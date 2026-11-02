@@ -73,3 +73,19 @@ Summons always pay nothing. Enemy shots and blasts must respect the room's walls
 **Reinforced stones.** A new rock type breaks only to a max level Thermos and looks clearly different, so players learn to come back for it. Some rooms have one covering a door to a vault, a rich detour room. Floors must still be fully winnable without it, and vaults never hold anything required.
 
 **Records.** Update the design spec, `docs/playtest-notes.md`, `docs/superpowers/plans/2026-11-02-next-rounds.md` and `LESSONS.md`.
+
+## Stage 5: Two paths at the start of a run
+
+The player wants more variety. Every run begins in a small first room, the Crossroads, before any floor. It holds two signposts on two exits, left and right. Each leads to a different first floor. Standing near a sign shows the path's name and a small skull icon for its danger.
+
+**Paths.**
+- Each path is its own `FloorDef` with its own name, enemy mix, mini boss, floor boss, room set and look, meaning floor and wall colors and its decor scatter. Both use the same grid floor rules.
+- **The Records Basement** is today's dreary office floor, with the Senior Adjuster and Regional Reaper. It is always open.
+- **The Unkempt Cemetery** is a new outdoor graveyard look with mossy stone, dead trees, stumps and fog-colored lighting. It has its own new floor boss and mini boss with their own telegraphed patterns, and it favors the new enemy types.
+- The second path is closed until the first floor boss has been beaten once. Its sign then shows as chained shut with a hint until then. Save this as an optional field so old saves load, and keep the rule easy to change.
+
+**Both reach the same next floor.** A second floor doesn't exist yet, so beating either floor boss still ends the run as it does today. Keep the point where a run continues to the next floor in one obvious place, so the second floor can slot in later whichever path was taken.
+
+**Maps.** The Crossroads shows on the mini map as its own small room, and the floor's name shows above the mini map, as the player's reference has.
+
+**Stage 1 must prepare for this.** Keep the floor builder working from a `FloorDef` for rooms, types and counts, with no fixed references to one floor, and keep room colors in one place a floor can override.

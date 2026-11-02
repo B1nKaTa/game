@@ -14,7 +14,8 @@ Work happens on the `next-build` branch while the `first-floor` copy stays untou
 | 5b | Real rewards for the Retirement Plan tiers | Reward list only |
 | 6 | Special items with mana | Design talk first |
 | 7 | Art for enemies and the room | Spends generations, so only with approval |
-| 8 | Second floor | After the first floor feels right |
+| 7b | Living floor stages 1 to 5, see the living floor design | Decided, building |
+| 8 | Second floor, reached from both first floors | After the first floors feel right |
 
 ## Round 1: Secret rooms
 
