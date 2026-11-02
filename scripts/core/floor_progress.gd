@@ -60,6 +60,8 @@ func arrival_cell(to_id: int, from_id: int) -> Vector2i:
 		return RoomLayout.SIDE_DOOR
 	if from_room.room_type == RoomLayout.TYPE_TREASURE:
 		return RoomLayout.TREASURE_DOOR
+	if from_room.room_type == RoomLayout.TYPE_SHOP:
+		return RoomLayout.SHOP_DOOR
 	if to_room.layer > from_room.layer:
 		return RoomLayout.ENTRY
 	return RoomLayout.EXIT_CELLS[to_room.exits.find(from_id)]

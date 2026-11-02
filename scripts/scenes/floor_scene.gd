@@ -108,7 +108,8 @@ func _enter_room(target_id: int) -> void:
 
 func _make_room_view(room: FloorRoom) -> RoomView:
 	var view := RoomView.new()
-	view.setup(room, _map, _floor_def, _run, player, _rng, _progress)
+	view.setup(room, _map, _floor_def, _run, player, _rng, _progress, Progress)
+	view.notice.connect(_hud.show_notice)
 	view.door_entered.connect(func(id: int): _enter_room.call_deferred(id))
 	view.pension_earned.connect(func(amount: int): Progress.add_pension(amount))
 	view.floor_cleared.connect(_on_floor_cleared)

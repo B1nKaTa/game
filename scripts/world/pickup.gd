@@ -52,6 +52,12 @@ func setup(label: String, color: Color, player: Node2D, needs_interact := false)
 	requires_interact = needs_interact
 
 
+func set_label(label: String, color: Color) -> void:
+	_label = label
+	_color = color
+	queue_redraw()
+
+
 func _ready() -> void:
 	add_to_group("pickups")
 	queue_redraw()

@@ -9,8 +9,11 @@ signal enemy_died(at: Vector2, is_boss: bool)
 signal doors_opened
 signal bomb_exploded
 signal consumable_taken
+signal notice(text: String)
 
 const HEAL_AMOUNT := 2
+const SHOP_PROMPT := "E: Buy"
+const FREE_COLOR := Color("67f0d0")
 const BACK_ICON := "<"
 const KEY_COLOR := Color("ece9e0")
 const BOMB_COLOR := Color("ff9a3c")
@@ -29,6 +32,8 @@ var _run: RunState
 var _player: Player
 var _rng: RandomNumberGenerator
 var _progress: FloorProgress
+var _bank: Node
+var _reward_cells: Array[Vector2i] = []
 var _alive := 0
 var _finished := false
 var _had_enemies := false
@@ -37,7 +42,7 @@ var _coins: Array[Pickup] = []
 var _last_death_at := Vector2.ZERO
 
 
-func setup(room: FloorRoom, map: FloorMap, floor_def: FloorDef, run: RunState, player: Player, rng: RandomNumberGenerator, progress: FloorProgress) -> void:
+func setup(room: FloorRoom, map: FloorMap, floor_def: FloorDef, run: RunState, player: Player, rng: RandomNumberGenerator, progress: FloorProgress, bank: Node) -> void:
 	_room = room
 	_map = map
 	_floor_def = floor_def
@@ -45,6 +50,7 @@ func setup(room: FloorRoom, map: FloorMap, floor_def: FloorDef, run: RunState, p
 	_player = player
 	_rng = rng
 	_progress = progress
+	_bank = bank
 
 
 func _ready() -> void:
@@ -97,6 +103,8 @@ func _create_doors() -> void:
 		_add_door(_room.side_id, RoomRules.door_icon(RoomLayout.TYPE_SIDE), RoomLayout.SIDE_DOOR)
 	if _room.treasure_id != -1:
 		_add_treasure_door()
+	if _room.shop_id != -1:
+		_add_door(_room.shop_id, RoomRules.door_icon(RoomLayout.TYPE_SHOP), RoomLayout.SHOP_DOOR)
 
 
 func _add_treasure_door() -> void:
@@ -179,6 +187,8 @@ func _on_enemy_defeated(enemy: Enemy) -> void:
 	_last_death_at = enemy.position
 	if _room.room_type == RoomLayout.TYPE_MINI_BOSS and enemy.def.is_boss:
 		_drop_consumable(enemy.position, RoomRules.DROP_KEY)
+		_run.mini_boss_down = true
+		_drop_boss_rewards(enemy.position)
 	if enemy.def.is_boss:
 		for other in get_tree().get_nodes_in_group("enemies"):
 			if other != enemy and other.get_parent() == self:
@@ -229,6 +239,121 @@ func _create_rewards() -> void:
 		_create_treasure(cell)
 	for cell in _room.layout.cells_of("C"):
 		_create_chest(cell)
+	if _room.room_type == RoomLayout.TYPE_SHOP:
+		_create_shop()
+	if _room.room_type == RoomLayout.TYPE_TREASURE:
+		_create_treasure_rewards()
+
+
+func _create_shop() -> void:
+	var stock := ShopRules.stock(Content.items(), _run, _rng)
+	var cells := _room.layout.cells_of("S")
+	for i in stock.size():
+		_add_shop_entry(RoomBackdrop.cell_center(cells[i]), stock[i])
+	_reward_cells = _room.layout.cells_of("R")
+	var station := RetirementStation.new()
+	station.setup(_bank, _player.feet())
+	station.position = RoomBackdrop.cell_center(_room.layout.cells_of(RoomLayout.SYMBOL_PLAN)[0])
+	station.deposit_wanted.connect(_on_deposit_wanted)
+	station.blasted.connect(_on_plan_blasted)
+	add_child(station)
+
+
+func _add_shop_entry(at: Vector2, entry: Dictionary) -> void:
+	var price: int = entry["price"]
+	var label := ""
+	var color := ITEM_COLOR
+	var give := Callable()
+	var allowed := Callable()
+	match entry["kind"]:
+		ShopRules.KIND_ITEM:
+			var item: ItemDef = entry["item"]
+			label = item.display_name
+			give = func(): _run.add_item(item)
+			allowed = func(): return not _run.has_item(item.id)
+		ShopRules.KIND_HEAL:
+			label = "Heal"
+			color = HEAL_COLOR
+			give = func(): _run.health.heal(HEAL_AMOUNT)
+			allowed = func(): return _run.health.pills < _run.health.max_pills
+		ShopRules.KIND_KEY:
+			label = RoomRules.KEY_NAME
+			color = KEY_COLOR
+			give = func(): _take_consumable(_run.add_key)
+			allowed = _run.can_add_key
+		ShopRules.KIND_BOMB:
+			label = RoomRules.BOMB_NAME
+			color = BOMB_COLOR
+			give = func(): _take_consumable(_run.add_bomb)
+			allowed = _run.can_add_bomb
+	var pickup := _add_pickup(at, "%s: %d" % [label, price], color, func(): _buy(price, give), true)
+	pickup.prompt = SHOP_PROMPT
+	pickup.can_take = func(): return _bank.data.pension >= price and allowed.call()
+
+
+func _buy(price: int, give: Callable) -> void:
+	if _bank.spend(price):
+		give.call()
+
+
+func _on_deposit_wanted(amount: int) -> void:
+	var reached: int = _bank.retirement_deposit(amount)
+	for i in reached:
+		_award_plan_reward()
+
+
+# Rewards last for this run only, and wait wherever the player can still reach them.
+func _award_plan_reward() -> void:
+	var picked := RoomRules.pick_items(Content.items(), _run, 1, _rng)
+	if picked.is_empty():
+		_run.add_bomb()
+		notice.emit("Retirement Plan bonus: a free %s" % RoomRules.BOMB_NAME)
+		return
+	var item := picked[0]
+	_run.promise(item)
+	var treasure_ahead := _map.has_unvisited_treasure(_progress)
+	match ShopRules.reward_place(treasure_ahead, not _run.mini_boss_down, _rng.randf()):
+		ShopRules.PLACE_TREASURE:
+			_run.treasure_rewards.append(item)
+			notice.emit("Retirement Plan bonus: a free item awaits in the treasure room")
+		ShopRules.PLACE_BOSS:
+			_run.boss_rewards.append(item)
+			notice.emit("Retirement Plan bonus: a free item awaits after the mini boss")
+		_:
+			_add_free_item(RoomBackdrop.cell_center(_reward_cells.pop_front()), item)
+			notice.emit("Retirement Plan bonus: a free item, right here")
+
+
+func _on_plan_blasted() -> void:
+	var data: ProgressData = _bank.data
+	if data.can_release_retirement():
+		var amount: int = _bank.release_retirement()
+		consumable_taken.emit()
+		notice.emit("Cashed out %d Pension from your Retirement Plan" % amount)
+	elif data.retirement_balance > 0:
+		notice.emit("Your Retirement Plan is locked until your next run")
+
+
+func _add_free_item(at: Vector2, item: ItemDef) -> void:
+	var pickup := _add_item_pickup(at, item)
+	pickup.set_label("Free: %s" % item.display_name, FREE_COLOR)
+
+
+func _create_treasure_rewards() -> void:
+	var anchor := _room.layout.cells_of("I")[0]
+	for i in _run.treasure_rewards.size():
+		var cell := _room.layout.nearest_floor_cell(anchor + Vector2i(i, 3))
+		_add_free_item(RoomBackdrop.cell_center(cell), _run.treasure_rewards[i])
+	_run.treasure_rewards.clear()
+
+
+func _drop_boss_rewards(at: Vector2) -> void:
+	var tile := float(RoomBackdrop.TILE)
+	for i in _run.boss_rewards.size():
+		var spot := at + Vector2((i + 1) * tile, tile)
+		var cell := _room.layout.nearest_floor_cell(Vector2i(floori(spot.x / tile), floori(spot.y / tile)))
+		_add_free_item(RoomBackdrop.cell_center(cell), _run.boss_rewards[i])
+	_run.boss_rewards.clear()
 
 
 func _create_chest(cell: Vector2i) -> void:

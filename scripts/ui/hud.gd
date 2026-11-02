@@ -7,6 +7,8 @@ const BOSS_NAME_TOP := 314.0
 const SLIP_COUNTER_AT := Vector2(300, 5)
 const THERMOS_COUNTER_AT := Vector2(360, 5)
 const COUNTER_TEXT_OFFSET := Vector2(15, -2)
+const NOTICE_TOP := 40.0
+const NOTICE_TIME := 3.5
 
 var _run: RunState
 var _status: Label
@@ -14,6 +16,8 @@ var _items: Label
 var _slips: Label
 var _thermoses: Label
 var _message: Label
+var _notice: Label
+var _notice_left := 0.0
 var _boss_name: Label
 var _boss_back: ColorRect
 var _boss_fill: ColorRect
@@ -41,6 +45,9 @@ func _ready() -> void:
 	_message = _add_label(Vector2(0, 150), 20)
 	_message.size = Vector2(640, 40)
 	_message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_notice = _add_label(Vector2(0, NOTICE_TOP), 12)
+	_notice.size = Vector2(640, 20)
+	_notice.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_boss_name = _add_label(Vector2(0, BOSS_NAME_TOP), 16)
 	_boss_name.size = Vector2(640, 20)
 	_boss_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -63,6 +70,19 @@ func set_pension(amount: int) -> void:
 
 func show_message(text: String) -> void:
 	_message.text = text
+
+
+func show_notice(text: String) -> void:
+	_notice.text = text
+	_notice_left = NOTICE_TIME
+
+
+func _process(delta: float) -> void:
+	if _notice_left <= 0.0:
+		return
+	_notice_left -= delta
+	if _notice_left <= 0.0:
+		_notice.text = ""
 
 
 func show_boss_bar(display_name: String, max_hp: float) -> void:

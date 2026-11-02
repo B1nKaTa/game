@@ -9,6 +9,7 @@ const ICONS := {
 	RoomLayout.TYPE_MINI_BOSS: "M",
 	RoomLayout.TYPE_FLOOR_BOSS: "B",
 	RoomLayout.TYPE_TREASURE: "T",
+	RoomLayout.TYPE_SHOP: "$",
 }
 const KEY_NAME := "Permission Slip"
 const BOMB_NAME := "Overheated Thermos"
@@ -48,7 +49,7 @@ static func door_icon(room_type: String) -> String:
 static func pick_items(all: Array[ItemDef], run: RunState, count: int, rng: RandomNumberGenerator) -> Array[ItemDef]:
 	var options: Array[ItemDef] = []
 	for item in all:
-		if not run.has_item(item.id):
+		if not run.has_item(item.id) and not run.is_promised(item.id):
 			options.append(item)
 	var picked: Array[ItemDef] = []
 	while picked.size() < count and not options.is_empty():

@@ -34,6 +34,7 @@ static func build(rng: RandomNumberGenerator, pool: Array[RoomLayout]) -> FloorM
 	map.boss_id = previous[0].id
 	_attach_side_rooms(map, picker, rng)
 	_attach_treasure_room(map, picker, rng)
+	_attach_shop(map, picker, rng)
 	return map
 
 
@@ -100,6 +101,29 @@ static func _attach_treasure_room(map: FloorMap, picker: _LayoutPicker, rng: Ran
 	var layout := picker.pick(RoomLayout.TYPE_TREASURE)
 	if layout == null:
 		return
+	var options := _rooms_on_every_route(map)
+	var parent := options[rng.randi_range(0, options.size() - 1)]
+	var treasure := _add_room(map, parent.layer, RoomLayout.TYPE_TREASURE, layout)
+	treasure.parent_id = parent.id
+	parent.treasure_id = treasure.id
+
+
+# The mini boss and healing layers always hold one room each, so a second option always exists.
+static func _attach_shop(map: FloorMap, picker: _LayoutPicker, rng: RandomNumberGenerator) -> void:
+	var layout := picker.pick(RoomLayout.TYPE_SHOP)
+	if layout == null:
+		return
+	var options: Array[FloorRoom] = []
+	for room in _rooms_on_every_route(map):
+		if room.treasure_id == -1:
+			options.append(room)
+	var parent := options[rng.randi_range(0, options.size() - 1)]
+	var shop := _add_room(map, parent.layer, RoomLayout.TYPE_SHOP, layout)
+	shop.parent_id = parent.id
+	parent.shop_id = shop.id
+
+
+static func _rooms_on_every_route(map: FloorMap) -> Array[FloorRoom]:
 	var in_layer := {}
 	for room in map.main_rooms():
 		in_layer[room.layer] = in_layer.get(room.layer, 0) + 1
@@ -107,10 +131,7 @@ static func _attach_treasure_room(map: FloorMap, picker: _LayoutPicker, rng: Ran
 	for room in map.main_rooms():
 		if in_layer[room.layer] == 1 and room.id != map.start_id and room.id != map.boss_id:
 			options.append(room)
-	var parent := options[rng.randi_range(0, options.size() - 1)]
-	var treasure := _add_room(map, parent.layer, RoomLayout.TYPE_TREASURE, layout)
-	treasure.parent_id = parent.id
-	parent.treasure_id = treasure.id
+	return options
 
 
 class _LayoutPicker:

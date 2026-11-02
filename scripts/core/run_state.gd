@@ -11,6 +11,10 @@ var health: Health
 var items: Array[ItemDef] = []
 var keys := 0
 var bombs := STARTING_BOMBS
+var treasure_rewards: Array[ItemDef] = []
+var boss_rewards: Array[ItemDef] = []
+var mini_boss_down := false
+var _promised := {}
 var _upgrades: Array[UpgradeDef]
 var _levels: Dictionary
 
@@ -37,6 +41,15 @@ func has_item(id: String) -> bool:
 		if item.id == id:
 			return true
 	return false
+
+
+# A promised item is on its way to the player as a reward, so nothing else offers it.
+func promise(item: ItemDef) -> void:
+	_promised[item.id] = true
+
+
+func is_promised(id: String) -> bool:
+	return _promised.has(id)
 
 
 func can_add_key() -> bool:

@@ -18,6 +18,13 @@ func main_rooms() -> Array[FloorRoom]:
 	return list
 
 
+func has_unvisited_treasure(progress: FloorProgress) -> bool:
+	for candidate in rooms:
+		if candidate.room_type == RoomLayout.TYPE_TREASURE and not progress.is_visited(candidate.id):
+			return true
+	return false
+
+
 func reaches_boss_from_everywhere() -> bool:
 	var from_start := _walk(start_id)
 	for candidate in main_rooms():
