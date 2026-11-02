@@ -81,22 +81,22 @@ func test_all_shipped_rooms_are_valid() -> void:
 		count += 1
 		var layout: RoomLayout = load(DIR + name)
 		assert_eq(layout.validate().size(), 0, "%s: %s" % [name, str(layout.validate())])
-	assert_eq(count, 26)
+	assert_eq(count, 41)
 
 
 func test_catalog_meets_the_spec_counts() -> void:
 	var counts := {}
 	for layout in RoomCatalog.load_valid(DIR):
 		counts[layout.room_type] = counts.get(layout.room_type, 0) + 1
-	assert_eq(counts.get(RoomLayout.TYPE_COMBAT, 0), 13)
-	assert_eq(counts.get(RoomLayout.TYPE_ITEM, 0), 2)
-	assert_eq(counts.get(RoomLayout.TYPE_HEALING, 0), 2)
-	assert_eq(counts.get(RoomLayout.TYPE_SIDE, 0), 2)
-	assert_eq(counts.get(RoomLayout.TYPE_MINI_BOSS, 0), 1)
-	assert_eq(counts.get(RoomLayout.TYPE_FLOOR_BOSS, 0), 1)
-	assert_eq(counts.get(RoomLayout.TYPE_TREASURE, 0), 2)
+	assert_eq(counts.get(RoomLayout.TYPE_COMBAT, 0), 19)
+	assert_eq(counts.get(RoomLayout.TYPE_ITEM, 0), 4)
+	assert_eq(counts.get(RoomLayout.TYPE_HEALING, 0), 3)
+	assert_eq(counts.get(RoomLayout.TYPE_SIDE, 0), 4)
+	assert_eq(counts.get(RoomLayout.TYPE_MINI_BOSS, 0), 2)
+	assert_eq(counts.get(RoomLayout.TYPE_FLOOR_BOSS, 0), 2)
+	assert_eq(counts.get(RoomLayout.TYPE_TREASURE, 0), 3)
 	assert_eq(counts.get(RoomLayout.TYPE_SHOP, 0), 1)
-	assert_eq(counts.get(RoomLayout.TYPE_SECRET, 0), 2)
+	assert_eq(counts.get(RoomLayout.TYPE_SECRET, 0), 3)
 
 
 func test_nearest_floor_cell_keeps_a_floor_cell() -> void:
@@ -187,3 +187,33 @@ func test_a_pickup_touching_a_door_fails_because_reaching_it_could_walk_through_
 	var rows := _open_rows("#.......E..E.......#")
 	rows[9] = "#........C.........#"
 	assert_true(_layout(RoomLayout.TYPE_COMBAT, rows).validate().size() > 0)
+
+
+func test_every_size_exists_across_room_types() -> void:
+	var small_types := {}
+	var large_types := {}
+	var small := 0
+	var large := 0
+	for layout in RoomCatalog.load_valid(DIR):
+		if layout.size_class() == RoomLayout.SIZE_SMALL:
+			small += 1
+			small_types[layout.room_type] = true
+		elif layout.size_class() == RoomLayout.SIZE_LARGE:
+			large += 1
+			large_types[layout.room_type] = true
+	assert_true(small >= 4, "small rooms: %d" % small)
+	assert_true(large >= 4, "large rooms: %d" % large)
+	assert_true(small_types.size() >= 2, "small rooms across types")
+	assert_true(large_types.size() >= 2, "large rooms across types")
+
+
+func test_a_floor_uses_rooms_of_every_size() -> void:
+	var def: FloorDef = load("res://data/floors/floor_1.tres")
+	var pool := RoomCatalog.load_valid(DIR)
+	var sizes := {}
+	for seed_value in 50:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = seed_value
+		for room in FloorBuilder.build_from_pool(rng, def, pool).rooms:
+			sizes[room.layout.size_class()] = true
+	assert_eq(sizes.size(), 3, str(sizes.keys()))
