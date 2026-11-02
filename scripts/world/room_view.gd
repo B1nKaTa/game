@@ -131,7 +131,8 @@ func _create_rewards() -> void:
 	if not cells.is_empty():
 		_create_item_choice(cells)
 	for cell in _room.layout.cells_of("H"):
-		_add_pickup(RoomBackdrop.cell_center(cell), "Heal", HEAL_COLOR, func(): _run.health.heal(HEAL_AMOUNT))
+		var heal := _add_pickup(RoomBackdrop.cell_center(cell), "Heal", HEAL_COLOR, func(): _run.health.heal(HEAL_AMOUNT))
+		heal.can_take = func(): return _run.health.pills < _run.health.max_pills
 	for cell in _room.layout.cells_of("T"):
 		_create_treasure(cell)
 

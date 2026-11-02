@@ -7,6 +7,7 @@ const COLLECT_RADIUS := 18.0
 const PROMPT_TEXT := "E: Take"
 
 var requires_interact := false
+var can_take := Callable()
 var _label := ""
 var _color := Color.WHITE
 var _player: Node2D
@@ -34,6 +35,8 @@ func _process(_delta: float) -> void:
 	if _done or not is_instance_valid(_player):
 		return
 	var in_range := global_position.distance_to(_player.global_position) <= COLLECT_RADIUS
+	if can_take.is_valid() and not can_take.call():
+		in_range = false
 	var show_prompt := requires_interact and in_range
 	if show_prompt != _prompt_shown:
 		_prompt_shown = show_prompt
