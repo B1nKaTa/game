@@ -4,6 +4,7 @@ const TIMEOUT := 180.0
 const MAX_ROOMS := 40
 
 var _failed := false
+var _boss_rooms_seen := 0
 
 
 func _ready() -> void:
@@ -60,13 +61,24 @@ func _clear_whole_floor() -> void:
 		scene.debug_take_first_exit()
 		await _wait(0.2)
 	_check(scene.is_cleared, "floor can be cleared")
+	_check(_boss_rooms_seen >= 2, "both bosses showed a boss bar")
 
 
 func _clear_room(scene: Node) -> void:
 	await _wait(0.1)
+	var hud := _find_hud(scene)
+	var boss_here := false
+	for enemy in get_tree().get_nodes_in_group("enemies"):
+		if enemy.def.is_boss:
+			boss_here = true
+	if boss_here:
+		_boss_rooms_seen += 1
+		_check(hud.is_boss_bar_visible(), "boss bar is visible during a boss fight")
 	for enemy in get_tree().get_nodes_in_group("enemies"):
 		enemy.take_damage(INF, Vector2.ZERO)
 	await _wait(0.1)
+	if boss_here:
+		_check(not hud.is_boss_bar_visible(), "boss bar is hidden after the boss falls")
 	for pickup in get_tree().get_nodes_in_group("pickups"):
 		if is_instance_valid(pickup) and not scene.is_over:
 			if pickup.requires_interact:
@@ -75,6 +87,13 @@ func _clear_room(scene: Node) -> void:
 				continue
 			scene.player.global_position = pickup.global_position
 			await _wait(0.05)
+
+
+func _find_hud(scene: Node) -> Hud:
+	for child in scene.get_children():
+		if child is Hud:
+			return child
+	return null
 
 
 func _die_in_a_run() -> void:

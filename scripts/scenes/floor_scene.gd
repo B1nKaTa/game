@@ -48,6 +48,7 @@ func debug_take_first_exit() -> void:
 
 
 func _enter_room(target_id: int) -> void:
+	_hud.hide_boss_bar()
 	player.recall_cane()
 	var from_side := _current_id != -1 and _map.room(_current_id).room_type == RoomLayout.TYPE_SIDE
 	if _room_view != null:
@@ -62,6 +63,7 @@ func _enter_room(target_id: int) -> void:
 	_room_view.pension_earned.connect(func(amount: int): Progress.add_pension(amount))
 	_room_view.room_finished.connect(func(id: int): _finished_rooms[id] = true)
 	_room_view.floor_cleared.connect(_on_floor_cleared)
+	_room_view.boss_spawned.connect(_on_boss_spawned)
 	add_child(_room_view)
 	move_child(_room_view, 0)
 	var entry := RoomLayout.ENTRY
@@ -85,6 +87,7 @@ func _end_run(message: String) -> void:
 	if is_over:
 		return
 	is_over = true
+	_hud.hide_boss_bar()
 	_hud.show_message(message)
 	if player != null:
 		player.recall_cane()
@@ -93,3 +96,13 @@ func _end_run(message: String) -> void:
 		_room_view.process_mode = Node.PROCESS_MODE_DISABLED
 	await get_tree().create_timer(MESSAGE_TIME).timeout
 	Game.return_to_waiting()
+
+
+func _on_boss_spawned(boss: Enemy) -> void:
+	_hud.show_boss_bar(boss.def.display_name, boss.def.max_hp)
+	boss.health_changed.connect(_hud.set_boss_health)
+	boss.defeated.connect(_on_boss_defeated)
+
+
+func _on_boss_defeated(_boss: Enemy) -> void:
+	_hud.hide_boss_bar()
