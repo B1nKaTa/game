@@ -13,6 +13,7 @@ const ENTRY := Vector2i(1, 5)
 const EXIT_A := Vector2i(18, 3)
 const EXIT_B := Vector2i(18, 7)
 const SIDE_DOOR := Vector2i(10, 1)
+const SIDE_ROOM_SPAWN := Vector2i(2, 5)
 const ALLOWED := "#.EIHTB"
 const REQUIRED := {
 	TYPE_COMBAT: {"E": 2},
@@ -55,6 +56,8 @@ func validate() -> PackedStringArray:
 	for anchor in [ENTRY, EXIT_A, EXIT_B, SIDE_DOOR]:
 		if rows[anchor.y][anchor.x] != ".":
 			errors.append("door cell must be floor at %s" % str(anchor))
+	if room_type == TYPE_SIDE and rows[SIDE_ROOM_SPAWN.y][SIDE_ROOM_SPAWN.x] != ".":
+		errors.append("side room spawn cell must be floor at %s" % str(SIDE_ROOM_SPAWN))
 	if not errors.is_empty():
 		return errors
 	var reachable := _flood_from_entry()

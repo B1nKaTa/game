@@ -52,7 +52,7 @@ func _ready() -> void:
 
 func _create_doors() -> void:
 	if _room.room_type == RoomLayout.TYPE_SIDE:
-		_add_door(_room.parent_id, "<", RoomLayout.EXIT_A)
+		_add_door(_room.parent_id, "<", RoomLayout.ENTRY)
 	else:
 		var cells := [RoomLayout.EXIT_A, RoomLayout.EXIT_B]
 		for i in _room.exits.size():

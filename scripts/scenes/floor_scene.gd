@@ -63,7 +63,11 @@ func _enter_room(target_id: int) -> void:
 	_room_view.floor_cleared.connect(_on_floor_cleared)
 	add_child(_room_view)
 	move_child(_room_view, 0)
-	var entry := RoomLayout.SIDE_DOOR if from_side else RoomLayout.ENTRY
+	var entry := RoomLayout.ENTRY
+	if from_side:
+		entry = RoomLayout.SIDE_DOOR
+	elif room.room_type == RoomLayout.TYPE_SIDE:
+		entry = RoomLayout.SIDE_ROOM_SPAWN
 	player.global_position = RoomBackdrop.cell_center(entry)
 
 

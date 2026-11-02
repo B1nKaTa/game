@@ -96,3 +96,14 @@ func test_nearest_floor_cell_moves_a_wall_cell_to_floor() -> void:
 	assert_eq(layout.nearest_floor_cell(Vector2i(0, 5)), Vector2i(1, 5))
 	assert_eq(layout.nearest_floor_cell(Vector2i(-3, 5)), Vector2i(1, 5))
 	assert_eq(layout.nearest_floor_cell(Vector2i(25, 0)), Vector2i(18, 1))
+
+
+func test_side_room_needs_floor_at_the_arrival_cell() -> void:
+	var open := _layout(RoomLayout.TYPE_SIDE, _open_rows("#.......T..........#"))
+	assert_eq(open.validate().size(), 0)
+	var rows := _open_rows("#.#.....T..........#")
+	var blocked := _layout(RoomLayout.TYPE_SIDE, rows)
+	assert_eq(RoomLayout.SIDE_ROOM_SPAWN, Vector2i(2, 5))
+	assert_true(blocked.validate().size() > 0, "wall on the side room spawn cell")
+	var regular := _layout(RoomLayout.TYPE_COMBAT, _open_rows("#.#.....E..E.......#"))
+	assert_eq(regular.validate().size(), 0, "regular rooms don't need that cell")
