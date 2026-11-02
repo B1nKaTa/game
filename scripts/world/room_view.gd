@@ -258,6 +258,7 @@ func _spawn_enemies() -> void:
 	for entry in EnemyPlan.plan(_room.layout, _floor_def, _room.extra_enemies, _rng):
 		var enemy := _spawn_enemy(entry["def"], RoomBackdrop.cell_center(entry["cell"]))
 		enemy.is_group_follower = not entry["leader"]
+		enemy.wait_for_room_start()
 	for cell in _room.layout.cells_of("B"):
 		var boss := _floor_def.mini_boss if _room.room_type == RoomLayout.TYPE_MINI_BOSS else _floor_def.floor_boss
 		_spawn_enemy(boss, RoomBackdrop.cell_center(cell))

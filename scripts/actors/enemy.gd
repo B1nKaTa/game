@@ -19,6 +19,8 @@ const WARNING_COLOR := Color("e4524f")
 const BLINK_EVERY := 0.09
 const BLINK_COLOR := Color("fff2c0")
 const MAX_PROPS_ACROSS_A_LANE := 8
+# A room's enemies stand still this long as Grandpa walks in, so he can read the room first.
+const ROOM_WAKE_TIME := 0.6
 
 var def: EnemyDef
 var hp: float = 0.0
@@ -48,6 +50,7 @@ var _show_bar := false
 var _blew_itself_up := false
 var _dismissed := false
 var _blink_wait := 0.0
+var _wake_left := 0.0
 
 
 func setup(enemy_def: EnemyDef, chase_target: Node2D, warning_fraction: float, show_health_bar := false) -> void:
@@ -80,6 +83,9 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	if not is_instance_valid(target):
+		return
+	if _wake_left > 0.0:
+		_wake_left -= delta
 		return
 	desired_velocity = Vector2.ZERO
 	_behavior.tick(self, delta)
@@ -133,6 +139,10 @@ func take_strike(amount: float, push: Vector2, to_attacker: Vector2) -> bool:
 		return false
 	take_damage(amount, push)
 	return true
+
+
+func wait_for_room_start() -> void:
+	_wake_left = ROOM_WAKE_TIME
 
 
 func self_destruct() -> void:
@@ -205,7 +215,7 @@ func warning_lane_direction() -> Vector2:
 
 
 func _clear_length(direction: Vector2, length: float, through_props: bool) -> float:
-	if not is_inside_tree():
+	if not is_inside_tree() or def.ignores_walls:
 		return length
 	var space := get_world_2d().direct_space_state
 	var skip: Array[RID] = []

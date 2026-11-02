@@ -613,6 +613,7 @@ func _check_fight_room(scene: Node) -> void:
 	# The check is about the rules, so stray hits must not end the run.
 	var pills_before := health.max_pills
 	health.raise_max(pills_before + 30)
+	await _check_room_start(scene)
 	await _check_blast(scene)
 	await _check_shield(scene)
 	await _check_boss_moves(scene)
@@ -623,6 +624,18 @@ func _check_fight_room(scene: Node) -> void:
 	await _wait(0.1)
 	health.pills = pills_before
 	health.raise_max(pills_before)
+
+
+# Enemies of a room hold still as he walks in, then come for him.
+func _check_room_start(scene: Node) -> void:
+	var layout := _fight_layout(20, 11, {Vector2i(8, 8): "E", Vector2i(12, 8): "E"})
+	await _enter_made_room(scene, layout)
+	var enemies := get_tree().get_nodes_in_group("enemies")
+	_check(enemies.size() >= 2, "a room's enemy cells spawn enemies")
+	var was: Vector2 = enemies[0].position
+	await _wait(Enemy.ROOM_WAKE_TIME * 0.6)
+	_check(not _gone(enemies[0]) and enemies[0].position == was and enemies[0]._warning == null, "enemies wait as he walks in")
+	await _dismiss_all()
 
 
 func _check_blast(scene: Node) -> void:

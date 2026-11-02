@@ -152,6 +152,26 @@ func test_a_pack_spreads_around_its_target() -> void:
 	assert_eq(seen.size(), 4, "each member takes its own side")
 
 
+func test_the_shield_turns_slowly_toward_its_target() -> void:
+	var Shield: Script = load("res://scripts/actors/behaviors/shield_behavior.gd")
+	var small: Vector2 = Shield.turned(Vector2.RIGHT, Vector2.LEFT, 0.5)
+	assert_near(absf(Vector2.RIGHT.angle_to(small)), 0.5)
+	var arrived: Vector2 = Shield.turned(Vector2.RIGHT, Vector2.UP, 2.0)
+	assert_true(arrived.is_equal_approx(Vector2.UP))
+
+
+func test_a_warning_can_show_for_a_whole_windup() -> void:
+	var enemy := Enemy.new()
+	enemy.setup(_load("burnt_out_auditor"), null, 0.5)
+	var telegraph := Telegraph.new()
+	telegraph.start(1.0)
+	enemy.set_warning(telegraph, 10.0)
+	assert_near(enemy._warning_share(), 0.5)
+	enemy.set_warning(telegraph, 10.0, true)
+	assert_near(enemy._warning_share(), 1.0)
+	enemy.free()
+
+
 func test_income_values_stay_low_enough_for_many_more_enemies() -> void:
 	var floor_def := _floor()
 	assert_true(floor_def.prop_pension < floor_def.treasure_pension, "a barrel is not a treasure")
