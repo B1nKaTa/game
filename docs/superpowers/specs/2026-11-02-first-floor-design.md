@@ -102,6 +102,12 @@ Reaching 10, 50, 100, 250, 500, 750 and 1000 for the first time each gives one f
 
 A floor usually has one secret room, hanging off a combat room with no side room. It may sit on a route the player skips. A faint crack in the top wall is the only hint, and a Thermos blast next to it opens a door. The room holds treasure and no enemies, and it appears on the maps once visited.
 
+### Recipes and Crafting
+
+Six items need a recipe before they can appear. A recipe can replace treasure 25% of the time, including chests and pockets, and the mini boss drops one 50% of the time. A run never offers the same recipe twice, and a found recipe is saved at once, so dying never loses it.
+
+Agnes, Afterlife Arts and Crafts, stands in the Waiting Room and holds every found recipe. Crafting costs Pension, from 70 to 120 by item, and one item at a time can wait for the next run. That run starts with it. The first craft also adds the item to the rotation for every run after, so it can appear in rooms, treasure, the shop and rewards. A crafted item can be crafted again later for another head start.
+
 ### Maps
 
 A small map in the top right corner shows visited rooms, the links between them and the current room. Pressing M opens a large map with room type icons and a legend, and pauses the game until M is pressed again. Unvisited rooms never show on either map. The map reads left to right from the start to the floor boss, with side rooms beside their parent.

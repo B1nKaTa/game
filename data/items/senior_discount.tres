@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "senior_discount"
+display_name = "Senior Discount Card"
+description = "Much more Pension from all sources. Valid everywhere, including here."
+craft_price = 90
+pension_bonus = 0.4

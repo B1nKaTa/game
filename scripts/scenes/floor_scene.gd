@@ -25,6 +25,9 @@ func _ready() -> void:
 	_rng.randomize()
 	Progress.start_run()
 	_run = Progress.make_run()
+	var crafted := Progress.take_crafted_item()
+	if crafted != null:
+		_run.add_item(crafted)
 	_hud = Hud.new()
 	_hud.setup(_run)
 	add_child(_hud)

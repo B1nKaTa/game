@@ -23,6 +23,8 @@ const CLEAR_BOMB_CHANCE := 0.2
 const BLOCK_COIN_CHANCE := 0.3
 const BLOCK_BOMB_CHANCE := 0.15
 const BLOCK_KEY_CHANCE := 0.1
+const TREASURE_RECIPE_CHANCE := 0.25
+const MINI_BOSS_RECIPE_CHANCE := 0.5
 
 
 static func block_drop(roll: float) -> String:
@@ -50,11 +52,24 @@ static func door_icon(room_type: String) -> String:
 static func pick_items(all: Array[ItemDef], run: RunState, count: int, rng: RandomNumberGenerator) -> Array[ItemDef]:
 	var options: Array[ItemDef] = []
 	for item in all:
-		if not run.has_item(item.id) and not run.is_promised(item.id):
+		if run.can_offer(item) and not run.has_item(item.id) and not run.is_promised(item.id):
 			options.append(item)
 	var picked: Array[ItemDef] = []
 	while picked.size() < count and not options.is_empty():
 		var index := rng.randi_range(0, options.size() - 1)
 		picked.append(options[index])
 		options.remove_at(index)
+	return picked
+
+
+# Picks a recipe the player hasn't found and that this run hasn't already offered, or null.
+static func pick_recipe(all: Array[ItemDef], found: Dictionary, run: RunState, rng: RandomNumberGenerator) -> ItemDef:
+	var options: Array[ItemDef] = []
+	for item in all:
+		if item.needs_recipe() and not found.has(item.id) and not run.was_recipe_offered(item.id):
+			options.append(item)
+	if options.is_empty():
+		return null
+	var picked := options[rng.randi_range(0, options.size() - 1)]
+	run.offer_recipe(picked.id)
 	return picked

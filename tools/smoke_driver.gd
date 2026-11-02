@@ -5,6 +5,7 @@ const MAX_ROOMS := 40
 
 var _failed := false
 var _boss_rooms_seen := 0
+var _crafted_id := ""
 
 
 func _ready() -> void:
@@ -36,9 +37,19 @@ func _run() -> void:
 	_check(reached == 2, "a deposit reports the tiers it reached")
 	_check(not Progress.data.can_release_retirement(), "the plan is locked in the run it was paid into")
 
+	var recipe: ItemDef = Content.recipes()[0]
+	Progress.add_pension(recipe.craft_price)
+	_check(not Progress.craft(recipe), "crafting needs the recipe")
+	Progress.find_recipe(recipe.id)
+	_check(Progress.craft(recipe), "a found recipe can be crafted")
+	_crafted_id = recipe.id
+
 	await _die_in_a_run()
 	await _wait(2.5)
 	_expect_scene("WaitingRoom")
+	_check(Progress.data.crafted_for_next_run.is_empty(), "the crafted item is used up by one run")
+	_check(Progress.data.is_unlocked(recipe.id), "the crafted item stays in rotation")
+	_check(Progress.make_run().can_offer(recipe), "new runs can offer the crafted item")
 	_check(Progress.data.can_release_retirement(), "the plan opens in a later run")
 	Progress.reload()
 	_check(Progress.data.retirement_balance == 60, "the plan survives a reload")
@@ -133,6 +144,8 @@ func _die_in_a_run() -> void:
 	await _wait(0.5)
 	_expect_scene("FloorScene")
 	var scene := get_tree().current_scene
+	if not _crafted_id.is_empty():
+		_check(scene.player.run.has_item(_crafted_id), "the crafted item starts the next run")
 	scene.player.run.health.hit(999)
 	await _wait(0.1)
 	_check(scene.is_over, "death ends the run")

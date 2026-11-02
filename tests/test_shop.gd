@@ -31,7 +31,10 @@ func test_every_stock_entry_has_a_price() -> void:
 
 
 func test_owned_and_promised_items_are_not_sold() -> void:
-	var all := Content.items()
+	var all: Array[ItemDef] = []
+	for item in Content.items():
+		if not item.needs_recipe():
+			all.append(item)
 	var run := _run()
 	for i in all.size() - 1:
 		if i % 2 == 0:

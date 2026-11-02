@@ -13,6 +13,8 @@ signal notice(text: String)
 
 const HEAL_AMOUNT := 2
 const SHOP_PROMPT := "Buy"
+const RECIPE_COLOR := Color("ffd65c")
+const RECIPE_PROMPT := "Take recipe"
 const FREE_COLOR := Color("67f0d0")
 const BACK_ICON := "<"
 const KEY_COLOR := Color("ece9e0")
@@ -207,6 +209,8 @@ func _on_enemy_defeated(enemy: Enemy) -> void:
 		_drop_consumable(enemy.position, RoomRules.DROP_KEY)
 		_run.mini_boss_down = true
 		_drop_boss_rewards(enemy.position)
+		if _rng.randf() < RoomRules.MINI_BOSS_RECIPE_CHANCE:
+			_drop_recipe(enemy.position + Vector2(-RoomBackdrop.TILE, RoomBackdrop.TILE))
 	if enemy.def.is_boss:
 		for other in get_tree().get_nodes_in_group("enemies"):
 			if other != enemy and other.get_parent() == self:
@@ -404,7 +408,27 @@ func _remove_others(choices: Array[Pickup], taken: Pickup) -> void:
 			choice.queue_free()
 
 
+# Found recipes are saved at once, so dying later in the run never loses one.
+func _drop_recipe(at: Vector2) -> bool:
+	var item := RoomRules.pick_recipe(Content.items(), _bank.data.recipes_found, _run, _rng)
+	if item == null:
+		return false
+	var tile := float(RoomBackdrop.TILE)
+	var cell := _room.layout.nearest_floor_cell(Vector2i(floori(at.x / tile), floori(at.y / tile)))
+	var pickup := _add_pickup(RoomBackdrop.cell_center(cell), "Recipe: %s" % item.display_name, RECIPE_COLOR, func(): _take_recipe(item), true)
+	pickup.prompt = RECIPE_PROMPT
+	return true
+
+
+func _take_recipe(item: ItemDef) -> void:
+	_bank.find_recipe(item.id)
+	consumable_taken.emit()
+	notice.emit("Recipe found: %s. Take it to the Waiting Room." % item.display_name)
+
+
 func _create_treasure(cell: Vector2i) -> void:
+	if _rng.randf() < RoomRules.TREASURE_RECIPE_CHANCE and _drop_recipe(RoomBackdrop.cell_center(cell)):
+		return
 	var picked := RoomRules.pick_items(Content.items(), _run, 1, _rng)
 	if picked.is_empty() or _rng.randf() < 0.5:
 		_drop_coin(RoomBackdrop.cell_center(cell), _floor_def.treasure_pension)

@@ -77,5 +77,30 @@ func mark_opening_seen() -> void:
 	_store.save_progress(data)
 
 
+func find_recipe(id: String) -> void:
+	data.find_recipe(id)
+	_store.save_progress(data)
+
+
+func craft(item: ItemDef) -> bool:
+	if not data.craft(item.id, item.craft_price):
+		return false
+	_save_pension()
+	return true
+
+
+func take_crafted_item() -> ItemDef:
+	var id := data.take_crafted_item()
+	if id.is_empty():
+		return null
+	_store.save_progress(data)
+	for item in Content.items():
+		if item.id == id:
+			return item
+	return null
+
+
 func make_run() -> RunState:
-	return RunState.new(Content.upgrades(), data.upgrades)
+	var run := RunState.new(Content.upgrades(), data.upgrades)
+	run.unlocked_items = data.items_unlocked
+	return run

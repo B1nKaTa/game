@@ -29,6 +29,14 @@ static func items() -> Array[ItemDef]:
 	return list
 
 
+static func recipes() -> Array[ItemDef]:
+	var list: Array[ItemDef] = []
+	for item in items():
+		if item.needs_recipe():
+			list.append(item)
+	return list
+
+
 static func upgrades() -> Array[UpgradeDef]:
 	var list: Array[UpgradeDef] = []
 	for resource in load_dir(UPGRADES_DIR):

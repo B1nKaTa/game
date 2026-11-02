@@ -10,7 +10,8 @@ Work happens on the `next-build` branch while the `first-floor` copy stays untou
 | 2 | More combat layouts, including breakable blocks and chests | No |
 | 3 | Key remapping screen | No |
 | 4 | Two more Bribed Clerk levels at 300 and 500 | Decided, built |
-| 5 | Real rewards for the Retirement Plan tiers | Reward list only |
+| 5 | Recipes and Agnes the crafter | Built |
+| 5b | Real rewards for the Retirement Plan tiers | Reward list only |
 | 6 | Special items with mana | Design talk first |
 | 7 | Art for enemies and the room | Spends generations, so only with approval |
 | 8 | Second floor | After the first floor feels right |
@@ -44,9 +45,10 @@ Run the tests and the full-loop check first, because this branch has never been 
 - Coming back from a secret room, and leaving it for later.
 - Each new layout, to check it plays well and nothing is awkward to reach.
 - Rebinding keys, then quitting and reopening.
+- Finding a recipe, crafting it with Agnes, starting the next run with the item, and seeing it appear in later runs.
 
 ## Status
 
-- Rounds 1 to 4 are written and pushed on `next-build`, and none of it has been run. Room layouts passed a separate check for size, door cells and reachability, run without starting the game.
-- Round 5 waits on the reward list, and round 6 on a design talk.
+- Rounds 1 to 5 are written and pushed on `next-build`, and none of it has been run. Room layouts passed a separate check for size, door cells and reachability, run without starting the game.
+- Round 5b waits on the reward list, and round 6 on a design talk.
 - Before merging into `first-floor`: run the tests and the full-loop check, then play the list above.

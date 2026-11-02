@@ -14,7 +14,9 @@ var bombs := STARTING_BOMBS
 var treasure_rewards: Array[ItemDef] = []
 var boss_rewards: Array[ItemDef] = []
 var mini_boss_down := false
+var unlocked_items := {}
 var _promised := {}
+var _offered_recipes := {}
 var _upgrades: Array[UpgradeDef]
 var _levels: Dictionary
 
@@ -25,6 +27,19 @@ func _init(upgrades: Array[UpgradeDef], levels: Dictionary) -> void:
 	stats = PlayerStats.compute(_upgrades, _levels, items)
 	health = Health.new(stats.max_pills)
 	health.changed.connect(changed.emit)
+
+
+# Recipe items only join the rotation once they have been crafted.
+func can_offer(item: ItemDef) -> bool:
+	return not item.needs_recipe() or unlocked_items.has(item.id)
+
+
+func offer_recipe(id: String) -> void:
+	_offered_recipes[id] = true
+
+
+func was_recipe_offered(id: String) -> bool:
+	return _offered_recipes.has(id)
 
 
 func add_item(item: ItemDef) -> void:

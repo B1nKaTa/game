@@ -13,6 +13,9 @@ var retirement_balance: int = 0
 var retirement_peak: int = 0
 var run_count: int = 0
 var retirement_deposit_run: int = NO_DEPOSIT_RUN
+var recipes_found: Dictionary = {}
+var items_unlocked: Dictionary = {}
+var crafted_for_next_run: String = ""
 
 
 func level_of(id: String) -> int:
@@ -84,6 +87,38 @@ func next_retirement_tier() -> int:
 	return -1
 
 
+func find_recipe(id: String) -> void:
+	recipes_found[id] = true
+
+
+func has_recipe(id: String) -> bool:
+	return recipes_found.has(id)
+
+
+func is_unlocked(id: String) -> bool:
+	return items_unlocked.has(id)
+
+
+# Only one crafted item can wait for the next run at a time.
+func can_craft(id: String, price: int) -> bool:
+	return has_recipe(id) and pension >= price and crafted_for_next_run.is_empty()
+
+
+func craft(id: String, price: int) -> bool:
+	if not can_craft(id, price):
+		return false
+	pension -= price
+	items_unlocked[id] = true
+	crafted_for_next_run = id
+	return true
+
+
+func take_crafted_item() -> String:
+	var id := crafted_for_next_run
+	crafted_for_next_run = ""
+	return id
+
+
 func to_dict() -> Dictionary:
 	return {
 		"version": VERSION,
@@ -94,6 +129,9 @@ func to_dict() -> Dictionary:
 		"retirement_peak": retirement_peak,
 		"run_count": run_count,
 		"retirement_deposit_run": retirement_deposit_run,
+		"recipes_found": recipes_found,
+		"items_unlocked": items_unlocked,
+		"crafted_for_next_run": crafted_for_next_run,
 	}
 
 
@@ -117,4 +155,16 @@ static func from_dict(raw: Variant) -> ProgressData:
 	data.retirement_peak = clampi(int(raw.get("retirement_peak", 0)), data.retirement_balance, RETIREMENT_CAP)
 	data.run_count = maxi(int(raw.get("run_count", 0)), 0)
 	data.retirement_deposit_run = int(raw.get("retirement_deposit_run", NO_DEPOSIT_RUN))
+	data.recipes_found = _id_set(raw.get("recipes_found"))
+	data.items_unlocked = _id_set(raw.get("items_unlocked"))
+	var crafted: Variant = raw.get("crafted_for_next_run", "")
+	data.crafted_for_next_run = crafted if crafted is String else ""
 	return data
+
+
+static func _id_set(raw: Variant) -> Dictionary:
+	var ids := {}
+	if raw is Dictionary:
+		for id in raw:
+			ids[str(id)] = true
+	return ids

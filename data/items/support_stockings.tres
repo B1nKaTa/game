@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "support_stockings"
+display_name = "Support Stockings"
+description = "Shorter dodge cooldown and a little more speed."
+craft_price = 80
+dodge_cooldown_cut = 0.25
+move_speed_bonus = 0.1
