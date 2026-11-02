@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="UpgradeDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/upgrade_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "prescription_glasses"
+display_name = "Prescription Glasses"
+description = "Finally, you can see how close they are to dying."
+prices = PackedInt32Array(40)
+merchant = "optometrist"
+reveals_enemy_health = true

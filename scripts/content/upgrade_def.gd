@@ -5,6 +5,7 @@ extends StatEffect
 @export var display_name: String = ""
 @export var description: String = ""
 @export var prices: PackedInt32Array = []
+@export var merchant: String = "black_market"
 
 
 func max_level() -> int:

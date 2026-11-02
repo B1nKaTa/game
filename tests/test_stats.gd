@@ -68,6 +68,44 @@ func test_upgrade_prices() -> void:
 
 func test_shipped_content_loads() -> void:
 	assert_eq(Content.items().size(), 6)
-	assert_eq(Content.upgrades().size(), 4)
+	assert_eq(Content.upgrades().size(), 5)
 	for upgrade in Content.upgrades():
 		assert_true(upgrade.max_level() > 0, upgrade.id)
+
+
+func test_upgrades_default_to_the_black_market() -> void:
+	assert_eq(UpgradeDef.new().merchant, "black_market")
+
+
+func test_upgrades_for_filters_by_merchant() -> void:
+	var market := Content.upgrades_for("black_market")
+	var optometrist := Content.upgrades_for("optometrist")
+	assert_eq(market.size(), 4)
+	assert_eq(optometrist.size(), 1)
+	assert_eq(optometrist[0].id, "prescription_glasses")
+	assert_eq(Content.upgrades_for("nobody").size(), 0)
+
+
+func test_glasses_content() -> void:
+	var glasses: UpgradeDef = null
+	for upgrade in Content.upgrades():
+		if upgrade.id == "prescription_glasses":
+			glasses = upgrade
+	assert_true(glasses != null)
+	assert_eq(glasses.max_level(), 1)
+	assert_eq(glasses.price_at(0), 40)
+	assert_true(glasses.reveals_enemy_health)
+
+
+func test_enemy_health_is_hidden_by_default() -> void:
+	var stats := PlayerStats.compute(_no_upgrades(), {}, _no_items())
+	assert_false(stats.reveals_enemy_health)
+
+
+func test_glasses_reveal_enemy_health_only_when_owned() -> void:
+	var glasses := UpgradeDef.new()
+	glasses.id = "glasses"
+	glasses.reveals_enemy_health = true
+	var upgrades: Array[UpgradeDef] = [glasses]
+	assert_false(PlayerStats.compute(upgrades, {"glasses": 0}, _no_items()).reveals_enemy_health)
+	assert_true(PlayerStats.compute(upgrades, {"glasses": 1}, _no_items()).reveals_enemy_health)

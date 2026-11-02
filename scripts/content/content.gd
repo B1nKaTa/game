@@ -35,3 +35,11 @@ static func upgrades() -> Array[UpgradeDef]:
 		if resource is UpgradeDef:
 			list.append(resource)
 	return list
+
+
+static func upgrades_for(merchant_id: String) -> Array[UpgradeDef]:
+	var list: Array[UpgradeDef] = []
+	for upgrade in upgrades():
+		if upgrade.merchant == merchant_id:
+			list.append(upgrade)
+	return list

@@ -7,3 +7,4 @@ extends Resource
 @export var damage_bonus: float = 0.0
 @export var pension_bonus: float = 0.0
 @export var warning_bonus: float = 0.0
+@export var reveals_enemy_health: bool = false
