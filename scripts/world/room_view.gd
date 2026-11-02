@@ -118,6 +118,7 @@ func _on_enemy_defeated(enemy: Enemy) -> void:
 func _drop_coin(at: Vector2, base_amount: int) -> void:
 	var amount := _run.pension_amount(base_amount)
 	var coin := _add_pickup(at + Vector2(_rng.randf_range(-COIN_SCATTER, COIN_SCATTER), _rng.randf_range(-COIN_SCATTER, COIN_SCATTER)), "+%d" % amount, PENSION_COLOR, func(): pension_earned.emit(amount))
+	coin.flies = true
 	_coins.append(coin)
 
 
@@ -177,7 +178,7 @@ func _finish_room() -> void:
 		door.locked = false
 	for coin in _coins:
 		if is_instance_valid(coin):
-			coin.collect()
+			coin.fly()
 	if not _already_cleared and _room.room_type in [RoomLayout.TYPE_COMBAT, RoomLayout.TYPE_MINI_BOSS, RoomLayout.TYPE_SIDE]:
 		pension_earned.emit(_run.pension_amount(_floor_def.clear_pension))
 	room_finished.emit(_room.id)
