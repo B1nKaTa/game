@@ -1,7 +1,7 @@
 class_name Gravestone
 extends RockBlock
 
-# Blocks walking and shots like a rock, and hides a coin as often, but reads as a grave.
+# Blocks walking and shots like a rock, and sometimes hides a coin, but reads as a grave.
 
 
 func art_id() -> String:

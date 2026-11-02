@@ -14,8 +14,8 @@ Work happens on the `next-build` branch while the `first-floor` copy stays untou
 | 5b | Real rewards for the Retirement Plan tiers | Reward list only |
 | 6 | Special items with mana | Design talk first |
 | 7 | Art for enemies and the room | Spends generations, so only with approval |
-| 7b | Living floor stages 1 to 5, see the living floor design | Stages 1 to 4 built (stage 4: potions, merchants by floors cleared, Thermos fuel, reinforced stones, vaults), stage 5 next |
-| 8 | Second floor, reached from both first floors | After the first floors feel right |
+| 7b | Living floor stages 1 to 5, see the living floor design | Stages 1 to 5 built (stage 4: potions, merchants by floors cleared, Thermos fuel, reinforced stones, vaults; stage 5: the Crossroads and the Unkempt Cemetery) |
+| 8 | Second floor, reached from both first floors | After the first floors feel right. It slots in at `_continue_after_floor` in the floor scene |
 
 ## Round 1: Secret rooms
 
@@ -66,4 +66,14 @@ Built and checked by tests, the full-loop check and screenshots, not yet played:
 
 To play and judge together: brew prices against income, whether a new merchant is noticed, how the stone and the resist message read, whether a vault feels worth 380 Pension of fuel, the buff lengths, and how the potion slot sits in the HUD beside the item list.
 
-Stage 5 notes: a second first floor adds its own `FloorDef` with its own vault layouts in its rooms folder. A floor with no vault layouts simply has none, and the unlock rule can move from floors cleared to something per path through the same list.
+## Living floor stage 5 status
+
+Built and checked by tests, the full-loop check and screenshots, not yet played:
+
+- The Crossroads opens every run. A closed path hangs in chains and refuses the door. Paths are listed in `PATH_FLOORS` in the floor scene, and each `FloorDef` holds `clears_to_open`, `danger` and `closed_hint`. No new save field: the rule reads `floors_cleared`.
+- The Unkempt Cemetery is its own `FloorDef` and `data/rooms/cemetery/` folder of 33 layouts, with a mossy palette, gravestones, dead trees, stumps, moss and saplings.
+- New enemy: Delinquent Plot Holder. New bosses: Gus, Head Groundskeeper, and Mortimer, Tired Undertaker. Ground attacks go through `GroundStrike` and break props by `Enemy.smash`.
+- Both maps name the floor, and the Crossroads shows as a small linked room.
+- The next floor slots in at `_continue_after_floor` in the floor scene.
+
+To play and judge together: whether the signs get noticed, whether two skulls read as a warning, how a Plot Holder's mound and warning read in a crowd, whether rows, furrows and open graves feel fair at speed, whether both new bosses feel equal to the first floor's, whether the rows of graves in layouts get in the way, and every placeholder drawing.

@@ -201,7 +201,7 @@ func _create_props(palette: RoomPalette) -> void:
 	for cell in layout.cells_of(RoomLayout.SYMBOL_GRAVESTONE):
 		var stone := Gravestone.new()
 		stone.palette = palette
-		stone.hides_coin = RoomRules.rock_hides_coin(_rng.randf())
+		stone.hides_coin = RoomRules.gravestone_hides_coin(_rng.randf())
 		_place_prop(stone, cell)
 		stone.broken.connect(_on_rock_broken.bind(stone.hides_coin, cell))
 	for cell in layout.cells_of(RoomLayout.SYMBOL_DEAD_TREE):

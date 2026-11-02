@@ -52,8 +52,9 @@ Excluded:
 ### Loop
 
 1. Grandpa starts in the Waiting Room and can spend Pension on permanent upgrades.
-2. He goes through the door and fights through the floor.
-3. When he dies or beats the floor boss, he returns to the Waiting Room and keeps all Pension earned.
+2. He goes through the door into the Crossroads and picks a path to a floor.
+3. He fights through the floor.
+4. When he dies or beats the floor boss, he returns to the Waiting Room and keeps all Pension earned.
 
 Beating the floor boss shows a "floor cleared" message before the return. No ending plays in this version.
 
@@ -70,6 +71,17 @@ Move with WASD and aim with the mouse. Tapping left click hits with the cane com
 - **Hit rules:** Swings and the thrown cane test the enemy's whole body. A swing stays active for the 0.1 seconds its arc shows, hits each enemy at most once, and stays in the direction it was swung.
 - **Health:** Shown as pills, starting at 4. Each enemy hit removes one pill unless an enemy's data says otherwise. Health is restored only by healing rooms and items during a run.
 
+### The Crossroads and the Two Paths
+
+Every run begins in the Crossroads, a small room with no enemies, before any floor. It has two exits, west and east, each with a signpost. Standing near a sign shows the path's name and skulls for its danger.
+
+- **The Records Basement** (west, one skull) is the dreary office floor, with the Senior Adjuster and the Regional Reaper. It is always open.
+- **The Unkempt Cemetery** (east, two skulls) is an outdoor graveyard: mossy ground, cold fog-colored light, gravestones, dead trees, stumps, moss and more grass, with Gus the Head Groundskeeper and Mortimer the Tired Undertaker. It favors the newer enemy types and has the Delinquent Plot Holder as its own. Its bosses match the first floor's in health and danger, because this path comes after a first win.
+
+A path opens by `clears_to_open` in its `FloorDef`, counted against `floors_cleared`, so clearing either path counts. The Cemetery asks for 1. A closed path's sign and door hang in chains, the sign says "Beat a floor boss first", and walking into it does nothing. `PATH_FLOORS` in the floor scene lists the paths. There is no way back to the Crossroads from a floor.
+
+Beating either floor boss ends the run, because no second floor exists yet. `_continue_after_floor` in the floor scene is the one place a run would go on from, whichever path was taken.
+
 ### Floor
 
 A floor is rooms on a grid, and two neighboring cells may be joined by a door. A door on a room's north wall leads to the room above, and Grandpa arrives at that room's south door. A floor has 12 to 15 regular rooms: a main path of 7 from the start to the floor boss, with branches off it. The mini boss sits halfway along the path and the floor boss at its end with one door, so neither can be skipped. Item rooms and the healing room are mostly on branches, so exploring pays. Detours are dead ends at free neighboring cells: one shop, one locked treasure room, side rooms by chance, and a secret room. The builder works from the floor's `FloorDef`, which holds its rooms and these counts. The same seed always gives the same floor.
@@ -78,7 +90,7 @@ Everything can be explored and walked back through. Each door shows an icon for 
 
 A room is small (14 by 9), medium (20 by 11) or large (30 by 17), read from its layout. A small room sits centered in darkness. In a large room the camera follows Grandpa and stops at the room's edges, while the HUD stays put. Room colors live in a palette a floor can override.
 
-Each room has one door cell per side, just inside the middle of that wall, and only sides with a neighbor get a door. A layout must keep all four cells reachable without a bomb, keep enemies at least 3 cells from them, and keep pickups from touching them, since any door can be the way in. Grandpa arrives standing on the door on the side he came from. A door only works after he has stepped away from it, so arriving on one never sends him straight back. In the first room he starts at a door cell with no door when there is one.
+Each room has one door cell per side, just inside the middle of that wall, and only sides with a neighbor get a door. A layout must keep all four cells reachable without a bomb, keep enemies at least 3 cells from them, and keep pickups from touching them, since any door can be the way in. Grandpa arrives standing on the door on the side he came from. A door only works after he has stepped away from it, so arriving on one never sends him straight back. Coming from the Crossroads he arrives in the first room on the side facing it, where the builder keeps one side free, so no door stands there.
 
 Rooms remember their state: cleared rooms stay empty and earn nothing more, and pickups left behind stay there. An item he has since gained elsewhere can't be taken again.
 
@@ -120,7 +132,7 @@ Agnes, Afterlife Arts and Crafts, stands in the Waiting Room and holds every fou
 
 ### Maps
 
-Both maps draw the grid like a floor plan: visited rooms at their cells whatever their size, door links between them, type icons, and the current room highlighted. The small map in the top right corner keeps the current room in its middle. Pressing M opens a large map of the whole floor with a legend, and pauses the game until M is pressed again. Unvisited rooms never show on either map.
+Both maps draw the grid like a floor plan: visited rooms at their cells whatever their size, door links between them, type icons, and the current room highlighted. The small map in the top right corner keeps the current room in its middle, with the floor's name on the row above it. Pressing M opens a large map of the whole floor with its name and a legend, and pauses the game until M is pressed again. Unvisited rooms never show on either map. The Crossroads shows as its own small room beside the first room, linked to it.
 
 | Room type | Purpose |
 |---|---|
@@ -146,6 +158,9 @@ Rooms are hand-built. Each run picks from a pool of at least 15 layouts, excludi
 | Claims Denial Officer | 110 | 38 | A slow shield that turns slowly toward Grandpa and stops swings from its front. Get around it, or throw the cane or a Thermos, which ignore the shield |
 | Senior Adjuster (mini boss) | 500 | 85 | Sweeps up close, charges along a lane from afar, breaking props on the way, and calls in Interns on marked spots across Grandpa's path |
 | Regional Reaper (floor boss) | 1200 | 84 | Scythe sweep, a dash across the room that breaks props, a ring of shots, and Temps summoned on marked spots. Below half health it is faster and runs attacks into each other |
+| Delinquent Plot Holder (Cemetery) | 46 | 58 | Digs in and tunnels after Grandpa as a mound nothing can hit, then rises under his feet after a warning that shows for its whole 0.85 seconds, hitting within 30 pixels. It stands in the open for 2.8 seconds, then digs in again. At most 3 in a room |
+| Gus, Head Groundskeeper (Cemetery mini boss) | 500 | 85 | A spade slam up close, a furrow that tears along a shown lane toward Grandpa, clippings marked on and around him, and Plot Holders on marked spots |
+| Mortimer, Tired Undertaker (Cemetery floor boss) | 1200 | 84 | A shovel drop up close that also marks four spots around him, rows of plots across the way to Grandpa with one gap each, open graves that follow Grandpa and then lock in, fans of wreaths, and Plot Holders on marked spots. Below half health it is faster, adds a row, two graves and a volley, and runs attacks into each other |
 
 Every attack shows the warning circle, and attacks that travel in a line also show a lane. At the base warning share every warning shows for at least 0.2 seconds. An Auditor's warning shows for its whole fuse. A boss starts an attack only with its whole body inside the view around Grandpa, and hurries over when farther off, so nothing starts off screen in a large room. A room's enemies hold still for 0.6 seconds as Grandpa walks in.
 
@@ -214,7 +229,7 @@ Enemies, items, upgrades and rooms each live in separate data files or scenes, n
 
 1. The Waiting Room loads saved Pension and upgrades.
 2. The player spends Pension, and each purchase saves immediately.
-3. The floor builder creates a floor, and the run begins with upgrades applied.
+3. The run begins in the Crossroads with upgrades applied, and the floor builder creates a floor once a path is chosen.
 4. Rewards update the run state, and earned Pension saves as it is collected.
 5. On death or floor clear, the run state is cleared and the game returns to the Waiting Room.
 

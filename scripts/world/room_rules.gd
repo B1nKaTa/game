@@ -33,6 +33,8 @@ const BARREL_BOMB_CHANCE := 0.05
 const BARREL_POTION_CHANCE := 0.06
 const PILE_COIN_CHANCE := 0.12
 const ROCK_COIN_CHANCE := 0.3
+# A graveyard has far more stones than an office has rocks, so each one hides a coin less often.
+const GRAVESTONE_COIN_CHANCE := 0.1
 # A small potion fills the potion slot. Its effect lives in the potion data, so it heals as that says.
 const POTION_NAME := "Small Potion"
 const SMALL_POTION_ID := "small_potion"
@@ -68,6 +70,10 @@ static func barrel_drop(roll: float) -> String:
 
 static func pile_drops_coin(roll: float) -> bool:
 	return roll < PILE_COIN_CHANCE
+
+
+static func gravestone_hides_coin(roll: float) -> bool:
+	return roll < GRAVESTONE_COIN_CHANCE
 
 
 static func rock_hides_coin(roll: float) -> bool:

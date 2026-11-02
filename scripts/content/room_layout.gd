@@ -63,6 +63,8 @@ const MUST_REACH_WITHOUT_BREAKING := "EBIHSPR"
 # A vault lays this many labeled pickups out in the open, this many cells apart so names never overlap.
 const VAULT_EXTRAS := 3
 const PICKUP_SPACING := 3
+# A long name is wider than three cells, so two on one row stand further apart.
+const SAME_ROW_SPACING := 4
 const REQUIRED := {
 	TYPE_COMBAT: {"E": 2},
 	TYPE_ITEM: {"I": 2},
@@ -171,7 +173,7 @@ func _touches_a_door(cell: Vector2i) -> bool:
 
 func _spaced_from(cell: Vector2i, others: Array[Vector2i]) -> bool:
 	for other in others:
-		if maxi(absi(cell.x - other.x), absi(cell.y - other.y)) < PICKUP_SPACING:
+		if maxi(absi(cell.x - other.x), absi(cell.y - other.y)) < PICKUP_SPACING or (cell.y == other.y and absi(cell.x - other.x) < SAME_ROW_SPACING):
 			return false
 	return true
 

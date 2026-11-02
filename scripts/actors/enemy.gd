@@ -21,6 +21,8 @@ const BLINK_COLOR := Color("fff2c0")
 const MAX_PROPS_ACROSS_A_LANE := 8
 # A room's enemies stand still this long as Grandpa walks in, so he can read the room first.
 const ROOM_WAKE_TIME := 0.6
+# Half a cell's diagonal: a floor spot this close is the cell he stands in.
+const SAME_CELL_REACH := 0.71
 const MOUND_COLOR := Color("5a4a33")
 const MOUND_EDGE := Color("2b2218")
 
@@ -109,7 +111,12 @@ func target_ground() -> Vector2:
 
 func move_under_target() -> void:
 	var spot := target_ground()
-	global_position = summon_spot.call(spot) if summon_spot.is_valid() else spot
+	if not summon_spot.is_valid():
+		global_position = spot
+		return
+	# Right under his feet on open floor. Only a spot inside something solid moves to the nearest floor.
+	var floor_spot: Vector2 = summon_spot.call(spot)
+	global_position = spot if floor_spot.distance_to(spot) <= RoomBackdrop.TILE * SAME_CELL_REACH else floor_spot
 
 
 func burst_from_ground() -> void:

@@ -77,6 +77,8 @@ func test_vault_extras_stay_off_doors_rewards_and_each_other() -> void:
 			for j in i:
 				var apart := cells[i] - cells[j]
 				assert_true(maxi(absi(apart.x), absi(apart.y)) >= RoomLayout.PICKUP_SPACING, "%s: labels would overlap" % layout.resource_path)
+				if apart.y == 0:
+					assert_true(absi(apart.x) >= RoomLayout.SAME_ROW_SPACING, "%s: a long name runs into the next on its row" % layout.resource_path)
 		checked += 1
 	assert_eq(checked, 3)
 

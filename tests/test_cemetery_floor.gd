@@ -217,3 +217,9 @@ func test_decor_scatter_uses_the_new_kinds_and_stays_off_doors() -> void:
 					assert_eq(layout.symbol_at(item["cell"]) if item["kind"] != RoomDecor.LANTERN else ".", RoomLayout.SYMBOL_FLOOR)
 	for kind in [RoomDecor.GRASS, RoomDecor.STUMP, RoomDecor.MOSS, RoomDecor.SAPLING]:
 		assert_true(seen.has(kind), kind)
+
+
+func test_a_gravestone_hides_a_coin_less_often_than_a_rock() -> void:
+	assert_true(RoomRules.GRAVESTONE_COIN_CHANCE < RoomRules.ROCK_COIN_CHANCE)
+	assert_true(RoomRules.gravestone_hides_coin(0.0))
+	assert_false(RoomRules.gravestone_hides_coin(RoomRules.GRAVESTONE_COIN_CHANCE + 0.01))
