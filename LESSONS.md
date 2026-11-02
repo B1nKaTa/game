@@ -22,3 +22,4 @@
 - 2026-11-02: A probe's simulated E press did nothing because it ran right after a screenshot, which is after that frame's _process, so just_pressed had already passed → await process_frame before simulating input, and suspect the probe's timing before the game.
 - 2026-11-02: A probe that hits a script error never reaches quit() and hangs until the tool times out → give every probe a timer that quits with an error.
 - 2026-11-02: Probes that ran the real floor scene without --smoke added Pension to the player's real save.json → back up and restore save.json around any probe that runs real scenes, and read the save before and after.
+- 2026-11-02: A boss's summons paid Pension, so leaving it alive allowed endless farming → anything that can spawn without limit must pay nothing.
