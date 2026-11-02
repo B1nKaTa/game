@@ -2,6 +2,7 @@ extends Node2D
 
 const FLOOR_PATH := "res://data/floors/floor_1.tres"
 const MESSAGE_TIME := 2.0
+const VIEW_CENTER := Vector2(320, 180)
 
 var player: Player
 var is_cleared := false
@@ -15,6 +16,7 @@ var _current_id := -1
 var _finished_rooms := {}
 var _used_sides := {}
 var _hud: Hud
+var _feedback: CombatFeedback
 
 
 func _ready() -> void:
@@ -30,10 +32,18 @@ func _ready() -> void:
 	if _map == null:
 		_end_run("This floor could not be built. Returning to the Waiting Room.")
 		return
+	# Resting at the middle of the 640x360 view keeps the same framing as having no camera.
+	var camera := Camera2D.new()
+	camera.position = VIEW_CENTER
+	add_child(camera)
+	_feedback = CombatFeedback.new()
+	_feedback.setup(camera)
+	add_child(_feedback)
 	player = Player.new()
 	player.setup(_run)
 	player.died.connect(_on_player_died)
 	add_child(player)
+	_feedback.watch_player(player)
 	var glow := Lighting.make_light(Color(1.0, 0.85, 0.6), 0.7, 0.8)
 	player.add_child(glow)
 	_enter_room(_map.start_id)
@@ -64,6 +74,7 @@ func _enter_room(target_id: int) -> void:
 	_room_view.room_finished.connect(func(id: int): _finished_rooms[id] = true)
 	_room_view.floor_cleared.connect(_on_floor_cleared)
 	_room_view.boss_spawned.connect(_on_boss_spawned)
+	_feedback.watch_room(_room_view)
 	add_child(_room_view)
 	move_child(_room_view, 0)
 	var entry := RoomLayout.ENTRY

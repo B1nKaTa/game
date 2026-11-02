@@ -22,6 +22,7 @@ const SPAWN_KEYS := {
 }
 
 var player: Player
+var _feedback: CombatFeedback
 
 
 func _ready() -> void:
@@ -29,6 +30,12 @@ func _ready() -> void:
 	var backdrop := RoomBackdrop.new()
 	backdrop.setup(PackedStringArray(ROWS))
 	add_child(backdrop)
+	var camera := Camera2D.new()
+	camera.position = Vector2(320, 180)
+	add_child(camera)
+	_feedback = CombatFeedback.new()
+	_feedback.setup(camera)
+	add_child(_feedback)
 	_spawn_player()
 
 
@@ -46,6 +53,7 @@ func _spawn_enemy(def: EnemyDef, at: Vector2) -> void:
 	enemy.setup(def, player, player.run.stats.warning_fraction)
 	enemy.position = at
 	enemy.summon_requested.connect(_spawn_enemy)
+	enemy.defeated.connect(_on_enemy_defeated)
 	add_child(enemy)
 
 
@@ -56,6 +64,12 @@ func _spawn_player() -> void:
 	player.position = RoomBackdrop.cell_center(Vector2i(3, 5))
 	player.died.connect(_on_player_died)
 	add_child(player)
+	_feedback.watch_player(player)
+
+
+func _on_enemy_defeated(enemy: Enemy) -> void:
+	DeathBurst.spawn(self, enemy.position, enemy.def.color, enemy.def.is_boss)
+	_feedback.on_enemy_died(enemy.position, enemy.def.is_boss)
 
 
 func _on_player_died() -> void:
