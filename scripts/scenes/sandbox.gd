@@ -17,6 +17,8 @@ const SPAWN_KEYS := {
 	KEY_1: "intern_reaper",
 	KEY_2: "filing_clerk",
 	KEY_3: "debt_ghost",
+	KEY_4: "senior_adjuster",
+	KEY_5: "regional_reaper",
 }
 
 var player: Player
