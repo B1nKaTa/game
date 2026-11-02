@@ -3,7 +3,14 @@ extends CanvasLayer
 
 signal closed
 
+var _title := ""
+var _merchant_id := ""
 var _list: VBoxContainer
+
+
+func setup(title: String, merchant_id: String) -> void:
+	_title = title
+	_merchant_id = merchant_id
 
 
 func _ready() -> void:
@@ -14,7 +21,7 @@ func _ready() -> void:
 	var column := VBoxContainer.new()
 	panel.add_child(column)
 	var title := Label.new()
-	title.text = "Black Market. You didn't see me."
+	title.text = _title
 	column.add_child(title)
 	_list = VBoxContainer.new()
 	column.add_child(_list)
@@ -28,7 +35,7 @@ func _ready() -> void:
 func _rebuild() -> void:
 	for child in _list.get_children():
 		child.queue_free()
-	for def in Content.upgrades():
+	for def in Content.upgrades_for(_merchant_id):
 		var button := Button.new()
 		var level := Progress.data.level_of(def.id)
 		var price := def.price_at(level)

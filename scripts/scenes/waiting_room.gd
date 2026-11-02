@@ -13,13 +13,15 @@ const ROWS := [
 	"#..................#",
 	"####################",
 ]
-const MERCHANT_CELL := Vector2i(5, 3)
+const MERCHANTS := [
+	{"id": "black_market", "title": "Black Market. You didn't see me.", "cell": Vector2i(5, 3), "color": Color("8a4fbf"), "art": "merchant"},
+	{"id": "optometrist", "title": "Dr. Squint, Unlicensed Optometrist", "cell": Vector2i(5, 7), "color": Color("4fbfa8"), "art": "optometrist"},
+]
 const DOOR_CELL := Vector2i(18, 5)
 const INTERACT_RANGE := 48.0
 
 var player: Player
 var _hud: Hud
-var _merchant_position := Vector2.ZERO
 var _panel: MerchantPanel
 
 
@@ -27,12 +29,11 @@ func _ready() -> void:
 	var backdrop := RoomBackdrop.new()
 	backdrop.setup(PackedStringArray(ROWS))
 	add_child(backdrop)
-	Lighting.add_room_mood(self)
-	_merchant_position = RoomBackdrop.cell_center(MERCHANT_CELL)
-	var merchant := SpriteVisual.new()
-	merchant.position = _merchant_position
-	add_child(merchant)
-	merchant.setup("merchant", Vector2(22, 30), Color("8a4fbf"), 32)
+	for entry in MERCHANTS:
+		var merchant := SpriteVisual.new()
+		merchant.position = RoomBackdrop.cell_center(entry["cell"])
+		add_child(merchant)
+		merchant.setup(entry["art"], Vector2(22, 30), entry["color"], 32)
 	player = Player.new()
 	player.setup(Progress.make_run())
 	player.position = RoomBackdrop.cell_center(Vector2i(3, 5))
@@ -54,12 +55,26 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	queue_redraw()
-	if _panel == null and Input.is_action_just_pressed("interact") and player.global_position.distance_to(_merchant_position) <= INTERACT_RANGE:
-		_open_panel()
+	if _panel == null and Input.is_action_just_pressed("interact"):
+		var entry := _merchant_in_range()
+		if not entry.is_empty():
+			_open_panel(entry)
 
 
-func _open_panel() -> void:
+func _merchant_in_range() -> Dictionary:
+	var best := {}
+	var best_distance := INTERACT_RANGE
+	for entry in MERCHANTS:
+		var distance := player.global_position.distance_to(RoomBackdrop.cell_center(entry["cell"]))
+		if distance <= best_distance:
+			best = entry
+			best_distance = distance
+	return best
+
+
+func _open_panel(entry: Dictionary) -> void:
 	_panel = MerchantPanel.new()
+	_panel.setup(entry["title"], entry["id"])
 	_panel.closed.connect(_close_panel)
 	add_child(_panel)
 	player.cancel_charge()
@@ -74,6 +89,9 @@ func _close_panel() -> void:
 
 
 func _draw() -> void:
-	if _panel == null and player != null and player.global_position.distance_to(_merchant_position) <= INTERACT_RANGE:
-		draw_string(ThemeDB.fallback_font, _merchant_position + Vector2(-30, -24), "E: Trade", HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color.WHITE)
+	if _panel == null and player != null:
+		var entry := _merchant_in_range()
+		if not entry.is_empty():
+			var at: Vector2 = RoomBackdrop.cell_center(entry["cell"])
+			draw_string(ThemeDB.fallback_font, at + Vector2(-30, -24), "E: Trade", HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color.WHITE)
 	draw_string(ThemeDB.fallback_font, Vector2(240, 24), "NOW SERVING: 666", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("e4524f"))
