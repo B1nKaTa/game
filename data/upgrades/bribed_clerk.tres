@@ -7,5 +7,5 @@ script = ExtResource("1")
 id = "bribed_clerk"
 display_name = "Bribed Clerk"
 description = "More Pension from all sources."
-prices = PackedInt32Array(60, 150)
+prices = PackedInt32Array(60, 150, 300, 500)
 pension_bonus = 0.1

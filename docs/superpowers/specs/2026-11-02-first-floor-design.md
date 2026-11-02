@@ -151,7 +151,7 @@ Two merchants in the Waiting Room sell permanent upgrades, with rising prices at
 | Black Market Pills | 1 more starting pill |
 | Better Knees | Faster movement and shorter dodge cooldown |
 | Reinforced Cane | More cane damage |
-| Bribed Clerk | More Pension from all sources |
+| Bribed Clerk | 10% more Pension from all sources per level, 4 levels at 60, 150, 300 and 500 |
 | Prescription Glasses (Dr. Squint, one level) | Regular enemies show a small health bar above their heads |
 
 ### Boss Health Bar

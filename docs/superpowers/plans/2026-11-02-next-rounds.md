@@ -9,8 +9,8 @@ Work happens on the `next-build` branch while the `first-floor` copy stays untou
 | 1 | Secret rooms opened by a Thermos | No |
 | 2 | More combat layouts, including breakable blocks and chests | No |
 | 3 | Key remapping screen | No |
-| 4 | More Waiting Room upgrades for earning Pension | Number of levels and prices |
-| 5 | Real rewards for the Retirement Plan tiers | Reward list, and the two rule questions below |
+| 4 | Two more Bribed Clerk levels at 300 and 500 | Decided, built |
+| 5 | Real rewards for the Retirement Plan tiers | Reward list only |
 | 6 | Special items with mana | Design talk first |
 | 7 | Art for enemies and the room | Spends generations, so only with approval |
 | 8 | Second floor | After the first floor feels right |
@@ -30,11 +30,11 @@ Work happens on the `next-build` branch while the `first-floor` copy stays untou
 
 - A screen in the Waiting Room to rebind every action, saved between sessions.
 
-## Open questions for the player
+## Decided by the player
 
-1. Does each Retirement Plan tier pay once ever, or again after cashing out?
-2. Does a tier's free item come only in the run it was reached, or in every run after?
-3. Should shop prices come down now that income is halved?
+1. Each Retirement Plan tier pays once ever.
+2. A tier's free item comes only in the run it was reached.
+3. Shop prices stay as they are for now.
 
 ## To test together when testing resumes
 
@@ -47,6 +47,6 @@ Run the tests and the full-loop check first, because this branch has never been 
 
 ## Status
 
-- Rounds 1, 2 and 3 are written and pushed on `next-build`, and none of it has been run. Room layouts passed a separate check for size, door cells and reachability, run without starting the game.
-- Rounds 4 and later wait on the decisions listed above.
+- Rounds 1 to 4 are written and pushed on `next-build`, and none of it has been run. Room layouts passed a separate check for size, door cells and reachability, run without starting the game.
+- Round 5 waits on the reward list, and round 6 on a design talk.
 - Before merging into `first-floor`: run the tests and the full-loop check, then play the list above.
