@@ -76,6 +76,8 @@ func take_damage(amount: float, push: Vector2) -> void:
 	if _dead:
 		return
 	hp -= amount
+	if _visual != null:
+		_visual.flash()
 	health_changed.emit(hp)
 	queue_redraw()
 	_knockback += push * (BOSS_KNOCKBACK_SCALE if def.is_boss else 1.0)
