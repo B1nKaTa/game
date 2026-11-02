@@ -13,8 +13,8 @@ var _run: RunState
 var _rng := RandomNumberGenerator.new()
 var _room_view: RoomView
 var _current_id := -1
-var _finished_rooms := {}
-var _used_sides := {}
+var _progress: FloorProgress
+var _room_views := {}
 var _hud: Hud
 var _feedback: CombatFeedback
 
@@ -46,6 +46,7 @@ func _ready() -> void:
 	_feedback.watch_player(player)
 	var glow := Lighting.make_light(Color(1.0, 0.85, 0.6), 0.7, 0.8)
 	player.add_child(glow)
+	_progress = FloorProgress.new(_map)
 	_enter_room(_map.start_id)
 
 
@@ -57,32 +58,45 @@ func debug_take_first_exit() -> void:
 		_enter_room(room.exits[0])
 
 
+func debug_go_back() -> void:
+	_enter_room(_progress.back_target(_current_id))
+
+
 func _enter_room(target_id: int) -> void:
 	_hud.hide_boss_bar()
 	player.recall_cane()
-	var from_side := _current_id != -1 and _map.room(_current_id).room_type == RoomLayout.TYPE_SIDE
+	var from_id := _current_id
 	if _room_view != null:
-		_room_view.queue_free()
-	var room := _map.room(target_id)
-	if room.room_type == RoomLayout.TYPE_SIDE:
-		_used_sides[room.parent_id] = true
+		_room_view.clear_passing_effects()
+		remove_child(_room_view)
+	_progress.enter(target_id, from_id)
 	_current_id = target_id
-	_room_view = RoomView.new()
-	_room_view.setup(room, _map, _floor_def, _run, player, _rng, _finished_rooms.has(target_id), not _used_sides.has(target_id))
-	_room_view.door_entered.connect(func(id: int): _enter_room.call_deferred(id))
-	_room_view.pension_earned.connect(func(amount: int): Progress.add_pension(amount))
-	_room_view.room_finished.connect(func(id: int): _finished_rooms[id] = true)
-	_room_view.floor_cleared.connect(_on_floor_cleared)
-	_room_view.boss_spawned.connect(_on_boss_spawned)
-	_feedback.watch_room(_room_view)
+	_room_view = _room_views.get(target_id)
+	if _room_view == null:
+		_room_view = _make_room_view(_map.room(target_id))
+		_room_views[target_id] = _room_view
 	add_child(_room_view)
 	move_child(_room_view, 0)
-	var entry := RoomLayout.ENTRY
-	if from_side:
-		entry = RoomLayout.SIDE_DOOR
-	elif room.room_type == RoomLayout.TYPE_SIDE:
-		entry = RoomLayout.SIDE_ROOM_SPAWN
-	player.global_position = RoomBackdrop.cell_center(entry)
+	_room_view.refresh_doors()
+	player.global_position = RoomBackdrop.cell_center(_progress.arrival_cell(target_id, from_id))
+
+
+func _make_room_view(room: FloorRoom) -> RoomView:
+	var view := RoomView.new()
+	view.setup(room, _map, _floor_def, _run, player, _rng, _progress)
+	view.door_entered.connect(func(id: int): _enter_room.call_deferred(id))
+	view.pension_earned.connect(func(amount: int): Progress.add_pension(amount))
+	view.floor_cleared.connect(_on_floor_cleared)
+	view.boss_spawned.connect(_on_boss_spawned)
+	_feedback.watch_room(view)
+	return view
+
+
+func _exit_tree() -> void:
+	# Rooms the player has left are out of the tree, so nothing else frees them.
+	for view: RoomView in _room_views.values():
+		if is_instance_valid(view) and not view.is_inside_tree():
+			view.free()
 
 
 func _on_player_died() -> void:

@@ -12,6 +12,7 @@ const HEIGHT := 11
 const ENTRY := Vector2i(1, 5)
 const EXIT_A := Vector2i(18, 3)
 const EXIT_B := Vector2i(18, 7)
+const EXIT_CELLS: Array[Vector2i] = [EXIT_A, EXIT_B]
 const SIDE_DOOR := Vector2i(10, 1)
 const SIDE_ROOM_SPAWN := Vector2i(2, 5)
 const ALLOWED := "#.EIHTB"

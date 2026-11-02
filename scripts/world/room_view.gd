@@ -4,12 +4,12 @@ extends Node2D
 signal door_entered(target_id: int)
 signal floor_cleared
 signal pension_earned(amount: int)
-signal room_finished(room_id: int)
 signal boss_spawned(boss: Enemy)
 signal enemy_died(at: Vector2, is_boss: bool)
 signal doors_opened
 
 const HEAL_AMOUNT := 2
+const BACK_ICON := "<"
 const PENSION_COLOR := Color("ffd24a")
 const ITEM_COLOR := Color("7dd3fc")
 const HEAL_COLOR := Color("e4524f")
@@ -21,8 +21,7 @@ var _floor_def: FloorDef
 var _run: RunState
 var _player: Player
 var _rng: RandomNumberGenerator
-var _already_cleared := false
-var _side_open := false
+var _progress: FloorProgress
 var _alive := 0
 var _finished := false
 var _had_enemies := false
@@ -30,15 +29,14 @@ var _doors: Array[Door] = []
 var _coins: Array[Pickup] = []
 
 
-func setup(room: FloorRoom, map: FloorMap, floor_def: FloorDef, run: RunState, player: Player, rng: RandomNumberGenerator, already_cleared: bool, side_open: bool) -> void:
+func setup(room: FloorRoom, map: FloorMap, floor_def: FloorDef, run: RunState, player: Player, rng: RandomNumberGenerator, progress: FloorProgress) -> void:
 	_room = room
 	_map = map
 	_floor_def = floor_def
 	_run = run
 	_player = player
 	_rng = rng
-	_already_cleared = already_cleared
-	_side_open = side_open
+	_progress = progress
 
 
 func _ready() -> void:
@@ -47,23 +45,39 @@ func _ready() -> void:
 	add_child(backdrop)
 	Lighting.add_room_mood(self)
 	_create_doors()
-	if not _already_cleared:
-		_create_rewards()
-		_spawn_enemies()
+	_create_rewards()
+	_spawn_enemies()
 	if _alive == 0:
 		_finish_room()
 
 
+# Call each time the player arrives, because choosing a route can seal doors in rooms visited earlier.
+func refresh_doors() -> void:
+	for door in _doors:
+		door.rearm()
+		door.sealed = _progress.is_sealed(door.target_id())
+
+
+# The room stays alive while the player is away, so remembered pickups keep their place.
+# Effects and shots in flight don't belong in that memory.
+func clear_passing_effects() -> void:
+	for child in get_children():
+		var is_flying_coin: bool = child is Pickup and child.is_flying()
+		if child is Projectile or child is DeathBurst or is_flying_coin:
+			child.queue_free()
+
+
 func _create_doors() -> void:
+	var back_id := _progress.back_target(_room.id)
+	if back_id != -1:
+		_add_door(back_id, BACK_ICON, RoomLayout.ENTRY)
 	if _room.room_type == RoomLayout.TYPE_SIDE:
-		_add_door(_room.parent_id, "<", RoomLayout.ENTRY)
-	else:
-		var cells := [RoomLayout.EXIT_A, RoomLayout.EXIT_B]
-		for i in _room.exits.size():
-			var target := _map.room(_room.exits[i])
-			_add_door(target.id, RoomRules.door_icon(target.room_type), cells[i])
-		if _room.side_id != -1 and _side_open:
-			_add_door(_room.side_id, RoomRules.door_icon(RoomLayout.TYPE_SIDE), RoomLayout.SIDE_DOOR)
+		return
+	for i in _room.exits.size():
+		var target := _map.room(_room.exits[i])
+		_add_door(target.id, RoomRules.door_icon(target.room_type), RoomLayout.EXIT_CELLS[i])
+	if _room.side_id != -1:
+		_add_door(_room.side_id, RoomRules.door_icon(RoomLayout.TYPE_SIDE), RoomLayout.SIDE_DOOR)
 
 
 func _add_door(target_id: int, icon: String, cell: Vector2i) -> void:
@@ -152,7 +166,7 @@ func _create_item_choice(cells: Array[Vector2i]) -> void:
 	var choices: Array[Pickup] = []
 	for i in picked.size():
 		var item := picked[i]
-		var choice := _add_pickup(RoomBackdrop.cell_center(cells[i]), item.display_name, ITEM_COLOR, func(): _run.add_item(item), true)
+		var choice := _add_item_pickup(RoomBackdrop.cell_center(cells[i]), item)
 		choices.append(choice)
 	for choice in choices:
 		choice.collected.connect(func(): _remove_others(choices, choice))
@@ -171,8 +185,14 @@ func _create_treasure(cell: Vector2i) -> void:
 	if picked.is_empty() or _rng.randf() < 0.5:
 		_drop_coin(RoomBackdrop.cell_center(cell), _floor_def.treasure_pension)
 		return
-	var item := picked[0]
-	_add_pickup(RoomBackdrop.cell_center(cell), item.display_name, ITEM_COLOR, func(): _run.add_item(item), true)
+	_add_item_pickup(RoomBackdrop.cell_center(cell), picked[0])
+
+
+# A left-behind item may be found again elsewhere before the player returns for it.
+func _add_item_pickup(at: Vector2, item: ItemDef) -> Pickup:
+	var pickup := _add_pickup(at, item.display_name, ITEM_COLOR, func(): _run.add_item(item), true)
+	pickup.can_take = func(): return not _run.has_item(item.id)
+	return pickup
 
 
 func _finish_room() -> void:
@@ -186,8 +206,7 @@ func _finish_room() -> void:
 	for coin in _coins:
 		if is_instance_valid(coin):
 			coin.fly()
-	if not _already_cleared and _room.room_type in [RoomLayout.TYPE_COMBAT, RoomLayout.TYPE_MINI_BOSS, RoomLayout.TYPE_SIDE]:
+	if _room.room_type in [RoomLayout.TYPE_COMBAT, RoomLayout.TYPE_MINI_BOSS, RoomLayout.TYPE_SIDE]:
 		pension_earned.emit(_run.pension_amount(_floor_def.clear_pension))
-	room_finished.emit(_room.id)
 	if _room.room_type == RoomLayout.TYPE_FLOOR_BOSS:
 		floor_cleared.emit()
