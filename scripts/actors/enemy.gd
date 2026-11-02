@@ -51,7 +51,16 @@ func _physics_process(delta: float) -> void:
 	velocity = desired_velocity + _knockback
 	_knockback = _knockback.lerp(Vector2.ZERO, minf(KNOCKBACK_DECAY * delta, 1.0))
 	move_and_slide()
+	if def.ignores_walls:
+		position = clamp_inside_room(position)
 	queue_redraw()
+
+
+static func clamp_inside_room(point: Vector2) -> Vector2:
+	var tile := float(RoomBackdrop.TILE)
+	return Vector2(
+		clampf(point.x, tile, (RoomLayout.WIDTH - 1) * tile),
+		clampf(point.y, tile, (RoomLayout.HEIGHT - 1) * tile))
 
 
 func take_damage(amount: float, push: Vector2) -> void:

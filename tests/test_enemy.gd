@@ -39,3 +39,15 @@ func test_damage_reduces_hp() -> void:
 	enemy.take_damage(5.0, Vector2.ZERO)
 	assert_near(enemy.hp, def.max_hp - 5.0)
 	enemy.free()
+
+
+func test_clamp_inside_room_keeps_inner_points() -> void:
+	assert_eq(Enemy.clamp_inside_room(Vector2(200, 150)), Vector2(200, 150))
+
+
+func test_clamp_inside_room_pulls_back_from_the_walls() -> void:
+	var tile := float(RoomBackdrop.TILE)
+	var max_x := (RoomLayout.WIDTH - 1) * tile
+	var max_y := (RoomLayout.HEIGHT - 1) * tile
+	assert_eq(Enemy.clamp_inside_room(Vector2(-50, -50)), Vector2(tile, tile))
+	assert_eq(Enemy.clamp_inside_room(Vector2(5000, 5000)), Vector2(max_x, max_y))
