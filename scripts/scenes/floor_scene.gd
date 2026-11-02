@@ -17,6 +17,8 @@ var _progress: FloorProgress
 var _room_views := {}
 var _hud: Hud
 var _feedback: CombatFeedback
+var _mini_map: FloorMapView
+var _big_map: FloorMapView
 
 
 func _ready() -> void:
@@ -47,6 +49,9 @@ func _ready() -> void:
 	var glow := Lighting.make_light(Color(1.0, 0.85, 0.6), 0.7, 0.8)
 	player.add_child(glow)
 	_progress = FloorProgress.new(_map)
+	_mini_map = _add_map_view(false)
+	_big_map = _add_map_view(true)
+	_big_map.opened_changed.connect(_on_big_map_changed)
 	_enter_room(_map.start_id)
 
 
@@ -60,6 +65,22 @@ func debug_take_first_exit() -> void:
 
 func debug_go_back() -> void:
 	_enter_room(_progress.back_target(_current_id))
+
+
+func debug_big_map() -> FloorMapView:
+	return _big_map
+
+
+func _add_map_view(is_big: bool) -> FloorMapView:
+	var view := FloorMapView.new()
+	view.setup(_map, _progress, is_big)
+	_hud.add_child(view)
+	return view
+
+
+func _on_big_map_changed(is_open: bool) -> void:
+	_mini_map.visible = not is_open
+	player.cancel_charge()
 
 
 func _enter_room(target_id: int) -> void:
@@ -79,6 +100,8 @@ func _enter_room(target_id: int) -> void:
 	move_child(_room_view, 0)
 	_room_view.refresh_doors()
 	player.global_position = RoomBackdrop.cell_center(_progress.arrival_cell(target_id, from_id))
+	_mini_map.set_current(target_id)
+	_big_map.set_current(target_id)
 
 
 func _make_room_view(room: FloorRoom) -> RoomView:
@@ -112,6 +135,9 @@ func _end_run(message: String) -> void:
 	if is_over:
 		return
 	is_over = true
+	if _big_map != null:
+		_big_map.enabled = false
+		_big_map.set_open(false)
 	_hud.hide_boss_bar()
 	_hud.show_message(message)
 	if player != null:

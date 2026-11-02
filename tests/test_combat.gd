@@ -116,7 +116,7 @@ func test_warning_shows_for_the_given_fraction() -> void:
 func test_input_actions_exist() -> void:
 	InputSetup.ensure()
 	InputSetup.ensure()
-	for action in ["move_left", "move_right", "move_up", "move_down", "attack", "throw", "dodge", "interact"]:
+	for action in ["move_left", "move_right", "move_up", "move_down", "attack", "throw", "dodge", "interact", "map"]:
 		assert_true(InputMap.has_action(action), action)
 		assert_eq(InputMap.action_get_events(action).size(), 1, action)
 

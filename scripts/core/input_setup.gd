@@ -9,6 +9,7 @@ static func ensure() -> void:
 	_key("move_down", KEY_S)
 	_key("dodge", KEY_SPACE)
 	_key("interact", KEY_E)
+	_key("map", KEY_M)
 	_mouse("attack", MOUSE_BUTTON_LEFT)
 	_mouse("throw", MOUSE_BUTTON_RIGHT)
 

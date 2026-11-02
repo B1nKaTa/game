@@ -60,8 +60,29 @@ func _clear_whole_floor() -> void:
 			break
 		scene.debug_take_first_exit()
 		await _wait(0.2)
+		if guard == 1:
+			await _clear_room(scene)
+			await _walk_back_and_return(scene)
 	_check(scene.is_cleared, "floor can be cleared")
 	_check(_boss_rooms_seen >= 2, "both bosses showed a boss bar")
+
+
+func _walk_back_and_return(scene: Node) -> void:
+	await _wait(0.5)
+	var pension_before: int = Progress.data.pension
+	scene.debug_go_back()
+	await _wait(0.2)
+	_check(get_tree().get_nodes_in_group("enemies").is_empty(), "a cleared room stays clear when walking back")
+	_check(Progress.data.pension == pension_before, "walking back earns no Pension")
+	var big_map: FloorMapView = scene.debug_big_map()
+	big_map.set_open(true)
+	_check(get_tree().paused, "the big map pauses the game")
+	big_map.set_open(false)
+	_check(not get_tree().paused, "closing the big map resumes the game")
+	scene.debug_take_first_exit()
+	await _wait(0.2)
+	_check(get_tree().get_nodes_in_group("enemies").is_empty(), "a cleared room stays clear when returning")
+	_check(Progress.data.pension == pension_before, "returning earns no Pension")
 
 
 func _clear_room(scene: Node) -> void:
