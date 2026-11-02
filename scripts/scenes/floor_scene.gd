@@ -76,6 +76,10 @@ func debug_room_view() -> RoomView:
 	return _room_view
 
 
+func debug_feedback() -> CombatFeedback:
+	return _feedback
+
+
 func debug_camera() -> Camera2D:
 	return _camera
 

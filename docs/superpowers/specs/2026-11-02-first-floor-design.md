@@ -29,7 +29,7 @@ Included:
 
 - A short opening where Grandpa dies and arrives in the Waiting Room
 - A small Waiting Room hub with two merchants and a door to the floor
-- One floor with a branching route of 10 to 12 rooms
+- One floor of 12 to 15 regular rooms on a grid, with detours
 - Cane combat with a combo, a charged swing, a cane throw and a dodge
 - 3 enemy types, 1 mini boss and 1 floor boss
 - 6 run items and 5 permanent upgrades
@@ -72,13 +72,15 @@ Move with WASD and aim with the mouse. Tapping left click hits with the cane com
 
 ### Floor
 
-The floor is a layered route. Each layer offers one or two rooms, and doors connect each room to one or two rooms in the next layer. Every route must reach the floor boss.
+A floor is rooms on a grid, and two neighboring cells may be joined by a door. A door on a room's north wall leads to the room above, and Grandpa arrives at that room's south door. A floor has 12 to 15 regular rooms: a main path of 7 from the start to the floor boss, with branches off it. The mini boss sits halfway along the path and the floor boss at its end with one door, so neither can be skipped. Item rooms and the healing room are mostly on branches, so exploring pays. Detours are dead ends at free neighboring cells: one shop, one locked treasure room, side rooms by chance, and a secret room. The builder works from the floor's `FloorDef`, which holds its rooms and these counts. The same seed always gives the same floor.
 
-Each door shows an icon for the room type behind it, so route choice is a real decision. Entering a combat or boss room locks its doors until all enemies are defeated.
+Everything can be explored and walked back through. Each door shows an icon for the room type behind it. Entering a combat or boss room locks its doors until all enemies are defeated.
 
-In regular rooms Grandpa arrives on the left and the exits are on the right. Every room except the first and the floor boss room has a return door at the arrival cell, leading to the room he came from. In a side room he spawns one cell to its right. Going back puts him at the door he originally left through. A door only works after he has stepped away from it, so arriving on one never sends him straight back.
+A room is small (14 by 9), medium (20 by 11) or large (30 by 17), read from its layout. A small room sits centered in darkness. In a large room the camera follows Grandpa and stops at the room's edges, while the HUD stays put. Room colors live in a palette a floor can override.
 
-Entering a room in a layer seals the other room in that layer, so the skipped route shows a sealed door for the rest of the run. Side rooms never seal. Rooms remember their state: cleared rooms stay empty and earn nothing more, and pickups left behind stay there. An item he has since gained elsewhere can't be taken again.
+Each room has one door cell per side, just inside the middle of that wall, and only sides with a neighbor get a door. A layout must keep all four cells reachable without a bomb, keep enemies at least 3 cells from them, and keep pickups from touching them, since any door can be the way in. Grandpa arrives standing on the door on the side he came from. A door only works after he has stepped away from it, so arriving on one never sends him straight back. In the first room he starts at a door cell with no door when there is one.
+
+Rooms remember their state: cleared rooms stay empty and earn nothing more, and pickups left behind stay there. An item he has since gained elsewhere can't be taken again.
 
 ### Consumables, Blocks and Treasure
 
@@ -88,11 +90,11 @@ A run starts with no Permission Slips and one Overheated Thermos. The HUD always
 - **Overheated Thermoses** are placed with Q and go off after 1.2 seconds, with a 56 pixel blast. The blast deals 30 damage to enemies, breaks blocks, and costs Grandpa one pill if he is caught. Cleared combat and side rooms drop one 20% of the time.
 - **Breakable blocks** act as walls until blasted, then drop Pension 30% of the time, a Thermos 15% and a Slip 10%. Blocks can close off a loot pocket. Layouts fail validation if a door, enemy or required reward can't be reached without a bomb.
 - **Locked chests** give the same reward as treasure, for one Slip.
-- **The treasure room** appears once per floor, behind a locked door in the bottom middle of a room that is alone in its layer, so a route choice can never hide it. One Slip opens the door for good, and the room offers a choice of three items.
+- **The treasure room** appears once per floor, behind a locked door on the side of a regular room that isn't the first room or the floor boss's. One Slip opens the door for good, and the room offers a choice of three items.
 
 ### Shop and Retirement Plan
 
-Each floor has one shop, behind an open `$` door in the bottom left of a room that is alone in its layer. Stock costs Pension: two items at 60, a heal at 20, a Permission Slip at 25 and a Thermos at 20. Each sells once, and bought stock stays gone if you leave and return.
+Each floor has one shop, behind an open `$` door on the side of a regular room that isn't the first room or the floor boss's. Stock costs Pension: two items at 60, a heal at 20, a Permission Slip at 25 and a Thermos at 20. Each sells once, and bought stock stays gone if you leave and return.
 
 The Retirement Plan stands in the shop. Holding E pays in 10 Pension at a time, up to 1000. The balance is saved between runs. A Thermos blast in a later run cashes out the whole balance. In the same run as a deposit the plan stays locked.
 
@@ -100,7 +102,7 @@ Reaching 10, 50, 100, 250, 500, 750 and 1000 for the first time each gives one f
 
 ### Secret Rooms
 
-A floor usually has one secret room, hanging off a combat room with no side room. It may sit on a route the player skips. A faint crack in the top wall is the only hint, and a Thermos blast next to it opens a door. The room holds treasure and no enemies, and it appears on the maps once visited.
+A floor usually has one secret room, hanging off a combat room at a free neighboring cell. A faint crack in the wall on that side is the only hint, and a Thermos blast next to it opens a door. The room holds treasure and no enemies, and it appears on the maps once visited.
 
 ### Recipes and Crafting
 
@@ -110,7 +112,7 @@ Agnes, Afterlife Arts and Crafts, stands in the Waiting Room and holds every fou
 
 ### Maps
 
-A small map in the top right corner shows visited rooms, the links between them and the current room. Pressing M opens a large map with room type icons and a legend, and pauses the game until M is pressed again. Unvisited rooms never show on either map. The map reads left to right from the start to the floor boss, with side rooms beside their parent.
+Both maps draw the grid like a floor plan: visited rooms at their cells whatever their size, door links between them, type icons, and the current room highlighted. The small map in the top right corner keeps the current room in its middle. Pressing M opens a large map of the whole floor with a legend, and pauses the game until M is pressed again. Unvisited rooms never show on either map.
 
 | Room type | Purpose |
 |---|---|
@@ -118,7 +120,7 @@ A small map in the top right corner shows visited rooms, the links between them 
 | Item | Choose one of two items, with light or no combat |
 | Healing | Restore 2 pills |
 | Side room | Optional detour from a door in a regular room, holding Pension or an item, with some risk |
-| Mini boss | Mandatory fight around the middle of the floor, on every route |
+| Mini boss | Mandatory fight halfway along the main path, so it cannot be skipped |
 | Floor boss | Final room of the floor |
 
 Rooms are hand-built. Each run picks from a pool of at least 15 layouts, excluding the two boss rooms. A normal run should take about 10 to 15 minutes.
@@ -178,9 +180,9 @@ The game uses Godot 4.7.2, standard version, with GDScript. No add-ons are plann
 |---|---|
 | Player | Movement, attacks, dodge and health |
 | Enemies | Shared behavior, with each type defined by its data and attack pattern |
-| Floor builder | Selects rooms and connects them into a valid route |
+| Floor builder | Places rooms on a grid from the floor's definition and joins them with doors |
 | Rooms | Doors, spawns, rewards, and locking until a fight ends |
-| Run state | Current health, items and route progress, cleared at the end of each run |
+| Run state | Current health, items and progress, cleared at the end of each run |
 | Save data | Pension and purchased upgrades |
 | Waiting Room | Hub scene, its merchants and the door to the floor |
 | Game flow | Moves between opening, Waiting Room, floor, death and floor cleared |
@@ -193,7 +195,7 @@ Enemies, items, upgrades and rooms each live in separate data files or scenes, n
 
 1. The Waiting Room loads saved Pension and upgrades.
 2. The player spends Pension, and each purchase saves immediately.
-3. The floor builder creates a route, and the run begins with upgrades applied.
+3. The floor builder creates a floor, and the run begins with upgrades applied.
 4. Rewards update the run state, and earned Pension saves as it is collected.
 5. On death or floor clear, the run state is cleared and the game returns to the Waiting Room.
 
@@ -204,7 +206,7 @@ Saves are stored in Godot's per-user data folder as a small versioned file. Each
 ### Error Handling
 
 - **Damaged save:** The game tries the backup. If both fail, it starts fresh and tells the player.
-- **Broken room data:** The floor builder skips the room, logs the error and continues. If too few valid rooms remain to build a route, it shows an error message and returns to the Waiting Room.
+- **Broken room data:** The floor builder skips the room, logs the error and continues. If too few valid rooms remain to build a floor, it shows an error message and returns to the Waiting Room.
 
 ## Art
 

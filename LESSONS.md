@@ -24,3 +24,5 @@
 - 2026-11-02: Probes that ran the real floor scene without --smoke added Pension to the player's real save.json → back up and restore save.json around any probe that runs real scenes, and read the save before and after.
 - 2026-11-02: A boss's summons paid Pension, so leaving it alive allowed endless farming → anything that can spawn without limit must pay nothing.
 - 2026-11-02: The Key Settings panel looked fine in code but ran off the 360 pixel screen, hiding its Leave button, and only a screenshot caught it → screenshot every new panel at its fullest, since the view is small and default buttons are tall.
+- 2026-11-02: A sed range starting at a pattern that appears twice deleted to the end of door.gd because its second start never found an end → read the diff after any sed range delete, and prefer exact line edits.
+- 2026-11-02: Spending a Slip while standing on a door walks through it on the next frame, so a check that then stood on the door again used a door already out of the tree → after any action that can change rooms, re-read the current room before touching its nodes.

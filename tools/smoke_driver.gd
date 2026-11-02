@@ -10,6 +10,7 @@ var _boss_rooms_seen := 0
 var _crafted_id := ""
 var _cleared_rooms := {}
 var _sizes_seen := {}
+var _followed_a_big_room := false
 
 
 func _ready() -> void:
@@ -69,7 +70,7 @@ func _run() -> void:
 	_check(Progress.data.level_of(upgrade.id) == 1, "upgrade survives a reload")
 
 	if not _failed:
-		print("SMOKE PASS rooms of sizes %s" % str(_sizes_seen.keys()))
+		print("SMOKE PASS rooms of sizes %s, big room view checked: %s" % [str(_sizes_seen.keys()), str(_followed_a_big_room)])
 		get_tree().quit(0)
 
 
@@ -89,7 +90,8 @@ func _clear_whole_floor() -> void:
 		await _clear_room(scene)
 		if scene.is_cleared:
 			break
-		_check_camera(scene)
+		await _check_camera(scene)
+		await _check_big_room_view(scene)
 		var at: int = scene.debug_current_id()
 		if not walked_back and at != map.start_id:
 			walked_back = true
@@ -221,6 +223,35 @@ func _check_camera(scene: Node) -> void:
 	_check(aim_error <= AIM_TOLERANCE, "aiming follows the camera, off by %f" % aim_error)
 
 
+# In a room too big for the view, the camera must track him to the corners, keep
+# shaking and aiming correct as it moves, and leave the HUD where it is.
+func _check_big_room_view(scene: Node) -> void:
+	var layout: RoomLayout = scene.debug_map().room(scene.debug_current_id()).layout
+	if layout.size_class() != RoomLayout.SIZE_LARGE or _followed_a_big_room:
+		return
+	_followed_a_big_room = true
+	var size := layout.size_in_cells()
+	var positions_seen := {}
+	var spots: Array[Vector2i] = [Vector2i(1, 1), Vector2i(size.x - 2, 1), Vector2i(1, size.y - 2), size - Vector2i(2, 2), size / 2]
+	for spot in spots:
+		scene.player.global_position = Player.arrival_position(layout.nearest_floor_cell(spot))
+		await _wait(0.05)
+		await _check_camera(scene)
+		positions_seen[scene.debug_camera().position] = true
+	_check(positions_seen.size() >= 4, "the camera follows him around a big room")
+	var rest: Vector2 = scene.debug_camera().position
+	scene.debug_feedback().on_hurt()
+	var shook := false
+	for i in 5:
+		await get_tree().process_frame
+		shook = shook or not scene.debug_camera().offset.is_zero_approx()
+		await _check_camera(scene)
+	_check(shook, "the screen still shakes in a big room")
+	_check(scene.debug_camera().position == rest, "shaking does not move where the camera rests")
+	var hud := _find_hud(scene)
+	_check(not hud.follow_viewport_enabled and hud.offset == Vector2.ZERO, "the HUD stays put")
+
+
 func _walk_back_and_return(scene: Node, here_id: int) -> void:
 	await _wait(0.5)
 	var map: FloorMap = scene.debug_map()
@@ -255,6 +286,9 @@ func _clear_room(scene: Node) -> void:
 	if _cleared_rooms.has(room_id):
 		return
 	_cleared_rooms[room_id] = true
+	var cells: Vector2i = scene.debug_map().room(room_id).layout.size_in_cells()
+	for enemy in get_tree().get_nodes_in_group("enemies"):
+		_check(enemy.room_cells == cells, "enemies clamp to the room's real size")
 	var hud := _find_hud(scene)
 	var boss_here := false
 	for enemy in get_tree().get_nodes_in_group("enemies"):
