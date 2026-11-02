@@ -274,7 +274,7 @@ func test_a_grid_too_small_for_the_floor_returns_null_instead_of_hanging() -> vo
 
 func test_floor_data_loads() -> void:
 	var def := _def()
-	assert_eq(def.enemies.size(), 3)
+	assert_eq(def.enemies.size(), 7)
 	assert_eq(def.mini_boss.id, "senior_adjuster")
 	assert_eq(def.floor_boss.id, "regional_reaper")
 	assert_eq(def.main_path_rooms, 7)

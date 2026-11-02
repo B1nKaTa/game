@@ -47,6 +47,8 @@ static func _try_build(rng: RandomNumberGenerator, def: FloorDef, picker: _Layou
 	for i in path_cells.size():
 		var room := _add_room(map, path_types[i], path_cells[i], picker)
 		map.main_path.append(room.id)
+		if room.room_type == RoomLayout.TYPE_COMBAT:
+			room.extra_enemies = def.extra_enemies_at(i, path_cells.size())
 		if i > 0:
 			map.join(map.room(map.main_path[i - 1]), room)
 	map.start_id = map.main_path[0]

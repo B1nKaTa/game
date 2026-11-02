@@ -9,6 +9,8 @@ var cell := Vector2i.ZERO
 var doors := {}
 # Picks this room's decor scatter, so two rooms sharing a layout still look different.
 var decor_seed := 0
+# Enemies added on top of the layout's own, because the room lies far along the main path.
+var extra_enemies := 0
 
 
 # A detour is a dead end hanging off a regular room, and never counts toward the floor's size.

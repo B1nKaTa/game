@@ -1,0 +1,34 @@
+class_name BossMoves
+extends RefCounted
+
+# A boss starts an attack only with its whole body inside the view around Grandpa. The camera
+# stops at the room's edges only by showing more of the room, so this holds there too.
+const VIEW_MARGIN := Vector2(36.0, 32.0)
+const CATCH_UP_SPEED := 1.9
+const SUMMON_WARNING := 0.7
+
+
+static func in_view(offset: Vector2) -> bool:
+	var half := RoomBackdrop.VIEW_SIZE / 2.0 - VIEW_MARGIN
+	return absf(offset.x) <= half.x and absf(offset.y) <= half.y
+
+
+static func ring_directions(count: int, start_angle: float) -> Array[Vector2]:
+	var directions: Array[Vector2] = []
+	for i in count:
+		directions.append(Vector2.from_angle(start_angle + TAU * i / float(count)))
+	return directions
+
+
+# Spots across the way Grandpa is walking. Standing still, the way ahead counts as away from the boss.
+static func cutoff_points(player: Vector2, moving: Vector2, boss: Vector2, count: int, distance: float, spread: float) -> Array[Vector2]:
+	var ahead := moving.normalized() if not moving.is_zero_approx() else boss.direction_to(player)
+	var points: Array[Vector2] = []
+	for i in count:
+		var offset := (i - (count - 1) / 2.0) * spread
+		points.append(player + ahead.rotated(offset) * distance)
+	return points
+
+
+static func can_summon(alive: int, cap: int) -> bool:
+	return alive < cap

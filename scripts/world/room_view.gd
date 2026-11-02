@@ -10,6 +10,7 @@ signal doors_opened
 signal bomb_exploded
 signal consumable_taken
 signal notice(text: String)
+signal hit_blocked
 
 const HEAL_AMOUNT := 2
 const SHOP_PROMPT := "Buy"
@@ -42,6 +43,7 @@ var _doors: Array[Door] = []
 var _coins: Array[Pickup] = []
 var _last_death_at := Vector2.ZERO
 var _broken_cells := {}
+var _spawned := 0
 
 
 func setup(room: FloorRoom, map: FloorMap, floor_def: FloorDef, run: RunState, player: Player, rng: RandomNumberGenerator, progress: FloorProgress, bank: Node) -> void:
@@ -82,7 +84,7 @@ func refresh_doors() -> void:
 func clear_passing_effects() -> void:
 	for child in get_children():
 		var is_flying_coin: bool = child is Pickup and child.is_flying()
-		if child is Projectile or child is DeathBurst or child is Thermos or is_flying_coin:
+		if child is Projectile or child is DeathBurst or child is Thermos or child is EnemyBlast or child is SummonMark or is_flying_coin:
 			child.queue_free()
 
 
@@ -213,7 +215,7 @@ func _on_block_broken(at: Vector2) -> void:
 	_broken_cells[_cell_of(at)] = true
 	var drop := RoomRules.block_drop(_rng.randf())
 	if drop == RoomRules.DROP_COIN:
-		_drop_coin(at, _floor_def.treasure_pension)
+		_drop_coin(at, _floor_def.prop_pension)
 	else:
 		_drop_consumable(at, drop)
 
@@ -221,14 +223,14 @@ func _on_block_broken(at: Vector2) -> void:
 func _on_rock_broken(at: Vector2, hides_coin: bool, cell: Vector2i) -> void:
 	_broken_cells[cell] = true
 	if hides_coin:
-		_drop_coin(at, _floor_def.treasure_pension)
+		_drop_coin(at, _floor_def.prop_pension)
 
 
 func _on_barrel_broken(at: Vector2, cell: Vector2i) -> void:
 	_broken_cells[cell] = true
 	var drop := RoomRules.barrel_drop(_rng.randf())
 	if drop == RoomRules.DROP_COIN:
-		_drop_coin(at, _floor_def.treasure_pension)
+		_drop_coin(at, _floor_def.prop_pension)
 	else:
 		_drop_consumable(at, drop)
 
@@ -236,7 +238,7 @@ func _on_barrel_broken(at: Vector2, cell: Vector2i) -> void:
 func _on_pile_broken(at: Vector2, cell: Vector2i) -> void:
 	_broken_cells[cell] = true
 	if RoomRules.pile_drops_coin(_rng.randf()):
-		_drop_coin(at, _floor_def.treasure_pension)
+		_drop_coin(at, _floor_def.prop_pension)
 
 
 func _cell_of(at: Vector2) -> Vector2i:
@@ -253,16 +255,15 @@ func clear_spot(at: Vector2) -> Vector2:
 
 
 func _spawn_enemies() -> void:
-	for cell in _room.layout.cells_of("E"):
-		var options := _floor_def.enemies
-		var def: EnemyDef = options[_rng.randi_range(0, options.size() - 1)]
-		_spawn_enemy(def, RoomBackdrop.cell_center(cell))
+	for entry in EnemyPlan.plan(_room.layout, _floor_def, _room.extra_enemies, _rng):
+		var enemy := _spawn_enemy(entry["def"], RoomBackdrop.cell_center(entry["cell"]))
+		enemy.is_group_follower = not entry["leader"]
 	for cell in _room.layout.cells_of("B"):
 		var boss := _floor_def.mini_boss if _room.room_type == RoomLayout.TYPE_MINI_BOSS else _floor_def.floor_boss
 		_spawn_enemy(boss, RoomBackdrop.cell_center(cell))
 
 
-func _spawn_enemy(def: EnemyDef, at: Vector2, summoned := false) -> void:
+func _spawn_enemy(def: EnemyDef, at: Vector2, summoned := false) -> Enemy:
 	var enemy := Enemy.new()
 	enemy.setup(def, _player, _run.stats.warning_fraction, _run.stats.reveals_enemy_health)
 	enemy.is_summon = summoned
@@ -270,20 +271,28 @@ func _spawn_enemy(def: EnemyDef, at: Vector2, summoned := false) -> void:
 	enemy.position = at
 	enemy.defeated.connect(_on_enemy_defeated)
 	enemy.summon_requested.connect(_spawn_summon)
+	enemy.hit_blocked.connect(hit_blocked.emit)
+	enemy.blasted.connect(bomb_exploded.emit)
+	enemy.summon_spot = summon_spot
+	enemy.spawn_index = _spawned
+	_spawned += 1
 	_alive += 1
 	_had_enemies = true
 	add_child(enemy)
 	if def.is_boss:
 		boss_spawned.emit(enemy)
+	return enemy
+
+
+# Summons land on open floor, wherever the boss wanted them.
+func summon_spot(at: Vector2) -> Vector2:
+	var cell := _cell_of(at)
+	var floor_cell := _room.layout.nearest_floor_cell(cell)
+	return RoomBackdrop.cell_center(floor_cell) if floor_cell != cell else at
 
 
 func _spawn_summon(def: EnemyDef, at: Vector2) -> void:
-	var tile := RoomBackdrop.TILE
-	var cell := Vector2i(floori(at.x / tile), floori(at.y / tile))
-	var floor_cell := _room.layout.nearest_floor_cell(cell)
-	if floor_cell != cell:
-		at = RoomBackdrop.cell_center(floor_cell)
-	_spawn_enemy(def, at, true)
+	_spawn_enemy(def, summon_spot(at), true)
 
 
 func _on_enemy_defeated(enemy: Enemy) -> void:
@@ -303,7 +312,7 @@ func _on_enemy_defeated(enemy: Enemy) -> void:
 	if enemy.def.is_boss:
 		for other in get_tree().get_nodes_in_group("enemies"):
 			if other != enemy and other.get_parent() == self:
-				other.take_damage(INF, Vector2.ZERO)
+				other.dismiss()
 	if _alive == 0:
 		_finish_room()
 

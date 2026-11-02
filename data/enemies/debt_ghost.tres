@@ -7,9 +7,9 @@
 script = ExtResource("1")
 id = "debt_ghost"
 display_name = "Debt Collector Ghost"
-max_hp = 24.0
-speed = 40.0
-pension_drop = 3
+max_hp = 36
+speed = 62
+pension_drop = 1
 ignores_walls = true
 body_size = Vector2(20, 22)
 color = Color(0.4, 0.94, 0.82, 1)

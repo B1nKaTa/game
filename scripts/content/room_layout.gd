@@ -198,6 +198,26 @@ func nearest_floor_cell(cell: Vector2i) -> Vector2i:
 	return best
 
 
+# Open cells an extra enemy may start on: walkable without breaking anything, and as far from
+# every door as a placed enemy has to be.
+func spare_fighter_cells() -> Array[Vector2i]:
+	var open := _flood_from_door(WALLS_AND_BOMB_ONLY)
+	var cells: Array[Vector2i] = []
+	for y in rows.size():
+		for x in rows[y].length():
+			var cell := Vector2i(x, y)
+			if rows[y][x] == SYMBOL_FLOOR and open.has(cell) and _far_from_every_door(cell):
+				cells.append(cell)
+	return cells
+
+
+func _far_from_every_door(cell: Vector2i) -> bool:
+	for side in SIDES:
+		if Vector2(cell - door_cell(side)).length() < MIN_FIGHTER_DOOR_DISTANCE:
+			return false
+	return true
+
+
 func symbol_at(cell: Vector2i) -> String:
 	var size := size_in_cells()
 	if cell.x < 0 or cell.y < 0 or cell.x >= size.x or cell.y >= size.y:

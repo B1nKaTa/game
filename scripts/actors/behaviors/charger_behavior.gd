@@ -1,11 +1,11 @@
 extends EnemyBehavior
 
 const START_RANGE := 180.0
-const WINDUP := 0.7
+const WINDUP := 0.55
 const CHARGE_TIME := 0.7
-const CHARGE_SPEED := 240.0
+const CHARGE_SPEED := 300.0
 const HIT_RANGE := 16.0
-const COOLDOWN := 1.5
+const COOLDOWN := 1.1
 
 var _telegraph := Telegraph.new()
 var _cooldown := 1.0

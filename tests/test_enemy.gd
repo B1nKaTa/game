@@ -22,12 +22,13 @@ func test_a_summoned_enemy_is_worth_nothing() -> void:
 
 func test_income_values_stay_at_the_reduced_level() -> void:
 	var floor_def: FloorDef = load("res://data/floors/floor_1.tres")
-	assert_eq(floor_def.clear_pension, 4)
-	assert_eq(floor_def.treasure_pension, 12)
-	assert_eq(floor_def.mini_boss.pension_drop, 15)
-	assert_eq(floor_def.floor_boss.pension_drop, 30)
+	assert_eq(floor_def.clear_pension, 2)
+	assert_eq(floor_def.treasure_pension, 10)
+	assert_eq(floor_def.prop_pension, 2)
+	assert_eq(floor_def.mini_boss.pension_drop, 10)
+	assert_eq(floor_def.floor_boss.pension_drop, 20)
 	for def: EnemyDef in floor_def.enemies:
-		assert_true(def.pension_drop <= 3, def.id)
+		assert_eq(def.pension_drop, 1, def.id)
 
 
 func test_regular_enemies_load_with_behaviors() -> void:

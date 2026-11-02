@@ -14,3 +14,11 @@ extends Resource
 @export var frame_width: int = 32
 @export var behavior_script: Script
 @export var summon: EnemyDef
+# How many spawn together at one enemy cell. Only the first of a group pays.
+@export var group_size: int = 1
+# A room holds at most this many of the type. Zero means no limit.
+@export var max_per_room: int = 0
+# Half the width in degrees of a shield facing its target. Zero means no shield.
+@export var shield_half_angle: float = 0.0
+# A placeholder sign drawn on the body, so a type reads without art. See EnemyMarks.
+@export var mark: String = ""

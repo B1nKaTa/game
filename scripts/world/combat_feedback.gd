@@ -50,6 +50,7 @@ func watch_room(room: RoomView) -> void:
 	room.doors_opened.connect(on_doors_opened)
 	room.bomb_exploded.connect(on_bomb_exploded)
 	room.consumable_taken.connect(on_consumable_taken)
+	room.hit_blocked.connect(on_hit_blocked)
 
 
 func on_swing_landed(heavy: bool, finisher: bool) -> void:
@@ -103,6 +104,10 @@ func on_doors_opened() -> void:
 func on_bomb_exploded() -> void:
 	_shake.start(ScreenShake.CHARGED_HIT, ScreenShake.CHARGED_TIME)
 	_play("explosion")
+
+
+func on_hit_blocked() -> void:
+	_play("shield_block")
 
 
 func on_consumable_taken() -> void:

@@ -213,7 +213,7 @@ func _strike_enemies() -> void:
 		if enemy.is_queued_for_deletion():
 			continue
 		if swing.try_hit(global_position, enemy.get_instance_id(), enemy.body_rect()):
-			enemy.take_damage(swing.damage, swing.direction * swing.push)
+			enemy.take_strike(swing.damage, swing.direction * swing.push, global_position - enemy.global_position)
 	for block: BreakableBlock in get_tree().get_nodes_in_group("breakable"):
 		if block.is_queued_for_deletion() or not block.can_break_by(BreakableBlock.SOURCE_CANE):
 			continue
