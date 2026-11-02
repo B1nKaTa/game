@@ -28,11 +28,11 @@ This section gives context for design decisions. Only the First Version Scope se
 Included:
 
 - A short opening where Grandpa dies and arrives in the Waiting Room
-- A small Waiting Room hub with one merchant and a door to the floor
+- A small Waiting Room hub with two merchants and a door to the floor
 - One floor with a branching route of 10 to 12 rooms
 - Cane combat with a combo, a charged swing, a cane throw and a dodge
 - 3 enemy types, 1 mini boss and 1 floor boss
-- 6 run items and 4 permanent upgrades
+- 6 run items and 5 permanent upgrades
 - One currency that carries over between runs
 - Saving and loading
 - Placeholder art at first, followed by an early AI art test
@@ -42,7 +42,7 @@ Excluded:
 - Endings and living-world scenes
 - More than one floor
 - More weapons
-- More merchants, and further Waiting Room characters beyond the merchant
+- More merchants beyond the two in the Waiting Room, and further Waiting Room characters
 - Controller support and Android support
 - Full key remapping, planned as a later feature
 - Sound and music beyond simple placeholder effects
@@ -115,7 +115,7 @@ Items last for the current run only. Grandpa can hold any number of them.
 
 Pension is the only currency. Enemies and rooms drop it, and picking it up adds it immediately. All of it is kept on death.
 
-The black market merchant sells these permanent upgrades, each with several levels at rising prices:
+Two merchants in the Waiting Room sell permanent upgrades, with rising prices at each level. The black market merchant sells the first four below. Dr. Squint, Unlicensed Optometrist, stands in a different spot and sells the glasses. Walking close to either shows "E: Trade", and only one trade panel is open at a time.
 
 | Upgrade | Effect per level |
 |---|---|
@@ -123,6 +123,11 @@ The black market merchant sells these permanent upgrades, each with several leve
 | Better Knees | Faster movement and shorter dodge cooldown |
 | Reinforced Cane | More cane damage |
 | Bribed Clerk | More Pension from all sources |
+| Prescription Glasses (Dr. Squint, one level) | Regular enemies show a small health bar above their heads |
+
+### Boss Health Bar
+
+Bosses draw no bar above their heads. Entering a boss room shows a large bar centered along the bottom of the screen, with the boss's name in larger text just above it. It appears when the boss spawns, drops as the boss takes damage, and disappears when the boss dies or the run ends. Entering another room never leaves a stale bar. The item list moves up to sit just under the pills line at the top, so it never overlaps the bar.
 
 ### Difficulty Target
 
@@ -142,7 +147,7 @@ The game uses Godot 4.7.2, standard version, with GDScript. No add-ons are plann
 | Rooms | Doors, spawns, rewards, and locking until a fight ends |
 | Run state | Current health, items and route progress, cleared at the end of each run |
 | Save data | Pension and purchased upgrades |
-| Waiting Room | Hub scene, merchant and the door to the floor |
+| Waiting Room | Hub scene, its merchants and the door to the floor |
 | Game flow | Moves between opening, Waiting Room, floor, death and floor cleared |
 
 ### Content as Data
