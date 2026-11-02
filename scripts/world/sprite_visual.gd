@@ -99,6 +99,18 @@ func has_art() -> bool:
 	return _sprite != null and _sprite.visible
 
 
+# A copy of the current frame, for leaving behind during a dodge. Null without art.
+func make_ghost() -> DodgeGhost:
+	if not has_art():
+		return null
+	var ghost := DodgeGhost.new()
+	ghost.texture = _sprite.texture
+	ghost.hframes = _sprite.hframes
+	ghost.frame = _sprite.frame
+	ghost.flip_h = _sprite.flip_h
+	return ghost
+
+
 func set_facing_left(left: bool) -> void:
 	if _sprite != null:
 		_sprite.flip_h = left

@@ -22,4 +22,4 @@
 - Round 9: Slips and Thermoses got their own always-visible HUD counters with icons, and each stacks to 99.
 - Round 10: added a shop on every floor and the Retirement Plan. To decide: the real reward list for each tier, and whether a tier should pay once ever. Still to judge: prices, and whether paying in feels worth it.
 - Round 11: income was too high. Halved every Pension source, about 124 on a full route instead of 249, so every upgrade takes about 10 clean runs instead of 5. Summons now pay nothing, because a mini boss left alive could be farmed forever. Earning more should come from paid upgrades.
-- Next build, not yet run or played: secret rooms, four new combat rooms, a Keys board for rebinding, more Bribed Clerk levels, and recipes crafted by Agnes.
+- Next build, not yet run or played: secret rooms, four new combat rooms, a Keys board for rebinding, more Bribed Clerk levels, recipes crafted by Agnes, a crosshair instead of the aim dot, and fading copies of Grandpa behind a dodge.

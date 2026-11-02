@@ -22,10 +22,14 @@ const SPRITE_FRAME_WIDTH := 68
 const SPRITE_FEET_Y := 23.0
 const FEET_BOX_SIZE := Vector2(14, 12)
 const FEET_OFFSET := Vector2(0, 17)
-const AIM_MARK_DISTANCE := 30.0
-const AIM_MARK_COLOR := Color(1.0, 0.9, 0.55, 0.7)
+const CROSSHAIR_GAP := 3.0
+const CROSSHAIR_REACH := 8.0
+const CROSSHAIR_COLOR := Color(1.0, 0.9, 0.55, 0.95)
+const GHOST_EVERY := 0.05
 
 var run: RunState
+var show_crosshair := false
+var _ghost_left := 0.0
 var _combo := CaneCombo.new()
 var _charge := ChargeSwing.new()
 var _cane := CaneThrow.new()
@@ -40,6 +44,14 @@ var _feet: Marker2D
 
 static func arrival_position(cell: Vector2i) -> Vector2:
 	return RoomBackdrop.cell_center(cell) - FEET_OFFSET
+
+
+static func crosshair_lines(center: Vector2) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	for direction: Vector2 in [Vector2.UP, Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT]:
+		points.append(center + direction * CROSSHAIR_GAP)
+		points.append(center + direction * CROSSHAIR_REACH)
+	return points
 
 
 func setup(run_state: RunState) -> void:
@@ -95,7 +107,22 @@ func _physics_process(delta: float) -> void:
 	_handle_attacks()
 	_handle_bomb()
 	_handle_movement()
+	_leave_dodge_ghosts(delta)
 	queue_redraw()
+
+
+func _leave_dodge_ghosts(delta: float) -> void:
+	if not _dodge.is_active():
+		_ghost_left = 0.0
+		return
+	_ghost_left -= delta
+	if _ghost_left > 0.0 or get_parent() == null:
+		return
+	_ghost_left = GHOST_EVERY
+	var ghost := _visual.make_ghost()
+	if ghost != null:
+		get_parent().add_child(ghost)
+		ghost.global_position = global_position
 
 
 # Spending is left to whoever can place it, so the practice room never wastes one.
@@ -213,14 +240,17 @@ func _handle_movement() -> void:
 
 
 func _draw() -> void:
-	if _dodge.is_active():
+	var has_art := _visual.has_art()
+	if _dodge.is_active() and not has_art:
 		draw_line(-_dodge_direction * 6.0, -_dodge_direction * 26.0, Color(1.0, 1.0, 1.0, 0.35), 8.0)
 	var swinging := _active_swing != null
 	var pointing := _active_swing.direction if swinging else _aim
-	if _visual.has_art():
-		draw_circle(pointing * AIM_MARK_DISTANCE, 1.5, AIM_MARK_COLOR)
-	elif _cane.is_held():
+	if not has_art and _cane.is_held():
 		draw_line(Vector2.ZERO, pointing * 20.0, Color("a8692f"), 3.0)
+	if show_crosshair:
+		var lines := crosshair_lines(get_local_mouse_position())
+		draw_multiline(lines, Color.BLACK, 3.0)
+		draw_multiline(lines, CROSSHAIR_COLOR, 1.0)
 	if swinging:
 		var center := _active_swing.direction.angle()
 		var half_angle := deg_to_rad(_active_swing.half_angle_deg)

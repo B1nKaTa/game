@@ -49,6 +49,8 @@ func _ready() -> void:
 	player.setup(_run)
 	player.died.connect(_on_player_died)
 	player.bomb_requested.connect(_on_bomb_requested)
+	player.show_crosshair = true
+	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
 	add_child(player)
 	_feedback.watch_player(player)
 	var glow := Lighting.make_light(Color(1.0, 0.85, 0.6), 0.7, 0.8)
@@ -122,6 +124,7 @@ func _make_room_view(room: FloorRoom) -> RoomView:
 
 
 func _exit_tree() -> void:
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	# Rooms the player has left are out of the tree, so nothing else frees them.
 	for view: RoomView in _room_views.values():
 		if is_instance_valid(view) and not view.is_inside_tree():

@@ -46,6 +46,7 @@ Run the tests and the full-loop check first, because this branch has never been 
 - Each new layout, to check it plays well and nothing is awkward to reach.
 - Rebinding keys, then quitting and reopening.
 - Finding a recipe, crafting it with Agnes, starting the next run with the item, and seeing it appear in later runs.
+- The crosshair at the mouse on the floor, the normal pointer back in the Waiting Room and panels, and the fading copies of Grandpa behind a dodge.
 
 ## Status
 
