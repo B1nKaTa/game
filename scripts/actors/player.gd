@@ -17,6 +17,9 @@ const ATTACK_PUSH := 60.0
 const DODGE_SPEED := 300.0
 const CHARGE_SLOWDOWN := 0.4
 const HURT_COLOR := Color("e4524f")
+const SPRITE_FRAME_WIDTH := 68
+const AIM_MARK_DISTANCE := 30.0
+const AIM_MARK_COLOR := Color(1.0, 0.9, 0.55, 0.7)
 
 var run: RunState
 var _combo := CaneCombo.new()
@@ -45,7 +48,7 @@ func _ready() -> void:
 	add_child(shape)
 	_visual = SpriteVisual.new()
 	add_child(_visual)
-	_visual.setup("grandpa", Vector2(20, 28), Color("7d9a5c"), 32)
+	_visual.setup("grandpa", Vector2(20, 28), Color("7d9a5c"), SPRITE_FRAME_WIDTH)
 	run.health.died.connect(died.emit)
 
 
@@ -133,7 +136,7 @@ func _exit_tree() -> void:
 func _swing(damage: float, reach: float, angle: float, push: float, heavy: bool, finisher: bool) -> void:
 	_finish_swing()
 	_active_swing = SwingAttack.new(_aim, reach, angle, damage * run.stats.damage_mult, push, heavy, finisher)
-	_visual.play("attack")
+	_visual.play_once("attack", CaneCombo.LOCK_TIME)
 	_strike_enemies()
 
 
@@ -178,7 +181,7 @@ func _handle_movement() -> void:
 		if _charge.is_charging():
 			speed *= CHARGE_SLOWDOWN
 		velocity = input * speed
-		if _active_swing == null:
+		if not _visual.is_playing_once():
 			_visual.play("walk" if input != Vector2.ZERO else "idle")
 	move_and_slide()
 
@@ -187,8 +190,11 @@ func _draw() -> void:
 	if _dodge.is_active():
 		draw_line(-_dodge_direction * 6.0, -_dodge_direction * 26.0, Color(1.0, 1.0, 1.0, 0.35), 8.0)
 	var swinging := _active_swing != null
-	if _cane.is_held():
-		draw_line(Vector2.ZERO, (_active_swing.direction if swinging else _aim) * 20.0, Color("a8692f"), 3.0)
+	var pointing := _active_swing.direction if swinging else _aim
+	if _visual.has_art():
+		draw_circle(pointing * AIM_MARK_DISTANCE, 1.5, AIM_MARK_COLOR)
+	elif _cane.is_held():
+		draw_line(Vector2.ZERO, pointing * 20.0, Color("a8692f"), 3.0)
 	if swinging:
 		var center := _active_swing.direction.angle()
 		var half_angle := deg_to_rad(_active_swing.half_angle_deg)

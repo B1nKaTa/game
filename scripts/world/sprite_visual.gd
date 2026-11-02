@@ -22,6 +22,7 @@ var _frame_width := 32
 var _anim := ""
 var _sprite: Sprite2D
 var _time := 0.0
+var _once_duration := 0.0
 var _flash_color := Color.WHITE
 var _flash_left := 0.0
 var _flash_time := 0.0
@@ -41,6 +42,12 @@ static func flash_amount(remaining: float, duration: float) -> float:
 	return clampf(remaining / (duration * FLASH_FADE), 0.0, 1.0)
 
 
+static func once_frame(time: float, duration: float, count: int) -> int:
+	if duration <= 0.0:
+		return count - 1
+	return mini(int(time / duration * count), count - 1)
+
+
 func setup(art_id: String, body_size: Vector2, color: Color, frame_width: int) -> void:
 	_art_id = art_id
 	_size = body_size
@@ -54,6 +61,7 @@ func play(anim: String) -> void:
 		return
 	_anim = anim
 	_time = 0.0
+	_once_duration = 0.0
 	var path := "res://art/sprites/%s/%s.png" % [_art_id, anim]
 	if not ResourceLoader.exists(path):
 		if _sprite != null:
@@ -75,6 +83,20 @@ func play(anim: String) -> void:
 	_sprite.frame = 0
 	_sprite.visible = true
 	queue_redraw()
+
+
+func play_once(anim: String, duration: float) -> void:
+	_anim = ""
+	play(anim)
+	_once_duration = duration
+
+
+func is_playing_once() -> bool:
+	return _once_duration > 0.0 and _time < _once_duration
+
+
+func has_art() -> bool:
+	return _sprite != null and _sprite.visible
 
 
 func set_facing_left(left: bool) -> void:
@@ -112,10 +134,13 @@ func _process(delta: float) -> void:
 	if _flash_left > 0.0:
 		_flash_left = maxf(_flash_left - delta, 0.0)
 		_apply_look()
-	if _sprite == null or not _sprite.visible:
-		return
 	_time += delta
-	_sprite.frame = int(_time * FPS) % _sprite.hframes
+	if not has_art():
+		return
+	if _once_duration > 0.0:
+		_sprite.frame = once_frame(_time, _once_duration, _sprite.hframes)
+	else:
+		_sprite.frame = int(_time * FPS) % _sprite.hframes
 
 
 func _draw() -> void:

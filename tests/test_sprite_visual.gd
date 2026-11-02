@@ -33,6 +33,62 @@ func test_flash_does_not_touch_an_unready_visual() -> void:
 	visual.free()
 
 
+func test_once_frame_covers_every_frame_over_the_duration() -> void:
+	assert_eq(SpriteVisual.once_frame(0.0, 0.2, 4), 0)
+	assert_eq(SpriteVisual.once_frame(0.05, 0.2, 4), 1)
+	assert_eq(SpriteVisual.once_frame(0.19, 0.2, 4), 3)
+
+
+func test_once_frame_holds_the_last_frame_after_the_end() -> void:
+	assert_eq(SpriteVisual.once_frame(0.5, 0.2, 4), 3)
+
+
+func test_once_frame_with_no_duration_shows_the_last_frame() -> void:
+	assert_eq(SpriteVisual.once_frame(0.0, 0.0, 4), 3)
+
+
+func test_play_once_runs_for_its_duration() -> void:
+	var visual := SpriteVisual.new()
+	visual.setup("no_such_art", Vector2(20, 24), Color.WHITE, 32)
+	assert_false(visual.is_playing_once())
+	visual.play_once("attack", 0.2)
+	assert_true(visual.is_playing_once())
+	visual._process(0.1)
+	assert_true(visual.is_playing_once())
+	visual._process(0.11)
+	assert_false(visual.is_playing_once())
+	visual.free()
+
+
+func test_play_once_restarts_the_same_animation() -> void:
+	var visual := SpriteVisual.new()
+	visual.setup("no_such_art", Vector2(20, 24), Color.WHITE, 32)
+	visual.play_once("attack", 0.2)
+	visual._process(0.15)
+	visual.play_once("attack", 0.2)
+	visual._process(0.15)
+	assert_true(visual.is_playing_once(), "second swing started over")
+	visual.free()
+
+
+func test_a_frozen_frame_does_not_advance_play_once() -> void:
+	var visual := SpriteVisual.new()
+	visual.setup("no_such_art", Vector2(20, 24), Color.WHITE, 32)
+	visual.play_once("attack", 0.2)
+	visual._process(0.0)
+	assert_true(visual.is_playing_once())
+	visual.free()
+
+
+func test_playing_a_loop_ends_play_once() -> void:
+	var visual := SpriteVisual.new()
+	visual.setup("no_such_art", Vector2(20, 24), Color.WHITE, 32)
+	visual.play_once("attack", 0.2)
+	visual.play("walk")
+	assert_false(visual.is_playing_once())
+	visual.free()
+
+
 func test_enemy_damage_before_it_is_in_the_tree_is_safe() -> void:
 	var enemy := Enemy.new()
 	enemy.setup(load("res://data/enemies/intern_reaper.tres"), null, 0.5)
