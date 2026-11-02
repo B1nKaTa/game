@@ -59,7 +59,7 @@ Beating the floor boss shows a "floor cleared" message before the return. No end
 
 ### Controls
 
-Move with WASD and aim with the mouse. Tapping left click hits with the cane combo, and holding it after the hit charges a swing that fires on release once fully charged. Right click throws the cane, and Space dodges.
+Move with WASD and aim with the mouse. Tapping left click hits with the cane combo, and holding it after the hit charges a swing that fires on release once fully charged. Right click throws the cane, Space dodges, and M opens the floor map.
 
 ### Combat
 
@@ -76,7 +76,13 @@ The floor is a layered route. Each layer offers one or two rooms, and doors conn
 
 Each door shows an icon for the room type behind it, so route choice is a real decision. Entering a combat or boss room locks its doors until all enemies are defeated.
 
-In regular rooms Grandpa arrives on the left and the exits are on the right. In a side room the return door is at the arrival cell on the left, and Grandpa spawns one cell to its right so he does not walk straight back out. Returning to the parent room puts him at the side room door, which is then gone.
+In regular rooms Grandpa arrives on the left and the exits are on the right. Every room except the first and the floor boss room has a return door at the arrival cell, leading to the room he came from. In a side room he spawns one cell to its right. Going back puts him at the door he originally left through. A door only works after he has stepped away from it, so arriving on one never sends him straight back.
+
+Entering a room in a layer seals the other room in that layer, so the skipped route shows a sealed door for the rest of the run. Side rooms never seal. Rooms remember their state: cleared rooms stay empty and earn nothing more, and pickups left behind stay there. An item he has since gained elsewhere can't be taken again.
+
+### Maps
+
+A small map in the top right corner shows visited rooms, the links between them and the current room. Pressing M opens a large map with room type icons and a legend, and pauses the game until M is pressed again. Unvisited rooms never show on either map. The map reads left to right from the start to the floor boss, with side rooms beside their parent.
 
 | Room type | Purpose |
 |---|---|
