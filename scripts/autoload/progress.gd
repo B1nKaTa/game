@@ -42,6 +42,36 @@ func buy(def: UpgradeDef) -> bool:
 	return true
 
 
+func spend(amount: int) -> bool:
+	if not data.spend(amount):
+		return false
+	_save_pension()
+	return true
+
+
+func start_run() -> void:
+	data.start_run()
+	_store.save_progress(data)
+
+
+func retirement_deposit(amount: int) -> int:
+	var reached := data.retirement_deposit(amount)
+	_save_pension()
+	return reached
+
+
+func release_retirement() -> int:
+	var amount := data.release_retirement()
+	if amount > 0:
+		_save_pension()
+	return amount
+
+
+func _save_pension() -> void:
+	_store.save_progress(data)
+	pension_changed.emit(data.pension)
+
+
 func mark_opening_seen() -> void:
 	data.opening_seen = true
 	_store.save_progress(data)

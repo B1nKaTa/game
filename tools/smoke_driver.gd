@@ -31,9 +31,20 @@ func _run() -> void:
 	await _wait(2.5)
 	_expect_scene("WaitingRoom")
 
+	Progress.add_pension(60)
+	var reached: int = Progress.retirement_deposit(60)
+	_check(reached == 2, "a deposit reports the tiers it reached")
+	_check(not Progress.data.can_release_retirement(), "the plan is locked in the run it was paid into")
+
 	await _die_in_a_run()
 	await _wait(2.5)
 	_expect_scene("WaitingRoom")
+	_check(Progress.data.can_release_retirement(), "the plan opens in a later run")
+	Progress.reload()
+	_check(Progress.data.retirement_balance == 60, "the plan survives a reload")
+	var before_release: int = Progress.data.pension
+	_check(Progress.release_retirement() == 60, "cashing out pays the balance")
+	_check(Progress.data.pension == before_release + 60, "cashing out adds to Pension")
 
 	var pension_saved: int = Progress.data.pension
 	Progress.reload()

@@ -23,6 +23,7 @@ var _big_map: FloorMapView
 
 func _ready() -> void:
 	_rng.randomize()
+	Progress.start_run()
 	_run = Progress.make_run()
 	_hud = Hud.new()
 	_hud.setup(_run)
