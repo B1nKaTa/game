@@ -1,11 +1,15 @@
 extends Node
 
-const TIMEOUT := 180.0
-const MAX_ROOMS := 40
+const TIMEOUT := 240.0
+const MAX_STEPS := 150
+const VIEW := Vector2(640, 360)
+const AIM_TOLERANCE := 1.5
 
 var _failed := false
 var _boss_rooms_seen := 0
 var _crafted_id := ""
+var _cleared_rooms := {}
+var _sizes_seen := {}
 
 
 func _ready() -> void:
@@ -65,10 +69,11 @@ func _run() -> void:
 	_check(Progress.data.level_of(upgrade.id) == 1, "upgrade survives a reload")
 
 	if not _failed:
-		print("SMOKE PASS")
+		print("SMOKE PASS rooms of sizes %s" % str(_sizes_seen.keys()))
 		get_tree().quit(0)
 
 
+# Explores every room through its real door, secret room included, and leaves the boss for last.
 func _clear_whole_floor() -> void:
 	Game.begin_run()
 	await _wait(0.5)
@@ -76,26 +81,153 @@ func _clear_whole_floor() -> void:
 	var scene := get_tree().current_scene
 	var starting_pills: int = scene.player.run.stats.max_pills
 	_check(starting_pills >= 4, "run starts with pills")
+	var map: FloorMap = scene.debug_map()
+	var walked_back := false
 	var guard := 0
-	while not scene.is_cleared and guard < MAX_ROOMS:
+	while not scene.is_cleared and not _failed and guard < MAX_STEPS:
 		guard += 1
 		await _clear_room(scene)
 		if scene.is_cleared:
 			break
-		scene.debug_take_first_exit()
-		await _wait(0.2)
-		if guard == 1:
-			await _clear_room(scene)
-			await _walk_back_and_return(scene)
+		_check_camera(scene)
+		var at: int = scene.debug_current_id()
+		if not walked_back and at != map.start_id:
+			walked_back = true
+			await _walk_back_and_return(scene, at)
+		var next: int = map.next_step(at, _next_goal(scene, map))
+		await _walk_through_door(scene, next)
 	_check(scene.is_cleared, "floor can be cleared")
+	_check(walked_back, "the check walked back through a door")
 	_check(_boss_rooms_seen >= 2, "both bosses showed a boss bar")
+	for room in map.rooms:
+		_check(scene.debug_progress().is_visited(room.id), "room %d (%s) was explored" % [room.id, room.room_type])
 
 
-func _walk_back_and_return(scene: Node) -> void:
-	await _wait(0.5)
-	var pension_before: int = Progress.data.pension
-	scene.debug_go_back()
+func _next_goal(scene: Node, map: FloorMap) -> int:
+	var at: int = scene.debug_current_id()
+	var best: int = map.boss_id
+	var best_steps := 1000
+	for room in map.rooms:
+		if room.id == map.boss_id or scene.debug_progress().is_visited(room.id):
+			continue
+		var steps := _steps_between(map, at, room.id)
+		if steps < best_steps:
+			best = room.id
+			best_steps = steps
+	return best
+
+
+func _steps_between(map: FloorMap, from_id: int, to_id: int) -> int:
+	var steps := 0
+	var cursor := from_id
+	while cursor != to_id and steps < map.rooms.size():
+		cursor = map.next_step(cursor, to_id)
+		steps += 1
+	return steps
+
+
+func _walk_through_door(scene: Node, target_id: int) -> void:
+	var map: FloorMap = scene.debug_map()
+	var from_id: int = scene.debug_current_id()
+	var target := map.room(target_id)
+	if target.room_type == RoomLayout.TYPE_SECRET and scene.debug_room_view().door_to(target_id) == null:
+		await _open_secret_crack(scene, target_id)
+	var door: Door = scene.debug_room_view().door_to(target_id)
+	_check(door != null, "room %d has a door to room %d" % [from_id, target_id])
+	if door == null:
+		return
+	await _step_away_from(scene, door, map.room(from_id))
+	if target.room_type == RoomLayout.TYPE_TREASURE and door.requires_key:
+		await _unlock_treasure_door(scene, door, from_id)
+	# Spending the Slip while standing on the door walks him through it at once.
+	if scene.debug_current_id() == from_id:
+		_stand_on(scene, door)
+		await _wait(0.15)
+	_check(scene.debug_current_id() == target_id, "walking onto a door enters room %d" % target_id)
+	_check_arrival(scene, map, target_id, from_id)
 	await _wait(0.2)
+	_check(scene.debug_current_id() == target_id, "arriving on a door does not bounce him back")
+
+
+func _check_arrival(scene: Node, map: FloorMap, room_id: int, from_id: int) -> void:
+	var room := map.room(room_id)
+	var side := room.side_towards(from_id)
+	_check(side == map.room(from_id).side_towards(room_id) * -1, "the door he arrives on faces where he came from")
+	var feet: Vector2 = scene.player.feet().global_position
+	var expected := RoomBackdrop.cell_center(room.layout.door_cell(side))
+	_check(feet.distance_to(expected) < Door.ENTER_RADIUS, "he arrives standing on the door of room %d (%s), feet %s, door %s" % [room_id, room.layout.resource_path, str(feet), str(expected)])
+	_sizes_seen[room.layout.size_class()] = true
+
+
+func _unlock_treasure_door(scene: Node, door: Door, from_id: int) -> void:
+	var run: RunState = scene.player.run
+	while run.keys > 0:
+		run.use_key()
+	_stand_on(scene, door)
+	await _wait(0.15)
+	_check(scene.debug_current_id() == from_id, "the treasure door stays shut without a Slip")
+	run.add_key()
+	await get_tree().process_frame
+	Input.action_press("interact")
+	await get_tree().process_frame
+	await get_tree().process_frame
+	Input.action_release("interact")
+	await _wait(0.05)
+	_check(not door.requires_key, "a Slip opens the treasure door")
+	_check(run.keys == 0, "opening the treasure door spends the Slip")
+
+
+func _open_secret_crack(scene: Node, target_id: int) -> void:
+	var view: RoomView = scene.debug_room_view()
+	var room: FloorRoom = scene.debug_map().room(scene.debug_current_id())
+	var side := room.side_towards(target_id)
+	var cell := room.layout.door_cell(side)
+	_check(view.door_to(target_id) == null, "a secret room shows no door until the crack opens")
+	var pills_before: int = scene.player.run.health.pills
+	# Far enough that the blast can't reach him, as in play.
+	scene.player.global_position = Player.arrival_position(room.layout.nearest_floor_cell(cell - side * 4))
+	view.place_bomb(RoomBackdrop.cell_center(cell))
+	await _wait(Thermos.FUSE_TIME + 0.3)
+	_check(view.door_to(target_id) != null, "a Thermos by the crack opens the secret door")
+	_check(scene.player.run.health.pills == pills_before, "the blast did not reach him")
+
+
+func _step_away_from(scene: Node, door: Door, room: FloorRoom) -> void:
+	var side := room.side_towards(door.target_id())
+	var cell := room.layout.nearest_floor_cell(room.layout.door_cell(side) - side * 3)
+	scene.player.global_position = Player.arrival_position(cell)
+	await _wait(0.05)
+
+
+func _stand_on(scene: Node, door: Door) -> void:
+	scene.player.global_position = door.global_position - Player.FEET_OFFSET
+
+
+func _check_camera(scene: Node) -> void:
+	await get_tree().process_frame
+	var camera: Camera2D = scene.debug_camera()
+	var cells: Vector2i = scene.debug_map().room(scene.debug_current_id()).layout.size_in_cells()
+	var room_size := Vector2(cells) * RoomBackdrop.TILE
+	var view_rect := Rect2(camera.position - VIEW / 2.0, VIEW)
+	for axis in 2:
+		if room_size[axis] <= VIEW[axis]:
+			_check(is_equal_approx(camera.position[axis], roundf(room_size[axis] / 2.0)), "a room that fits stays centered")
+		else:
+			_check(view_rect.position[axis] >= 0.0 and view_rect.end[axis] <= room_size[axis], "the camera stops at the room's edges")
+	# Aiming reads the mouse through the camera, so it must land where the view is now.
+	var mouse_on_screen: Vector2 = scene.get_viewport().get_mouse_position()
+	var expected_mouse: Vector2 = view_rect.position + camera.offset + mouse_on_screen
+	var aim_error: float = scene.player.get_global_mouse_position().distance_to(expected_mouse)
+	_check(aim_error <= AIM_TOLERANCE, "aiming follows the camera, off by %f" % aim_error)
+
+
+func _walk_back_and_return(scene: Node, here_id: int) -> void:
+	await _wait(0.5)
+	var map: FloorMap = scene.debug_map()
+	var pension_before: int = Progress.data.pension
+	var pickups_here := _resting_pickups()
+	var back_id: int = map.next_step(here_id, map.start_id)
+	await _walk_through_door(scene, back_id)
 	_check(get_tree().get_nodes_in_group("enemies").is_empty(), "a cleared room stays clear when walking back")
 	_check(Progress.data.pension == pension_before, "walking back earns no Pension")
 	var big_map: FloorMapView = scene.debug_big_map()
@@ -103,14 +235,26 @@ func _walk_back_and_return(scene: Node) -> void:
 	_check(get_tree().paused, "the big map pauses the game")
 	big_map.set_open(false)
 	_check(not get_tree().paused, "closing the big map resumes the game")
-	scene.debug_take_first_exit()
-	await _wait(0.2)
+	await _walk_through_door(scene, here_id)
 	_check(get_tree().get_nodes_in_group("enemies").is_empty(), "a cleared room stays clear when returning")
 	_check(Progress.data.pension == pension_before, "returning earns no Pension")
+	_check(_resting_pickups() == pickups_here, "a room remembers pickups left behind")
+
+
+func _resting_pickups() -> int:
+	var count := 0
+	for pickup in get_tree().get_nodes_in_group("pickups"):
+		if not pickup.is_flying() and not pickup.is_queued_for_deletion():
+			count += 1
+	return count
 
 
 func _clear_room(scene: Node) -> void:
 	await _wait(0.1)
+	var room_id: int = scene.debug_current_id()
+	if _cleared_rooms.has(room_id):
+		return
+	_cleared_rooms[room_id] = true
 	var hud := _find_hud(scene)
 	var boss_here := false
 	for enemy in get_tree().get_nodes_in_group("enemies"):
@@ -125,13 +269,19 @@ func _clear_room(scene: Node) -> void:
 	if boss_here:
 		_check(not hud.is_boss_bar_visible(), "boss bar is hidden after the boss falls")
 	for pickup in get_tree().get_nodes_in_group("pickups"):
-		if is_instance_valid(pickup) and not scene.is_over:
-			if pickup.requires_interact:
+		# Walking onto a pickup near a door can leave the room, and then the rest are out of reach.
+		if scene.is_over or scene.debug_current_id() != room_id:
+			return
+		if not is_instance_valid(pickup) or not pickup.is_inside_tree():
+			continue
+		if pickup.requires_interact:
+			# Buying could spend the Pension this check expects to see earned.
+			if pickup.prompt != RoomView.SHOP_PROMPT:
 				pickup.collect()
 				await _wait(0.05)
-				continue
-			scene.player.global_position = pickup.global_position
-			await _wait(0.05)
+			continue
+		scene.player.global_position = pickup.global_position
+		await _wait(0.05)
 
 
 func _find_hud(scene: Node) -> Hud:

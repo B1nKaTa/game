@@ -16,16 +16,18 @@ const ROOM_COLORS := {
 }
 const PANEL_COLOR := Color(0.09, 0.07, 0.11, 0.65)
 const BIG_PANEL_COLOR := Color(0.09, 0.07, 0.11, 0.95)
-const LINE_COLOR := Color("625e6f")
+const LINE_COLOR := Color("c9c5d6")
 const CURRENT_COLOR := Color.WHITE
-const MIN_ROW := -1.0
-const MINI_RECT := Rect2(528, 3, 108, 30)
-const MINI_SPACING := Vector2(13, 8)
-const MINI_ROOM := Vector2(9, 6)
+const MINI_RECT := Rect2(528, 3, 108, 58)
+const MINI_SPACING := Vector2(13, 11)
+const MINI_FONT := 8
+const MINI_LINK := 3.0
 const BIG_RECT := Rect2(60, 40, 520, 280)
+const BIG_AREA := Rect2(72, 70, 496, 214)
 const BIG_SPACING := Vector2(60, 46)
-const BIG_ROOM := Vector2(40, 30)
-const BIG_MARGIN := Vector2(38, 58)
+const BIG_FONT := 16
+const BIG_LINK := 6.0
+const ROOM_FILL := 0.8
 const LEGEND_TOP := "C Combat   I Item   H Healing   ? Side   S Secret"
 const LEGEND_BOTTOM := "T Treasure   $ Shop   M Mini boss   B Boss"
 const TITLE := "Floor Map"
@@ -38,21 +40,33 @@ var _current_id := -1
 var _is_big := false
 
 
-# Column is the layer, read left to right from the start to the boss. Row is measured so a lone room sits between two.
+# A room's place on the map is its grid cell, counted from the floor's top left, whatever its size.
 static func map_position(map: FloorMap, room: FloorRoom) -> Vector2:
-	if room.room_type == RoomLayout.TYPE_SIDE or room.room_type == RoomLayout.TYPE_SECRET:
-		var parent := map_position(map, map.room(room.parent_id))
-		return Vector2(parent.x, parent.y - 1.0 if parent.y < 1.0 else parent.y + 1.0)
-	if room.room_type == RoomLayout.TYPE_TREASURE or room.room_type == RoomLayout.TYPE_SHOP:
-		var parent := map_position(map, map.room(room.parent_id))
-		return Vector2(parent.x, parent.y + 1.0)
-	var in_layer: Array[FloorRoom] = []
-	for candidate in map.main_rooms():
-		if candidate.layer == room.layer:
-			in_layer.append(candidate)
-	if in_layer.size() == 1:
-		return Vector2(room.layer, 0.5)
-	return Vector2(room.layer, in_layer.find(room))
+	return Vector2(room.cell - map.bounds().position)
+
+
+static func room_size(spacing: Vector2) -> Vector2:
+	return (spacing * ROOM_FILL).floor()
+
+
+static func room_rect(at: Vector2, origin: Vector2, spacing: Vector2) -> Rect2:
+	return Rect2(origin + at * spacing, room_size(spacing))
+
+
+# As roomy as the panel allows while the whole floor fits, with a stable picture as rooms are found.
+static func big_spacing(extent: Vector2i) -> Vector2:
+	var fit := (BIG_AREA.size / Vector2(extent)).floor()
+	return Vector2(minf(fit.x, BIG_SPACING.x), minf(fit.y, BIG_SPACING.y))
+
+
+static func big_origin(extent: Vector2i, spacing: Vector2) -> Vector2:
+	var used := Vector2(extent) * spacing - (spacing - room_size(spacing))
+	return BIG_AREA.position + ((BIG_AREA.size - used) / 2.0).floor()
+
+
+# The small map keeps the current room in the middle, since a whole floor won't fit in the corner.
+static func mini_origin(current_at: Vector2) -> Vector2:
+	return MINI_RECT.get_center() - current_at * MINI_SPACING - room_size(MINI_SPACING) / 2.0
 
 
 func setup(map: FloorMap, progress: FloorProgress, is_big: bool) -> void:
@@ -99,20 +113,18 @@ func _exit_tree() -> void:
 
 
 func _draw() -> void:
-	if _map == null or _progress == null:
+	if _map == null or _progress == null or _current_id == -1:
 		return
 	var panel := BIG_RECT if _is_big else MINI_RECT
-	var spacing := BIG_SPACING if _is_big else MINI_SPACING
-	var room_size := BIG_ROOM if _is_big else MINI_ROOM
-	var origin := panel.position + (BIG_MARGIN if _is_big else Vector2(3, 3))
+	var extent := _map.bounds().size
+	var spacing := big_spacing(extent) if _is_big else MINI_SPACING
+	var origin := big_origin(extent, spacing) if _is_big else mini_origin(map_position(_map, _map.room(_current_id)))
 	draw_rect(panel, BIG_PANEL_COLOR if _is_big else PANEL_COLOR)
-	draw_rect(panel, LINE_COLOR, false, 1.0)
+	draw_rect(panel, Color("625e6f"), false, 1.0)
 	for room_id in _progress.visited_ids():
-		var previous := _progress.previous_of(room_id)
-		if previous != -1:
-			draw_line(_room_center(room_id, origin, spacing, room_size), _room_center(previous, origin, spacing, room_size), LINE_COLOR, 2.0 if _is_big else 1.0)
+		_draw_links(_map.room(room_id), panel, origin, spacing)
 	for room_id in _progress.visited_ids():
-		_draw_room(_map.room(room_id), origin, spacing, room_size)
+		_draw_room(_map.room(room_id), panel, origin, spacing)
 	if _is_big:
 		_draw_text(panel.position + Vector2(12, 22), TITLE, 16, Color.WHITE)
 		_draw_text(panel.end - Vector2(62, 257), KeyBindings.with_key("map", CLOSE_HINT), 11, Color("ffd24a"))
@@ -120,18 +132,35 @@ func _draw() -> void:
 		_draw_text(panel.position + Vector2(12, panel.size.y - 12), LEGEND_BOTTOM, 11, Color("ece9e0"))
 
 
-func _room_center(room_id: int, origin: Vector2, spacing: Vector2, room_size: Vector2) -> Vector2:
-	var at := map_position(_map, _map.room(room_id)) - Vector2(0, MIN_ROW)
-	return origin + at * spacing + room_size / 2.0
+# Only between two visited rooms, so a link never gives away a room or a secret not yet found.
+func _draw_links(room: FloorRoom, panel: Rect2, origin: Vector2, spacing: Vector2) -> void:
+	var from := _rect_of(room, origin, spacing)
+	if not panel.encloses(from):
+		return
+	for side: Vector2i in room.doors:
+		var other_id: int = room.doors[side]
+		if not _progress.is_visited(other_id) or not panel.encloses(_rect_of(_map.room(other_id), origin, spacing)):
+			continue
+		var center := from.get_center()
+		draw_line(center, center + Vector2(side) * spacing, LINE_COLOR, BIG_LINK if _is_big else MINI_LINK)
 
 
-func _draw_room(room: FloorRoom, origin: Vector2, spacing: Vector2, room_size: Vector2) -> void:
-	var rect := Rect2(_room_center(room.id, origin, spacing, room_size) - room_size / 2.0, room_size)
+func _rect_of(room: FloorRoom, origin: Vector2, spacing: Vector2) -> Rect2:
+	return room_rect(map_position(_map, room), origin, spacing)
+
+
+func _draw_room(room: FloorRoom, panel: Rect2, origin: Vector2, spacing: Vector2) -> void:
+	var rect := _rect_of(room, origin, spacing)
+	if not panel.encloses(rect):
+		return
 	draw_rect(rect, ROOM_COLORS.get(room.room_type, Color.WHITE))
 	var is_current := room.id == _current_id
-	draw_rect(rect, CURRENT_COLOR if is_current else Color.BLACK, false, 2.0 if is_current and _is_big else 1.0)
-	if _is_big:
-		_draw_text(rect.position + Vector2(room_size.x / 2.0 - 5.0, room_size.y / 2.0 + 6.0), RoomRules.door_icon(room.room_type), 16, Color.BLACK)
+	draw_rect(rect, CURRENT_COLOR if is_current else Color.BLACK, false, 2.0 if is_current else 1.0)
+	var font_size := BIG_FONT if _is_big else MINI_FONT
+	var icon := RoomRules.door_icon(room.room_type)
+	var icon_size := ThemeDB.fallback_font.get_string_size(icon, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
+	var ascent := ThemeDB.fallback_font.get_ascent(font_size)
+	_draw_text(rect.get_center() + Vector2(-icon_size.x / 2.0, ascent - icon_size.y / 2.0), icon, font_size, Color.BLACK)
 
 
 func _draw_text(at: Vector2, text: String, font_size: int, color: Color) -> void:

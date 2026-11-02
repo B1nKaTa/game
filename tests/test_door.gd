@@ -8,31 +8,27 @@ func test_a_door_arms_once_the_player_is_out_of_range() -> void:
 
 
 func test_an_armed_open_door_is_entered_when_in_range() -> void:
-	assert_true(Door.should_enter(false, false, false, false, true, true))
+	assert_true(Door.should_enter(false, false, false, true, true))
 
 
 func test_arriving_on_a_door_does_not_enter_it() -> void:
-	assert_false(Door.should_enter(false, false, false, false, false, true))
+	assert_false(Door.should_enter(false, false, false, false, true))
 
 
 func test_a_locked_door_is_not_entered() -> void:
-	assert_false(Door.should_enter(true, false, false, false, true, true))
-
-
-func test_a_sealed_door_is_not_entered() -> void:
-	assert_false(Door.should_enter(false, true, false, false, true, true))
+	assert_false(Door.should_enter(true, false, false, true, true))
 
 
 func test_a_door_needing_a_slip_is_not_entered() -> void:
-	assert_false(Door.should_enter(false, false, true, false, true, true))
+	assert_false(Door.should_enter(false, true, false, true, true))
 
 
 func test_a_used_door_is_not_entered_twice() -> void:
-	assert_false(Door.should_enter(false, false, false, true, true, true))
+	assert_false(Door.should_enter(false, false, true, true, true))
 
 
 func test_out_of_range_is_not_entered() -> void:
-	assert_false(Door.should_enter(false, false, false, false, true, false))
+	assert_false(Door.should_enter(false, false, false, true, false))
 
 
 func test_a_slip_can_only_be_spent_on_an_open_door_in_range() -> void:
@@ -51,3 +47,9 @@ func test_rearming_lets_a_door_be_used_after_returning() -> void:
 	assert_false(door._used)
 	assert_false(door._armed, "must be left before it can fire again")
 	door.free()
+
+
+func test_a_prompt_on_an_east_door_stays_inside_the_room() -> void:
+	assert_true(Door.prompt_x(50.0, RoomLayout.EAST) + 50.0 < 0.0, "drawn to the left of the door")
+	for side: Vector2i in [RoomLayout.NORTH, RoomLayout.SOUTH, RoomLayout.WEST]:
+		assert_true(Door.prompt_x(50.0, side) > 0.0, "drawn to the right of the door")

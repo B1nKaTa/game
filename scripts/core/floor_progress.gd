@@ -1,24 +1,19 @@
 class_name FloorProgress
 extends RefCounted
 
+const FIRST_ARRIVAL_SIDES: Array[Vector2i] = [RoomLayout.SOUTH, RoomLayout.WEST, RoomLayout.EAST, RoomLayout.NORTH]
+
 var _map: FloorMap
 var _visited: Array[int] = []
-var _came_from := {}
-var _chosen_in_layer := {}
 
 
 func _init(map: FloorMap) -> void:
 	_map = map
 
 
-func enter(room_id: int, from_id := -1) -> void:
-	if is_visited(room_id):
-		return
-	_visited.append(room_id)
-	_came_from[room_id] = from_id
-	var room := _map.room(room_id)
-	if not room.is_detour():
-		_chosen_in_layer[room.layer] = room_id
+func enter(room_id: int) -> void:
+	if not is_visited(room_id):
+		_visited.append(room_id)
 
 
 func is_visited(room_id: int) -> bool:
@@ -29,41 +24,13 @@ func visited_ids() -> Array[int]:
 	return _visited
 
 
-func is_sealed(room_id: int) -> bool:
-	var room := _map.room(room_id)
-	if room.is_detour():
-		return false
-	return _chosen_in_layer.get(room.layer, room_id) != room_id
-
-
-func previous_of(room_id: int) -> int:
-	var room := _map.room(room_id)
-	if room.is_detour():
-		return room.parent_id
-	return _came_from.get(room_id, -1)
-
-
-func back_target(room_id: int) -> int:
-	if _map.room(room_id).room_type == RoomLayout.TYPE_FLOOR_BOSS:
-		return -1
-	return previous_of(room_id)
-
-
+# Grandpa arrives on the door leading back the way he came.
 func arrival_cell(to_id: int, from_id: int) -> Vector2i:
 	var to_room := _map.room(to_id)
-	if to_room.is_detour():
-		return RoomLayout.SIDE_ROOM_SPAWN
-	if from_id == -1:
-		return RoomLayout.ENTRY
-	var from_room := _map.room(from_id)
-	if from_room.room_type == RoomLayout.TYPE_SIDE:
-		return RoomLayout.SIDE_DOOR
-	if from_room.room_type == RoomLayout.TYPE_TREASURE:
-		return RoomLayout.TREASURE_DOOR
-	if from_room.room_type == RoomLayout.TYPE_SHOP:
-		return RoomLayout.SHOP_DOOR
-	if from_room.room_type == RoomLayout.TYPE_SECRET:
-		return RoomLayout.SECRET_DOOR
-	if to_room.layer > from_room.layer:
-		return RoomLayout.ENTRY
-	return RoomLayout.EXIT_CELLS[to_room.exits.find(from_id)]
+	var side := to_room.side_towards(from_id)
+	if side != Vector2i.ZERO:
+		return to_room.layout.door_cell(side)
+	for free_side in FIRST_ARRIVAL_SIDES:
+		if not to_room.doors.has(free_side):
+			return to_room.layout.door_cell(free_side)
+	return to_room.layout.door_cell(FIRST_ARRIVAL_SIDES[0])

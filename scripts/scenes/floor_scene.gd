@@ -34,7 +34,7 @@ func _ready() -> void:
 	_hud.set_pension(Progress.data.pension)
 	Progress.pension_changed.connect(_hud.set_pension)
 	_floor_def = load(FLOOR_PATH)
-	_map = FloorBuilder.build(_rng, RoomCatalog.load_valid(_floor_def.rooms_dir))
+	_map = FloorBuilder.build(_rng, _floor_def)
 	if _map == null:
 		_end_run("This floor could not be built. Returning to the Waiting Room.")
 		return
@@ -60,16 +60,24 @@ func _ready() -> void:
 	_enter_room(_map.start_id)
 
 
-func debug_take_first_exit() -> void:
-	var room := _map.room(_current_id)
-	if room.is_detour():
-		_enter_room(room.parent_id)
-	elif not room.exits.is_empty():
-		_enter_room(room.exits[0])
+func debug_map() -> FloorMap:
+	return _map
 
 
-func debug_go_back() -> void:
-	_enter_room(_progress.back_target(_current_id))
+func debug_progress() -> FloorProgress:
+	return _progress
+
+
+func debug_current_id() -> int:
+	return _current_id
+
+
+func debug_room_view() -> RoomView:
+	return _room_view
+
+
+func debug_camera() -> Camera2D:
+	return _camera
 
 
 func debug_big_map() -> FloorMapView:
@@ -95,7 +103,7 @@ func _enter_room(target_id: int) -> void:
 	if _room_view != null:
 		_room_view.clear_passing_effects()
 		remove_child(_room_view)
-	_progress.enter(target_id, from_id)
+	_progress.enter(target_id)
 	_current_id = target_id
 	_room_view = _room_views.get(target_id)
 	if _room_view == null:

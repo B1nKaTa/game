@@ -16,7 +16,6 @@ const SHOP_PROMPT := "Buy"
 const RECIPE_COLOR := Color("ffd65c")
 const RECIPE_PROMPT := "Take recipe"
 const FREE_COLOR := Color("67f0d0")
-const BACK_ICON := "<"
 const KEY_COLOR := Color("ece9e0")
 const BOMB_COLOR := Color("ff9a3c")
 const CHEST_COLOR := Color("a8692f")
@@ -69,11 +68,10 @@ func _ready() -> void:
 		_finish_room()
 
 
-# Call each time the player arrives, because choosing a route can seal doors in rooms visited earlier.
+# Call each time the player arrives, so the door he stands on waits until he steps away.
 func refresh_doors() -> void:
 	for door in _doors:
 		door.rearm()
-		door.sealed = _progress.is_sealed(door.target_id())
 
 
 # The room stays alive while the player is away, so remembered pickups keep their place.
@@ -93,41 +91,44 @@ func place_bomb(at: Vector2) -> void:
 	add_child(thermos)
 
 
+func door_to(target_id: int) -> Door:
+	for door in _doors:
+		if door.target_id() == target_id:
+			return door
+	return null
+
+
 func _create_doors() -> void:
-	var back_id := _progress.back_target(_room.id)
-	if back_id != -1:
-		_add_door(back_id, BACK_ICON, RoomLayout.ENTRY)
-	if _room.is_detour():
-		return
-	for i in _room.exits.size():
-		var target := _map.room(_room.exits[i])
-		_add_door(target.id, RoomRules.door_icon(target.room_type), RoomLayout.EXIT_CELLS[i])
-	if _room.side_id != -1:
-		_add_door(_room.side_id, RoomRules.door_icon(RoomLayout.TYPE_SIDE), RoomLayout.SIDE_DOOR)
-	if _room.treasure_id != -1:
-		_add_treasure_door()
-	if _room.shop_id != -1:
-		_add_door(_room.shop_id, RoomRules.door_icon(RoomLayout.TYPE_SHOP), RoomLayout.SHOP_DOOR)
-	if _room.secret_id != -1:
-		_add_secret_wall()
+	for side in RoomLayout.SIDES:
+		if not _room.doors.has(side):
+			continue
+		var target := _map.room(_room.doors[side])
+		match target.room_type:
+			RoomLayout.TYPE_SECRET:
+				_add_secret_wall(side)
+			RoomLayout.TYPE_TREASURE:
+				_add_treasure_door(target.id, side)
+			_:
+				_add_door(target.id, RoomRules.door_icon(target.room_type), side)
 
 
-func _add_secret_wall() -> void:
+# The crack sits in the wall on the side leading to the secret room.
+func _add_secret_wall(side: Vector2i) -> void:
 	var wall := SecretWall.new()
-	wall.position = RoomBackdrop.cell_center(RoomLayout.SECRET_WALL)
-	wall.broken.connect(_on_secret_wall_broken)
+	wall.position = RoomBackdrop.cell_center(_room.layout.wall_cell(side))
+	wall.broken.connect(_on_secret_wall_broken.bind(side))
 	add_child(wall)
 
 
-func _on_secret_wall_broken(_at: Vector2) -> void:
-	var door := _add_door(_room.secret_id, RoomRules.door_icon(RoomLayout.TYPE_SECRET), RoomLayout.SECRET_DOOR)
+func _on_secret_wall_broken(_at: Vector2, side: Vector2i) -> void:
+	var door := _add_door(_room.doors[side], RoomRules.door_icon(RoomLayout.TYPE_SECRET), side)
 	door.locked = not _finished
 	doors_opened.emit()
 	notice.emit("You found a secret room!")
 
 
-func _add_treasure_door() -> void:
-	var door := _add_door(_room.treasure_id, RoomRules.door_icon(RoomLayout.TYPE_TREASURE), RoomLayout.TREASURE_DOOR)
+func _add_treasure_door(target_id: int, side: Vector2i) -> void:
+	var door := _add_door(target_id, RoomRules.door_icon(RoomLayout.TYPE_TREASURE), side)
 	door.requires_key = true
 	door.has_key = func(): return _run.keys > 0
 	door.key_spent.connect(_on_treasure_door_unlocked)
@@ -138,10 +139,10 @@ func _on_treasure_door_unlocked() -> void:
 	doors_opened.emit()
 
 
-func _add_door(target_id: int, icon: String, cell: Vector2i) -> Door:
+func _add_door(target_id: int, icon: String, side: Vector2i) -> Door:
 	var door := Door.new()
-	door.setup(target_id, icon, _player.feet())
-	door.position = RoomBackdrop.cell_center(cell)
+	door.setup(target_id, icon, _player.feet(), side)
+	door.position = RoomBackdrop.cell_center(_room.layout.door_cell(side))
 	door.entered.connect(func(id: int): door_entered.emit(id))
 	add_child(door)
 	_doors.append(door)

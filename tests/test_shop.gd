@@ -84,27 +84,23 @@ func test_station_text_when_empty() -> void:
 	assert_eq(RetirementStation.status_lines(0, 10, false)[2], "Empty")
 
 
-func test_every_floor_has_one_shop_away_from_the_treasure_room() -> void:
+func test_every_floor_has_one_shop_reachable_without_a_bomb_off_a_middle_room() -> void:
 	var pool := _pool()
+	var def: FloorDef = load("res://data/floors/floor_1.tres")
 	for seed_value in 300:
 		var rng := RandomNumberGenerator.new()
 		rng.seed = seed_value
-		var map := FloorBuilder.build(rng, pool)
+		var map := FloorBuilder.build_from_pool(rng, def, pool)
+		var reached := map.reached_without_bomb()
 		var shops := 0
 		for room in map.rooms:
 			if room.room_type != RoomLayout.TYPE_SHOP:
 				continue
 			shops += 1
 			assert_true(room.is_detour())
-			var parent := map.room(room.parent_id)
-			assert_eq(parent.shop_id, room.id)
-			assert_eq(parent.treasure_id, -1, "seed %d: both on one parent would overlap on the map" % seed_value)
-			assert_true(parent.id != map.start_id and parent.id != map.boss_id)
-			var in_layer := 0
-			for candidate in map.main_rooms():
-				if candidate.layer == parent.layer:
-					in_layer += 1
-			assert_eq(in_layer, 1, "seed %d: a sealed route could hide the shop" % seed_value)
+			assert_true(reached.has(room.id), "seed %d" % seed_value)
+			var parent_id: int = room.doors.values()[0]
+			assert_true(parent_id != map.start_id and parent_id != map.boss_id)
 		assert_eq(shops, 1, "seed %d" % seed_value)
 
 
@@ -113,17 +109,18 @@ func test_arriving_around_a_shop() -> void:
 	var parent := FloorRoom.new()
 	parent.id = 0
 	parent.room_type = RoomLayout.TYPE_COMBAT
+	parent.layout = _pool()[0]
 	map.rooms.append(parent)
 	var shop := FloorRoom.new()
 	shop.id = 1
 	shop.room_type = RoomLayout.TYPE_SHOP
-	shop.parent_id = 0
+	shop.cell = Vector2i(0, 1)
+	shop.layout = _pool()[0]
 	map.rooms.append(shop)
+	map.join(parent, shop)
 	var progress := FloorProgress.new(map)
-	assert_eq(progress.arrival_cell(1, 0), RoomLayout.SIDE_ROOM_SPAWN)
-	assert_eq(progress.arrival_cell(0, 1), RoomLayout.SHOP_DOOR)
-	assert_false(progress.is_sealed(1))
-	assert_eq(progress.back_target(1), 0)
+	assert_eq(progress.arrival_cell(1, 0), shop.layout.door_cell(RoomLayout.NORTH))
+	assert_eq(progress.arrival_cell(0, 1), parent.layout.door_cell(RoomLayout.SOUTH))
 
 
 func test_shop_layout_has_room_for_every_reward() -> void:
