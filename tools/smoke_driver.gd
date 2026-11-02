@@ -953,7 +953,7 @@ func _check_vault_room(scene: Node) -> void:
 			choices += 1
 		if pickup._label == RoomRules.POTION_NAME:
 			potion = pickup
-	_check(names.has(RoomRules.POTION_NAME) and names.has(RoomRules.BOMB_NAME) and names.has(RoomRules.KEY_NAME), "a vault holds a potion, a Thermos and a Slip in the open")
+	_check(names.has(RoomRules.POTION_NAME) and names.has(RoomRules.BOMB_NAME) and names.has(RoomRules.KEY_NAME), "a vault holds a potion, a Thermos and a Slip in the open, found %s in %s" % [str(names.keys()), scene.debug_map().room(scene.debug_current_id()).layout.resource_path])
 	_check(choices >= 3, "a vault offers a choice of items, found %d interactive pickups" % choices)
 	if potion == null:
 		return

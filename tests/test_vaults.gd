@@ -61,6 +61,47 @@ func test_vault_layouts_are_valid_rich_and_cover_every_size() -> void:
 	assert_eq(sizes.size(), 3)
 
 
+# Arriving on a door collects whatever lies on it, so a vault's open pickups stay clear of all four.
+func test_vault_extras_stay_off_doors_rewards_and_each_other() -> void:
+	var checked := 0
+	for layout in _pool():
+		if layout.room_type != RoomLayout.TYPE_VAULT:
+			continue
+		var cells := layout.vault_extra_cells(3)
+		assert_eq(cells.size(), 3, layout.resource_path)
+		for i in cells.size():
+			assert_eq(layout.symbol_at(cells[i]), RoomLayout.SYMBOL_FLOOR, "%s %s" % [layout.resource_path, cells[i]])
+			for side in RoomLayout.SIDES:
+				var offset := cells[i] - layout.door_cell(side)
+				assert_true(maxi(absi(offset.x), absi(offset.y)) > 1, "%s: %s touches a door" % [layout.resource_path, cells[i]])
+			for j in i:
+				var apart := cells[i] - cells[j]
+				assert_true(maxi(absi(apart.x), absi(apart.y)) >= RoomLayout.PICKUP_SPACING, "%s: labels would overlap" % layout.resource_path)
+		checked += 1
+	assert_eq(checked, 3)
+
+
+func test_a_vault_with_no_room_for_its_extras_fails_validation() -> void:
+	var layout := RoomLayout.new()
+	layout.room_type = RoomLayout.TYPE_VAULT
+	# Every cell away from the doors is taken, so nothing can be laid out in the open.
+	layout.rows = PackedStringArray([
+		"##########",
+		"#IIIT.TIT#",
+		"#IIIT.TIT#",
+		"#IIIT.TIT#",
+		"#........#",
+		"#ITIT.TIT#",
+		"#ITIT.TIT#",
+		"##########",
+	])
+	assert_true(layout.vault_extra_cells(3).size() < 3)
+	var told := false
+	for error in layout.validate():
+		told = told or error.contains("open pickups")
+	assert_true(told, "validation names the missing room")
+
+
 func test_a_vault_layout_without_its_rewards_fails() -> void:
 	var rows := ["####################"]
 	for y in range(1, 10):

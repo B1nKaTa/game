@@ -54,6 +54,9 @@ const WALL_LIKE := "#l"
 const WALLS := "#lV"
 const WALLS_AND_BOMB_ONLY := "#lVXO"
 const MUST_REACH_WITHOUT_BREAKING := "EBIHSPR"
+# A vault lays this many labeled pickups out in the open, this many cells apart so names never overlap.
+const VAULT_EXTRAS := 3
+const PICKUP_SPACING := 3
 const REQUIRED := {
 	TYPE_COMBAT: {"E": 2},
 	TYPE_ITEM: {"I": 2},
@@ -120,7 +123,50 @@ func validate() -> PackedStringArray:
 	for side in SIDES:
 		if not open.has(door_cell(side)):
 			errors.append("needs a bomb to reach the door at %s" % str(door_cell(side)))
+	if room_type == TYPE_VAULT and vault_extra_cells(VAULT_EXTRAS).size() < VAULT_EXTRAS:
+		errors.append("no room for %d open pickups clear of the doors" % VAULT_EXTRAS)
 	return errors
+
+
+# Where a vault's open pickups lie: below its item row and spread out, on plain floor. Standing on a
+# pickup takes it, and Grandpa arrives standing on a door, so none may touch any of the four door cells.
+func vault_extra_cells(count: int) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	var items := cells_of("I")
+	var anchor: Vector2i = items[0] if not items.is_empty() else size_in_cells() / 2
+	for i in count:
+		var wanted := anchor + Vector2i(i * PICKUP_SPACING, 3 + i % 2)
+		var found := _nearest_open_spot(wanted, cells)
+		if found == Vector2i(-1, -1):
+			break
+		cells.append(found)
+	return cells
+
+
+func _nearest_open_spot(wanted: Vector2i, taken: Array[Vector2i]) -> Vector2i:
+	var best := Vector2i(-1, -1)
+	var best_distance := INF
+	for cell in cells_of(SYMBOL_FLOOR):
+		var distance := Vector2(cell - wanted).length_squared()
+		if distance < best_distance and not _touches_a_door(cell) and _spaced_from(cell, taken):
+			best_distance = distance
+			best = cell
+	return best
+
+
+func _touches_a_door(cell: Vector2i) -> bool:
+	for side in SIDES:
+		var offset := cell - door_cell(side)
+		if absi(offset.x) <= 1 and absi(offset.y) <= 1:
+			return true
+	return false
+
+
+func _spaced_from(cell: Vector2i, others: Array[Vector2i]) -> bool:
+	for other in others:
+		if maxi(absi(cell.x - other.x), absi(cell.y - other.y)) < PICKUP_SPACING:
+			return false
+	return true
 
 
 # The crack for a secret room needs the wall cell past each door, and a corner shows nothing.

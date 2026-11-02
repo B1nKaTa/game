@@ -405,12 +405,10 @@ func _create_rewards() -> void:
 # A vault is the richest room: the usual choice of items and treasures, plus a potion, a Thermos
 # and a Slip lying out in the open. It holds no Pension beyond a treasure's, so income stays put.
 func _create_vault_extras() -> void:
-	var anchor := _room.layout.cells_of("I")[0]
 	var kinds := [RoomRules.DROP_POTION, RoomRules.DROP_BOMB, RoomRules.DROP_KEY]
-	for i in kinds.size():
-		# Three cells apart and staggered, so the long names don't print over one another.
-		var cell := _room.layout.nearest_floor_cell(anchor + Vector2i(i * 3, 3 + i % 2))
-		_drop_consumable(RoomBackdrop.cell_center(cell), kinds[i])
+	var cells := _room.layout.vault_extra_cells(kinds.size())
+	for i in cells.size():
+		_drop_consumable(RoomBackdrop.cell_center(cells[i]), kinds[i])
 
 
 func _create_shop() -> void:
