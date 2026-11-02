@@ -26,7 +26,11 @@ func setup(state: CaneThrow, player: Node2D, direction: Vector2, damage_mult: fl
 	_state = state
 	_player = player
 	_direction = direction
-	_damage = DAMAGE * damage_mult
+	_damage = hit_damage(damage_mult)
+
+
+static func hit_damage(damage_mult: float) -> float:
+	return DAMAGE * damage_mult
 
 
 func _physics_process(delta: float) -> void:

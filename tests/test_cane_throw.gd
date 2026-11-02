@@ -79,3 +79,17 @@ func test_drop_restarts_the_timer_on_the_next_throw() -> void:
 	cane.drop()
 	cane.tick(1.0)
 	assert_true(cane.is_dropped())
+
+
+func test_throw_damage_scales_with_damage_mult() -> void:
+	assert_near(ThrownCane.hit_damage(1.0), 14.0)
+	assert_near(ThrownCane.hit_damage(1.5), 21.0)
+
+
+func test_a_hit_drops_the_cane_once() -> void:
+	var cane := CaneThrow.new()
+	cane.try_throw()
+	cane.drop()
+	cane.drop()
+	assert_true(cane.is_dropped())
+	assert_false(cane.is_flying(), "a dropped cane can't hit again")
