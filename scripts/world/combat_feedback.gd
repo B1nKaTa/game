@@ -48,6 +48,8 @@ func watch_room(room: RoomView) -> void:
 	room.enemy_died.connect(on_enemy_died)
 	room.pension_earned.connect(on_pension_earned)
 	room.doors_opened.connect(on_doors_opened)
+	room.bomb_exploded.connect(on_bomb_exploded)
+	room.consumable_taken.connect(on_consumable_taken)
 
 
 func on_swing_landed(heavy: bool, finisher: bool) -> void:
@@ -96,6 +98,15 @@ func on_pension_earned(_amount: int) -> void:
 
 func on_doors_opened() -> void:
 	_play("door_open")
+
+
+func on_bomb_exploded() -> void:
+	_shake.start(ScreenShake.CHARGED_HIT, ScreenShake.CHARGED_TIME)
+	_play("explosion")
+
+
+func on_consumable_taken() -> void:
+	_play("consumable_pickup")
 
 
 func is_shaking() -> bool:

@@ -9,6 +9,21 @@ const ICONS := {
 	RoomLayout.TYPE_MINI_BOSS: "M",
 	RoomLayout.TYPE_FLOOR_BOSS: "B",
 }
+const KEY_NAME := "Permission Slip"
+const BOMB_NAME := "Overheated Thermos"
+const DROP_NONE := ""
+const DROP_KEY := "key"
+const DROP_BOMB := "bomb"
+const CLEAR_KEY_CHANCE := 0.15
+const CLEAR_BOMB_CHANCE := 0.2
+
+
+static func clear_drop(roll: float) -> String:
+	if roll < CLEAR_KEY_CHANCE:
+		return DROP_KEY
+	if roll < CLEAR_KEY_CHANCE + CLEAR_BOMB_CHANCE:
+		return DROP_BOMB
+	return DROP_NONE
 
 
 static func door_icon(room_type: String) -> String:

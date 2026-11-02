@@ -44,6 +44,7 @@ func _ready() -> void:
 	player = Player.new()
 	player.setup(_run)
 	player.died.connect(_on_player_died)
+	player.bomb_requested.connect(_on_bomb_requested)
 	add_child(player)
 	_feedback.watch_player(player)
 	var glow := Lighting.make_light(Color(1.0, 0.85, 0.6), 0.7, 0.8)
@@ -120,6 +121,10 @@ func _exit_tree() -> void:
 	for view: RoomView in _room_views.values():
 		if is_instance_valid(view) and not view.is_inside_tree():
 			view.free()
+
+
+func _on_bomb_requested(at: Vector2) -> void:
+	_room_view.place_bomb(at)
 
 
 func _on_player_died() -> void:

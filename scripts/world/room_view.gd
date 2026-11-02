@@ -7,9 +7,13 @@ signal pension_earned(amount: int)
 signal boss_spawned(boss: Enemy)
 signal enemy_died(at: Vector2, is_boss: bool)
 signal doors_opened
+signal bomb_exploded
+signal consumable_taken
 
 const HEAL_AMOUNT := 2
 const BACK_ICON := "<"
+const KEY_COLOR := Color("ece9e0")
+const BOMB_COLOR := Color("ff9a3c")
 const PENSION_COLOR := Color("ffd24a")
 const ITEM_COLOR := Color("7dd3fc")
 const HEAL_COLOR := Color("e4524f")
@@ -27,6 +31,7 @@ var _finished := false
 var _had_enemies := false
 var _doors: Array[Door] = []
 var _coins: Array[Pickup] = []
+var _last_death_at := Vector2.ZERO
 
 
 func setup(room: FloorRoom, map: FloorMap, floor_def: FloorDef, run: RunState, player: Player, rng: RandomNumberGenerator, progress: FloorProgress) -> void:
@@ -63,8 +68,16 @@ func refresh_doors() -> void:
 func clear_passing_effects() -> void:
 	for child in get_children():
 		var is_flying_coin: bool = child is Pickup and child.is_flying()
-		if child is Projectile or child is DeathBurst or is_flying_coin:
+		if child is Projectile or child is DeathBurst or child is Thermos or is_flying_coin:
 			child.queue_free()
+
+
+func place_bomb(at: Vector2) -> void:
+	var thermos := Thermos.new()
+	thermos.setup(_player)
+	thermos.position = at
+	thermos.exploded.connect(bomb_exploded.emit)
+	add_child(thermos)
 
 
 func _create_doors() -> void:
@@ -126,6 +139,9 @@ func _on_enemy_defeated(enemy: Enemy) -> void:
 	DeathBurst.spawn(self, enemy.position, enemy.def.color, enemy.def.is_boss)
 	enemy_died.emit(enemy.position, enemy.def.is_boss)
 	_drop_coin(enemy.position, enemy.def.pension_drop)
+	_last_death_at = enemy.position
+	if _room.room_type == RoomLayout.TYPE_MINI_BOSS and enemy.def.is_boss:
+		_drop_consumable(enemy.position, RoomRules.DROP_KEY)
 	if enemy.def.is_boss:
 		for other in get_tree().get_nodes_in_group("enemies"):
 			if other != enemy and other.get_parent() == self:
@@ -139,6 +155,19 @@ func _drop_coin(at: Vector2, base_amount: int) -> void:
 	var coin := _add_pickup(at + Vector2(_rng.randf_range(-COIN_SCATTER, COIN_SCATTER), _rng.randf_range(-COIN_SCATTER, COIN_SCATTER)), "+%d" % amount, PENSION_COLOR, func(): pension_earned.emit(amount))
 	coin.flies = true
 	_coins.append(coin)
+
+
+func _drop_consumable(at: Vector2, kind: String) -> void:
+	match kind:
+		RoomRules.DROP_KEY:
+			_add_pickup(at, RoomRules.KEY_NAME, KEY_COLOR, func(): _take_consumable(_run.add_key))
+		RoomRules.DROP_BOMB:
+			_add_pickup(at, RoomRules.BOMB_NAME, BOMB_COLOR, func(): _take_consumable(_run.add_bomb))
+
+
+func _take_consumable(add: Callable) -> void:
+	add.call()
+	consumable_taken.emit()
 
 
 func _add_pickup(at: Vector2, label: String, color: Color, on_take: Callable, needs_interact := false) -> Pickup:
@@ -208,5 +237,7 @@ func _finish_room() -> void:
 			coin.fly()
 	if _room.room_type in [RoomLayout.TYPE_COMBAT, RoomLayout.TYPE_MINI_BOSS, RoomLayout.TYPE_SIDE]:
 		pension_earned.emit(_run.pension_amount(_floor_def.clear_pension))
+	if _had_enemies and _room.room_type in [RoomLayout.TYPE_COMBAT, RoomLayout.TYPE_SIDE]:
+		_drop_consumable(_last_death_at, RoomRules.clear_drop(_rng.randf()))
 	if _room.room_type == RoomLayout.TYPE_FLOOR_BOSS:
 		floor_cleared.emit()

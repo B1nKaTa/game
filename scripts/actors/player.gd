@@ -8,6 +8,7 @@ signal cane_thrown
 signal cane_hit
 signal cane_caught
 signal hurt
+signal bomb_requested(at: Vector2)
 
 const ATTACK_REACH := 44.0
 const ATTACK_ANGLE := 60.0
@@ -92,8 +93,15 @@ func _physics_process(delta: float) -> void:
 	_visual.set_facing_left(_aim.x < 0.0)
 	_visual.set_alpha(HurtLook.alpha_for(_dodge.is_active(), run.health.invulnerability_left()))
 	_handle_attacks()
+	_handle_bomb()
 	_handle_movement()
 	queue_redraw()
+
+
+# Spending is left to whoever can place it, so the practice room never wastes one.
+func _handle_bomb() -> void:
+	if Input.is_action_just_pressed("bomb") and bomb_requested.get_connections().size() > 0 and run.use_bomb():
+		bomb_requested.emit(_feet.global_position)
 
 
 func _handle_attacks() -> void:

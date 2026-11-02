@@ -16,6 +16,8 @@ const SOUNDS := {
 	"enemy_death": {"from": 500.0, "to": 80.0, "time": 0.3, "shape": SQUARE, "volume": 0.4},
 	"coin_pickup": {"from": 880.0, "to": 1320.0, "time": 0.08, "shape": SINE, "volume": 0.4},
 	"door_open": {"from": 120.0, "to": 240.0, "time": 0.35, "shape": SINE, "volume": 0.5},
+	"explosion": {"from": 0.0, "to": 0.0, "time": 0.4, "shape": NOISE, "volume": 0.65},
+	"consumable_pickup": {"from": 520.0, "to": 780.0, "time": 0.14, "shape": SQUARE, "volume": 0.3},
 }
 
 

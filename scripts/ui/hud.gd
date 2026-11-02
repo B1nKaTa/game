@@ -101,7 +101,7 @@ func _refresh() -> void:
 	var text := "Pension: %d" % _pension
 	if _run != null:
 		var pills := "■".repeat(_run.health.pills) + "□".repeat(_run.health.max_pills - _run.health.pills)
-		text = "Pills: %s   %s" % [pills, text]
+		text = "Pills: %s   %s   Slips: %d   Thermos: %d" % [pills, text, _run.keys, _run.bombs]
 		var names: PackedStringArray = []
 		for item in _run.items:
 			names.append(item.display_name)
