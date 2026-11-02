@@ -31,7 +31,7 @@ Included:
 - A small Waiting Room hub with two merchants and a door to the floor
 - One floor of 12 to 15 regular rooms on a grid, with detours
 - Cane combat with a combo, a charged swing, a cane throw and a dodge
-- 3 enemy types, 1 mini boss and 1 floor boss
+- 7 enemy types, 1 mini boss and 1 floor boss
 - 6 run items and 5 permanent upgrades
 - One currency that carries over between runs
 - Saving and loading
@@ -127,13 +127,21 @@ Rooms are hand-built. Each run picks from a pool of at least 15 layouts, excludi
 
 ### Enemies
 
-| Enemy | Behavior |
-|---|---|
-| Intern Reaper | Walks toward Grandpa and swings a small scythe at close range |
-| Filing Clerk | Keeps its distance and throws slow-moving paperwork |
-| Debt Collector Ghost | Floats through obstacles and charges in straight lines |
-| Senior Adjuster (mini boss) | Sweeping melee attacks, and calls in Interns during the fight |
-| Regional Reaper (floor boss) | Two phases of scythe sweeps and ranged attacks, with faster patterns in the second phase |
+| Enemy | Health | Speed | Behavior |
+|---|---|---|---|
+| Intern Reaper | 42 | 95 | Walks toward Grandpa and swings a small scythe at close range |
+| Filing Clerk | 30 | 75 | Keeps its distance and throws paperwork |
+| Debt Collector Ghost | 36 | 62 | Floats through obstacles and charges in straight lines, showing the lane first |
+| Seasonal Temp | 13 | 108 | Comes in groups of 4 that spread out to surround Grandpa. Only the first of a group pays |
+| Notary Public | 34 | 72 | Backs away and fires aimed bursts of 3 shots along a lane it shows first |
+| Burnt-Out Auditor | 30 | 112 | Rushes in and lights a 1 second fuse, then blows up in 56 pixels. Killed before lighting it dies quietly, killed after it still blows. If it blows itself up it pays nothing |
+| Claims Denial Officer | 110 | 38 | A slow shield that turns slowly toward Grandpa and stops swings from its front. Get around it, or throw the cane or a Thermos, which ignore the shield |
+| Senior Adjuster (mini boss) | 500 | 85 | Sweeps up close, charges along a lane from afar, breaking props on the way, and calls in Interns on marked spots across Grandpa's path |
+| Regional Reaper (floor boss) | 1200 | 84 | Scythe sweep, a dash across the room that breaks props, a ring of shots, and Temps summoned on marked spots. Below half health it is faster and runs attacks into each other |
+
+Every attack shows the warning circle, and attacks that travel in a line also show a lane. At the base warning share every warning shows for at least 0.2 seconds. An Auditor's warning shows for its whole fuse. A boss starts an attack only with its whole body inside the view around Grandpa, and hurries over when farther off, so nothing starts off screen in a large room. A room's enemies hold still for 0.6 seconds as Grandpa walks in.
+
+A floor's enemy mix, how often each type appears and how many extra enemies far rooms on the main path add are all in its `FloorDef`, along with its bosses. Each enemy type can also cap how many of it a room holds. Combat layouts hold at least 4 enemy cells when small, 6 when medium and 10 when large. An Auditor's blast hurts other enemies and breaks props by the same rules as a Thermos, and a wall between stops its damage. Summons always pay nothing.
 
 ### Run Items
 
@@ -150,7 +158,7 @@ Items last for the current run only. Grandpa can hold any number of them.
 
 ### Currency and Upgrades
 
-Pension is the only currency. Enemies and rooms drop it, and picking it up adds it immediately. All of it is kept on death.
+Pension is the only currency. Enemies and rooms drop it, and picking it up adds it immediately. All of it is kept on death. Regular enemies pay 1, a cleared room 1, a coin from a prop 1, treasure 8, the mini boss 8 and the floor boss 16, which comes to about 125 on a full clear, or about 140 with every rock and crate blasted as well.
 
 Two merchants in the Waiting Room sell permanent upgrades, with rising prices at each level. The black market merchant sells the first four below. Dr. Squint, Unlicensed Optometrist, stands in a different spot and sells the glasses. Walking close to either shows "E: Trade", and only one trade panel is open at a time.
 

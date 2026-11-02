@@ -2,7 +2,7 @@ extends EnemyBehavior
 
 const SWEEP_RANGE := 64.0
 const START_RANGE := 54.0
-const SWEEP_WINDUP := 0.65
+const SWEEP_WINDUP := 0.75
 const CHARGE_WINDUP := 0.7
 const CHARGE_LENGTH := 280.0
 const CHARGE_SPEED := 380.0
