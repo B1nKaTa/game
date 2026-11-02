@@ -7,7 +7,7 @@ script = ExtResource("1")
 room_type = "combat"
 rows = PackedStringArray(
 "####################",
-"#.V................#",
+"#EV................#",
 "#.V.XXX......XXX.VV#",
 "#...XTX......XCX...#",
 "#...XXX..E...XXX...#",
