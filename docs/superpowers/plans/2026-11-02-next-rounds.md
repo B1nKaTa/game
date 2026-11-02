@@ -14,7 +14,7 @@ Work happens on the `next-build` branch while the `first-floor` copy stays untou
 | 5b | Real rewards for the Retirement Plan tiers | Reward list only |
 | 6 | Special items with mana | Design talk first |
 | 7 | Art for enemies and the room | Spends generations, so only with approval |
-| 7b | Living floor stages 1 to 5, see the living floor design | Decided, building |
+| 7b | Living floor stages 1 to 5, see the living floor design | Stages 1 to 4 built (stage 4: potions, merchants by floors cleared, Thermos fuel, reinforced stones, vaults), stage 5 next |
 | 8 | Second floor, reached from both first floors | After the first floors feel right |
 
 ## Round 1: Secret rooms
@@ -54,3 +54,16 @@ Run the tests and the full-loop check first, because this branch has never been 
 - Rounds 1 to 5 are written and pushed on `next-build`, and none of it has been run. Room layouts passed a separate check for size, door cells and reachability, run without starting the game.
 - Round 5b waits on the reward list, and round 6 on a design talk.
 - Before merging into `first-floor`: run the tests and the full-loop check, then play the list above.
+
+## Living floor stage 4 status
+
+Built and checked by tests, the full-loop check and screenshots, not yet played:
+
+- Potion slot with H to drink, small potions from barrels fill it, brews from Madame Murk (after 1 floor clear) fill it for the next run.
+- Boom Bernard (after 3 floor clears) sells Questionable Fuel, 3 levels, Thermos damage to enemies only.
+- Reinforced stones and vaults. The number of vaults and the Thermos level the stones want are `vault_count` and `vault_stone_level` in `FloorDef`, so a second first floor sets its own. The unlock clears are in the merchant list in the Waiting Room scene.
+- `ProgressData` has optional `floors_cleared` and `brewed_potion`, and a test proves an older save loads.
+
+To play and judge together: brew prices against income, whether a new merchant is noticed, how the stone and the resist message read, whether a vault feels worth 380 Pension of fuel, the buff lengths, and how the potion slot sits in the HUD beside the item list.
+
+Stage 5 notes: a second first floor adds its own `FloorDef` with its own vault layouts in its rooms folder. A floor with no vault layouts simply has none, and the unlock rule can move from floors cleared to something per path through the same list.
