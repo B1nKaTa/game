@@ -4,7 +4,7 @@ extends RefCounted
 const TORCH_SPACING := 10.0
 const TALL_ROOM := 14
 const FILL_SPACING := 8.0
-const FILL_ENERGY := 0.55
+const FILL_ENERGY := 0.32
 const FILL_SCALE := 2.6
 
 

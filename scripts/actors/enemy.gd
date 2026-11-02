@@ -11,8 +11,8 @@ const SUMMON_SPREAD := 40.0
 const BAR_WIDTH := 20.0
 const BAR_HEIGHT := 2.0
 const READ_GLOW_COLOR := Color(1.0, 0.95, 0.9)
-const READ_GLOW_ENERGY := 0.6
-const READ_GLOW_SCALE := 0.7
+const READ_GLOW_ENERGY := 0.3
+const READ_GLOW_SCALE := 0.6
 
 var def: EnemyDef
 var hp: float = 0.0

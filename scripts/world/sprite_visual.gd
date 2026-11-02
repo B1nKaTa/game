@@ -36,6 +36,14 @@ static func frame_count(texture_width: int, frame_width: int) -> int:
 	return maxi(texture_width / frame_width, 1)
 
 
+# Placeholders are never darker than this, so enemies stay readable on any floor.
+const MIN_BRIGHTNESS := 0.55
+
+
+static func readable(color: Color) -> Color:
+	return Color.from_hsv(color.h, color.s, maxf(color.v, MIN_BRIGHTNESS), color.a)
+
+
 static func flash_amount(remaining: float, duration: float) -> float:
 	if duration <= 0.0 or remaining <= 0.0:
 		return 0.0
@@ -158,8 +166,10 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	if _sprite != null and _sprite.visible:
 		return
-	var fill := _color.lerp(_flash_color, flash_amount(_flash_left, _flash_time))
+	var fill := readable(_color).lerp(_flash_color, flash_amount(_flash_left, _flash_time))
 	fill.a *= _alpha
 	var outline := Color(0.0, 0.0, 0.0, _alpha)
+	# A pale halo keeps a dark placeholder visible on a dark floor.
+	draw_rect(Rect2(-_size / 2.0, _size).grow(1.0), Color(1.0, 1.0, 1.0, 0.5 * _alpha), false, 1.0)
 	draw_rect(Rect2(-_size / 2.0, _size), fill)
 	draw_rect(Rect2(-_size / 2.0, _size), outline, false, 1.0)
