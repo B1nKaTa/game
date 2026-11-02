@@ -10,7 +10,7 @@ static func ensure() -> void:
 	_key("dodge", KEY_SPACE)
 	_key("interact", KEY_E)
 	_mouse("attack", MOUSE_BUTTON_LEFT)
-	_mouse("charge", MOUSE_BUTTON_RIGHT)
+	_mouse("throw", MOUSE_BUTTON_RIGHT)
 
 
 static func _key(action: String, key: Key) -> void:

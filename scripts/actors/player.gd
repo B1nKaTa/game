@@ -64,15 +64,14 @@ func _physics_process(delta: float) -> void:
 
 
 func _handle_attacks() -> void:
-	if Input.is_action_just_pressed("charge"):
-		_charge.start()
-	if Input.is_action_just_released("charge"):
-		if _charge.release():
-			_swing(ChargeSwing.DAMAGE, CHARGE_REACH, CHARGE_ANGLE, ChargeSwing.KNOCKBACK)
-	if Input.is_action_just_pressed("attack") and not _charge.is_charging():
+	if Input.is_action_just_pressed("attack"):
 		var damage := _combo.try_attack()
 		if damage > 0:
 			_swing(damage, ATTACK_REACH, ATTACK_ANGLE, ATTACK_PUSH)
+		_charge.start()
+	if Input.is_action_just_released("attack"):
+		if _charge.release():
+			_swing(ChargeSwing.DAMAGE, CHARGE_REACH, CHARGE_ANGLE, ChargeSwing.KNOCKBACK)
 
 
 func _swing(damage: float, reach: float, angle: float, push: float) -> void:

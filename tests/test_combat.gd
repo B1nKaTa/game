@@ -79,6 +79,36 @@ func test_warning_shows_for_the_given_fraction() -> void:
 func test_input_actions_exist() -> void:
 	InputSetup.ensure()
 	InputSetup.ensure()
-	for action in ["move_left", "move_right", "move_up", "move_down", "attack", "charge", "dodge", "interact"]:
+	for action in ["move_left", "move_right", "move_up", "move_down", "attack", "throw", "dodge", "interact"]:
 		assert_true(InputMap.has_action(action), action)
 		assert_eq(InputMap.action_get_events(action).size(), 1, action)
+
+
+func test_charge_only_shows_after_the_hold_delay() -> void:
+	var charge := ChargeSwing.new()
+	charge.start()
+	assert_true(charge.is_holding())
+	assert_false(charge.is_charging(), "a tap is not a charge")
+	charge.tick(ChargeSwing.HOLD_DELAY - 0.01)
+	assert_false(charge.is_charging())
+	charge.tick(0.02)
+	assert_true(charge.is_charging())
+	assert_true(charge.progress() < 0.1, "indicator starts empty")
+
+
+func test_releasing_a_tap_does_nothing() -> void:
+	var charge := ChargeSwing.new()
+	charge.start()
+	charge.tick(0.1)
+	assert_false(charge.release())
+	assert_false(charge.is_holding())
+
+
+func test_charge_cancel_stops_it() -> void:
+	var charge := ChargeSwing.new()
+	charge.start()
+	charge.tick(ChargeSwing.CHARGE_TIME + 0.1)
+	charge.cancel()
+	assert_false(charge.is_holding())
+	assert_false(charge.is_charging())
+	assert_false(charge.release(), "cancelled charge never fires")
