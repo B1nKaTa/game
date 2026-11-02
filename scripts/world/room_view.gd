@@ -5,6 +5,7 @@ signal door_entered(target_id: int)
 signal floor_cleared
 signal pension_earned(amount: int)
 signal room_finished(room_id: int)
+signal boss_spawned(boss: Enemy)
 
 const HEAL_AMOUNT := 2
 const PENSION_COLOR := Color("ffd24a")
@@ -83,12 +84,14 @@ func _spawn_enemies() -> void:
 
 func _spawn_enemy(def: EnemyDef, at: Vector2) -> void:
 	var enemy := Enemy.new()
-	enemy.setup(def, _player, _run.stats.warning_fraction)
+	enemy.setup(def, _player, _run.stats.warning_fraction, _run.stats.reveals_enemy_health)
 	enemy.position = at
 	enemy.defeated.connect(_on_enemy_defeated)
 	enemy.summon_requested.connect(_spawn_summon)
 	_alive += 1
 	add_child(enemy)
+	if def.is_boss:
+		boss_spawned.emit(enemy)
 
 
 func _spawn_summon(def: EnemyDef, at: Vector2) -> void:

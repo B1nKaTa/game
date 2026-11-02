@@ -3,10 +3,13 @@ extends CharacterBody2D
 
 signal defeated(enemy: Enemy)
 signal summon_requested(enemy_def: EnemyDef, spawn_position: Vector2)
+signal health_changed(hp: float)
 
 const KNOCKBACK_DECAY := 8.0
 const BOSS_KNOCKBACK_SCALE := 0.2
 const SUMMON_SPREAD := 40.0
+const BAR_WIDTH := 20.0
+const BAR_HEIGHT := 2.0
 
 var def: EnemyDef
 var hp: float = 0.0
@@ -19,13 +22,15 @@ var _dead := false
 var _warning: Telegraph
 var _warning_radius := 0.0
 var _visual: SpriteVisual
+var _show_bar := false
 
 
-func setup(enemy_def: EnemyDef, chase_target: Node2D, warning_fraction: float) -> void:
+func setup(enemy_def: EnemyDef, chase_target: Node2D, warning_fraction: float, show_health_bar := false) -> void:
 	def = enemy_def
 	hp = def.max_hp
 	target = chase_target
 	_warning_fraction = warning_fraction
+	_show_bar = show_health_bar
 	_behavior = def.behavior_script.new()
 
 
@@ -63,10 +68,16 @@ static func clamp_inside_room(point: Vector2) -> Vector2:
 		clampf(point.y, tile, (RoomLayout.HEIGHT - 1) * tile))
 
 
+func shows_health_bar() -> bool:
+	return _show_bar and def != null and not def.is_boss
+
+
 func take_damage(amount: float, push: Vector2) -> void:
 	if _dead:
 		return
 	hp -= amount
+	health_changed.emit(hp)
+	queue_redraw()
 	_knockback += push * (BOSS_KNOCKBACK_SCALE if def.is_boss else 1.0)
 	if hp <= 0.0:
 		_dead = true
@@ -115,8 +126,8 @@ func request_summon(count: int) -> void:
 func _draw() -> void:
 	if _warning != null and _warning.shows_warning(_warning_fraction):
 		draw_arc(Vector2.ZERO, _warning_radius, 0.0, TAU, 32, Color("e4524f"), 2.0)
-	if def != null and def.is_boss:
-		var width := def.body_size.x + 20.0
-		var top := -def.body_size.y / 2.0 - 8.0
-		draw_rect(Rect2(-width / 2.0, top, width, 3.0), Color.BLACK)
-		draw_rect(Rect2(-width / 2.0, top, width * maxf(hp, 0.0) / def.max_hp, 3.0), Color("e4524f"))
+	if def != null and shows_health_bar():
+		var top := -def.body_size.y / 2.0 - 6.0
+		var fraction := clampf(hp / def.max_hp, 0.0, 1.0)
+		draw_rect(Rect2(-BAR_WIDTH / 2.0, top, BAR_WIDTH, BAR_HEIGHT), Color.BLACK)
+		draw_rect(Rect2(-BAR_WIDTH / 2.0, top, BAR_WIDTH * fraction, BAR_HEIGHT), Color("e4524f"))
