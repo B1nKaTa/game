@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="UpgradeDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/upgrade_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "bribed_clerk"
+display_name = "Bribed Clerk"
+description = "More Pension from all sources."
+prices = PackedInt32Array(60, 150)
+pension_bonus = 0.1

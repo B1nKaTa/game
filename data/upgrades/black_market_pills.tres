@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="UpgradeDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/upgrade_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "black_market_pills"
+display_name = "Black Market Pills"
+description = "One more starting pill."
+prices = PackedInt32Array(40, 100, 200)
+bonus_pills = 1
