@@ -15,7 +15,10 @@ const EXIT_B := Vector2i(18, 7)
 const EXIT_CELLS: Array[Vector2i] = [EXIT_A, EXIT_B]
 const SIDE_DOOR := Vector2i(10, 1)
 const SIDE_ROOM_SPAWN := Vector2i(2, 5)
-const ALLOWED := "#.EIHTB"
+const ALLOWED := "#.EIHTBXC"
+const SYMBOL_WALL := "#"
+const SYMBOL_BLOCK := "X"
+const MUST_REACH_WITHOUT_BREAKING := "EBIH"
 const REQUIRED := {
 	TYPE_COMBAT: {"E": 2},
 	TYPE_ITEM: {"I": 2},
@@ -61,12 +64,18 @@ func validate() -> PackedStringArray:
 		errors.append("side room spawn cell must be floor at %s" % str(SIDE_ROOM_SPAWN))
 	if not errors.is_empty():
 		return errors
-	var reachable := _flood_from_entry()
+	var reachable := _flood_from_entry(SYMBOL_WALL)
+	var open := _flood_from_entry(SYMBOL_WALL + SYMBOL_BLOCK)
 	for y in HEIGHT:
 		for x in WIDTH:
 			var cell := Vector2i(x, y)
-			if rows[y][x] != "#" and not reachable.has(cell):
+			if rows[y][x] != SYMBOL_WALL and not reachable.has(cell):
 				errors.append("cell cannot be reached at %s" % str(cell))
+			if MUST_REACH_WITHOUT_BREAKING.contains(rows[y][x]) and not open.has(cell):
+				errors.append("needs a bomb to reach '%s' at %s" % [rows[y][x], str(cell)])
+	for anchor in [EXIT_A, EXIT_B, SIDE_DOOR]:
+		if not open.has(anchor):
+			errors.append("needs a bomb to reach the door at %s" % str(anchor))
 	return errors
 
 
@@ -85,7 +94,7 @@ func nearest_floor_cell(cell: Vector2i) -> Vector2i:
 	var best_distance := INF
 	for y in rows.size():
 		for x in rows[y].length():
-			if rows[y][x] == "#":
+			if rows[y][x] == SYMBOL_WALL or rows[y][x] == SYMBOL_BLOCK:
 				continue
 			var distance := Vector2(x - from.x, y - from.y).length_squared()
 			if distance < best_distance:
@@ -94,14 +103,18 @@ func nearest_floor_cell(cell: Vector2i) -> Vector2i:
 	return best
 
 
-func _flood_from_entry() -> Dictionary:
+func is_open_without_breaking(cell: Vector2i) -> bool:
+	return _flood_from_entry(SYMBOL_WALL + SYMBOL_BLOCK).has(cell)
+
+
+func _flood_from_entry(blocked: String) -> Dictionary:
 	var seen := {ENTRY: true}
 	var open: Array[Vector2i] = [ENTRY]
 	while not open.is_empty():
 		var cell: Vector2i = open.pop_back()
 		for step: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
 			var next: Vector2i = cell + step
-			if seen.has(next) or rows[next.y][next.x] == "#":
+			if seen.has(next) or blocked.contains(rows[next.y][next.x]):
 				continue
 			seen[next] = true
 			open.append(next)

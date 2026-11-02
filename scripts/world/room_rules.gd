@@ -14,8 +14,22 @@ const BOMB_NAME := "Overheated Thermos"
 const DROP_NONE := ""
 const DROP_KEY := "key"
 const DROP_BOMB := "bomb"
+const DROP_COIN := "coin"
 const CLEAR_KEY_CHANCE := 0.15
 const CLEAR_BOMB_CHANCE := 0.2
+const BLOCK_COIN_CHANCE := 0.3
+const BLOCK_BOMB_CHANCE := 0.15
+const BLOCK_KEY_CHANCE := 0.1
+
+
+static func block_drop(roll: float) -> String:
+	if roll < BLOCK_COIN_CHANCE:
+		return DROP_COIN
+	if roll < BLOCK_COIN_CHANCE + BLOCK_BOMB_CHANCE:
+		return DROP_BOMB
+	if roll < BLOCK_COIN_CHANCE + BLOCK_BOMB_CHANCE + BLOCK_KEY_CHANCE:
+		return DROP_KEY
+	return DROP_NONE
 
 
 static func clear_drop(roll: float) -> String:

@@ -14,6 +14,7 @@ const PROMPT_TEXT := "E: Take"
 var requires_interact := false
 var can_take := Callable()
 var flies := false
+var prompt := PROMPT_TEXT
 var _label := ""
 var _color := Color.WHITE
 var _player: Node2D
@@ -120,4 +121,4 @@ func _draw() -> void:
 		return
 	draw_string(ThemeDB.fallback_font, Vector2(-18, -12), _label, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color.WHITE)
 	if _prompt_shown:
-		draw_string(ThemeDB.fallback_font, Vector2(-18, 22), PROMPT_TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("ffd24a"))
+		draw_string(ThemeDB.fallback_font, Vector2(-18, 22), prompt, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("ffd24a"))

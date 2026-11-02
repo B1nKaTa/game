@@ -14,6 +14,9 @@ const HEAL_AMOUNT := 2
 const BACK_ICON := "<"
 const KEY_COLOR := Color("ece9e0")
 const BOMB_COLOR := Color("ff9a3c")
+const CHEST_COLOR := Color("a8692f")
+const CHEST_LABEL := "Locked Chest"
+const CHEST_PROMPT := "E: Use Slip"
 const PENSION_COLOR := Color("ffd24a")
 const ITEM_COLOR := Color("7dd3fc")
 const HEAL_COLOR := Color("e4524f")
@@ -50,6 +53,7 @@ func _ready() -> void:
 	add_child(backdrop)
 	Lighting.add_room_mood(self)
 	_create_doors()
+	_create_blocks()
 	_create_rewards()
 	_spawn_enemies()
 	if _alive == 0:
@@ -100,6 +104,24 @@ func _add_door(target_id: int, icon: String, cell: Vector2i) -> void:
 	door.entered.connect(func(id: int): door_entered.emit(id))
 	add_child(door)
 	_doors.append(door)
+
+
+func _create_blocks() -> void:
+	for cell in _room.layout.cells_of(RoomLayout.SYMBOL_BLOCK):
+		var block := BreakableBlock.new()
+		block.position = RoomBackdrop.cell_center(cell)
+		block.broken.connect(_on_block_broken)
+		add_child(block)
+
+
+func _on_block_broken(at: Vector2) -> void:
+	var drop := RoomRules.block_drop(_rng.randf())
+	if drop == RoomRules.DROP_COIN:
+		_drop_coin(at, _floor_def.treasure_pension)
+		if _finished:
+			_coins[-1].fly()
+	else:
+		_drop_consumable(at, drop)
 
 
 func _spawn_enemies() -> void:
@@ -188,6 +210,19 @@ func _create_rewards() -> void:
 		heal.can_take = func(): return _run.health.pills < _run.health.max_pills
 	for cell in _room.layout.cells_of("T"):
 		_create_treasure(cell)
+	for cell in _room.layout.cells_of("C"):
+		_create_chest(cell)
+
+
+func _create_chest(cell: Vector2i) -> void:
+	var chest := _add_pickup(RoomBackdrop.cell_center(cell), CHEST_LABEL, CHEST_COLOR, func(): _open_chest(cell), true)
+	chest.prompt = CHEST_PROMPT
+	chest.can_take = func(): return _run.keys > 0
+
+
+func _open_chest(cell: Vector2i) -> void:
+	if _run.use_key():
+		_create_treasure(cell)
 
 
 func _create_item_choice(cells: Array[Vector2i]) -> void:
@@ -213,6 +248,10 @@ func _create_treasure(cell: Vector2i) -> void:
 	var picked := RoomRules.pick_items(Content.items(), _run, 1, _rng)
 	if picked.is_empty() or _rng.randf() < 0.5:
 		_drop_coin(RoomBackdrop.cell_center(cell), _floor_def.treasure_pension)
+		# A coin in a walled-off pocket must not fly out through the blocks for free.
+		if not _room.layout.is_open_without_breaking(cell):
+			var coin: Pickup = _coins.pop_back()
+			coin.flies = false
 		return
 	_add_item_pickup(RoomBackdrop.cell_center(cell), picked[0])
 
