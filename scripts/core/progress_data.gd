@@ -99,9 +99,9 @@ func is_unlocked(id: String) -> bool:
 	return items_unlocked.has(id)
 
 
-# Only one crafted item can wait for the next run at a time.
+# Each item is crafted once ever, and only one crafted item can wait for the next run at a time.
 func can_craft(id: String, price: int) -> bool:
-	return has_recipe(id) and pension >= price and crafted_for_next_run.is_empty()
+	return has_recipe(id) and not is_unlocked(id) and pension >= price and crafted_for_next_run.is_empty()
 
 
 func craft(id: String, price: int) -> bool:

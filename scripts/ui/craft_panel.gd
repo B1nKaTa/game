@@ -63,8 +63,10 @@ func _rebuild() -> void:
 
 func _make_button(item: ItemDef) -> Button:
 	var button := Button.new()
-	var state := "in rotation" if Progress.data.is_unlocked(item.id) else "first craft unlocks it"
-	button.text = "%s  %d Pension  (%s)" % [item.display_name, item.craft_price, state]
+	if Progress.data.is_unlocked(item.id):
+		button.text = "%s  Crafted, now in rotation" % item.display_name
+	else:
+		button.text = "%s  %d Pension" % [item.display_name, item.craft_price]
 	button.tooltip_text = item.description
 	button.disabled = not Progress.data.can_craft(item.id, item.craft_price)
 	button.pressed.connect(_craft.bind(item))

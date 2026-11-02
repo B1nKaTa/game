@@ -96,13 +96,25 @@ func test_taking_the_crafted_item_empties_the_slot() -> void:
 	assert_true(data.is_unlocked("hip"), "stays in rotation")
 
 
-func test_an_unlocked_item_can_be_crafted_again_for_another_run() -> void:
+func test_an_item_can_only_be_crafted_once_ever() -> void:
 	var data := _data()
 	data.find_recipe("hip")
 	data.craft("hip", 10)
 	data.take_crafted_item()
-	assert_true(data.craft("hip", 10))
-	assert_eq(data.pension, 980)
+	assert_false(data.can_craft("hip", 10))
+	assert_false(data.craft("hip", 10))
+	assert_eq(data.pension, 990, "no second charge")
+	assert_eq(data.crafted_for_next_run, "", "no second head start")
+	assert_true(data.is_unlocked("hip"), "still in rotation")
+
+
+func test_a_saved_crafted_item_stays_crafted_after_loading() -> void:
+	var data := _data()
+	data.find_recipe("hip")
+	data.craft("hip", 10)
+	data.take_crafted_item()
+	var loaded := ProgressData.from_dict(JSON.parse_string(JSON.stringify(data.to_dict())))
+	assert_false(loaded.can_craft("hip", 10))
 
 
 func test_recipes_are_saved_and_loaded() -> void:

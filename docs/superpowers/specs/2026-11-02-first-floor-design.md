@@ -106,7 +106,7 @@ A floor usually has one secret room, hanging off a combat room with no side room
 
 Six items need a recipe before they can appear. A recipe can replace treasure 25% of the time, including chests and pockets, and the mini boss drops one 50% of the time. A run never offers the same recipe twice, and a found recipe is saved at once, so dying never loses it.
 
-Agnes, Afterlife Arts and Crafts, stands in the Waiting Room and holds every found recipe. Crafting costs Pension, from 70 to 120 by item, and one item at a time can wait for the next run. That run starts with it. The first craft also adds the item to the rotation for every run after, so it can appear in rooms, treasure, the shop and rewards. A crafted item can be crafted again later for another head start.
+Agnes, Afterlife Arts and Crafts, stands in the Waiting Room and holds every found recipe. Crafting costs Pension, from 70 to 120 by item, and one item at a time can wait for the next run. Each item can be crafted once ever. The next run starts with it, and from then on it is in the rotation for every run, so it can appear in rooms, treasure, the shop and rewards. It is never again given at the start of a run.
 
 ### Maps
 
