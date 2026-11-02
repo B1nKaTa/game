@@ -1,0 +1,14 @@
+# Playtest Notes
+
+## First Version Checklist
+
+- [ ] The full loop from Waiting Room to floor and back plays without crashes.
+- [ ] Pension and upgrades survive quitting and reopening the game.
+- [ ] A new player usually dies before beating the floor boss.
+- [ ] A few rounds of upgrades make a win realistic.
+- [ ] A normal run takes about 10 to 15 minutes.
+- [ ] The cane combat feels good.
+
+## Session Notes
+
+- Round 1: item naming and moving between rooms feel good. Side room return door moved behind the player. Charge moved to holding attack, and right click now throws the cane. More content is planned.
