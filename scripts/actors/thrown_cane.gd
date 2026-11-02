@@ -6,7 +6,6 @@ signal caught
 
 const FLY_SPEED := 320.0
 const MAX_RANGE := 200.0
-const HIT_RADIUS := 16.0
 const DAMAGE := 14.0
 const PUSH := 80.0
 const PICKUP_RADIUS := 18.0
@@ -16,6 +15,7 @@ const WALL_LAYER := 1
 const WALL_BACKOFF := 4.0
 const SPIN_SPEED := 18.0
 const LENGTH := 20.0
+const HIT_REACH := LENGTH * 0.5
 
 var _state: CaneThrow
 var _player: Node2D
@@ -38,6 +38,10 @@ static func advance_travel(travelled: float, delta: float) -> float:
 
 static func hit_damage(damage_mult: float) -> float:
 	return DAMAGE * damage_mult
+
+
+static func touches_body(point: Vector2, body: Rect2) -> bool:
+	return point.distance_to(MeleeArc.closest_point(body, point)) <= HIT_REACH
 
 
 func _physics_process(delta: float) -> void:
@@ -74,12 +78,14 @@ func _fly(delta: float) -> void:
 		_state.drop()
 
 
-func _enemy_in_reach() -> Node2D:
-	var best: Node2D = null
-	var best_distance := HIT_RADIUS
-	for enemy: Node2D in get_tree().get_nodes_in_group("enemies"):
+func _enemy_in_reach() -> Enemy:
+	var best: Enemy = null
+	var best_distance := INF
+	for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
+		if enemy.is_queued_for_deletion() or not touches_body(global_position, enemy.body_rect()):
+			continue
 		var distance := global_position.distance_to(enemy.global_position)
-		if distance <= best_distance:
+		if distance < best_distance:
 			best_distance = distance
 			best = enemy
 	return best

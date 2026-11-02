@@ -126,6 +126,24 @@ func test_travel_completes_from_any_position_and_direction() -> void:
 			return
 
 
+func test_flying_cane_hits_the_outer_part_of_a_big_body() -> void:
+	var boss := Rect2(-20, -24, 40, 48)
+	assert_true(ThrownCane.touches_body(Vector2(0, 22), boss), "22 from the center, inside the body")
+
+
+func test_flying_cane_tip_reaches_past_the_body_edge() -> void:
+	var body := Rect2(-10, -12, 20, 24)
+	assert_true(ThrownCane.touches_body(Vector2(10.0 + ThrownCane.HIT_REACH, 0), body))
+	assert_false(ThrownCane.touches_body(Vector2(10.0 + ThrownCane.HIT_REACH + 1.0, 0), body))
+
+
+func test_flying_cane_reach_is_no_worse_for_regular_enemies() -> void:
+	var body := Rect2(-9, -11, 18, 22)
+	for i in 36:
+		var point := Vector2.from_angle(TAU * i / 36.0) * 16.0
+		assert_true(ThrownCane.touches_body(point, body), "16 from the center at step %d" % i)
+
+
 func test_thrown_cane_announces_the_catch() -> void:
 	var state := CaneThrow.new()
 	state.try_throw()
