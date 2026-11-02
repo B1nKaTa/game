@@ -3,33 +3,41 @@ extends CanvasLayer
 
 signal closed
 
-const WAITING_TEXT := "Press a key or mouse button..."
+const WAITING_TEXT := "Press a key..."
+const BUTTON_FONT_SIZE := 12
+const BUTTON_WIDTH := 270.0
 
-var _list: VBoxContainer
+var _list: GridContainer
 var _waiting_action := ""
 
 
 func _ready() -> void:
 	var panel := PanelContainer.new()
-	panel.position = Vector2(120, 20)
-	panel.custom_minimum_size = Vector2(400, 320)
+	panel.position = Vector2(40, 40)
 	add_child(panel)
 	var column := VBoxContainer.new()
 	panel.add_child(column)
 	var title := Label.new()
 	title.text = "Key Settings. Esc cancels a change."
 	column.add_child(title)
-	_list = VBoxContainer.new()
+	# Two columns, because ten actions in one column run off the 360 pixel screen.
+	_list = GridContainer.new()
+	_list.columns = 2
 	column.add_child(_list)
-	var reset := Button.new()
-	reset.text = "Reset to defaults"
+	var reset := _make_button("Reset to defaults")
 	reset.pressed.connect(_reset)
 	column.add_child(reset)
-	var close := Button.new()
-	close.text = "Leave"
+	var close := _make_button("Leave")
 	close.pressed.connect(func(): closed.emit())
 	column.add_child(close)
 	_rebuild()
+
+
+func _make_button(text: String) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.add_theme_font_size_override("font_size", BUTTON_FONT_SIZE)
+	return button
 
 
 func _rebuild() -> void:
@@ -37,9 +45,9 @@ func _rebuild() -> void:
 		child.queue_free()
 	for entry in KeyBindings.ACTIONS:
 		var action: String = entry["action"]
-		var button := Button.new()
 		var bound := WAITING_TEXT if action == _waiting_action else KeyBindings.label_for(action)
-		button.text = "%s:  %s" % [entry["label"], bound]
+		var button := _make_button("%s:  %s" % [entry["label"], bound])
+		button.custom_minimum_size.x = BUTTON_WIDTH
 		button.pressed.connect(_start_waiting.bind(action))
 		_list.add_child(button)
 

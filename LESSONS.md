@@ -23,3 +23,4 @@
 - 2026-11-02: A probe that hits a script error never reaches quit() and hangs until the tool times out → give every probe a timer that quits with an error.
 - 2026-11-02: Probes that ran the real floor scene without --smoke added Pension to the player's real save.json → back up and restore save.json around any probe that runs real scenes, and read the save before and after.
 - 2026-11-02: A boss's summons paid Pension, so leaving it alive allowed endless farming → anything that can spawn without limit must pay nothing.
+- 2026-11-02: The Key Settings panel looked fine in code but ran off the 360 pixel screen, hiding its Leave button, and only a screenshot caught it → screenshot every new panel at its fullest, since the view is small and default buttons are tall.
