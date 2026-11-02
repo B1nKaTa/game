@@ -16,7 +16,6 @@ const CHARGE_ANGLE := 75.0
 const ATTACK_PUSH := 60.0
 const DODGE_SPEED := 300.0
 const CHARGE_SLOWDOWN := 0.4
-const SWING_SHOW_TIME := 0.1
 const HURT_COLOR := Color("e4524f")
 
 var run: RunState
@@ -27,8 +26,7 @@ var _thrown_cane: ThrownCane
 var _dodge := DodgeTimer.new()
 var _aim := Vector2.RIGHT
 var _dodge_direction := Vector2.RIGHT
-var _swing_show := 0.0
-var _swing_reach := 0.0
+var _active_swing: SwingAttack
 var _visual: SpriteVisual
 
 
@@ -67,7 +65,7 @@ func _physics_process(delta: float) -> void:
 	_charge.tick(delta)
 	_dodge.tick(delta)
 	run.health.tick(delta)
-	_swing_show = maxf(_swing_show - delta, 0.0)
+	_advance_swing(delta)
 	var to_mouse := get_global_mouse_position() - global_position
 	if not to_mouse.is_zero_approx():
 		_aim = to_mouse.normalized()
@@ -133,18 +131,40 @@ func _exit_tree() -> void:
 
 
 func _swing(damage: float, reach: float, angle: float, push: float, heavy: bool, finisher: bool) -> void:
-	_swing_show = SWING_SHOW_TIME
-	_swing_reach = reach
+	_finish_swing()
+	_active_swing = SwingAttack.new(_aim, reach, angle, damage * run.stats.damage_mult, push, heavy, finisher)
 	_visual.play("attack")
-	var landed := false
-	for enemy in get_tree().get_nodes_in_group("enemies"):
-		if MeleeArc.hits(global_position, _aim, reach, angle, enemy.global_position):
-			enemy.take_damage(damage * run.stats.damage_mult, _aim * push)
-			landed = true
-	if landed:
-		swing_landed.emit(heavy, finisher)
+	_strike_enemies()
+
+
+func _advance_swing(delta: float) -> void:
+	if _active_swing == null:
+		return
+	_active_swing.tick(delta)
+	if _active_swing.is_active():
+		_strike_enemies()
 	else:
-		swing_missed.emit(heavy)
+		_finish_swing()
+
+
+func _strike_enemies() -> void:
+	var swing := _active_swing
+	var had_landed := swing.has_landed()
+	for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
+		if enemy.is_queued_for_deletion():
+			continue
+		if swing.try_hit(global_position, enemy.get_instance_id(), enemy.body_rect()):
+			enemy.take_damage(swing.damage, swing.direction * swing.push)
+	if swing.has_landed() and not had_landed:
+		swing_landed.emit(swing.heavy, swing.finisher)
+
+
+func _finish_swing() -> void:
+	if _active_swing == null:
+		return
+	if not _active_swing.has_landed():
+		swing_missed.emit(_active_swing.heavy)
+	_active_swing = null
 
 
 func _handle_movement() -> void:
@@ -158,7 +178,7 @@ func _handle_movement() -> void:
 		if _charge.is_charging():
 			speed *= CHARGE_SLOWDOWN
 		velocity = input * speed
-		if _swing_show <= 0.0:
+		if _active_swing == null:
 			_visual.play("walk" if input != Vector2.ZERO else "idle")
 	move_and_slide()
 
@@ -166,9 +186,12 @@ func _handle_movement() -> void:
 func _draw() -> void:
 	if _dodge.is_active():
 		draw_line(-_dodge_direction * 6.0, -_dodge_direction * 26.0, Color(1.0, 1.0, 1.0, 0.35), 8.0)
+	var swinging := _active_swing != null
 	if _cane.is_held():
-		draw_line(Vector2.ZERO, _aim * 20.0, Color("a8692f"), 3.0)
-	if _swing_show > 0.0:
-		draw_arc(Vector2.ZERO, _swing_reach, _aim.angle() - 1.0, _aim.angle() + 1.0, 12, Color("ffe58a"), 3.0)
+		draw_line(Vector2.ZERO, (_active_swing.direction if swinging else _aim) * 20.0, Color("a8692f"), 3.0)
+	if swinging:
+		var center := _active_swing.direction.angle()
+		var half_angle := deg_to_rad(_active_swing.half_angle_deg)
+		draw_arc(Vector2.ZERO, _active_swing.reach, center - half_angle, center + half_angle, 12, Color("ffe58a"), 3.0)
 	if _charge.is_charging():
 		draw_arc(Vector2.ZERO, 22.0, -PI / 2.0, -PI / 2.0 + TAU * _charge.progress(), 24, Color("f4c542"), 2.0)

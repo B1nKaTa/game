@@ -68,6 +68,10 @@ static func clamp_inside_room(point: Vector2) -> Vector2:
 		clampf(point.y, tile, (RoomLayout.HEIGHT - 1) * tile))
 
 
+func body_rect() -> Rect2:
+	return Rect2(global_position - def.body_size / 2.0, def.body_size)
+
+
 func shows_health_bar() -> bool:
 	return _show_bar and def != null and not def.is_boss
 

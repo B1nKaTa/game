@@ -49,12 +49,49 @@ func test_dodge_has_duration_and_cooldown() -> void:
 	assert_true(dodge.try_start(1.0))
 
 
-func test_melee_arc() -> void:
-	var o := Vector2.ZERO
-	assert_true(MeleeArc.hits(o, Vector2.RIGHT, 40.0, 60.0, Vector2(30, 0)))
-	assert_false(MeleeArc.hits(o, Vector2.RIGHT, 40.0, 60.0, Vector2(50, 0)), "too far")
-	assert_false(MeleeArc.hits(o, Vector2.RIGHT, 40.0, 60.0, Vector2(-30, 0)), "behind")
-	assert_true(MeleeArc.hits(o, Vector2.RIGHT, 40.0, 60.0, Vector2.ZERO), "same spot")
+func _arc_hits(center: Vector2, size := Vector2(20, 24)) -> bool:
+	var body := Rect2(center - size / 2.0, size)
+	return MeleeArc.hits_body(Vector2.ZERO, Vector2.RIGHT, 44.0, 60.0, body)
+
+
+func test_arc_hits_a_body_whose_center_is_inside() -> void:
+	assert_true(_arc_hits(Vector2(30, 0)))
+
+
+func test_arc_hits_a_body_whose_center_is_past_the_reach() -> void:
+	assert_true(_arc_hits(Vector2(50, 0)), "near edge is at 40 of 44")
+
+
+func test_arc_misses_a_body_entirely_past_the_reach() -> void:
+	assert_false(_arc_hits(Vector2(60, 0)), "near edge is at 50 of 44")
+
+
+func test_arc_misses_a_body_behind_the_swing() -> void:
+	assert_false(_arc_hits(Vector2(-30, 0)))
+
+
+func test_arc_hits_a_body_on_top_of_the_swinger() -> void:
+	assert_true(_arc_hits(Vector2.ZERO))
+	assert_true(_arc_hits(Vector2(-5, 0)), "still overlaps when centered slightly behind")
+
+
+func test_arc_hits_a_body_corner_inside_the_arc() -> void:
+	assert_true(_arc_hits(Vector2(40, 40)), "nearest corner is 41 away at about 43 degrees")
+	assert_false(_arc_hits(Vector2(45, 45)), "nearest corner is 48 away")
+
+
+func test_arc_hits_a_big_body_that_only_crosses_its_side_edge() -> void:
+	assert_true(_arc_hits(Vector2(-5, 30), Vector2(40, 48)), "nearest point is outside the angle")
+
+
+func test_arc_misses_a_body_just_beside_its_side_edge() -> void:
+	assert_false(_arc_hits(Vector2(0, 30)))
+
+
+func test_closest_point_on_a_body() -> void:
+	var body := Rect2(10, 10, 20, 20)
+	assert_eq(MeleeArc.closest_point(body, Vector2.ZERO), Vector2(10, 10))
+	assert_eq(MeleeArc.closest_point(body, Vector2(15, 20)), Vector2(15, 20), "inside stays put")
 
 
 func test_telegraph_finishes_once() -> void:
