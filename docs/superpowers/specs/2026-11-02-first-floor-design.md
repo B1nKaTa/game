@@ -59,7 +59,7 @@ Beating the floor boss shows a "floor cleared" message before the return. No end
 
 ### Controls
 
-Move with WASD and aim with the mouse. Tapping left click hits with the cane combo, and holding it after the hit charges a swing that fires on release once fully charged. Right click throws the cane, Space dodges, and M opens the floor map.
+Move with WASD and aim with the mouse. Tapping left click hits with the cane combo, and holding it after the hit charges a swing that fires on release once fully charged. Right click throws the cane, Space dodges, Q places a Thermos, E interacts, and M opens the floor map.
 
 ### Combat
 
@@ -79,6 +79,16 @@ Each door shows an icon for the room type behind it, so route choice is a real d
 In regular rooms Grandpa arrives on the left and the exits are on the right. Every room except the first and the floor boss room has a return door at the arrival cell, leading to the room he came from. In a side room he spawns one cell to its right. Going back puts him at the door he originally left through. A door only works after he has stepped away from it, so arriving on one never sends him straight back.
 
 Entering a room in a layer seals the other room in that layer, so the skipped route shows a sealed door for the rest of the run. Side rooms never seal. Rooms remember their state: cleared rooms stay empty and earn nothing more, and pickups left behind stay there. An item he has since gained elsewhere can't be taken again.
+
+### Consumables, Blocks and Treasure
+
+A run starts with no Permission Slips and one Overheated Thermos.
+
+- **Permission Slips** open locked chests and the treasure room. The mini boss always drops one. Cleared combat and side rooms drop one 15% of the time.
+- **Overheated Thermoses** are placed with Q and go off after 1.2 seconds, with a 56 pixel blast. The blast deals 30 damage to enemies, breaks blocks, and costs Grandpa one pill if he is caught. Cleared combat and side rooms drop one 20% of the time.
+- **Breakable blocks** act as walls until blasted, then drop Pension 30% of the time, a Thermos 15% and a Slip 10%. Blocks can close off a loot pocket. Layouts fail validation if a door, enemy or required reward can't be reached without a bomb.
+- **Locked chests** give the same reward as treasure, for one Slip.
+- **The treasure room** appears once per floor, behind a locked door in the bottom middle of a room that is alone in its layer, so a route choice can never hide it. One Slip opens the door for good, and the room offers a choice of three items.
 
 ### Maps
 

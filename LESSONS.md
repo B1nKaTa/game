@@ -19,3 +19,5 @@
 - 2026-11-02: The attack animation stopped after the 0.1 second hit window and a 10 FPS loop showed about one frame → time a one-shot animation by its own duration, separate from the hit window.
 - 2026-11-02: Doors fire on proximity, so arriving on a return door would bounce the player straight back → a door only works after the player has stepped out of its range.
 - 2026-11-02: Keeping visited rooms alive out of the tree keeps pickups simply, but anything mid-flight resumes on return and nothing frees those rooms automatically → clear shots, bursts and flying coins on leaving, and free rooms in the scene's _exit_tree.
+- 2026-11-02: A probe's simulated E press did nothing because it ran right after a screenshot, which is after that frame's _process, so just_pressed had already passed → await process_frame before simulating input, and suspect the probe's timing before the game.
+- 2026-11-02: A probe that hits a script error never reaches quit() and hangs until the tool times out → give every probe a timer that quits with an error.
