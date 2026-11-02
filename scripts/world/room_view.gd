@@ -157,9 +157,10 @@ func _spawn_enemies() -> void:
 		_spawn_enemy(boss, RoomBackdrop.cell_center(cell))
 
 
-func _spawn_enemy(def: EnemyDef, at: Vector2) -> void:
+func _spawn_enemy(def: EnemyDef, at: Vector2, summoned := false) -> void:
 	var enemy := Enemy.new()
 	enemy.setup(def, _player, _run.stats.warning_fraction, _run.stats.reveals_enemy_health)
+	enemy.is_summon = summoned
 	enemy.position = at
 	enemy.defeated.connect(_on_enemy_defeated)
 	enemy.summon_requested.connect(_spawn_summon)
@@ -176,14 +177,15 @@ func _spawn_summon(def: EnemyDef, at: Vector2) -> void:
 	var floor_cell := _room.layout.nearest_floor_cell(cell)
 	if floor_cell != cell:
 		at = RoomBackdrop.cell_center(floor_cell)
-	_spawn_enemy(def, at)
+	_spawn_enemy(def, at, true)
 
 
 func _on_enemy_defeated(enemy: Enemy) -> void:
 	_alive -= 1
 	DeathBurst.spawn(self, enemy.position, enemy.def.color, enemy.def.is_boss)
 	enemy_died.emit(enemy.position, enemy.def.is_boss)
-	_drop_coin(enemy.position, enemy.def.pension_drop)
+	if enemy.coin_value() > 0:
+		_drop_coin(enemy.position, enemy.coin_value())
 	_last_death_at = enemy.position
 	if _room.room_type == RoomLayout.TYPE_MINI_BOSS and enemy.def.is_boss:
 		_drop_consumable(enemy.position, RoomRules.DROP_KEY)

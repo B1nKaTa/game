@@ -15,5 +15,5 @@ rooms_dir = "res://data/rooms/floor_1/"
 enemies = [ExtResource("2"), ExtResource("3"), ExtResource("4")]
 mini_boss = ExtResource("5")
 floor_boss = ExtResource("6")
-clear_pension = 8
-treasure_pension = 25
+clear_pension = 4
+treasure_pension = 12

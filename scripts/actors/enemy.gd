@@ -15,6 +15,7 @@ var def: EnemyDef
 var hp: float = 0.0
 var target: Node2D
 var desired_velocity := Vector2.ZERO
+var is_summon := false
 var _warning_fraction := 0.5
 var _behavior: EnemyBehavior
 var _knockback := Vector2.ZERO
@@ -66,6 +67,11 @@ static func clamp_inside_room(point: Vector2) -> Vector2:
 	return Vector2(
 		clampf(point.x, tile, (RoomLayout.WIDTH - 1) * tile),
 		clampf(point.y, tile, (RoomLayout.HEIGHT - 1) * tile))
+
+
+# Summons pay nothing, or a boss left alive could be farmed forever.
+func coin_value() -> int:
+	return 0 if is_summon else def.pension_drop
 
 
 func body_rect() -> Rect2:

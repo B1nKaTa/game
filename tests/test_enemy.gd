@@ -5,6 +5,31 @@ func _load(id: String) -> EnemyDef:
 	return load("res://data/enemies/%s.tres" % id)
 
 
+func test_a_normal_enemy_is_worth_its_drop() -> void:
+	var enemy := Enemy.new()
+	enemy.setup(_load("intern_reaper"), null, 0.5)
+	assert_true(enemy.coin_value() > 0)
+	enemy.free()
+
+
+func test_a_summoned_enemy_is_worth_nothing() -> void:
+	var enemy := Enemy.new()
+	enemy.setup(_load("intern_reaper"), null, 0.5)
+	enemy.is_summon = true
+	assert_eq(enemy.coin_value(), 0, "or a boss could be farmed forever")
+	enemy.free()
+
+
+func test_income_values_stay_at_the_reduced_level() -> void:
+	var floor_def: FloorDef = load("res://data/floors/floor_1.tres")
+	assert_eq(floor_def.clear_pension, 4)
+	assert_eq(floor_def.treasure_pension, 12)
+	assert_eq(floor_def.mini_boss.pension_drop, 15)
+	assert_eq(floor_def.floor_boss.pension_drop, 30)
+	for def: EnemyDef in floor_def.enemies:
+		assert_true(def.pension_drop <= 3, def.id)
+
+
 func test_regular_enemies_load_with_behaviors() -> void:
 	for id in ["intern_reaper", "filing_clerk", "debt_ghost"]:
 		var def := _load(id)
