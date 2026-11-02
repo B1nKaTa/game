@@ -124,3 +124,17 @@ func test_travel_completes_from_any_position_and_direction() -> void:
 		assert_true(travelled >= ThrownCane.MAX_RANGE and frames <= 38, "throw %d took %d frames" % [i, frames])
 		if not failures.is_empty():
 			return
+
+
+func test_thrown_cane_announces_the_catch() -> void:
+	var state := CaneThrow.new()
+	state.try_throw()
+	state.drop()
+	var cane := ThrownCane.new()
+	cane.setup(state, null, Vector2.RIGHT, 1.0)
+	var caught := [0]
+	cane.caught.connect(func(): caught[0] += 1)
+	cane._catch()
+	assert_eq(caught[0], 1)
+	assert_true(state.is_held())
+	cane.free()

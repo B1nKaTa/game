@@ -2,6 +2,12 @@ class_name Player
 extends CharacterBody2D
 
 signal died
+signal swing_landed(heavy: bool, finisher: bool)
+signal swing_missed(heavy: bool)
+signal cane_thrown
+signal cane_hit
+signal cane_caught
+signal hurt
 
 const ATTACK_REACH := 44.0
 const ATTACK_ANGLE := 60.0
@@ -50,7 +56,9 @@ func take_hit(amount: int) -> bool:
 		return false
 	var landed := run.health.hit(amount)
 	if landed:
-		_visual.flash(HURT_COLOR, HurtLook.RED_TIME)
+		if _visual != null:
+			_visual.flash(HURT_COLOR, HurtLook.RED_TIME)
+		hurt.emit()
 	return landed
 
 
@@ -80,11 +88,11 @@ func _handle_attacks() -> void:
 	if Input.is_action_just_pressed("attack"):
 		var damage := _combo.try_attack()
 		if damage > 0:
-			_swing(damage, ATTACK_REACH, ATTACK_ANGLE, ATTACK_PUSH)
+			_swing(damage, ATTACK_REACH, ATTACK_ANGLE, ATTACK_PUSH, false, damage == CaneCombo.DAMAGE[-1])
 		_charge.start()
 	if Input.is_action_just_released("attack"):
 		if _charge.release():
-			_swing(ChargeSwing.DAMAGE, CHARGE_REACH, CHARGE_ANGLE, ChargeSwing.KNOCKBACK)
+			_swing(ChargeSwing.DAMAGE, CHARGE_REACH, CHARGE_ANGLE, ChargeSwing.KNOCKBACK, true, false)
 
 
 func _throw_cane() -> void:
@@ -99,8 +107,11 @@ func _throw_cane() -> void:
 		spawn = wall["position"] + wall["normal"] * ThrownCane.WALL_BACKOFF
 	_thrown_cane = ThrownCane.new()
 	_thrown_cane.setup(_cane, self, _aim, run.stats.damage_mult)
+	_thrown_cane.hit_enemy.connect(cane_hit.emit)
+	_thrown_cane.caught.connect(cane_caught.emit)
 	parent.add_child(_thrown_cane)
 	_thrown_cane.global_position = spawn
+	cane_thrown.emit()
 	if not wall.is_empty():
 		_cane.drop()
 
@@ -121,13 +132,19 @@ func _exit_tree() -> void:
 		_thrown_cane.queue_free()
 
 
-func _swing(damage: float, reach: float, angle: float, push: float) -> void:
+func _swing(damage: float, reach: float, angle: float, push: float, heavy: bool, finisher: bool) -> void:
 	_swing_show = SWING_SHOW_TIME
 	_swing_reach = reach
 	_visual.play("attack")
+	var landed := false
 	for enemy in get_tree().get_nodes_in_group("enemies"):
 		if MeleeArc.hits(global_position, _aim, reach, angle, enemy.global_position):
 			enemy.take_damage(damage * run.stats.damage_mult, _aim * push)
+			landed = true
+	if landed:
+		swing_landed.emit(heavy, finisher)
+	else:
+		swing_missed.emit(heavy)
 
 
 func _handle_movement() -> void:

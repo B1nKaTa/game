@@ -1,6 +1,9 @@
 class_name ThrownCane
 extends Node2D
 
+signal hit_enemy
+signal caught
+
 const FLY_SPEED := 320.0
 const MAX_RANGE := 200.0
 const HIT_RADIUS := 16.0
@@ -66,6 +69,7 @@ func _fly(delta: float) -> void:
 	if enemy != null:
 		enemy.take_damage(_damage, _direction * PUSH)
 		_state.drop()
+		hit_enemy.emit()
 	elif wall_hit or _travelled >= MAX_RANGE:
 		_state.drop()
 
@@ -99,6 +103,7 @@ func _return_to_player(delta: float) -> void:
 
 func _catch() -> void:
 	_state.catch_cane()
+	caught.emit()
 	queue_free()
 
 

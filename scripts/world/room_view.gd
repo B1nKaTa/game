@@ -6,6 +6,8 @@ signal floor_cleared
 signal pension_earned(amount: int)
 signal room_finished(room_id: int)
 signal boss_spawned(boss: Enemy)
+signal enemy_died(at: Vector2, is_boss: bool)
+signal doors_opened
 
 const HEAL_AMOUNT := 2
 const PENSION_COLOR := Color("ffd24a")
@@ -23,6 +25,7 @@ var _already_cleared := false
 var _side_open := false
 var _alive := 0
 var _finished := false
+var _had_enemies := false
 var _doors: Array[Door] = []
 var _coins: Array[Pickup] = []
 
@@ -89,6 +92,7 @@ func _spawn_enemy(def: EnemyDef, at: Vector2) -> void:
 	enemy.defeated.connect(_on_enemy_defeated)
 	enemy.summon_requested.connect(_spawn_summon)
 	_alive += 1
+	_had_enemies = true
 	add_child(enemy)
 	if def.is_boss:
 		boss_spawned.emit(enemy)
@@ -106,6 +110,7 @@ func _spawn_summon(def: EnemyDef, at: Vector2) -> void:
 func _on_enemy_defeated(enemy: Enemy) -> void:
 	_alive -= 1
 	DeathBurst.spawn(self, enemy.position, enemy.def.color, enemy.def.is_boss)
+	enemy_died.emit(enemy.position, enemy.def.is_boss)
 	_drop_coin(enemy.position, enemy.def.pension_drop)
 	if enemy.def.is_boss:
 		for other in get_tree().get_nodes_in_group("enemies"):
@@ -176,6 +181,8 @@ func _finish_room() -> void:
 	_finished = true
 	for door in _doors:
 		door.locked = false
+	if _had_enemies:
+		doors_opened.emit()
 	for coin in _coins:
 		if is_instance_valid(coin):
 			coin.fly()
