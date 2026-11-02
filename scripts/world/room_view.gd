@@ -105,6 +105,7 @@ func _spawn_summon(def: EnemyDef, at: Vector2) -> void:
 
 func _on_enemy_defeated(enemy: Enemy) -> void:
 	_alive -= 1
+	DeathBurst.spawn(self, enemy.position, enemy.def.color, enemy.def.is_boss)
 	_drop_coin(enemy.position, enemy.def.pension_drop)
 	if enemy.def.is_boss:
 		for other in get_tree().get_nodes_in_group("enemies"):
