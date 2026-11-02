@@ -98,6 +98,10 @@ The Retirement Plan stands in the shop. Holding E pays in 10 Pension at a time, 
 
 Reaching 10, 50, 100, 250, 500, 750 and 1000 for the first time each gives one free item for that run only. It waits in the shop, the treasure room if not yet entered, or after the mini boss if not yet beaten. The item chosen is a random run item for now, with a free Thermos if none are left, until the real reward list is decided. Each tier pays once ever, so cashing out and paying back in can't earn it twice.
 
+### Secret Rooms
+
+A floor usually has one secret room, hanging off a combat room with no side room. It may sit on a route the player skips. A faint crack in the top wall is the only hint, and a Thermos blast next to it opens a door. The room holds treasure and no enemies, and it appears on the maps once visited.
+
 ### Maps
 
 A small map in the top right corner shows visited rooms, the links between them and the current room. Pressing M opens a large map with room type icons and a legend, and pauses the game until M is pressed again. Unvisited rooms never show on either map. The map reads left to right from the start to the floor boss, with side rooms beside their parent.

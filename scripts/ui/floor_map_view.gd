@@ -12,6 +12,7 @@ const ROOM_COLORS := {
 	RoomLayout.TYPE_FLOOR_BOSS: Color("ffd24a"),
 	RoomLayout.TYPE_TREASURE: Color("67f0d0"),
 	RoomLayout.TYPE_SHOP: Color("7d9a5c"),
+	RoomLayout.TYPE_SECRET: Color("ece9e0"),
 }
 const PANEL_COLOR := Color(0.09, 0.07, 0.11, 0.65)
 const BIG_PANEL_COLOR := Color(0.09, 0.07, 0.11, 0.95)
@@ -25,7 +26,8 @@ const BIG_RECT := Rect2(60, 40, 520, 280)
 const BIG_SPACING := Vector2(60, 46)
 const BIG_ROOM := Vector2(40, 30)
 const BIG_MARGIN := Vector2(38, 58)
-const LEGEND := "C Combat   I Item   H Healing   ? Side   T Treasure   $ Shop   M Mini boss   B Boss"
+const LEGEND_TOP := "C Combat   I Item   H Healing   ? Side   S Secret"
+const LEGEND_BOTTOM := "T Treasure   $ Shop   M Mini boss   B Boss"
 const TITLE := "Floor Map"
 const CLOSE_HINT := "M: Close"
 
@@ -38,7 +40,7 @@ var _is_big := false
 
 # Column is the layer, read left to right from the start to the boss. Row is measured so a lone room sits between two.
 static func map_position(map: FloorMap, room: FloorRoom) -> Vector2:
-	if room.room_type == RoomLayout.TYPE_SIDE:
+	if room.room_type == RoomLayout.TYPE_SIDE or room.room_type == RoomLayout.TYPE_SECRET:
 		var parent := map_position(map, map.room(room.parent_id))
 		return Vector2(parent.x, parent.y - 1.0 if parent.y < 1.0 else parent.y + 1.0)
 	if room.room_type == RoomLayout.TYPE_TREASURE or room.room_type == RoomLayout.TYPE_SHOP:
@@ -114,7 +116,8 @@ func _draw() -> void:
 	if _is_big:
 		_draw_text(panel.position + Vector2(12, 22), TITLE, 16, Color.WHITE)
 		_draw_text(panel.end - Vector2(62, 257), CLOSE_HINT, 11, Color("ffd24a"))
-		_draw_text(panel.position + Vector2(12, panel.size.y - 12), LEGEND, 11, Color("ece9e0"))
+		_draw_text(panel.position + Vector2(12, panel.size.y - 26), LEGEND_TOP, 11, Color("ece9e0"))
+		_draw_text(panel.position + Vector2(12, panel.size.y - 12), LEGEND_BOTTOM, 11, Color("ece9e0"))
 
 
 func _room_center(room_id: int, origin: Vector2, spacing: Vector2, room_size: Vector2) -> Vector2:

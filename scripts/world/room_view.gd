@@ -105,6 +105,22 @@ func _create_doors() -> void:
 		_add_treasure_door()
 	if _room.shop_id != -1:
 		_add_door(_room.shop_id, RoomRules.door_icon(RoomLayout.TYPE_SHOP), RoomLayout.SHOP_DOOR)
+	if _room.secret_id != -1:
+		_add_secret_wall()
+
+
+func _add_secret_wall() -> void:
+	var wall := SecretWall.new()
+	wall.position = RoomBackdrop.cell_center(RoomLayout.SECRET_WALL)
+	wall.broken.connect(_on_secret_wall_broken)
+	add_child(wall)
+
+
+func _on_secret_wall_broken(_at: Vector2) -> void:
+	var door := _add_door(_room.secret_id, RoomRules.door_icon(RoomLayout.TYPE_SECRET), RoomLayout.SECRET_DOOR)
+	door.locked = not _finished
+	doors_opened.emit()
+	notice.emit("You found a secret room!")
 
 
 func _add_treasure_door() -> void:

@@ -35,6 +35,7 @@ static func build(rng: RandomNumberGenerator, pool: Array[RoomLayout]) -> FloorM
 	_attach_side_rooms(map, picker, rng)
 	_attach_treasure_room(map, picker, rng)
 	_attach_shop(map, picker, rng)
+	_attach_secret_room(map, picker, rng)
 	return map
 
 
@@ -121,6 +122,23 @@ static func _attach_shop(map: FloorMap, picker: _LayoutPicker, rng: RandomNumber
 	var shop := _add_room(map, parent.layer, RoomLayout.TYPE_SHOP, layout)
 	shop.parent_id = parent.id
 	parent.shop_id = shop.id
+
+
+# Unlike the shop it may sit on a skipped route, because finding it is the reward.
+static func _attach_secret_room(map: FloorMap, picker: _LayoutPicker, rng: RandomNumberGenerator) -> void:
+	var layout := picker.pick(RoomLayout.TYPE_SECRET)
+	if layout == null:
+		return
+	var options: Array[FloorRoom] = []
+	for room in map.main_rooms():
+		if room.room_type == RoomLayout.TYPE_COMBAT and room.side_id == -1:
+			options.append(room)
+	if options.is_empty():
+		return
+	var parent := options[rng.randi_range(0, options.size() - 1)]
+	var secret := _add_room(map, parent.layer, RoomLayout.TYPE_SECRET, layout)
+	secret.parent_id = parent.id
+	parent.secret_id = secret.id
 
 
 static func _rooms_on_every_route(map: FloorMap) -> Array[FloorRoom]:
