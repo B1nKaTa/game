@@ -38,6 +38,8 @@ func _run() -> void:
 	_check(not Progress.data.can_release_retirement(), "the plan is locked in the run it was paid into")
 
 	var recipe: ItemDef = Content.recipes()[0]
+	# The floor run above collects whatever recipes it happens to find, possibly this one.
+	Progress.data.recipes_found.erase(recipe.id)
 	Progress.add_pension(recipe.craft_price)
 	_check(not Progress.craft(recipe), "crafting needs the recipe")
 	Progress.find_recipe(recipe.id)
