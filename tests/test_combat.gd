@@ -123,3 +123,29 @@ func test_player_cancel_charge_clears_a_held_charge() -> void:
 	assert_false(player._charge.is_holding())
 	assert_false(player._charge.is_charging())
 	player.free()
+
+
+func test_warning_progress_is_zero_before_the_warning_shows() -> void:
+	var telegraph := Telegraph.new()
+	telegraph.start(1.0)
+	assert_near(telegraph.warning_progress(0.5), 0.0)
+	assert_near(Telegraph.new().warning_progress(0.5), 0.0, "idle")
+
+
+func test_warning_progress_grows_to_one_as_the_attack_lands() -> void:
+	var telegraph := Telegraph.new()
+	telegraph.start(1.0)
+	telegraph.tick(0.5)
+	assert_near(telegraph.warning_progress(0.5), 0.0)
+	telegraph.tick(0.25)
+	assert_near(telegraph.warning_progress(0.5), 0.5)
+	telegraph.tick(0.2)
+	assert_true(telegraph.warning_progress(0.5) > 0.85)
+
+
+func test_a_longer_warning_window_starts_filling_earlier() -> void:
+	var telegraph := Telegraph.new()
+	telegraph.start(1.0)
+	telegraph.tick(0.4)
+	assert_near(telegraph.warning_progress(0.5), 0.0, "default window not open yet")
+	assert_true(telegraph.warning_progress(0.8) > 0.0, "hearing aid window is open")

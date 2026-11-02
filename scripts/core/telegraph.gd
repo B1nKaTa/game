@@ -23,3 +23,12 @@ func is_active() -> bool:
 
 func shows_warning(fraction: float) -> bool:
 	return is_active() and _remaining <= _duration * fraction
+
+
+func warning_progress(fraction: float) -> float:
+	if not shows_warning(fraction):
+		return 0.0
+	var window := _duration * fraction
+	if window <= 0.0:
+		return 1.0
+	return clampf(1.0 - _remaining / window, 0.0, 1.0)

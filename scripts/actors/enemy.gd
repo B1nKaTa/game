@@ -127,6 +127,8 @@ func request_summon(count: int) -> void:
 
 func _draw() -> void:
 	if _warning != null and _warning.shows_warning(_warning_fraction):
+		var progress := _warning.warning_progress(_warning_fraction)
+		draw_circle(Vector2.ZERO, _warning_radius * progress, Color(0.89, 0.32, 0.31, 0.15 + 0.3 * progress))
 		draw_arc(Vector2.ZERO, _warning_radius, 0.0, TAU, 32, Color("e4524f"), 2.0)
 	if def != null and shows_health_bar():
 		var top := -def.body_size.y / 2.0 - 6.0
