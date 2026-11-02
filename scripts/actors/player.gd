@@ -29,6 +29,8 @@ const GHOST_EVERY := 0.05
 
 var run: RunState
 var show_crosshair := false
+# Set by the full-loop check and balance probes, which have no mouse to aim with.
+var aim_source := Callable()
 var _ghost_left := 0.0
 var _combo := CaneCombo.new()
 var _charge := ChargeSwing.new()
@@ -99,7 +101,7 @@ func _physics_process(delta: float) -> void:
 	_dodge.tick(delta)
 	run.health.tick(delta)
 	_advance_swing(delta)
-	var to_mouse := get_global_mouse_position() - global_position
+	var to_mouse := _aim_point() - global_position
 	if not to_mouse.is_zero_approx():
 		_aim = to_mouse.normalized()
 	_visual.set_facing_left(_aim.x < 0.0)
@@ -109,6 +111,10 @@ func _physics_process(delta: float) -> void:
 	_handle_movement()
 	_leave_dodge_ghosts(delta)
 	queue_redraw()
+
+
+func _aim_point() -> Vector2:
+	return aim_source.call() if aim_source.is_valid() else get_global_mouse_position()
 
 
 func _leave_dodge_ghosts(delta: float) -> void:

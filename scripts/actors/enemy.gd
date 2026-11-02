@@ -38,6 +38,7 @@ var _knockback := Vector2.ZERO
 var _dead := false
 var _warning: Telegraph
 var _warning_radius := 0.0
+var _warning_whole := false
 var _lane_direction := Vector2.RIGHT
 var _lane_length := 0.0
 var _lane_width := 0.0
@@ -175,9 +176,15 @@ func direction_to_target() -> Vector2:
 	return global_position.direction_to(target.global_position)
 
 
-func set_warning(telegraph: Telegraph, radius: float) -> void:
+# Shown for the part of the windup the player's stats allow, unless the whole of it must show.
+func set_warning(telegraph: Telegraph, radius: float, whole_windup := false) -> void:
 	_warning = telegraph
 	_warning_radius = radius
+	_warning_whole = whole_windup
+
+
+func _warning_share() -> float:
+	return 1.0 if _warning_whole else _warning_fraction
 
 
 func clear_warning() -> void:
@@ -276,8 +283,8 @@ func _on_summon_mark_finished(spot: Vector2) -> void:
 
 
 func _draw() -> void:
-	if _warning != null and _warning.shows_warning(_warning_fraction):
-		var progress := _warning.warning_progress(_warning_fraction)
+	if _warning != null and _warning.shows_warning(_warning_share()):
+		var progress := _warning.warning_progress(_warning_share())
 		draw_circle(Vector2.ZERO, _warning_radius * progress, Color(0.89, 0.32, 0.31, 0.15 + 0.3 * progress))
 		draw_arc(Vector2.ZERO, _warning_radius, 0.0, TAU, 32, WARNING_COLOR, 2.0)
 		if _lane_length > 0.0:

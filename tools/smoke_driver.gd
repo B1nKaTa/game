@@ -15,6 +15,7 @@ var _checked_block_memory := false
 var _saw_shop := false
 var _checked_props := false
 var _pickups_off_solids := 0
+var _checked_fight := false
 
 
 func _ready() -> void:
@@ -74,7 +75,7 @@ func _run() -> void:
 	_check(Progress.data.level_of(upgrade.id) == 1, "upgrade survives a reload")
 
 	if not _failed:
-		print("SMOKE PASS rooms of sizes %s, big room view checked: %s, block memory checked: %s, props checked: %s, pickups off solids: %d" % [str(_sizes_seen.keys()), str(_followed_a_big_room), str(_checked_block_memory), str(_checked_props), _pickups_off_solids])
+		print("SMOKE PASS rooms of sizes %s, big room view checked: %s, block memory checked: %s, props checked: %s, fight checked: %s, pickups off solids: %d" % [str(_sizes_seen.keys()), str(_followed_a_big_room), str(_checked_block_memory), str(_checked_props), str(_checked_fight), _pickups_off_solids])
 		get_tree().quit(0)
 
 
@@ -98,6 +99,8 @@ func _clear_whole_floor() -> void:
 		await _check_big_room_view(scene)
 		if not _checked_props:
 			await _check_props_room(scene)
+		if not _checked_fight:
+			await _check_fight_room(scene)
 		var at: int = scene.debug_current_id()
 		if not walked_back and at != map.start_id:
 			walked_back = true
@@ -557,3 +560,238 @@ func _check_pickups_off_solids(scene: Node, room_id: int) -> void:
 
 func _gone(node) -> bool:
 	return not is_instance_valid(node) or node.is_queued_for_deletion()
+
+
+# --- Stage 3: new enemies, blasts, shields and boss patterns ---
+
+func _fight_layout(width: int, height: int, changes: Dictionary) -> RoomLayout:
+	var rows := ["#".repeat(width)]
+	for y in range(1, height - 1):
+		rows.append("#" + ".".repeat(width - 2) + "#")
+	rows.append("#".repeat(width))
+	for cell: Vector2i in changes:
+		var row: String = rows[cell.y]
+		rows[cell.y] = row.substr(0, cell.x) + changes[cell] + row.substr(cell.x + 1)
+	var layout := RoomLayout.new()
+	layout.room_type = RoomLayout.TYPE_HEALING
+	layout.rows = PackedStringArray(rows)
+	return layout
+
+
+func _enter_made_room(scene: Node, layout: RoomLayout) -> RoomView:
+	var map: FloorMap = scene.debug_map()
+	var room := FloorRoom.new()
+	room.id = map.rooms.size()
+	room.cell = Vector2i(80 + room.id, 80)
+	room.room_type = layout.room_type
+	room.layout = layout
+	room.decor_seed = 5
+	map.rooms.append(room)
+	scene._enter_room(room.id)
+	await _wait(0.1)
+	return scene.debug_room_view()
+
+
+func _enemy_def(id: String) -> EnemyDef:
+	return load("res://data/enemies/%s.tres" % id)
+
+
+func _put_feet(scene: Node, at: Vector2) -> void:
+	scene.player.global_position = at - Player.FEET_OFFSET
+
+
+func _dismiss_all() -> void:
+	for enemy in get_tree().get_nodes_in_group("enemies"):
+		enemy.dismiss()
+	await _wait(0.05)
+
+
+func _check_fight_room(scene: Node) -> void:
+	_checked_fight = true
+	var back_id: int = scene.debug_current_id()
+	var health: Health = scene.player.run.health
+	# The check is about the rules, so stray hits must not end the run.
+	var pills_before := health.max_pills
+	health.raise_max(pills_before + 30)
+	await _check_blast(scene)
+	await _check_shield(scene)
+	await _check_boss_moves(scene)
+	await _check_far_boss_waits(scene)
+	await _dismiss_all()
+	scene.player.aim_source = Callable()
+	scene._enter_room(back_id)
+	await _wait(0.1)
+	health.pills = pills_before
+	health.raise_max(pills_before)
+
+
+func _check_blast(scene: Node) -> void:
+	var cell_at := func(c: Vector2i) -> Vector2: return RoomBackdrop.cell_center(c)
+	var layout := _fight_layout(20, 11, {Vector2i(5, 4): "Q", Vector2i(7, 4): "O", Vector2i(12, 3): "#", Vector2i(12, 4): "#", Vector2i(12, 5): "#", Vector2i(12, 6): "#"})
+	var view := await _enter_made_room(scene, layout)
+	var barrels := _props_in(view, Barrel)
+	var rocks := _props_in(view, RockBlock)
+	var auditor := view._spawn_enemy(_enemy_def("burnt_out_auditor"), cell_at.call(Vector2i(6, 5)))
+	var neighbor := view._spawn_enemy(_enemy_def("intern_reaper"), cell_at.call(Vector2i(6, 6)))
+	neighbor.set_physics_process(false)
+	var neighbor_hp: float = neighbor.hp
+	var pension_before: int = Progress.data.pension
+	_put_feet(scene, cell_at.call(Vector2i(16, 8)))
+	auditor._behavior._rushed = 99.0
+	await _wait(0.2)
+	_check(auditor._warning != null, "a lit auditor shows its warning")
+	var health: Health = scene.player.run.health
+	var pills: int = health.pills
+	await _wait(1.0)
+	_check(_gone(auditor), "the auditor goes off when its fuse ends")
+	_check(_gone(barrels[0]) and _gone(rocks[0]), "the blast breaks barrels and rocks")
+	_check(neighbor.hp < neighbor_hp, "the blast hurts other enemies")
+	_check(health.pills == pills, "a far player is not hurt")
+	_check(Progress.data.pension == pension_before, "an auditor that blows itself up pays nothing")
+	await _wait(0.9)
+	# A wall stands between the next blast and Grandpa.
+	var walled := view._spawn_enemy(_enemy_def("burnt_out_auditor"), cell_at.call(Vector2i(11, 4)) + Vector2(8, 0))
+	var beyond := view._spawn_enemy(_enemy_def("intern_reaper"), cell_at.call(Vector2i(13, 4)) + Vector2(-6, 0))
+	beyond.set_physics_process(false)
+	var beyond_hp: float = beyond.hp
+	_put_feet(scene, cell_at.call(Vector2i(13, 4)) + Vector2(-6, 8))
+	walled._behavior._rushed = 99.0
+	await _wait(0.2)
+	var walled_pills: int = health.pills
+	walled.set_physics_process(true)
+	var waited := 0.0
+	while not _gone(walled) and waited < 2.0:
+		await _wait(0.1)
+		waited += 0.1
+	_check(_gone(walled), "the walled auditor went off")
+	_check(health.pills == walled_pills, "a wall stops the blast reaching Grandpa")
+	_check(is_equal_approx(beyond.hp, beyond_hp), "a wall stops the blast reaching an enemy")
+	# Killing a lit one still sets it off, and an unlit one dies quietly.
+	var quiet := view._spawn_enemy(_enemy_def("burnt_out_auditor"), cell_at.call(Vector2i(3, 8)))
+	var near_quiet := view._spawn_enemy(_enemy_def("intern_reaper"), cell_at.call(Vector2i(4, 8)))
+	near_quiet.set_physics_process(false)
+	var near_hp: float = near_quiet.hp
+	await _wait(0.05)
+	quiet.take_damage(INF, Vector2.ZERO)
+	await _wait(0.05)
+	_check(is_equal_approx(near_quiet.hp, near_hp), "an unlit auditor dies without a blast")
+	await _dismiss_all()
+
+
+func _swing_at(scene: Node, enemy: Enemy) -> void:
+	scene.player.aim_source = func() -> Vector2: return enemy.global_position
+	await get_tree().physics_frame
+	await get_tree().process_frame
+	Input.action_press("attack")
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	Input.action_release("attack")
+	await _wait(0.3)
+
+
+func _check_shield(scene: Node) -> void:
+	var view := await _enter_made_room(scene, _fight_layout(20, 11, {}))
+	var center := RoomBackdrop.cell_center(Vector2i(10, 6))
+	var officer := view._spawn_enemy(_enemy_def("denial_officer"), center)
+	officer.set_physics_process(false)
+	officer.facing = Vector2.RIGHT
+	var body := center + Vector2(34, 0)
+	_put_feet(scene, body + Player.FEET_OFFSET)
+	var hp: float = officer.hp
+	var blocks := [0]
+	officer.hit_blocked.connect(func(): blocks[0] += 1)
+	await _swing_at(scene, officer)
+	_check(blocks[0] == 1 and is_equal_approx(officer.hp, hp), "a swing from the front is blocked, blocks %d" % blocks[0])
+	_put_feet(scene, center + Vector2(-34, 0) + Player.FEET_OFFSET)
+	await _swing_at(scene, officer)
+	_check(officer.hp < hp, "a swing from behind lands")
+	var after_swing: float = officer.hp
+	_put_feet(scene, center + Vector2(100, 0) + Player.FEET_OFFSET)
+	await get_tree().physics_frame
+	await get_tree().process_frame
+	Input.action_press("throw")
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	Input.action_release("throw")
+	await _wait(0.5)
+	_check(officer.hp < after_swing, "a thrown cane goes over the shield")
+	scene.player.recall_cane()
+	scene.player.aim_source = Callable()
+	await _dismiss_all()
+
+
+func _check_boss_moves(scene: Node) -> void:
+	var view := await _enter_made_room(scene, _fight_layout(20, 11, {Vector2i(8, 5): "O", Vector2i(11, 7): "Q"}))
+	var rocks := _props_in(view, RockBlock)
+	var barrels := _props_in(view, Barrel)
+	var floor_def: FloorDef = load("res://data/floors/floor_1.tres")
+	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(2, 5)))
+	var reaper: Enemy = view._spawn_enemy(floor_def.floor_boss, RoomBackdrop.cell_center(Vector2i(15, 5)), true)
+	await _wait(0.05)
+	reaper._behavior._begin(reaper, reaper._behavior.Attack.DASH, false)
+	_check(reaper._lane_length > 0.0, "the dash shows a lane first")
+	var from: Vector2 = reaper.global_position
+	await _wait(1.8)
+	_check(reaper.global_position.distance_to(from) > 150.0, "the dash crosses the room, moved %f" % reaper.global_position.distance_to(from))
+	_check(_gone(rocks[0]), "the dash breaks a rock in its path")
+	reaper.global_position = RoomBackdrop.cell_center(Vector2i(10, 3))
+	reaper._behavior._cooldown = 99.0
+	reaper._behavior._next = reaper._behavior.Attack.NONE
+	reaper._behavior._begin(reaper, reaper._behavior.Attack.RING, false)
+	await _wait(reaper._behavior.windup_for(reaper._behavior.Attack.RING, false) + 0.1)
+	var shots := 0
+	for child in view.get_children():
+		if child is Projectile:
+			shots += 1
+	_check(shots == reaper._behavior.ring_count(false), "the ring fires all its shots, %d" % shots)
+	reaper._behavior._cooldown = 99.0
+	reaper._behavior._next = reaper._behavior.Attack.NONE
+	reaper._behavior._begin(reaper, reaper._behavior.Attack.SUMMON, false)
+	await _wait(reaper._behavior.windup_for(reaper._behavior.Attack.SUMMON, false) + 0.1)
+	var marks := 0
+	for child in view.get_children():
+		if child is SummonMark:
+			marks += 1
+	_check(marks == reaper._behavior.SUMMON_COUNT, "summons are marked before they come, %d" % marks)
+	var before: int = get_tree().get_nodes_in_group("enemies").size()
+	await _wait(BossMoves.SUMMON_WARNING + 0.05)
+	var enemies := get_tree().get_nodes_in_group("enemies")
+	_check(enemies.size() == before + marks, "each mark becomes a summon")
+	for enemy: Enemy in enemies:
+		if enemy != reaper:
+			_check(enemy.is_summon and enemy.coin_value() == 0, "a summon pays nothing")
+			_check(not view._room.layout.is_solid_at(view._cell_of(enemy.position)), "summons land on open floor")
+	await _dismiss_all()
+	# The mini boss charges through props too.
+	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(5, 7)))
+	var mini: Enemy = view._spawn_enemy(floor_def.mini_boss, RoomBackdrop.cell_center(Vector2i(16, 7)), true)
+	await _wait(0.05)
+	mini._behavior._begin(mini, mini._behavior.Attack.CHARGE)
+	_check(mini._lane_length > 0.0, "the charge shows a lane first")
+	await _wait(1.6)
+	_check(_gone(barrels[0]), "the charge breaks a barrel in its path")
+	await _dismiss_all()
+
+
+# In a big room a boss far from Grandpa walks over, and starts nothing he cannot see.
+func _check_far_boss_waits(scene: Node) -> void:
+	var view := await _enter_made_room(scene, _fight_layout(30, 17, {}))
+	var floor_def: FloorDef = load("res://data/floors/floor_1.tres")
+	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(2, 2)))
+	var boss: Enemy = view._spawn_enemy(floor_def.floor_boss, RoomBackdrop.cell_center(Vector2i(27, 14)), true)
+	boss._behavior._cooldown = 0.0
+	var started_far := false
+	var came_near := false
+	var waited := 0.0
+	while waited < 6.0:
+		await get_tree().physics_frame
+		waited += get_physics_process_delta_time()
+		var offset: Vector2 = scene.player.global_position - boss.global_position
+		if BossMoves.in_view(offset):
+			came_near = true
+			break
+		if boss._warning != null:
+			started_far = true
+	_check(not started_far, "a far boss starts no attack from beyond the screen")
+	_check(came_near, "a far boss comes into view")
+	await _dismiss_all()

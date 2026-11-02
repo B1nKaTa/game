@@ -1,8 +1,8 @@
 extends EnemyBehavior
 
 const START_RANGE := 46.0
-const FUSE := 0.9
-const FUSE_CRAWL := 0.25
+const FUSE := 1.0
+const FUSE_CRAWL := 0.15
 # Stuck behind something, it gives up and goes off where it stands, so a room can always end.
 const RUSH_LIMIT := 12.0
 const BLAST_RADIUS := 56.0
@@ -33,7 +33,8 @@ func tick(enemy: Enemy, delta: float) -> void:
 	if enemy.distance_to_target() <= START_RANGE or _rushed >= RUSH_LIMIT:
 		_lit = true
 		_telegraph.start(FUSE)
-		enemy.set_warning(_telegraph, BLAST_RADIUS)
+		# A blast has no second chance, so its warning shows for the whole fuse.
+		enemy.set_warning(_telegraph, BLAST_RADIUS, true)
 
 
 func on_killed(enemy: Enemy) -> void:

@@ -1,9 +1,9 @@
 extends EnemyBehavior
 
 const START_RANGE := 180.0
-const WINDUP := 0.55
+const WINDUP := 0.65
 const CHARGE_TIME := 0.7
-const CHARGE_SPEED := 300.0
+const CHARGE_SPEED := 280.0
 const HIT_RANGE := 16.0
 const COOLDOWN := 1.1
 
@@ -35,3 +35,4 @@ func tick(enemy: Enemy, delta: float) -> void:
 		_direction = enemy.direction_to_target()
 		_telegraph.start(WINDUP)
 		enemy.set_warning(_telegraph, 20.0)
+		enemy.set_warning_lane(_direction, CHARGE_TIME * CHARGE_SPEED, HIT_RANGE * 2.0, false)

@@ -1,9 +1,9 @@
 extends EnemyBehavior
 
 const TURN_SPEED := 1.4
-const START_RANGE := 46.0
-const STRIKE_RANGE := 54.0
-const WINDUP := 0.7
+const START_RANGE := 36.0
+const STRIKE_RANGE := 42.0
+const WINDUP := 0.75
 const COOLDOWN := 1.3
 
 var _telegraph := Telegraph.new()

@@ -286,9 +286,7 @@ func _spawn_enemy(def: EnemyDef, at: Vector2, summoned := false) -> Enemy:
 
 # Summons land on open floor, wherever the boss wanted them.
 func summon_spot(at: Vector2) -> Vector2:
-	var cell := _cell_of(at)
-	var floor_cell := _room.layout.nearest_floor_cell(cell)
-	return RoomBackdrop.cell_center(floor_cell) if floor_cell != cell else at
+	return RoomBackdrop.cell_center(_room.layout.nearest_floor_cell(_cell_of(at)))
 
 
 func _spawn_summon(def: EnemyDef, at: Vector2) -> void:
