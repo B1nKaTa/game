@@ -12,6 +12,7 @@ const ICONS := {
 	RoomLayout.TYPE_SHOP: "$",
 	RoomLayout.TYPE_SECRET: "S",
 	RoomLayout.TYPE_VAULT: "V",
+	RoomLayout.TYPE_CROSSROADS: "+",
 }
 const KEY_NAME := "Permission Slip"
 const BOMB_NAME := "Overheated Thermos"

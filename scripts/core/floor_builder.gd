@@ -61,7 +61,17 @@ static func _try_build(rng: RandomNumberGenerator, def: FloorDef, picker: _Layou
 	# Secret rooms and vaults wait behind a bomb, so nothing else may lead through one.
 	if not map.only_hidden_rooms_need_a_bomb() or not map.hidden_rooms_are_dead_ends():
 		return null
+	# The Crossroads shows on the maps beside the start, so one side must stay free.
+	if not _start_has_a_free_side(map):
+		return null
 	return map
+
+
+static func _start_has_a_free_side(map: FloorMap) -> bool:
+	for side in RoomLayout.SIDES:
+		if map.room_at(map.room(map.start_id).cell + side) == null:
+			return true
+	return false
 
 
 # Never touches itself, so the main path reads as a line on the map and leaves room for branches.

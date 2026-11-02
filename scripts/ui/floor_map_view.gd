@@ -14,12 +14,18 @@ const ROOM_COLORS := {
 	RoomLayout.TYPE_SHOP: Color("7d9a5c"),
 	RoomLayout.TYPE_SECRET: Color("ece9e0"),
 	RoomLayout.TYPE_VAULT: Color("5fd8ff"),
+	RoomLayout.TYPE_CROSSROADS: Color("c9b98a"),
 }
 const PANEL_COLOR := Color(0.09, 0.07, 0.11, 0.65)
 const BIG_PANEL_COLOR := Color(0.09, 0.07, 0.11, 0.95)
 const LINE_COLOR := Color("c9c5d6")
 const CURRENT_COLOR := Color.WHITE
-const MINI_RECT := Rect2(528, 3, 108, 58)
+# The floor's name sits on the row above it, at the top of the screen.
+const NAME_FONT := 9
+const NAME_BASELINE := 10.0
+const NAME_COLOR := Color("ece9e0")
+const MINI_RECT := Rect2(528, 13, 108, 58)
+const CROSSROADS_SCALE := 0.65
 const MINI_SPACING := Vector2(13, 11)
 const MINI_FONT := 8
 const MINI_LINK := 3.0
@@ -30,8 +36,7 @@ const BIG_FONT := 16
 const BIG_LINK := 6.0
 const ROOM_FILL := 0.8
 const LEGEND_TOP := "C Combat   I Item   H Healing   ? Side   S Secret"
-const LEGEND_BOTTOM := "T Treasure   $ Shop   M Mini boss   B Boss   V Vault"
-const TITLE := "Floor Map"
+const LEGEND_BOTTOM := "T Treasure   $ Shop   M Mini boss   B Boss   V Vault   + Crossroads"
 const CLOSE_HINT := "Close"
 
 var enabled := true
@@ -39,6 +44,7 @@ var _map: FloorMap
 var _progress: FloorProgress
 var _current_id := -1
 var _is_big := false
+var _floor_name := ""
 
 
 # A room's place on the map is its grid cell, counted from the floor's top left, whatever its size.
@@ -70,10 +76,22 @@ static func mini_origin(current_at: Vector2) -> Vector2:
 	return MINI_RECT.get_center() - current_at * MINI_SPACING - room_size(MINI_SPACING) / 2.0
 
 
-func setup(map: FloorMap, progress: FloorProgress, is_big: bool) -> void:
+# The Crossroads is a smaller square in its cell, so it reads as the little room it is.
+static func crossroads_rect(cell_rect: Rect2) -> Rect2:
+	var size := (cell_rect.size * CROSSROADS_SCALE).floor()
+	return Rect2(cell_rect.get_center() - size / 2.0, size)
+
+
+func setup(map: FloorMap, progress: FloorProgress, is_big: bool, floor_name := "") -> void:
 	_map = map
 	_progress = progress
 	_is_big = is_big
+	_floor_name = floor_name
+	queue_redraw()
+
+
+func floor_name() -> String:
+	return _floor_name
 
 
 func _ready() -> void:
@@ -126,11 +144,21 @@ func _draw() -> void:
 		_draw_links(_map.room(room_id), panel, origin, spacing)
 	for room_id in _progress.visited_ids():
 		_draw_room(_map.room(room_id), panel, origin, spacing)
-	if _is_big:
-		_draw_text(panel.position + Vector2(12, 22), TITLE, 16, Color.WHITE)
+	if not _is_big:
+		_draw_floor_name()
+	else:
+		_draw_text(panel.position + Vector2(12, 22), _floor_name, 16, Color.WHITE)
 		_draw_text(panel.end - Vector2(62, 257), KeyBindings.with_key("map", CLOSE_HINT), 11, Color("ffd24a"))
 		_draw_text(panel.position + Vector2(12, panel.size.y - 26), LEGEND_TOP, 11, Color("ece9e0"))
 		_draw_text(panel.position + Vector2(12, panel.size.y - 12), LEGEND_BOTTOM, 11, Color("ece9e0"))
+
+
+func _draw_floor_name() -> void:
+	var font := ThemeDB.fallback_font
+	var width := font.get_string_size(_floor_name, HORIZONTAL_ALIGNMENT_LEFT, -1, NAME_FONT).x
+	var at := Vector2(MINI_RECT.end.x - width, NAME_BASELINE)
+	draw_string_outline(font, at, _floor_name, HORIZONTAL_ALIGNMENT_LEFT, -1, NAME_FONT, 3, Color.BLACK)
+	draw_string(font, at, _floor_name, HORIZONTAL_ALIGNMENT_LEFT, -1, NAME_FONT, NAME_COLOR)
 
 
 # Only between two visited rooms, so a link never gives away a room or a secret not yet found.
@@ -154,9 +182,15 @@ func _draw_room(room: FloorRoom, panel: Rect2, origin: Vector2, spacing: Vector2
 	var rect := _rect_of(room, origin, spacing)
 	if not panel.encloses(rect):
 		return
+	var is_crossroads := room.room_type == RoomLayout.TYPE_CROSSROADS
+	if is_crossroads:
+		rect = crossroads_rect(rect)
 	draw_rect(rect, ROOM_COLORS.get(room.room_type, Color.WHITE))
 	var is_current := room.id == _current_id
 	draw_rect(rect, CURRENT_COLOR if is_current else Color.BLACK, false, 2.0 if is_current else 1.0)
+	# Too small for a letter on the corner map, and its shape says enough there.
+	if is_crossroads and not _is_big:
+		return
 	var font_size := BIG_FONT if _is_big else MINI_FONT
 	var icon := RoomRules.door_icon(room.room_type)
 	var icon_size := ThemeDB.fallback_font.get_string_size(icon, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)

@@ -1,9 +1,11 @@
 extends Node
 
-const TIMEOUT := 240.0
+const TIMEOUT := 420.0
 const MAX_STEPS := 150
 const VIEW := Vector2(640, 360)
 const AIM_TOLERANCE := 1.5
+const RECORDS_PATH := 0
+const CEMETERY_PATH := 1
 
 var _failed := false
 var _boss_rooms_seen := 0
@@ -21,6 +23,8 @@ var _checked_vault_room := false
 var _checked_stone_memory := false
 var _checked_potions := false
 var _checked_fuel := false
+var _checked_graveyard := false
+var _paths_cleared := 0
 
 
 func _ready() -> void:
@@ -44,7 +48,7 @@ func _run() -> void:
 	_check(spent_ok, "can buy an upgrade")
 	var pension_before: int = Progress.data.pension
 
-	await _clear_whole_floor()
+	await _clear_whole_floor(RECORDS_PATH)
 	_check(Progress.data.pension > pension_before, "Pension was earned during the run")
 	await _wait(2.5)
 	_expect_scene("WaitingRoom")
@@ -58,6 +62,17 @@ func _run() -> void:
 	_check(ids.has("potion_merchant") and ids.has("bomb_merchant"), "three clears bring the bomb merchant too")
 	Progress.reload()
 	_check(Progress.data.floors_cleared == 1, "floors cleared come back from the save as it was written")
+
+	# The first clear opened the second path, and clearing it counts the same.
+	var pension_before_second: int = Progress.data.pension
+	await _clear_whole_floor(CEMETERY_PATH)
+	_check(Progress.data.pension > pension_before_second, "the second path earns Pension too")
+	await _wait(2.5)
+	_expect_scene("WaitingRoom")
+	_check(Progress.data.floors_cleared == 2, "clearing the second path is counted too")
+	_check(_paths_cleared == 2, "both paths were cleared")
+	ids = get_tree().current_scene.open_merchant_ids()
+	_check(ids.has("potion_merchant") and not ids.has("bomb_merchant"), "merchants open on clears of any path")
 
 	Progress.add_pension(60)
 	var reached: int = Progress.retirement_deposit(60)
@@ -103,12 +118,21 @@ func _run() -> void:
 	_check(Progress.data.level_of(upgrade.id) == 1, "upgrade survives a reload")
 
 	if not _failed:
-		print("SMOKE PASS rooms of sizes %s, big room view checked: %s, block memory checked: %s, props checked: %s, fight checked: %s, vault opened: %s, potions checked: %s, fuel checked: %s, pickups off solids: %d" % [str(_sizes_seen.keys()), str(_followed_a_big_room), str(_checked_block_memory), str(_checked_props), str(_checked_fight), str(_opened_a_vault), str(_checked_potions), str(_checked_fuel), _pickups_off_solids])
+		print("SMOKE PASS paths cleared: %d, rooms of sizes %s, big room view checked: %s, block memory checked: %s, props checked: %s, fight checked: %s, graveyard checked: %s, vault opened: %s, potions checked: %s, fuel checked: %s, pickups off solids: %d" % [_paths_cleared, str(_sizes_seen.keys()), str(_followed_a_big_room), str(_checked_block_memory), str(_checked_props), str(_checked_fight), str(_checked_graveyard), str(_opened_a_vault), str(_checked_potions), str(_checked_fuel), _pickups_off_solids])
 		get_tree().quit(0)
 
 
 # Explores every room through its real door, secret room included, and leaves the boss for last.
-func _clear_whole_floor() -> void:
+func _clear_whole_floor(path_index: int) -> void:
+	# Each floor checks all of this for itself, whatever the last one saw.
+	_boss_rooms_seen = 0
+	_cleared_rooms = {}
+	_saw_shop = false
+	_opened_a_vault = false
+	_checked_vault_room = false
+	_checked_stone_memory = false
+	_checked_block_memory = false
+	_followed_a_big_room = false
 	Game.begin_run()
 	await _wait(0.5)
 	_expect_scene("FloorScene")
@@ -116,8 +140,13 @@ func _clear_whole_floor() -> void:
 	var starting_pills: int = scene.player.run.stats.max_pills
 	_check(starting_pills >= 4, "run starts with pills")
 	_check(scene.player.run.potion == null, "a run starts with an empty slot when nothing was brewed")
-	await _check_potion_drinking(scene)
+	if not _checked_potions:
+		await _check_potion_drinking(scene)
+	await _check_crossroads(scene)
+	await _walk_a_path(scene, path_index)
 	var map: FloorMap = scene.debug_map()
+	if path_index == CEMETERY_PATH and not _checked_graveyard:
+		await _check_graveyard_fights(scene)
 	var walked_back := false
 	var guard := 0
 	while not scene.is_cleared and not _failed and guard < MAX_STEPS:
@@ -156,6 +185,8 @@ func _clear_whole_floor() -> void:
 	_check(_checked_stone_memory == has_vault, "a floor with a vault checked its broken stone staying broken")
 	for room in map.rooms:
 		_check(scene.debug_progress().is_visited(room.id), "room %d (%s) was explored" % [room.id, room.room_type])
+	if scene.is_cleared:
+		_paths_cleared += 1
 
 
 func _next_goal(scene: Node, map: FloorMap) -> int:
@@ -434,6 +465,7 @@ func _die_in_a_run() -> void:
 	await _wait(0.5)
 	_expect_scene("FloorScene")
 	var scene := get_tree().current_scene
+	await _walk_a_path(scene, RECORDS_PATH)
 	if not _crafted_id.is_empty():
 		_check(scene.player.run.has_item(_crafted_id), "the crafted item starts the next run")
 	var carried: PotionDef = scene.player.run.potion
@@ -660,7 +692,8 @@ func _check_fight_room(scene: Node) -> void:
 	await _check_blast(scene)
 	await _check_shield(scene)
 	await _check_boss_moves(scene)
-	await _check_far_boss_waits(scene)
+	var floor_def: FloorDef = load("res://data/floors/floor_1.tres")
+	await _check_far_boss_waits(scene, floor_def.floor_boss)
 	await _check_thermos_fuel(scene)
 	await _dismiss_all()
 	scene.player.aim_source = Callable()
@@ -832,11 +865,10 @@ func _check_boss_moves(scene: Node) -> void:
 
 
 # In a big room a boss far from Grandpa walks over, and starts nothing he cannot see.
-func _check_far_boss_waits(scene: Node) -> void:
+func _check_far_boss_waits(scene: Node, boss_def: EnemyDef) -> void:
 	var view := await _enter_made_room(scene, _fight_layout(30, 17, {}))
-	var floor_def: FloorDef = load("res://data/floors/floor_1.tres")
 	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(2, 2)))
-	var boss: Enemy = view._spawn_enemy(floor_def.floor_boss, RoomBackdrop.cell_center(Vector2i(27, 14)), true)
+	var boss: Enemy = view._spawn_enemy(boss_def, RoomBackdrop.cell_center(Vector2i(27, 14)), true)
 	boss._behavior._cooldown = 0.0
 	var started_far := false
 	var came_near := false
@@ -850,8 +882,8 @@ func _check_far_boss_waits(scene: Node) -> void:
 			break
 		if boss._warning != null:
 			started_far = true
-	_check(not started_far, "a far boss starts no attack from beyond the screen")
-	_check(came_near, "a far boss comes into view")
+	_check(not started_far, "a far %s starts no attack from beyond the screen" % boss_def.id)
+	_check(came_near, "a far %s comes into view" % boss_def.id)
 	await _dismiss_all()
 
 
@@ -929,7 +961,7 @@ func _open_vault_stone(scene: Node, target_id: int) -> void:
 	_check(told[0] >= 2, "a stone that resists says so")
 	_check(view.door_to(target_id) == null, "no door while the stone stands")
 	# The level the floor asks for breaks it, and the blast still costs him nothing at a distance.
-	var floor_def: FloorDef = load("res://data/floors/floor_1.tres")
+	var floor_def: FloorDef = scene.debug_floor_def()
 	run.stats.thermos_level = floor_def.vault_stone_level
 	scene.player.global_position = far
 	view.place_bomb(RoomBackdrop.cell_center(door_cell))
@@ -1023,3 +1055,320 @@ func _check_thermos_fuel(scene: Node) -> void:
 	_check(health.pills == pills - Thermos.PLAYER_DAMAGE, "a fueled blast still costs Grandpa exactly %d pill" % Thermos.PLAYER_DAMAGE)
 	run.stats.thermos_damage_mult = 1.0
 	await _dismiss_all()
+
+
+# --- Stage 5: the Crossroads and the second path ---
+
+func _check_crossroads(scene: Node) -> void:
+	var view: CrossroadsView = scene.debug_room_view()
+	var cleared: int = Progress.data.floors_cleared
+	var map: FloorMap = scene.debug_map()
+	var here: FloorRoom = map.room(scene.debug_current_id())
+	_check(here.room_type == RoomLayout.TYPE_CROSSROADS, "every run starts in the Crossroads")
+	_check(get_tree().get_nodes_in_group("enemies").is_empty(), "nothing waits to fight in the Crossroads")
+	_check(scene.debug_mini_map().floor_name() == "The Crossroads", "the mini map names the Crossroads")
+	_check(scene.debug_big_map().floor_name() == "The Crossroads", "the big map names the Crossroads")
+	_check(scene.debug_progress().is_visited(here.id), "the Crossroads shows on the map")
+	var south := RoomBackdrop.cell_center(here.layout.door_cell(RoomLayout.SOUTH))
+	_put_feet(scene, south)
+	await _wait(0.1)
+	# Between the signs neither says anything, and walking over to one brings up its details.
+	_check(not view.sign_of_path(RECORDS_PATH).is_showing_details() and not view.sign_of_path(CEMETERY_PATH).is_showing_details(), "a sign shows nothing from afar")
+	for index in [RECORDS_PATH, CEMETERY_PATH]:
+		var path_sign := view.sign_of_path(index)
+		_put_feet(scene, path_sign.global_position + Vector2(0, 16))
+		await _wait(0.1)
+		_check(path_sign.is_showing_details(), "standing near a sign shows its details, path %d" % index)
+	_check(not view.sign_of_path(RECORDS_PATH).is_chained(), "the first path is never chained")
+	var cemetery_door: Door = view.door_to(CEMETERY_PATH)
+	var should_be_closed := cleared < 1
+	_check(view.sign_of_path(CEMETERY_PATH).is_chained() == should_be_closed, "the second path sign is chained only before the first clear, clears %d" % cleared)
+	_check(cemetery_door.chained == should_be_closed, "the second path door is chained only before the first clear, clears %d" % cleared)
+	if should_be_closed:
+		_stand_on(scene, cemetery_door)
+		await _wait(0.3)
+		_check(scene.debug_current_id() == here.id and scene.debug_floor_def().id == "crossroads", "walking into the closed path does nothing")
+		_check(scene.debug_map() == map, "and builds no floor")
+		# Asking the scene outright is refused too, so the rule lives in more than the door.
+		scene.debug_choose_path(CEMETERY_PATH)
+		await get_tree().process_frame
+		_check(scene.debug_floor_def().id == "crossroads", "a closed path cannot be chosen at all")
+	# A door he arrives standing on waits until he has stepped away.
+	var records_door: Door = view.door_to(RECORDS_PATH)
+	_stand_on(scene, records_door)
+	view.refresh_doors()
+	await _wait(0.15)
+	_check(scene.debug_floor_def().id == "crossroads", "a door he stands on waits until he steps away")
+	_put_feet(scene, south)
+	await _wait(0.05)
+
+
+# Walks out by the real door, so arming and arrival are the real ones.
+func _walk_a_path(scene: Node, index: int) -> void:
+	var view: CrossroadsView = scene.debug_room_view()
+	var door: Door = view.door_to(index)
+	_check(door != null and not door.chained, "the chosen path door is open")
+	if door == null:
+		return
+	_stand_on(scene, door)
+	await _wait(0.15)
+	var def: FloorDef = scene.debug_floor_def()
+	var wanted: FloorDef = load(scene.PATH_FLOORS[index])
+	_check(def == wanted, "walking out by a door enters its floor, got %s" % def.id)
+	var map: FloorMap = scene.debug_map()
+	_check(scene.debug_current_id() == map.start_id, "a path leads to the start room of its floor")
+	_check(scene.debug_mini_map().floor_name() == wanted.display_name, "the mini map names the floor")
+	_check(scene.debug_big_map().floor_name() == wanted.display_name, "the big map names the floor")
+	var crossroads: FloorRoom = null
+	for room in map.rooms:
+		if room.room_type == RoomLayout.TYPE_CROSSROADS:
+			crossroads = room
+	_check(crossroads != null and scene.debug_progress().is_visited(crossroads.id), "the Crossroads stays on the map as its own room")
+	if crossroads == null:
+		return
+	var start: FloorRoom = map.room(map.start_id)
+	var side := crossroads.cell - start.cell
+	_check(absi(side.x) + absi(side.y) == 1, "the Crossroads sits right beside the start room")
+	_check(not start.doors.has(side), "no door leads back to the Crossroads")
+	var feet: Vector2 = scene.player.feet().global_position
+	_check(feet.distance_to(RoomBackdrop.cell_center(start.layout.door_cell(side))) < Door.ENTER_RADIUS, "he arrives on the side facing the Crossroads")
+	await _wait(0.2)
+	_check(scene.debug_current_id() == map.start_id, "arriving from the Crossroads does not walk him onward")
+
+
+func _strikes_in(view: Node) -> Array:
+	var found := []
+	for child in view.get_children():
+		if child is GroundStrike and not child.is_queued_for_deletion():
+			found.append(child)
+	return found
+
+
+func _check_graveyard_fights(scene: Node) -> void:
+	_checked_graveyard = true
+	var back_id: int = scene.debug_current_id()
+	var health: Health = scene.player.run.health
+	var pills_before := health.max_pills
+	health.raise_max(pills_before + 30)
+	await _check_plot_holder(scene, health)
+	await _check_groundskeeper(scene, health)
+	await _check_undertaker(scene, health)
+	var def: FloorDef = scene.debug_floor_def()
+	await _check_far_boss_waits(scene, def.mini_boss)
+	await _check_far_boss_waits(scene, def.floor_boss)
+	await _dismiss_all()
+	scene._enter_room(back_id)
+	await _wait(0.1)
+	health.pills = pills_before
+	health.raise_max(pills_before)
+
+
+func _check_plot_holder(scene: Node, health: Health) -> void:
+	var view := await _enter_made_room(scene, _fight_layout(20, 11, {}))
+	var center := RoomBackdrop.cell_center(Vector2i(10, 5))
+	_put_feet(scene, center)
+	var holder: Enemy = view._spawn_enemy(_enemy_def("plot_holder"), RoomBackdrop.cell_center(Vector2i(3, 2)))
+	var waited := 0.0
+	while not holder.submerged and waited < 1.0:
+		await _wait(0.05)
+		waited += 0.05
+	_check(holder.submerged, "a Plot Holder digs in")
+	var hp: float = holder.hp
+	holder.take_damage(20.0, Vector2.ZERO)
+	_check(is_equal_approx(holder.hp, hp), "nothing hurts a Plot Holder underground")
+	var pills: int = health.pills
+	waited = 0.0
+	while holder._warning == null and waited < 2.0:
+		await _wait(0.02)
+		waited += 0.02
+	_check(holder._warning != null, "a rise shows a warning first")
+	_check(holder.submerged and health.pills == pills, "the warning comes before anything is up")
+	_check(holder.global_position.distance_to(center) <= 30.0, "the warning lies under him, off by %f" % holder.global_position.distance_to(center))
+	waited = 0.0
+	while holder.submerged and waited < 2.0:
+		await _wait(0.02)
+		waited += 0.02
+	_check(not holder.submerged, "it rises when the warning ends")
+	_check(waited >= 0.7, "the warning shows long enough to step out, %f" % waited)
+	_check(health.pills == pills - holder.def.damage, "staying on the warning costs a hit")
+	holder.take_damage(1.0, Vector2.ZERO)
+	_check(holder.hp < hp, "up in the open it can be hit")
+	# Next time he steps off as soon as the warning shows.
+	waited = 0.0
+	while holder._warning == null and waited < 6.0:
+		await _wait(0.05)
+		waited += 0.05
+	_check(holder._warning != null, "it comes around again")
+	await _wait(0.3)
+	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(3, 2)) if holder.global_position.x > 200.0 else RoomBackdrop.cell_center(Vector2i(17, 8)))
+	var pills_off: int = health.pills
+	waited = 0.0
+	while holder.submerged and waited < 2.0:
+		await _wait(0.02)
+		waited += 0.02
+	_check(health.pills == pills_off, "stepping off the warning avoids the hit")
+	await _dismiss_all()
+	# A summoned one pays nothing, and dismissing one underground still clears it.
+	var summoned: Enemy = view._spawn_enemy(_enemy_def("plot_holder"), center, true)
+	_check(summoned.coin_value() == 0, "a summoned Plot Holder pays nothing")
+	await _wait(0.3)
+	_check(summoned.submerged, "the summoned one digs in")
+	summoned.dismiss()
+	await _wait(0.05)
+	_check(_gone(summoned), "dismissing one underground clears it")
+
+
+func _check_groundskeeper(scene: Node, health: Health) -> void:
+	var def: FloorDef = scene.debug_floor_def()
+	var view := await _enter_made_room(scene, _fight_layout(20, 11, {Vector2i(9, 5): "A", Vector2i(14, 8): "Y"}))
+	var graves := _props_in(view, Gravestone)
+	var trees := _props_in(view, DeadTree)
+	_check(graves.size() == 1 and trees.size() == 1, "the made room built the graveyard props")
+	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(3, 5)))
+	var gus: Enemy = view._spawn_enemy(def.mini_boss, RoomBackdrop.cell_center(Vector2i(16, 5)), true)
+	gus._behavior._summon_timer = 99.0
+	gus._behavior._cooldown = 99.0
+	await _wait(0.05)
+	var pills: int = health.pills
+	# The furrow shows a lane, marks its line, and breaks the grave standing on that line.
+	gus._behavior._begin(gus, gus._behavior.Attack.FURROW)
+	_check(gus._lane_length > 0.0, "the furrow shows a lane first")
+	_check(_strikes_in(view).is_empty(), "no strike lands without its windup")
+	await _wait(gus._behavior.FURROW_WINDUP + 0.05)
+	_check(_strikes_in(view).size() >= 3, "the furrow marks its line, %d" % _strikes_in(view).size())
+	_check(health.pills == pills, "marks hurt nothing yet")
+	await _wait(1.4)
+	_check(_gone(graves[0]), "the furrow breaks a gravestone on its line")
+	_check(_strikes_in(view).is_empty(), "every strike has landed")
+	# Clippings land on him and around him, and each mark shows first.
+	gus._behavior._cooldown = 99.0
+	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(4, 8)))
+	await _wait(0.05)
+	pills = health.pills
+	gus._behavior._begin(gus, gus._behavior.Attack.CLIPPINGS)
+	await _wait(gus._behavior.CLIPPINGS_WINDUP + 0.05)
+	var marks := _strikes_in(view)
+	_check(marks.size() >= 2, "clippings mark the ground, %d" % marks.size())
+	_check(health.pills == pills, "and hurt nothing yet")
+	await _wait(gus._behavior.CLIPPINGS_WARNING + 0.1)
+	_check(health.pills == pills - gus.def.damage, "standing on the clipping meant for him costs a hit, %d to %d" % [pills, health.pills])
+	# A slam breaks what it reaches, and a summon is marked and pays nothing.
+	gus.global_position = trees[0].global_position + Vector2(40, 0)
+	gus._behavior._cooldown = 99.0
+	gus._behavior._begin(gus, gus._behavior.Attack.SLAM)
+	await _wait(gus._behavior.SLAM_WINDUP + 0.1)
+	_check(_gone(trees[0]), "the slam breaks a dead tree")
+	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(4, 2)))
+	gus._behavior._cooldown = 99.0
+	gus._behavior._summon_timer = 0.0
+	gus.global_position = RoomBackdrop.cell_center(Vector2i(10, 2))
+	await _wait(0.1)
+	var summon_marks := 0
+	for child in view.get_children():
+		if child is SummonMark:
+			summon_marks += 1
+	_check(summon_marks == gus._behavior.SUMMON_COUNT, "summons are marked first, %d" % summon_marks)
+	await _wait(BossMoves.SUMMON_WARNING + 0.1)
+	var helpers := 0
+	for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
+		if enemy != gus:
+			helpers += 1
+			_check(enemy.is_summon and enemy.coin_value() == 0, "the groundskeeper summons pay nothing")
+			_check(enemy.def.id == "plot_holder", "he summons Plot Holders")
+	_check(helpers == summon_marks, "each mark becomes a summon")
+	await _dismiss_all()
+
+
+func _check_undertaker(scene: Node, health: Health) -> void:
+	var def: FloorDef = scene.debug_floor_def()
+	var view := await _enter_made_room(scene, _fight_layout(30, 17, {Vector2i(16, 8): "A"}))
+	var graves := _props_in(view, Gravestone)
+	var at := RoomBackdrop.cell_center(Vector2i(22, 8))
+	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(12, 8)))
+	var boss: Enemy = view._spawn_enemy(def.floor_boss, at, true)
+	await _wait(0.05)
+	var behavior = boss._behavior
+	# Rows of plots: all marked, nearest first, each row with its gap.
+	behavior._cooldown = 99.0
+	behavior._begin(boss, behavior.Attack.ROWS, false)
+	_check(boss._warning != null, "the rows show a windup")
+	_check(_strikes_in(view).is_empty(), "no row lands before its windup ends")
+	await _wait(behavior.ROWS_WINDUP + 0.05)
+	var rows: int = behavior.row_count(false)
+	var marked := _strikes_in(view).size()
+	_check(marked >= (behavior.ROW_SPOTS - 1) * rows - rows * 2, "every row is marked at once, %d" % marked)
+	await _wait(behavior.ROW_WARNING + behavior.ROW_STEP * rows + 0.2)
+	_check(_gone(graves[0]), "a row breaks a gravestone it reaches")
+	await _wait(0.3)
+	# Open graves follow him, then lock in, so stepping off in time saves him.
+	var health_at := health.pills
+	behavior._cooldown = 99.0
+	behavior._next = behavior.Attack.NONE
+	behavior._begin(boss, behavior.Attack.PITS, false)
+	await _wait(behavior.PITS_WINDUP + 0.05)
+	var pits := _strikes_in(view)
+	_check(pits.size() == behavior.pit_count(false), "each open grave is marked, %d" % pits.size())
+	if pits.size() == behavior.pit_count(false):
+		_check(pits[0].is_following(), "the first grave follows him")
+		var moved_to := RoomBackdrop.cell_center(Vector2i(6, 4))
+		_put_feet(scene, moved_to)
+		await _wait(0.1)
+		_check(pits[0].global_position.distance_to(moved_to) < 20.0, "and keeps up with his feet")
+		_check(health.pills == health_at, "following hurts nothing")
+		await _wait(behavior.PIT_FOLLOW)
+		_check(not pits[0].is_following(), "then it locks in")
+		var locked: Vector2 = pits[0].global_position
+		var away := RoomBackdrop.cell_center(Vector2i(14, 12))
+		_put_feet(scene, away)
+		_check(locked.distance_to(away) > behavior.PIT_RADIUS, "the check really stepped off")
+		await _wait(behavior.PIT_WARNING)
+		_check(health.pills == health_at, "stepping off a locked grave avoids it")
+	# The later graves are still following him, so let them all land before going on.
+	await _wait(behavior.PIT_STEP * behavior.pit_count(false) + behavior.PIT_WARNING + behavior.PIT_FOLLOW)
+	# Wreaths are a warned fan of shots, in more than one volley.
+	behavior._cooldown = 99.0
+	behavior._next = behavior.Attack.NONE
+	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(12, 8)))
+	await _wait(0.05)
+	behavior._begin(boss, behavior.Attack.WREATHS, false)
+	_check(boss._warning != null and boss._lane_length > 0.0, "the wreaths show a lane first")
+	await _wait(behavior.WREATHS_WINDUP + 0.1)
+	var shots := 0
+	for child in view.get_children():
+		if child is Projectile:
+			shots += 1
+	_check(shots == behavior.WREATH_SHOTS, "a volley is a fan of wreaths, %d" % shots)
+	await _wait(behavior.VOLLEY_GAP + 0.05)
+	shots = 0
+	for child in view.get_children():
+		if child is Projectile:
+			shots += 1
+	_check(shots > behavior.WREATH_SHOTS, "a second volley follows, %d" % shots)
+	await _wait(0.5)
+	# Its summons are marked and pay nothing.
+	behavior._cooldown = 99.0
+	behavior._next = behavior.Attack.NONE
+	behavior._begin(boss, behavior.Attack.SUMMON, false)
+	await _wait(behavior.SUMMON_WINDUP + 0.1)
+	var summon_marks := 0
+	for child in view.get_children():
+		if child is SummonMark:
+			summon_marks += 1
+	_check(summon_marks == behavior.SUMMON_COUNT, "its summons are marked first, %d" % summon_marks)
+	await _wait(BossMoves.SUMMON_WARNING + 0.1)
+	var helpers := 0
+	for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
+		if enemy != boss:
+			helpers += 1
+			_check(enemy.is_summon and enemy.coin_value() == 0, "the undertaker summons pay nothing")
+	_check(helpers == summon_marks, "each mark becomes a summon, %d" % helpers)
+	await _dismiss_all()
+	# Nothing it set going outlives it.
+	var last: Enemy = view._spawn_enemy(def.floor_boss, at, true)
+	last.set_physics_process(false)
+	var pills_now := health.pills
+	last.strike_ground(scene.player.feet().global_position, 40.0, 0.3)
+	last.take_damage(INF, Vector2.ZERO)
+	await _wait(0.5)
+	_check(health.pills == pills_now, "a strike comes to nothing once its boss has fallen")
+	_check(_strikes_in(view).is_empty(), "and leaves no mark behind")

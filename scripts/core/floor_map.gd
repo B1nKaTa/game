@@ -26,6 +26,36 @@ func main_rooms() -> Array[FloorRoom]:
 	return list
 
 
+static func with_only_crossroads(layout: RoomLayout) -> FloorMap:
+	var map := FloorMap.new()
+	map._add_crossroads(layout, Vector2i.ZERO)
+	return map
+
+
+# The room he left a built floor from, for the maps: beside the start room on the side he walked in
+# from, or on a free side when a room stands there. It leads in and nothing leads back to it.
+func attach_crossroads(layout: RoomLayout, wanted_side: Vector2i) -> FloorRoom:
+	var start := room(start_id)
+	var sides: Array[Vector2i] = [wanted_side]
+	sides.append_array(RoomLayout.SIDES)
+	for side in sides:
+		if room_at(start.cell + side) == null:
+			var crossroads := _add_crossroads(layout, start.cell + side)
+			crossroads.doors[-side] = start.id
+			return crossroads
+	return null
+
+
+func _add_crossroads(layout: RoomLayout, cell: Vector2i) -> FloorRoom:
+	var crossroads := FloorRoom.new()
+	crossroads.id = rooms.size()
+	crossroads.room_type = RoomLayout.TYPE_CROSSROADS
+	crossroads.layout = layout
+	crossroads.cell = cell
+	rooms.append(crossroads)
+	return crossroads
+
+
 func join(a: FloorRoom, b: FloorRoom) -> void:
 	var side := b.cell - a.cell
 	a.doors[side] = b.id
@@ -60,7 +90,8 @@ func reached_without_bomb() -> Dictionary:
 func only_hidden_rooms_need_a_bomb() -> bool:
 	var reached := reached_without_bomb()
 	for candidate in rooms:
-		if not candidate.needs_a_bomb() and not reached.has(candidate.id):
+		# The Crossroads is the way in, so nothing has to lead back to it.
+		if candidate.room_type != RoomLayout.TYPE_CROSSROADS and not candidate.needs_a_bomb() and not reached.has(candidate.id):
 			return false
 	return true
 

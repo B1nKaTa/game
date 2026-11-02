@@ -30,6 +30,9 @@ func arrival_cell(to_id: int, from_id: int) -> Vector2i:
 	var side := to_room.side_towards(from_id)
 	if side != Vector2i.ZERO:
 		return to_room.layout.door_cell(side)
+	# A one-way way in has no door on this side, but he still comes from there.
+	if from_id >= 0 and _map.room(from_id).side_towards(to_id) != Vector2i.ZERO:
+		return to_room.layout.door_cell(-_map.room(from_id).side_towards(to_id))
 	for free_side in FIRST_ARRIVAL_SIDES:
 		if not to_room.doors.has(free_side):
 			return to_room.layout.door_cell(free_side)

@@ -8,9 +8,12 @@ const ENTER_RADIUS := 18.0
 const PROMPT_GAP := 18.0
 const KEY_PROMPT := "Use Slip"
 const NO_KEY_PROMPT := "Needs a Slip"
+const CHAINED_COLOR := Color("3c3a44")
 
 var locked := true
 var requires_key := false
+# Stays shut however the room goes, as a closed path at the Crossroads does.
+var chained := false
 var has_key := Callable()
 var _target_id := -1
 var _side := Vector2i.ZERO
@@ -26,8 +29,8 @@ static func next_armed(armed: bool, in_range: bool) -> bool:
 	return armed or not in_range
 
 
-static func should_enter(is_locked: bool, needs_key: bool, used: bool, armed: bool, in_range: bool) -> bool:
-	return armed and in_range and not (is_locked or needs_key or used)
+static func should_enter(is_locked: bool, needs_key: bool, used: bool, armed: bool, in_range: bool, is_chained := false) -> bool:
+	return armed and in_range and not (is_locked or needs_key or used or is_chained)
 
 
 static func can_spend_key(needs_key: bool, is_locked: bool, in_range: bool, player_has_key: bool) -> bool:
@@ -65,7 +68,7 @@ func _process(_delta: float) -> void:
 		requires_key = false
 		key_spent.emit()
 		return
-	if should_enter(locked, requires_key, _used, _armed, _near):
+	if should_enter(locked, requires_key, _used, _armed, _near, chained):
 		_used = true
 		entered.emit(_target_id)
 
@@ -78,8 +81,16 @@ func _draw() -> void:
 	var color := Color("7a3b3b") if locked else Color("c98a3c")
 	if requires_key and not locked:
 		color = Color("5d4a8c")
+	if chained:
+		color = CHAINED_COLOR
 	draw_rect(Rect2(-14, -14, 28, 28), color)
 	draw_rect(Rect2(-14, -14, 28, 28), Color.BLACK, false, 2.0)
+	if chained:
+		draw_line(Vector2(-14, -14), Vector2(14, 14), PathSign.CHAIN_EDGE, 4.0)
+		draw_line(Vector2(14, -14), Vector2(-14, 14), PathSign.CHAIN_EDGE, 4.0)
+		draw_line(Vector2(-14, -14), Vector2(14, 14), PathSign.CHAIN_COLOR, 2.0)
+		draw_line(Vector2(14, -14), Vector2(-14, 14), PathSign.CHAIN_COLOR, 2.0)
+		return
 	draw_string(ThemeDB.fallback_font, Vector2(-5, 6), _icon, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
 	if requires_key and not locked and _near:
 		var prompt := KeyBindings.with_key("interact", KEY_PROMPT) if _player_has_key() else NO_KEY_PROMPT
