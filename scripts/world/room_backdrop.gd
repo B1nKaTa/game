@@ -6,7 +6,17 @@ const FLOOR_A := Color("6a6677")
 const FLOOR_B := Color("625e6f")
 const WALL := Color("3a3547")
 
+const VIEW_SIZE := Vector2(640, 360)
+const OVERDRAW_MARGIN := 16.0
+
 var _rows: PackedStringArray = []
+
+
+# Wall-colored ground that reaches past the view by more than the biggest screen
+# shake, so shaking never shows the clear color.
+static func overdraw_rect() -> Rect2:
+	var margin := Vector2(OVERDRAW_MARGIN, OVERDRAW_MARGIN)
+	return Rect2(-margin, VIEW_SIZE + margin * 2.0)
 
 
 static func cell_center(cell: Vector2i) -> Vector2:
@@ -40,6 +50,7 @@ func _add_wall(cell: Vector2i) -> void:
 
 
 func _draw() -> void:
+	draw_rect(overdraw_rect(), WALL)
 	for y in _rows.size():
 		for x in _rows[y].length():
 			var color := WALL if _rows[y][x] == "#" else (FLOOR_A if (x + y) % 2 == 0 else FLOOR_B)
