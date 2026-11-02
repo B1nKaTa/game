@@ -149,6 +149,10 @@ static func _attach_detours(rng: RandomNumberGenerator, map: FloorMap, def: Floo
 	for room in regular:
 		if room.room_type == RoomLayout.TYPE_COMBAT:
 			combat.append(room)
+	# Vaults come before the side rooms, which are only by chance, so a floor almost always has its vault.
+	if picker.has(RoomLayout.TYPE_VAULT):
+		for i in def.vault_count:
+			_attach(rng, map, combat, RoomLayout.TYPE_VAULT, picker, def)
 	if picker.has(RoomLayout.TYPE_SIDE):
 		for room in combat:
 			if rng.randf() < def.side_room_chance:
@@ -156,9 +160,6 @@ static func _attach_detours(rng: RandomNumberGenerator, map: FloorMap, def: Floo
 				_attach(rng, map, one_parent, RoomLayout.TYPE_SIDE, picker, def)
 	if picker.has(RoomLayout.TYPE_SECRET):
 		_attach(rng, map, combat, RoomLayout.TYPE_SECRET, picker, def)
-	if picker.has(RoomLayout.TYPE_VAULT):
-		for i in def.vault_count:
-			_attach(rng, map, combat, RoomLayout.TYPE_VAULT, picker, def)
 	return true
 
 

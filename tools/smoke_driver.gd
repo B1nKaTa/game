@@ -16,6 +16,11 @@ var _saw_shop := false
 var _checked_props := false
 var _pickups_off_solids := 0
 var _checked_fight := false
+var _opened_a_vault := false
+var _checked_vault_room := false
+var _checked_stone_memory := false
+var _checked_potions := false
+var _checked_fuel := false
 
 
 func _ready() -> void:
@@ -30,6 +35,8 @@ func _run() -> void:
 	await _wait(0.5)
 	_expect_scene("WaitingRoom")
 	_check(Progress.data.opening_seen, "opening is remembered")
+	_check(Progress.data.floors_cleared == 0, "a fresh save has cleared nothing")
+	_check(get_tree().current_scene.open_merchant_ids() == ["black_market", "optometrist"], "only the first two merchants wait at the start")
 
 	Progress.add_pension(500)
 	var upgrade: UpgradeDef = Content.upgrades()[0]
@@ -41,6 +48,16 @@ func _run() -> void:
 	_check(Progress.data.pension > pension_before, "Pension was earned during the run")
 	await _wait(2.5)
 	_expect_scene("WaitingRoom")
+	_check(Progress.data.floors_cleared == 1, "clearing the floor is counted")
+	var ids: Array = get_tree().current_scene.open_merchant_ids()
+	_check(ids.has("potion_merchant") and not ids.has("bomb_merchant"), "one clear brings the potion merchant, not the bomb merchant")
+	Progress.data.floors_cleared = 3
+	Game.return_to_waiting()
+	await _wait(0.5)
+	ids = get_tree().current_scene.open_merchant_ids()
+	_check(ids.has("potion_merchant") and ids.has("bomb_merchant"), "three clears bring the bomb merchant too")
+	Progress.reload()
+	_check(Progress.data.floors_cleared == 1, "floors cleared come back from the save as it was written")
 
 	Progress.add_pension(60)
 	var reached: int = Progress.retirement_deposit(60)
@@ -56,9 +73,20 @@ func _run() -> void:
 	_check(Progress.craft(recipe), "a found recipe can be crafted")
 	_crafted_id = recipe.id
 
+	# A brew bought now waits in the slot for the next run, and only one can wait.
+	Progress.add_pension(100)
+	var tea: PotionDef = Content.potion("swift_tea")
+	var pension_before_brew: int = Progress.data.pension
+	_check(Progress.brew(tea), "a brew can be bought")
+	_check(Progress.data.pension == pension_before_brew - tea.price, "a brew costs its price")
+	_check(not Progress.brew(Content.potion("healing_tonic")), "only one brew waits at a time")
+	Progress.reload()
+	_check(Progress.data.brewed_potion == "swift_tea", "the brew survives a reload")
+
 	await _die_in_a_run()
 	await _wait(2.5)
 	_expect_scene("WaitingRoom")
+	_check(Progress.data.brewed_potion.is_empty(), "the brew is used up by one run")
 	_check(Progress.data.crafted_for_next_run.is_empty(), "the crafted item is used up by one run")
 	_check(Progress.data.is_unlocked(recipe.id), "the crafted item stays in rotation")
 	_check(Progress.make_run().can_offer(recipe), "new runs can offer the crafted item")
@@ -75,7 +103,7 @@ func _run() -> void:
 	_check(Progress.data.level_of(upgrade.id) == 1, "upgrade survives a reload")
 
 	if not _failed:
-		print("SMOKE PASS rooms of sizes %s, big room view checked: %s, block memory checked: %s, props checked: %s, fight checked: %s, pickups off solids: %d" % [str(_sizes_seen.keys()), str(_followed_a_big_room), str(_checked_block_memory), str(_checked_props), str(_checked_fight), _pickups_off_solids])
+		print("SMOKE PASS rooms of sizes %s, big room view checked: %s, block memory checked: %s, props checked: %s, fight checked: %s, vault opened: %s, potions checked: %s, fuel checked: %s, pickups off solids: %d" % [str(_sizes_seen.keys()), str(_followed_a_big_room), str(_checked_block_memory), str(_checked_props), str(_checked_fight), str(_opened_a_vault), str(_checked_potions), str(_checked_fuel), _pickups_off_solids])
 		get_tree().quit(0)
 
 
@@ -87,14 +115,19 @@ func _clear_whole_floor() -> void:
 	var scene := get_tree().current_scene
 	var starting_pills: int = scene.player.run.stats.max_pills
 	_check(starting_pills >= 4, "run starts with pills")
+	_check(scene.player.run.potion == null, "a run starts with an empty slot when nothing was brewed")
+	await _check_potion_drinking(scene)
 	var map: FloorMap = scene.debug_map()
 	var walked_back := false
 	var guard := 0
 	while not scene.is_cleared and not _failed and guard < MAX_STEPS:
 		guard += 1
+		if map.room(scene.debug_current_id()).room_type == RoomLayout.TYPE_VAULT and not _checked_vault_room:
+			await _check_vault_room(scene)
 		await _clear_room(scene)
 		if scene.is_cleared:
 			break
+		await _check_stone_memory(scene)
 		await _check_camera(scene)
 		await _check_big_room_view(scene)
 		if not _checked_props:
@@ -115,6 +148,12 @@ func _clear_whole_floor() -> void:
 	_check(walked_back, "the check walked back through a door")
 	_check(_saw_shop, "the shop was checked")
 	_check(_boss_rooms_seen >= 2, "both bosses showed a boss bar")
+	var has_vault := false
+	for room in map.rooms:
+		has_vault = has_vault or room.room_type == RoomLayout.TYPE_VAULT
+	_check(_opened_a_vault == has_vault, "a floor with a vault had it opened with a max level Thermos")
+	_check(_checked_vault_room == has_vault, "a floor with a vault had its vault room checked")
+	_check(_checked_stone_memory == has_vault, "a floor with a vault checked its broken stone staying broken")
 	for room in map.rooms:
 		_check(scene.debug_progress().is_visited(room.id), "room %d (%s) was explored" % [room.id, room.room_type])
 
@@ -148,6 +187,8 @@ func _walk_through_door(scene: Node, target_id: int) -> void:
 	var target := map.room(target_id)
 	if target.room_type == RoomLayout.TYPE_SECRET and scene.debug_room_view().door_to(target_id) == null:
 		await _open_secret_crack(scene, target_id)
+	if target.room_type == RoomLayout.TYPE_VAULT and scene.debug_room_view().door_to(target_id) == null:
+		await _open_vault_stone(scene, target_id)
 	var door: Door = scene.debug_room_view().door_to(target_id)
 	_check(door != null, "room %d has a door to room %d" % [from_id, target_id])
 	if door == null:
@@ -305,7 +346,7 @@ func _check_a_broken_block_stays_broken(scene: Node, here_id: int) -> void:
 
 func _plain_block() -> BreakableBlock:
 	for block in get_tree().get_nodes_in_group("breakable"):
-		if not block is SecretWall and not block is RetirementStation and not block.is_queued_for_deletion():
+		if not block is SecretWall and not block is ReinforcedRock and not block is RetirementStation and not block.is_queued_for_deletion():
 			return block
 	return null
 
@@ -313,7 +354,7 @@ func _plain_block() -> BreakableBlock:
 func _plain_block_count() -> int:
 	var count := 0
 	for block in get_tree().get_nodes_in_group("breakable"):
-		if not block is SecretWall and not block is RetirementStation and not block.is_queued_for_deletion():
+		if not block is SecretWall and not block is ReinforcedRock and not block is RetirementStation and not block.is_queued_for_deletion():
 			count += 1
 	return count
 
@@ -395,6 +436,8 @@ func _die_in_a_run() -> void:
 	var scene := get_tree().current_scene
 	if not _crafted_id.is_empty():
 		_check(scene.player.run.has_item(_crafted_id), "the crafted item starts the next run")
+	var carried: PotionDef = scene.player.run.potion
+	_check(carried != null and carried.id == "swift_tea", "the brewed potion starts the next run in the slot")
 	scene.player.run.health.hit(999)
 	await _wait(0.1)
 	_check(scene.is_over, "death ends the run")
@@ -618,6 +661,7 @@ func _check_fight_room(scene: Node) -> void:
 	await _check_shield(scene)
 	await _check_boss_moves(scene)
 	await _check_far_boss_waits(scene)
+	await _check_thermos_fuel(scene)
 	await _dismiss_all()
 	scene.player.aim_source = Callable()
 	scene._enter_room(back_id)
@@ -808,4 +852,174 @@ func _check_far_boss_waits(scene: Node) -> void:
 			started_far = true
 	_check(not started_far, "a far boss starts no attack from beyond the screen")
 	_check(came_near, "a far boss comes into view")
+	await _dismiss_all()
+
+
+# --- Stage 4: potions, the Thermos fuel, reinforced stones and vaults ---
+
+func _press(action: String) -> void:
+	await get_tree().process_frame
+	Input.action_press(action)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	Input.action_release(action)
+	await get_tree().physics_frame
+
+
+# The real key drinks the potion, healing waits until it helps and a buff runs out.
+func _check_potion_drinking(scene: Node) -> void:
+	_checked_potions = true
+	var run: RunState = scene.player.run
+	var health: Health = run.health
+	await _press("potion")
+	_check(run.potion == null and run.buff == null, "the potion key does nothing with an empty slot")
+	run.give_potion(Content.potion("healing_tonic"))
+	await _press("potion")
+	_check(run.potion != null, "a healing potion is kept while his pills are full")
+	health.hit(2)
+	var hurt: int = health.pills
+	await _press("potion")
+	_check(run.potion == null and health.pills == mini(hurt + 2, health.max_pills), "the potion key heals and empties the slot")
+	health.heal(99)
+	var base_speed: float = run.stats.move_speed
+	run.give_potion(Content.potion("swift_tea"))
+	await _press("potion")
+	_check(run.buff != null and absf(run.move_speed() - base_speed * 1.4) < 0.01, "the potion key starts a buff")
+	var hud := _find_hud(scene)
+	await get_tree().process_frame
+	_check(hud._potion_slot != null and hud._potion_slot._buff_label.text.begins_with("Swift"), "the HUD shows the running buff")
+	run.tick_buff(99.0)
+	_check(run.buff == null and absf(run.move_speed() - base_speed) < 0.01, "a buff runs out")
+
+
+# The vault stone shrugs off everything but a max level Thermos.
+func _open_vault_stone(scene: Node, target_id: int) -> void:
+	var view: RoomView = scene.debug_room_view()
+	var room: FloorRoom = scene.debug_map().room(scene.debug_current_id())
+	var side := room.side_towards(target_id)
+	var door_cell := room.layout.door_cell(side)
+	var wall_at := RoomBackdrop.cell_center(room.layout.wall_cell(side))
+	var stones := _props_in(view, ReinforcedRock)
+	_check(stones.size() == 1 and stones[0].global_position == wall_at, "a vault door hides behind one stone in the wall, like the secret crack")
+	_check(view.door_to(target_id) == null, "a vault shows no door until its stone breaks")
+	if stones.size() != 1:
+		return
+	var stone: ReinforcedRock = stones[0]
+	var run: RunState = scene.player.run
+	var pills: int = run.health.pills
+	var far := Player.arrival_position(room.layout.nearest_floor_cell(door_cell - side * 4))
+	scene.player.global_position = far
+	# An Auditor blast, a boss attack and the cane all leave it be.
+	EnemyBlast.go(view, RoomBackdrop.cell_center(door_cell), 80.0, 10.0, 0.0, scene.player, 0)
+	await _wait(0.1)
+	_check(not _gone(stone), "an Auditor blast does not break the stone")
+	BreakableBlock.smash(get_tree(), RoomBackdrop.cell_center(door_cell), 80.0, BreakableBlock.SOURCE_BOSS)
+	await _wait(0.1)
+	_check(not _gone(stone), "a boss attack does not break the stone")
+	_check(not stone.hit_by(BreakableBlock.SOURCE_CANE), "the cane does not break the stone")
+	# A Thermos below the needed level only makes it resist, and says so.
+	var told := [0]
+	view.notice.connect(func(_text: String): told[0] += 1)
+	for level in [0, 2]:
+		scene.player.global_position = far
+		run.stats.thermos_level = level
+		view.place_bomb(RoomBackdrop.cell_center(door_cell))
+		await _wait(Thermos.FUSE_TIME + 0.3)
+		_check(not _gone(stone), "a level %d Thermos does not break the stone" % level)
+	_check(told[0] >= 2, "a stone that resists says so")
+	_check(view.door_to(target_id) == null, "no door while the stone stands")
+	# The level the floor asks for breaks it, and the blast still costs him nothing at a distance.
+	var floor_def: FloorDef = load("res://data/floors/floor_1.tres")
+	run.stats.thermos_level = floor_def.vault_stone_level
+	scene.player.global_position = far
+	view.place_bomb(RoomBackdrop.cell_center(door_cell))
+	await _wait(Thermos.FUSE_TIME + 0.3)
+	_check(_gone(stone), "a max level Thermos breaks the stone")
+	_check(view.door_to(target_id) != null, "a broken stone opens the vault door on the same side")
+	_check(run.health.pills == pills, "the blasts did not reach him")
+	run.stats.thermos_level = 0
+	_opened_a_vault = true
+
+
+func _check_vault_room(scene: Node) -> void:
+	_checked_vault_room = true
+	var run: RunState = scene.player.run
+	var names := {}
+	var choices := 0
+	var potion: Pickup = null
+	for pickup in get_tree().get_nodes_in_group("pickups"):
+		names[pickup._label] = true
+		if pickup.requires_interact:
+			choices += 1
+		if pickup._label == RoomRules.POTION_NAME:
+			potion = pickup
+	_check(names.has(RoomRules.POTION_NAME) and names.has(RoomRules.BOMB_NAME) and names.has(RoomRules.KEY_NAME), "a vault holds a potion, a Thermos and a Slip in the open")
+	_check(choices >= 3, "a vault offers a choice of items, found %d interactive pickups" % choices)
+	if potion == null:
+		return
+	# A small potion fills the slot, and stays on the floor while the slot is full.
+	run.potion = null
+	run.give_potion(Content.potion("swift_tea"))
+	_put_feet(scene, potion.global_position)
+	await _wait(0.25)
+	_check(not _gone(potion), "a full slot leaves the small potion on the floor")
+	_check(run.potion.id == "swift_tea", "and keeps the potion it has")
+	run.potion = null
+	run.changed.emit()
+	await _wait(0.25)
+	_check(run.potion != null and run.potion.id == RoomRules.SMALL_POTION_ID, "an empty slot takes the small potion")
+	_check(_gone(potion), "and the pickup is gone")
+	run.potion = null
+	run.changed.emit()
+
+
+# A stone that was broken stays broken when the room is left and entered again.
+func _check_stone_memory(scene: Node) -> void:
+	if _checked_stone_memory:
+		return
+	var map: FloorMap = scene.debug_map()
+	var here: FloorRoom = map.room(scene.debug_current_id())
+	for side: Vector2i in here.doors:
+		var vault_id: int = here.doors[side]
+		if map.room(vault_id).room_type != RoomLayout.TYPE_VAULT or not scene.debug_progress().is_visited(vault_id):
+			continue
+		_checked_stone_memory = true
+		var view: RoomView = scene.debug_room_view()
+		_check(_props_in(view, ReinforcedRock).is_empty(), "the broken stone is still gone after coming back")
+		_check(view.door_to(vault_id) != null, "and its vault door is still there")
+		var away: int = vault_id if here.id == map.start_id else map.next_step(here.id, map.start_id)
+		await _walk_through_door(scene, away)
+		await _walk_through_door(scene, here.id)
+		_check(_props_in(scene.debug_room_view(), ReinforcedRock).is_empty(), "the broken stone stays broken after leaving and returning")
+		return
+
+
+# The fuel upgrade hits enemies harder, never Grandpa.
+func _check_thermos_fuel(scene: Node) -> void:
+	_checked_fuel = true
+	var view := await _enter_made_room(scene, _fight_layout(20, 11, {}))
+	var run: RunState = scene.player.run
+	var health: Health = run.health
+	var floor_def: FloorDef = load("res://data/floors/floor_1.tres")
+	var at := RoomBackdrop.cell_center(Vector2i(14, 3))
+	var foe: Enemy = view._spawn_enemy(floor_def.floor_boss, at, true)
+	foe.set_physics_process(false)
+	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(3, 8)))
+	var hp: float = foe.hp
+	view.place_bomb(at)
+	await _wait(Thermos.FUSE_TIME + 0.3)
+	_check(absf((hp - foe.hp) - Thermos.DAMAGE) < 0.01, "a plain Thermos does its base damage, did %f" % (hp - foe.hp))
+	run.stats.thermos_damage_mult = 1.9
+	hp = foe.hp
+	view.place_bomb(at)
+	await _wait(Thermos.FUSE_TIME + 0.3)
+	_check(absf((hp - foe.hp) - Thermos.DAMAGE * 1.9) < 0.01, "a fueled Thermos hurts enemies more, did %f" % (hp - foe.hp))
+	# Standing in the blast costs one pill, however strong the Thermos is.
+	_put_feet(scene, at)
+	await _wait(0.1)
+	var pills: int = health.pills
+	view.place_bomb(at)
+	await _wait(Thermos.FUSE_TIME + 0.3)
+	_check(health.pills == pills - Thermos.PLAYER_DAMAGE, "a fueled blast still costs Grandpa exactly %d pill" % Thermos.PLAYER_DAMAGE)
+	run.stats.thermos_damage_mult = 1.0
 	await _dismiss_all()
