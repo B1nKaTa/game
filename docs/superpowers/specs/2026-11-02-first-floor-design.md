@@ -181,7 +181,7 @@ Items last for the current run only. Grandpa can hold any number of them.
 
 ### Currency and Upgrades
 
-Pension is the only currency. Enemies and rooms drop it, and picking it up adds it immediately. All of it is kept on death. Regular enemies pay 1, a cleared room 1, a coin from a prop 1, treasure 8, the mini boss 8 and the floor boss 16, which comes to about 125 on a full clear, or about 140 with every rock and crate blasted as well.
+Pension is the only currency. Enemies and rooms drop it, and picking it up adds it immediately. All of it is kept on death. Regular enemies pay 1, a cleared room 1, a coin from a prop 1, treasure 8, the mini boss 8 and the floor boss 16, which comes to about 125 on a full clear, or about 140 with every rock and crate blasted as well. The Cemetery pays the same prices and comes to the same totals, with a gravestone hiding a coin a third as often as a rock because a graveyard holds so many.
 
 Four merchants can stand in the Waiting Room. The black market merchant sells the first four below. Dr. Squint, Unlicensed Optometrist, stands in a different spot and sells the glasses. The other two appear only once earned, by floors cleared, which is saved as an optional field so older saves load as zero: Madame Murk, Discount Apothecary, after 1 clear, and Boom Bernard, Fuel Dealer, after 3. Those numbers are the `clears` values in the merchant list of the Waiting Room scene, so later floors can move them in one place. Walking close to any shows "E: Trade", and only one trade panel is open at a time.
 
