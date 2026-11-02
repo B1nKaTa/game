@@ -67,15 +67,15 @@ func test_damage_reduces_hp() -> void:
 
 
 func test_clamp_inside_room_keeps_inner_points() -> void:
-	assert_eq(Enemy.clamp_inside_room(Vector2(200, 150)), Vector2(200, 150))
+	assert_eq(Enemy.clamp_inside_room(Vector2(200, 150), Vector2i(20, 11)), Vector2(200, 150))
 
 
-func test_clamp_inside_room_pulls_back_from_the_walls() -> void:
+func test_clamp_inside_room_pulls_back_from_the_walls_of_any_size() -> void:
 	var tile := float(RoomBackdrop.TILE)
-	var max_x := (RoomLayout.WIDTH - 1) * tile
-	var max_y := (RoomLayout.HEIGHT - 1) * tile
-	assert_eq(Enemy.clamp_inside_room(Vector2(-50, -50)), Vector2(tile, tile))
-	assert_eq(Enemy.clamp_inside_room(Vector2(5000, 5000)), Vector2(max_x, max_y))
+	for cells: Vector2i in [Vector2i(14, 9), Vector2i(20, 11), Vector2i(30, 17)]:
+		var far_corner := Vector2(cells.x - 1, cells.y - 1) * tile
+		assert_eq(Enemy.clamp_inside_room(Vector2(-50, -50), cells), Vector2(tile, tile))
+		assert_eq(Enemy.clamp_inside_room(Vector2(5000, 5000), cells), far_corner)
 
 
 func test_health_bar_is_off_by_default() -> void:

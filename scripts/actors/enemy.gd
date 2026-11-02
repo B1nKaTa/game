@@ -16,6 +16,7 @@ var hp: float = 0.0
 var target: Node2D
 var desired_velocity := Vector2.ZERO
 var is_summon := false
+var room_cells := RoomLayout.DEFAULT_SIZE
 var _warning_fraction := 0.5
 var _behavior: EnemyBehavior
 var _knockback := Vector2.ZERO
@@ -58,15 +59,15 @@ func _physics_process(delta: float) -> void:
 	_knockback = _knockback.lerp(Vector2.ZERO, minf(KNOCKBACK_DECAY * delta, 1.0))
 	move_and_slide()
 	if def.ignores_walls:
-		position = clamp_inside_room(position)
+		position = clamp_inside_room(position, room_cells)
 	queue_redraw()
 
 
-static func clamp_inside_room(point: Vector2) -> Vector2:
+static func clamp_inside_room(point: Vector2, cells: Vector2i) -> Vector2:
 	var tile := float(RoomBackdrop.TILE)
 	return Vector2(
-		clampf(point.x, tile, (RoomLayout.WIDTH - 1) * tile),
-		clampf(point.y, tile, (RoomLayout.HEIGHT - 1) * tile))
+		clampf(point.x, tile, (cells.x - 1) * tile),
+		clampf(point.y, tile, (cells.y - 1) * tile))
 
 
 # Summons pay nothing, or a boss left alive could be farmed forever.

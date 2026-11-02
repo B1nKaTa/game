@@ -2,7 +2,6 @@ extends Node2D
 
 const FLOOR_PATH := "res://data/floors/floor_1.tres"
 const MESSAGE_TIME := 2.0
-const VIEW_CENTER := Vector2(320, 180)
 
 var player: Player
 var is_cleared := false
@@ -19,6 +18,7 @@ var _hud: Hud
 var _feedback: CombatFeedback
 var _mini_map: FloorMapView
 var _big_map: FloorMapView
+var _camera: Camera2D
 
 
 func _ready() -> void:
@@ -38,12 +38,10 @@ func _ready() -> void:
 	if _map == null:
 		_end_run("This floor could not be built. Returning to the Waiting Room.")
 		return
-	# Resting at the middle of the 640x360 view keeps the same framing as having no camera.
-	var camera := Camera2D.new()
-	camera.position = VIEW_CENTER
-	add_child(camera)
+	_camera = Camera2D.new()
+	add_child(_camera)
 	_feedback = CombatFeedback.new()
-	_feedback.setup(camera)
+	_feedback.setup(_camera)
 	add_child(_feedback)
 	player = Player.new()
 	player.setup(_run)
@@ -109,6 +107,19 @@ func _enter_room(target_id: int) -> void:
 	player.global_position = Player.arrival_position(_progress.arrival_cell(target_id, from_id))
 	_mini_map.set_current(target_id)
 	_big_map.set_current(target_id)
+	_follow_player()
+
+
+func _process(_delta: float) -> void:
+	_follow_player()
+
+
+# Shake moves the camera through its offset, so following never fights it.
+func _follow_player() -> void:
+	if _camera == null or _current_id == -1:
+		return
+	var room_size := Vector2(_map.room(_current_id).layout.size_in_cells()) * RoomBackdrop.TILE
+	_camera.position = RoomCamera.center_for(room_size, player.feet().global_position, RoomBackdrop.VIEW_SIZE)
 
 
 func _make_room_view(room: FloorRoom) -> RoomView:

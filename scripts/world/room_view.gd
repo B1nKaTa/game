@@ -57,9 +57,10 @@ func setup(room: FloorRoom, map: FloorMap, floor_def: FloorDef, run: RunState, p
 
 func _ready() -> void:
 	var backdrop := RoomBackdrop.new()
-	backdrop.setup(_room.layout.rows)
+	var palette := _floor_def.room_palette()
+	backdrop.setup(_room.layout.rows, palette)
 	add_child(backdrop)
-	Lighting.add_room_mood(self)
+	Lighting.add_room_mood(self, _room.layout.size_in_cells(), palette)
 	_create_doors()
 	_create_blocks()
 	_create_rewards()
@@ -179,6 +180,7 @@ func _spawn_enemy(def: EnemyDef, at: Vector2, summoned := false) -> void:
 	var enemy := Enemy.new()
 	enemy.setup(def, _player, _run.stats.warning_fraction, _run.stats.reveals_enemy_health)
 	enemy.is_summon = summoned
+	enemy.room_cells = _room.layout.size_in_cells()
 	enemy.position = at
 	enemy.defeated.connect(_on_enemy_defeated)
 	enemy.summon_requested.connect(_spawn_summon)

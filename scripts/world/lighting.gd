@@ -1,9 +1,23 @@
 class_name Lighting
 extends RefCounted
 
-const AMBIENT := Color(0.32, 0.32, 0.48)
-const TORCH := Color(1.0, 0.62, 0.3)
-const TORCH_CELLS: Array[Vector2i] = [Vector2i(4, 0), Vector2i(15, 0), Vector2i(4, 10), Vector2i(15, 10)]
+const TORCH_SPACING := 10.0
+const TALL_ROOM := 14
+
+
+# Along the top and bottom walls, plus the side walls of a tall room, since a
+# torch's glow doesn't reach the middle of one from the top and bottom alone.
+static func torch_cells(room_cells: Vector2i) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	var columns := maxi(2, roundi(room_cells.x / TORCH_SPACING))
+	for i in columns:
+		var x := int((i + 0.5) * room_cells.x / columns)
+		cells.append(Vector2i(x, 0))
+		cells.append(Vector2i(x, room_cells.y - 1))
+	if room_cells.y >= TALL_ROOM:
+		cells.append(Vector2i(0, room_cells.y / 2))
+		cells.append(Vector2i(room_cells.x - 1, room_cells.y / 2))
+	return cells
 
 
 static func make_light(color: Color, energy: float, scale_factor: float) -> PointLight2D:
@@ -25,11 +39,11 @@ static func make_light(color: Color, energy: float, scale_factor: float) -> Poin
 	return light
 
 
-static func add_room_mood(parent: Node) -> void:
+static func add_room_mood(parent: Node, room_cells: Vector2i, palette: RoomPalette) -> void:
 	var modulate := CanvasModulate.new()
-	modulate.color = AMBIENT
+	modulate.color = palette.ambient
 	parent.add_child(modulate)
-	for cell in TORCH_CELLS:
-		var light := make_light(TORCH, 1.0, 1.6)
+	for cell in torch_cells(room_cells):
+		var light := make_light(palette.torch, 1.0, 1.6)
 		light.position = RoomBackdrop.cell_center(cell)
 		parent.add_child(light)

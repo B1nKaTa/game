@@ -9,3 +9,8 @@ extends Resource
 @export var floor_boss: EnemyDef
 @export var clear_pension: int = 8
 @export var treasure_pension: int = 25
+@export var palette: RoomPalette
+
+
+func room_palette() -> RoomPalette:
+	return palette if palette != null else RoomPalette.new()
