@@ -31,6 +31,39 @@ func test_using_a_thermos_needs_one() -> void:
 	assert_eq(run.bombs, 1)
 
 
+func test_slips_and_thermoses_stop_at_the_cap() -> void:
+	var run := _run()
+	assert_eq(RunState.MAX_CONSUMABLE, 99)
+	assert_true(run.can_add_key())
+	assert_true(run.can_add_bomb())
+	for i in RunState.MAX_CONSUMABLE + 5:
+		run.add_key()
+		run.add_bomb()
+	assert_eq(run.keys, RunState.MAX_CONSUMABLE)
+	assert_eq(run.bombs, RunState.MAX_CONSUMABLE)
+	assert_false(run.can_add_key())
+	assert_false(run.can_add_bomb())
+	run.use_key()
+	run.use_bomb()
+	assert_true(run.can_add_key(), "spending one makes room again")
+	assert_true(run.can_add_bomb(), "spending one makes room again")
+
+
+func test_adding_at_the_cap_announces_nothing() -> void:
+	var run := _run()
+	for i in RunState.MAX_CONSUMABLE:
+		run.add_key()
+	var count := [0]
+	run.changed.connect(func(): count[0] += 1)
+	run.add_key()
+	assert_eq(count[0], 0)
+
+
+func test_counter_text_shows_the_amount() -> void:
+	assert_eq(Hud.counter_text(0), "x0")
+	assert_eq(Hud.counter_text(99), "x99")
+
+
 func test_changes_are_announced() -> void:
 	var run := _run()
 	var count := [0]

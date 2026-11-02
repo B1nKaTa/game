@@ -197,9 +197,11 @@ func _drop_coin(at: Vector2, base_amount: int) -> void:
 func _drop_consumable(at: Vector2, kind: String) -> void:
 	match kind:
 		RoomRules.DROP_KEY:
-			_add_pickup(at, RoomRules.KEY_NAME, KEY_COLOR, func(): _take_consumable(_run.add_key))
+			var slip := _add_pickup(at, RoomRules.KEY_NAME, KEY_COLOR, func(): _take_consumable(_run.add_key))
+			slip.can_take = _run.can_add_key
 		RoomRules.DROP_BOMB:
-			_add_pickup(at, RoomRules.BOMB_NAME, BOMB_COLOR, func(): _take_consumable(_run.add_bomb))
+			var thermos := _add_pickup(at, RoomRules.BOMB_NAME, BOMB_COLOR, func(): _take_consumable(_run.add_bomb))
+			thermos.can_take = _run.can_add_bomb
 
 
 func _take_consumable(add: Callable) -> void:

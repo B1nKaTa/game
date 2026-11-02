@@ -82,7 +82,7 @@ Entering a room in a layer seals the other room in that layer, so the skipped ro
 
 ### Consumables, Blocks and Treasure
 
-A run starts with no Permission Slips and one Overheated Thermos.
+A run starts with no Permission Slips and one Overheated Thermos. The HUD always shows both as icons with a count along the top. Each stacks to 99, and a pickup stays on the floor while you are at the cap.
 
 - **Permission Slips** open locked chests and the treasure room. The mini boss always drops one. Cleared combat and side rooms drop one 15% of the time.
 - **Overheated Thermoses** are placed with Q and go off after 1.2 seconds, with a 56 pixel blast. The blast deals 30 damage to enemies, breaks blocks, and costs Grandpa one pill if he is caught. Cleared combat and side rooms drop one 20% of the time.

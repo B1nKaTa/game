@@ -4,10 +4,15 @@ extends CanvasLayer
 const BOSS_BAR_SIZE := Vector2(480, 10)
 const BOSS_BAR_TOP := 336.0
 const BOSS_NAME_TOP := 314.0
+const SLIP_COUNTER_AT := Vector2(300, 5)
+const THERMOS_COUNTER_AT := Vector2(360, 5)
+const COUNTER_TEXT_OFFSET := Vector2(15, -2)
 
 var _run: RunState
 var _status: Label
 var _items: Label
+var _slips: Label
+var _thermoses: Label
 var _message: Label
 var _boss_name: Label
 var _boss_back: ColorRect
@@ -20,6 +25,10 @@ static func bar_fraction(hp: float, max_hp: float) -> float:
 	if max_hp <= 0.0:
 		return 0.0
 	return clampf(hp / max_hp, 0.0, 1.0)
+
+
+static func counter_text(amount: int) -> String:
+	return "x%d" % amount
 
 
 func setup(run: RunState) -> void:
@@ -40,6 +49,8 @@ func _ready() -> void:
 	_boss_fill = _add_rect(Vector2(left, BOSS_BAR_TOP), BOSS_BAR_SIZE, Color("e4524f"))
 	hide_boss_bar()
 	if _run != null:
+		_slips = _add_counter(SLIP_COUNTER_AT, ConsumableIcon.Kind.SLIP)
+		_thermoses = _add_counter(THERMOS_COUNTER_AT, ConsumableIcon.Kind.THERMOS)
 		_run.changed.connect(_refresh)
 	_refresh()
 
@@ -77,6 +88,14 @@ func is_boss_bar_visible() -> bool:
 	return _boss_back != null and _boss_back.visible
 
 
+func _add_counter(at: Vector2, kind: ConsumableIcon.Kind) -> Label:
+	var icon := ConsumableIcon.new()
+	icon.setup(kind)
+	icon.position = at
+	add_child(icon)
+	return _add_label(at + COUNTER_TEXT_OFFSET, 12)
+
+
 func _add_rect(at: Vector2, size: Vector2, color: Color) -> ColorRect:
 	var rect := ColorRect.new()
 	rect.position = at
@@ -101,7 +120,9 @@ func _refresh() -> void:
 	var text := "Pension: %d" % _pension
 	if _run != null:
 		var pills := "■".repeat(_run.health.pills) + "□".repeat(_run.health.max_pills - _run.health.pills)
-		text = "Pills: %s   %s   Slips: %d   Thermos: %d" % [pills, text, _run.keys, _run.bombs]
+		text = "Pills: %s   %s" % [pills, text]
+		_slips.text = counter_text(_run.keys)
+		_thermoses.text = counter_text(_run.bombs)
 		var names: PackedStringArray = []
 		for item in _run.items:
 			names.append(item.display_name)

@@ -4,6 +4,7 @@ extends RefCounted
 signal changed
 
 const STARTING_BOMBS := 1
+const MAX_CONSUMABLE := 99
 
 var stats: PlayerStats
 var health: Health
@@ -38,7 +39,17 @@ func has_item(id: String) -> bool:
 	return false
 
 
+func can_add_key() -> bool:
+	return keys < MAX_CONSUMABLE
+
+
+func can_add_bomb() -> bool:
+	return bombs < MAX_CONSUMABLE
+
+
 func add_key() -> void:
+	if not can_add_key():
+		return
 	keys += 1
 	changed.emit()
 
@@ -52,6 +63,8 @@ func use_key() -> bool:
 
 
 func add_bomb() -> void:
+	if not can_add_bomb():
+		return
 	bombs += 1
 	changed.emit()
 
