@@ -84,3 +84,15 @@ func test_catalog_meets_the_spec_counts() -> void:
 	assert_eq(counts.get(RoomLayout.TYPE_SIDE, 0), 2)
 	assert_eq(counts.get(RoomLayout.TYPE_MINI_BOSS, 0), 1)
 	assert_eq(counts.get(RoomLayout.TYPE_FLOOR_BOSS, 0), 1)
+
+
+func test_nearest_floor_cell_keeps_a_floor_cell() -> void:
+	var layout := _layout(RoomLayout.TYPE_COMBAT, _open_rows("#.......E..E.......#"))
+	assert_eq(layout.nearest_floor_cell(Vector2i(5, 5)), Vector2i(5, 5))
+
+
+func test_nearest_floor_cell_moves_a_wall_cell_to_floor() -> void:
+	var layout := _layout(RoomLayout.TYPE_COMBAT, _open_rows("#.......E..E.......#"))
+	assert_eq(layout.nearest_floor_cell(Vector2i(0, 5)), Vector2i(1, 5))
+	assert_eq(layout.nearest_floor_cell(Vector2i(-3, 5)), Vector2i(1, 5))
+	assert_eq(layout.nearest_floor_cell(Vector2i(25, 0)), Vector2i(18, 1))

@@ -86,9 +86,18 @@ func _spawn_enemy(def: EnemyDef, at: Vector2) -> void:
 	enemy.setup(def, _player, _run.stats.warning_fraction)
 	enemy.position = at
 	enemy.defeated.connect(_on_enemy_defeated)
-	enemy.summon_requested.connect(_spawn_enemy)
+	enemy.summon_requested.connect(_spawn_summon)
 	_alive += 1
 	add_child(enemy)
+
+
+func _spawn_summon(def: EnemyDef, at: Vector2) -> void:
+	var tile := RoomBackdrop.TILE
+	var cell := Vector2i(floori(at.x / tile), floori(at.y / tile))
+	var floor_cell := _room.layout.nearest_floor_cell(cell)
+	if floor_cell != cell:
+		at = RoomBackdrop.cell_center(floor_cell)
+	_spawn_enemy(def, at)
 
 
 func _on_enemy_defeated(enemy: Enemy) -> void:

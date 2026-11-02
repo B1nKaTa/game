@@ -75,6 +75,21 @@ func cells_of(symbol: String) -> Array[Vector2i]:
 	return cells
 
 
+func nearest_floor_cell(cell: Vector2i) -> Vector2i:
+	var from := Vector2i(clampi(cell.x, 0, WIDTH - 1), clampi(cell.y, 0, HEIGHT - 1))
+	var best := from
+	var best_distance := INF
+	for y in rows.size():
+		for x in rows[y].length():
+			if rows[y][x] == "#":
+				continue
+			var distance := Vector2(x - from.x, y - from.y).length_squared()
+			if distance < best_distance:
+				best_distance = distance
+				best = Vector2i(x, y)
+	return best
+
+
 func _flood_from_entry() -> Dictionary:
 	var seen := {ENTRY: true}
 	var open: Array[Vector2i] = [ENTRY]
