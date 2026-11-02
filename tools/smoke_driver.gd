@@ -11,6 +11,8 @@ var _crafted_id := ""
 var _cleared_rooms := {}
 var _sizes_seen := {}
 var _followed_a_big_room := false
+var _checked_block_memory := false
+var _saw_shop := false
 
 
 func _ready() -> void:
@@ -70,7 +72,7 @@ func _run() -> void:
 	_check(Progress.data.level_of(upgrade.id) == 1, "upgrade survives a reload")
 
 	if not _failed:
-		print("SMOKE PASS rooms of sizes %s, big room view checked: %s" % [str(_sizes_seen.keys()), str(_followed_a_big_room)])
+		print("SMOKE PASS rooms of sizes %s, big room view checked: %s, block memory checked: %s" % [str(_sizes_seen.keys()), str(_followed_a_big_room), str(_checked_block_memory)])
 		get_tree().quit(0)
 
 
@@ -96,10 +98,15 @@ func _clear_whole_floor() -> void:
 		if not walked_back and at != map.start_id:
 			walked_back = true
 			await _walk_back_and_return(scene, at)
+		if map.room(at).room_type == RoomLayout.TYPE_SHOP and not _saw_shop:
+			_check_shop(scene)
+		if at != map.start_id:
+			await _check_a_broken_block_stays_broken(scene, at)
 		var next: int = map.next_step(at, _next_goal(scene, map))
 		await _walk_through_door(scene, next)
 	_check(scene.is_cleared, "floor can be cleared")
 	_check(walked_back, "the check walked back through a door")
+	_check(_saw_shop, "the shop was checked")
 	_check(_boss_rooms_seen >= 2, "both bosses showed a boss bar")
 	for room in map.rooms:
 		_check(scene.debug_progress().is_visited(room.id), "room %d (%s) was explored" % [room.id, room.room_type])
@@ -270,6 +277,54 @@ func _walk_back_and_return(scene: Node, here_id: int) -> void:
 	_check(get_tree().get_nodes_in_group("enemies").is_empty(), "a cleared room stays clear when returning")
 	_check(Progress.data.pension == pension_before, "returning earns no Pension")
 	_check(_resting_pickups() == pickups_here, "a room remembers pickups left behind")
+
+
+# Once per run, in the first room with a plain block, since not every room has one.
+func _check_a_broken_block_stays_broken(scene: Node, here_id: int) -> void:
+	if _checked_block_memory:
+		return
+	var block := _plain_block()
+	if block == null:
+		return
+	_checked_block_memory = true
+	block.take_blast()
+	await _wait(0.1)
+	var blocks_left := _plain_block_count()
+	var map: FloorMap = scene.debug_map()
+	await _walk_through_door(scene, map.next_step(here_id, map.start_id))
+	await _walk_through_door(scene, here_id)
+	_check(_plain_block_count() == blocks_left, "a broken block stays broken on return")
+
+
+func _plain_block() -> BreakableBlock:
+	for block in get_tree().get_nodes_in_group("breakable"):
+		if not block is SecretWall and not block is RetirementStation and not block.is_queued_for_deletion():
+			return block
+	return null
+
+
+func _plain_block_count() -> int:
+	var count := 0
+	for block in get_tree().get_nodes_in_group("breakable"):
+		if not block is SecretWall and not block is RetirementStation and not block.is_queued_for_deletion():
+			count += 1
+	return count
+
+
+func _check_shop(scene: Node) -> void:
+	var view: RoomView = scene.debug_room_view()
+	var stations := 0
+	for child in view.get_children():
+		if child is RetirementStation:
+			stations += 1
+	_check(stations == 1, "the shop holds the Retirement Plan")
+	var stock := 0
+	for pickup in get_tree().get_nodes_in_group("pickups"):
+		if pickup.prompt == RoomView.SHOP_PROMPT:
+			stock += 1
+	# Heal, Slip and Thermos are always sold. Items already found this run are not, so up to two may be missing.
+	_check(stock >= 3 and stock <= 5, "the shop shows its stock, found %d" % stock)
+	_saw_shop = true
 
 
 func _resting_pickups() -> int:
