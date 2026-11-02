@@ -19,10 +19,13 @@ const MERCHANTS := [
 ]
 const DOOR_CELL := Vector2i(18, 5)
 const INTERACT_RANGE := 48.0
+const KEY_BOARD_CELL := Vector2i(14, 3)
+const KEY_BOARD_COLOR := Color("6b4a2a")
 
 var player: Player
 var _hud: Hud
 var _panel: MerchantPanel
+var _keys_panel: KeysPanel
 
 
 func _ready() -> void:
@@ -55,10 +58,31 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	queue_redraw()
-	if _panel == null and Input.is_action_just_pressed("interact"):
+	if _panel == null and _keys_panel == null and Input.is_action_just_pressed("interact"):
 		var entry := _merchant_in_range()
 		if not entry.is_empty():
 			_open_panel(entry)
+		elif _near_key_board():
+			_open_keys_panel()
+
+
+func _near_key_board() -> bool:
+	return player.global_position.distance_to(RoomBackdrop.cell_center(KEY_BOARD_CELL)) <= INTERACT_RANGE
+
+
+func _open_keys_panel() -> void:
+	_keys_panel = KeysPanel.new()
+	_keys_panel.closed.connect(_close_keys_panel)
+	add_child(_keys_panel)
+	player.cancel_charge()
+	player.set_physics_process(false)
+	_hud.show_message("")
+
+
+func _close_keys_panel() -> void:
+	_keys_panel.queue_free()
+	_keys_panel = null
+	player.set_physics_process(true)
 
 
 func _merchant_in_range() -> Dictionary:
@@ -89,9 +113,15 @@ func _close_panel() -> void:
 
 
 func _draw() -> void:
-	if _panel == null and player != null:
+	var board_at := RoomBackdrop.cell_center(KEY_BOARD_CELL)
+	draw_rect(Rect2(board_at - Vector2(14, 18), Vector2(28, 36)), KEY_BOARD_COLOR)
+	draw_rect(Rect2(board_at - Vector2(14, 18), Vector2(28, 36)), Color.BLACK, false, 2.0)
+	draw_string(ThemeDB.fallback_font, board_at + Vector2(-7, 5), "Keys", HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color.WHITE)
+	if _panel == null and _keys_panel == null and player != null:
 		var entry := _merchant_in_range()
 		if not entry.is_empty():
 			var at: Vector2 = RoomBackdrop.cell_center(entry["cell"])
-			draw_string(ThemeDB.fallback_font, at + Vector2(-30, -24), "E: Trade", HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color.WHITE)
+			draw_string(ThemeDB.fallback_font, at + Vector2(-30, -24), KeyBindings.with_key("interact", "Trade"), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color.WHITE)
+		elif _near_key_board():
+			draw_string(ThemeDB.fallback_font, board_at + Vector2(-30, -24), KeyBindings.with_key("interact", "Key Settings"), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color.WHITE)
 	draw_string(ThemeDB.fallback_font, Vector2(240, 24), "NOW SERVING: 666", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("e4524f"))

@@ -9,7 +9,7 @@ const ARRIVE_RADIUS := 6.0
 const FLY_START_SPEED := 120.0
 const FLY_ACCELERATION := 700.0
 const FLY_MAX_SPEED := 420.0
-const PROMPT_TEXT := "E: Take"
+const PROMPT_TEXT := "Take"
 
 var requires_interact := false
 var can_take := Callable()
@@ -127,4 +127,4 @@ func _draw() -> void:
 		return
 	draw_string(ThemeDB.fallback_font, Vector2(-18, -12), _label, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color.WHITE)
 	if _prompt_shown:
-		draw_string(ThemeDB.fallback_font, Vector2(-18, 22), prompt, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("ffd24a"))
+		draw_string(ThemeDB.fallback_font, Vector2(-18, 22), KeyBindings.with_key("interact", prompt), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("ffd24a"))

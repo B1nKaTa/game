@@ -10,7 +10,7 @@ const USE_RADIUS := 48.0
 const FILL_COLOR := Color("5d4a8c")
 const TEXT_COLOR := Color("ece9e0")
 const PROMPT_COLOR := Color("ffd24a")
-const PROMPT := "Hold E: Pay in 10"
+const PROMPT := "Pay in 10 (hold)"
 
 var _bank: Node
 var _feet: Node2D
@@ -61,4 +61,4 @@ func _draw() -> void:
 	for i in lines.size():
 		draw_string(ThemeDB.fallback_font, Vector2(-60, -48.0 + i * 11.0), lines[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 10, TEXT_COLOR)
 	if _near:
-		draw_string(ThemeDB.fallback_font, Vector2(-60, 28), PROMPT, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, PROMPT_COLOR)
+		draw_string(ThemeDB.fallback_font, Vector2(-60, 28), KeyBindings.with_key("interact", PROMPT), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, PROMPT_COLOR)

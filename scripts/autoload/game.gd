@@ -7,6 +7,7 @@ const FLOOR_SCENE := "res://scenes/floor.tscn"
 
 func _ready() -> void:
 	InputSetup.ensure()
+	KeyBindings.load_from()
 	if OS.get_cmdline_user_args().has("--smoke"):
 		var driver: Node = load("res://tools/smoke_driver.gd").new()
 		add_child(driver)

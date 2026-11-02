@@ -5,7 +5,7 @@ signal entered(target_id: int)
 signal key_spent
 
 const ENTER_RADIUS := 18.0
-const KEY_PROMPT := "E: Use Slip"
+const KEY_PROMPT := "Use Slip"
 const NO_KEY_PROMPT := "Needs a Slip"
 
 var locked := true
@@ -81,5 +81,5 @@ func _draw() -> void:
 		return
 	draw_string(ThemeDB.fallback_font, Vector2(-5, 6), _icon, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
 	if requires_key and not locked and _near:
-		var prompt := KEY_PROMPT if _player_has_key() else NO_KEY_PROMPT
+		var prompt := KeyBindings.with_key("interact", KEY_PROMPT) if _player_has_key() else NO_KEY_PROMPT
 		draw_string(ThemeDB.fallback_font, Vector2(18, 4), prompt, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("ffd24a"))

@@ -59,7 +59,7 @@ Beating the floor boss shows a "floor cleared" message before the return. No end
 
 ### Controls
 
-Move with WASD and aim with the mouse. Tapping left click hits with the cane combo, and holding it after the hit charges a swing that fires on release once fully charged. Right click throws the cane, Space dodges, Q places a Thermos, E interacts, and M opens the floor map.
+Move with WASD and aim with the mouse. Tapping left click hits with the cane combo, and holding it after the hit charges a swing that fires on release once fully charged. Right click throws the cane, Space dodges, Q places a Thermos, E interacts, and M opens the floor map. Every one of these can be changed at the Keys board in the Waiting Room, and the choices are saved. Taking a key already in use swaps the two actions, and on-screen prompts always show the current key.
 
 ### Combat
 

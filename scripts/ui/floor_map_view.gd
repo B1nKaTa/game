@@ -29,7 +29,7 @@ const BIG_MARGIN := Vector2(38, 58)
 const LEGEND_TOP := "C Combat   I Item   H Healing   ? Side   S Secret"
 const LEGEND_BOTTOM := "T Treasure   $ Shop   M Mini boss   B Boss"
 const TITLE := "Floor Map"
-const CLOSE_HINT := "M: Close"
+const CLOSE_HINT := "Close"
 
 var enabled := true
 var _map: FloorMap
@@ -115,7 +115,7 @@ func _draw() -> void:
 		_draw_room(_map.room(room_id), origin, spacing, room_size)
 	if _is_big:
 		_draw_text(panel.position + Vector2(12, 22), TITLE, 16, Color.WHITE)
-		_draw_text(panel.end - Vector2(62, 257), CLOSE_HINT, 11, Color("ffd24a"))
+		_draw_text(panel.end - Vector2(62, 257), KeyBindings.with_key("map", CLOSE_HINT), 11, Color("ffd24a"))
 		_draw_text(panel.position + Vector2(12, panel.size.y - 26), LEGEND_TOP, 11, Color("ece9e0"))
 		_draw_text(panel.position + Vector2(12, panel.size.y - 12), LEGEND_BOTTOM, 11, Color("ece9e0"))
 

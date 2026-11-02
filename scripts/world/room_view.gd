@@ -12,14 +12,14 @@ signal consumable_taken
 signal notice(text: String)
 
 const HEAL_AMOUNT := 2
-const SHOP_PROMPT := "E: Buy"
+const SHOP_PROMPT := "Buy"
 const FREE_COLOR := Color("67f0d0")
 const BACK_ICON := "<"
 const KEY_COLOR := Color("ece9e0")
 const BOMB_COLOR := Color("ff9a3c")
 const CHEST_COLOR := Color("a8692f")
 const CHEST_LABEL := "Locked Chest"
-const CHEST_PROMPT := "E: Use Slip"
+const CHEST_PROMPT := "Use Slip"
 const PENSION_COLOR := Color("ffd24a")
 const ITEM_COLOR := Color("7dd3fc")
 const HEAL_COLOR := Color("e4524f")

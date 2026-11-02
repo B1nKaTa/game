@@ -44,3 +44,9 @@ Run the tests and the full-loop check first, because this branch has never been 
 - Coming back from a secret room, and leaving it for later.
 - Each new layout, to check it plays well and nothing is awkward to reach.
 - Rebinding keys, then quitting and reopening.
+
+## Status
+
+- Rounds 1, 2 and 3 are written and pushed on `next-build`, and none of it has been run. Room layouts passed a separate check for size, door cells and reachability, run without starting the game.
+- Rounds 4 and later wait on the decisions listed above.
+- Before merging into `first-floor`: run the tests and the full-loop check, then play the list above.
