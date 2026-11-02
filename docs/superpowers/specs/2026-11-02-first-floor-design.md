@@ -90,6 +90,14 @@ A run starts with no Permission Slips and one Overheated Thermos. The HUD always
 - **Locked chests** give the same reward as treasure, for one Slip.
 - **The treasure room** appears once per floor, behind a locked door in the bottom middle of a room that is alone in its layer, so a route choice can never hide it. One Slip opens the door for good, and the room offers a choice of three items.
 
+### Shop and Retirement Plan
+
+Each floor has one shop, behind an open `$` door in the bottom left of a room that is alone in its layer. Stock costs Pension: two items at 60, a heal at 20, a Permission Slip at 25 and a Thermos at 20. Each sells once, and bought stock stays gone if you leave and return.
+
+The Retirement Plan stands in the shop. Holding E pays in 10 Pension at a time, up to 1000. The balance is saved between runs. A Thermos blast in a later run cashes out the whole balance. In the same run as a deposit the plan stays locked.
+
+Reaching 10, 50, 100, 250, 500, 750 and 1000 for the first time each gives one free item for that run only. It waits in the shop, the treasure room if not yet entered, or after the mini boss if not yet beaten. The item chosen is a random run item for now, with a free Thermos if none are left, until the real reward list is decided. Each tier pays once ever, so cashing out and paying back in can't earn it twice.
+
 ### Maps
 
 A small map in the top right corner shows visited rooms, the links between them and the current room. Pressing M opens a large map with room type icons and a legend, and pauses the game until M is pressed again. Unvisited rooms never show on either map. The map reads left to right from the start to the floor boss, with side rooms beside their parent.

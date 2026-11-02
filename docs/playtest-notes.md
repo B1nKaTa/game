@@ -20,3 +20,4 @@
 - Round 7: added a mini map, a big map on M, and return doors. Only visited rooms show. Choosing a route seals the other one, and rooms remember pickups left behind.
 - Round 8: Grandpa's collision box moved to his feet. Added Permission Slips, Overheated Thermoses, breakable blocks, loot pockets, locked chests and a locked treasure room. Next rounds: a shop paid in Pension, secret rooms, then special items with mana. Still to judge: drop rates, Thermos strength, and whether rewards make runs too easy.
 - Round 9: Slips and Thermoses got their own always-visible HUD counters with icons, and each stacks to 99.
+- Round 10: added a shop on every floor and the Retirement Plan. To decide: the real reward list for each tier, and whether a tier should pay once ever. Still to judge: prices, and whether paying in feels worth it.
