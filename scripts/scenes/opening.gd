@@ -20,6 +20,7 @@ func _ready() -> void:
 	var background := ColorRect.new()
 	background.color = Color("100e14")
 	background.size = Vector2(640, 360)
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(background)
 	_label = Label.new()
 	_label.position = Vector2(40, 150)
@@ -28,10 +29,18 @@ func _ready() -> void:
 	_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	layer.add_child(_label)
 	_label.text = LINES[0]
+	var hint := Label.new()
+	hint.text = "Click or press Space to continue"
+	hint.position = Vector2(40, 325)
+	hint.size = Vector2(560, 20)
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.modulate = Color(1, 1, 1, 0.5)
+	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(hint)
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("attack") or event.is_action_pressed("dodge") or event.is_action_pressed("interact"):
+	if event.is_action_pressed("attack") or event.is_action_pressed("dodge") or event.is_action_pressed("interact") or event.is_action_pressed("ui_accept"):
 		_index += 1
 		if _index >= LINES.size():
 			Game.finish_opening()
