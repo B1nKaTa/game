@@ -32,6 +32,11 @@ extends Resource
 @export var hole := Color("0a0810")
 @export var hole_rim := Color("2c2838")
 @export var bones := Color("d9d2bc")
+@export var gravestone := Color("8d9490")
+@export var gravestone_edge := Color("2f3532")
+@export var gravestone_moss := Color("5d7d45")
+@export var dead_tree := Color("41352b")
+@export var dead_tree_edge := Color("1d1712")
 @export_group("Decor")
 @export var grass := Color("557f48")
 @export var grass_cut := Color("3f5f38")
@@ -41,6 +46,10 @@ extends Resource
 @export var lantern := Color("ffb347")
 @export var lantern_light := Color(1.0, 0.78, 0.45)
 @export var torch_flame := Color("ffd24a")
+@export var stump := Color("5a4630")
+@export var stump_top := Color("9a8460")
+@export var moss := Color("4f6f3c")
+@export var sapling := Color("3a2f25")
 # How many free floor cells, as a fraction, get a piece of scatter, and how much each
 # kind is wanted compared with the others. A kind left out of the weights never appears.
 @export var decor_density := 0.07

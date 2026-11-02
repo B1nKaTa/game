@@ -14,7 +14,7 @@
 [resource]
 script = ExtResource("1")
 id = "floor_1"
-display_name = "Claims Department"
+display_name = "The Records Basement"
 rooms_dir = "res://data/rooms/floor_1/"
 enemies = [ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10")]
 enemy_weights = PackedInt32Array(5, 3, 4, 4, 3, 2, 2)

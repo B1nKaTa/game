@@ -16,6 +16,13 @@ extends Resource
 # What a coin found in a barrel, a rock, a crate or a pile of bones is worth.
 @export var prop_pension: int = 2
 @export var palette: RoomPalette
+@export_group("Path")
+# How many floor bosses must have fallen, on any path, before this path opens. Zero means always open.
+@export var clears_to_open: int = 0
+# Skulls on the path's sign at the Crossroads.
+@export var danger: int = 1
+# What the chained sign says while the path is closed.
+@export var closed_hint: String = ""
 @export_group("Layout")
 @export var grid_size := Vector2i(9, 7)
 @export var main_path_rooms: int = 7
@@ -31,6 +38,10 @@ extends Resource
 @export var vault_count: int = 1
 # The Thermos upgrade level that breaks this floor's reinforced stones. A later floor can ask for less.
 @export var vault_stone_level: int = 3
+
+
+func is_open(floors_cleared: int) -> bool:
+	return floors_cleared >= clears_to_open
 
 
 func room_palette() -> RoomPalette:

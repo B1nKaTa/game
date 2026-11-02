@@ -1,0 +1,74 @@
+[gd_resource type="Resource" script_class="FloorDef" load_steps=14 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/floor_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/content/room_palette.gd" id="2"]
+[ext_resource type="Resource" path="res://data/enemies/intern_reaper.tres" id="3"]
+[ext_resource type="Resource" path="res://data/enemies/filing_clerk.tres" id="4"]
+[ext_resource type="Resource" path="res://data/enemies/debt_ghost.tres" id="5"]
+[ext_resource type="Resource" path="res://data/enemies/seasonal_temp.tres" id="6"]
+[ext_resource type="Resource" path="res://data/enemies/notary_public.tres" id="7"]
+[ext_resource type="Resource" path="res://data/enemies/burnt_out_auditor.tres" id="8"]
+[ext_resource type="Resource" path="res://data/enemies/denial_officer.tres" id="9"]
+[ext_resource type="Resource" path="res://data/enemies/plot_holder.tres" id="10"]
+[ext_resource type="Resource" path="res://data/enemies/head_groundskeeper.tres" id="11"]
+[ext_resource type="Resource" path="res://data/enemies/tired_undertaker.tres" id="12"]
+
+[sub_resource type="Resource" id="palette"]
+script = ExtResource("2")
+floor_a = Color(0.27, 0.36, 0.25, 1)
+floor_b = Color(0.3, 0.38, 0.26, 1)
+floor_c = Color(0.33, 0.37, 0.3, 1)
+floor_jitter = 0.03
+grout = Color(0, 0, 0, 0.04)
+speckle = Color(0.75, 0.9, 0.65, 0.12)
+wall = Color(0.22, 0.27, 0.25, 1)
+wall_line = Color(0.31, 0.43, 0.27, 0.55)
+darkness = Color(0.03, 0.05, 0.06, 1)
+ambient = Color(0.4, 0.48, 0.52, 1)
+torch = Color(0.62, 0.8, 0.88, 1)
+fill_light = Color(0.7, 0.86, 0.9, 1)
+crate = Color(0.32, 0.27, 0.2, 1)
+crate_edge = Color(0.14, 0.12, 0.09, 1)
+rock = Color(0.46, 0.51, 0.46, 1)
+rock_edge = Color(0.18, 0.22, 0.2, 1)
+barrel = Color(0.36, 0.33, 0.24, 1)
+barrel_band = Color(0.18, 0.22, 0.17, 1)
+hole = Color(0.03, 0.05, 0.04, 1)
+hole_rim = Color(0.2, 0.25, 0.17, 1)
+grass = Color(0.42, 0.62, 0.3, 1)
+grass_cut = Color(0.3, 0.42, 0.24, 1)
+puddle = Color(0.5, 0.65, 0.68, 0.5)
+lantern = Color(0.7, 0.9, 0.92, 1)
+lantern_light = Color(0.66, 0.86, 0.92, 1)
+torch_flame = Color(0.82, 0.95, 0.98, 1)
+decor_density = 0.17
+decor_weights = {
+"bones": 1.0,
+"crack": 1.0,
+"grass": 7.0,
+"lantern": 0.3,
+"moss": 5.0,
+"puddle": 1.0,
+"sapling": 2.0,
+"stump": 2.0,
+"torch": 0.3
+}
+scatter_lights = 2
+
+[resource]
+script = ExtResource("1")
+id = "cemetery"
+display_name = "The Unkempt Cemetery"
+rooms_dir = "res://data/rooms/cemetery/"
+enemies = [ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10")]
+enemy_weights = PackedInt32Array(1, 1, 2, 5, 4, 3, 3, 5)
+extra_enemy_steps = PackedFloat32Array(0.5, 0.8)
+mini_boss = ExtResource("11")
+floor_boss = ExtResource("12")
+clear_pension = 1
+treasure_pension = 8
+prop_pension = 1
+palette = SubResource("palette")
+clears_to_open = 1
+danger = 2
+closed_hint = "Beat a floor boss first"

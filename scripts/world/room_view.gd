@@ -84,7 +84,7 @@ func refresh_doors() -> void:
 func clear_passing_effects() -> void:
 	for child in get_children():
 		var is_flying_coin: bool = child is Pickup and child.is_flying()
-		if child is Projectile or child is DeathBurst or child is Thermos or child is EnemyBlast or child is SummonMark or is_flying_coin:
+		if child is Projectile or child is DeathBurst or child is Thermos or child is EnemyBlast or child is SummonMark or child is GroundStrike or is_flying_coin:
 			child.queue_free()
 
 
@@ -198,6 +198,17 @@ func _create_props(palette: RoomPalette) -> void:
 		rock.hides_coin = RoomRules.rock_hides_coin(_rng.randf())
 		_place_prop(rock, cell)
 		rock.broken.connect(_on_rock_broken.bind(rock.hides_coin, cell))
+	for cell in layout.cells_of(RoomLayout.SYMBOL_GRAVESTONE):
+		var stone := Gravestone.new()
+		stone.palette = palette
+		stone.hides_coin = RoomRules.rock_hides_coin(_rng.randf())
+		_place_prop(stone, cell)
+		stone.broken.connect(_on_rock_broken.bind(stone.hides_coin, cell))
+	for cell in layout.cells_of(RoomLayout.SYMBOL_DEAD_TREE):
+		var tree := DeadTree.new()
+		tree.palette = palette
+		_place_prop(tree, cell)
+		tree.broken.connect(_on_rock_broken.bind(false, cell))
 	for cell in layout.cells_of(RoomLayout.SYMBOL_BARREL):
 		var barrel := Barrel.new()
 		barrel.palette = palette
@@ -301,6 +312,7 @@ func _spawn_enemy(def: EnemyDef, at: Vector2, summoned := false) -> Enemy:
 	enemy.hit_blocked.connect(hit_blocked.emit)
 	enemy.blasted.connect(bomb_exploded.emit)
 	enemy.summon_spot = summon_spot
+	enemy.open_ground = is_open_ground
 	enemy.spawn_index = _spawned
 	_spawned += 1
 	_alive += 1
@@ -314,6 +326,11 @@ func _spawn_enemy(def: EnemyDef, at: Vector2, summoned := false) -> Enemy:
 # Summons land on open floor, wherever the boss wanted them.
 func summon_spot(at: Vector2) -> Vector2:
 	return RoomBackdrop.cell_center(_room.layout.nearest_floor_cell(_cell_of(at)))
+
+
+# Ground attacks need ground, so walls and holes take no mark.
+func is_open_ground(at: Vector2) -> bool:
+	return not RoomLayout.WALLS.contains(_room.layout.symbol_at(_cell_of(at)))
 
 
 func _spawn_summon(def: EnemyDef, at: Vector2) -> void:

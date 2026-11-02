@@ -12,6 +12,8 @@ const TYPE_SHOP := "shop"
 const TYPE_SECRET := "secret"
 # A rich dead end behind a reinforced stone. Nothing the floor needs is ever inside.
 const TYPE_VAULT := "vault"
+# The small room every run starts in, with one exit per path. It holds nothing to fight or find.
+const TYPE_CROSSROADS := "crossroads"
 const DEFAULT_SIZE := Vector2i(20, 11)
 const NORTH := Vector2i.UP
 const SOUTH := Vector2i.DOWN
@@ -37,6 +39,9 @@ const SYMBOL_ROCK := "O"
 const SYMBOL_BARREL := "Q"
 const SYMBOL_HOLE := "V"
 const SYMBOL_PILE := "Z"
+# Graveyard props. A gravestone can hide a coin, and a dead tree is only in the way. Both break like a rock.
+const SYMBOL_GRAVESTONE := "A"
+const SYMBOL_DEAD_TREE := "Y"
 # Decor blocks nothing. Lanterns hang in the border wall, the rest lie on the floor.
 const SYMBOL_GRASS := "g"
 const SYMBOL_BONES := "n"
@@ -45,14 +50,15 @@ const SYMBOL_PUDDLE := "u"
 const SYMBOL_CRACK := "k"
 const SYMBOL_TORCH := "t"
 const SYMBOL_LANTERN := "l"
-const DECOR_SYMBOLS := "gnwuktl"
-const ALLOWED := "#.EIHTBXCSPROQVZgnwuktl"
+const SYMBOL_STUMP := "m"
+const DECOR_SYMBOLS := "gnwuktlm"
+const ALLOWED := "#.EIHTBXCSPROQVZAYgnwuktlm"
 # Nothing can walk through these, so nothing may be dropped or summoned on them.
-const SOLID_SYMBOLS := "#lXOQVP"
+const SOLID_SYMBOLS := "#lXOQVPAY"
 # Routes may not need a hole or a wall, and may not need a bomb for a crate or a rock.
 const WALL_LIKE := "#l"
 const WALLS := "#lV"
-const WALLS_AND_BOMB_ONLY := "#lVXO"
+const WALLS_AND_BOMB_ONLY := "#lVXOAY"
 const MUST_REACH_WITHOUT_BREAKING := "EBIHSPR"
 # A vault lays this many labeled pickups out in the open, this many cells apart so names never overlap.
 const VAULT_EXTRAS := 3
@@ -68,6 +74,7 @@ const REQUIRED := {
 	TYPE_SHOP: {"S": 5, "P": 1, "R": 7},
 	TYPE_SECRET: {"T": 2},
 	TYPE_VAULT: {"I": 3, "T": 3},
+	TYPE_CROSSROADS: {},
 }
 
 @export var room_type: String = ""

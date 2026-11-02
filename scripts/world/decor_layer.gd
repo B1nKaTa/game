@@ -68,3 +68,19 @@ func _draw_placeholder(kind: String, variant: int, at: Vector2) -> void:
 			draw_rect(Rect2(-5, -9, 10, 16), Color("2b2018"))
 			draw_rect(Rect2(-4, -6, 8, 11), p.lantern)
 			draw_rect(Rect2(-1, -4, 2, 7), Color(1, 1, 0.85))
+		RoomDecor.STUMP:
+			draw_rect(Rect2(-8, -3, 16, 12), p.stump)
+			draw_rect(Rect2(-8, -3, 16, 12), Color.BLACK, false, 1.0)
+			draw_set_transform(at + Vector2(0, -3), 0.0, Vector2(1.0, 0.45))
+			draw_circle(Vector2.ZERO, 8.0, p.stump_top)
+			draw_arc(Vector2.ZERO, 4.5, 0.0, TAU, 12, p.stump, 1.0)
+		RoomDecor.MOSS:
+			var radius := 9.0 + variant * 2.0
+			draw_set_transform(at, 0.0, Vector2(1.0, 0.65))
+			draw_circle(Vector2.ZERO, radius, Color(p.moss, 0.75))
+			draw_circle(Vector2(radius * 0.4, -radius * 0.3), radius * 0.45, Color(p.moss.lightened(0.15), 0.75))
+		RoomDecor.SAPLING:
+			var lean := -3.0 if variant % 2 == 0 else 3.0
+			draw_line(Vector2(0, 9), Vector2(lean, -8), p.sapling, 2.0)
+			draw_line(Vector2(lean * 0.4, 1), Vector2(lean + 5, -5), p.sapling, 1.0)
+			draw_line(Vector2(lean * 0.6, -2), Vector2(lean - 5, -7), p.sapling, 1.0)

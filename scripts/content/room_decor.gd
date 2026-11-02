@@ -10,6 +10,9 @@ const PUDDLE := "puddle"
 const CRACK := "crack"
 const TORCH := "torch"
 const LANTERN := "lantern"
+const STUMP := "stump"
+const MOSS := "moss"
+const SAPLING := "sapling"
 const SYMBOL_KINDS := {
 	RoomLayout.SYMBOL_GRASS: GRASS,
 	RoomLayout.SYMBOL_BONES: BONES,
@@ -18,6 +21,7 @@ const SYMBOL_KINDS := {
 	RoomLayout.SYMBOL_CRACK: CRACK,
 	RoomLayout.SYMBOL_TORCH: TORCH,
 	RoomLayout.SYMBOL_LANTERN: LANTERN,
+	RoomLayout.SYMBOL_STUMP: STUMP,
 }
 # The scatter keeps this far from every door cell, so doors stay easy to see.
 const DOOR_CLEARANCE := 1
