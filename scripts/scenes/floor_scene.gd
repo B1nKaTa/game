@@ -87,6 +87,7 @@ func _end_run(message: String) -> void:
 	is_over = true
 	_hud.show_message(message)
 	if player != null:
+		player.recall_cane()
 		player.process_mode = Node.PROCESS_MODE_DISABLED
 	if _room_view != null:
 		_room_view.process_mode = Node.PROCESS_MODE_DISABLED
