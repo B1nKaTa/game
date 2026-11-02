@@ -2,11 +2,13 @@ class_name PotionSlot
 extends Control
 
 # The HUD's potion slot, always on screen: a flask that is empty or full, the key that drinks
-# it, and the short name of whatever is inside. A running buff shows its time left beneath.
-const SIZE := Vector2(110, 30)
+# it, and the short name of whatever is inside. A running buff shows its time left beside the
+# name, on the same row, so it never runs into the item list under the top row.
+const SIZE := Vector2(110, 16)
 const FLASK_AT := Vector2(0, 0)
 const TEXT_AT := Vector2(14, -2)
-const BUFF_TEXT_AT := Vector2(14, 12)
+const NAME_WIDTH_WITH_BUFF := 48.0
+const BUFF_TEXT_AT := Vector2(64, 0)
 const EMPTY_COLOR := Color(0.7, 0.7, 0.78, 0.55)
 const NAME_FONT := 11
 const BUFF_FONT := 9
@@ -45,8 +47,10 @@ func show_potion(potion: PotionDef, key: String) -> void:
 
 
 func show_buff(buff: PotionDef, seconds_left: float) -> void:
-	if _buff_label != null:
-		_buff_label.text = buff_text(buff, seconds_left)
+	if _buff_label == null:
+		return
+	_buff_label.text = buff_text(buff, seconds_left)
+	_name_label.size.x = NAME_WIDTH_WITH_BUFF if not _buff_label.text.is_empty() else SIZE.x - TEXT_AT.x
 
 
 func _add_label(at: Vector2, font_size: int) -> Label:

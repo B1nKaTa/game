@@ -408,7 +408,8 @@ func _create_vault_extras() -> void:
 	var anchor := _room.layout.cells_of("I")[0]
 	var kinds := [RoomRules.DROP_POTION, RoomRules.DROP_BOMB, RoomRules.DROP_KEY]
 	for i in kinds.size():
-		var cell := _room.layout.nearest_floor_cell(anchor + Vector2i(i * 2, 3))
+		# Three cells apart and staggered, so the long names don't print over one another.
+		var cell := _room.layout.nearest_floor_cell(anchor + Vector2i(i * 3, 3 + i % 2))
 		_drop_consumable(RoomBackdrop.cell_center(cell), kinds[i])
 
 

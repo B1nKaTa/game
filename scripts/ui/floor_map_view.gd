@@ -30,7 +30,7 @@ const BIG_FONT := 16
 const BIG_LINK := 6.0
 const ROOM_FILL := 0.8
 const LEGEND_TOP := "C Combat   I Item   H Healing   ? Side   S Secret"
-const LEGEND_BOTTOM := "T Treasure   $ Shop   M Mini boss   B Boss"
+const LEGEND_BOTTOM := "T Treasure   $ Shop   M Mini boss   B Boss   V Vault"
 const TITLE := "Floor Map"
 const CLOSE_HINT := "Close"
 

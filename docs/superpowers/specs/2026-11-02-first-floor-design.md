@@ -59,7 +59,7 @@ Beating the floor boss shows a "floor cleared" message before the return. No end
 
 ### Controls
 
-Move with WASD and aim with the mouse. Tapping left click hits with the cane combo, and holding it after the hit charges a swing that fires on release once fully charged. Right click throws the cane, Space dodges, Q places a Thermos, E interacts, and M opens the floor map. Every one of these can be changed at the Keys board in the Waiting Room, and the choices are saved. Taking a key already in use swaps the two actions, and on-screen prompts always show the current key.
+Move with WASD and aim with the mouse. Tapping left click hits with the cane combo, and holding it after the hit charges a swing that fires on release once fully charged. Right click throws the cane, Space dodges, Q places a Thermos, H drinks the potion in the slot, E interacts, and M opens the floor map. Every one of these can be changed at the Keys board in the Waiting Room, and the choices are saved. Taking a key already in use swaps the two actions, and on-screen prompts always show the current key.
 
 ### Combat
 
@@ -89,6 +89,8 @@ A run starts with no Permission Slips and one Overheated Thermos. The HUD always
 - **Permission Slips** open locked chests and the treasure room. The mini boss always drops one. Cleared combat and side rooms drop one 15% of the time.
 - **Overheated Thermoses** are placed with Q and go off after 1.2 seconds, with a 56 pixel blast. The blast deals 30 damage to enemies, breaks blocks, and costs Grandpa one pill if he is caught. Cleared combat and side rooms drop one 20% of the time.
 - **Breakable blocks** act as walls until blasted, then drop Pension 30% of the time, a Thermos 15% and a Slip 10%. Blocks can close off a loot pocket. Layouts fail validation if a door, enemy or required reward can't be reached without a bomb.
+- **Potions** fill one potion slot, shown beside the Thermos counter all the time as a flask, the drink key and a short name. A brew from the potion merchant starts the next run in the slot, and a small potion found in a barrel (6% of barrels) fills it too, healing 1 pill. A found potion stays on the floor while the slot is full, so nothing is wasted. H drinks it. A healing potion waits until a pill is missing, a buff can be drunk any time, and a new buff replaces a running one. The slot shows a running buff's time left.
+- **The Thermos blast** is stronger with Questionable Fuel, which raises the damage it does to enemies and never what it does to Grandpa, who still loses 1 pill. Each level adds a ring and a hotter color to the blast, so the upgrade shows.
 - **Locked chests** give the same reward as treasure, for one Slip.
 - **The treasure room** appears once per floor, behind a locked door on the side of a regular room that isn't the first room or the floor boss's. One Slip opens the door for good, and the room offers a choice of three items.
 
@@ -103,6 +105,12 @@ Reaching 10, 50, 100, 250, 500, 750 and 1000 for the first time each gives one f
 ### Secret Rooms
 
 A floor usually has one secret room, hanging off a combat room at a free neighboring cell. A faint crack in the wall on that side is the only hint, and a Thermos blast next to it opens a door. The room holds treasure and no enemies, and it appears on the maps once visited.
+
+### Vaults and Reinforced Stones
+
+A floor has a number of vault rooms set in its `FloorDef` (one on this floor), each hanging off a combat room at a free neighboring cell, placed before the chance side rooms so nearly every floor has one. The door to a vault is hidden behind a reinforced stone, standing in the wall cell on that side, the same cell the secret crack uses. The stone is steel blue with glowing seams, nothing like a rock, and it breaks only to a Thermos upgraded to the level the floor's `FloorDef` asks for (the last of the 3 levels here). A weaker Thermos only makes it resist and says so, and Auditor blasts, boss attacks and the cane never break it. Once broken it stays broken and its door stays open, because rooms stay alive when left. A vault holds no fight: a choice of three items, treasures, and a Small Potion, a Thermos and a Slip lying in the open. It pays no Pension beyond a treasure's.
+
+Vaults are dead ends and detours. The floor builder refuses any floor where a vault or secret room has a second door, or where any other room can only be reached through one, so floors stay fully winnable and reachable without a bomb. Tests check this over hundreds of seeds.
 
 ### Recipes and Crafting
 
@@ -160,7 +168,9 @@ Items last for the current run only. Grandpa can hold any number of them.
 
 Pension is the only currency. Enemies and rooms drop it, and picking it up adds it immediately. All of it is kept on death. Regular enemies pay 1, a cleared room 1, a coin from a prop 1, treasure 8, the mini boss 8 and the floor boss 16, which comes to about 125 on a full clear, or about 140 with every rock and crate blasted as well.
 
-Two merchants in the Waiting Room sell permanent upgrades, with rising prices at each level. The black market merchant sells the first four below. Dr. Squint, Unlicensed Optometrist, stands in a different spot and sells the glasses. Walking close to either shows "E: Trade", and only one trade panel is open at a time.
+Four merchants can stand in the Waiting Room. The black market merchant sells the first four below. Dr. Squint, Unlicensed Optometrist, stands in a different spot and sells the glasses. The other two appear only once earned, by floors cleared, which is saved as an optional field so older saves load as zero: Madame Murk, Discount Apothecary, after 1 clear, and Boom Bernard, Fuel Dealer, after 3. Those numbers are the `clears` values in the merchant list of the Waiting Room scene, so later floors can move them in one place. Walking close to any shows "E: Trade", and only one trade panel is open at a time.
+
+Madame Murk sells brews for the next run, one at a time, bought with Pension like Agnes's crafts: Swift Tea 12 (move 40% faster for 15 seconds), Liniment of Fury 16 (cane and thrown cane 50% harder for 15 seconds) and Healing Tonic 20 (restores 2 pills). A brew is bought every run it is wanted, so each stays under a fifth of a full clear's 125 Pension, and brewing every run slows saving for upgrades by at most that much. Boom Bernard sells Questionable Fuel in three levels at 50, 110 and 220 (380 in all), each making a Thermos blast hurt enemies 30% more. It costs a little less than the Reinforced Cane's 410, because a Thermos is a limited tool while the cane works all run. Every permanent upgrade together now costs 2435, up from 2055, and income is unchanged.
 
 | Upgrade | Effect per level |
 |---|---|
@@ -169,6 +179,7 @@ Two merchants in the Waiting Room sell permanent upgrades, with rising prices at
 | Reinforced Cane | More cane damage |
 | Bribed Clerk | 10% more Pension from all sources per level, 4 levels at 60, 150, 300 and 500 |
 | Prescription Glasses (Dr. Squint, one level) | Regular enemies show a small health bar above their heads |
+| Questionable Fuel (Boom Bernard, 3 levels at 50, 110 and 220) | Thermos blasts do 30% more damage to enemies. The last level breaks reinforced stone |
 
 ### Boss Health Bar
 
@@ -209,7 +220,7 @@ Enemies, items, upgrades and rooms each live in separate data files or scenes, n
 
 ### Save Data
 
-Saves are stored in Godot's per-user data folder as a small versioned file. Each save is written to a temporary file and then swapped in, keeping the previous save as a backup. Only Pension, upgrade levels and whether the opening has been seen are saved. A run in progress is not saved, so quitting mid-run ends that run while keeping its Pension.
+Saves are stored in Godot's per-user data folder as a small versioned file. Each save is written to a temporary file and then swapped in, keeping the previous save as a backup. Pension, upgrade levels, whether the opening has been seen, the Retirement Plan, found recipes, crafted items, floors cleared and the brew waiting for the next run are saved, the later ones as optional fields so older saves still load. A run in progress is not saved, so quitting mid-run ends that run while keeping its Pension.
 
 ### Error Handling
 
