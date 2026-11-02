@@ -62,6 +62,7 @@ func _open_panel() -> void:
 	_panel = MerchantPanel.new()
 	_panel.closed.connect(_close_panel)
 	add_child(_panel)
+	player.cancel_charge()
 	player.set_physics_process(false)
 	_hud.show_message("")
 

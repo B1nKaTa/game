@@ -100,6 +100,10 @@ func _throw_cane() -> void:
 		_cane.drop()
 
 
+func cancel_charge() -> void:
+	_charge.cancel()
+
+
 func recall_cane() -> void:
 	if is_instance_valid(_thrown_cane):
 		_thrown_cane.queue_free()

@@ -112,3 +112,14 @@ func test_charge_cancel_stops_it() -> void:
 	assert_false(charge.is_holding())
 	assert_false(charge.is_charging())
 	assert_false(charge.release(), "cancelled charge never fires")
+
+
+func test_player_cancel_charge_clears_a_held_charge() -> void:
+	var player := Player.new()
+	player._charge.start()
+	player._charge.tick(ChargeSwing.CHARGE_TIME)
+	assert_true(player._charge.is_charging())
+	player.cancel_charge()
+	assert_false(player._charge.is_holding())
+	assert_false(player._charge.is_charging())
+	player.free()
