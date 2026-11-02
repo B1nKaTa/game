@@ -48,6 +48,7 @@ func debug_take_first_exit() -> void:
 
 
 func _enter_room(target_id: int) -> void:
+	player.recall_cane()
 	var from_side := _current_id != -1 and _map.room(_current_id).room_type == RoomLayout.TYPE_SIDE
 	if _room_view != null:
 		_room_view.queue_free()

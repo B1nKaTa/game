@@ -15,6 +15,8 @@ const SWING_SHOW_TIME := 0.1
 var run: RunState
 var _combo := CaneCombo.new()
 var _charge := ChargeSwing.new()
+var _cane := CaneThrow.new()
+var _thrown_cane: ThrownCane
 var _dodge := DodgeTimer.new()
 var _aim := Vector2.RIGHT
 var _dodge_direction := Vector2.RIGHT
@@ -64,6 +66,12 @@ func _physics_process(delta: float) -> void:
 
 
 func _handle_attacks() -> void:
+	if not _cane.is_held():
+		_charge.cancel()
+		return
+	if Input.is_action_just_pressed("throw"):
+		_throw_cane()
+		return
 	if Input.is_action_just_pressed("attack"):
 		var damage := _combo.try_attack()
 		if damage > 0:
@@ -72,6 +80,29 @@ func _handle_attacks() -> void:
 	if Input.is_action_just_released("attack"):
 		if _charge.release():
 			_swing(ChargeSwing.DAMAGE, CHARGE_REACH, CHARGE_ANGLE, ChargeSwing.KNOCKBACK)
+
+
+func _throw_cane() -> void:
+	var parent := get_parent()
+	if parent == null or not _cane.try_throw():
+		return
+	_charge.cancel()
+	_thrown_cane = ThrownCane.new()
+	_thrown_cane.setup(_cane, self, _aim, run.stats.damage_mult)
+	parent.add_child(_thrown_cane)
+	_thrown_cane.global_position = global_position + _aim * ThrownCane.LENGTH
+
+
+func recall_cane() -> void:
+	if is_instance_valid(_thrown_cane):
+		_thrown_cane.queue_free()
+	_thrown_cane = null
+	_cane.catch_cane()
+
+
+func _exit_tree() -> void:
+	if is_instance_valid(_thrown_cane):
+		_thrown_cane.queue_free()
 
 
 func _swing(damage: float, reach: float, angle: float, push: float) -> void:
@@ -100,7 +131,8 @@ func _handle_movement() -> void:
 
 
 func _draw() -> void:
-	draw_line(Vector2.ZERO, _aim * 20.0, Color("a8692f"), 3.0)
+	if _cane.is_held():
+		draw_line(Vector2.ZERO, _aim * 20.0, Color("a8692f"), 3.0)
 	if _swing_show > 0.0:
 		draw_arc(Vector2.ZERO, _swing_reach, _aim.angle() - 1.0, _aim.angle() + 1.0, 12, Color("ffe58a"), 3.0)
 	if _charge.is_charging():
