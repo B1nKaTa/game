@@ -15,8 +15,12 @@ var palette: RoomPalette
 
 # Everything breakable near a point is hit once, whoever is doing the breaking.
 static func smash(tree: SceneTree, center: Vector2, radius: float, source: String) -> int:
+	return smash_among(tree.get_nodes_in_group("breakable"), center, radius, source)
+
+
+static func smash_among(blocks: Array, center: Vector2, radius: float, source: String) -> int:
 	var count := 0
-	for block: BreakableBlock in tree.get_nodes_in_group("breakable"):
+	for block: BreakableBlock in blocks:
 		if block.is_queued_for_deletion():
 			continue
 		if center.distance_to(MeleeArc.closest_point(block.body_rect(), center)) > radius:

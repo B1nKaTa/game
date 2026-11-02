@@ -31,7 +31,8 @@ func hit_by(source: String) -> bool:
 	if cut or not can_break_by(source):
 		return false
 	cut = true
-	remove_from_group("breakable")
+	if is_in_group("breakable"):
+		remove_from_group("breakable")
 	var parent := get_parent()
 	if parent != null and is_inside_tree():
 		DeathBurst.spawn(parent, position, look().grass, false)
