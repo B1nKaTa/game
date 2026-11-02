@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/enemy_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/actors/behaviors/charger_behavior.gd" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "debt_ghost"
+display_name = "Debt Collector Ghost"
+max_hp = 24.0
+speed = 40.0
+pension_drop = 5
+ignores_walls = true
+body_size = Vector2(20, 22)
+color = Color(0.4, 0.94, 0.82, 1)
+behavior_script = ExtResource("2")
