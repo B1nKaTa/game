@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "pill_organizer"
+display_name = "Spare Pill Organizer"
+description = "One extra pill for this run."
+bonus_pills = 1

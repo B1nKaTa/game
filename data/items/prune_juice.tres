@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "prune_juice"
+display_name = "Prune Juice"
+description = "Shorter dodge cooldown. You will move quickly."
+dodge_cooldown_cut = 0.3

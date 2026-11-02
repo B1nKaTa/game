@@ -1,0 +1,25 @@
+# Shadows and outlines
+17131c
+272140
+3a3258
+3a3547
+# Stone
+625e6f
+6a6677
+8f8ba0
+# Warm light
+ffd24a
+ffd65c
+ff9a3c
+e4524f
+a8692f
+6b4a2a
+# Grandpa
+ece9e0
+e8b58e
+7d9a5c
+506b3b
+7a6a58
+# Afterlife glow
+67f0d0
+7dd3fc

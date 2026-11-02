@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="UpgradeDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/upgrade_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "reinforced_cane"
+display_name = "Reinforced Cane"
+description = "More cane damage."
+prices = PackedInt32Array(50, 120, 240)
+damage_bonus = 0.1

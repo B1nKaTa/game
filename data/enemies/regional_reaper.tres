@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/enemy_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/actors/behaviors/floor_boss_behavior.gd" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "regional_reaper"
+display_name = "Regional Reaper"
+max_hp = 420.0
+speed = 60.0
+pension_drop = 60
+is_boss = true
+body_size = Vector2(40, 48)
+color = Color(0.13, 0.1, 0.22, 1)
+frame_width = 64
+behavior_script = ExtResource("2")

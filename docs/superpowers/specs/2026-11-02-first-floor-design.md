@@ -28,11 +28,11 @@ This section gives context for design decisions. Only the First Version Scope se
 Included:
 
 - A short opening where Grandpa dies and arrives in the Waiting Room
-- A small Waiting Room hub with one merchant and a door to the floor
+- A small Waiting Room hub with two merchants and a door to the floor
 - One floor with a branching route of 10 to 12 rooms
-- Cane combat with a combo, a charged swing and a dodge
+- Cane combat with a combo, a charged swing, a cane throw and a dodge
 - 3 enemy types, 1 mini boss and 1 floor boss
-- 6 run items and 4 permanent upgrades
+- 6 run items and 5 permanent upgrades
 - One currency that carries over between runs
 - Saving and loading
 - Placeholder art at first, followed by an early AI art test
@@ -42,8 +42,9 @@ Excluded:
 - Endings and living-world scenes
 - More than one floor
 - More weapons
-- More merchants, and further Waiting Room characters beyond the merchant
+- More merchants beyond the two in the Waiting Room, and further Waiting Room characters
 - Controller support and Android support
+- Full key remapping, planned as a later feature
 - Sound and music beyond simple placeholder effects
 
 ## Gameplay
@@ -58,13 +59,15 @@ Beating the floor boss shows a "floor cleared" message before the return. No end
 
 ### Controls
 
-Move with WASD and aim with the mouse. Left click attacks, holding right click charges a swing, and Space dodges.
+Move with WASD and aim with the mouse. Tapping left click hits with the cane combo, and holding it after the hit charges a swing that fires on release once fully charged. Right click throws the cane, and Space dodges.
 
 ### Combat
 
 - **Combo:** Three quick cane hits, with the third dealing the most damage.
-- **Charged swing:** A slower attack, released after charging, that deals high damage and knocks enemies back.
+- **Charged swing:** Hold left click after the combo hit. The player slows and a charge ring shows after 0.2 seconds of holding. Releasing when fully charged does a slower swing that deals high damage and knocks enemies back, and releasing earlier does nothing further.
+- **Cane throw:** Right click throws the cane in the aim direction at 320 pixels per second for up to 200 pixels. It hits the first enemy it touches for 14 damage with a small push, then drops there. It also drops at a wall or at full range. While the cane is away, Grandpa cannot attack with combo or charged swings, and cannot throw again. Walking over the dropped cane picks it up. If it is left for 3 seconds it flies back to Grandpa without dealing damage, so he is never stuck without it. Changing rooms returns it at once.
 - **Dodge:** A short hobble-dash that avoids damage while active, with a cooldown of about 1 second.
+- **Hit rules:** Swings and the thrown cane test the enemy's whole body. A swing stays active for the 0.1 seconds its arc shows, hits each enemy at most once, and stays in the direction it was swung.
 - **Health:** Shown as pills, starting at 4. Each enemy hit removes one pill unless an enemy's data says otherwise. Health is restored only by healing rooms and items during a run.
 
 ### Floor
@@ -72,6 +75,8 @@ Move with WASD and aim with the mouse. Left click attacks, holding right click c
 The floor is a layered route. Each layer offers one or two rooms, and doors connect each room to one or two rooms in the next layer. Every route must reach the floor boss.
 
 Each door shows an icon for the room type behind it, so route choice is a real decision. Entering a combat or boss room locks its doors until all enemies are defeated.
+
+In regular rooms Grandpa arrives on the left and the exits are on the right. In a side room the return door is at the arrival cell on the left, and Grandpa spawns one cell to its right so he does not walk straight back out. Returning to the parent room puts him at the side room door, which is then gone.
 
 | Room type | Purpose |
 |---|---|
@@ -111,7 +116,7 @@ Items last for the current run only. Grandpa can hold any number of them.
 
 Pension is the only currency. Enemies and rooms drop it, and picking it up adds it immediately. All of it is kept on death.
 
-The black market merchant sells these permanent upgrades, each with several levels at rising prices:
+Two merchants in the Waiting Room sell permanent upgrades, with rising prices at each level. The black market merchant sells the first four below. Dr. Squint, Unlicensed Optometrist, stands in a different spot and sells the glasses. Walking close to either shows "E: Trade", and only one trade panel is open at a time.
 
 | Upgrade | Effect per level |
 |---|---|
@@ -119,6 +124,11 @@ The black market merchant sells these permanent upgrades, each with several leve
 | Better Knees | Faster movement and shorter dodge cooldown |
 | Reinforced Cane | More cane damage |
 | Bribed Clerk | More Pension from all sources |
+| Prescription Glasses (Dr. Squint, one level) | Regular enemies show a small health bar above their heads |
+
+### Boss Health Bar
+
+Bosses draw no bar above their heads. Entering a boss room shows a large bar centered along the bottom of the screen, with the boss's name in larger text just above it. It appears when the boss spawns, drops as the boss takes damage, and disappears when the boss dies or the run ends. Entering another room never leaves a stale bar. The item list moves up to sit just under the pills line at the top, so it never overlaps the bar.
 
 ### Difficulty Target
 
@@ -138,7 +148,7 @@ The game uses Godot 4.7.2, standard version, with GDScript. No add-ons are plann
 | Rooms | Doors, spawns, rewards, and locking until a fight ends |
 | Run state | Current health, items and route progress, cleared at the end of each run |
 | Save data | Pension and purchased upgrades |
-| Waiting Room | Hub scene, merchant and the door to the floor |
+| Waiting Room | Hub scene, its merchants and the door to the floor |
 | Game flow | Moves between opening, Waiting Room, floor, death and floor cleared |
 
 ### Content as Data
