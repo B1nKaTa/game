@@ -79,7 +79,7 @@ func test_every_room_keeps_the_secret_door_cell_reachable() -> void:
 	for y in range(1, 10):
 		rows.append("#.......E..E.......#" if y == 5 else "#..................#")
 	rows.append("####################")
-	rows[1] = "#..............#...#"
+	rows[1] = "#.........#........#"
 	var layout := RoomLayout.new()
 	layout.room_type = RoomLayout.TYPE_COMBAT
 	layout.rows = PackedStringArray(rows)

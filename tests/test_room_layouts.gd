@@ -111,12 +111,79 @@ func test_nearest_floor_cell_moves_a_wall_cell_to_floor() -> void:
 	assert_eq(layout.nearest_floor_cell(Vector2i(25, 0)), Vector2i(18, 1))
 
 
-func test_side_room_needs_floor_at_the_arrival_cell() -> void:
-	var open := _layout(RoomLayout.TYPE_SIDE, _open_rows("#.......T..........#"))
-	assert_eq(open.validate().size(), 0)
-	var rows := _open_rows("#.#.....T..........#")
-	var blocked := _layout(RoomLayout.TYPE_SIDE, rows)
-	assert_eq(RoomLayout.SIDE_ROOM_SPAWN, Vector2i(2, 5))
-	assert_true(blocked.validate().size() > 0, "wall on the side room spawn cell")
-	var regular := _layout(RoomLayout.TYPE_COMBAT, _open_rows("#.#.....E..E.......#"))
-	assert_eq(regular.validate().size(), 0, "regular rooms don't need that cell")
+func _sized_rows(width: int, height: int, middle: String) -> Array:
+	var rows := ["#".repeat(width)]
+	for y in range(1, height - 1):
+		rows.append(middle if y == height / 2 else "#" + ".".repeat(width - 2) + "#")
+	rows.append("#".repeat(width))
+	return rows
+
+
+func test_size_is_read_from_the_rows() -> void:
+	var small := _layout(RoomLayout.TYPE_COMBAT, _sized_rows(14, 9, "#...E....E...#"))
+	assert_eq(small.size_in_cells(), Vector2i(14, 9))
+	assert_eq(small.size_class(), RoomLayout.SIZE_SMALL)
+	assert_eq(small.validate().size(), 0)
+	var medium := _layout(RoomLayout.TYPE_COMBAT, _open_rows("#.......E..E.......#"))
+	assert_eq(medium.size_in_cells(), Vector2i(20, 11))
+	assert_eq(medium.size_class(), RoomLayout.SIZE_MEDIUM)
+	var large := _layout(RoomLayout.TYPE_COMBAT, _sized_rows(30, 17, "#.....E...............E......#"))
+	assert_eq(large.size_in_cells(), Vector2i(30, 17))
+	assert_eq(large.size_class(), RoomLayout.SIZE_LARGE)
+	assert_eq(large.validate().size(), 0)
+
+
+func test_uneven_rows_fail() -> void:
+	var rows := _open_rows("#.......E..E.......#")
+	rows[3] = "#.................#"
+	assert_true(_layout(RoomLayout.TYPE_COMBAT, rows).validate().size() > 0)
+
+
+func test_door_cells_sit_at_the_middle_of_each_wall() -> void:
+	var medium := _layout(RoomLayout.TYPE_COMBAT, _open_rows("#.......E..E.......#"))
+	assert_eq(medium.door_cell(RoomLayout.NORTH), Vector2i(10, 1))
+	assert_eq(medium.door_cell(RoomLayout.SOUTH), Vector2i(10, 9))
+	assert_eq(medium.door_cell(RoomLayout.WEST), Vector2i(1, 5))
+	assert_eq(medium.door_cell(RoomLayout.EAST), Vector2i(18, 5))
+	var small := _layout(RoomLayout.TYPE_COMBAT, _sized_rows(14, 9, "#...E....E...#"))
+	assert_eq(small.door_cell(RoomLayout.NORTH), Vector2i(7, 1))
+	assert_eq(small.door_cell(RoomLayout.SOUTH), Vector2i(7, 7))
+	assert_eq(small.door_cell(RoomLayout.WEST), Vector2i(1, 4))
+	assert_eq(small.door_cell(RoomLayout.EAST), Vector2i(12, 4))
+
+
+func test_the_wall_cell_is_just_past_the_door_cell() -> void:
+	var layout := _layout(RoomLayout.TYPE_COMBAT, _open_rows("#.......E..E.......#"))
+	for side in RoomLayout.SIDES:
+		var wall := layout.wall_cell(side)
+		assert_eq(wall - side, layout.door_cell(side))
+		assert_eq(layout.rows[wall.y][wall.x], "#", str(side))
+
+
+func test_all_four_door_cells_must_be_floor() -> void:
+	for side in RoomLayout.SIDES:
+		var layout := _layout(RoomLayout.TYPE_COMBAT, _open_rows("#.......E..E.......#"))
+		var cell := layout.door_cell(side)
+		var rows: Array = Array(layout.rows)
+		var row: String = rows[cell.y]
+		rows[cell.y] = row.substr(0, cell.x) + "#" + row.substr(cell.x + 1)
+		assert_true(_layout(RoomLayout.TYPE_COMBAT, rows).validate().size() > 0, str(side))
+
+
+func test_all_four_door_cells_must_be_reachable_without_a_bomb() -> void:
+	var rows := _open_rows("#.......E..E.......#")
+	rows[1] = "#........X.X.......#"
+	rows[2] = "#.........X........#"
+	assert_true(_layout(RoomLayout.TYPE_COMBAT, rows).validate().size() > 0, "north door behind blocks")
+
+
+func test_an_enemy_right_beside_a_door_fails_because_any_door_can_be_the_way_in() -> void:
+	var rows := _open_rows("#.......E..E.......#")
+	rows[3] = "#.........E........#"
+	assert_true(_layout(RoomLayout.TYPE_COMBAT, rows).validate().size() > 0)
+
+
+func test_a_pickup_touching_a_door_fails_because_reaching_it_could_walk_through_the_door() -> void:
+	var rows := _open_rows("#.......E..E.......#")
+	rows[9] = "#........C.........#"
+	assert_true(_layout(RoomLayout.TYPE_COMBAT, rows).validate().size() > 0)
