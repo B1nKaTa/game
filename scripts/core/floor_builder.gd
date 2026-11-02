@@ -184,6 +184,7 @@ static func _add_room(map: FloorMap, room_type: String, cell: Vector2i, picker: 
 	room.room_type = room_type
 	room.cell = cell
 	room.layout = picker.pick(room_type)
+	room.decor_seed = picker.next_seed()
 	map.rooms.append(room)
 	return room
 
@@ -196,6 +197,9 @@ class _LayoutPicker:
 	func _init(by_type: Dictionary, rng: RandomNumberGenerator) -> void:
 		_by_type = by_type
 		_rng = rng
+
+	func next_seed() -> int:
+		return _rng.randi()
 
 	func has(room_type: String) -> bool:
 		return _by_type.has(room_type)

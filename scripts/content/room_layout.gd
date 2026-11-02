@@ -48,6 +48,7 @@ const ALLOWED := "#.EIHTBXCSPROQVZgnwuktl"
 # Nothing can walk through these, so nothing may be dropped or summoned on them.
 const SOLID_SYMBOLS := "#lXOQVP"
 # Routes may not need a hole or a wall, and may not need a bomb for a crate or a rock.
+const WALL_LIKE := "#l"
 const WALLS := "#lV"
 const WALLS_AND_BOMB_ONLY := "#lVXO"
 const MUST_REACH_WITHOUT_BREAKING := "EBIHSPR"

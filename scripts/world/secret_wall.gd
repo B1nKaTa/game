@@ -4,6 +4,10 @@ extends BreakableBlock
 const CRACK_COLOR := Color(0.0, 0.0, 0.0, 0.55)
 
 
+func can_break_by(source: String) -> bool:
+	return source == SOURCE_BLAST
+
+
 # The crack is the only hint, so it stays faint. A blast opens it through take_blast.
 func _draw() -> void:
 	draw_line(Vector2(-3, -14), Vector2(1, -6), CRACK_COLOR, 1.0)

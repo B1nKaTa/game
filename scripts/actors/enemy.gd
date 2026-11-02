@@ -10,6 +10,9 @@ const BOSS_KNOCKBACK_SCALE := 0.2
 const SUMMON_SPREAD := 40.0
 const BAR_WIDTH := 20.0
 const BAR_HEIGHT := 2.0
+const READ_GLOW_COLOR := Color(1.0, 0.95, 0.9)
+const READ_GLOW_ENERGY := 0.6
+const READ_GLOW_SCALE := 0.7
 
 var def: EnemyDef
 var hp: float = 0.0
@@ -39,7 +42,7 @@ func setup(enemy_def: EnemyDef, chase_target: Node2D, warning_fraction: float, s
 func _ready() -> void:
 	add_to_group("enemies")
 	collision_layer = 4
-	collision_mask = 0 if def.ignores_walls else 1
+	collision_mask = 0 if def.ignores_walls else (1 | Hole.LAYER)
 	var shape := CollisionShape2D.new()
 	var rect := RectangleShape2D.new()
 	rect.size = def.body_size * 0.8
@@ -48,6 +51,8 @@ func _ready() -> void:
 	_visual = SpriteVisual.new()
 	add_child(_visual)
 	_visual.setup(def.id, def.body_size, def.color, def.frame_width)
+	# A soft glow keeps every enemy readable, however far it is from the room's torches.
+	add_child(Lighting.make_light(READ_GLOW_COLOR, READ_GLOW_ENERGY, READ_GLOW_SCALE))
 
 
 func _physics_process(delta: float) -> void:
@@ -81,6 +86,12 @@ func body_rect() -> Rect2:
 
 func shows_health_bar() -> bool:
 	return _show_bar and def != null and not def.is_boss
+
+
+# Bosses break what they reach, so cover does not last.
+func smash(center: Vector2, radius: float) -> void:
+	if is_inside_tree():
+		BreakableBlock.smash(get_tree(), center, radius, BreakableBlock.SOURCE_BOSS)
 
 
 func take_damage(amount: float, push: Vector2) -> void:

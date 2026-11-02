@@ -33,7 +33,11 @@ func setup(bank: Node, feet: Node2D) -> void:
 	_feet = feet
 
 
-# Blasts don't destroy the plan. They crack it open if it is ready to pay out.
+func can_break_by(_source: String) -> bool:
+	return false
+
+
+# Blasts do not destroy the plan. They crack it open if it is ready to pay out.
 func take_blast() -> void:
 	blasted.emit()
 

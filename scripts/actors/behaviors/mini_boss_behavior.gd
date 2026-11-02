@@ -23,6 +23,7 @@ func tick(enemy: Enemy, delta: float) -> void:
 		if _telegraph.tick(delta):
 			enemy.clear_warning()
 			_cooldown = COOLDOWN
+			enemy.smash(enemy.global_position, SWEEP_RANGE)
 			if enemy.distance_to_target() <= SWEEP_RANGE:
 				enemy.hit_target(enemy.def.damage)
 		return

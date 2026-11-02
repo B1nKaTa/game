@@ -8,6 +8,7 @@ const OVERDRAW_MARGIN := 16.0
 
 var _rows: PackedStringArray = []
 var _palette: RoomPalette
+var _seed := 0
 
 
 # Reaches past the view and the room by more than the biggest screen shake, so
@@ -27,16 +28,17 @@ static func cell_center(cell: Vector2i) -> Vector2:
 	return Vector2(cell.x * TILE + TILE / 2.0, cell.y * TILE + TILE / 2.0)
 
 
-func setup(rows: PackedStringArray, palette: RoomPalette = null) -> void:
+func setup(rows: PackedStringArray, palette: RoomPalette = null, seed_value := 0) -> void:
 	_rows = rows
 	_palette = palette if palette != null else RoomPalette.new()
+	_seed = seed_value
 	z_index = -10
 
 
 func _ready() -> void:
 	for y in _rows.size():
 		for x in _rows[y].length():
-			if _rows[y][x] == "#":
+			if RoomLayout.WALL_LIKE.contains(_rows[y][x]):
 				_add_wall(Vector2i(x, y))
 	queue_redraw()
 
@@ -60,5 +62,14 @@ func _draw() -> void:
 	draw_rect(wall_rim_rect(room_size), _palette.wall)
 	for y in _rows.size():
 		for x in _rows[y].length():
-			var color := _palette.wall if _rows[y][x] == "#" else (_palette.floor_a if (x + y) % 2 == 0 else _palette.floor_b)
-			draw_rect(Rect2(x * TILE, y * TILE, TILE, TILE), color)
+			var tile := Rect2(x * TILE, y * TILE, TILE, TILE)
+			if RoomLayout.WALL_LIKE.contains(_rows[y][x]):
+				draw_rect(tile, _palette.wall)
+				draw_line(tile.position + Vector2(0, TILE / 2.0), tile.position + Vector2(TILE, TILE / 2.0), _palette.wall_line, 1.0)
+				continue
+			draw_rect(tile, _palette.floor_color(Vector2i(x, y), _seed))
+			draw_line(tile.position, tile.position + Vector2(TILE, 0), _palette.grout, 1.0)
+			draw_line(tile.position, tile.position + Vector2(0, TILE), _palette.grout, 1.0)
+			if RoomDecor.noise(Vector2i(x, y), _seed + 7) < 0.25:
+				var spot := tile.position + Vector2(RoomDecor.noise(Vector2i(y, x), _seed + 3), RoomDecor.noise(Vector2i(x, y), _seed + 5)) * (TILE - 4.0)
+				draw_rect(Rect2(spot, Vector2(3, 2)), _palette.speckle)

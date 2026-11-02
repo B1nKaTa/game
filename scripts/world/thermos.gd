@@ -52,9 +52,7 @@ func _explode() -> void:
 	for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
 		if not enemy.is_queued_for_deletion() and in_blast(global_position, enemy.body_rect()):
 			enemy.take_damage(DAMAGE, global_position.direction_to(enemy.global_position) * PUSH)
-	for block: BreakableBlock in get_tree().get_nodes_in_group("breakable"):
-		if in_blast(global_position, block.body_rect()):
-			block.take_blast()
+	BreakableBlock.smash(get_tree(), global_position, BLAST_RADIUS, BreakableBlock.SOURCE_BLAST)
 	if is_instance_valid(_player) and global_position.distance_to(_player.feet().global_position) <= BLAST_RADIUS:
 		_player.take_hit(PLAYER_DAMAGE)
 	exploded.emit()

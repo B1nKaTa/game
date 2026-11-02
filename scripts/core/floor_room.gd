@@ -7,6 +7,8 @@ var layout: RoomLayout
 var cell := Vector2i.ZERO
 # Which room each door leads to, keyed by the side of this room it stands on.
 var doors := {}
+# Picks this room's decor scatter, so two rooms sharing a layout still look different.
+var decor_seed := 0
 
 
 # A detour is a dead end hanging off a regular room, and never counts toward the floor's size.

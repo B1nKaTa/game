@@ -66,9 +66,13 @@ func _fly(delta: float) -> void:
 	var result := get_world_2d().direct_space_state.intersect_ray(query)
 	if not result.is_empty():
 		wall_hit = true
+		var collider: Object = result.get("collider")
+		if collider is BreakableBlock:
+			collider.hit_by(BreakableBlock.SOURCE_CANE)
 		to = result["position"] + result["normal"] * WALL_BACKOFF
 	_travelled = new_travel
 	global_position = to
+	_break_loose_things_in_reach()
 	var enemy := _enemy_in_reach()
 	if enemy != null:
 		enemy.take_damage(_damage, _direction * PUSH)
@@ -76,6 +80,13 @@ func _fly(delta: float) -> void:
 		hit_enemy.emit()
 	elif wall_hit or _travelled >= MAX_RANGE:
 		_state.drop()
+
+
+# Piles and grass block nothing, so the cane meets them by touch.
+func _break_loose_things_in_reach() -> void:
+	for block: BreakableBlock in get_tree().get_nodes_in_group("breakable"):
+		if not block.is_solid() and not block.is_queued_for_deletion() and touches_body(global_position, block.body_rect()):
+			block.hit_by(BreakableBlock.SOURCE_CANE)
 
 
 func _enemy_in_reach() -> Enemy:

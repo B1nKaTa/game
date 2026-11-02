@@ -18,11 +18,22 @@ const DROP_NONE := ""
 const DROP_KEY := "key"
 const DROP_BOMB := "bomb"
 const DROP_COIN := "coin"
+const DROP_POTION := "potion"
 const CLEAR_KEY_CHANCE := 0.15
 const CLEAR_BOMB_CHANCE := 0.2
 const BLOCK_COIN_CHANCE := 0.3
 const BLOCK_BOMB_CHANCE := 0.15
 const BLOCK_KEY_CHANCE := 0.1
+# Most barrels hold nothing or a coin.
+const BARREL_COIN_CHANCE := 0.22
+const BARREL_KEY_CHANCE := 0.05
+const BARREL_BOMB_CHANCE := 0.05
+const BARREL_POTION_CHANCE := 0.06
+const PILE_COIN_CHANCE := 0.12
+const ROCK_COIN_CHANCE := 0.3
+# A small potion heals this much. The potion slot of a later stage will take them instead.
+const POTION_NAME := "Small Potion"
+const POTION_HEAL := 1
 const TREASURE_RECIPE_CHANCE := 0.25
 const MINI_BOSS_RECIPE_CHANCE := 0.5
 
@@ -35,6 +46,30 @@ static func block_drop(roll: float) -> String:
 	if roll < BLOCK_COIN_CHANCE + BLOCK_BOMB_CHANCE + BLOCK_KEY_CHANCE:
 		return DROP_KEY
 	return DROP_NONE
+
+
+static func barrel_drop(roll: float) -> String:
+	var edge := BARREL_COIN_CHANCE
+	if roll < edge:
+		return DROP_COIN
+	edge += BARREL_KEY_CHANCE
+	if roll < edge:
+		return DROP_KEY
+	edge += BARREL_BOMB_CHANCE
+	if roll < edge:
+		return DROP_BOMB
+	edge += BARREL_POTION_CHANCE
+	if roll < edge:
+		return DROP_POTION
+	return DROP_NONE
+
+
+static func pile_drops_coin(roll: float) -> bool:
+	return roll < PILE_COIN_CHANCE
+
+
+static func rock_hides_coin(roll: float) -> bool:
+	return roll < ROCK_COIN_CHANCE
 
 
 static func clear_drop(roll: float) -> String:

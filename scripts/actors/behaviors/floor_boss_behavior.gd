@@ -50,6 +50,7 @@ func tick(enemy: Enemy, delta: float) -> void:
 func _finish_attack(enemy: Enemy, phase_two: bool) -> void:
 	_cooldown = PHASE_TWO_COOLDOWN if phase_two else BASE_COOLDOWN
 	if _attack == Attack.SWEEP:
+		enemy.smash(enemy.global_position, SWEEP_RANGE)
 		if enemy.distance_to_target() <= SWEEP_RANGE:
 			enemy.hit_target(enemy.def.damage)
 		return

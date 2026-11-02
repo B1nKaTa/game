@@ -66,7 +66,7 @@ func feet() -> Node2D:
 func _ready() -> void:
 	add_to_group("player")
 	collision_layer = 2
-	collision_mask = 1
+	collision_mask = 1 | Hole.LAYER
 	var shape := CollisionShape2D.new()
 	var rect := RectangleShape2D.new()
 	rect.size = FEET_BOX_SIZE
@@ -158,6 +158,9 @@ func _throw_cane() -> void:
 	var query := PhysicsRayQueryParameters2D.create(_feet.global_position, spawn, ThrownCane.WALL_LAYER)
 	var wall := get_world_2d().direct_space_state.intersect_ray(query)
 	if not wall.is_empty():
+		var collider: Object = wall.get("collider")
+		if collider is BreakableBlock:
+			collider.hit_by(BreakableBlock.SOURCE_CANE)
 		spawn = wall["position"] + wall["normal"] * ThrownCane.WALL_BACKOFF
 	_thrown_cane = ThrownCane.new()
 	_thrown_cane.setup(_cane, self, _aim, run.stats.damage_mult)
@@ -211,6 +214,11 @@ func _strike_enemies() -> void:
 			continue
 		if swing.try_hit(global_position, enemy.get_instance_id(), enemy.body_rect()):
 			enemy.take_damage(swing.damage, swing.direction * swing.push)
+	for block: BreakableBlock in get_tree().get_nodes_in_group("breakable"):
+		if block.is_queued_for_deletion() or not block.can_break_by(BreakableBlock.SOURCE_CANE):
+			continue
+		if swing.try_hit(global_position, block.get_instance_id(), block.body_rect()):
+			block.hit_by(BreakableBlock.SOURCE_CANE)
 	if swing.has_landed() and not had_landed:
 		swing_landed.emit(swing.heavy, swing.finisher)
 

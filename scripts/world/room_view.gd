@@ -41,6 +41,7 @@ var _had_enemies := false
 var _doors: Array[Door] = []
 var _coins: Array[Pickup] = []
 var _last_death_at := Vector2.ZERO
+var _broken_cells := {}
 
 
 func setup(room: FloorRoom, map: FloorMap, floor_def: FloorDef, run: RunState, player: Player, rng: RandomNumberGenerator, progress: FloorProgress, bank: Node) -> void:
@@ -57,11 +58,13 @@ func setup(room: FloorRoom, map: FloorMap, floor_def: FloorDef, run: RunState, p
 func _ready() -> void:
 	var backdrop := RoomBackdrop.new()
 	var palette := _floor_def.room_palette()
-	backdrop.setup(_room.layout.rows, palette)
+	backdrop.setup(_room.layout.rows, palette, _room.decor_seed)
 	add_child(backdrop)
 	Lighting.add_room_mood(self, _room.layout.size_in_cells(), palette)
+	_create_decor(palette)
 	_create_doors()
 	_create_blocks()
+	_create_props(palette)
 	_create_rewards()
 	_spawn_enemies()
 	if _alive == 0:
@@ -157,14 +160,96 @@ func _create_blocks() -> void:
 		add_child(block)
 
 
+# Rocks, barrels, holes and piles of bones. Anything that breaks leaves its cell free for good,
+# because a broken thing is freed with the room kept alive, so it stays broken on return.
+func _create_props(palette: RoomPalette) -> void:
+	var layout := _room.layout
+	for cell in layout.cells_of(RoomLayout.SYMBOL_ROCK):
+		var rock := RockBlock.new()
+		rock.palette = palette
+		rock.hides_coin = RoomRules.rock_hides_coin(_rng.randf())
+		_place_prop(rock, cell)
+		rock.broken.connect(_on_rock_broken.bind(rock.hides_coin, cell))
+	for cell in layout.cells_of(RoomLayout.SYMBOL_BARREL):
+		var barrel := Barrel.new()
+		barrel.palette = palette
+		_place_prop(barrel, cell)
+		barrel.broken.connect(_on_barrel_broken.bind(cell))
+	for cell in layout.cells_of(RoomLayout.SYMBOL_PILE):
+		var pile := BonePile.new()
+		pile.palette = palette
+		_place_prop(pile, cell)
+		pile.broken.connect(_on_pile_broken.bind(cell))
+	for cell in layout.cells_of(RoomLayout.SYMBOL_HOLE):
+		var hole := Hole.new()
+		hole.palette = palette
+		hole.position = RoomBackdrop.cell_center(cell)
+		add_child(hole)
+
+
+func _place_prop(prop: BreakableBlock, cell: Vector2i) -> void:
+	prop.position = RoomBackdrop.cell_center(cell)
+	add_child(prop)
+
+
+func _create_decor(palette: RoomPalette) -> void:
+	var items := RoomDecor.plan(_room.layout, palette, _room.decor_seed)
+	var layer := DecorLayer.new()
+	layer.setup(items, palette)
+	add_child(layer)
+	for item in items:
+		var at: Vector2 = RoomBackdrop.cell_center(item["cell"]) + item["offset"]
+		if item["kind"] == RoomDecor.GRASS:
+			var tuft := GrassTuft.new()
+			tuft.palette = palette
+			tuft.variant = item["variant"]
+			tuft.position = at
+			add_child(tuft)
+		elif RoomDecor.is_light(item["kind"]):
+			Lighting.add_decor_light(self, item["kind"], at, palette)
+
+
 func _on_block_broken(at: Vector2) -> void:
+	_broken_cells[_cell_of(at)] = true
 	var drop := RoomRules.block_drop(_rng.randf())
 	if drop == RoomRules.DROP_COIN:
 		_drop_coin(at, _floor_def.treasure_pension)
-		if _finished:
-			_coins[-1].fly()
 	else:
 		_drop_consumable(at, drop)
+
+
+func _on_rock_broken(at: Vector2, hides_coin: bool, cell: Vector2i) -> void:
+	_broken_cells[cell] = true
+	if hides_coin:
+		_drop_coin(at, _floor_def.treasure_pension)
+
+
+func _on_barrel_broken(at: Vector2, cell: Vector2i) -> void:
+	_broken_cells[cell] = true
+	var drop := RoomRules.barrel_drop(_rng.randf())
+	if drop == RoomRules.DROP_COIN:
+		_drop_coin(at, _floor_def.treasure_pension)
+	else:
+		_drop_consumable(at, drop)
+
+
+func _on_pile_broken(at: Vector2, cell: Vector2i) -> void:
+	_broken_cells[cell] = true
+	if RoomRules.pile_drops_coin(_rng.randf()):
+		_drop_coin(at, _floor_def.treasure_pension)
+
+
+func _cell_of(at: Vector2) -> Vector2i:
+	return Vector2i(floori(at.x / RoomBackdrop.TILE), floori(at.y / RoomBackdrop.TILE))
+
+
+# Whatever is dropped lands on open floor. A ghost can die over a rock or a hole, and a
+# solid cell that has been broken is open again.
+func clear_spot(at: Vector2) -> Vector2:
+	var cell := _cell_of(at)
+	if not _room.layout.is_solid_at(cell) or _broken_cells.has(cell):
+		return at
+	return RoomBackdrop.cell_center(_room.layout.nearest_floor_cell(cell))
 
 
 func _spawn_enemies() -> void:
@@ -205,15 +290,16 @@ func _on_enemy_defeated(enemy: Enemy) -> void:
 	_alive -= 1
 	DeathBurst.spawn(self, enemy.position, enemy.def.color, enemy.def.is_boss)
 	enemy_died.emit(enemy.position, enemy.def.is_boss)
+	var spot := clear_spot(enemy.position)
 	if enemy.coin_value() > 0:
-		_drop_coin(enemy.position, enemy.coin_value())
-	_last_death_at = enemy.position
+		_drop_coin(spot, enemy.coin_value())
+	_last_death_at = spot
 	if _room.room_type == RoomLayout.TYPE_MINI_BOSS and enemy.def.is_boss:
-		_drop_consumable(enemy.position, RoomRules.DROP_KEY)
+		_drop_consumable(spot, RoomRules.DROP_KEY)
 		_run.mini_boss_down = true
-		_drop_boss_rewards(enemy.position)
+		_drop_boss_rewards(spot)
 		if _rng.randf() < RoomRules.MINI_BOSS_RECIPE_CHANCE:
-			_drop_recipe(enemy.position + Vector2(-RoomBackdrop.TILE, RoomBackdrop.TILE))
+			_drop_recipe(spot + Vector2(-RoomBackdrop.TILE, RoomBackdrop.TILE))
 	if enemy.def.is_boss:
 		for other in get_tree().get_nodes_in_group("enemies"):
 			if other != enemy and other.get_parent() == self:
@@ -225,8 +311,13 @@ func _on_enemy_defeated(enemy: Enemy) -> void:
 func _drop_coin(at: Vector2, base_amount: int) -> void:
 	var amount := _run.pension_amount(base_amount)
 	var coin := _add_pickup(at + Vector2(_rng.randf_range(-COIN_SCATTER, COIN_SCATTER), _rng.randf_range(-COIN_SCATTER, COIN_SCATTER)), "+%d" % amount, PENSION_COLOR, func(): pension_earned.emit(amount))
+	# A coin lying in a pocket only a bomb opens would fly out through the stones.
+	if not _room.layout.coin_can_fly_from(_cell_of(at)):
+		return
 	coin.flies = true
 	_coins.append(coin)
+	if _finished:
+		coin.fly()
 
 
 func _drop_consumable(at: Vector2, kind: String) -> void:
@@ -237,6 +328,9 @@ func _drop_consumable(at: Vector2, kind: String) -> void:
 		RoomRules.DROP_BOMB:
 			var thermos := _add_pickup(at, RoomRules.BOMB_NAME, BOMB_COLOR, func(): _take_consumable(_run.add_bomb))
 			thermos.can_take = _run.can_add_bomb
+		RoomRules.DROP_POTION:
+			var potion := _add_pickup(at, RoomRules.POTION_NAME, HEAL_COLOR, func(): _run.health.heal(RoomRules.POTION_HEAL))
+			potion.can_take = func(): return _run.health.pills < _run.health.max_pills
 
 
 func _take_consumable(add: Callable) -> void:
@@ -435,10 +529,6 @@ func _create_treasure(cell: Vector2i) -> void:
 	var picked := RoomRules.pick_items(Content.items(), _run, 1, _rng)
 	if picked.is_empty() or _rng.randf() < 0.5:
 		_drop_coin(RoomBackdrop.cell_center(cell), _floor_def.treasure_pension)
-		# A coin in a walled-off pocket must not fly out through the blocks for free.
-		if not _room.layout.is_open_without_breaking(cell):
-			var coin: Pickup = _coins.pop_back()
-			coin.flies = false
 		return
 	_add_item_pickup(RoomBackdrop.cell_center(cell), picked[0])
 
