@@ -93,3 +93,34 @@ func test_a_hit_drops_the_cane_once() -> void:
 	cane.drop()
 	assert_true(cane.is_dropped())
 	assert_false(cane.is_flying(), "a dropped cane can't hit again")
+
+
+func test_advance_travel_caps_at_max_range() -> void:
+	var delta := 1.0 / 60.0
+	var travelled := 0.0
+	var frames := 0
+	while travelled < ThrownCane.MAX_RANGE and frames < 1000:
+		travelled = ThrownCane.advance_travel(travelled, delta)
+		frames += 1
+	assert_eq(frames, 38)
+	assert_eq(travelled, ThrownCane.MAX_RANGE, "exactly the max range")
+	assert_eq(ThrownCane.advance_travel(travelled, delta), ThrownCane.MAX_RANGE, "stays capped")
+
+
+func test_travel_completes_from_any_position_and_direction() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 12345
+	var delta := 1.0 / 60.0
+	for i in 2000:
+		var position := Vector2(rng.randf_range(-700.0, 700.0), rng.randf_range(-400.0, 400.0))
+		var direction := Vector2.from_angle(rng.randf_range(0.0, TAU))
+		var travelled := 0.0
+		var frames := 0
+		while travelled < ThrownCane.MAX_RANGE and frames < 100:
+			var next := ThrownCane.advance_travel(travelled, delta)
+			position += direction * (next - travelled)
+			travelled = next
+			frames += 1
+		assert_true(travelled >= ThrownCane.MAX_RANGE and frames <= 38, "throw %d took %d frames" % [i, frames])
+		if not failures.is_empty():
+			return

@@ -29,6 +29,10 @@ func setup(state: CaneThrow, player: Node2D, direction: Vector2, damage_mult: fl
 	_damage = hit_damage(damage_mult)
 
 
+static func advance_travel(travelled: float, delta: float) -> float:
+	return minf(travelled + FLY_SPEED * delta, MAX_RANGE)
+
+
 static func hit_damage(damage_mult: float) -> float:
 	return DAMAGE * damage_mult
 
@@ -46,7 +50,8 @@ func _physics_process(delta: float) -> void:
 
 func _fly(delta: float) -> void:
 	_spin += SPIN_SPEED * delta
-	var step := minf(FLY_SPEED * delta, MAX_RANGE - _travelled)
+	var new_travel := advance_travel(_travelled, delta)
+	var step := new_travel - _travelled
 	var from := global_position
 	var to := from + _direction * step
 	var wall_hit := false
@@ -55,7 +60,7 @@ func _fly(delta: float) -> void:
 	if not result.is_empty():
 		wall_hit = true
 		to = result["position"] + result["normal"] * WALL_BACKOFF
-	_travelled += from.distance_to(to)
+	_travelled = new_travel
 	global_position = to
 	var enemy := _enemy_in_reach()
 	if enemy != null:

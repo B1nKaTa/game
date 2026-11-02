@@ -12,3 +12,4 @@
 ## Session Notes
 
 - Round 1: item naming and moving between rooms feel good. Side room return door moved behind the player. Charge moved to holding attack, and right click now throws the cane. More content is planned.
+- Round 2: cane throw and tap-and-hold charge feel better. Fixed a bug where the thrown cane stayed spinning instead of dropping.
