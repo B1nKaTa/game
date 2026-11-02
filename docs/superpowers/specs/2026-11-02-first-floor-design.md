@@ -67,6 +67,7 @@ Move with WASD and aim with the mouse. Tapping left click hits with the cane com
 - **Charged swing:** Hold left click after the combo hit. The player slows and a charge ring shows after 0.2 seconds of holding. Releasing when fully charged does a slower swing that deals high damage and knocks enemies back, and releasing earlier does nothing further.
 - **Cane throw:** Right click throws the cane in the aim direction at 320 pixels per second for up to 200 pixels. It hits the first enemy it touches for 14 damage with a small push, then drops there. It also drops at a wall or at full range. While the cane is away, Grandpa cannot attack with combo or charged swings, and cannot throw again. Walking over the dropped cane picks it up. If it is left for 3 seconds it flies back to Grandpa without dealing damage, so he is never stuck without it. Changing rooms returns it at once.
 - **Dodge:** A short hobble-dash that avoids damage while active, with a cooldown of about 1 second.
+- **Hit rules:** Swings and the thrown cane test the enemy's whole body. A swing stays active for the 0.1 seconds its arc shows, hits each enemy at most once, and stays in the direction it was swung.
 - **Health:** Shown as pills, starting at 4. Each enemy hit removes one pill unless an enemy's data says otherwise. Health is restored only by healing rooms and items during a run.
 
 ### Floor

@@ -12,3 +12,5 @@
 - 2026-11-02: Engine.time_scale = 0 still runs physics ticks, only their delta becomes 0, so a probe counting physics frames wrongly showed no freeze → measure a freeze by summing _physics_process delta, and time hit stop with Time.get_ticks_usec in _process.
 - 2026-11-02: A flying coin that pays on arrival can be lost when the room is freed or the player dies mid-flight → pay when the flight starts and make the flight cosmetic.
 - 2026-11-02: Decorative nodes under a room that is set to PROCESS_MODE_DISABLED at run end freeze mid-animation → give effects like DeathBurst process_mode ALWAYS.
+- 2026-11-02: Swings tested only the enemy's center on one frame while the arc showed for 0.1 seconds and followed the mouse, so attacks visibly passed through enemies → hit tests use what the player sees: the whole body, for as long as the attack is drawn, where it is drawn.
+- 2026-11-02: A probe's first section printed "damaged=false" only because nodes added in SceneTree._initialize had not run _ready and the swing crashed first → start probes with call_deferred, and include a control case that must succeed.

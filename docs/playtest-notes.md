@@ -15,3 +15,4 @@
 - Round 2: cane throw and tap-and-hold charge feel better. Fixed a bug where the thrown cane stayed spinning instead of dropping.
 - Round 3: added an optometrist selling glasses that show enemy health, and a large boss health bar.
 - Round 4: added hit flash, hit stop, screen shake, death bursts, clearer attack warnings, player hurt feedback, flying coins and placeholder sounds.
+- Round 5: sounds are fine for now and may change later. Fixed swings passing through enemies: swings and the thrown cane now test the enemy's whole body, a swing stays active while its arc shows, and the arc stays in the direction it was swung.
