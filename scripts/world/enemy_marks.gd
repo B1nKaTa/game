@@ -11,6 +11,11 @@ const STAMP_COLOR := Color("f3eaff")
 const FUSE_COLOR := Color("1c1208")
 const SPARK_COLOR := Color("ffe58a")
 const TEETH_COLOR := Color("20240f")
+const DIRT_COLOR := Color("4a3a24")
+const SPADE_HANDLE := Color("6b4a2a")
+const SPADE_BLADE := Color("c9cdd6")
+const HAT_COLOR := Color("15131a")
+const HAT_BAND := Color("7a2f3a")
 
 var _def: EnemyDef
 var _facing := Vector2.RIGHT
@@ -52,6 +57,16 @@ func _draw() -> void:
 		"teeth":
 			for x in [-3.0, 1.0]:
 				draw_rect(Rect2(x, -1.0, 2.0, 3.0), TEETH_COLOR)
+		"dirt":
+			for x in [-half.x + 2.0, -2.0, half.x - 5.0]:
+				draw_rect(Rect2(x, half.y - 6.0, 4.0, 6.0), DIRT_COLOR)
+		"spade":
+			draw_line(Vector2(half.x + 3.0, -half.y), Vector2(half.x + 3.0, half.y - 8.0), SPADE_HANDLE, 2.0)
+			draw_rect(Rect2(half.x, half.y - 9.0, 7.0, 9.0), SPADE_BLADE)
+		"top_hat":
+			draw_rect(Rect2(-half.x * 0.6, -half.y - 10.0, half.x * 1.2, 12.0), HAT_COLOR)
+			draw_rect(Rect2(-half.x * 0.85, -half.y + 1.0, half.x * 1.7, 3.0), HAT_COLOR)
+			draw_rect(Rect2(-half.x * 0.6, -half.y - 2.0, half.x * 1.2, 2.0), HAT_BAND)
 	if _def.shield_half_angle > 0.0:
 		var reach := maxf(half.x, half.y) + SHIELD_GAP
 		var half_arc := deg_to_rad(_def.shield_half_angle)

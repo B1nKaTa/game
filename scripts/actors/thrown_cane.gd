@@ -93,7 +93,7 @@ func _enemy_in_reach() -> Enemy:
 	var best: Enemy = null
 	var best_distance := INF
 	for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
-		if enemy.is_queued_for_deletion() or not touches_body(global_position, enemy.body_rect()):
+		if enemy.is_queued_for_deletion() or enemy.submerged or not touches_body(global_position, enemy.body_rect()):
 			continue
 		var distance := global_position.distance_to(enemy.global_position)
 		if distance < best_distance:

@@ -21,6 +21,8 @@ const BLINK_COLOR := Color("fff2c0")
 const MAX_PROPS_ACROSS_A_LANE := 8
 # A room's enemies stand still this long as Grandpa walks in, so he can read the room first.
 const ROOM_WAKE_TIME := 0.6
+const MOUND_COLOR := Color("5a4a33")
+const MOUND_EDGE := Color("2b2218")
 
 var def: EnemyDef
 var hp: float = 0.0
@@ -34,6 +36,10 @@ var facing := Vector2.RIGHT
 var spawn_index := 0
 # Where a summon wanted at some point really lands. A room sets this to keep them off solid cells.
 var summon_spot: Callable
+# Says whether a point is ground at all, and not wall or a hole. A room sets this.
+var open_ground: Callable
+# Underground it is only a moving mound: nothing can hit it and it crosses anything. See set_submerged.
+var submerged := false
 var _warning_fraction := 0.5
 var _behavior: EnemyBehavior
 var _knockback := Vector2.ZERO
@@ -81,6 +87,62 @@ func _ready() -> void:
 	add_child(Lighting.make_light(READ_GLOW_COLOR, READ_GLOW_ENERGY, READ_GLOW_SCALE))
 
 
+func set_submerged(value: bool) -> void:
+	submerged = value
+	collision_layer = 0 if value else 4
+	if not def.ignores_walls:
+		collision_mask = 0 if value else (1 | Hole.LAYER)
+	if _visual != null:
+		_visual.visible = not value
+		_marks.visible = not value
+	queue_redraw()
+
+
+func is_dead() -> bool:
+	return _dead
+
+
+# Where Grandpa actually stands, since a ground attack is about his feet.
+func target_ground() -> Vector2:
+	return target.feet().global_position if target.has_method("feet") else target.global_position
+
+
+func move_under_target() -> void:
+	var spot := target_ground()
+	global_position = summon_spot.call(spot) if summon_spot.is_valid() else spot
+
+
+func burst_from_ground() -> void:
+	DeathBurst.spawn(get_parent(), position, def.color, false)
+
+
+func strike_ground(at: Vector2, radius: float, warning: float, delay := 0.0, follow_time := 0.0) -> void:
+	if open_ground.is_valid() and not open_ground.call(at):
+		return
+	var strike := GroundStrike.new()
+	strike.setup(self, radius, warning, delay, follow_time)
+	get_parent().add_child(strike)
+	strike.global_position = at
+
+
+# Lands spot by spot along a line, and stops at the first wall or hole like the warning lane does.
+func strike_line(points: Array[Vector2], radius: float, warning: float, step: float) -> void:
+	for i in points.size():
+		if open_ground.is_valid() and not open_ground.call(points[i]):
+			return
+		strike_ground(points[i], radius, warning, i * step)
+
+
+# Breaks props as any boss attack does. A wall between shields Grandpa, as it does from a blast.
+func land_ground_strike(at: Vector2, radius: float) -> void:
+	smash(at, radius)
+	if not is_inside_tree() or not is_instance_valid(target):
+		return
+	var feet := target_ground()
+	if GroundStrike.hits(at, radius, feet) and EnemyBlast.line_is_clear(get_world_2d().direct_space_state, at, feet):
+		hit_target(def.damage)
+
+
 func _physics_process(delta: float) -> void:
 	if not is_instance_valid(target):
 		return
@@ -92,7 +154,7 @@ func _physics_process(delta: float) -> void:
 	velocity = desired_velocity + _knockback
 	_knockback = _knockback.lerp(Vector2.ZERO, minf(KNOCKBACK_DECAY * delta, 1.0))
 	move_and_slide()
-	if def.ignores_walls:
+	if def.ignores_walls or submerged:
 		position = clamp_inside_room(position, room_cells)
 	_marks.show_facing(facing)
 	queue_redraw()
@@ -132,6 +194,8 @@ func smash(center: Vector2, radius: float) -> void:
 
 # A hit struck from up close, which a shield can stop. Returns whether it landed.
 func take_strike(amount: float, push: Vector2, to_attacker: Vector2) -> bool:
+	if submerged:
+		return false
 	if shield_covers(facing, to_attacker, def.shield_half_angle):
 		if _marks != null:
 			_marks.flash_shield()
@@ -157,6 +221,9 @@ func dismiss() -> void:
 
 func take_damage(amount: float, push: Vector2) -> void:
 	if _dead:
+		return
+	# Only leaving outright reaches something underground, so a room can always finish.
+	if submerged and not is_inf(amount):
 		return
 	hp -= amount
 	if _visual != null:
@@ -293,6 +360,10 @@ func _on_summon_mark_finished(spot: Vector2) -> void:
 
 
 func _draw() -> void:
+	if submerged:
+		var mound := PackedVector2Array([Vector2(-11, 7), Vector2(-7, 0), Vector2(-2, -4), Vector2(4, -3), Vector2(9, 2), Vector2(12, 7)])
+		draw_colored_polygon(mound, MOUND_COLOR)
+		draw_polyline(mound, MOUND_EDGE, 1.0)
 	if _warning != null and _warning.shows_warning(_warning_share()):
 		var progress := _warning.warning_progress(_warning_share())
 		draw_circle(Vector2.ZERO, _warning_radius * progress, Color(0.89, 0.32, 0.31, 0.15 + 0.3 * progress))

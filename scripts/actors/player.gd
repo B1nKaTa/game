@@ -229,7 +229,7 @@ func _strike_enemies() -> void:
 	var swing := _active_swing
 	var had_landed := swing.has_landed()
 	for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
-		if enemy.is_queued_for_deletion():
+		if enemy.is_queued_for_deletion() or enemy.submerged:
 			continue
 		if swing.try_hit(global_position, enemy.get_instance_id(), enemy.body_rect()):
 			enemy.take_strike(swing.damage, swing.direction * swing.push, global_position - enemy.global_position)
