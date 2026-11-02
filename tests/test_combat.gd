@@ -162,6 +162,15 @@ func test_player_cancel_charge_clears_a_held_charge() -> void:
 	player.free()
 
 
+func test_feet_box_ends_at_the_bottom_of_the_sprite() -> void:
+	assert_near(Player.FEET_OFFSET.y + Player.FEET_BOX_SIZE.y / 2.0, Player.SPRITE_FEET_Y)
+
+
+func test_arrival_puts_the_feet_on_the_cell() -> void:
+	var cell := Vector2i(1, 5)
+	assert_eq(Player.arrival_position(cell) + Player.FEET_OFFSET, RoomBackdrop.cell_center(cell))
+
+
 func test_warning_progress_is_zero_before_the_warning_shows() -> void:
 	var telegraph := Telegraph.new()
 	telegraph.start(1.0)

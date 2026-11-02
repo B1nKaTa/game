@@ -99,7 +99,7 @@ func _enter_room(target_id: int) -> void:
 	add_child(_room_view)
 	move_child(_room_view, 0)
 	_room_view.refresh_doors()
-	player.global_position = RoomBackdrop.cell_center(_progress.arrival_cell(target_id, from_id))
+	player.global_position = Player.arrival_position(_progress.arrival_cell(target_id, from_id))
 	_mini_map.set_current(target_id)
 	_big_map.set_current(target_id)
 

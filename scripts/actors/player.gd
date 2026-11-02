@@ -18,6 +18,9 @@ const DODGE_SPEED := 300.0
 const CHARGE_SLOWDOWN := 0.4
 const HURT_COLOR := Color("e4524f")
 const SPRITE_FRAME_WIDTH := 68
+const SPRITE_FEET_Y := 23.0
+const FEET_BOX_SIZE := Vector2(14, 12)
+const FEET_OFFSET := Vector2(0, 17)
 const AIM_MARK_DISTANCE := 30.0
 const AIM_MARK_COLOR := Color(1.0, 0.9, 0.55, 0.7)
 
@@ -31,10 +34,20 @@ var _aim := Vector2.RIGHT
 var _dodge_direction := Vector2.RIGHT
 var _active_swing: SwingAttack
 var _visual: SpriteVisual
+var _feet: Marker2D
+
+
+static func arrival_position(cell: Vector2i) -> Vector2:
+	return RoomBackdrop.cell_center(cell) - FEET_OFFSET
 
 
 func setup(run_state: RunState) -> void:
 	run = run_state
+
+
+# Doors and pickups use this point, because it is where he stands in the room.
+func feet() -> Node2D:
+	return _feet
 
 
 func _ready() -> void:
@@ -43,9 +56,13 @@ func _ready() -> void:
 	collision_mask = 1
 	var shape := CollisionShape2D.new()
 	var rect := RectangleShape2D.new()
-	rect.size = Vector2(16, 18)
+	rect.size = FEET_BOX_SIZE
 	shape.shape = rect
+	shape.position = FEET_OFFSET
 	add_child(shape)
+	_feet = Marker2D.new()
+	_feet.position = FEET_OFFSET
+	add_child(_feet)
 	_visual = SpriteVisual.new()
 	add_child(_visual)
 	_visual.setup("grandpa", Vector2(20, 28), Color("7d9a5c"), SPRITE_FRAME_WIDTH)
@@ -102,7 +119,8 @@ func _throw_cane() -> void:
 		return
 	_charge.cancel()
 	var spawn := global_position + _aim * ThrownCane.LENGTH
-	var query := PhysicsRayQueryParameters2D.create(global_position, spawn, ThrownCane.WALL_LAYER)
+	# His upper body can overlap a wall now, so the wall check starts from where he stands.
+	var query := PhysicsRayQueryParameters2D.create(_feet.global_position, spawn, ThrownCane.WALL_LAYER)
 	var wall := get_world_2d().direct_space_state.intersect_ray(query)
 	if not wall.is_empty():
 		spawn = wall["position"] + wall["normal"] * ThrownCane.WALL_BACKOFF

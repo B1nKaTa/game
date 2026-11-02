@@ -82,7 +82,7 @@ func _create_doors() -> void:
 
 func _add_door(target_id: int, icon: String, cell: Vector2i) -> void:
 	var door := Door.new()
-	door.setup(target_id, icon, _player)
+	door.setup(target_id, icon, _player.feet())
 	door.position = RoomBackdrop.cell_center(cell)
 	door.entered.connect(func(id: int): door_entered.emit(id))
 	add_child(door)
@@ -143,7 +143,7 @@ func _drop_coin(at: Vector2, base_amount: int) -> void:
 
 func _add_pickup(at: Vector2, label: String, color: Color, on_take: Callable, needs_interact := false) -> Pickup:
 	var pickup := Pickup.new()
-	pickup.setup(label, color, _player, needs_interact)
+	pickup.setup(label, color, _player.feet(), needs_interact)
 	pickup.position = at
 	pickup.collected.connect(on_take)
 	add_child(pickup)
