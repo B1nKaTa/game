@@ -58,7 +58,7 @@ func _ready() -> void:
 
 func debug_take_first_exit() -> void:
 	var room := _map.room(_current_id)
-	if room.room_type == RoomLayout.TYPE_SIDE:
+	if room.is_detour():
 		_enter_room(room.parent_id)
 	elif not room.exits.is_empty():
 		_enter_room(room.exits[0])

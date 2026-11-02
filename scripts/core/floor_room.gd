@@ -7,4 +7,10 @@ var room_type: String = ""
 var layout: RoomLayout
 var exits: Array[int] = []
 var side_id: int = -1
+var treasure_id: int = -1
 var parent_id: int = -1
+
+
+# A detour hangs off a room on the route, so entering it never chooses a route.
+func is_detour() -> bool:
+	return room_type == RoomLayout.TYPE_SIDE or room_type == RoomLayout.TYPE_TREASURE

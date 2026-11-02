@@ -88,22 +88,37 @@ func _create_doors() -> void:
 	var back_id := _progress.back_target(_room.id)
 	if back_id != -1:
 		_add_door(back_id, BACK_ICON, RoomLayout.ENTRY)
-	if _room.room_type == RoomLayout.TYPE_SIDE:
+	if _room.is_detour():
 		return
 	for i in _room.exits.size():
 		var target := _map.room(_room.exits[i])
 		_add_door(target.id, RoomRules.door_icon(target.room_type), RoomLayout.EXIT_CELLS[i])
 	if _room.side_id != -1:
 		_add_door(_room.side_id, RoomRules.door_icon(RoomLayout.TYPE_SIDE), RoomLayout.SIDE_DOOR)
+	if _room.treasure_id != -1:
+		_add_treasure_door()
 
 
-func _add_door(target_id: int, icon: String, cell: Vector2i) -> void:
+func _add_treasure_door() -> void:
+	var door := _add_door(_room.treasure_id, RoomRules.door_icon(RoomLayout.TYPE_TREASURE), RoomLayout.TREASURE_DOOR)
+	door.requires_key = true
+	door.has_key = func(): return _run.keys > 0
+	door.key_spent.connect(_on_treasure_door_unlocked)
+
+
+func _on_treasure_door_unlocked() -> void:
+	_run.use_key()
+	doors_opened.emit()
+
+
+func _add_door(target_id: int, icon: String, cell: Vector2i) -> Door:
 	var door := Door.new()
 	door.setup(target_id, icon, _player.feet())
 	door.position = RoomBackdrop.cell_center(cell)
 	door.entered.connect(func(id: int): door_entered.emit(id))
 	add_child(door)
 	_doors.append(door)
+	return door
 
 
 func _create_blocks() -> void:

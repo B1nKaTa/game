@@ -10,6 +10,7 @@ const ROOM_COLORS := {
 	RoomLayout.TYPE_SIDE: Color("a78bda"),
 	RoomLayout.TYPE_MINI_BOSS: Color("ff9a3c"),
 	RoomLayout.TYPE_FLOOR_BOSS: Color("ffd24a"),
+	RoomLayout.TYPE_TREASURE: Color("67f0d0"),
 }
 const PANEL_COLOR := Color(0.09, 0.07, 0.11, 0.65)
 const BIG_PANEL_COLOR := Color(0.09, 0.07, 0.11, 0.95)
@@ -23,7 +24,7 @@ const BIG_RECT := Rect2(60, 40, 520, 280)
 const BIG_SPACING := Vector2(60, 46)
 const BIG_ROOM := Vector2(40, 30)
 const BIG_MARGIN := Vector2(38, 58)
-const LEGEND := "C Combat    I Item    H Healing    ? Side room    M Mini boss    B Boss"
+const LEGEND := "C Combat    I Item    H Healing    ? Side room    T Treasure    M Mini boss    B Boss"
 const TITLE := "Floor Map"
 const CLOSE_HINT := "M: Close"
 
@@ -39,6 +40,9 @@ static func map_position(map: FloorMap, room: FloorRoom) -> Vector2:
 	if room.room_type == RoomLayout.TYPE_SIDE:
 		var parent := map_position(map, map.room(room.parent_id))
 		return Vector2(parent.x, parent.y - 1.0 if parent.y < 1.0 else parent.y + 1.0)
+	if room.room_type == RoomLayout.TYPE_TREASURE:
+		var parent := map_position(map, map.room(room.parent_id))
+		return Vector2(parent.x, parent.y + 1.0)
 	var in_layer: Array[FloorRoom] = []
 	for candidate in map.main_rooms():
 		if candidate.layer == room.layer:

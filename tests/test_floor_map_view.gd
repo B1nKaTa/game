@@ -45,6 +45,17 @@ func test_a_side_room_does_not_count_as_a_row_in_its_layer() -> void:
 	assert_eq(FloorMapView.map_position(map, side), Vector2(2, -0.5))
 
 
+func test_treasure_room_sits_opposite_a_side_room() -> void:
+	var map := FloorMap.new()
+	var parent := _add(map, 2, RoomLayout.TYPE_COMBAT)
+	var side := _add(map, 2, RoomLayout.TYPE_SIDE)
+	side.parent_id = parent.id
+	var treasure := _add(map, 2, RoomLayout.TYPE_TREASURE)
+	treasure.parent_id = parent.id
+	assert_eq(FloorMapView.map_position(map, side), Vector2(2, -0.5))
+	assert_eq(FloorMapView.map_position(map, treasure), Vector2(2, 1.5))
+
+
 func test_every_room_type_has_a_color() -> void:
 	for room_type: String in RoomRules.ICONS:
 		assert_true(FloorMapView.ROOM_COLORS.has(room_type), room_type)

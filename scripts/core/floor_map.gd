@@ -13,7 +13,7 @@ func room(id: int) -> FloorRoom:
 func main_rooms() -> Array[FloorRoom]:
 	var list: Array[FloorRoom] = []
 	for candidate in rooms:
-		if candidate.room_type != RoomLayout.TYPE_SIDE:
+		if not candidate.is_detour():
 			list.append(candidate)
 	return list
 

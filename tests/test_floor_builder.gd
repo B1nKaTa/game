@@ -96,6 +96,32 @@ func test_side_rooms_hang_off_combat_rooms_and_return() -> void:
 	assert_true(found > 0, "some floors have side rooms")
 
 
+func test_every_floor_has_one_treasure_room_on_every_route() -> void:
+	var pool := _pool()
+	for seed_value in SEEDS:
+		var map := _build(seed_value, pool)
+		var found := 0
+		for room in map.rooms:
+			if room.room_type != RoomLayout.TYPE_TREASURE:
+				continue
+			found += 1
+			assert_true(room.is_detour())
+			var parent := map.room(room.parent_id)
+			assert_eq(parent.treasure_id, room.id)
+			assert_true(parent.id != map.start_id and parent.id != map.boss_id, "seed %d" % seed_value)
+			var in_layer := 0
+			for candidate in map.main_rooms():
+				if candidate.layer == parent.layer:
+					in_layer += 1
+			assert_eq(in_layer, 1, "seed %d: a sealed route could hide it" % seed_value)
+		assert_eq(found, 1, "seed %d" % seed_value)
+
+
+func test_treasure_room_does_not_count_as_a_main_room() -> void:
+	for room in _build(3, _pool()).main_rooms():
+		assert_false(room.is_detour())
+
+
 func test_same_seed_gives_same_floor() -> void:
 	var pool := _pool()
 	var first := _build(99, pool)

@@ -55,6 +55,16 @@ func test_required_symbols_by_type() -> void:
 	assert_true(_layout(RoomLayout.TYPE_SIDE, empty).validate().size() > 0)
 	assert_true(_layout(RoomLayout.TYPE_MINI_BOSS, empty).validate().size() > 0)
 	assert_true(_layout(RoomLayout.TYPE_FLOOR_BOSS, empty).validate().size() > 0)
+	assert_true(_layout(RoomLayout.TYPE_TREASURE, empty).validate().size() > 0)
+
+
+func test_treasure_door_cell_must_be_floor_and_reachable() -> void:
+	var rows := _open_rows("#.......E..E.......#")
+	rows[9] = "#.........#........#"
+	assert_true(_layout(RoomLayout.TYPE_COMBAT, rows).validate().size() > 0)
+	rows[9] = "#........X.X.......#"
+	rows[8] = "#.........X........#"
+	assert_true(_layout(RoomLayout.TYPE_COMBAT, rows).validate().size() > 0, "blocked by breakable blocks")
 
 
 func test_unknown_type_fails() -> void:
@@ -71,7 +81,7 @@ func test_all_shipped_rooms_are_valid() -> void:
 		count += 1
 		var layout: RoomLayout = load(DIR + name)
 		assert_eq(layout.validate().size(), 0, "%s: %s" % [name, str(layout.validate())])
-	assert_eq(count, 17)
+	assert_eq(count, 19)
 
 
 func test_catalog_meets_the_spec_counts() -> void:
@@ -84,6 +94,7 @@ func test_catalog_meets_the_spec_counts() -> void:
 	assert_eq(counts.get(RoomLayout.TYPE_SIDE, 0), 2)
 	assert_eq(counts.get(RoomLayout.TYPE_MINI_BOSS, 0), 1)
 	assert_eq(counts.get(RoomLayout.TYPE_FLOOR_BOSS, 0), 1)
+	assert_eq(counts.get(RoomLayout.TYPE_TREASURE, 0), 2)
 
 
 func test_nearest_floor_cell_keeps_a_floor_cell() -> void:

@@ -8,6 +8,7 @@ const ICONS := {
 	RoomLayout.TYPE_SIDE: "?",
 	RoomLayout.TYPE_MINI_BOSS: "M",
 	RoomLayout.TYPE_FLOOR_BOSS: "B",
+	RoomLayout.TYPE_TREASURE: "T",
 }
 const KEY_NAME := "Permission Slip"
 const BOMB_NAME := "Overheated Thermos"

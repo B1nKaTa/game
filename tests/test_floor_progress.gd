@@ -125,6 +125,31 @@ func test_arriving_in_a_side_room_uses_its_spawn_cell() -> void:
 	assert_eq(progress.arrival_cell(4, 1), RoomLayout.SIDE_ROOM_SPAWN)
 
 
+func _map_with_treasure() -> FloorMap:
+	var map := _make_map()
+	var treasure := _add(map, 1, RoomLayout.TYPE_TREASURE, [])
+	treasure.parent_id = 1
+	map.room(1).treasure_id = treasure.id
+	return map
+
+
+func test_treasure_room_behaves_like_a_detour() -> void:
+	var progress := FloorProgress.new(_map_with_treasure())
+	progress.enter(0)
+	progress.enter(1, 0)
+	progress.enter(5, 1)
+	assert_false(progress.is_sealed(5))
+	assert_false(progress.is_sealed(1), "entering it doesn't choose a route")
+	assert_eq(progress.back_target(5), 1)
+	assert_eq(progress.previous_of(5), 1)
+
+
+func test_arriving_around_a_treasure_room() -> void:
+	var progress := FloorProgress.new(_map_with_treasure())
+	assert_eq(progress.arrival_cell(5, 1), RoomLayout.SIDE_ROOM_SPAWN)
+	assert_eq(progress.arrival_cell(1, 5), RoomLayout.TREASURE_DOOR)
+
+
 func test_a_built_floor_can_be_walked_forward_and_back_without_dead_ends() -> void:
 	var pool := RoomCatalog.load_valid("res://data/rooms/floor_1/")
 	for seed_value in 50:
