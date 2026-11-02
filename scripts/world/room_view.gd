@@ -117,9 +117,9 @@ func _drop_coin(at: Vector2, base_amount: int) -> void:
 	_coins.append(coin)
 
 
-func _add_pickup(at: Vector2, label: String, color: Color, on_take: Callable) -> Pickup:
+func _add_pickup(at: Vector2, label: String, color: Color, on_take: Callable, needs_interact := false) -> Pickup:
 	var pickup := Pickup.new()
-	pickup.setup(label, color, _player)
+	pickup.setup(label, color, _player, needs_interact)
 	pickup.position = at
 	pickup.collected.connect(on_take)
 	add_child(pickup)
@@ -141,7 +141,7 @@ func _create_item_choice(cells: Array[Vector2i]) -> void:
 	var choices: Array[Pickup] = []
 	for i in picked.size():
 		var item := picked[i]
-		var choice := _add_pickup(RoomBackdrop.cell_center(cells[i]), item.display_name, ITEM_COLOR, func(): _run.add_item(item))
+		var choice := _add_pickup(RoomBackdrop.cell_center(cells[i]), item.display_name, ITEM_COLOR, func(): _run.add_item(item), true)
 		choices.append(choice)
 	for choice in choices:
 		choice.collected.connect(func(): _remove_others(choices, choice))
@@ -161,7 +161,7 @@ func _create_treasure(cell: Vector2i) -> void:
 		_drop_coin(RoomBackdrop.cell_center(cell), _floor_def.treasure_pension)
 		return
 	var item := picked[0]
-	_add_pickup(RoomBackdrop.cell_center(cell), item.display_name, ITEM_COLOR, func(): _run.add_item(item))
+	_add_pickup(RoomBackdrop.cell_center(cell), item.display_name, ITEM_COLOR, func(): _run.add_item(item), true)
 
 
 func _finish_room() -> void:

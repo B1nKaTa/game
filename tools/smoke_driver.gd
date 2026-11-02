@@ -69,6 +69,10 @@ func _clear_room(scene: Node) -> void:
 	await _wait(0.1)
 	for pickup in get_tree().get_nodes_in_group("pickups"):
 		if is_instance_valid(pickup) and not scene.is_over:
+			if pickup.requires_interact:
+				pickup.collect()
+				await _wait(0.05)
+				continue
 			scene.player.global_position = pickup.global_position
 			await _wait(0.05)
 
