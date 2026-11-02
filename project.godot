@@ -4,6 +4,12 @@ config_version=5
 
 config/name="Grandpa"
 config/features=PackedStringArray("4.7")
+run/main_scene="res://scenes/boot.tscn"
+
+[autoload]
+
+Progress="*res://scripts/autoload/progress.gd"
+Game="*res://scripts/autoload/game.gd"
 
 [display]
 
