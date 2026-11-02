@@ -64,7 +64,7 @@ func _physics_process(delta: float) -> void:
 	if not to_mouse.is_zero_approx():
 		_aim = to_mouse.normalized()
 	_visual.set_facing_left(_aim.x < 0.0)
-	_visual.set_alpha(HurtLook.alpha(run.health.invulnerability_left()))
+	_visual.set_alpha(HurtLook.alpha_for(_dodge.is_active(), run.health.invulnerability_left()))
 	_handle_attacks()
 	_handle_movement()
 	queue_redraw()
@@ -147,6 +147,8 @@ func _handle_movement() -> void:
 
 
 func _draw() -> void:
+	if _dodge.is_active():
+		draw_line(-_dodge_direction * 6.0, -_dodge_direction * 26.0, Color(1.0, 1.0, 1.0, 0.35), 8.0)
 	if _cane.is_held():
 		draw_line(Vector2.ZERO, _aim * 20.0, Color("a8692f"), 3.0)
 	if _swing_show > 0.0:

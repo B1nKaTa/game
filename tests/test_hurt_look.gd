@@ -33,3 +33,13 @@ func test_health_reports_invulnerability_left() -> void:
 	health.tick(0.3)
 	assert_near(health.invulnerability_left(), Health.INVULN_TIME - 0.3)
 	assert_true(health.is_invulnerable())
+
+
+func test_dodging_fades_grandpa() -> void:
+	assert_near(HurtLook.alpha_for(true, 0.0), HurtLook.DODGE_ALPHA)
+	assert_true(HurtLook.DODGE_ALPHA < 1.0)
+
+
+func test_not_dodging_uses_the_hurt_blink() -> void:
+	assert_near(HurtLook.alpha_for(false, 0.0), 1.0)
+	assert_near(HurtLook.alpha_for(false, Health.INVULN_TIME), 1.0)
