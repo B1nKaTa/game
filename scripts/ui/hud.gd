@@ -14,7 +14,7 @@ func setup(run: RunState) -> void:
 
 func _ready() -> void:
 	_status = _add_label(Vector2(8, 4), 12)
-	_items = _add_label(Vector2(8, 340), 9)
+	_items = _add_label(Vector2(8, 324), 9)
 	_message = _add_label(Vector2(0, 150), 20)
 	_message.size = Vector2(640, 40)
 	_message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
