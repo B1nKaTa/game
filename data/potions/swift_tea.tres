@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="PotionDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/potion_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "swift_tea"
+display_name = "Swift Tea"
+short_name = "Swift"
+description = "Move 40% faster for 15 seconds."
+speed_bonus = 0.4
+duration = 15.0
+price = 12
+color = Color(0.404, 0.941, 0.816, 1)

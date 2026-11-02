@@ -25,6 +25,12 @@ extends Resource
 @export var healing_rooms: int = 1
 @export var side_room_chance: float = 0.2
 @export var path_reward_chance: float = 0.25
+@export_group("Vaults")
+# Vault rooms this floor hangs off its combat rooms, each behind a reinforced stone. A floor
+# without vault layouts, or with none free cells, simply has fewer.
+@export var vault_count: int = 1
+# The Thermos upgrade level that breaks this floor's reinforced stones. A later floor can ask for less.
+@export var vault_stone_level: int = 3
 
 
 func room_palette() -> RoomPalette:

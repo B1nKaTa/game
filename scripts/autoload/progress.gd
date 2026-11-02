@@ -100,6 +100,26 @@ func take_crafted_item() -> ItemDef:
 	return null
 
 
+func record_floor_cleared() -> void:
+	data.record_floor_cleared()
+	_store.save_progress(data)
+
+
+func brew(def: PotionDef) -> bool:
+	if not data.brew(def.id, def.price):
+		return false
+	_save_pension()
+	return true
+
+
+func take_brewed_potion() -> PotionDef:
+	var id := data.take_brewed_potion()
+	if id.is_empty():
+		return null
+	_store.save_progress(data)
+	return Content.potion(id)
+
+
 func make_run() -> RunState:
 	var run := RunState.new(Content.upgrades(), data.upgrades)
 	run.unlocked_items = data.items_unlocked

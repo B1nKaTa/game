@@ -13,9 +13,14 @@ const ROWS := [
 	"#..................#",
 	"####################",
 ]
+# "clears" is how many floors must be cleared before a merchant appears, and a missing one means
+# always there. "kind" picks the panel: upgrades by default, or "potions" for brews. Later floors
+# will move the clears here, in one place.
 const MERCHANTS := [
 	{"id": "black_market", "title": "Black Market. You didn't see me.", "cell": Vector2i(5, 3), "color": Color("8a4fbf"), "art": "merchant"},
 	{"id": "optometrist", "title": "Dr. Squint, Unlicensed Optometrist", "cell": Vector2i(5, 7), "color": Color("4fbfa8"), "art": "optometrist"},
+	{"id": "potion_merchant", "kind": "potions", "clears": 1, "title": "Madame Murk, Discount Apothecary", "cell": Vector2i(8, 3), "color": Color("c0508f"), "art": "apothecary"},
+	{"id": "bomb_merchant", "clears": 3, "title": "Boom Bernard, Fuel Dealer", "cell": Vector2i(14, 7), "color": Color("d9822b"), "art": "fuel_dealer"},
 ]
 const DOOR_CELL := Vector2i(18, 5)
 const INTERACT_RANGE := 48.0
@@ -28,7 +33,8 @@ const CRAFTER_TITLE := "Agnes, Afterlife Arts and Crafts"
 
 var player: Player
 var _hud: Hud
-var _panel: MerchantPanel
+var _open_merchants: Array = []
+var _panel: CanvasLayer
 var _keys_panel: KeysPanel
 var _craft_panel: CraftPanel
 
@@ -37,7 +43,8 @@ func _ready() -> void:
 	var backdrop := RoomBackdrop.new()
 	backdrop.setup(PackedStringArray(ROWS))
 	add_child(backdrop)
-	for entry in MERCHANTS:
+	_open_merchants = MerchantRules.open_ones(MERCHANTS, Progress.data.floors_cleared)
+	for entry in _open_merchants:
 		var merchant := SpriteVisual.new()
 		merchant.position = RoomBackdrop.cell_center(entry["cell"])
 		add_child(merchant)
@@ -120,10 +127,14 @@ func _close_keys_panel() -> void:
 	player.set_physics_process(true)
 
 
+func open_merchant_ids() -> Array:
+	return _open_merchants.map(func(entry: Dictionary): return entry["id"])
+
+
 func _merchant_in_range() -> Dictionary:
 	var best := {}
 	var best_distance := INTERACT_RANGE
-	for entry in MERCHANTS:
+	for entry in _open_merchants:
 		var distance := player.global_position.distance_to(RoomBackdrop.cell_center(entry["cell"]))
 		if distance <= best_distance:
 			best = entry
@@ -132,8 +143,12 @@ func _merchant_in_range() -> Dictionary:
 
 
 func _open_panel(entry: Dictionary) -> void:
-	_panel = MerchantPanel.new()
-	_panel.setup(entry["title"], entry["id"])
+	if entry.get("kind", "") == "potions":
+		_panel = PotionPanel.new()
+		_panel.setup(entry["title"])
+	else:
+		_panel = MerchantPanel.new()
+		_panel.setup(entry["title"], entry["id"])
 	_panel.closed.connect(_close_panel)
 	add_child(_panel)
 	player.cancel_charge()

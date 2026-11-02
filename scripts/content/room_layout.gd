@@ -10,6 +10,8 @@ const TYPE_FLOOR_BOSS := "floor_boss"
 const TYPE_TREASURE := "treasure"
 const TYPE_SHOP := "shop"
 const TYPE_SECRET := "secret"
+# A rich dead end behind a reinforced stone. Nothing the floor needs is ever inside.
+const TYPE_VAULT := "vault"
 const DEFAULT_SIZE := Vector2i(20, 11)
 const NORTH := Vector2i.UP
 const SOUTH := Vector2i.DOWN
@@ -62,6 +64,7 @@ const REQUIRED := {
 	TYPE_TREASURE: {"I": 3},
 	TYPE_SHOP: {"S": 5, "P": 1, "R": 7},
 	TYPE_SECRET: {"T": 2},
+	TYPE_VAULT: {"I": 3, "T": 3},
 }
 
 @export var room_type: String = ""

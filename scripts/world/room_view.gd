@@ -91,6 +91,8 @@ func clear_passing_effects() -> void:
 func place_bomb(at: Vector2) -> void:
 	var thermos := Thermos.new()
 	thermos.setup(_player)
+	thermos.level = _run.stats.thermos_level
+	thermos.damage_mult = _run.stats.thermos_damage_mult
 	thermos.position = at
 	thermos.exploded.connect(bomb_exploded.emit)
 	add_child(thermos)
@@ -111,6 +113,8 @@ func _create_doors() -> void:
 		match target.room_type:
 			RoomLayout.TYPE_SECRET:
 				_add_secret_wall(side)
+			RoomLayout.TYPE_VAULT:
+				_add_vault_stone(side)
 			RoomLayout.TYPE_TREASURE:
 				_add_treasure_door(target.id, side)
 			_:
@@ -130,6 +134,28 @@ func _on_secret_wall_broken(_at: Vector2, side: Vector2i) -> void:
 	door.locked = not _finished
 	doors_opened.emit()
 	notice.emit("You found a secret room!")
+
+
+# A vault door hides behind a reinforced stone in the same wall cell a secret crack uses.
+func _add_vault_stone(side: Vector2i) -> void:
+	var stone := ReinforcedRock.new()
+	stone.palette = _floor_def.room_palette()
+	stone.needed_level = _floor_def.vault_stone_level
+	stone.position = RoomBackdrop.cell_center(_room.layout.wall_cell(side))
+	stone.broken.connect(_on_vault_stone_broken.bind(side))
+	stone.resisted.connect(_on_vault_stone_resisted)
+	add_child(stone)
+
+
+func _on_vault_stone_broken(_at: Vector2, side: Vector2i) -> void:
+	var door := _add_door(_room.doors[side], RoomRules.door_icon(RoomLayout.TYPE_VAULT), side)
+	door.locked = not _finished
+	doors_opened.emit()
+	notice.emit("The reinforced stone crumbles. A vault!")
+
+
+func _on_vault_stone_resisted() -> void:
+	notice.emit("The stone doesn't even crack. It wants a much hotter Thermos.")
 
 
 func _add_treasure_door(target_id: int, side: Vector2i) -> void:
@@ -337,8 +363,10 @@ func _drop_consumable(at: Vector2, kind: String) -> void:
 			var thermos := _add_pickup(at, RoomRules.BOMB_NAME, BOMB_COLOR, func(): _take_consumable(_run.add_bomb))
 			thermos.can_take = _run.can_add_bomb
 		RoomRules.DROP_POTION:
-			var potion := _add_pickup(at, RoomRules.POTION_NAME, HEAL_COLOR, func(): _run.health.heal(RoomRules.POTION_HEAL))
-			potion.can_take = func(): return _run.health.pills < _run.health.max_pills
+			# It fills the potion slot, and waits on the floor while the slot is full.
+			var small := Content.potion(RoomRules.SMALL_POTION_ID)
+			var potion := _add_pickup(at, RoomRules.POTION_NAME, HEAL_COLOR, func(): _take_consumable(func(): _run.give_potion(small)))
+			potion.can_take = _run.can_take_potion
 
 
 func _take_consumable(add: Callable) -> void:
@@ -370,6 +398,18 @@ func _create_rewards() -> void:
 		_create_shop()
 	if _room.room_type == RoomLayout.TYPE_TREASURE:
 		_create_treasure_rewards()
+	if _room.room_type == RoomLayout.TYPE_VAULT:
+		_create_vault_extras()
+
+
+# A vault is the richest room: the usual choice of items and treasures, plus a potion, a Thermos
+# and a Slip lying out in the open. It holds no Pension beyond a treasure's, so income stays put.
+func _create_vault_extras() -> void:
+	var anchor := _room.layout.cells_of("I")[0]
+	var kinds := [RoomRules.DROP_POTION, RoomRules.DROP_BOMB, RoomRules.DROP_KEY]
+	for i in kinds.size():
+		var cell := _room.layout.nearest_floor_cell(anchor + Vector2i(i * 2, 3))
+		_drop_consumable(RoomBackdrop.cell_center(cell), kinds[i])
 
 
 func _create_shop() -> void:

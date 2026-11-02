@@ -58,6 +58,9 @@ static func _try_build(rng: RandomNumberGenerator, def: FloorDef, picker: _Layou
 			return null
 	if not _attach_detours(rng, map, def, picker):
 		return null
+	# Secret rooms and vaults wait behind a bomb, so nothing else may lead through one.
+	if not map.only_hidden_rooms_need_a_bomb() or not map.hidden_rooms_are_dead_ends():
+		return null
 	return map
 
 
@@ -153,6 +156,9 @@ static func _attach_detours(rng: RandomNumberGenerator, map: FloorMap, def: Floo
 				_attach(rng, map, one_parent, RoomLayout.TYPE_SIDE, picker, def)
 	if picker.has(RoomLayout.TYPE_SECRET):
 		_attach(rng, map, combat, RoomLayout.TYPE_SECRET, picker, def)
+	if picker.has(RoomLayout.TYPE_VAULT):
+		for i in def.vault_count:
+			_attach(rng, map, combat, RoomLayout.TYPE_VAULT, picker, def)
 	return true
 
 

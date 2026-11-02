@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="PotionDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/potion_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "healing_tonic"
+display_name = "Healing Tonic"
+short_name = "Tonic"
+description = "Restores 2 pills when you drink it."
+heal = 2
+price = 20
+color = Color(0.894, 0.322, 0.31, 1)

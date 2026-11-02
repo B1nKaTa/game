@@ -48,11 +48,29 @@ func has_unvisited_treasure(progress: FloorProgress) -> bool:
 
 # The rooms a player can walk to from the start before ever owning a Thermos.
 func reached_without_bomb() -> Dictionary:
-	var secret_ids: Array[int] = []
+	var hidden_ids: Array[int] = []
 	for candidate in rooms:
-		if candidate.room_type == RoomLayout.TYPE_SECRET:
-			secret_ids.append(candidate.id)
-	return walk_from(start_id, secret_ids)
+		if candidate.needs_a_bomb():
+			hidden_ids.append(candidate.id)
+	return walk_from(start_id, hidden_ids)
+
+
+# Every room except the ones that wait behind a cracked wall or a reinforced stone must be walkable
+# without a bomb, so a floor is always fully winnable and fully reachable without either.
+func only_hidden_rooms_need_a_bomb() -> bool:
+	var reached := reached_without_bomb()
+	for candidate in rooms:
+		if not candidate.needs_a_bomb() and not reached.has(candidate.id):
+			return false
+	return true
+
+
+# A hidden room is a dead end: one door, back to the room it hangs off.
+func hidden_rooms_are_dead_ends() -> bool:
+	for candidate in rooms:
+		if candidate.needs_a_bomb() and candidate.doors.size() != 1:
+			return false
+	return true
 
 
 func walk_from(from_id: int, avoid: Array[int] = []) -> Dictionary:

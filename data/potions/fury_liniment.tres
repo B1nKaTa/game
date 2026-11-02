@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="PotionDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/potion_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "fury_liniment"
+display_name = "Liniment of Fury"
+short_name = "Fury"
+description = "Cane and thrown cane hit 50% harder for 15 seconds."
+damage_bonus = 0.5
+duration = 15.0
+price = 16
+color = Color(1, 0.604, 0.235, 1)

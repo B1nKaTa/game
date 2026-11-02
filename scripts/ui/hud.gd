@@ -6,6 +6,7 @@ const BOSS_BAR_TOP := 336.0
 const BOSS_NAME_TOP := 314.0
 const SLIP_COUNTER_AT := Vector2(300, 5)
 const THERMOS_COUNTER_AT := Vector2(360, 5)
+const POTION_SLOT_AT := Vector2(414, 5)
 const COUNTER_TEXT_OFFSET := Vector2(15, -2)
 const NOTICE_TOP := 40.0
 const NOTICE_TIME := 3.5
@@ -15,6 +16,7 @@ var _status: Label
 var _items: Label
 var _slips: Label
 var _thermoses: Label
+var _potion_slot: PotionSlot
 var _message: Label
 var _notice: Label
 var _notice_left := 0.0
@@ -58,6 +60,9 @@ func _ready() -> void:
 	if _run != null:
 		_slips = _add_counter(SLIP_COUNTER_AT, ConsumableIcon.Kind.SLIP)
 		_thermoses = _add_counter(THERMOS_COUNTER_AT, ConsumableIcon.Kind.THERMOS)
+		_potion_slot = PotionSlot.new()
+		_potion_slot.position = POTION_SLOT_AT
+		add_child(_potion_slot)
 		_run.changed.connect(_refresh)
 	_refresh()
 
@@ -78,6 +83,8 @@ func show_notice(text: String) -> void:
 
 
 func _process(delta: float) -> void:
+	if _potion_slot != null:
+		_potion_slot.show_buff(_run.buff, _run.buff_left)
 	if _notice_left <= 0.0:
 		return
 	_notice_left -= delta
@@ -143,6 +150,7 @@ func _refresh() -> void:
 		text = "Pills: %s   %s" % [pills, text]
 		_slips.text = counter_text(_run.keys)
 		_thermoses.text = counter_text(_run.bombs)
+		_potion_slot.show_potion(_run.potion, KeyBindings.label_for("potion"))
 		var names: PackedStringArray = []
 		for item in _run.items:
 			names.append(item.display_name)

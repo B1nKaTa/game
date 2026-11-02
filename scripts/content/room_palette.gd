@@ -23,6 +23,10 @@ extends Resource
 @export var crate_edge := Color("3a2614")
 @export var rock := Color("7b7987")
 @export var rock_edge := Color("34313f")
+# Reinforced stone must never read as a plain rock: cold steel blue with glowing seams.
+@export var reinforced := Color("33506e")
+@export var reinforced_edge := Color("0d1a2b")
+@export var reinforced_glow := Color("5fd8ff")
 @export var barrel := Color("8a5a2b")
 @export var barrel_band := Color("3a2614")
 @export var hole := Color("0a0810")

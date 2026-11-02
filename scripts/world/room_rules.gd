@@ -11,6 +11,7 @@ const ICONS := {
 	RoomLayout.TYPE_TREASURE: "T",
 	RoomLayout.TYPE_SHOP: "$",
 	RoomLayout.TYPE_SECRET: "S",
+	RoomLayout.TYPE_VAULT: "V",
 }
 const KEY_NAME := "Permission Slip"
 const BOMB_NAME := "Overheated Thermos"
@@ -31,9 +32,9 @@ const BARREL_BOMB_CHANCE := 0.05
 const BARREL_POTION_CHANCE := 0.06
 const PILE_COIN_CHANCE := 0.12
 const ROCK_COIN_CHANCE := 0.3
-# A small potion heals this much. The potion slot of a later stage will take them instead.
+# A small potion fills the potion slot. Its effect lives in the potion data, so it heals as that says.
 const POTION_NAME := "Small Potion"
-const POTION_HEAL := 1
+const SMALL_POTION_ID := "small_potion"
 const TREASURE_RECIPE_CHANCE := 0.25
 const MINI_BOSS_RECIPE_CHANCE := 0.5
 

@@ -13,6 +13,9 @@ const BODY_COLOR := Color("a8692f")
 const WARNING_COLOR := Color("e4524f")
 const BLAST_COLOR := Color("ffd24a")
 
+# Upgrades from the bomb merchant. Damage is for enemies only, and the level decides what stone breaks.
+var level := 0
+var damage_mult := 1.0
 var _player: Player
 var _fuse := FUSE_TIME
 var _gone_off := false
@@ -25,6 +28,16 @@ static func in_blast(center: Vector2, body: Rect2) -> bool:
 
 func setup(player: Player) -> void:
 	_player = player
+
+
+func blast_damage() -> float:
+	return DAMAGE * damage_mult
+
+
+# Each upgrade level brightens the blast and adds a ring, so the player can see what they paid for.
+static func blast_color(upgrade_level: int) -> Color:
+	var colors := [BLAST_COLOR, Color("ffb23a"), Color("ff7b2e"), Color("fff2c8")]
+	return colors[clampi(upgrade_level, 0, colors.size() - 1)]
 
 
 func tick_fuse(delta: float) -> bool:
@@ -51,8 +64,9 @@ func _explode() -> void:
 	_blast_left = BLAST_SHOW_TIME
 	for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
 		if not enemy.is_queued_for_deletion() and in_blast(global_position, enemy.body_rect()):
-			enemy.take_damage(DAMAGE, global_position.direction_to(enemy.global_position) * PUSH)
+			enemy.take_damage(blast_damage(), global_position.direction_to(enemy.global_position) * PUSH)
 	BreakableBlock.smash(get_tree(), global_position, BLAST_RADIUS, BreakableBlock.SOURCE_BLAST)
+	ReinforcedRock.blast(get_tree(), global_position, BLAST_RADIUS, level)
 	if is_instance_valid(_player) and global_position.distance_to(_player.feet().global_position) <= BLAST_RADIUS:
 		_player.take_hit(PLAYER_DAMAGE)
 	exploded.emit()
@@ -61,8 +75,12 @@ func _explode() -> void:
 func _draw() -> void:
 	if _gone_off:
 		var progress := 1.0 - _blast_left / BLAST_SHOW_TIME
-		draw_circle(Vector2.ZERO, BLAST_RADIUS * minf(0.5 + progress, 1.0), Color(BLAST_COLOR, 0.55 * (1.0 - progress)))
-		draw_arc(Vector2.ZERO, BLAST_RADIUS, 0.0, TAU, 32, BLAST_COLOR, 2.0)
+		var color := blast_color(level)
+		draw_circle(Vector2.ZERO, BLAST_RADIUS * minf(0.5 + progress, 1.0), Color(color, (0.55 + 0.08 * level) * (1.0 - progress)))
+		draw_arc(Vector2.ZERO, BLAST_RADIUS, 0.0, TAU, 32, color, 2.0 + level)
+		for ring in level:
+			var ring_radius := BLAST_RADIUS * (0.3 + 0.2 * ring) * minf(0.5 + progress, 1.0)
+			draw_arc(Vector2.ZERO, ring_radius, 0.0, TAU, 24, Color(1.0, 1.0, 1.0, 0.8 * (1.0 - progress)), 1.5)
 		return
 	var urgency := 1.0 - _fuse / FUSE_TIME
 	var blink_on := int(_fuse * (6.0 + 14.0 * urgency)) % 2 == 0

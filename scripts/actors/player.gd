@@ -9,6 +9,7 @@ signal cane_hit
 signal cane_caught
 signal hurt
 signal bomb_requested(at: Vector2)
+signal potion_drunk(potion: PotionDef)
 
 const ATTACK_REACH := 44.0
 const ATTACK_ANGLE := 60.0
@@ -100,6 +101,7 @@ func _physics_process(delta: float) -> void:
 	_charge.tick(delta)
 	_dodge.tick(delta)
 	run.health.tick(delta)
+	run.tick_buff(delta)
 	_advance_swing(delta)
 	var to_mouse := _aim_point() - global_position
 	if not to_mouse.is_zero_approx():
@@ -108,6 +110,7 @@ func _physics_process(delta: float) -> void:
 	_visual.set_alpha(HurtLook.alpha_for(_dodge.is_active(), run.health.invulnerability_left()))
 	_handle_attacks()
 	_handle_bomb()
+	_handle_potion()
 	_handle_movement()
 	_leave_dodge_ghosts(delta)
 	queue_redraw()
@@ -135,6 +138,16 @@ func _leave_dodge_ghosts(delta: float) -> void:
 func _handle_bomb() -> void:
 	if Input.is_action_just_pressed("bomb") and bomb_requested.get_connections().size() > 0 and run.use_bomb():
 		bomb_requested.emit(_feet.global_position)
+
+
+func _handle_potion() -> void:
+	if not Input.is_action_just_pressed("potion"):
+		return
+	var drunk := run.potion
+	if run.drink_potion():
+		if _visual != null:
+			_visual.flash(drunk.color, 0.25)
+		potion_drunk.emit(drunk)
 
 
 func _handle_attacks() -> void:
@@ -169,7 +182,7 @@ func _throw_cane() -> void:
 			collider.hit_by(BreakableBlock.SOURCE_CANE)
 		spawn = wall["position"] + wall["normal"] * ThrownCane.WALL_BACKOFF
 	_thrown_cane = ThrownCane.new()
-	_thrown_cane.setup(_cane, self, _aim, run.stats.damage_mult)
+	_thrown_cane.setup(_cane, self, _aim, run.damage_mult())
 	_thrown_cane.hit_enemy.connect(cane_hit.emit)
 	_thrown_cane.caught.connect(cane_caught.emit)
 	parent.add_child(_thrown_cane)
@@ -197,7 +210,7 @@ func _exit_tree() -> void:
 
 func _swing(damage: float, reach: float, angle: float, push: float, heavy: bool, finisher: bool) -> void:
 	_finish_swing()
-	_active_swing = SwingAttack.new(_aim, reach, angle, damage * run.stats.damage_mult, push, heavy, finisher)
+	_active_swing = SwingAttack.new(_aim, reach, angle, damage * run.damage_mult(), push, heavy, finisher)
 	_visual.play_once("attack", CaneCombo.LOCK_TIME)
 	_strike_enemies()
 
@@ -244,7 +257,7 @@ func _handle_movement() -> void:
 	if _dodge.is_active():
 		velocity = _dodge_direction * DODGE_SPEED
 	else:
-		var speed := run.stats.move_speed
+		var speed := run.move_speed()
 		if _charge.is_charging():
 			speed *= CHARGE_SLOWDOWN
 		velocity = input * speed

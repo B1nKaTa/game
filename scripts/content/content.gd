@@ -3,6 +3,7 @@ extends RefCounted
 
 const ITEMS_DIR := "res://data/items/"
 const UPGRADES_DIR := "res://data/upgrades/"
+const POTIONS_DIR := "res://data/potions/"
 
 
 static func load_dir(path: String) -> Array:
@@ -42,6 +43,29 @@ static func upgrades() -> Array[UpgradeDef]:
 	for resource in load_dir(UPGRADES_DIR):
 		if resource is UpgradeDef:
 			list.append(resource)
+	return list
+
+
+static func potions() -> Array[PotionDef]:
+	var list: Array[PotionDef] = []
+	for resource in load_dir(POTIONS_DIR):
+		if resource is PotionDef:
+			list.append(resource)
+	return list
+
+
+static func potion(id: String) -> PotionDef:
+	for def in potions():
+		if def.id == id:
+			return def
+	return null
+
+
+static func potions_for_sale() -> Array[PotionDef]:
+	var list: Array[PotionDef] = []
+	for def in potions():
+		if def.is_for_sale():
+			list.append(def)
 	return list
 
 

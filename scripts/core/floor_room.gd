@@ -15,7 +15,12 @@ var extra_enemies := 0
 
 # A detour is a dead end hanging off a regular room, and never counts toward the floor's size.
 func is_detour() -> bool:
-	return room_type in [RoomLayout.TYPE_SIDE, RoomLayout.TYPE_TREASURE, RoomLayout.TYPE_SHOP, RoomLayout.TYPE_SECRET]
+	return room_type in [RoomLayout.TYPE_SIDE, RoomLayout.TYPE_TREASURE, RoomLayout.TYPE_SHOP, RoomLayout.TYPE_SECRET, RoomLayout.TYPE_VAULT]
+
+
+# These rooms sit behind a wall or a stone that only a bomb opens, so nothing the floor needs may lead through them.
+func needs_a_bomb() -> bool:
+	return room_type == RoomLayout.TYPE_SECRET or room_type == RoomLayout.TYPE_VAULT
 
 
 # The side whose door leads to that room, or Vector2i.ZERO when none does.

@@ -81,7 +81,7 @@ func test_all_shipped_rooms_are_valid() -> void:
 		count += 1
 		var layout: RoomLayout = load(DIR + name)
 		assert_eq(layout.validate().size(), 0, "%s: %s" % [name, str(layout.validate())])
-	assert_eq(count, 41)
+	assert_eq(count, 44)
 
 
 func test_catalog_meets_the_spec_counts() -> void:
@@ -97,6 +97,7 @@ func test_catalog_meets_the_spec_counts() -> void:
 	assert_eq(counts.get(RoomLayout.TYPE_TREASURE, 0), 3)
 	assert_eq(counts.get(RoomLayout.TYPE_SHOP, 0), 1)
 	assert_eq(counts.get(RoomLayout.TYPE_SECRET, 0), 3)
+	assert_eq(counts.get(RoomLayout.TYPE_VAULT, 0), 3)
 
 
 func test_nearest_floor_cell_keeps_a_floor_cell() -> void:

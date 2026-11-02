@@ -28,6 +28,9 @@ func _ready() -> void:
 	var crafted := Progress.take_crafted_item()
 	if crafted != null:
 		_run.add_item(crafted)
+	var brewed := Progress.take_brewed_potion()
+	if brewed != null:
+		_run.give_potion(brewed)
 	_hud = Hud.new()
 	_hud.setup(_run)
 	add_child(_hud)
@@ -163,7 +166,11 @@ func _on_player_died() -> void:
 
 
 func _on_floor_cleared() -> void:
+	if is_cleared:
+		return
 	is_cleared = true
+	# Merchants open on floors cleared, so the clear is saved before anything else can end the run.
+	Progress.record_floor_cleared()
 	_end_run("FLOOR CLEARED")
 
 

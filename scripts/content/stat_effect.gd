@@ -8,3 +8,5 @@ extends Resource
 @export var pension_bonus: float = 0.0
 @export var warning_bonus: float = 0.0
 @export var reveals_enemy_health: bool = false
+# Extra damage a Thermos blast does to enemies, never to Grandpa.
+@export var thermos_damage_bonus: float = 0.0

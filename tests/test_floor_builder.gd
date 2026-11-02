@@ -68,13 +68,13 @@ func test_every_door_joins_neighboring_cells_both_ways() -> void:
 				assert_eq(other.doors.get(-side), room.id, "seed %d room %d" % [seed_value, room.id])
 
 
-func test_everything_is_reachable_without_a_bomb_except_secret_rooms() -> void:
+func test_everything_is_reachable_without_a_bomb_except_secret_rooms_and_vaults() -> void:
 	var pool := _pool()
 	for seed_value in SEEDS:
 		var map := _build(seed_value, pool)
 		var reached := map.reached_without_bomb()
 		for room in map.rooms:
-			if room.room_type != RoomLayout.TYPE_SECRET:
+			if room.room_type != RoomLayout.TYPE_SECRET and room.room_type != RoomLayout.TYPE_VAULT:
 				assert_true(reached.has(room.id), "seed %d room %d (%s)" % [seed_value, room.id, room.room_type])
 
 

@@ -16,6 +16,10 @@ var retirement_deposit_run: int = NO_DEPOSIT_RUN
 var recipes_found: Dictionary = {}
 var items_unlocked: Dictionary = {}
 var crafted_for_next_run: String = ""
+# How many floor bosses have been beaten. Merchants and later paths open on it.
+var floors_cleared: int = 0
+# The one brew waiting in the potion slot for the next run.
+var brewed_potion: String = ""
 
 
 func level_of(id: String) -> int:
@@ -119,6 +123,29 @@ func take_crafted_item() -> String:
 	return id
 
 
+func record_floor_cleared() -> void:
+	floors_cleared += 1
+
+
+# Only one brew can wait at a time, and it costs Pension.
+func can_brew(price: int) -> bool:
+	return price > 0 and pension >= price and brewed_potion.is_empty()
+
+
+func brew(id: String, price: int) -> bool:
+	if not can_brew(price):
+		return false
+	pension -= price
+	brewed_potion = id
+	return true
+
+
+func take_brewed_potion() -> String:
+	var id := brewed_potion
+	brewed_potion = ""
+	return id
+
+
 func to_dict() -> Dictionary:
 	return {
 		"version": VERSION,
@@ -132,6 +159,8 @@ func to_dict() -> Dictionary:
 		"recipes_found": recipes_found,
 		"items_unlocked": items_unlocked,
 		"crafted_for_next_run": crafted_for_next_run,
+		"floors_cleared": floors_cleared,
+		"brewed_potion": brewed_potion,
 	}
 
 
@@ -159,6 +188,9 @@ static func from_dict(raw: Variant) -> ProgressData:
 	data.items_unlocked = _id_set(raw.get("items_unlocked"))
 	var crafted: Variant = raw.get("crafted_for_next_run", "")
 	data.crafted_for_next_run = crafted if crafted is String else ""
+	data.floors_cleared = maxi(int(raw.get("floors_cleared", 0)), 0)
+	var brewed: Variant = raw.get("brewed_potion", "")
+	data.brewed_potion = brewed if brewed is String else ""
 	return data
 
 

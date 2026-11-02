@@ -15,6 +15,10 @@ var treasure_rewards: Array[ItemDef] = []
 var boss_rewards: Array[ItemDef] = []
 var mini_boss_down := false
 var unlocked_items := {}
+# The one potion Grandpa carries, and the buff he is under, if any.
+var potion: PotionDef
+var buff: PotionDef
+var buff_left := 0.0
 var _promised := {}
 var _offered_recipes := {}
 var _upgrades: Array[UpgradeDef]
@@ -103,6 +107,59 @@ func use_bomb() -> bool:
 	bombs -= 1
 	changed.emit()
 	return true
+
+
+func can_take_potion() -> bool:
+	return potion == null
+
+
+# A found potion stays on the floor when the slot is full, so this refuses rather than replaces.
+func give_potion(def: PotionDef) -> bool:
+	if def == null or not can_take_potion():
+		return false
+	potion = def
+	changed.emit()
+	return true
+
+
+# Healing is never wasted on a full set of pills, so drinking waits until it helps.
+func can_drink_potion() -> bool:
+	if potion == null:
+		return false
+	return potion.has_buff() or health.pills < health.max_pills
+
+
+func drink_potion() -> bool:
+	if not can_drink_potion():
+		return false
+	var drunk := potion
+	potion = null
+	if drunk.heal > 0:
+		health.heal(drunk.heal)
+	if drunk.has_buff():
+		buff = drunk
+		buff_left = drunk.duration
+	changed.emit()
+	return true
+
+
+func tick_buff(delta: float) -> void:
+	if buff == null:
+		return
+	buff_left -= delta
+	if buff_left <= 0.0:
+		buff = null
+		buff_left = 0.0
+		changed.emit()
+
+
+func move_speed() -> float:
+	return stats.move_speed * (1.0 + (buff.speed_bonus if buff != null else 0.0))
+
+
+# What the cane and the thrown cane multiply their damage by. A Thermos has its own stat.
+func damage_mult() -> float:
+	return stats.damage_mult + (buff.damage_bonus if buff != null else 0.0)
 
 
 func pension_amount(base: int) -> int:
