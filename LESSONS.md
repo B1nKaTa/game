@@ -39,3 +39,4 @@
 - 2026-11-02: A probe method named _set clashed with Object._set and stopped the script parsing → avoid underscore names of engine virtual methods in probes.
 - 2026-11-02: A headless root window takes its mouse position from the display, so simulated mouse motion cannot aim → drive aim through the player's aim_source in probes and the full-loop check.
 - 2026-11-02: A direct `Select-String` for SMOKE hid a failing full-loop run's reason → keep the exit code and the whole tail whenever a check is run through a filter.
+- 2026-11-02: A full-loop check that no Pension came from a self-destructing enemy failed about half its runs, because the same blast broke a barrel and a rock that can hold coins → when a check measures a total, keep every other source out of that moment, and run new checks many times before trusting them.

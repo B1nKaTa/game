@@ -648,7 +648,6 @@ func _check_blast(scene: Node) -> void:
 	var neighbor := view._spawn_enemy(_enemy_def("intern_reaper"), cell_at.call(Vector2i(6, 6)))
 	neighbor.set_physics_process(false)
 	var neighbor_hp: float = neighbor.hp
-	var pension_before: int = Progress.data.pension
 	_put_feet(scene, cell_at.call(Vector2i(16, 8)))
 	auditor._behavior._rushed = 99.0
 	await _wait(0.2)
@@ -660,7 +659,6 @@ func _check_blast(scene: Node) -> void:
 	_check(_gone(barrels[0]) and _gone(rocks[0]), "the blast breaks barrels and rocks")
 	_check(neighbor.hp < neighbor_hp, "the blast hurts other enemies")
 	_check(health.pills == pills, "a far player is not hurt")
-	_check(Progress.data.pension == pension_before, "an auditor that blows itself up pays nothing")
 	await _wait(0.9)
 	# A wall stands between the next blast and Grandpa.
 	var walled := view._spawn_enemy(_enemy_def("burnt_out_auditor"), cell_at.call(Vector2i(11, 4)) + Vector2(8, 0))
@@ -671,6 +669,8 @@ func _check_blast(scene: Node) -> void:
 	walled._behavior._rushed = 99.0
 	await _wait(0.2)
 	var walled_pills: int = health.pills
+	# No props are left in reach here, since a broken barrel or rock can hold a coin.
+	var pension_before: int = Progress.data.pension
 	walled.set_physics_process(true)
 	var waited := 0.0
 	while not _gone(walled) and waited < 2.0:
@@ -678,6 +678,7 @@ func _check_blast(scene: Node) -> void:
 		waited += 0.1
 	_check(_gone(walled), "the walled auditor went off")
 	_check(health.pills == walled_pills, "a wall stops the blast reaching Grandpa")
+	_check(Progress.data.pension == pension_before, "an auditor that blows itself up pays nothing")
 	_check(is_equal_approx(beyond.hp, beyond_hp), "a wall stops the blast reaching an enemy")
 	# Killing a lit one still sets it off, and an unlit one dies quietly.
 	var quiet := view._spawn_enemy(_enemy_def("burnt_out_auditor"), cell_at.call(Vector2i(3, 8)))
