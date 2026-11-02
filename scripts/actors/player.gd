@@ -87,10 +87,17 @@ func _throw_cane() -> void:
 	if parent == null or not _cane.try_throw():
 		return
 	_charge.cancel()
+	var spawn := global_position + _aim * ThrownCane.LENGTH
+	var query := PhysicsRayQueryParameters2D.create(global_position, spawn, ThrownCane.WALL_LAYER)
+	var wall := get_world_2d().direct_space_state.intersect_ray(query)
+	if not wall.is_empty():
+		spawn = wall["position"] + wall["normal"] * ThrownCane.WALL_BACKOFF
 	_thrown_cane = ThrownCane.new()
 	_thrown_cane.setup(_cane, self, _aim, run.stats.damage_mult)
 	parent.add_child(_thrown_cane)
-	_thrown_cane.global_position = global_position + _aim * ThrownCane.LENGTH
+	_thrown_cane.global_position = spawn
+	if not wall.is_empty():
+		_cane.drop()
 
 
 func recall_cane() -> void:
