@@ -7,11 +7,11 @@ High-quality moody pixel art, seen from a top-down angle. Dark stone rooms are l
 ## Technical Rules
 
 - Game resolution: 640×360.
-- Grandpa: about 32 wide by 48 tall.
+- Grandpa: 68×68 frames, with the character about 46 tall inside them.
 - Regular enemies: 32 wide frames.
 - Senior Adjuster: 48 wide frames. Regional Reaper: 64 wide frames.
 - Tiles: 32×32.
-- Colors: only those in art/palette.txt. Lighting happens in the engine, so sprites use flat, evenly lit colors with no baked-in glow.
+- Colors: keep the colors the generator produces, because reducing sprites to art/palette.txt made Grandpa clearly worse. Lighting happens in the engine, so sprites use flat, evenly lit colors with no baked-in glow.
 - Backgrounds: transparent.
 
 ## File Layout
@@ -43,12 +43,14 @@ Subjects:
 
 ## Processing
 
-1. Generate at the largest size the tool allows, using a tool whose terms allow commercial use.
-2. Remove the background.
-3. Run the cleanup command, which reduces the image to the game's pixel grid and palette:
+Sprites come from PixelLab, whose terms allow commercial use. Grandpa is character `a765494f-e4ed-44db-b5c7-1b7417c6dd24` there.
 
-       godot --headless --path . --script res://tools/art/cleanup_cli.gd -- input.png output.png 32 48
+1. Create the character at 48 px in v3 mode from the base prompt.
+2. Generate idle, walk and attack in v3 mode facing east. The game mirrors him for facing left. Custom v3 animations share one scale and canvas, while template animations come out smaller, so don't mix them.
+3. Say in every action prompt that he grips the cane in every frame and his body stays unchanged, or the cane vanishes and his body grows.
+4. Build each strip from the generated frames, leaving out frame 0, which is only the standing reference. Reorder or drop frames where needed. The attack starts with the cane already forward, because the hit lands the moment the swing starts.
+5. Check the frames enlarged, then in the game. Fix stray pixels by hand only if they show in play.
 
-4. Fix stray pixels and frame-to-frame differences by hand in a pixel art editor.
+Use `tools/art/cleanup_cli.gd` only for art from tools that don't output true pixel art.
 
 AI use is disclosed wherever a store requires it.

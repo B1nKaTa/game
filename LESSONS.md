@@ -14,3 +14,6 @@
 - 2026-11-02: Decorative nodes under a room that is set to PROCESS_MODE_DISABLED at run end freeze mid-animation → give effects like DeathBurst process_mode ALWAYS.
 - 2026-11-02: Swings tested only the enemy's center on one frame while the arc showed for 0.1 seconds and followed the mouse, so attacks visibly passed through enemies → hit tests use what the player sees: the whole body, for as long as the attack is drawn, where it is drawn.
 - 2026-11-02: A probe's first section printed "damaged=false" only because nodes added in SceneTree._initialize had not run _ready and the swing crashed first → start probes with call_deferred, and include a control case that must succeed.
+- 2026-11-02: PixelLab template walks dropped the cane and v3 animations came out larger than template ones, so Grandpa changed size between animations → use v3 for every animation of a character and say in each prompt that he grips the cane in every frame.
+- 2026-11-02: Mapping generated sprites to the small project palette put orange streaks in Grandpa's hair and muddied his trousers → compare raw and palette versions enlarged before enforcing a palette.
+- 2026-11-02: The attack animation stopped after the 0.1 second hit window and a 10 FPS loop showed about one frame → time a one-shot animation by its own duration, separate from the hit window.
