@@ -52,3 +52,7 @@ func is_dead() -> bool:
 
 func is_invulnerable() -> bool:
 	return _invuln > 0.0
+
+
+func invulnerability_left() -> float:
+	return _invuln

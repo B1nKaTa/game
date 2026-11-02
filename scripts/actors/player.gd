@@ -11,6 +11,7 @@ const ATTACK_PUSH := 60.0
 const DODGE_SPEED := 300.0
 const CHARGE_SLOWDOWN := 0.4
 const SWING_SHOW_TIME := 0.1
+const HURT_COLOR := Color("e4524f")
 
 var run: RunState
 var _combo := CaneCombo.new()
@@ -47,7 +48,10 @@ func _ready() -> void:
 func take_hit(amount: int) -> bool:
 	if _dodge.is_active():
 		return false
-	return run.health.hit(amount)
+	var landed := run.health.hit(amount)
+	if landed:
+		_visual.flash(HURT_COLOR, HurtLook.RED_TIME)
+	return landed
 
 
 func _physics_process(delta: float) -> void:
@@ -60,6 +64,7 @@ func _physics_process(delta: float) -> void:
 	if not to_mouse.is_zero_approx():
 		_aim = to_mouse.normalized()
 	_visual.set_facing_left(_aim.x < 0.0)
+	_visual.set_alpha(HurtLook.alpha(run.health.invulnerability_left()))
 	_handle_attacks()
 	_handle_movement()
 	queue_redraw()
