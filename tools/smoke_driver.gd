@@ -986,7 +986,13 @@ func _check_vault_room(scene: Node) -> void:
 		if pickup._label == RoomRules.POTION_NAME:
 			potion = pickup
 	_check(names.has(RoomRules.POTION_NAME) and names.has(RoomRules.BOMB_NAME) and names.has(RoomRules.KEY_NAME), "a vault holds a potion, a Thermos and a Slip in the open, found %s in %s" % [str(names.keys()), scene.debug_map().room(scene.debug_current_id()).layout.resource_path])
-	_check(choices >= 3, "a vault offers a choice of items, found %d interactive pickups" % choices)
+	# This check takes every item it passes, where a player takes one of each choice, so by a late vault
+	# the run may have few left to offer. The vault must still lay out all it can, up to its three.
+	var can_offer := 0
+	for item in Content.items():
+		if run.can_offer(item) and not run.has_item(item.id) and not run.is_promised(item.id):
+			can_offer += 1
+	_check(choices >= mini(3, can_offer), "a vault offers a choice of items, found %d interactive pickups with %d items left to offer" % [choices, can_offer])
 	if potion == null:
 		return
 	# A small potion fills the slot, and stays on the floor while the slot is full.
