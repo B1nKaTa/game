@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="FloorDef" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/floor_def.gd" id="1"]
+[ext_resource type="Resource" path="res://data/enemies/intern_reaper.tres" id="2"]
+[ext_resource type="Resource" path="res://data/enemies/filing_clerk.tres" id="3"]
+[ext_resource type="Resource" path="res://data/enemies/debt_ghost.tres" id="4"]
+[ext_resource type="Resource" path="res://data/enemies/senior_adjuster.tres" id="5"]
+[ext_resource type="Resource" path="res://data/enemies/regional_reaper.tres" id="6"]
+
+[resource]
+script = ExtResource("1")
+id = "floor_1"
+display_name = "Claims Department"
+rooms_dir = "res://data/rooms/floor_1/"
+enemies = [ExtResource("2"), ExtResource("3"), ExtResource("4")]
+mini_boss = ExtResource("5")
+floor_boss = ExtResource("6")
+clear_pension = 8
+treasure_pension = 25
