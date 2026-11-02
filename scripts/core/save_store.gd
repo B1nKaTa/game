@@ -23,10 +23,20 @@ func save_progress(data: ProgressData) -> bool:
 	file.store_string(JSON.stringify(data.to_dict()))
 	file.close()
 	if FileAccess.file_exists(_path):
-		if FileAccess.file_exists(_backup):
-			DirAccess.remove_absolute(_backup)
-		DirAccess.rename_absolute(_path, _backup)
-	return DirAccess.rename_absolute(_temp, _path) == OK
+		if _read(_path) != null:
+			if FileAccess.file_exists(_backup) and DirAccess.remove_absolute(_backup) != OK:
+				push_error("Could not remove old backup: %s" % _backup)
+				return false
+			if DirAccess.rename_absolute(_path, _backup) != OK:
+				push_error("Could not rotate save to backup: %s" % _path)
+				return false
+		elif DirAccess.remove_absolute(_path) != OK:
+			push_error("Could not remove damaged save: %s" % _path)
+			return false
+	if DirAccess.rename_absolute(_temp, _path) != OK:
+		push_error("Could not move new save into place: %s" % _path)
+		return false
+	return true
 
 
 func load_progress() -> ProgressData:

@@ -110,3 +110,21 @@ func test_cannot_buy_past_max_level() -> void:
 	data.upgrades = {"cane": 1}
 	assert_false(data.buy(_upgrade([10])))
 	assert_eq(data.pension, 100)
+
+
+func test_saving_after_recovery_keeps_the_good_backup() -> void:
+	var store := _store()
+	var data := ProgressData.new()
+	data.pension = 10
+	store.save_progress(data)
+	data.pension = 20
+	store.save_progress(data)
+	_write(PATH, "{not json")
+	assert_eq(store.load_progress().pension, 10)
+	assert_eq(store.last_status, SaveStore.STATUS_BACKUP)
+	data.pension = 30
+	store.save_progress(data)
+	_write(PATH, "{not json")
+	assert_eq(store.load_progress().pension, 10)
+	assert_eq(store.last_status, SaveStore.STATUS_BACKUP)
+	store.delete_all()
