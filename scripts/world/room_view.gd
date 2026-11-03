@@ -11,6 +11,8 @@ signal bomb_exploded
 signal consumable_taken
 signal notice(text: String)
 signal hit_blocked
+# How many items a fallen floor boss laid out to choose from.
+signal boss_choice_dropped(count: int)
 
 const HEAL_AMOUNT := 2
 const SHOP_PROMPT := "Buy"
@@ -26,6 +28,10 @@ const PENSION_COLOR := Color("ffd24a")
 const ITEM_COLOR := Color("7dd3fc")
 const HEAL_COLOR := Color("e4524f")
 const COIN_SCATTER := 10.0
+# A fallen floor boss offers this many free items, and taking one clears the rest away.
+const BOSS_CHOICE_COUNT := 2
+# Where those items wait, in cells from where the boss fell: one each side, a row lower.
+const BOSS_CHOICE_OFFSETS: Array[Vector2i] = [Vector2i(-2, 1), Vector2i(2, 1)]
 
 var _room: FloorRoom
 var _map: FloorMap
@@ -44,6 +50,9 @@ var _coins: Array[Pickup] = []
 var _last_death_at := Vector2.ZERO
 var _broken_cells := {}
 var _spawned := 0
+# The cells a floor boss's item choice was laid on, so later things placed in the room keep clear.
+var _choice_cells: Array[Vector2i] = []
+var _choice_group: ChoiceGroup
 
 
 func setup(room: FloorRoom, map: FloorMap, floor_def: FloorDef, run: RunState, player: Player, rng: RandomNumberGenerator, progress: FloorProgress, bank: Node) -> void:
@@ -354,6 +363,8 @@ func _on_enemy_defeated(enemy: Enemy) -> void:
 		_drop_boss_rewards(spot)
 		if _rng.randf() < RoomRules.MINI_BOSS_RECIPE_CHANCE:
 			_drop_recipe(spot + Vector2(-RoomBackdrop.TILE, RoomBackdrop.TILE))
+	if _room.room_type == RoomLayout.TYPE_FLOOR_BOSS and enemy.def.is_boss and not enemy.is_summon:
+		_drop_boss_choice(spot)
 	if enemy.def.is_boss:
 		for other in get_tree().get_nodes_in_group("enemies"):
 			if other != enemy and other.get_parent() == self:
@@ -520,9 +531,31 @@ func _on_plan_blasted() -> void:
 		notice.emit("Your Retirement Plan is locked until your next run")
 
 
-func _add_free_item(at: Vector2, item: ItemDef) -> void:
+func _add_free_item(at: Vector2, item: ItemDef) -> Pickup:
 	var pickup := _add_item_pickup(at, item)
 	pickup.set_label("Free: %s" % item.display_name, FREE_COLOR)
+	return pickup
+
+
+# A floor boss leaves two free items from the run's usual pool, one each side of where it fell.
+# Taking one clears the other away. A pool down to one item shows one, and an empty pool none.
+func _drop_boss_choice(at: Vector2) -> void:
+	if not _choice_cells.is_empty():
+		return
+	var picked := RoomRules.pick_items(Content.items(), _run, BOSS_CHOICE_COUNT, _rng)
+	var fell_at := _cell_of(at)
+	var wanted: Array[Vector2i] = []
+	for i in picked.size():
+		wanted.append(fell_at + BOSS_CHOICE_OFFSETS[i])
+	_choice_cells = _room.layout.open_spots_near(wanted)
+	_choice_group = ChoiceGroup.new()
+	for i in _choice_cells.size():
+		var item := picked[i]
+		_run.promise(item)
+		var pickup := _add_free_item(RoomBackdrop.cell_center(_choice_cells[i]), item)
+		_choice_group.add(pickup)
+		pickup.collected.connect(_choice_group.take.bind(pickup))
+	boss_choice_dropped.emit(_choice_cells.size())
 
 
 func _create_treasure_rewards() -> void:

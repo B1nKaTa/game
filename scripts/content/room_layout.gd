@@ -152,6 +152,20 @@ func vault_extra_cells(count: int) -> Array[Vector2i]:
 	return cells
 
 
+# Plain floor cells as near each wanted cell as the spacing allows, kept off the door cells and apart
+# from each other and from taken. A wanted cell with no such spot left is skipped.
+func open_spots_near(wanted: Array[Vector2i], taken: Array[Vector2i] = []) -> Array[Vector2i]:
+	var avoid: Array[Vector2i] = taken.duplicate()
+	var found: Array[Vector2i] = []
+	for cell in wanted:
+		var spot := _nearest_open_spot(cell, avoid)
+		if spot == Vector2i(-1, -1):
+			continue
+		avoid.append(spot)
+		found.append(spot)
+	return found
+
+
 func _nearest_open_spot(wanted: Vector2i, taken: Array[Vector2i]) -> Vector2i:
 	var best := Vector2i(-1, -1)
 	var best_distance := INF
