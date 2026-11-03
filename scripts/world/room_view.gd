@@ -82,6 +82,11 @@ var _urn_groups: Array[ChoiceGroup] = []
 var _tables: Array[ArcadeTable] = []
 
 
+# The floor's palette, for anything a boss lays down in the room later, such as a wet patch.
+func room_palette() -> RoomPalette:
+	return _floor_def.room_palette() if _floor_def != null else null
+
+
 # The floor's palette, turned to neon for an Arcade Room. A copy, so the floor's own stays as it was.
 static func arcade_palette(base: RoomPalette) -> RoomPalette:
 	var neon := base.duplicate() as RoomPalette

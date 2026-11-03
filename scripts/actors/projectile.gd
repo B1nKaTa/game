@@ -8,10 +8,18 @@ const SHOT_Z := 55
 const DART_BARREL := Color("dff3ff")
 const DART_PLUNGER := Color("7fb7d8")
 const DART_NEEDLE := Color("f4f4f4")
+# What a plain shot looks like: a sheet of paper, a wishing-well coin or a bauble from a present.
+const LOOK_PAPER := ""
+const LOOK_COIN := "coin"
+const LOOK_ORNAMENT := "ornament"
+const COIN_GOLD := Color("e8c04a")
+const COIN_SHINE := Color("fff4c0")
+const ORNAMENT_RED := Color("d93a3a")
 
 # A sedative dart slows Grandpa by this much for this long when it lands. Zero means a plain shot.
 var slow_fraction := 0.0
 var slow_time := 0.0
+var look := LOOK_PAPER
 var _velocity := Vector2.ZERO
 var _target: Node2D
 var _damage := 1
@@ -60,6 +68,17 @@ func _draw() -> void:
 		draw_rect(Rect2(-7, -2.5, 10, 5), Color.BLACK, false, 1.0)
 		draw_rect(Rect2(-10, -1.5, 3, 3), DART_PLUNGER)
 		draw_line(Vector2(3, 0), Vector2(9, 0), DART_NEEDLE, 1.0)
+		return
+	if look == LOOK_COIN:
+		draw_circle(Vector2.ZERO, 5.0, COIN_GOLD)
+		draw_arc(Vector2.ZERO, 5.0, 0.0, TAU, 16, Color.BLACK, 1.0)
+		draw_arc(Vector2.ZERO, 3.0, 0.0, TAU, 12, COIN_SHINE, 1.0)
+		return
+	if look == LOOK_ORNAMENT:
+		draw_circle(Vector2.ZERO, 5.0, ORNAMENT_RED)
+		draw_arc(Vector2.ZERO, 5.0, 0.0, TAU, 16, Color.BLACK, 1.0)
+		draw_rect(Rect2(-1.5, -7.0, 3.0, 2.5), COIN_GOLD)
+		draw_circle(Vector2(-1.5, -1.5), 1.5, COIN_SHINE)
 		return
 	draw_rect(Rect2(-4, -5, 8, 10), Color("efe8d2"))
 	draw_rect(Rect2(-4, -5, 8, 10), Color.BLACK, false, 1.0)

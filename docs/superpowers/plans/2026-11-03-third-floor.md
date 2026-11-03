@@ -823,7 +823,11 @@ Same models as Step 3, plus `scripts/world/wet_floor.gd`, `scripts/world/lights_
 - **Splash:** fountain jets on 3 warned spots near Grandpa (0.9 s). Each leaves a 3×3 patch of `WetFloor` for 4 s, added and removed by the boss. Static: `splash_cells(target_cell, count, rng)`, kept off walls and door cells.
 - **Summon:** a line of 3 Mall Walkers every 12 s, capped by `BossMoves.can_summon`. They pay nothing.
 
-- [ ] **Step 1: Write failing tests** for `splash_cells` and the fan of 5. **Step 2: Implement. When testing is allowed, look at every attack in a real window. Commit.**
+- [x] **Step 1: Write failing tests** for `splash_cells` and the fan of 5. In `tests/test_mall_bosses.gd`, with the summon cap, her pay-nothing walkers and her numbers against Barbara, Klaus and the Reverend.
+- [ ] **Step 2: Implement. When testing is allowed, look at every attack in a real window. Commit.** Implemented, tests run and passing (904); the look in a real window is still to do.
+  - **The coins:** all 5 lanes show on her during the 0.7 s windup through a new `Enemy.add_warning_lane`, which draws extra lanes beside the main one and clears with the warning. The coins fly at 230 px/s and draw as coins (`Projectile.look`).
+  - **The splash:** `splash_cells(target_cell, count, rng, room_cells, is_open)` puts the first jet under him and the rest within 3 cells, 2 apart, off walls, doors, props and strips. Each jet is a `GroundStrike` of radius 26 with a spray look; `GroundStrike` gained a `landed` signal, on which a `WetSplash` lays the 3×3 patch (less any cell that may not be wet) for 4 s and then takes it up.
+  - **The numbers:** 560 final health (311.111 in the `.tres`), speed 70, pays 8, rests 0.8 s, alternates her two attacks, and calls 3 walkers every 12 s under a cap of 5 enemies.
 
 ### Task 18: The Mall Santa (floor boss)
 

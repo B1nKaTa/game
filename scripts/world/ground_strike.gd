@@ -5,6 +5,9 @@ extends Node2D
 # warning, and then it lands: it breaks props and hurts Grandpa if his feet are inside. It comes
 # to nothing if the boss that started it falls first. A strike that lingers leaves burning ground,
 # which keeps hurting whoever stands in it, each body at most once per BURN_EVERY, until it burns out.
+# It says when it lands, so an attack can leave something behind, such as a wet floor or a burst of shots.
+signal landed(at: Vector2)
+
 const COLOR := Color("e4524f")
 const FOLLOW_COLOR := Color("ffd24a")
 const DUST_COLOR := Color("b9a97a")
@@ -31,6 +34,9 @@ const LOOK_CASKET := "casket"
 const CASKET_RING_GAP := 8.0
 const CASKET_SHADOW := Color(0.05, 0.02, 0.03)
 const CASKET_WOOD := Color("4a2a1c")
+# A fountain jet bursting up out of the floor: the dust of its landing is spray.
+const LOOK_SPLASH := "splash"
+const SPLASH_COLOR := Color(0.6, 0.85, 1.0)
 const WREATH := Color("3f6b34")
 const WREATH_BLOOM := Color("d9576b")
 const THORN := Color("2c4a24")
@@ -167,6 +173,7 @@ func _process(delta: float) -> void:
 		global_position = _source.target_ground()
 	if advance(delta):
 		_source.land_ground_strike(global_position, _radius, _damage)
+		landed.emit(global_position)
 		# Whoever the landing just hurt is not burned again at once.
 		if _linger > 0.0 and is_instance_valid(_source.target):
 			mark_burned(_source.target.get_instance_id())
@@ -202,7 +209,12 @@ func _draw() -> void:
 		return
 	if _landed:
 		var progress := 1.0 - maxf(_show_left, 0.0) / SHOW_TIME
-		draw_circle(Vector2.ZERO, _radius * minf(0.6 + progress, 1.0), Color(DUST_COLOR, 0.7 * (1.0 - progress)))
+		var dust := SPLASH_COLOR if _look == LOOK_SPLASH else DUST_COLOR
+		draw_circle(Vector2.ZERO, _radius * minf(0.6 + progress, 1.0), Color(dust, 0.7 * (1.0 - progress)))
+		if _look == LOOK_SPLASH:
+			for i in 6:
+				var way := Vector2.from_angle(TAU * i / 6.0 + 0.3)
+				draw_line(way * _radius * 0.3, way * _radius * (0.5 + progress), Color(SPLASH_COLOR, 1.0 - progress), 2.0)
 		if _look == LOOK_CASKET:
 			_draw_coffin(1.0, CASKET_WOOD, 1.0 - progress)
 		return

@@ -58,6 +58,10 @@ const COP_BADGE := Color("e2c25a")
 const WHISTLE := Color("c9cdd6")
 const PERFUME_GLASS := Color(0.85, 0.95, 1.0, 0.85)
 const PERFUME_BULB := Color("d9576b")
+const TIARA := Color("e8e4f0")
+const TIARA_GEM := Color("6fd6ff")
+const PEARL := Color("fbf7ef")
+const PURSE := Color("8a2f6a")
 
 var _def: EnemyDef
 var _facing := Vector2.RIGHT
@@ -196,6 +200,15 @@ func _draw() -> void:
 			draw_rect(Rect2(half.x - 1.0, -4.0, 7.0, 9.0), Color.BLACK, false, 1.0)
 			draw_line(Vector2(half.x + 2.5, -4.0), Vector2(half.x + 2.5, -8.0), Color.BLACK, 1.0)
 			draw_circle(Vector2(half.x + 2.5, -10.0), 3.0, PERFUME_BULB)
+		"tiara":
+			# A sparkling tiara, a string of pearls and a purse of wishing-well coins.
+			var points := PackedVector2Array([Vector2(-half.x * 0.6, -half.y + 1.0), Vector2(-half.x * 0.35, -half.y - 5.0), Vector2(-half.x * 0.15, -half.y - 1.0), Vector2(0.0, -half.y - 8.0), Vector2(half.x * 0.15, -half.y - 1.0), Vector2(half.x * 0.35, -half.y - 5.0), Vector2(half.x * 0.6, -half.y + 1.0)])
+			draw_polyline(points, TIARA, 2.0)
+			draw_circle(Vector2(0.0, -half.y - 8.0), 2.0, TIARA_GEM)
+			for i in 5:
+				draw_circle(Vector2(-half.x * 0.4 + i * half.x * 0.2, -half.y * 0.35 + absf(i - 2.0) * -1.5), 1.5, PEARL)
+			draw_rect(Rect2(half.x - 3.0, 2.0, 9.0, 8.0), PURSE)
+			draw_circle(Vector2(half.x + 1.5, 2.0), 2.0, Projectile.COIN_GOLD)
 	if _def.shield_half_angle > 0.0:
 		var reach := maxf(half.x, half.y) + SHIELD_GAP
 		var half_arc := deg_to_rad(_def.shield_half_angle)

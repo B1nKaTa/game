@@ -93,6 +93,8 @@ var _waypoint := Vector2.ZERO
 var _push := Vector2.ZERO
 var _push_left := 0.0
 var _rally_left := 0.0
+# More warned lanes beside the main one, each [direction, length, width].
+var _extra_lanes: Array = []
 
 
 func setup(enemy_def: EnemyDef, chase_target: Node2D, warning_fraction: float, show_health_bar := false) -> void:
@@ -420,6 +422,17 @@ func clear_warning() -> void:
 	_warning = null
 	_lane_length = 0.0
 	_cone_length = 0.0
+	_extra_lanes.clear()
+
+
+# Adds one more lane to the warning, for an attack that flies down several at once, such as a fan of
+# coins. Each ends at the first wall like the main lane, and all of them go with the warning.
+func add_warning_lane(direction: Vector2, length: float, width: float, through_props := true) -> void:
+	_extra_lanes.append([direction, _clear_length(direction, length, through_props), width])
+
+
+func warning_lane_count() -> int:
+	return _extra_lanes.size() + (1 if _lane_length > 0.0 else 0)
 
 
 # Adds a cone to the warning, for a breath that fans out from the body. Angle is the whole width.
@@ -592,6 +605,14 @@ func _draw_warning(layer: Node2D) -> void:
 			layer.draw_set_transform(Vector2.ZERO, _lane_direction.angle())
 			layer.draw_rect(lane, Color(WARNING_COLOR, 0.15 + 0.3 * progress))
 			layer.draw_rect(outline, WARNING_COLOR, false, 2.0)
+			layer.draw_set_transform(Vector2.ZERO)
+		for extra: Array in _extra_lanes:
+			var way: Vector2 = extra[0]
+			var length: float = extra[1]
+			var width: float = extra[2]
+			layer.draw_set_transform(Vector2.ZERO, way.angle())
+			layer.draw_rect(Rect2(0.0, -width / 2.0, length * progress, width), Color(WARNING_COLOR, 0.15 + 0.3 * progress))
+			layer.draw_rect(Rect2(0.0, -width / 2.0, length, width), WARNING_COLOR, false, 2.0)
 			layer.draw_set_transform(Vector2.ZERO)
 		if _cone_length > 0.0:
 			var base := _cone_direction.angle() - _cone_angle / 2.0
