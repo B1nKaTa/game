@@ -840,8 +840,14 @@ Same models as Step 3, plus `scripts/world/wet_floor.gd`, `scripts/world/lights_
 - **Conveyor control:** reverses or speeds up (×1.5 for 4 s) every strip in the room, after the strips' own chime. With no strips he uses the present drop.
 - **Second phase:** he summons fast elves, at most 3 alive (`BossMoves.can_summon` counting only elves), and the sleigh run chains straight into a present drop.
 
-- [ ] **Step 1: Write failing tests:** the sleigh costs 3 with a whole warning, never more than 3 elves, `closing_radius`, and phase two's followup.
-- [ ] **Step 2: Implement. When testing is allowed, look at every attack in a real window. Commit.**
+- [x] **Step 1: Write failing tests:** the sleigh costs 3 with a whole warning, never more than 3 elves, `closing_radius`, and phase two's followup. In `tests/test_mall_bosses.gd`, with the ring's band and shut rule, the present spots, conveyor control only with strips, and his numbers against Matron, Smokey and Mortimer.
+- [ ] **Step 2: Implement. When testing is allowed, look at every attack in a real window. Commit.** Implemented, tests run and passing (917); the look in a real window is still to do, the sleigh's warning above all.
+  - **The sleigh:** 1.2 s windup shown whole on him and on the lane, which gets a second outline 6 px out (`Enemy.mark_lane_heaviest`). Then a `BossDash` of up to 380 px at 430 px/s, stopping short of walls (`MatronBehavior.charge_end`), smashing props, costing 3. A red sleigh is drawn round him while it runs.
+  - **The presents:** 4 `PresentDrop`s, one right on him and the rest within 90 px, 36 px apart. Each warns 0.9 s with a short warned spoke for each of its 6 shots, lands for 1 pill, then bursts into 6 baubles at 150 px/s.
+  - **The ring:** `ClosingRing` shows at 120 px for the 0.6 s windup, then closes to 20 over 1.4 s. Its band costs 2 (`HEAVY_DAMAGE`) once, and so does still being inside when it shuts; a dodge passes through, as through any hit.
+  - **The strips:** every 8 s at most, when the room has strips, he orders all of them to `REVERSE` or `SPEED_UP`, which they do after their own 1 s chime.
+  - **The second phase:** 1.2× speed, 0.8× windups except the sleigh, rests 0.45 s, every sleigh run followed by a present drop, and every 7 s he calls elves (`mall_elf`, the melee behaviour at speed 140) up to 3 alive, counting only his elves.
+  - **The numbers:** 1700 final health (944.444 in the `.tres`), speed 80, pays 16, rests 0.65 s and 0.45 s, as Mortimer.
 
 ### Task 19: Mall floor content
 

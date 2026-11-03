@@ -27,6 +27,8 @@ const SAME_CELL_REACH := 0.71
 const HEAVY_DAMAGE := 2
 # A third floor's floor boss has one attack that costs this, and it always shows an extra-clear warning.
 const HEAVIEST_DAMAGE := 3
+# How far outside a heaviest lane its second outline stands.
+const HEAVIEST_LANE_GAP := 6.0
 const MOUND_COLOR := Color("5a4a33")
 const MOUND_EDGE := Color("2b2218")
 const SMOKE_COLOR := Color("8f8a94")
@@ -95,6 +97,7 @@ var _push_left := 0.0
 var _rally_left := 0.0
 # More warned lanes beside the main one, each [direction, length, width].
 var _extra_lanes: Array = []
+var _lane_heaviest := false
 
 
 func setup(enemy_def: EnemyDef, chase_target: Node2D, warning_fraction: float, show_health_bar := false) -> void:
@@ -423,6 +426,17 @@ func clear_warning() -> void:
 	_lane_length = 0.0
 	_cone_length = 0.0
 	_extra_lanes.clear()
+	_lane_heaviest = false
+
+
+# The lane is the heaviest attack's, which shows a second outline outside the first, so a
+# three-pill charge never reads as an ordinary one.
+func mark_lane_heaviest() -> void:
+	_lane_heaviest = true
+
+
+func lane_is_heaviest() -> bool:
+	return _lane_heaviest
 
 
 # Adds one more lane to the warning, for an attack that flies down several at once, such as a fan of
@@ -605,6 +619,8 @@ func _draw_warning(layer: Node2D) -> void:
 			layer.draw_set_transform(Vector2.ZERO, _lane_direction.angle())
 			layer.draw_rect(lane, Color(WARNING_COLOR, 0.15 + 0.3 * progress))
 			layer.draw_rect(outline, WARNING_COLOR, false, 2.0)
+			if _lane_heaviest:
+				layer.draw_rect(outline.grow(HEAVIEST_LANE_GAP), WARNING_COLOR, false, 2.0)
 			layer.draw_set_transform(Vector2.ZERO)
 		for extra: Array in _extra_lanes:
 			var way: Vector2 = extra[0]

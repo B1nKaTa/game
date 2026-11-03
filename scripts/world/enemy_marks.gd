@@ -62,6 +62,10 @@ const TIARA := Color("e8e4f0")
 const TIARA_GEM := Color("6fd6ff")
 const PEARL := Color("fbf7ef")
 const PURSE := Color("8a2f6a")
+const SANTA_RED := Color("c4161c")
+const SANTA_WHITE := Color("fbfbff")
+const SANTA_BELT := Color("15131a")
+const ELF_HAT := Color("1f7a34")
 
 var _def: EnemyDef
 var _facing := Vector2.RIGHT
@@ -209,6 +213,20 @@ func _draw() -> void:
 				draw_circle(Vector2(-half.x * 0.4 + i * half.x * 0.2, -half.y * 0.35 + absf(i - 2.0) * -1.5), 1.5, PEARL)
 			draw_rect(Rect2(half.x - 3.0, 2.0, 9.0, 8.0), PURSE)
 			draw_circle(Vector2(half.x + 1.5, 2.0), 2.0, Projectile.COIN_GOLD)
+		"santa_hat":
+			# A floppy red hat with white trim and a bobble, and a big white beard.
+			var hat := PackedVector2Array([Vector2(-half.x * 0.6, -half.y + 2.0), Vector2(half.x * 0.6, -half.y + 2.0), Vector2(half.x * 0.7, -half.y - 12.0)])
+			draw_colored_polygon(hat, SANTA_RED)
+			draw_rect(Rect2(-half.x * 0.7, -half.y, half.x * 1.4, 4.0), SANTA_WHITE)
+			draw_circle(Vector2(half.x * 0.7, -half.y - 12.0), 3.5, SANTA_WHITE)
+			draw_colored_polygon(PackedVector2Array([Vector2(-half.x * 0.5, -half.y * 0.45), Vector2(half.x * 0.5, -half.y * 0.45), Vector2(0.0, half.y * 0.15)]), SANTA_WHITE)
+			draw_rect(Rect2(-half.x, half.y * 0.2, half.x * 2.0, 4.0), SANTA_BELT)
+			draw_rect(Rect2(-3.0, half.y * 0.2, 6.0, 4.0), Projectile.COIN_GOLD)
+		"elf_hat":
+			# A pointed green hat with a bell.
+			draw_colored_polygon(PackedVector2Array([Vector2(-half.x * 0.8, -half.y + 2.0), Vector2(half.x * 0.8, -half.y + 2.0), Vector2(half.x * 1.2, -half.y - 9.0)]), ELF_HAT)
+			draw_circle(Vector2(half.x * 1.2, -half.y - 9.0), 2.0, Projectile.COIN_GOLD)
+			draw_rect(Rect2(-half.x * 0.8, -half.y + 1.0, half.x * 1.6, 2.0), SANTA_RED)
 	if _def.shield_half_angle > 0.0:
 		var reach := maxf(half.x, half.y) + SHIELD_GAP
 		var half_arc := deg_to_rad(_def.shield_half_angle)
