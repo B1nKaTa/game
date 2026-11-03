@@ -623,15 +623,15 @@ func test_each_game_returns_about_ninety_percent() -> void:
   - `ArcadeTable` (a `Node2D` like `RetirementStation`) has `game: String` (`"slot"`, `"blackjack"`, `"poker"`), `plays_left: int`, `signal play_wanted(game: String)` and `refill()`. `RoomView.refresh_doors()` calls `refill()` on each table, which is what "once per visit" means.
   - `RoomView._create_arcade()` places the Dealer NPC by `layout.merchant_cell()` and a table on each game cell.
 
-- [ ] **Step 1: Write the failing tests:**
+- [x] **Step 1: Write the failing tests:** (written in `tests/test_arcade_room.gd`, not yet run)
   - **Frequency:** over 1000 seeds of each floor def, an arcade room appears on 20% to 30% of floors, never on the main path, and always with exactly one door.
   - **Validation:** the arcade layouts validate, hold one of each table and a merchant spot, and have no enemy cells.
   - **Plays:** a table's `plays_left` is 3 for the slot and 1 for the cards, and `refill()` restores it.
   - **Model:** follow `test_vaults.gd`'s builder tests.
-- [x] **Step 2: When testing is allowed, run them to make sure they fail. then implement.**
+- [ ] **Step 2: When testing is allowed, run them to make sure they fail, then implement.** Implemented; the tests are not yet run. The table letter is `G`. Tables also count as rivals for the Dealer's talk prompt, and the full loop skips them as plain blocks.
   - **The look:** the room is safe, with neon light and a loud carpet. Add a palette override for arcade rooms in `RoomView`: bright magenta and cyan fill lights and a high-contrast `carpet_motif`.
   - **The Dealer:** placeholder lines such as "Place your bets.", "The house is very understanding." and "No refunds, even in the afterlife."
-- [ ] **Step 3: When testing is allowed, run tests and 3 full loops, screenshot the room and its door's die, and commit.**
+- [ ] **Step 3: When testing is allowed, run tests and 3 full loops, screenshot the room and its door's die, and commit.** Committed before testing; the runs and screenshots are still to do.
 
 ### Task 9: The card-table overlay
 

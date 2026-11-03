@@ -16,6 +16,8 @@ const TYPE_VAULT := "vault"
 const TYPE_CROSSROADS := "crossroads"
 # The safe room at the foot of the stairwell between floors, with one way on to the next Crossroads.
 const TYPE_LANDING := "landing"
+# A safe dead end with a Dealer and three game tables, rolled on about one floor in four.
+const TYPE_ARCADE := "arcade"
 const DEFAULT_SIZE := Vector2i(20, 11)
 const NORTH := Vector2i.UP
 const SOUTH := Vector2i.DOWN
@@ -73,14 +75,17 @@ const WET_DOOR_CLEARANCE := 2
 # A floor vent: walkable, but it flares on a rhythm and hurts whoever stands on it. Kept clear of doors too.
 const SYMBOL_VENT := "U"
 const VENT_DOOR_CLEARANCE := 2
-const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMp"
+# An Arcade game table. An arcade room's tables are, in reading order, the slot machine, blackjack and
+# draw poker. Solid, like the Retirement Plan, and never broken.
+const SYMBOL_GAME := "G"
+const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpG"
 # Nothing can walk through these, so nothing may be dropped or summoned on them.
-const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRM"
+const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMG"
 # Routes may not need a hole or a wall, and may not need a bomb for a crate or a rock.
 const WALL_LIKE := "#l"
 const WALLS := "#lV"
 const WALLS_AND_BOMB_ONLY := "#lVXOAYKDM"
-const MUST_REACH_WITHOUT_BREAKING := "EBIHSP"
+const MUST_REACH_WITHOUT_BREAKING := "EBIHSPG"
 # A vault lays this many labeled pickups out in the open, this many cells apart so names never overlap.
 const VAULT_EXTRAS := 3
 const PICKUP_SPACING := 3
@@ -110,6 +115,7 @@ const REQUIRED := {
 	TYPE_VAULT: {"I": 3, "T": 3},
 	TYPE_CROSSROADS: {},
 	TYPE_LANDING: {},
+	TYPE_ARCADE: {SYMBOL_GAME: 3},
 }
 
 @export var room_type: String = ""
@@ -171,6 +177,11 @@ func validate() -> PackedStringArray:
 			errors.append("needs a bomb to reach the door at %s" % str(door_cell(side)))
 	if room_type == TYPE_VAULT and vault_extra_cells(VAULT_EXTRAS).size() < VAULT_EXTRAS:
 		errors.append("no room for %d open pickups clear of the doors" % VAULT_EXTRAS)
+	if room_type == TYPE_ARCADE:
+		if not cells_of("E").is_empty() or not cells_of("B").is_empty():
+			errors.append("an arcade room holds no fight")
+		if merchant_cell() == Vector2i(-1, -1):
+			errors.append("no spot for the Dealer clear of the doors")
 	return errors
 
 
@@ -191,9 +202,12 @@ func vault_extra_cells(count: int) -> Array[Vector2i]:
 
 # Where a shop's merchant stands: the plain floor nearest the middle of his wares, as far from each
 # ware and the Retirement Plan as labels stand apart, so no two of them answer one press, and two
-# steps clear of every door. A crowded room drops the spacing rather than leave him out.
+# steps clear of every door. A crowded room drops the spacing rather than leave him out. A room with
+# no wares, as an arcade is, places its Dealer by the game tables the same way.
 func merchant_cell() -> Vector2i:
 	var wares := cells_of("S")
+	if wares.is_empty():
+		wares = cells_of(SYMBOL_GAME)
 	if wares.is_empty():
 		return Vector2i(-1, -1)
 	var middle := Vector2.ZERO

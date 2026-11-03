@@ -16,6 +16,7 @@ const ROOM_COLORS := {
 	RoomLayout.TYPE_VAULT: Color("5fd8ff"),
 	RoomLayout.TYPE_CROSSROADS: Color("c9b98a"),
 	RoomLayout.TYPE_LANDING: Color("c9b98a"),
+	RoomLayout.TYPE_ARCADE: Color("e85fd0"),
 }
 const PANEL_COLOR := Color(0.09, 0.07, 0.11, 0.65)
 const BIG_PANEL_COLOR := Color(0.09, 0.07, 0.11, 0.95)
@@ -194,6 +195,9 @@ func _draw_room(room: FloorRoom, panel: Rect2, origin: Vector2, spacing: Vector2
 		return
 	var font_size := BIG_FONT if _is_big else MINI_FONT
 	var icon := RoomRules.door_icon(room.room_type)
+	if icon == RoomRules.ARCADE_ICON:
+		ArcadeTable.draw_die(self, rect.get_center(), float(font_size))
+		return
 	var icon_size := ThemeDB.fallback_font.get_string_size(icon, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
 	var ascent := ThemeDB.fallback_font.get_ascent(font_size)
 	_draw_text(rect.get_center() + Vector2(-icon_size.x / 2.0, ascent - icon_size.y / 2.0), icon, font_size, Color.BLACK)

@@ -96,6 +96,9 @@ func _rival_distances() -> Array[float]:
 		var station := node as RetirementStation
 		if station != null and station.global_position.distance_to(feet) <= RetirementStation.USE_RADIUS:
 			rivals.append(station.global_position.distance_to(feet))
+		var table := node as ArcadeTable
+		if table != null and table.plays_left > 0 and table.global_position.distance_to(feet) <= ArcadeTable.USE_RADIUS:
+			rivals.append(table.global_position.distance_to(feet))
 	return rivals
 
 

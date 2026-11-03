@@ -43,6 +43,10 @@ extends Resource
 @export var vault_count: int = 1
 # The Thermos upgrade level that breaks this floor's reinforced stones. A later floor can ask for less.
 @export var vault_stone_level: int = 3
+@export_group("Arcade")
+# The chance that this floor hangs an Arcade Room off one of its combat rooms. Its layouts are shared
+# by every floor.
+@export var arcade_chance: float = 0.25
 @export_group("Chests")
 # How often a layout's C cell becomes each kind of chest, as weights by ChestRules kind. The rare
 # kinds get likelier deeper down, and a first floor never rolls a mimic whatever this says.

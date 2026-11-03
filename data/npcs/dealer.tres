@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="NpcDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/npc_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "dealer"
+display_name = "Dealer"
+color = Color(0.55, 0.16, 0.3, 1)
+body_size = Vector2(22, 30)
+lines = Array[String](["Place your bets.", "The house is very understanding.", "No refunds, even in the afterlife.", "Each game once a visit. House rules."])

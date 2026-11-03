@@ -3,10 +3,19 @@ extends RefCounted
 
 # A random walk can box itself in, so a failed attempt simply tries again from the same generator.
 const MAX_ATTEMPTS := 50
+# Arcade Rooms look the same on every floor, so their layouts live apart from any floor's own.
+const ARCADE_DIR := "res://data/rooms/arcade/"
 
 
 static func build(rng: RandomNumberGenerator, def: FloorDef) -> FloorMap:
-	return build_from_pool(rng, def, RoomCatalog.load_valid(def.rooms_dir))
+	return build_from_pool(rng, def, pool_for(def))
+
+
+# A floor's own layouts, and the shared arcade layouts beside them.
+static func pool_for(def: FloorDef) -> Array[RoomLayout]:
+	var pool := RoomCatalog.load_valid(def.rooms_dir)
+	pool.append_array(RoomCatalog.load_valid(ARCADE_DIR))
+	return pool
 
 
 static func build_from_pool(rng: RandomNumberGenerator, def: FloorDef, pool: Array[RoomLayout]) -> FloorMap:
@@ -163,6 +172,10 @@ static func _attach_detours(rng: RandomNumberGenerator, map: FloorMap, def: Floo
 	if picker.has(RoomLayout.TYPE_VAULT):
 		for i in def.vault_count:
 			_attach(rng, map, combat, RoomLayout.TYPE_VAULT, picker, def)
+	# Now and then an Arcade Room, a plain dead end off a combat room. It comes after the vault, so the
+	# vault keeps its odds, and rolls only when arcade layouts were given, so other pools build as before.
+	if picker.has(RoomLayout.TYPE_ARCADE) and rng.randf() < def.arcade_chance:
+		_attach(rng, map, combat, RoomLayout.TYPE_ARCADE, picker, def)
 	if picker.has(RoomLayout.TYPE_SIDE):
 		for room in combat:
 			if rng.randf() < def.side_room_chance:

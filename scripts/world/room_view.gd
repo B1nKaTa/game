@@ -14,11 +14,25 @@ signal hit_blocked
 # How many items a fallen floor boss laid out to choose from.
 signal boss_choice_dropped(count: int)
 signal stairwell_entered
+# Grandpa asked to play at one of the Arcade Room's tables.
+signal arcade_game_wanted(table: ArcadeTable)
 
 const HEAL_AMOUNT := 2
 const SHOP_PROMPT := "Buy"
 # The same merchant keeps every shop on every floor.
 const MERCHANT: NpcDef = preload("res://data/npcs/shop_merchant.tres")
+# The same Dealer keeps every Arcade Room.
+const DEALER: NpcDef = preload("res://data/npcs/dealer.tres")
+# An Arcade Room's neon: a dark carpet with a loud pattern, lit magenta from the middle and cyan from
+# the walls.
+const ARCADE_FLOOR_A := Color("2a1838")
+const ARCADE_FLOOR_B := Color("23143a")
+const ARCADE_FLOOR_C := Color("301a33")
+const ARCADE_WALL := Color("1c1226")
+const ARCADE_WALL_LINE := Color(1.0, 0.35, 0.85, 0.5)
+const ARCADE_MOTIF := Color(1.0, 0.85, 0.2, 0.45)
+const ARCADE_MAGENTA := Color(1.0, 0.3, 0.85)
+const ARCADE_CYAN := Color(0.3, 0.95, 1.0)
 const RECIPE_COLOR := Color("ffd65c")
 const RECIPE_PROMPT := "Take recipe"
 const FREE_COLOR := Color("67f0d0")
@@ -65,6 +79,27 @@ var _choice_cells: Array[Vector2i] = []
 var _choice_group: ChoiceGroup
 # Each opened Gilded Urn's pair of items. Kept here, since a signal alone would not keep a group alive.
 var _urn_groups: Array[ChoiceGroup] = []
+var _tables: Array[ArcadeTable] = []
+
+
+# The floor's palette, turned to neon for an Arcade Room. A copy, so the floor's own stays as it was.
+static func arcade_palette(base: RoomPalette) -> RoomPalette:
+	var neon := base.duplicate() as RoomPalette
+	neon.floor_a = ARCADE_FLOOR_A
+	neon.floor_b = ARCADE_FLOOR_B
+	neon.floor_c = ARCADE_FLOOR_C
+	neon.wall = ARCADE_WALL
+	neon.wall_line = ARCADE_WALL_LINE
+	neon.floor_pattern = 1
+	neon.carpet_motif = ARCADE_MOTIF
+	neon.fill_light = ARCADE_MAGENTA
+	neon.torch = ARCADE_CYAN
+	neon.lantern = ARCADE_CYAN
+	neon.lantern_light = ARCADE_CYAN
+	neon.ambient = Color(0.5, 0.42, 0.6)
+	neon.decor_density = 0.0
+	neon.flicker = 0.0
+	return neon
 
 
 func setup(room: FloorRoom, map: FloorMap, floor_def: FloorDef, run: RunState, player: Player, rng: RandomNumberGenerator, progress: FloorProgress, bank: Node) -> void:
@@ -82,6 +117,8 @@ func _ready() -> void:
 	_walk_grid = WalkGrid.from_layout(_room.layout)
 	var backdrop := RoomBackdrop.new()
 	var palette := _floor_def.room_palette()
+	if _room.room_type == RoomLayout.TYPE_ARCADE:
+		palette = arcade_palette(palette)
 	backdrop.setup(_room.layout.rows, palette, _room.decor_seed)
 	add_child(backdrop)
 	Lighting.add_room_mood(self, _room.layout.size_in_cells(), palette)
@@ -101,6 +138,13 @@ func _ready() -> void:
 func refresh_doors() -> void:
 	for door in _doors:
 		door.rearm()
+	# Each Arcade game plays once per visit, so coming back fills them again.
+	for table in _tables:
+		table.refill()
+
+
+func arcade_tables() -> Array[ArcadeTable]:
+	return _tables
 
 
 # The room stays alive while the player is away, so remembered pickups keep their place.
@@ -542,6 +586,31 @@ func _create_rewards() -> void:
 		_create_shop()
 	if _room.room_type == RoomLayout.TYPE_VAULT:
 		_create_vault_extras()
+	if _room.room_type == RoomLayout.TYPE_ARCADE:
+		_create_arcade()
+
+
+# The Dealer stands by his tables as the Shopkeeper does by his wares, and each game cell gets its
+# table, the slot machine first, then blackjack, then draw poker.
+func _create_arcade() -> void:
+	var cell := _room.layout.merchant_cell()
+	if cell != Vector2i(-1, -1):
+		var dealer := Npc.new()
+		dealer.setup(DEALER, _player)
+		dealer.position = RoomBackdrop.cell_center(cell)
+		add_child(dealer)
+	var cells := _room.layout.cells_of(RoomLayout.SYMBOL_GAME)
+	for i in cells.size():
+		var table := ArcadeTable.new()
+		table.setup(ArcadeTable.GAMES[i % ArcadeTable.GAMES.size()], _player.feet())
+		table.position = RoomBackdrop.cell_center(cells[i])
+		table.play_wanted.connect(_on_table_wanted.bind(table))
+		add_child(table)
+		_tables.append(table)
+
+
+func _on_table_wanted(_game: String, table: ArcadeTable) -> void:
+	arcade_game_wanted.emit(table)
 
 
 # A vault is the richest room: the usual choice of items and treasures, plus a potion, a Thermos

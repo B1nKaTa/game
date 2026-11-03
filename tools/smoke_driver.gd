@@ -453,7 +453,7 @@ func _check_a_thermos_left_behind_comes_back(scene: Node) -> void:
 
 func _plain_block() -> BreakableBlock:
 	for block in get_tree().get_nodes_in_group("breakable"):
-		if not block is SecretWall and not block is ReinforcedRock and not block is RetirementStation and not block.is_queued_for_deletion():
+		if not block is SecretWall and not block is ReinforcedRock and not block is RetirementStation and not block is ArcadeTable and not block.is_queued_for_deletion():
 			return block
 	return null
 
@@ -461,7 +461,7 @@ func _plain_block() -> BreakableBlock:
 func _plain_block_count() -> int:
 	var count := 0
 	for block in get_tree().get_nodes_in_group("breakable"):
-		if not block is SecretWall and not block is ReinforcedRock and not block is RetirementStation and not block.is_queued_for_deletion():
+		if not block is SecretWall and not block is ReinforcedRock and not block is RetirementStation and not block is ArcadeTable and not block.is_queued_for_deletion():
 			count += 1
 	return count
 

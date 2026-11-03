@@ -1,6 +1,8 @@
 class_name RoomRules
 extends RefCounted
 
+# The Arcade Room's doors and map square show a die, drawn in code. This letter stands for it in text.
+const ARCADE_ICON := "A"
 const ICONS := {
 	RoomLayout.TYPE_COMBAT: "C",
 	RoomLayout.TYPE_ITEM: "I",
@@ -14,6 +16,7 @@ const ICONS := {
 	RoomLayout.TYPE_VAULT: "V",
 	RoomLayout.TYPE_CROSSROADS: "+",
 	RoomLayout.TYPE_LANDING: "v",
+	RoomLayout.TYPE_ARCADE: ARCADE_ICON,
 }
 const KEY_NAME := "Permission Slip"
 const BOMB_NAME := "Overheated Thermos"

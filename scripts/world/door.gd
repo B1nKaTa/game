@@ -91,7 +91,10 @@ func _draw() -> void:
 		draw_line(Vector2(-14, -14), Vector2(14, 14), PathSign.CHAIN_COLOR, 2.0)
 		draw_line(Vector2(14, -14), Vector2(-14, 14), PathSign.CHAIN_COLOR, 2.0)
 		return
-	draw_string(ThemeDB.fallback_font, Vector2(-5, 6), _icon, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+	if _icon == RoomRules.ARCADE_ICON:
+		ArcadeTable.draw_die(self, Vector2.ZERO, 16.0)
+	else:
+		draw_string(ThemeDB.fallback_font, Vector2(-5, 6), _icon, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
 	if requires_key and not locked and _near:
 		var prompt := KeyBindings.with_key("interact", KEY_PROMPT) if _player_has_key() else NO_KEY_PROMPT
 		var width := ThemeDB.fallback_font.get_string_size(prompt, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x

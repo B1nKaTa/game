@@ -146,7 +146,7 @@ func test_every_room_type_a_floor_uses_is_covered() -> void:
 	for layout in _pool():
 		types[layout.room_type] = true
 	for room_type: String in RoomLayout.REQUIRED:
-		if not room_type in [RoomLayout.TYPE_CROSSROADS, RoomLayout.TYPE_LANDING]:
+		if not room_type in [RoomLayout.TYPE_CROSSROADS, RoomLayout.TYPE_LANDING, RoomLayout.TYPE_ARCADE]:
 			assert_true(types.has(room_type), room_type)
 
 
