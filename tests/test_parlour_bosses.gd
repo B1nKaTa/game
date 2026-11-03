@@ -250,6 +250,16 @@ func test_without_pipes_there_is_no_crescendo() -> void:
 	assert_true(seen.has(FuneralDirectorBehavior.Attack.CRESCENDO), "with pipes it comes")
 
 
+func test_the_safe_spot_stays_marked_until_the_last_ring_has_passed() -> void:
+	var longest := FuneralDirectorBehavior.CRESCENDO_GLOW + 11 * FuneralDirectorBehavior.CRESCENDO_STAGGER
+	var slowest_ring := PipeRing.GROW_TIME * FuneralDirectorBehavior.CRESCENDO_REACH / PipeRing.REACH
+	assert_true(FuneralDirectorBehavior.safe_mark_time(longest) >= longest + slowest_ring)
+	var mark := SafeSpotMark.new()
+	mark.setup(FuneralDirectorBehavior.safe_mark_time(longest))
+	assert_near(mark.time_left(), FuneralDirectorBehavior.safe_mark_time(longest))
+	mark.free()
+
+
 func test_phase_two_chains_the_coffin_charge() -> void:
 	for attack in [CASKET, PROCESSION, SPRAY, CRESCENDO]:
 		assert_eq(FuneralDirectorBehavior.followup(attack, true), CHARGE, "after %d" % attack)

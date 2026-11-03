@@ -79,6 +79,7 @@ var _aim := Vector2.RIGHT
 var _gap := -1
 var _across := Vector2.RIGHT
 var _shell: CoffinShell
+var _safe_mark: SafeSpotMark
 var _rng := RandomNumberGenerator.new()
 
 
@@ -197,6 +198,11 @@ static func _clear_of_pipes(spot: Vector2, pipes: Array[Vector2]) -> bool:
 
 
 # How far each pipe's ring reaches: just short of the safe spot, and never past CRESCENDO_REACH.
+# How long the safe spot stays marked: through the last pipe's glow and until its ring has grown out.
+static func safe_mark_time(longest_glow: float) -> float:
+	return longest_glow + PipeRing.GROW_TIME * CRESCENDO_REACH / PipeRing.REACH
+
+
 static func crescendo_reaches(pipes: Array[Vector2], safe: Vector2) -> Array[float]:
 	var reaches: Array[float] = []
 	for pipe in pipes:
@@ -240,6 +246,8 @@ func tick(enemy: Enemy, delta: float) -> void:
 func on_killed(enemy: Enemy) -> void:
 	for pipe in _pipes(enemy):
 		pipe.cancel_force()
+	if is_instance_valid(_safe_mark):
+		_safe_mark.queue_free()
 
 
 func _climb_in(enemy: Enemy) -> void:
@@ -357,4 +365,8 @@ func _play_crescendo(enemy: Enemy) -> float:
 		else:
 			pipes[i].hold(glow + PipeRing.GROW_TIME * 2.0)
 		longest = maxf(longest, glow)
+	_safe_mark = SafeSpotMark.new()
+	_safe_mark.setup(safe_mark_time(longest))
+	enemy.get_parent().add_child(_safe_mark)
+	_safe_mark.global_position = safe
 	return longest
