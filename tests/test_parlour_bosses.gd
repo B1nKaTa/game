@@ -35,7 +35,7 @@ func test_the_eulogy_drops_six_words_evenly_along_a_line_through_him() -> void:
 func test_the_eulogy_follows_the_plan() -> void:
 	assert_eq(Reverend.WORDS, 6)
 	assert_near(Reverend.WORD_STEP, 0.18)
-	assert_near(Reverend.WORD_WARNING, 0.8)
+	assert_near(Reverend.WORD_WARNING, 0.7)
 
 
 func test_every_point_of_the_plates_flight_stays_in_the_room() -> void:

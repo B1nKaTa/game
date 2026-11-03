@@ -4,15 +4,15 @@ extends EnemyBehavior
 # The Reverend, Officiant of Last Words. His eulogy drops words one after another onto warned spots in
 # a line from him through Grandpa, his collection plate flies out down a warned lane and comes back
 # along a marked curve, and he calls Weeping Mourners to the service on marked spots.
-const EULOGY_WINDUP := 0.6
+const EULOGY_WINDUP := 0.5
 const WORDS := 6
 const WORD_STEP := 0.18
-const WORD_WARNING := 0.8
+const WORD_WARNING := 0.7
 const WORD_RADIUS := 22.0
 # The line runs this far past Grandpa, and never shorter than EULOGY_MIN.
 const EULOGY_PAST := 60.0
 const EULOGY_MIN := 140.0
-const PLATE_WINDUP := 0.7
+const PLATE_WINDUP := 0.55
 const PLATE_LENGTH := 180.0
 const PLATE_BEND := 70.0
 const PLATE_LANE_WIDTH := 24.0
