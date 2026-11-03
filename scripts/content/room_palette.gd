@@ -50,6 +50,10 @@ extends Resource
 @export var stump_top := Color("9a8460")
 @export var moss := Color("4f6f3c")
 @export var sapling := Color("3a2f25")
+# A mopped floor shows as a pale sheen with bright streaks, beside a yellow caution sign.
+@export var wet := Color(0.72, 0.88, 1.0, 0.3)
+@export var wet_shine := Color(1.0, 1.0, 1.0, 0.55)
+@export var caution := Color("f2c230")
 # How many free floor cells, as a fraction, get a piece of scatter, and how much each
 # kind is wanted compared with the others. A kind left out of the weights never appears.
 @export var decor_density := 0.07

@@ -125,6 +125,13 @@ func is_dead() -> bool:
 	return _dead
 
 
+# Only something walking on the floor slides on a wet one. Ghosts and mounds don't.
+func is_on_wet() -> bool:
+	if def.ignores_walls or submerged or not is_inside_tree():
+		return false
+	return WetFloor.is_wet_at(get_tree(), global_position)
+
+
 # Where Grandpa actually stands, since a ground attack is about his feet.
 func target_ground() -> Vector2:
 	return target.feet().global_position if target.has_method("feet") else target.global_position

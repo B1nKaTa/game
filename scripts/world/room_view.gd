@@ -283,6 +283,15 @@ func _create_props(palette: RoomPalette) -> void:
 		hole.palette = palette
 		hole.position = RoomBackdrop.cell_center(cell)
 		add_child(hole)
+	for cell in layout.cells_of(RoomLayout.SYMBOL_WET):
+		var wet := WetFloor.new()
+		wet.palette = palette
+		wet.position = RoomBackdrop.cell_center(cell)
+		add_child(wet)
+	for cell in WetFloor.sign_cells(layout):
+		var caution := WetSign.new()
+		caution.palette = palette
+		_place_prop(caution, cell)
 
 
 func _place_prop(prop: BreakableBlock, cell: Vector2i) -> void:

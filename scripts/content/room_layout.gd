@@ -54,7 +54,10 @@ const SYMBOL_TORCH := "t"
 const SYMBOL_LANTERN := "l"
 const SYMBOL_STUMP := "m"
 const DECOR_SYMBOLS := "gnwuktlm"
-const ALLOWED := "#.EIHTBXCSPROQVZAYgnwuktlm"
+# A freshly mopped cell: everyone walks on it, Grandpa and chargers slide. Kept well clear of doors.
+const SYMBOL_WET := "W"
+const WET_DOOR_CLEARANCE := 2
+const ALLOWED := "#.EIHTBXCSPROQVZAYgnwuktlmW"
 # Nothing can walk through these, so nothing may be dropped or summoned on them.
 const SOLID_SYMBOLS := "#lXOQVPAY"
 # Routes may not need a hole or a wall, and may not need a bomb for a crate or a rock.
@@ -134,6 +137,8 @@ func validate() -> PackedStringArray:
 				errors.append("needs a bomb to reach '%s' at %s" % [symbol, str(cell)])
 			if not (SYMBOL_WALL + SYMBOL_FLOOR + SYMBOL_BLOCK + DECOR_SYMBOLS).contains(symbol):
 				errors.append_array(_door_clearance_errors(cell, symbol))
+			if symbol == SYMBOL_WET and _within_of_a_door(cell, WET_DOOR_CLEARANCE):
+				errors.append("wet floor at %s is within %d cells of a door" % [str(cell), WET_DOOR_CLEARANCE])
 	for side in SIDES:
 		if not open.has(door_cell(side)):
 			errors.append("needs a bomb to reach the door at %s" % str(door_cell(side)))
@@ -183,9 +188,17 @@ func _nearest_open_spot(wanted: Vector2i, taken: Array[Vector2i]) -> Vector2i:
 
 
 func _touches_a_door(cell: Vector2i) -> bool:
+	return _within_of_a_door(cell, 1)
+
+
+func touches_a_door(cell: Vector2i) -> bool:
+	return _within_of_a_door(cell, 1)
+
+
+func _within_of_a_door(cell: Vector2i, cells: int) -> bool:
 	for side in SIDES:
 		var offset := cell - door_cell(side)
-		if absi(offset.x) <= 1 and absi(offset.y) <= 1:
+		if absi(offset.x) <= cells and absi(offset.y) <= cells:
 			return true
 	return false
 

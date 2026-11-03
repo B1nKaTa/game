@@ -27,12 +27,16 @@ const CROSSHAIR_GAP := 3.0
 const CROSSHAIR_REACH := 8.0
 const CROSSHAIR_COLOR := Color(1.0, 0.9, 0.55, 0.95)
 const GHOST_EVERY := 0.05
+const SLOW_COLOR := Color(0.62, 0.86, 1.0, 0.9)
 
 var run: RunState
 var show_crosshair := false
 # Set by the full-loop check and balance probes, which have no mouse to aim with.
 var aim_source := Callable()
 var _ghost_left := 0.0
+# True while his feet stand on a wet floor, where he slides.
+var on_wet := false
+var _slow := SlowEffect.new()
 var _combo := CaneCombo.new()
 var _charge := ChargeSwing.new()
 var _cane := CaneThrow.new()
@@ -96,10 +100,25 @@ func take_hit(amount: int) -> bool:
 	return landed
 
 
+# A sedative takes some of his speed for a while. The strongest slow running counts.
+func slow(fraction: float, seconds: float) -> void:
+	_slow.apply(fraction, seconds)
+	queue_redraw()
+
+
+func slow_factor() -> float:
+	return _slow.speed_factor()
+
+
+func is_slowed() -> bool:
+	return _slow.is_active()
+
+
 func _physics_process(delta: float) -> void:
 	_combo.tick(delta)
 	_charge.tick(delta)
 	_dodge.tick(delta)
+	_slow.tick(delta)
 	run.health.tick(delta)
 	run.tick_buff(delta)
 	_advance_swing(delta)
@@ -255,13 +274,16 @@ func _handle_movement() -> void:
 	var input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	if Input.is_action_just_pressed("dodge") and _dodge.try_start(run.stats.dodge_cooldown):
 		_dodge_direction = input.normalized() if input != Vector2.ZERO else _aim
+	on_wet = _feet != null and WetFloor.is_wet_at(get_tree() if is_inside_tree() else null, _feet.global_position)
 	if _dodge.is_active():
+		# A dodge goes where it is aimed, wet floor or not.
 		velocity = _dodge_direction * DODGE_SPEED
 	else:
-		var speed := run.move_speed()
+		var speed := run.move_speed() * _slow.speed_factor()
 		if _charge.is_charging():
 			speed *= CHARGE_SLOWDOWN
-		velocity = input * speed
+		# What he carries onto the wet is never more than a walk, so a dodge does not fling him.
+		velocity = SlideRule.velocity(velocity.limit_length(speed), input * speed, on_wet, get_physics_process_delta_time())
 		if not _visual.is_playing_once():
 			_visual.play("walk" if input != Vector2.ZERO else "idle")
 	move_and_slide()
@@ -285,3 +307,16 @@ func _draw() -> void:
 		draw_arc(Vector2.ZERO, _active_swing.reach, center - half_angle, center + half_angle, 12, Color("ffe58a"), 3.0)
 	if _charge.is_charging():
 		draw_arc(Vector2.ZERO, 22.0, -PI / 2.0, -PI / 2.0 + TAU * _charge.progress(), 24, Color("f4c542"), 2.0)
+	if _slow.is_active():
+		_draw_slowed()
+
+
+# A pale blue ring at his feet and drowsy bubbles over his head while a sedative holds him.
+func _draw_slowed() -> void:
+	draw_set_transform(FEET_OFFSET, 0.0, Vector2(1.0, 0.45))
+	draw_arc(Vector2.ZERO, 13.0, 0.0, TAU, 20, SLOW_COLOR, 2.0)
+	draw_set_transform(Vector2.ZERO)
+	var bob := sin(Time.get_ticks_msec() / 180.0) * 1.5
+	for i in 3:
+		var at := Vector2(6.0 + i * 4.0, -24.0 - i * 5.0 + bob)
+		draw_arc(at, 1.5 + i * 0.7, 0.0, TAU, 10, SLOW_COLOR, 1.0)
