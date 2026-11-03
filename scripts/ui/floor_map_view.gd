@@ -15,6 +15,7 @@ const ROOM_COLORS := {
 	RoomLayout.TYPE_SECRET: Color("ece9e0"),
 	RoomLayout.TYPE_VAULT: Color("5fd8ff"),
 	RoomLayout.TYPE_CROSSROADS: Color("c9b98a"),
+	RoomLayout.TYPE_LANDING: Color("c9b98a"),
 }
 const PANEL_COLOR := Color(0.09, 0.07, 0.11, 0.65)
 const BIG_PANEL_COLOR := Color(0.09, 0.07, 0.11, 0.95)

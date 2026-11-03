@@ -210,3 +210,68 @@ func test_skulls_match_the_danger_of_the_path() -> void:
 	var none := FloorDef.new()
 	none.danger = 0
 	assert_eq(PathSign.skulls_for(none), 1, "a sign always shows at least one")
+
+
+# --- the landing below a first floor ---
+
+func _landing() -> RoomLayout:
+	return load("res://data/rooms/landing/landing.tres")
+
+
+func test_the_landing_is_a_small_valid_room_with_nothing_to_fight_or_find() -> void:
+	var layout := _landing()
+	assert_eq(layout.room_type, RoomLayout.TYPE_LANDING)
+	assert_eq(layout.validate().size(), 0, str(layout.validate()))
+	assert_eq(layout.size_class(), RoomLayout.SIZE_SMALL)
+	for symbol in "EBIHTCSPRXOQVZAY":
+		assert_eq(layout.cells_of(symbol).size(), 0, "'%s' has no place here" % symbol)
+
+
+func test_the_landing_floor_is_named_floor_2_and_holds_no_enemies() -> void:
+	var def: FloorDef = load("res://data/floors/landing.tres")
+	assert_eq(def.display_name, "Floor 2")
+	assert_eq(def.depth, 2)
+	assert_eq(def.enemies.size(), 0)
+	assert_eq(EnemyPlan.plan(_landing(), def, 0, RandomNumberGenerator.new()).size(), 0)
+
+
+func test_a_landing_map_leads_from_the_landing_to_a_crossroads() -> void:
+	var map := FloorMap.with_landing_and_crossroads(_landing(), _layout())
+	assert_eq(map.rooms.size(), 2)
+	var landing := map.room(map.start_id)
+	assert_eq(landing.room_type, RoomLayout.TYPE_LANDING)
+	assert_eq(landing.doors.size(), 1, "the landing has one way on")
+	var crossroads := map.room(landing.doors.values()[0])
+	assert_eq(crossroads.room_type, RoomLayout.TYPE_CROSSROADS)
+	assert_eq(crossroads.side_towards(landing.id), -landing.side_towards(crossroads.id), "linked both ways")
+	assert_true(landing.side_towards(crossroads.id) != Vector2i.ZERO)
+	var arrival := FloorProgress.new(map).arrival_cell(map.start_id, -1)
+	assert_true(arrival != _landing().door_cell(landing.side_towards(crossroads.id)), "he arrives away from the way on")
+	assert_eq(FloorProgress.new(map).arrival_cell(crossroads.id, landing.id), _layout().door_cell(RoomLayout.SOUTH), "he enters the Crossroads from the south, between its two exits")
+
+
+func test_every_second_floor_path_keeps_a_free_cell_beside_its_start() -> void:
+	for path in ["res://data/floors/sunset_shores.tres", "res://data/floors/furnace_works.tres"]:
+		for seed_value in 100:
+			var map := _floor(seed_value, path)
+			var room := map.attach_crossroads(_layout(), RoomLayout.EAST)
+			assert_true(room != null, "%s seed %d" % [path, seed_value])
+
+
+func test_the_second_crossroads_paths_and_their_rules() -> void:
+	var sunset: FloorDef = load("res://data/floors/sunset_shores.tres")
+	var furnace: FloorDef = load("res://data/floors/furnace_works.tres")
+	assert_eq(sunset.id, "sunset_shores")
+	assert_eq(sunset.display_name, "Sunset Shores Eternal Care")
+	assert_eq(furnace.id, "furnace_works")
+	assert_eq(furnace.display_name, "The Furnace Works")
+	assert_eq(sunset.depth, 2)
+	assert_eq(furnace.depth, 2)
+	assert_true(furnace.danger > sunset.danger)
+	assert_false(furnace.closed_hint.is_empty())
+	var data := ProgressData.new()
+	assert_true(sunset.is_open_for(data), "Sunset Shores is always open")
+	data.record_floor_cleared(1, "floor_1")
+	assert_false(furnace.is_open_for(data), "a first-floor clear does not open the Furnace Works")
+	data.record_floor_cleared(2, "sunset_shores")
+	assert_true(furnace.is_open_for(data))

@@ -32,6 +32,19 @@ static func with_only_crossroads(layout: RoomLayout) -> FloorMap:
 	return map
 
 
+# The foot of the stairwell: the landing he starts on, and north of it the next Crossroads.
+static func with_landing_and_crossroads(landing_layout: RoomLayout, crossroads_layout: RoomLayout) -> FloorMap:
+	var map := FloorMap.new()
+	var landing := FloorRoom.new()
+	landing.id = 0
+	landing.room_type = RoomLayout.TYPE_LANDING
+	landing.layout = landing_layout
+	map.rooms.append(landing)
+	map.start_id = landing.id
+	map.join(landing, map._add_crossroads(crossroads_layout, Vector2i.UP))
+	return map
+
+
 # The room he left a built floor from, for the maps: beside the start room on the side he walked in
 # from, or on a free side when a room stands there. It leads in and nothing leads back to it.
 func attach_crossroads(layout: RoomLayout, wanted_side: Vector2i) -> FloorRoom:

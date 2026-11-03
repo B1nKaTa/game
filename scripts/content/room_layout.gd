@@ -14,6 +14,8 @@ const TYPE_SECRET := "secret"
 const TYPE_VAULT := "vault"
 # The small room every run starts in, with one exit per path. It holds nothing to fight or find.
 const TYPE_CROSSROADS := "crossroads"
+# The safe room at the foot of the stairwell between floors, with one way on to the next Crossroads.
+const TYPE_LANDING := "landing"
 const DEFAULT_SIZE := Vector2i(20, 11)
 const NORTH := Vector2i.UP
 const SOUTH := Vector2i.DOWN
@@ -77,6 +79,7 @@ const REQUIRED := {
 	TYPE_SECRET: {"T": 2},
 	TYPE_VAULT: {"I": 3, "T": 3},
 	TYPE_CROSSROADS: {},
+	TYPE_LANDING: {},
 }
 
 @export var room_type: String = ""
