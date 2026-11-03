@@ -49,7 +49,8 @@ func tick(enemy: Enemy, delta: float) -> void:
 		_direction = enemy.direction_to_target()
 		enemy.facing = _direction
 		_telegraph.start(WINDUP)
-		enemy.set_warning(_telegraph, WARNING_RADIUS)
+		# It wakes right beside him, so its warning shows for the whole windup, whatever his stats.
+		enemy.set_warning(_telegraph, WARNING_RADIUS, true)
 		enemy.set_warning_lane(_direction, lane_length(), LANE_WIDTH, false)
 		return
 	enemy.desired_velocity = enemy.chase_direction() * enemy.def.speed

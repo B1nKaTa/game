@@ -188,6 +188,18 @@ func test_floors_that_roll_mimics_name_them_and_one_naming_none_rolls_none() -> 
 	assert_near(float(unnamed.chest_odds()[ChestRules.MIMIC]), 0.0)
 
 
+func test_a_mimic_shows_its_whole_warning_even_standing_on_him() -> void:
+	var target := Node2D.new()
+	var mimic := Enemy.new()
+	mimic.setup(load("res://data/enemies/mimic.tres"), target, 0.5)
+	mimic._behavior.tick(mimic, MimicBehavior.FIRST_LUNGE + 0.01)
+	assert_true(mimic._warning != null, "it starts a lunge right on top of him")
+	assert_near(mimic._warning_share(), 1.0, "the whole windup, not his stats' share")
+	assert_true(mimic._warning.shows_warning(mimic._warning_share()), "from its very first moment")
+	mimic.free()
+	target.free()
+
+
 func test_no_regular_enemy_drops_a_slip() -> void:
 	for path: String in FLOOR_ONE + FLOOR_TWO:
 		var def: FloorDef = load(path)
