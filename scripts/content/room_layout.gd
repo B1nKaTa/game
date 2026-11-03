@@ -51,6 +51,12 @@ const SYMBOL_TROLLEY := "F"
 const SYMBOL_ARMCHAIR := "K"
 const SYMBOL_BED := "D"
 const SYMBOL_VASE := "f"
+# Boiler hall stock. Coal sacks and crates break like barrels, a coal heap like a rock, and a pipe
+# valve blocks nothing and breaks to anything, like a vase.
+const SYMBOL_COAL_SACK := "L"
+const SYMBOL_CRATE := "R"
+const SYMBOL_COAL_HEAP := "M"
+const SYMBOL_PIPE_VALVE := "p"
 # Decor blocks nothing. Lanterns hang in the border wall, the rest lie on the floor.
 const SYMBOL_GRASS := "g"
 const SYMBOL_BONES := "n"
@@ -60,20 +66,20 @@ const SYMBOL_CRACK := "k"
 const SYMBOL_TORCH := "t"
 const SYMBOL_LANTERN := "l"
 const SYMBOL_STUMP := "m"
-const DECOR_SYMBOLS := "gnwuktlmf"
+const DECOR_SYMBOLS := "gnwuktlmfp"
 # A freshly mopped cell: everyone walks on it, Grandpa and chargers slide. Kept well clear of doors.
 const SYMBOL_WET := "W"
 const WET_DOOR_CLEARANCE := 2
 # A floor vent: walkable, but it flares on a rhythm and hurts whoever stands on it. Kept clear of doors too.
 const SYMBOL_VENT := "U"
 const VENT_DOOR_CLEARANCE := 2
-const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfU"
+const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMp"
 # Nothing can walk through these, so nothing may be dropped or summoned on them.
-const SOLID_SYMBOLS := "#lXOQVPAYJFKD"
+const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRM"
 # Routes may not need a hole or a wall, and may not need a bomb for a crate or a rock.
 const WALL_LIKE := "#l"
 const WALLS := "#lV"
-const WALLS_AND_BOMB_ONLY := "#lVXOAYKD"
+const WALLS_AND_BOMB_ONLY := "#lVXOAYKDM"
 const MUST_REACH_WITHOUT_BREAKING := "EBIHSP"
 # A vault lays this many labeled pickups out in the open, this many cells apart so names never overlap.
 const VAULT_EXTRAS := 3

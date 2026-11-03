@@ -280,13 +280,23 @@ func _create_props(palette: RoomPalette) -> void:
 			furniture.hides_coin = RoomRules.furniture_hides_coin(_rng.randf())
 			_place_prop(furniture, cell)
 			furniture.broken.connect(_on_rock_broken.bind(furniture.hides_coin, cell))
-	for symbol: String in [RoomLayout.SYMBOL_BARREL, RoomLayout.SYMBOL_WHEELCHAIR, RoomLayout.SYMBOL_TROLLEY]:
+	for cell in layout.cells_of(RoomLayout.SYMBOL_COAL_HEAP):
+		var heap := CoalHeap.new()
+		heap.palette = palette
+		heap.hides_coin = RoomRules.coal_heap_hides_coin(_rng.randf())
+		_place_prop(heap, cell)
+		heap.broken.connect(_on_rock_broken.bind(heap.hides_coin, cell))
+	for symbol: String in [RoomLayout.SYMBOL_BARREL, RoomLayout.SYMBOL_WHEELCHAIR, RoomLayout.SYMBOL_TROLLEY, RoomLayout.SYMBOL_COAL_SACK, RoomLayout.SYMBOL_CRATE]:
 		for cell in layout.cells_of(symbol):
 			var barrel: Barrel = Barrel.new()
 			if symbol == RoomLayout.SYMBOL_WHEELCHAIR:
 				barrel = Wheelchair.new()
 			elif symbol == RoomLayout.SYMBOL_TROLLEY:
 				barrel = FoodTrolley.new()
+			elif symbol == RoomLayout.SYMBOL_COAL_SACK:
+				barrel = CoalSack.new()
+			elif symbol == RoomLayout.SYMBOL_CRATE:
+				barrel = FurnaceCrate.new()
 			barrel.palette = palette
 			_place_prop(barrel, cell)
 			barrel.broken.connect(_on_barrel_broken.bind(cell))
@@ -295,6 +305,11 @@ func _create_props(palette: RoomPalette) -> void:
 		vase.palette = palette
 		_place_prop(vase, cell)
 		vase.broken.connect(_on_vase_broken.bind(cell))
+	for cell in layout.cells_of(RoomLayout.SYMBOL_PIPE_VALVE):
+		var stub := PipeValve.new()
+		stub.palette = palette
+		_place_prop(stub, cell)
+		stub.broken.connect(_on_vase_broken.bind(cell))
 	for cell in layout.cells_of(RoomLayout.SYMBOL_PILE):
 		var pile := BonePile.new()
 		pile.palette = palette

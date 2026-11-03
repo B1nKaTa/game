@@ -66,6 +66,13 @@ func _draw() -> void:
 			if RoomLayout.WALL_LIKE.contains(_rows[y][x]):
 				draw_rect(tile, _palette.wall)
 				draw_line(tile.position + Vector2(0, TILE / 2.0), tile.position + Vector2(TILE, TILE / 2.0), _palette.wall_line, 1.0)
+				# Brick walls: three more courses, each row of bricks set half a brick along.
+				if _palette.wall_pattern == 1:
+					for course in 4:
+						var top := tile.position.y + course * TILE / 4.0
+						draw_line(Vector2(tile.position.x, top), Vector2(tile.end.x, top), _palette.brick_line, 1.0)
+						var joint := tile.position.x + (TILE / 4.0 if course % 2 == 0 else TILE * 0.75)
+						draw_line(Vector2(joint, top), Vector2(joint, top + TILE / 4.0), _palette.brick_line, 1.0)
 				continue
 			draw_rect(tile, _palette.floor_color(Vector2i(x, y), _seed))
 			# A patterned floor lays carpet on its middle tone, woven and seamless, and tiles the rest.
@@ -73,6 +80,14 @@ func _draw() -> void:
 				var mid := tile.get_center()
 				draw_colored_polygon(PackedVector2Array([mid + Vector2(0, -6), mid + Vector2(6, 0), mid + Vector2(0, 6), mid + Vector2(-6, 0)]), _palette.carpet_motif)
 				draw_rect(Rect2(tile.position + Vector2(1, 1), Vector2(2, 2)), _palette.carpet_motif)
+				continue
+			# Iron grating: dark slots across the plate, with a bolt in each corner.
+			if _palette.floor_pattern == 2 and _palette.patch_of(Vector2i(x, y), _seed) == 1:
+				for slot in 4:
+					draw_rect(Rect2(tile.position + Vector2(4, 4 + slot * 7), Vector2(TILE - 8, 3)), _palette.carpet_motif)
+				for corner in [Vector2(2, 2), Vector2(TILE - 4, 2), Vector2(2, TILE - 4), Vector2(TILE - 4, TILE - 4)]:
+					draw_rect(Rect2(tile.position + corner, Vector2(2, 2)), _palette.speckle)
+				draw_rect(tile, _palette.grout, false, 1.0)
 				continue
 			draw_line(tile.position, tile.position + Vector2(TILE, 0), _palette.grout, 1.0)
 			draw_line(tile.position, tile.position + Vector2(0, TILE), _palette.grout, 1.0)

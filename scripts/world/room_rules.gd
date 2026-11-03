@@ -38,6 +38,8 @@ const ROCK_COIN_CHANCE := 0.3
 const GRAVESTONE_COIN_CHANCE := 0.1
 # A care home has many armchairs and beds, so each hides a coin about as rarely as a gravestone.
 const FURNITURE_COIN_CHANCE := 0.1
+# A boiler hall is full of coal heaps, so each hides a coin as rarely.
+const COAL_HEAP_COIN_CHANCE := 0.1
 # A small potion fills the potion slot. Its effect lives in the potion data, so it heals as that says.
 const POTION_NAME := "Small Potion"
 const SMALL_POTION_ID := "small_potion"
@@ -123,3 +125,7 @@ static func pick_recipe(all: Array[ItemDef], found: Dictionary, run: RunState, r
 
 static func furniture_hides_coin(roll: float) -> bool:
 	return roll < FURNITURE_COIN_CHANCE
+
+
+static func coal_heap_hides_coin(roll: float) -> bool:
+	return roll < COAL_HEAP_COIN_CHANCE

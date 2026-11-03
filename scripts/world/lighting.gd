@@ -54,15 +54,28 @@ static func add_room_mood(parent: Node, room_cells: Vector2i, palette: RoomPalet
 		var light := make_light(palette.torch, 1.0, 1.6)
 		light.position = RoomBackdrop.cell_center(cell)
 		parent.add_child(light)
+		add_flicker(light, palette.flicker)
 
 
 # Torches and lanterns from the layout or the scatter give real pools of warm light.
 static func add_decor_light(parent: Node, kind: String, at: Vector2, palette: RoomPalette) -> PointLight2D:
 	var is_torch := kind == RoomDecor.TORCH
 	var light := make_light(palette.torch if is_torch else palette.lantern_light, 1.0 if is_torch else 0.8, 1.4 if is_torch else 1.1)
+	if kind == RoomDecor.FURNACE:
+		light = make_light(palette.furnace_fire, 1.0, 1.6)
 	light.position = at
 	parent.add_child(light)
+	add_flicker(light, palette.flicker)
 	return light
+
+
+# A floor of open fires gives every flame a slight, uneven wobble. Nothing wobbles at 0.
+static func add_flicker(light: PointLight2D, amount: float) -> void:
+	if amount <= 0.0:
+		return
+	var wobble := LightFlicker.new()
+	wobble.amount = amount
+	light.add_child(wobble)
 
 
 # Faint wide lights spread through a room, so no part of a big room is pitch dark

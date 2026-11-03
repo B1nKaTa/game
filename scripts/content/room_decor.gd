@@ -15,6 +15,11 @@ const MOSS := "moss"
 const SAPLING := "sapling"
 const PLANT := "plant"
 const IV_STAND := "iv_stand"
+const GAUGE := "gauge"
+const PIPE := "pipe"
+const COAL_DUST := "coal_dust"
+# A furnace mouth set in the wall, like a lantern, glowing orange.
+const FURNACE := "furnace"
 const SYMBOL_KINDS := {
 	RoomLayout.SYMBOL_GRASS: GRASS,
 	RoomLayout.SYMBOL_BONES: BONES,
@@ -40,7 +45,7 @@ static func noise(cell: Vector2i, seed_value: int) -> float:
 
 
 static func is_light(kind: String) -> bool:
-	return kind == TORCH or kind == LANTERN
+	return kind == TORCH or kind == LANTERN or kind == FURNACE
 
 
 # Every piece of decor in a room: {kind, cell, variant, offset}. Lanterns sit on wall cells.
@@ -76,7 +81,7 @@ static func plan(layout: RoomLayout, palette: RoomPalette, seed_value: int) -> A
 		if cell == NO_CELL:
 			continue
 		used[cell] = true
-		items.append(_item(kind, cell, rng, kind != LANTERN))
+		items.append(_item(kind, cell, rng, kind != LANTERN and kind != FURNACE))
 		wanted -= 1
 		if is_light(kind):
 			lights += 1
@@ -111,7 +116,7 @@ static func _pick_kind(palette: RoomPalette, rng: RandomNumberGenerator, no_more
 
 # A cell for the kind, or NO_CELL when it finds none this time.
 static func _pick_cell(layout: RoomLayout, kind: String, free_cells: Array[Vector2i], used: Dictionary, rng: RandomNumberGenerator) -> Vector2i:
-	if kind == LANTERN:
+	if kind == LANTERN or kind == FURNACE:
 		return _pick_lantern_cell(layout, used, rng)
 	if free_cells.is_empty():
 		return NO_CELL

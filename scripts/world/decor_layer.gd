@@ -96,3 +96,26 @@ func _draw_placeholder(kind: String, variant: int, at: Vector2) -> void:
 			draw_line(Vector2(-4, -12), Vector2(4, -12), p.iv_stand, 1.0)
 			draw_rect(Rect2(1, -11, 5, 7), p.iv_bag)
 			draw_line(Vector2(3.5, -4), Vector2(3.5, 2), p.iv_bag, 1.0)
+		RoomDecor.GAUGE:
+			draw_line(Vector2(0, 10), Vector2(0, 0), p.pipe, 2.0)
+			draw_circle(Vector2(0, -4), 6.0, p.pipe.darkened(0.3))
+			draw_circle(Vector2(0, -4), 5.0, p.gauge)
+			draw_line(Vector2(0, -4), Vector2.from_angle(-2.4 + variant * 0.6) * 4.0 + Vector2(0, -4), p.gauge_needle, 1.0)
+		RoomDecor.PIPE:
+			var vertical := variant % 2 == 0
+			var run := Vector2(0, 12) if vertical else Vector2(12, 0)
+			draw_line(-run, run, p.pipe.darkened(0.35), 6.0)
+			draw_line(-run, run, p.pipe, 4.0)
+			draw_rect(Rect2(-run * 0.5 - Vector2(3, 3), Vector2(6, 6)), p.pipe.darkened(0.2))
+		RoomDecor.COAL_DUST:
+			var radius := 8.0 + variant * 1.5
+			draw_set_transform(at, 0.0, Vector2(1.0, 0.6))
+			draw_circle(Vector2.ZERO, radius, p.coal_dust)
+			draw_circle(Vector2(radius * 0.4, 0), 2.0, p.coal)
+		RoomDecor.FURNACE:
+			draw_rect(Rect2(-half + 1, -half + 1, half * 2.0 - 2, half * 2.0 - 2), p.furnace)
+			draw_rect(Rect2(-9, -6, 18, 14), p.furnace_fire)
+			draw_rect(Rect2(-6, -2, 12, 8), p.furnace_fire.lightened(0.4))
+			for x in [-6.0, 0.0, 6.0]:
+				draw_line(Vector2(x, -6), Vector2(x, 8), p.furnace, 2.0)
+			draw_rect(Rect2(-half + 1, -half + 1, half * 2.0 - 2, half * 2.0 - 2), Color.BLACK, false, 1.0)

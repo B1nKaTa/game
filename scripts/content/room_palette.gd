@@ -47,6 +47,14 @@ extends Resource
 @export var armchair_edge := Color("4a2532")
 @export var bed := Color("9aa3ad")
 @export var bed_sheet := Color("b9d4e6")
+# Boiler hall stock. Coal sacks and crates break like barrels, coal heaps like rocks, and a pipe
+# valve blocks nothing and breaks to anything, like grass.
+@export var sack := Color("7a6a52")
+@export var coal := Color("2a2524")
+@export var coal_edge := Color("0e0c0c")
+@export var coal_shine := Color("6a6268")
+@export var pipe := Color("7c7f86")
+@export var valve_wheel := Color("c8463c")
 @export_group("Decor")
 @export var grass := Color("557f48")
 @export var grass_cut := Color("3f5f38")
@@ -71,9 +79,20 @@ extends Resource
 @export var plant_leaf := Color("5f9a52")
 @export var iv_stand := Color("c7ccd4")
 @export var iv_bag := Color(0.75, 0.9, 1.0, 0.85)
-# 1 draws a small woven motif on the carpet patches of the floor, 0 leaves the floor plain.
+# 1 draws a small woven motif on the carpet patches of the floor, 2 lays iron grating on them, and
+# 0 leaves the floor plain.
 @export var floor_pattern := 0
 @export var carpet_motif := Color(1.0, 1.0, 1.0, 0.12)
+# 1 draws courses of brick on the walls, 0 a single line.
+@export var wall_pattern := 0
+@export var brick_line := Color(0.0, 0.0, 0.0, 0.3)
+# How much every torch and lantern's light wobbles, as a share of its strength. 0 keeps it steady.
+@export var flicker := 0.0
+@export var gauge := Color("b8b2a4")
+@export var gauge_needle := Color("c8463c")
+@export var furnace := Color("2e2826")
+@export var furnace_fire := Color("ff9a3a")
+@export var coal_dust := Color(0.05, 0.04, 0.04, 0.35)
 # How many free floor cells, as a fraction, get a piece of scatter, and how much each
 # kind is wanted compared with the others. A kind left out of the weights never appears.
 @export var decor_density := 0.07
