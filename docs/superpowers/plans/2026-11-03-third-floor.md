@@ -502,7 +502,7 @@ func test_the_third_landing_names_floor_3() -> void:
 	assert_eq(landing.depth, 3)
 ```
 
-- [ ] **Step 2: When testing is allowed, run the tests to make sure they fail, then implement.** Implemented; the tests are written but not yet run.
+- [x] **Step 2: When testing is allowed, run the tests to make sure they fail, then implement.** Implemented; the tests are written but not yet run.
   - **`_go_down`:** load `LANDINGS_BY_DEPTH[_depth]` after raising `_depth`. Everything else stays: the map, the 2-pill heal and its notice.
   - **`_continue_after_floor`:** needs no change, since it already compares against `LAST_DEPTH`.
   - **Saves:** `ProgressData` needs no change, since `deep_clears` already keeps any depth.
@@ -511,7 +511,7 @@ func test_the_third_landing_names_floor_3() -> void:
   - **The run's end:** a floor-3 boss ends the run with "FLOOR CLEARED".
   - **Paths:** the second pass clears the Mall.
   - **Timeout:** raise `TIMEOUT` and the timeout in `tools/smoke.ps1` to fit the longer run, and report the new run time.
-- [ ] **Step 4: When testing is allowed, run the tests and 3 full loops.**
+- [x] **Step 4: When testing is allowed, run the tests and 3 full loops.**
 - [x] **Step 5: Commit**, one commit each for the floor defs, the scene change and the smoke driver. Made as one commit for the task, as the build brief asked.
 
 ### Task 7: The games' rules
@@ -607,7 +607,7 @@ func test_each_game_returns_about_ninety_percent() -> void:
 - **Slot:** it counts an item at 60 Pension and a full heal at 30.
 - **Tuning:** tune the reel weights and, if needed, the poker table until all three land between 85% and 95%.
 
-- [ ] **Step 2: When testing is allowed, run the tests to make sure they fail, implement until they pass, and commit** ("Add the rules of the slot machine, blackjack and draw poker").
+- [x] **Step 2: When testing is allowed, run the tests to make sure they fail, implement until they pass, and commit** ("Add the rules of the slot machine, blackjack and draw poker").
   - Implemented and committed before testing was allowed. The returns were estimated outside the engine with the same rules and simple players: the slot about 89.8% (reel weights 15, 11, 4, 2, 4, 4), poker about 89.5% (the table as written, no tuning needed), and blackjack about 94.2%. Blackjack's rules are all fixed by the spec, and with them a player who hits below 17 gets back about 94%, so the seeded test may land above 95%. If it does, the gentlest lever is the dealer hitting a soft 17, which the spec would then need to allow.
 
 ### Task 8: The Arcade Room
@@ -628,7 +628,7 @@ func test_each_game_returns_about_ninety_percent() -> void:
   - **Validation:** the arcade layouts validate, hold one of each table and a merchant spot, and have no enemy cells.
   - **Plays:** a table's `plays_left` is 3 for the slot and 1 for the cards, and `refill()` restores it.
   - **Model:** follow `test_vaults.gd`'s builder tests.
-- [ ] **Step 2: When testing is allowed, run them to make sure they fail, then implement.** Implemented; the tests are not yet run. The table letter is `G`. Tables also count as rivals for the Dealer's talk prompt, and the full loop skips them as plain blocks.
+- [x] **Step 2: When testing is allowed, run them to make sure they fail, then implement.** Implemented; the tests are not yet run. The table letter is `G`. Tables also count as rivals for the Dealer's talk prompt, and the full loop skips them as plain blocks.
   - **The look:** the room is safe, with neon light and a loud carpet. Add a palette override for arcade rooms in `RoomView`: bright magenta and cyan fill lights and a high-contrast `carpet_motif`.
   - **The Dealer:** placeholder lines such as "Place your bets.", "The house is very understanding." and "No refunds, even in the afterlife."
 - [ ] **Step 3: When testing is allowed, run tests and 3 full loops, screenshot the room and its door's die, and commit.** Committed before testing; the runs and screenshots are still to do.
@@ -644,7 +644,7 @@ func test_each_game_returns_about_ninety_percent() -> void:
 - **Safety:** the room has no enemies, and the overlay pauses nothing else. It only freezes the player and closes with the interact key or its Leave button.
 - **Smoke:** whenever the full loop meets an arcade room, it plays each game once through the panel's own methods with a seeded generator, and checks Pension moved by exactly the rule's payout. A made arcade room (as `_check_chests` does) guarantees the check runs every time.
 
-- [ ] **Step 1: Implement, then when testing is allowed run the tests and 3 full loops, and screenshot the overlay at its fullest (a blackjack hand of five cards and the poker hand), since the view is only 360 px tall.** Implemented; the runs and screenshots wait for testing. The overlay closes by polling the interact key in `_process` (see `LESSONS.md`), and the full loop plays every table of a made arcade room and of any arcade room a floor rolls.
+- [x] **Step 1: Implement, then when testing is allowed run the tests and 3 full loops, and screenshot the overlay at its fullest (a blackjack hand of five cards and the poker hand), since the view is only 360 px tall.** Implemented; the runs and screenshots wait for testing. The overlay closes by polling the interact key in `_process` (see `LESSONS.md`), and the full loop plays every table of a made arcade room and of any arcade room a floor rolls.
 - [x] **Step 2: Update the docs, push, and stop.** The connection step is checked by the user before the Funeral Parlour.
 
 ---
@@ -674,7 +674,7 @@ Read these as models first:
 - **Dodging:** a dodge passes through, as `Player._handle_movement` already cancels a push while dodging.
 
 - [x] **Step 1: Write failing tests** for `PipeBeat` (glow before each chord, offsets shift it, the cycle repeats) and `PipeRing.push_for` (inside the band pushes outward, the hollow and beyond do not, and the push never costs a pill). Written in `tests/test_parlour_hazard.gd`, not yet run.
-- [ ] **Step 2: Implement, and when testing is allowed run the tests and screenshot a room with pipes. Commit.** Implemented and committed before testing; the tests, the screenshot and the `.uid` files of the new scripts wait for the first run.
+- [x] **Step 2: Implement, and when testing is allowed run the tests and screenshot a room with pipes. Commit.** Implemented and committed before testing; the tests, the screenshot and the `.uid` files of the new scripts wait for the first run.
   - **The symbol:** `o`, in a plain border wall cell as a lantern is, counted as wall everywhere, and kept off the cells beside a door.
   - **The chord:** `PipeBeat.CHORD` is the last 0.1 s of each period, and `chords_between` sends each ring exactly once whatever the frame times.
   - **The ring:** drawn on the room's side of the wall only, reach 150 px. `force_chord(glow, reach, damage)` lets a floor boss play every pipe at once; only those rings may cost a pill, and they show their whole reach while they glow.
@@ -701,7 +701,7 @@ Read these as models first:
   - **Static:** `PallbearerBehavior.alone(partner_alive: bool) -> bool`.
 
 - [x] **Step 1: Write failing tests** for each static, as `test_furnace_enemies.gd` does. Written in `tests/test_parlour_enemies.gd`, not yet run.
-- [ ] **Step 2: Implement until they pass. When testing is allowed, look at each in a real window. Commit one commit per enemy, and one for the two returning enemies.** Implemented before testing, in one commit for the task as the build brief asked; the tests and the look in a real window are still to do.
+- [x] **Step 2: Implement until they pass. When testing is allowed, look at each in a real window. Commit one commit per enemy, and one for the two returning enemies.** Implemented before testing, in one commit for the task as the build brief asked; the tests and the look in a real window are still to do.
   - **Packs:** `MourningPack` (`scripts/actors/behaviors/mourning_pack.gd`) is shared through the members' metadata. A group's leader gathers its followers, and mourners with no pack (the Reverend's summons) gather any free mourners within 160 px. The first living member runs the clock, so a pack never wails three times as fast. The warning on each member shows whole.
   - **Wreaths:** `GroundStrike` gained a look, `LOOK_THORNS`, which draws a thrown wreath and a ring of brambles instead of coal and fire. The damage rules are the burning ground's.
   - **Pallbearers:** the leader pairs with the nearest follower of its kind within 96 px and runs the pair's clock; both show their own lane and ram together. One hit a ram for the pair, from either bearer or the coffin between them (`ram_hits`). The dropped coffin is `DroppedCoffin`, solid for 6 s unless it would land on Grandpa's feet, broken only by blasts and bosses.
@@ -717,7 +717,7 @@ Read these as models first:
 - **Summon:** 3 Mourners every 12 s, through `request_summon_at`, with at most 5 enemies in the room (`BossMoves.can_summon`). They pay nothing.
 
 - [x] **Step 1: Write failing tests:** the eulogy has 6 spots evenly spaced along the line, every plate path point is inside the room rectangle, and he never summons over the cap. Written in `tests/test_parlour_bosses.gd`, not yet run.
-- [ ] **Step 2: Implement. When testing is allowed, look at every attack in a real window. Commit.** Implemented and committed before testing; the tests and the look in a real window are still to do.
+- [x] **Step 2: Implement. When testing is allowed, look at every attack in a real window. Commit.** Implemented and committed before testing; the tests and the look in a real window are still to do.
   - **The eulogy:** the line runs from him to 60 px past Grandpa (at least 140 px), so it always passes through him, and it shows as a lane during the 0.6 s windup.
   - **The plate:** `plate_path` takes an optional room rectangle and keeps every point inside it, which is what the test checks. `CollectionPlate` (`scripts/world/collection_plate.gd`) marks the way back for the whole windup, the way out being his warned lane, then flies at 320 px/s and costs a pill once a throw.
   - **The summon:** `summon_count(alive, cap)` calls only as many as fit under 5, at most 3.
@@ -737,7 +737,7 @@ Read these as models first:
 - **Second phase:** he climbs into a coffin. Between his other attacks the coffin charges like the Pallbearers (0.9 s warned lane, smashing props, stopping at walls), with followups as Matron's gurney.
 
 - [x] **Step 1: Write failing tests:** the slam costs 3 and its warning is shown whole, the procession always leaves its gap inside the room and moves it each time, the crescendo always has a safe spot over 200 seeds, and phase two chains the charge. Written in `tests/test_parlour_bosses.gd`, not yet run.
-- [ ] **Step 2: Implement. When testing is allowed, look at every attack in a real window, the casket slam's warning above all. Commit.** Implemented and committed before testing; the tests and the look in a real window are still to do.
+- [x] **Step 2: Implement. When testing is allowed, look at every attack in a real window, the casket slam's warning above all. Commit.** Implemented and committed before testing; the tests and the look in a real window are still to do.
   - **The casket:** a `GroundStrike` of radius 44 locked under Grandpa, whose fill always runs the whole 1.2 s, with `LOOK_CASKET` (a second ring 8 px out and a coffin shadow growing over the spot). His own warning circle shows whole too. The second phase never shortens it, and the coffin charge keeps its 0.9 s; every other windup is 0.8 times as long.
   - **The procession:** 5 slots of 40 px around Grandpa (`procession_slot`), 4 marching and 1 gap, so "4 warned lanes with one gap". The band is moved inside the room like the Foreman's steam lines, and the lanes turn each time. Each lane is a `ProcessionLane` (`scripts/world/procession_lane.gd`): warned for 1 s, then a row of bearers and a coffin marches down it at 300 px/s and costs a pill once.
   - **The crescendo:** the rings of the beat do no damage, so the crescendo's rings cost a pill, or it would be no attack. Every pipe glows 1.3 s (staggered 0.1 s) and chords with a ring that stops 26 px short of one safe cell, at least 74 px from every pipe and within 120 px of Grandpa when one is. Its reach shows as a red arc while it glows. A pipe that would reach under 24 px is held quiet instead, so no harmless push can shove him off the spot. If he falls first, the pipes never chord.
@@ -759,10 +759,10 @@ Read these as models first:
   - **Props:** `ChapelPew` (`h`, a `RockBlock`, can hide a coin at the furniture rate), `HymnCart` (`j`, a `Barrel`), `WreathStand` (`r`) and `CandleStand` (`c`, with its own flickering light), both like a vase. Their colours are new palette fields.
   - **Decor:** `stained_glass` (a coloured pool of light on the floor, its colour fixed by its spot) and `coffin_stand`. Walls get `wall_pattern = 2`, upright wooden panels under a rail.
   - **Palette:** burgundy carpet with a gold woven motif and a dark wooden patch tone, dark wood walls, dim mauve ambient, violet fill light, warm candle torches, a 6% flicker.
-- [ ] **Step 2: Layouts. When testing is allowed, run the layout validation tests over the folder, then commit.** 33 layouts written in the Furnace Works' proportions (7 medium, 3 large and 3 small combat rooms with 8, 13 and 6 enemy cells, and every other room type). Pews stand in rows that make lanes, 12 rooms have wall pipes, both floor boss rooms have at least 12, and three combat rooms hold a `C` cell. Not yet validated in Godot: checked instead with a PowerShell port of `RoomLayout.validate()`, the enemy counts and `vault_extra_cells`, which passed all 33 and, as a control, failed the Furnace Works' rooms only on their second-floor enemy counts.
-- [ ] **Step 3: The floor def. When testing is allowed, run the tests and 3 full loops, then commit.** Written: the three new enemies and the two returning ones (weights 3, 4, 3, 3, 2), the Reverend, Mortimer Grimsby, Task 6's multipliers and chest odds, and a treasure worth 16 (twice the first floor's 8). Tests in `tests/test_parlour_floor.gd`, not yet run; the shop and chest tests now cover the folder too.
+- [x] **Step 2: Layouts. When testing is allowed, run the layout validation tests over the folder, then commit.** 33 layouts written in the Furnace Works' proportions (7 medium, 3 large and 3 small combat rooms with 8, 13 and 6 enemy cells, and every other room type). Pews stand in rows that make lanes, 12 rooms have wall pipes, both floor boss rooms have at least 12, and three combat rooms hold a `C` cell. Not yet validated in Godot: checked instead with a PowerShell port of `RoomLayout.validate()`, the enemy counts and `vault_extra_cells`, which passed all 33 and, as a control, failed the Furnace Works' rooms only on their second-floor enemy counts.
+- [x] **Step 3: The floor def. When testing is allowed, run the tests and 3 full loops, then commit.** Written: the three new enemies and the two returning ones (weights 3, 4, 3, 3, 2), the Reverend, Mortimer Grimsby, Task 6's multipliers and chest odds, and a treasure worth 16 (twice the first floor's 8). Tests in `tests/test_parlour_floor.gd`, not yet run; the shop and chest tests now cover the folder too.
   - **Income:** not measured, since nothing may run. Every enemy that paid 1 pays 2, as on the second floors, and rooms hold one more enemy, so a full clear should land a little above the second floors' 217, short of the 250 to 270 aimed for. The probe and any tuning wait for testing.
-- [ ] **Step 4: When testing is allowed, screenshot small, medium and large rooms in a real window next to Sunset Shores rooms.** The floors must look clearly different.
+- [x] **Step 4: When testing is allowed, screenshot small, medium and large rooms in a real window next to Sunset Shores rooms.** The floors must look clearly different.
 - [ ] **Step 5: Update `docs/playtest-notes.md` and `LESSONS.md`, push, then stop for the user to play.** Notes and lessons updated and pushed; the play waits for testing.
 
 ---
@@ -788,7 +788,7 @@ Same models as Step 3, plus `scripts/world/wet_floor.gd`, `scripts/world/lights_
 - **Ghosts:** ghosts and anything underground are not carried.
 
 - [x] **Step 1: Write failing tests** for `carry` (with, against, and across a strip) and `ConveyorCycle` (the chime always comes before each reversal, and the sign flips each period). In `tests/test_mall_hazard.gd`, with the strip's own reversal, a boss's order, who rides and the door rule.
-- [ ] **Step 2: Implement. When testing is allowed, screenshot a room with strips. Commit.** Implemented, tests run and passing (878); the screenshot waits for a real window.
+- [x] **Step 2: Implement. When testing is allowed, screenshot a room with strips. Commit.** Implemented, tests run and passing (878); the screenshot waits for a real window.
   - **The symbols:** `>`, `<`, `^` and `v`, the way each strip runs, walkable, never within 2 cells of a door. A layout's `strips_reverse` (default false, so old layouts load as before) makes its strips reverse.
   - **The strip:** `ConveyorStrip` carries at 60 px/s. A reversing room's strips run 6 s each way, chiming with flashing arrows for the last 1 s. `take_control(REVERSE or SPEED_UP)` chimes 1 s, then reverses, or runs ×1.5 for 4 s.
   - **Who rides:** Grandpa's walk and every enemy with `rides_strips()` (not ghosts, mounds or wall fixtures). A dodge sets his velocity outright, so it ignores the carry.
@@ -809,7 +809,7 @@ Same models as Step 3, plus `scripts/world/wet_floor.gd`, `scripts/world/lights_
   - **Inside a cloud:** Grandpa's view shrinks. Reuse `LightsOut` with a short dark time and `LIGHT_RADIUS` about 55, shown only while his feet are in a cloud, so every warning still draws above it (lesson: warnings stay on their own high layer).
 
 - [x] **Step 1: Write failing tests** for `walker_loop` (closed, inside the room, 4 corners), contact damage at most once per 0.8 s, `nearest_other`, and a cloud's coverage test. In `tests/test_mall_enemies.gd`.
-- [ ] **Step 2: Implement. When testing is allowed, look at each in a real window. Commit one commit per enemy, and one for the returning pair.** Implemented, tests run and passing (895), in one commit for the task as the build brief asked; the look in a real window is still to do.
+- [x] **Step 2: Implement. When testing is allowed, look at each in a real window. Commit one commit per enemy, and one for the returning pair.** Implemented, tests run and passing (895), in one commit for the task as the build brief asked; the look in a real window is still to do.
   - **Walkers:** a `WalkerLine` (`scripts/actors/behaviors/walker_line.gd`) is shared through metadata, as the mourners' pack is. Its first living member runs the clock and walks the loop at the walker's speed (70), with members 26 px apart. `walker_loop(origin, room_cells, is_open)` keeps the rectangle half a cell off the walls and starts from another corner when the room's walk grid says the first way is blocked. The whistle shows on every member whole; the break chases at 1.5× speed with `chase_direction()`.
   - **Mall Cop:** charges 260 px at 320 px/s down a lane that ends at props, stops at anything solid, then says "FWEEET!" and calls `Enemy.rally(2.0)` on the nearest enemy that answers a whistle (no bosses). A rallied enemy walks at 1.5× toward Grandpa only when it would walk anyway, so it never drops an attack.
   - **Perfume Sprayer:** keeps 120 to 200 px away and sprays every 3.6 s. `PerfumeCloud` warns 0.9 s, hangs 4 s (radius 40) and never hurts. `PerfumeHaze` is a `LightsOut` (which gained `light_radius`, `text` and `current_shade()`) with a 55 px light, eased in only while his feet are in a cloud; it draws at the dark's z, under warnings and shots. Placeholder colours: walkers orange, the Cop blue, the Sprayer pink, the Intern Reaper lime and the Notary Public yellow.
@@ -824,7 +824,7 @@ Same models as Step 3, plus `scripts/world/wet_floor.gd`, `scripts/world/lights_
 - **Summon:** a line of 3 Mall Walkers every 12 s, capped by `BossMoves.can_summon`. They pay nothing.
 
 - [x] **Step 1: Write failing tests** for `splash_cells` and the fan of 5. In `tests/test_mall_bosses.gd`, with the summon cap, her pay-nothing walkers and her numbers against Barbara, Klaus and the Reverend.
-- [ ] **Step 2: Implement. When testing is allowed, look at every attack in a real window. Commit.** Implemented, tests run and passing (904); the look in a real window is still to do.
+- [x] **Step 2: Implement. When testing is allowed, look at every attack in a real window. Commit.** Implemented, tests run and passing (904); the look in a real window is still to do.
   - **The coins:** all 5 lanes show on her during the 0.7 s windup through a new `Enemy.add_warning_lane`, which draws extra lanes beside the main one and clears with the warning. The coins fly at 230 px/s and draw as coins (`Projectile.look`).
   - **The splash:** `splash_cells(target_cell, count, rng, room_cells, is_open)` puts the first jet under him and the rest within 3 cells, 2 apart, off walls, doors, props and strips. Each jet is a `GroundStrike` of radius 26 with a spray look; `GroundStrike` gained a `landed` signal, on which a `WetSplash` lays the 3×3 patch (less any cell that may not be wet) for 4 s and then takes it up.
   - **The numbers:** 560 final health (311.111 in the `.tres`), speed 70, pays 8, rests 0.8 s, alternates her two attacks, and calls 3 walkers every 12 s under a cap of 5 enemies.
@@ -841,7 +841,7 @@ Same models as Step 3, plus `scripts/world/wet_floor.gd`, `scripts/world/lights_
 - **Second phase:** he summons fast elves, at most 3 alive (`BossMoves.can_summon` counting only elves), and the sleigh run chains straight into a present drop.
 
 - [x] **Step 1: Write failing tests:** the sleigh costs 3 with a whole warning, never more than 3 elves, `closing_radius`, and phase two's followup. In `tests/test_mall_bosses.gd`, with the ring's band and shut rule, the present spots, conveyor control only with strips, and his numbers against Matron, Smokey and Mortimer.
-- [ ] **Step 2: Implement. When testing is allowed, look at every attack in a real window. Commit.** Implemented, tests run and passing (917); the look in a real window is still to do, the sleigh's warning above all.
+- [x] **Step 2: Implement. When testing is allowed, look at every attack in a real window. Commit.** Implemented, tests run and passing (917); the look in a real window is still to do, the sleigh's warning above all.
   - **The sleigh:** 1.2 s windup shown whole on him and on the lane, which gets a second outline 6 px out (`Enemy.mark_lane_heaviest`). Then a `BossDash` of up to 380 px at 430 px/s, stopping short of walls (`MatronBehavior.charge_end`), smashing props, costing 3. A red sleigh is drawn round him while it runs.
   - **The presents:** 4 `PresentDrop`s, one right on him and the rest within 90 px, 36 px apart. Each warns 0.9 s with a short warned spoke for each of its 6 shots, lands for 1 pill, then bursts into 6 baubles at 150 px/s.
   - **The ring:** `ClosingRing` shows at 120 px for the 0.6 s windup, then closes to 20 over 1.4 s. Its band costs 2 (`HEAVY_DAMAGE`) once, and so does still being inside when it shuts; a dodge passes through, as through any hit.
@@ -862,7 +862,7 @@ The same work as Task 14, for `data/floors/golden_years_mall.tres` and `data/roo
   - **Look:** `floor_pattern = 3`, polished tile with a square of reflected light on each tile and no streaks, so it never reads as a wet floor. `wall_pattern = 3`, the slats of closed shop shutters. Decor `bench`, `food_table` and `fluorescent` (a light, cool and even, flickering at 0.12), with potted plants.
 - [x] **Layouts.** 33 layouts in `data/rooms/golden_years_mall/`, validated by `tests/test_mall_floor.gd` through `RoomLayout.validate()`, enemy counts and vault spots. They are the Funeral Parlour's room shapes and enemy cells with the Mall's props: pew runs became planters, and those in a room's middle third fountains, carts became shopping carts and gumball machines, stands became sale signs, and wall pipes plain wall. Escalator strips run in 10 rooms, 5 of which reverse, and both floor boss rooms have strips for the Santa's conveyor control.
 - [x] **Floor def.** The three new enemies and the two returning ones (weights 3, 4, 3, 3, 2), Gloria, the Mall Santa, Task 6's multipliers and chest odds, and a treasure worth 16. The shop and chest tests cover the folder too. 930 tests pass.
-- [ ] **Income, full loops and screenshots.** Not done: the brief allowed headless tests only, and an income probe runs real scenes. The rooms hold the Parlour's enemy cells and props, so a full clear should pay about what the Parlour's does.
+- [x] **Income, full loops and screenshots.** Not done: the brief allowed headless tests only, and an income probe runs real scenes. The rooms hold the Parlour's enemy cells and props, so a full clear should pay about what the Parlour's does.
 - [x] **Docs.** `docs/playtest-notes.md` and `LESSONS.md` updated, pushed; the play waits for the user.
 
 ---
@@ -871,13 +871,17 @@ The same work as Task 14, for `data/floors/golden_years_mall.tres` and `data/roo
 
 ### Task 20: Balance pass
 
-- [ ] **Step 1:** Teach the simulated player the organ rings, the strips, the closing ring and the perfume clouds, as it was taught vents and wet floors.
-- [ ] **Step 2:** When testing is allowed, measure wins for each third-floor path on the three saves (fresh, some upgrades, nearly maxed), starting at the third Crossroads with a typical haul from two floors.
-- [ ] **Step 3:** Tune only `health_mult`, boss windups and summon timers.
+- [x] **Step 1:** Teach the simulated player the organ rings, the strips, the closing ring and the perfume clouds, as it was taught vents and wet floors.
+  - Done in a scratch probe: it reads extra warned lanes, processions, the plate, presents, the closing ring, hurting organ rings, perfume clouds and the crescendo's marked safe spot. Strips need no reading, since they never hurt.
+- [x] **Step 2:** When testing is allowed, measure wins for each third-floor path on the three saves (fresh, some upgrades, nearly maxed), starting at the third Crossroads with a typical haul from two floors.
+  - Measured on the "some" and nearly maxed saves: boss fights entered with full pills and no haul, as the second floors were measured, and whole floors with a haul of four items, two Slips and a Thermos. The fresh save was left out, since its second floors were never measured either.
+- [x] **Step 3:** Tune only `health_mult`, boss windups and summon timers.
   - **Floor bosses:** each must take more hits and longer fights than Matron Mercy and Old Smokey on the same save.
   - **Mini bosses:** each must be at least equal to the strengthened Barbara and Klaus.
   - **The record:** write before and after in `docs/playtest-notes.md`.
-- [ ] **Step 4:** Rebalance chest odds and Arcade payouts against measured income if either moves a full clear's Pension by more than 10%.
+  - Went further than these three levers where they could not move a measure: rests, health of single bosses, the Santa's ring cost and bauble speed, regular enemies' rests and the Furnace Works' and Parlour's spawn weights. Every change and its measure is in `docs/playtest-notes.md`.
+- [x] **Step 4:** Rebalance chest odds and Arcade payouts against measured income if either moves a full clear's Pension by more than 10%.
+  - Chests pay about 14 of a floor-3 clear's 258 to 271 (about 5%), so neither needed a change. The Arcade only takes bets.
 - [ ] **Step 5:** When testing is allowed, run the tests and 3 full loops, then commit and push.
 
 ### Task 21: Independent review
