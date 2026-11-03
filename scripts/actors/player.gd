@@ -232,7 +232,8 @@ func _strike_enemies() -> void:
 		if enemy.is_queued_for_deletion() or enemy.submerged:
 			continue
 		if swing.try_hit(global_position, enemy.get_instance_id(), enemy.body_rect()):
-			enemy.take_strike(swing.damage, swing.direction * swing.push, global_position - enemy.global_position)
+			if not enemy.take_strike(swing.damage, swing.direction * swing.push, global_position - enemy.global_position):
+				swing.mark_blocked()
 	for block: BreakableBlock in get_tree().get_nodes_in_group("breakable"):
 		if block.is_queued_for_deletion() or not block.can_break_by(BreakableBlock.SOURCE_CANE):
 			continue
@@ -245,7 +246,7 @@ func _strike_enemies() -> void:
 func _finish_swing() -> void:
 	if _active_swing == null:
 		return
-	if not _active_swing.has_landed():
+	if not _active_swing.has_reached_something():
 		swing_missed.emit(_active_swing.heavy)
 	_active_swing = null
 

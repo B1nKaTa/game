@@ -32,6 +32,16 @@ func test_a_hit_counts_as_landed() -> void:
 	assert_true(swing.has_landed())
 
 
+func test_a_blocked_hit_is_neither_landed_nor_a_miss() -> void:
+	var swing := _swing()
+	swing.try_hit(Vector2.ZERO, 1, AHEAD)
+	swing.mark_blocked()
+	assert_false(swing.has_landed())
+	assert_true(swing.has_reached_something())
+	swing.try_hit(Vector2.ZERO, 2, AHEAD)
+	assert_true(swing.has_landed(), "a second enemy with no shield still counts")
+
+
 func test_an_enemy_moving_in_mid_swing_is_hit() -> void:
 	var swing := _swing()
 	assert_false(swing.try_hit(Vector2.ZERO, 1, FAR_AHEAD))

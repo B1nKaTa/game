@@ -12,6 +12,7 @@ var heavy: bool
 var finisher: bool
 var _time_left := DURATION
 var _hit_ids := {}
+var _blocked := 0
 
 
 func _init(swing_direction: Vector2, swing_reach: float, swing_half_angle_deg: float, swing_damage: float, swing_push: float, is_heavy: bool, is_finisher: bool) -> void:
@@ -33,7 +34,16 @@ func is_active() -> bool:
 
 
 func has_landed() -> bool:
+	return _hit_ids.size() > _blocked
+
+
+# A swing a shield stopped reached something, so it isn't a miss, but it didn't land either.
+func has_reached_something() -> bool:
 	return not _hit_ids.is_empty()
+
+
+func mark_blocked() -> void:
+	_blocked += 1
 
 
 func try_hit(origin: Vector2, id: int, body: Rect2) -> bool:
