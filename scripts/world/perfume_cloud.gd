@@ -11,8 +11,9 @@ const LINGER := 4.0
 const RADIUS := 40.0
 const FADE := 0.5
 const WARNING_COLOR := Color("e4524f")
-const MIST := Color(0.98, 0.6, 0.86)
-const MIST_EDGE := Color(1.0, 0.82, 0.95)
+const MIST := Color(0.9, 0.42, 0.76)
+# A deep magenta edge, so a hanging cloud shows on the Mall's pale tile as well as on dark floors.
+const MIST_EDGE := Color("b8358f")
 const SPARKLE := Color("fff2fb")
 
 var _source: Enemy
@@ -99,8 +100,8 @@ func _draw() -> void:
 	var swirl := _age * 1.3
 	for i in 5:
 		var at := Vector2.from_angle(swirl + TAU * i / 5.0) * _radius * 0.35
-		draw_circle(at, _radius * 0.62, Color(MIST, 0.16 * fade))
-	draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 32, Color(MIST_EDGE, 0.55 * fade), 1.5)
+		draw_circle(at, _radius * 0.62, Color(MIST, 0.2 * fade))
+	draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 32, Color(MIST_EDGE, 0.85 * fade), 2.0)
 	for i in 4:
 		var lift := fposmod(_age * 0.6 + i * 0.27, 1.0)
 		var at := Vector2.from_angle(TAU * i / 4.0 + 0.4) * _radius * 0.5 + Vector2(0.0, -lift * 10.0)
