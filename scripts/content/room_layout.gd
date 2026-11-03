@@ -79,6 +79,12 @@ const PICKUP_SPACING := 3
 const SAME_ROW_SPACING := 4
 # A plan reward above the station counts as this much further away, squared in cells.
 const ABOVE_THE_PLAN := 100.0
+# A free item's label is about this many cells long and starts at the item, so it needs that much
+# floor to its right. The top row sits under the HUD and the small map.
+const LABEL_CELLS := 4
+const UNDER_THE_HUD := 1
+# Plan rewards keep the full label spacing only this near the station, in cells.
+const PLAN_NEAR := 4
 const MERCHANT_DOOR_CLEARANCE := 2
 # Enemy cells a combat room holds by size when no floor says otherwise, as on the first floor.
 const ENEMIES_BY_SIZE := {SIZE_SMALL: 4, SIZE_MEDIUM: 6, SIZE_LARGE: 11}
@@ -205,7 +211,9 @@ func merchant_cell() -> Vector2i:
 # Where a shop's Retirement Plan lays its free items, one spot per tier: the nearest plain floor to
 # the station, clear of the doors, the wares and whatever stands in avoid, such as the merchant, and
 # far enough that its Take prompt never shares the station's reach. Spots below come first, since the
-# plan's own text stands above it. When labels can no longer stay apart, each item still gets a spot.
+# plan's own text stands above it. Being near the plan matters more than the wide label spacing, so
+# past PLAN_NEAR cells a spot only a row or two from a ware will do, and when even that runs out each
+# item still gets a spot of its own.
 func plan_reward_cells(count: int, avoid: Array[Vector2i] = []) -> Array[Vector2i]:
 	var plans := cells_of(SYMBOL_PLAN)
 	if plans.is_empty():
@@ -217,26 +225,48 @@ func plan_reward_cells(count: int, avoid: Array[Vector2i] = []) -> Array[Vector2
 	taken.append_array(keep_clear)
 	var found: Array[Vector2i] = []
 	for i in count:
-		var best := Vector2i(-1, -1)
-		var fallback := Vector2i(-1, -1)
-		var best_distance := INF
-		var fallback_distance := INF
+		var picks := [Vector2i(-1, -1), Vector2i(-1, -1), Vector2i(-1, -1)]
+		var distances := [INF, INF, INF]
 		for cell in cells_of(SYMBOL_FLOOR):
-			if _touches_a_door(cell) or taken.has(cell) or not _spaced_from(cell, keep_clear):
+			if _touches_a_door(cell) or taken.has(cell) or not _spaced_from(cell, keep_clear) or not _label_fits(cell) or not clear_of_the_plan_text(cell, station):
 				continue
 			var distance := Vector2(cell - station).length_squared() + (ABOVE_THE_PLAN if cell.y < station.y else 0.0)
-			if distance < fallback_distance:
-				fallback_distance = distance
-				fallback = cell
-			if distance < best_distance and _spaced_from(cell, taken):
-				best_distance = distance
-				best = cell
-		var spot := best if best != Vector2i(-1, -1) else fallback
+			var near := maxi(absi(cell.x - station.x), absi(cell.y - station.y)) <= PLAN_NEAR
+			var fits := [near and _spaced_from(cell, taken), _spaced_loosely(cell, taken), true]
+			for tier in 3:
+				if fits[tier] and distance < distances[tier]:
+					distances[tier] = distance
+					picks[tier] = cell
+		var spot := Vector2i(-1, -1)
+		for pick: Vector2i in picks:
+			if pick != Vector2i(-1, -1):
+				spot = pick
+				break
 		if spot == Vector2i(-1, -1):
 			break
 		taken.append(spot)
 		found.append(spot)
 	return found
+
+
+# Labels a row or two apart still read, if no two share a row too closely.
+func _spaced_loosely(cell: Vector2i, others: Array[Vector2i]) -> bool:
+	for other in others:
+		if maxi(absi(cell.x - other.x), absi(cell.y - other.y)) < 2 or (cell.y == other.y and absi(cell.x - other.x) < SAME_ROW_SPACING):
+			return false
+	return true
+
+
+# Out from under the HUD, with room for a long name before the wall on the right.
+func _label_fits(cell: Vector2i) -> bool:
+	return cell.y > UNDER_THE_HUD and cell.x + LABEL_CELLS < size_in_cells().x
+
+
+# The plan writes three lines in the two rows above itself, from two cells left of it to two right,
+# so no free item or its name may sit there.
+static func clear_of_the_plan_text(cell: Vector2i, station: Vector2i) -> bool:
+	var offset := cell - station
+	return not (offset.y >= -2 and offset.y <= -1 and offset.x >= -1 - LABEL_CELLS and offset.x <= 2)
 
 
 # Plain floor cells as near each wanted cell as the spacing allows, kept off the door cells and apart

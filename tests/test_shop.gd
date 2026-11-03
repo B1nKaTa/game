@@ -139,25 +139,29 @@ func test_every_plan_tier_has_its_own_spot_beside_the_plan() -> void:
 			seen[spot] = true
 			assert_eq(layout.symbol_at(spot), RoomLayout.SYMBOL_FLOOR)
 			assert_false(layout.touches_a_door(spot))
+			# Sunset Shores once put one under the small map, and a long name ran past the right wall.
+			assert_true(spot.y > RoomLayout.UNDER_THE_HUD, "%s: %s is under the HUD" % [layout.resource_path, str(spot)])
+			assert_true(spot.x + RoomLayout.LABEL_CELLS < layout.size_in_cells().x, "%s: no room for the name at %s" % [layout.resource_path, str(spot)])
 		# Its Take prompt and the plan's Pay in never answer the same press.
 		var first := spots[0]
 		var reach := RetirementStation.USE_RADIUS + Pickup.COLLECT_RADIUS + absf(Player.FEET_OFFSET.y)
 		assert_true(Vector2(first - station).length() * RoomBackdrop.TILE > reach, "%s first at %s" % [layout.resource_path, str(first)])
-		assert_true(first.y >= station.y, "below the plan's own text")
+		for spot in spots:
+			assert_true(RoomLayout.clear_of_the_plan_text(spot, station), "%s: %s sits on the plan's text" % [layout.resource_path, str(spot)])
 		assert_true(maxi(absi(first.x - station.x), absi(first.y - station.y)) <= 4, "right beside the plan")
 
 
 func test_the_plan_reward_spots_keep_off_the_wares() -> void:
 	var layout := RoomLayout.new()
 	layout.rows = PackedStringArray([
-		"##########",
-		"#........#",
-		"#........#",
-		"#...P....#",
-		"#........#",
-		"#....S...#",
-		"#........#",
-		"##########"])
+		"##############",
+		"#............#",
+		"#............#",
+		"#...P........#",
+		"#............#",
+		"#....S.......#",
+		"#............#",
+		"##############"])
 	var spots := layout.plan_reward_cells(2)
 	assert_eq(spots.size(), 2)
 	for spot in spots:
