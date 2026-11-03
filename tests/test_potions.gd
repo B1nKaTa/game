@@ -253,8 +253,12 @@ func test_a_brew_costs_pension_and_only_one_waits() -> void:
 
 func test_merchants_open_on_floors_cleared() -> void:
 	var entries := [{"id": "always"}, {"id": "potions", "clears": 1}, {"id": "bombs", "clears": 3}]
-	assert_eq(MerchantRules.open_ones(entries, 0).size(), 1)
-	assert_eq(MerchantRules.open_ones(entries, 1).size(), 2)
-	assert_eq(MerchantRules.open_ones(entries, 2).size(), 2)
-	assert_eq(MerchantRules.open_ones(entries, 3).size(), 3)
-	assert_true(MerchantRules.is_open({"id": "x"}, 0), "no requirement means always there")
+	var data := ProgressData.new()
+	assert_eq(MerchantRules.open_ones(entries, data).size(), 1)
+	data.record_floor_cleared(1, "floor_1")
+	assert_eq(MerchantRules.open_ones(entries, data).size(), 2)
+	data.record_floor_cleared(1, "cemetery")
+	assert_eq(MerchantRules.open_ones(entries, data).size(), 2)
+	data.record_floor_cleared(1, "floor_1")
+	assert_eq(MerchantRules.open_ones(entries, data).size(), 3)
+	assert_true(MerchantRules.is_open({"id": "x"}, ProgressData.new()), "no requirement means always there")

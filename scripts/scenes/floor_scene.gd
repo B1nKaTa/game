@@ -124,7 +124,7 @@ func _choose_path(index: int) -> void:
 	if is_over or _room_view == null or not _room_view is CrossroadsView:
 		return
 	var def: FloorDef = _path_defs()[index]
-	if not def.is_open(Progress.data.floors_cleared):
+	if not def.is_open_for(Progress.data):
 		return
 	var map := FloorBuilder.build(_rng, def)
 	if map == null:
@@ -188,7 +188,7 @@ func _make_room_view(room: FloorRoom) -> RoomView:
 	var view: RoomView
 	if room.room_type == RoomLayout.TYPE_CROSSROADS:
 		view = CrossroadsView.new()
-		view.setup_paths(_path_defs(), Progress.data.floors_cleared)
+		view.setup_paths(_path_defs(), Progress.data)
 		view.door_entered.connect(func(index: int): _choose_path.call_deferred(index))
 	else:
 		view = RoomView.new()
@@ -223,7 +223,7 @@ func _on_floor_cleared() -> void:
 		return
 	is_cleared = true
 	# Merchants open on floors cleared, so the clear is saved before anything else can end the run.
-	Progress.record_floor_cleared()
+	Progress.record_floor_cleared(_floor_def.depth, _floor_def.id)
 	_continue_after_floor()
 
 

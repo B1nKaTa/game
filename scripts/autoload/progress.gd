@@ -100,8 +100,8 @@ func take_crafted_item() -> ItemDef:
 	return null
 
 
-func record_floor_cleared() -> void:
-	data.record_floor_cleared()
+func record_floor_cleared(depth: int, path_id: String) -> void:
+	data.record_floor_cleared(depth, path_id)
 	_store.save_progress(data)
 
 

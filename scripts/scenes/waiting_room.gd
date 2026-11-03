@@ -13,14 +13,15 @@ const ROWS := [
 	"#..................#",
 	"####################",
 ]
-# "clears" is how many floors must be cleared before a merchant appears, and a missing one means
-# always there. "kind" picks the panel: upgrades by default, or "potions" for brews. Later floors
-# will move the clears here, in one place.
+# When a merchant appears is read by MerchantRules: "depth" and "clears" count clears at a depth,
+# "paths" names the paths that must all have been cleared, and "legacy_clears" keeps a merchant open
+# for a save made before clears were kept by depth. No rule means always there. "kind" picks the
+# panel: upgrades by default, or "potions" for brews.
 const MERCHANTS := [
 	{"id": "black_market", "title": "Black Market. You didn't see me.", "cell": Vector2i(5, 3), "color": Color("8a4fbf"), "art": "merchant"},
 	{"id": "optometrist", "title": "Dr. Squint, Unlicensed Optometrist", "cell": Vector2i(5, 7), "color": Color("4fbfa8"), "art": "optometrist"},
-	{"id": "potion_merchant", "kind": "potions", "clears": 1, "title": "Madame Murk, Discount Apothecary", "cell": Vector2i(8, 3), "color": Color("c0508f"), "art": "apothecary"},
-	{"id": "bomb_merchant", "clears": 3, "title": "Boom Bernard, Fuel Dealer", "cell": Vector2i(14, 7), "color": Color("d9822b"), "art": "fuel_dealer"},
+	{"id": "potion_merchant", "kind": "potions", "depth": 2, "clears": 1, "legacy_clears": 1, "title": "Madame Murk, Discount Apothecary", "cell": Vector2i(8, 3), "color": Color("c0508f"), "art": "apothecary"},
+	{"id": "bomb_merchant", "paths": ["sunset_shores", "furnace_works"], "legacy_clears": 3, "title": "Boom Bernard, Fuel Dealer", "cell": Vector2i(14, 7), "color": Color("d9822b"), "art": "fuel_dealer"},
 ]
 const DOOR_CELL := Vector2i(18, 5)
 const INTERACT_RANGE := 48.0
@@ -43,7 +44,7 @@ func _ready() -> void:
 	var backdrop := RoomBackdrop.new()
 	backdrop.setup(PackedStringArray(ROWS))
 	add_child(backdrop)
-	_open_merchants = MerchantRules.open_ones(MERCHANTS, Progress.data.floors_cleared)
+	_open_merchants = MerchantRules.open_ones(MERCHANTS, Progress.data)
 	for entry in _open_merchants:
 		var merchant := SpriteVisual.new()
 		merchant.position = RoomBackdrop.cell_center(entry["cell"])

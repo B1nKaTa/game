@@ -16,8 +16,14 @@ var retirement_deposit_run: int = NO_DEPOSIT_RUN
 var recipes_found: Dictionary = {}
 var items_unlocked: Dictionary = {}
 var crafted_for_next_run: String = ""
-# How many floor bosses have been beaten. Merchants and later paths open on it.
+# How many first-floor bosses have been beaten. The Cemetery opens on it.
 var floors_cleared: int = 0
+# Clears of floors below the first, by depth as a string key, since JSON keys are strings.
+var deep_clears: Dictionary = {}
+# The ids of every path whose floor boss has fallen at least once.
+var paths_cleared: Dictionary = {}
+# A save from before clears were kept by depth keeps the merchants its old count had opened.
+var legacy_clears: int = 0
 # The one brew waiting in the potion slot for the next run.
 var brewed_potion: String = ""
 
@@ -123,8 +129,24 @@ func take_crafted_item() -> String:
 	return id
 
 
-func record_floor_cleared() -> void:
-	floors_cleared += 1
+# First-floor clears stay in floors_cleared, so older saves and the Cemetery's rule keep their meaning.
+func record_floor_cleared(depth := 1, path_id := "") -> void:
+	if depth <= 1:
+		floors_cleared += 1
+	else:
+		deep_clears[str(depth)] = clears_at(depth) + 1
+	if not path_id.is_empty():
+		paths_cleared[path_id] = true
+
+
+func clears_at(depth: int) -> int:
+	if depth <= 1:
+		return floors_cleared
+	return int(deep_clears.get(str(depth), 0))
+
+
+func has_cleared_path(id: String) -> bool:
+	return paths_cleared.has(id)
 
 
 # Only one brew can wait at a time, and it costs Pension.
@@ -160,6 +182,9 @@ func to_dict() -> Dictionary:
 		"items_unlocked": items_unlocked,
 		"crafted_for_next_run": crafted_for_next_run,
 		"floors_cleared": floors_cleared,
+		"deep_clears": deep_clears,
+		"paths_cleared": paths_cleared,
+		"legacy_clears": legacy_clears,
 		"brewed_potion": brewed_potion,
 	}
 
@@ -189,6 +214,14 @@ static func from_dict(raw: Variant) -> ProgressData:
 	var crafted: Variant = raw.get("crafted_for_next_run", "")
 	data.crafted_for_next_run = crafted if crafted is String else ""
 	data.floors_cleared = maxi(int(raw.get("floors_cleared", 0)), 0)
+	data.deep_clears = {}
+	var deep: Variant = raw.get("deep_clears", {})
+	if deep is Dictionary:
+		for key in deep:
+			data.deep_clears[str(key)] = maxi(int(deep[key]), 0)
+	data.paths_cleared = _id_set(raw.get("paths_cleared"))
+	# Only a save older than clears by depth lacks the key. Its count is frozen here, once.
+	data.legacy_clears = maxi(int(raw.get("legacy_clears", data.floors_cleared)), 0)
 	var brewed: Variant = raw.get("brewed_potion", "")
 	data.brewed_potion = brewed if brewed is String else ""
 	return data

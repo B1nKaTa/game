@@ -17,8 +17,13 @@ extends Resource
 @export var prop_pension: int = 2
 @export var palette: RoomPalette
 @export_group("Path")
-# How many floor bosses must have fallen, on any path, before this path opens. Zero means always open.
+# How many floor bosses at open_after_depth must have fallen, on any path there, before this path
+# opens. Zero means always open.
 @export var clears_to_open: int = 0
+# 1 for a floor reached from the first Crossroads, 2 for one reached from the second.
+@export var depth: int = 1
+# Whose clears clears_to_open counts: the first floor's, or the second's.
+@export var open_after_depth: int = 1
 # Skulls on the path's sign at the Crossroads.
 @export var danger: int = 1
 # What the chained sign says while the path is closed.
@@ -42,6 +47,10 @@ extends Resource
 
 func is_open(floors_cleared: int) -> bool:
 	return floors_cleared >= clears_to_open
+
+
+func is_open_for(data: ProgressData) -> bool:
+	return is_open(data.clears_at(open_after_depth))
 
 
 func room_palette() -> RoomPalette:

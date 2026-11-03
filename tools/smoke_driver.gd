@@ -54,14 +54,19 @@ func _run() -> void:
 	_expect_scene("WaitingRoom")
 	_check(Progress.data.floors_cleared == 1, "clearing the floor is counted")
 	var ids: Array = get_tree().current_scene.open_merchant_ids()
-	_check(ids.has("potion_merchant") and not ids.has("bomb_merchant"), "one clear brings the potion merchant, not the bomb merchant")
-	Progress.data.floors_cleared = 3
+	_check(not ids.has("potion_merchant") and not ids.has("bomb_merchant"), "a first-floor clear opens no merchant")
+	Progress.data.record_floor_cleared(2, "sunset_shores")
 	Game.return_to_waiting()
 	await _wait(0.5)
 	ids = get_tree().current_scene.open_merchant_ids()
-	_check(ids.has("potion_merchant") and ids.has("bomb_merchant"), "three clears bring the bomb merchant too")
+	_check(ids.has("potion_merchant") and not ids.has("bomb_merchant"), "a second-floor clear brings the potion merchant, not the bomb merchant")
+	Progress.data.record_floor_cleared(2, "furnace_works")
+	Game.return_to_waiting()
+	await _wait(0.5)
+	ids = get_tree().current_scene.open_merchant_ids()
+	_check(ids.has("potion_merchant") and ids.has("bomb_merchant"), "clearing both second-floor paths brings the bomb merchant too")
 	Progress.reload()
-	_check(Progress.data.floors_cleared == 1, "floors cleared come back from the save as it was written")
+	_check(Progress.data.floors_cleared == 1 and Progress.data.clears_at(2) == 0, "clears come back from the save as it was written")
 
 	# The first clear opened the second path, and clearing it counts the same.
 	var pension_before_second: int = Progress.data.pension
@@ -72,7 +77,7 @@ func _run() -> void:
 	_check(Progress.data.floors_cleared == 2, "clearing the second path is counted too")
 	_check(_paths_cleared == 2, "both paths were cleared")
 	ids = get_tree().current_scene.open_merchant_ids()
-	_check(ids.has("potion_merchant") and not ids.has("bomb_merchant"), "merchants open on clears of any path")
+	_check(not ids.has("potion_merchant") and not ids.has("bomb_merchant"), "first-floor clears of any path open no merchant")
 
 	Progress.add_pension(60)
 	var reached: int = Progress.retirement_deposit(60)
