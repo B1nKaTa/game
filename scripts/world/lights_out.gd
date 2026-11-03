@@ -23,6 +23,10 @@ var _darkness := DARK
 var _age := 0.0
 var _fading := -1.0
 var _hole: GradientTexture2D
+# How far the light around him reaches, and what shows over him as it starts. A smaller dark, such as
+# a perfume cloud's, sets both before it enters the room.
+var light_radius := LIGHT_RADIUS
+var text := TEXT
 
 
 # How dark the room is at a moment, from 0 to the darkness asked for.
@@ -80,23 +84,31 @@ func _process(delta: float) -> void:
 		queue_free()
 
 
+func current_shade() -> float:
+	return shade_at(_age, _warning, _dark, _darkness)
+
+
 func _draw() -> void:
 	if not is_instance_valid(_target):
 		return
-	var shade := shade_at(_age, _warning, _dark, _darkness)
+	var shade := current_shade()
+	if shade <= 0.0:
+		return
 	var feet: Vector2 = _target.feet().global_position if _target.has_method("feet") else _target.global_position
 	var center := to_local(feet)
 	var tint := Color(1, 1, 1, shade)
-	var square := Rect2(center - Vector2(EDGE_RADIUS, EDGE_RADIUS), Vector2(EDGE_RADIUS, EDGE_RADIUS) * 2.0)
+	# The light's edges scale with its radius, so a smaller dark keeps the same soft rim.
+	var edge := EDGE_RADIUS * light_radius / LIGHT_RADIUS
+	var square := Rect2(center - Vector2(edge, edge), Vector2(edge, edge) * 2.0)
 	draw_texture_rect(_hole, square, false, tint)
 	var black := Color(0, 0, 0, shade)
 	draw_rect(Rect2(square.position.x - REACH, square.position.y - REACH, REACH * 2.0 + square.size.x, REACH), black)
 	draw_rect(Rect2(square.position.x - REACH, square.end.y, REACH * 2.0 + square.size.x, REACH), black)
 	draw_rect(Rect2(square.position.x - REACH, square.position.y, REACH, square.size.y), black)
 	draw_rect(Rect2(square.end.x, square.position.y, REACH, square.size.y), black)
-	if _age < _warning + 0.4:
+	if _age < _warning + 0.4 and not text.is_empty():
 		var font := ThemeDB.fallback_font
-		var width := font.get_string_size(TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
+		var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
 		var at := center + Vector2(-width / 2.0, -46.0)
-		draw_string_outline(font, at, TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, 5, Color.BLACK)
-		draw_string(font, at, TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, TEXT_COLOR)
+		draw_string_outline(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, 5, Color.BLACK)
+		draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, TEXT_COLOR)

@@ -37,6 +37,9 @@ const WARNING_Z := 60
 # How often a walker looks again for its way to Grandpa, and how near a waypoint counts as reached.
 const ROUTE_EVERY := 0.3
 const WAYPOINT_REACH := 4.0
+# A whistle sends an enemy toward Grandpa this much faster, until it is this near him.
+const RALLY_SPEED := 1.5
+const RALLY_NEAR := 30.0
 
 var def: EnemyDef
 var hp: float = 0.0
@@ -89,6 +92,7 @@ var _waypoint := Vector2.ZERO
 # A shove that carries it along for a while, as an organ pipe's ring does. It adds to any knockback.
 var _push := Vector2.ZERO
 var _push_left := 0.0
+var _rally_left := 0.0
 
 
 func setup(enemy_def: EnemyDef, chase_target: Node2D, warning_fraction: float, show_health_bar := false) -> void:
@@ -246,6 +250,11 @@ func _physics_process(delta: float) -> void:
 	_route_left -= delta
 	desired_velocity = Vector2.ZERO
 	_behavior.tick(self, delta)
+	# Called by a whistle, it hurries to Grandpa whenever it would walk anyway, so it never drops an attack.
+	if _rally_left > 0.0:
+		_rally_left -= delta
+		if not desired_velocity.is_zero_approx() and distance_to_target() > RALLY_NEAR:
+			desired_velocity = chase_direction() * def.speed * RALLY_SPEED
 	# Something bolted to the wall stays put, however hard it is hit.
 	if def.wall_mounted:
 		_knockback = Vector2.ZERO
@@ -329,6 +338,21 @@ func is_pushed() -> bool:
 # and something bolted to a wall never moves.
 func rides_strips() -> bool:
 	return def != null and not def.ignores_walls and not def.wall_mounted and not submerged
+
+
+# Whether a Mall Cop's whistle can call it: anything that walks, but no boss.
+func answers_whistle() -> bool:
+	return def != null and not def.is_boss and not def.wall_mounted and not submerged
+
+
+# A whistle sends it toward Grandpa faster for a while.
+func rally(seconds: float) -> void:
+	if answers_whistle():
+		_rally_left = maxf(_rally_left, seconds)
+
+
+func is_rallied() -> bool:
+	return _rally_left > 0.0
 
 
 func wait_for_room_start() -> void:

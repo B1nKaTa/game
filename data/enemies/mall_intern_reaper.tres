@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/enemy_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/actors/behaviors/melee_behavior.gd" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "mall_intern_reaper"
+display_name = "Intern Reaper"
+max_hp = 42.0
+speed = 95.0
+pension_drop = 1
+body_size = Vector2(20, 24)
+color = Color(0.55, 0.85, 0.42, 1)
+behavior_script = ExtResource("2")
+

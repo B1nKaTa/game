@@ -808,8 +808,11 @@ Same models as Step 3, plus `scripts/world/wet_floor.gd`, `scripts/world/lights_
   - **Clouds:** she sprays a cloud at a warned spot (0.9 s) that lingers 4 s, radius 40.
   - **Inside a cloud:** Grandpa's view shrinks. Reuse `LightsOut` with a short dark time and `LIGHT_RADIUS` about 55, shown only while his feet are in a cloud, so every warning still draws above it (lesson: warnings stay on their own high layer).
 
-- [ ] **Step 1: Write failing tests** for `walker_loop` (closed, inside the room, 4 corners), contact damage at most once per 0.8 s, `nearest_other`, and a cloud's coverage test.
-- [ ] **Step 2: Implement. When testing is allowed, look at each in a real window. Commit one commit per enemy, and one for the returning pair.**
+- [x] **Step 1: Write failing tests** for `walker_loop` (closed, inside the room, 4 corners), contact damage at most once per 0.8 s, `nearest_other`, and a cloud's coverage test. In `tests/test_mall_enemies.gd`.
+- [ ] **Step 2: Implement. When testing is allowed, look at each in a real window. Commit one commit per enemy, and one for the returning pair.** Implemented, tests run and passing (895), in one commit for the task as the build brief asked; the look in a real window is still to do.
+  - **Walkers:** a `WalkerLine` (`scripts/actors/behaviors/walker_line.gd`) is shared through metadata, as the mourners' pack is. Its first living member runs the clock and walks the loop at the walker's speed (70), with members 26 px apart. `walker_loop(origin, room_cells, is_open)` keeps the rectangle half a cell off the walls and starts from another corner when the room's walk grid says the first way is blocked. The whistle shows on every member whole; the break chases at 1.5× speed with `chase_direction()`.
+  - **Mall Cop:** charges 260 px at 320 px/s down a lane that ends at props, stops at anything solid, then says "FWEEET!" and calls `Enemy.rally(2.0)` on the nearest enemy that answers a whistle (no bosses). A rallied enemy walks at 1.5× toward Grandpa only when it would walk anyway, so it never drops an attack.
+  - **Perfume Sprayer:** keeps 120 to 200 px away and sprays every 3.6 s. `PerfumeCloud` warns 0.9 s, hangs 4 s (radius 40) and never hurts. `PerfumeHaze` is a `LightsOut` (which gained `light_radius`, `text` and `current_shade()`) with a 55 px light, eased in only while his feet are in a cloud; it draws at the dark's z, under warnings and shots. Placeholder colours: walkers orange, the Cop blue, the Sprayer pink, the Intern Reaper lime and the Notary Public yellow.
 
 ### Task 17: Gloria, Mall Fountain Diva (mini boss)
 

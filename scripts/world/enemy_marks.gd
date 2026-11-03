@@ -50,6 +50,14 @@ const BOOK_EDGE := Color("e2b33c")
 const DIRECTOR_HAT := Color("15131a")
 const DIRECTOR_BAND := Color("7a2f3a")
 const CARNATION := Color("fbf7ef")
+const SWEATBAND := Color("f4f1e6")
+const SNEAKER := Color("fbfbff")
+const COP_CAP := Color("1c2340")
+const COP_PEAK := Color("0c1020")
+const COP_BADGE := Color("e2c25a")
+const WHISTLE := Color("c9cdd6")
+const PERFUME_GLASS := Color(0.85, 0.95, 1.0, 0.85)
+const PERFUME_BULB := Color("d9576b")
 
 var _def: EnemyDef
 var _facing := Vector2.RIGHT
@@ -170,6 +178,24 @@ func _draw() -> void:
 			draw_rect(Rect2(-half.x * 0.5, -half.y - 4.0, half.x, 3.0), DIRECTOR_BAND)
 			draw_rect(Rect2(-half.x * 0.8, -half.y, half.x * 1.6, 3.0), DIRECTOR_HAT)
 			draw_circle(Vector2(-half.x * 0.45, -half.y * 0.3), 3.0, CARNATION)
+		"headband":
+			# A sweatband round the head and white sneakers.
+			draw_rect(Rect2(-half.x, -half.y + 3.0, half.x * 2.0, 3.0), SWEATBAND)
+			draw_rect(Rect2(-half.x + 1.0, half.y - 3.0, 5.0, 3.0), SNEAKER)
+			draw_rect(Rect2(half.x - 6.0, half.y - 3.0, 5.0, 3.0), SNEAKER)
+		"cop_cap":
+			# A peaked cap with a badge, and a whistle on a cord.
+			draw_rect(Rect2(-half.x * 0.7, -half.y - 5.0, half.x * 1.4, 6.0), COP_CAP)
+			draw_rect(Rect2(-half.x * 0.9, -half.y, half.x * 1.8, 2.0), COP_PEAK)
+			draw_rect(Rect2(-1.5, -half.y - 4.0, 3.0, 3.0), COP_BADGE)
+			draw_line(Vector2(-3.0, -half.y + 9.0), Vector2(2.0, 2.0), COP_BADGE, 1.0)
+			draw_rect(Rect2(1.0, 1.0, 5.0, 3.0), WHISTLE)
+		"perfume":
+			# A cut-glass bottle with a squeeze bulb, held out to one side.
+			draw_rect(Rect2(half.x - 1.0, -4.0, 7.0, 9.0), PERFUME_GLASS)
+			draw_rect(Rect2(half.x - 1.0, -4.0, 7.0, 9.0), Color.BLACK, false, 1.0)
+			draw_line(Vector2(half.x + 2.5, -4.0), Vector2(half.x + 2.5, -8.0), Color.BLACK, 1.0)
+			draw_circle(Vector2(half.x + 2.5, -10.0), 3.0, PERFUME_BULB)
 	if _def.shield_half_angle > 0.0:
 		var reach := maxf(half.x, half.y) + SHIELD_GAP
 		var half_arc := deg_to_rad(_def.shield_half_angle)
