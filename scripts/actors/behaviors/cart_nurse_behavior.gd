@@ -24,6 +24,7 @@ var _charge_left := 0.0
 var _stun_left := 0.0
 var _direction := Vector2.RIGHT
 var _has_hit := false
+var _charged_for := 0.0
 var _moving := Vector2.ZERO
 
 
@@ -54,6 +55,7 @@ func _wanted(enemy: Enemy, delta: float) -> Vector2:
 		if _telegraph.tick(delta):
 			enemy.clear_warning()
 			_charge_left = CHARGE_TIME
+			_charged_for = 0.0
 			_cooldown = COOLDOWN
 			_has_hit = false
 		return Vector2.ZERO
@@ -69,13 +71,14 @@ func _wanted(enemy: Enemy, delta: float) -> Vector2:
 
 func _charging(enemy: Enemy, delta: float) -> Vector2:
 	# Only running into a wall head on counts, and not what she was already leaning on at the start.
-	if CHARGE_TIME - _charge_left > STUN_GRACE:
+	if _charged_for > STUN_GRACE:
 		for i in enemy.get_slide_collision_count():
 			var collision := enemy.get_slide_collision(i)
 			if BossDash.stops_at(collision.get_collider()) and collision.get_normal().dot(_direction) < -HEAD_ON:
 				_hit_wall(enemy)
 				return Vector2.ZERO
 	_charge_left -= delta
+	_charged_for += delta
 	enemy.smash(enemy.global_position + _direction * SMASH_AHEAD, SMASH_RADIUS)
 	if not _has_hit and enemy.distance_to_target() <= HIT_RANGE:
 		_has_hit = true
