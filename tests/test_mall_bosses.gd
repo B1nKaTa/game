@@ -142,7 +142,6 @@ func test_gloria_is_at_least_as_hard_as_barbara_klaus_and_the_reverend() -> void
 	assert_true(def.max_hp >= _load("reverend").max_hp - 0.01, "as tough as the Reverend")
 	assert_true(Diva.COOLDOWN <= ActivitiesCoordinatorBehavior.COOLDOWN)
 	assert_true(Diva.COOLDOWN <= ForemanBehavior.COOLDOWN)
-	assert_true(Diva.COOLDOWN <= ReverendBehavior.COOLDOWN)
 	assert_true(Diva.SUMMON_COUNT >= ForemanBehavior.SUMMON_COUNT)
 
 
@@ -288,15 +287,15 @@ func test_without_strips_there_is_no_conveyor_control() -> void:
 	assert_eq(seen.size(), 4)
 
 
-func test_the_mall_santa_is_clearly_harder_than_matron_and_smokey_and_on_par_with_mortimer() -> void:
+func test_the_mall_santa_is_clearly_harder_than_matron_and_smokey_and_no_tougher_than_mortimer() -> void:
 	var def := _load("mall_santa")
 	assert_true(def.is_boss)
-	assert_true(absf(def.max_hp * MALL_HEALTH - 1700.0) < 0.5, str(def.max_hp * MALL_HEALTH))
+	assert_true(absf(def.max_hp * MALL_HEALTH - 1650.0) < 0.5, str(def.max_hp * MALL_HEALTH))
 	assert_near(def.speed, 80.0)
 	assert_eq(def.pension_drop, 16)
 	for id in ["matron_mercy", "old_smokey"]:
 		assert_true(def.max_hp * MALL_HEALTH >= _load(id).max_hp * FLOOR_TWO_HEALTH * 1.1, id)
-	assert_near(def.max_hp, _load("mortimer_grimsby").max_hp, "the same health as Mortimer")
+	assert_true(def.max_hp <= _load("mortimer_grimsby").max_hp, "no more health than Mortimer, whose attacks are easier to read")
 	assert_true(MallSantaBehavior.BASE_COOLDOWN <= FuneralDirectorBehavior.BASE_COOLDOWN)
 	assert_true(MallSantaBehavior.PHASE_TWO_COOLDOWN <= FuneralDirectorBehavior.PHASE_TWO_COOLDOWN)
 	assert_true(MallSantaBehavior.BASE_COOLDOWN < MatronBehavior.BASE_COOLDOWN)

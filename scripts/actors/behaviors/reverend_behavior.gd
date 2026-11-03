@@ -8,7 +8,7 @@ const EULOGY_WINDUP := 0.5
 const WORDS := 6
 const WORD_STEP := 0.18
 const WORD_WARNING := 0.7
-const WORD_RADIUS := 22.0
+const WORD_RADIUS := 26.0
 # The line runs this far past Grandpa, and never shorter than EULOGY_MIN.
 const EULOGY_PAST := 60.0
 const EULOGY_MIN := 140.0
@@ -20,7 +20,7 @@ const OUT_STEPS := 6
 const BACK_STEPS := 10
 const WARNING_RADIUS := 34.0
 # A little shorter than Barbara's and Klaus's rests, as he must be at least as hard as they are.
-const COOLDOWN := 0.6
+const COOLDOWN := 0.5
 const KEEP_NEAR := 110.0
 const FIRST_SUMMON := 5.0
 const SUMMON_EVERY := 9.0
