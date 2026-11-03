@@ -644,8 +644,8 @@ func test_each_game_returns_about_ninety_percent() -> void:
 - **Safety:** the room has no enemies, and the overlay pauses nothing else. It only freezes the player and closes with the interact key or its Leave button.
 - **Smoke:** whenever the full loop meets an arcade room, it plays each game once through the panel's own methods with a seeded generator, and checks Pension moved by exactly the rule's payout. A made arcade room (as `_check_chests` does) guarantees the check runs every time.
 
-- [ ] **Step 1: Implement, then when testing is allowed run the tests and 3 full loops, and screenshot the overlay at its fullest (a blackjack hand of five cards and the poker hand), since the view is only 360 px tall.**
-- [ ] **Step 2: Update the docs, push, and stop.** The connection step is checked by the user before the Funeral Parlour.
+- [ ] **Step 1: Implement, then when testing is allowed run the tests and 3 full loops, and screenshot the overlay at its fullest (a blackjack hand of five cards and the poker hand), since the view is only 360 px tall.** Implemented; the runs and screenshots wait for testing. The overlay closes by polling the interact key in `_process` (see `LESSONS.md`), and the full loop plays every table of a made arcade room and of any arcade room a floor rolls.
+- [x] **Step 2: Update the docs, push, and stop.** The connection step is checked by the user before the Funeral Parlour.
 
 ---
 

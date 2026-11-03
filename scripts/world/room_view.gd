@@ -613,6 +613,47 @@ func _on_table_wanted(_game: String, table: ArcadeTable) -> void:
 	arcade_game_wanted.emit(table)
 
 
+# --- what the card-table overlay asks of the room ---
+
+func arcade_balance() -> int:
+	return _bank.data.pension
+
+
+# Bets come out of his Pension, and one he cannot cover is refused.
+func arcade_bet(amount: int) -> bool:
+	return amount > 0 and _bank.spend(amount)
+
+
+# Winnings go straight into his Pension, exactly as the game's rules pay them.
+func arcade_pay(amount: int) -> void:
+	if amount > 0:
+		_bank.add_pension(amount)
+
+
+# Three skulls: a free item from the run's usual pool, lying by the table. With nothing left to offer,
+# it pays what a shop would ask for one instead.
+func arcade_item_win(table: ArcadeTable) -> void:
+	var picked := RoomRules.pick_items(Content.items(), _run, 1, _rng)
+	if picked.is_empty():
+		arcade_pay(ArcadeOdds.ITEM_VALUE)
+		return
+	var table_cell := _cell_of(table.position)
+	var wanted: Array[Vector2i] = [table_cell + Vector2i(0, 2)]
+	var taken: Array[Vector2i] = _room.layout.cells_of(RoomLayout.SYMBOL_GAME)
+	var dealer := _room.layout.merchant_cell()
+	if dealer != Vector2i(-1, -1):
+		taken.append(dealer)
+	var spots := _room.layout.open_spots_near(wanted, taken)
+	var cell: Vector2i = spots[0] if not spots.is_empty() else _room.layout.nearest_floor_cell(wanted[0])
+	_run.promise(picked[0])
+	_add_free_item(RoomBackdrop.cell_center(cell), picked[0])
+
+
+# Three pills: every pill back.
+func arcade_full_heal() -> void:
+	_run.health.heal(_run.health.max_pills)
+
+
 # A vault is the richest room: the usual choice of items and treasures, plus a potion, a Thermos
 # and a Slip lying out in the open. It holds no Pension beyond a treasure's, so income stays put.
 func _create_vault_extras() -> void:

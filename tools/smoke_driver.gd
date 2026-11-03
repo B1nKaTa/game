@@ -11,6 +11,8 @@ const OPEN_DEEP_PATH := 0
 const LOCKED_DEEP_PATH := 1
 # A mimic's base pay, so "pays well" means at least the base before any floor multiplier.
 const MIMIC_PAY_AT_LEAST := 5
+# Pension lent to the Arcade checks so every bet is covered, and taken back after.
+const ARCADE_SPARE := 200
 
 var _failed := false
 var _boss_rooms_seen := 0
@@ -38,6 +40,9 @@ var _boss_choices_checked := 0
 var _landings_reached := 0
 var _checked_chests := false
 var _mimics_beaten_in_loop := 0
+var _checked_arcade := false
+# Arcade Rooms the floors rolled whose games the loop played, by room view.
+var _arcades_played := {}
 
 
 func _ready() -> void:
@@ -65,6 +70,7 @@ func _run() -> void:
 	await _clear_three_floors(RECORDS_PATH, OPEN_DEEP_PATH, OPEN_DEEP_PATH)
 	_check(Progress.data.pension > pension_before, "Pension was earned during the run")
 	_check(_checked_chests, "every kind of chest was opened in the chest room")
+	_check(_checked_arcade, "every Arcade game was played through its overlay")
 	await _wait(2.5)
 	_expect_scene("WaitingRoom")
 	_check(Progress.data.floors_cleared == 1, "clearing the first floor is counted")
@@ -143,7 +149,7 @@ func _run() -> void:
 	_check(Progress.data.level_of(upgrade.id) == 1, "upgrade survives a reload")
 
 	if not _failed:
-		print("SMOKE PASS paths cleared: %d, landings reached: %d, boss choices checked: %d, rooms of sizes %s, big room view checked: %s, block memory checked: %s, props checked: %s, fight checked: %s, graveyard checked: %s, care home checked: %s, furnace checked: %s, vault opened: %s, potions checked: %s, fuel checked: %s, pickups off solids: %d, chests checked: %s, mimics beaten on the way: %d" % [_paths_cleared, _landings_reached, _boss_choices_checked, str(_sizes_seen.keys()), str(_followed_a_big_room), str(_checked_block_memory), str(_checked_props), str(_checked_fight), str(_checked_graveyard), str(_checked_care_home), str(_checked_furnace), str(_opened_a_vault), str(_checked_potions), str(_checked_fuel), _pickups_off_solids, str(_checked_chests), _mimics_beaten_in_loop])
+		print("SMOKE PASS paths cleared: %d, landings reached: %d, boss choices checked: %d, rooms of sizes %s, big room view checked: %s, block memory checked: %s, props checked: %s, fight checked: %s, graveyard checked: %s, care home checked: %s, furnace checked: %s, vault opened: %s, potions checked: %s, fuel checked: %s, pickups off solids: %d, chests checked: %s, mimics beaten on the way: %d, arcade checked: %s, arcade rooms played on the way: %d" % [_paths_cleared, _landings_reached, _boss_choices_checked, str(_sizes_seen.keys()), str(_followed_a_big_room), str(_checked_block_memory), str(_checked_props), str(_checked_fight), str(_checked_graveyard), str(_checked_care_home), str(_checked_furnace), str(_opened_a_vault), str(_checked_potions), str(_checked_fuel), _pickups_off_solids, str(_checked_chests), _mimics_beaten_in_loop, str(_checked_arcade), _arcades_played.size()])
 		get_tree().quit(0)
 
 
@@ -229,6 +235,9 @@ func _clear_whole_floor(scene: Node, path_index: int) -> void:
 			await _walk_back_and_return(scene, at)
 		if map.room(at).room_type == RoomLayout.TYPE_SHOP:
 			await _check_merchant(scene)
+		if map.room(at).room_type == RoomLayout.TYPE_ARCADE and not _arcades_played.has(scene.debug_room_view().get_instance_id()):
+			_arcades_played[scene.debug_room_view().get_instance_id()] = true
+			await _play_each_table(scene, scene.debug_room_view(), null)
 		if map.room(at).room_type == RoomLayout.TYPE_SHOP and not _saw_shop:
 			_check_shop(scene)
 		if at != map.start_id:
@@ -813,6 +822,7 @@ func _check_fight_room(scene: Node) -> void:
 	await _check_shield(scene)
 	await _check_dentures(scene)
 	await _check_chests(scene)
+	await _check_arcade(scene)
 	await _check_boss_moves(scene)
 	var floor_def: FloorDef = load("res://data/floors/floor_1.tres")
 	await _check_far_boss_waits(scene, floor_def.floor_boss)
@@ -1096,6 +1106,119 @@ func _check_chests(scene: Node) -> void:
 		run.add_key()
 	floor_def.mimic = mimic_before
 	_checked_chests = true
+
+
+# --- The Arcade Room: the Dealer, the tables and the card-table overlay ---
+
+# A made Arcade Room, so the check runs every time whatever the floors rolled: three tables in order and
+# the Dealer, each game played once through the overlay for exactly its rule's payout, a bet he cannot
+# cover refused, a hand left mid-play finished rather than lost, and every table full again next visit.
+func _check_arcade(scene: Node) -> void:
+	var layout: RoomLayout = load(FloorBuilder.ARCADE_DIR + "arcade_01.tres")
+	var view := await _enter_made_room(scene, layout)
+	var player: Player = scene.player
+	_check(get_tree().get_nodes_in_group("enemies").is_empty(), "nothing waits to fight in the Arcade Room")
+	var tables: Array[ArcadeTable] = view.arcade_tables()
+	_check(tables.size() == ArcadeTable.GAMES.size(), "the Arcade Room holds a table for each game, got %d" % tables.size())
+	if tables.size() < ArcadeTable.GAMES.size():
+		return
+	for i in tables.size():
+		_check(tables[i].game == ArcadeTable.GAMES[i], "table %d is the %s" % [i, ArcadeTable.GAMES[i]])
+	var dealers := 0
+	for child in view.get_children():
+		if child is Npc and child.def.id == "dealer":
+			dealers += 1
+	_check(dealers == 1, "the Dealer stands in the Arcade Room")
+	var seeded := RandomNumberGenerator.new()
+	seeded.seed = 31
+	await _play_each_table(scene, view, seeded)
+	# A pull he cannot cover is refused and costs nothing.
+	var panel := await _open_table(scene, tables[0])
+	if panel != null:
+		var saved: int = Progress.data.pension
+		var pulls: int = tables[0].plays_left
+		Progress.spend(saved)
+		_check(not panel.pull() and Progress.data.pension == 0 and tables[0].plays_left == pulls, "a pull he cannot cover is refused")
+		Progress.add_pension(saved)
+		await _close_table(scene)
+	# Coming back fills every table, and walking away mid-hand stands for him and pays what the hand earned.
+	view.refresh_doors()
+	for table in tables:
+		_check(table.plays_left == ArcadeTable.plays_per_visit(table.game), "a new visit fills the %s again" % table.game)
+	Progress.add_pension(ARCADE_SPARE)
+	panel = await _open_table(scene, tables[1])
+	if panel != null:
+		var pension: int = Progress.data.pension
+		_check(panel.bet(Blackjack.BETS[0]), "a blackjack bet can be placed")
+		var hand: Blackjack = panel.blackjack()
+		await _close_table(scene)
+		_check(hand.is_over, "walking away mid-hand finishes the hand")
+		_check(Progress.data.pension == pension - Blackjack.BETS[0] + Blackjack.payout(hand.outcome(), Blackjack.BETS[0]), "and pays what it earned")
+	Progress.spend(mini(ARCADE_SPARE, Progress.data.pension))
+	_check(player.is_physics_processing(), "closing the overlay lets Grandpa move again")
+	_checked_arcade = true
+
+
+# Plays every table of an Arcade Room once through its overlay, opened and closed by the real key, and
+# checks Pension moves by exactly what each game's rules pay. A seeded generator makes the hands the same
+# every run. Spare Pension covers the bets and is taken back after.
+func _play_each_table(scene: Node, view: RoomView, seeded: RandomNumberGenerator) -> void:
+	var player: Player = scene.player
+	Progress.add_pension(ARCADE_SPARE)
+	for table in view.arcade_tables():
+		if table.plays_left <= 0:
+			continue
+		var panel := await _open_table(scene, table)
+		if panel == null:
+			break
+		_check(not player.is_physics_processing(), "the overlay holds Grandpa still")
+		if seeded != null:
+			panel.use_rng(seeded)
+		var pension: int = Progress.data.pension
+		var plays: int = table.plays_left
+		match table.game:
+			ArcadeTable.SLOT:
+				_check(panel.pull(), "a pull can be made")
+				var won := SlotMachine.payout(panel.last_reels(), SlotMachine.BET)
+				_check(Progress.data.pension == pension - SlotMachine.BET + int(won["pension"]), "a pull pays exactly its rule's payout, reels %s" % str(panel.last_reels()))
+			ArcadeTable.BLACKJACK:
+				_check(panel.bet(Blackjack.BETS[0]), "a blackjack bet can be placed")
+				var hand: Blackjack = panel.blackjack()
+				while panel.state() == CardTablePanel.PLAYING and Blackjack.hand_value(hand.player) < ArcadeOdds.PLAYER_STANDS_ON:
+					panel.hit()
+				panel.stand()
+				_check(panel.state() == CardTablePanel.DONE, "the blackjack hand is settled")
+				_check(Progress.data.pension == pension - Blackjack.BETS[0] + Blackjack.payout(hand.outcome(), Blackjack.BETS[0]), "blackjack pays exactly its rule's payout, %s" % hand.outcome())
+				_check(not panel.bet(Blackjack.BETS[0]), "blackjack plays one hand a visit")
+			ArcadeTable.POKER:
+				_check(panel.bet(DrawPoker.BETS[0]), "a poker bet can be placed")
+				var holds := ArcadeOdds.simple_holds(panel.poker().hand)
+				for i in holds.size():
+					if holds[i]:
+						panel.toggle_hold(i)
+				panel.draw_cards()
+				var hand_name := DrawPoker.rank_hand(panel.poker().hand)
+				_check(Progress.data.pension == pension - DrawPoker.BETS[0] + DrawPoker.payout(hand_name, DrawPoker.BETS[0]), "draw poker pays exactly its rule's payout, %s" % hand_name)
+		_check(table.plays_left == plays - 1, "a play uses one of the visit's plays at the %s" % table.game)
+		await _close_table(scene)
+	Progress.spend(mini(ARCADE_SPARE, Progress.data.pension))
+
+
+# Stands Grandpa just below a table and presses the real interact key.
+func _open_table(scene: Node, table: ArcadeTable) -> CardTablePanel:
+	_put_feet(scene, table.global_position + Vector2(0, RoomBackdrop.TILE))
+	await _wait(0.1)
+	await _press("interact")
+	await _wait(0.1)
+	var panel: CardTablePanel = scene.debug_card_panel()
+	_check(panel != null and panel.game() == table.game, "the interact key opens the %s overlay" % table.game)
+	return panel
+
+
+func _close_table(scene: Node) -> void:
+	await _press("interact")
+	await _wait(0.2)
+	_check(scene.debug_card_panel() == null, "the interact key closes the overlay, and does not open it again")
 
 
 # Mimics a room rolled are woken and beaten before its pickups are gathered, so walking onto a coin

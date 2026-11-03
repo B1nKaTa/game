@@ -40,6 +40,10 @@ var _feedback: CombatFeedback
 var _mini_map: FloorMapView
 var _big_map: FloorMapView
 var _camera: Camera2D
+# The Arcade overlay while it is open, and the frame it last closed on, so the press that closes it
+# never opens it again at once.
+var _card_panel: CardTablePanel
+var _card_panel_closed_frame := -1
 
 
 func _ready() -> void:
@@ -119,6 +123,10 @@ func debug_floor_def() -> FloorDef:
 
 func debug_depth() -> int:
 	return _depth
+
+
+func debug_card_panel() -> CardTablePanel:
+	return _card_panel
 
 
 # Walks out of the Crossroads along a path at once, for checks that are not about the walking.
@@ -215,6 +223,7 @@ func _make_room_view(room: FloorRoom) -> RoomView:
 		view = RoomView.new()
 		view.door_entered.connect(func(id: int): _enter_room.call_deferred(id))
 		view.stairwell_entered.connect(func(): _go_down.call_deferred())
+		view.arcade_game_wanted.connect(_open_card_table)
 	view.setup(room, _map, _floor_def, _run, player, _rng, _progress, Progress)
 	view.notice.connect(_hud.show_notice)
 	view.pension_earned.connect(func(amount: int): Progress.add_pension(amount))
@@ -234,6 +243,36 @@ func _exit_tree() -> void:
 
 func _on_bomb_requested(at: Vector2) -> void:
 	_room_view.place_bomb(at)
+
+
+# An Arcade table opens its overlay. Grandpa holds still, as at a Waiting Room counter, the mouse shows
+# for the buttons and the big map waits, but the room itself carries on, safe as it is.
+func _open_card_table(table: ArcadeTable) -> void:
+	if is_over or _card_panel != null or Engine.get_process_frames() == _card_panel_closed_frame:
+		return
+	if _big_map.is_open() or not is_instance_valid(table):
+		return
+	_card_panel = CardTablePanel.new()
+	_card_panel.setup(table, _room_view, _rng)
+	_card_panel.closed.connect(_close_card_table)
+	add_child(_card_panel)
+	player.cancel_charge()
+	player.set_physics_process(false)
+	_big_map.enabled = false
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
+func _close_card_table() -> void:
+	if _card_panel == null:
+		return
+	_card_panel.queue_free()
+	_card_panel = null
+	_card_panel_closed_frame = Engine.get_process_frames()
+	if is_over:
+		return
+	player.set_physics_process(true)
+	_big_map.enabled = true
+	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
 
 
 func _on_player_died() -> void:
@@ -289,6 +328,8 @@ func _end_run(message: String) -> void:
 	if is_over:
 		return
 	is_over = true
+	if _card_panel != null:
+		_card_panel.leave()
 	if _big_map != null:
 		_big_map.enabled = false
 		_big_map.set_open(false)
