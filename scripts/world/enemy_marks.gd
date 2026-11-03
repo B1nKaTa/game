@@ -47,6 +47,9 @@ const COLLAR := Color("15131a")
 const COLLAR_TAB := Color("fbf7ef")
 const BOOK := Color("4a1c24")
 const BOOK_EDGE := Color("e2b33c")
+const DIRECTOR_HAT := Color("15131a")
+const DIRECTOR_BAND := Color("7a2f3a")
+const CARNATION := Color("fbf7ef")
 
 var _def: EnemyDef
 var _facing := Vector2.RIGHT
@@ -161,6 +164,12 @@ func _draw() -> void:
 			draw_rect(Rect2(-2.0, -half.y + 8.0, 4.0, 4.0), COLLAR_TAB)
 			draw_rect(Rect2(half.x - 4.0, 0.0, 9.0, 11.0), BOOK)
 			draw_rect(Rect2(half.x - 4.0, 0.0, 9.0, 11.0), BOOK_EDGE, false, 1.0)
+		"carnation_hat":
+			# A tall black hat with a burgundy band, and a white carnation in the lapel.
+			draw_rect(Rect2(-half.x * 0.5, -half.y - 14.0, half.x, 15.0), DIRECTOR_HAT)
+			draw_rect(Rect2(-half.x * 0.5, -half.y - 4.0, half.x, 3.0), DIRECTOR_BAND)
+			draw_rect(Rect2(-half.x * 0.8, -half.y, half.x * 1.6, 3.0), DIRECTOR_HAT)
+			draw_circle(Vector2(-half.x * 0.45, -half.y * 0.3), 3.0, CARNATION)
 	if _def.shield_half_angle > 0.0:
 		var reach := maxf(half.x, half.y) + SHIELD_GAP
 		var half_arc := deg_to_rad(_def.shield_half_angle)

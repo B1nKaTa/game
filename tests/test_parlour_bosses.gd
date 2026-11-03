@@ -5,6 +5,11 @@ const Reverend := preload("res://scripts/actors/behaviors/reverend_behavior.gd")
 const PARLOUR_HEALTH := 1.8
 # The second floors scale by this, so their bosses' final health is their .tres health times it.
 const FLOOR_TWO_HEALTH := 1.4
+const CASKET := FuneralDirectorBehavior.Attack.CASKET
+const PROCESSION := FuneralDirectorBehavior.Attack.PROCESSION
+const SPRAY := FuneralDirectorBehavior.Attack.SPRAY
+const CRESCENDO := FuneralDirectorBehavior.Attack.CRESCENDO
+const CHARGE := FuneralDirectorBehavior.Attack.CHARGE
 
 
 func _load(id: String) -> EnemyDef:
@@ -100,3 +105,171 @@ func test_the_reverend_is_at_least_as_hard_as_barbara_and_klaus() -> void:
 	assert_true(Reverend.COOLDOWN <= ActivitiesCoordinatorBehavior.COOLDOWN)
 	assert_true(Reverend.COOLDOWN <= ForemanBehavior.COOLDOWN)
 	assert_true(Reverend.SUMMON_COUNT >= ForemanBehavior.SUMMON_COUNT)
+
+
+# --- Mortimer Grimsby ---
+
+func _walls_of(cells: Vector2i, rng: RandomNumberGenerator, count: int) -> Array[Vector2]:
+	# Ring origins on the inner face of the border walls, as organ pipes have them.
+	var size := Vector2(cells) * RoomBackdrop.TILE
+	var tile := float(RoomBackdrop.TILE)
+	var pipes: Array[Vector2] = []
+	for i in count:
+		match rng.randi_range(0, 3):
+			0:
+				pipes.append(Vector2(rng.randf_range(tile * 2.0, size.x - tile * 2.0), tile))
+			1:
+				pipes.append(Vector2(rng.randf_range(tile * 2.0, size.x - tile * 2.0), size.y - tile))
+			2:
+				pipes.append(Vector2(tile, rng.randf_range(tile * 2.0, size.y - tile * 2.0)))
+			_:
+				pipes.append(Vector2(size.x - tile, rng.randf_range(tile * 2.0, size.y - tile * 2.0)))
+	return pipes
+
+
+func test_the_casket_slam_costs_three_pills_and_its_warning_shows_whole() -> void:
+	assert_eq(Enemy.HEAVIEST_DAMAGE, 3)
+	assert_eq(FuneralDirectorBehavior.CASKET_DAMAGE, 3)
+	assert_true(FuneralDirectorBehavior.CASKET_SHOWN_WHOLE)
+	assert_near(FuneralDirectorBehavior.CASKET_WINDUP, 1.2)
+	assert_near(FuneralDirectorBehavior.CASKET_RADIUS, 44.0)
+	for phase_two in [false, true]:
+		assert_near(FuneralDirectorBehavior.windup_for(FuneralDirectorBehavior.Attack.CASKET, phase_two), 1.2, "the second phase never shortens it")
+	var mortimer := Enemy.new()
+	mortimer.setup(_load("mortimer_grimsby"), null, 0.25)
+	var telegraph := Telegraph.new()
+	telegraph.start(FuneralDirectorBehavior.CASKET_WINDUP)
+	mortimer.set_warning(telegraph, FuneralDirectorBehavior.WARNING_RADIUS, FuneralDirectorBehavior.CASKET_SHOWN_WHOLE)
+	assert_near(mortimer._warning_share(), 1.0, "whatever his warning stat")
+	assert_true(telegraph.shows_warning(mortimer._warning_share()), "it shows from the first instant")
+	mortimer.free()
+
+
+func test_the_casket_mark_fills_over_its_whole_windup_and_lands_for_three() -> void:
+	var strike := GroundStrike.new()
+	strike.setup(null, FuneralDirectorBehavior.CASKET_RADIUS, FuneralDirectorBehavior.CASKET_WINDUP, 0.0, 0.0, FuneralDirectorBehavior.CASKET_DAMAGE)
+	strike.set_look(GroundStrike.LOOK_CASKET)
+	assert_eq(strike.damage(), 3)
+	assert_false(strike.advance(0.6))
+	assert_near(strike.fill(), 0.5, "half filled at half the windup")
+	assert_true(strike.advance(0.61))
+	strike.free()
+
+
+func test_he_can_step_out_of_the_casket_in_time() -> void:
+	var walk := PlayerStats.BASE_SPEED * (FuneralDirectorBehavior.CASKET_WINDUP - 0.3)
+	assert_true(walk > FuneralDirectorBehavior.CASKET_RADIUS * 2.0, "%f" % walk)
+
+
+func test_the_procession_leaves_its_gap_inside_the_room() -> void:
+	for cells in [Vector2i(14, 9), Vector2i(20, 11), Vector2i(30, 17)]:
+		var room := ForemanBehavior.room_rect(cells)
+		for direction in [Vector2.RIGHT, Vector2.DOWN]:
+			for gap in FuneralDirectorBehavior.SLOTS:
+				for center in [room.get_center(), room.position + Vector2(5, 5), room.end - Vector2(5, 5)]:
+					var lanes := FuneralDirectorBehavior.procession_lanes(room, direction, gap, center)
+					assert_eq(lanes.size(), 4, "four lanes march")
+					var clear := FuneralDirectorBehavior.procession_slot(room, direction, gap, center)
+					assert_true(room.grow(0.5).encloses(clear), "the gap %s lies in %s" % [str(clear), str(room)])
+					assert_true(clear.size.x >= Player.FEET_BOX_SIZE.x * 2.0 and clear.size.y >= Player.FEET_BOX_SIZE.y * 2.0, "he fits in it")
+					for lane in lanes:
+						assert_true(room.grow(0.5).encloses(lane))
+						assert_false(lane.has_point(clear.get_center()), "the gap is clear")
+
+
+func test_the_procession_gap_moves_each_time() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 21
+	var last := 1
+	var seen := {}
+	for i in 60:
+		var next := FuneralDirectorBehavior.next_gap(last, rng)
+		assert_true(next != last and next >= 0 and next < FuneralDirectorBehavior.SLOTS)
+		seen[next] = true
+		last = next
+	assert_eq(seen.size(), FuneralDirectorBehavior.SLOTS)
+
+
+func test_a_procession_row_hits_only_where_it_has_marched() -> void:
+	assert_true(ProcessionLane.row_hits(Vector2.ZERO, Vector2.RIGHT, 40.0, 100.0, Vector2(80, 10)))
+	assert_false(ProcessionLane.row_hits(Vector2.ZERO, Vector2.RIGHT, 40.0, 100.0, Vector2(140, 0)), "not reached yet")
+	assert_false(ProcessionLane.row_hits(Vector2.ZERO, Vector2.RIGHT, 40.0, 100.0, Vector2(20, 0)), "already passed")
+	assert_false(ProcessionLane.row_hits(Vector2.ZERO, Vector2.RIGHT, 40.0, 100.0, Vector2(80, 30)), "beside the lane")
+
+
+func test_the_crescendo_always_leaves_a_safe_spot() -> void:
+	for seed_value in 200:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = seed_value
+		var cells: Vector2i = [Vector2i(14, 9), Vector2i(20, 11), Vector2i(30, 17)][seed_value % 3]
+		var room := ForemanBehavior.room_rect(cells)
+		var pipes := _walls_of(cells, rng, rng.randi_range(2, 8))
+		var feet := Vector2(rng.randf_range(room.position.x, room.end.x), rng.randf_range(room.position.y, room.end.y))
+		var safe := FuneralDirectorBehavior.crescendo_safe_spot(pipes, room, rng, feet)
+		assert_true(room.has_point(safe), "seed %d: inside the room" % seed_value)
+		var reaches := FuneralDirectorBehavior.crescendo_reaches(pipes, safe)
+		var playing := 0
+		for i in pipes.size():
+			if reaches[i] < FuneralDirectorBehavior.PLAYS_FROM:
+				continue
+			playing += 1
+			# Grown to its full reach, the band's outer edge still stops short of the spot.
+			assert_true(pipes[i].distance_to(safe) > reaches[i] + PipeRing.WIDTH / 2.0, "seed %d pipe %d" % [seed_value, i])
+			for step in 21:
+				var radius := lerpf(PipeRing.FROM, reaches[i], step / 20.0)
+				assert_false(Shockwave.band_hits(pipes[i], radius, PipeRing.WIDTH, safe), "seed %d pipe %d at %f" % [seed_value, i, radius])
+		assert_true(playing > 0, "seed %d: the crescendo plays" % seed_value)
+
+
+func test_the_safe_spot_is_near_him_when_it_can_be() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 3
+	var room := ForemanBehavior.room_rect(Vector2i(20, 11))
+	var pipes: Array[Vector2] = [Vector2(160, 32), Vector2(480, 320)]
+	var feet := room.get_center()
+	for i in 20:
+		var safe := FuneralDirectorBehavior.crescendo_safe_spot(pipes, room, rng, feet)
+		assert_true(safe.distance_to(feet) <= FuneralDirectorBehavior.SAFE_NEAR, str(safe))
+
+
+func test_the_spray_follows_the_plan() -> void:
+	assert_near(FuneralDirectorBehavior.SPRAY_WINDUP, 0.9)
+	assert_near(FuneralDirectorBehavior.SPRAY_ANGLE, 50.0)
+	assert_near(FuneralDirectorBehavior.SPRAY_LENGTH, 120.0)
+	assert_near(FuneralDirectorBehavior.SPRAY_SLOW, 0.5)
+	assert_near(FuneralDirectorBehavior.SPRAY_SLOW_TIME, 1.5)
+
+
+func test_without_pipes_there_is_no_crescendo() -> void:
+	for roll in [0.0, 0.3, 0.6, 0.99]:
+		var attack := FuneralDirectorBehavior.choose_attack(60.0, FuneralDirectorBehavior.Attack.NONE, false, 99.0, roll)
+		assert_true(attack != FuneralDirectorBehavior.Attack.CRESCENDO)
+	var seen := {}
+	for i in 100:
+		seen[FuneralDirectorBehavior.choose_attack(60.0, FuneralDirectorBehavior.Attack.NONE, true, 99.0, i / 100.0)] = true
+	assert_true(seen.has(FuneralDirectorBehavior.Attack.CRESCENDO), "with pipes it comes")
+
+
+func test_phase_two_chains_the_coffin_charge() -> void:
+	for attack in [CASKET, PROCESSION, SPRAY, CRESCENDO]:
+		assert_eq(FuneralDirectorBehavior.followup(attack, true), CHARGE, "after %d" % attack)
+		assert_eq(FuneralDirectorBehavior.followup(attack, false), FuneralDirectorBehavior.Attack.NONE)
+	assert_eq(FuneralDirectorBehavior.followup(CHARGE, true), FuneralDirectorBehavior.Attack.NONE, "never two charges running")
+	assert_near(FuneralDirectorBehavior.CHARGE_WINDUP, 0.9)
+	assert_near(FuneralDirectorBehavior.windup_for(CHARGE, true), 0.9)
+	assert_true(FuneralDirectorBehavior.windup_for(SPRAY, true) < FuneralDirectorBehavior.SPRAY_WINDUP, "his other windups quicken")
+	assert_true(FuneralDirectorBehavior.is_phase_two(800.0, 1700.0))
+	assert_false(FuneralDirectorBehavior.is_phase_two(900.0, 1700.0))
+
+
+func test_mortimer_is_clearly_harder_than_matron_and_smokey() -> void:
+	var def := _load("mortimer_grimsby")
+	assert_true(def.is_boss)
+	assert_true(absf(def.max_hp * PARLOUR_HEALTH - 1700.0) < 0.5, str(def.max_hp * PARLOUR_HEALTH))
+	assert_near(def.speed, 75.0)
+	assert_eq(def.pension_drop, 16)
+	for id in ["matron_mercy", "old_smokey"]:
+		assert_true(def.max_hp * PARLOUR_HEALTH >= _load(id).max_hp * FLOOR_TWO_HEALTH * 1.1, id)
+	assert_true(FuneralDirectorBehavior.BASE_COOLDOWN < ChiefStokerBehavior.BASE_COOLDOWN)
+	assert_true(FuneralDirectorBehavior.PHASE_TWO_COOLDOWN < ChiefStokerBehavior.PHASE_TWO_COOLDOWN)
+	assert_true(FuneralDirectorBehavior.CASKET_DAMAGE > Enemy.HEAVY_DAMAGE)

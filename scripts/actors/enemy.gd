@@ -25,6 +25,8 @@ const ROOM_WAKE_TIME := 0.6
 const SAME_CELL_REACH := 0.71
 # What a boss's heaviest named attacks cost Grandpa, in pills.
 const HEAVY_DAMAGE := 2
+# A third floor's floor boss has one attack that costs this, and it always shows an extra-clear warning.
+const HEAVIEST_DAMAGE := 3
 const MOUND_COLOR := Color("5a4a33")
 const MOUND_EDGE := Color("2b2218")
 const SMOKE_COLOR := Color("8f8a94")

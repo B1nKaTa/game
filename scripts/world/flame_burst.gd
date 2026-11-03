@@ -11,6 +11,8 @@ var _direction := Vector2.RIGHT
 var _length := 130.0
 var _angle := 60.0
 var _left := SHOW_TIME
+var _outer := OUTER
+var _inner := INNER
 
 
 func setup(direction: Vector2, length: float, angle_deg: float) -> void:
@@ -18,6 +20,12 @@ func setup(direction: Vector2, length: float, angle_deg: float) -> void:
 	_length = length
 	_angle = angle_deg
 	z_index = Projectile.SHOT_Z
+
+
+# Another spray than fire, such as embalming fluid, keeps the shape in its own colours.
+func tint(outer: Color, inner: Color) -> void:
+	_outer = outer
+	_inner = inner
 
 
 func _process(delta: float) -> void:
@@ -38,5 +46,5 @@ func _draw() -> void:
 		var wobble := 1.0 - 0.12 * absf(sin(t * 24.0 + i * 1.7))
 		outer.append(Vector2.from_angle(a) * _length * wobble)
 		inner.append(Vector2.from_angle(_direction.angle() + (a - _direction.angle()) * 0.55) * _length * 0.65 * wobble)
-	draw_colored_polygon(outer, Color(OUTER, OUTER.a * fade))
-	draw_colored_polygon(inner, Color(INNER, INNER.a * fade))
+	draw_colored_polygon(outer, Color(_outer, _outer.a * fade))
+	draw_colored_polygon(inner, Color(_inner, _inner.a * fade))

@@ -736,8 +736,12 @@ Read these as models first:
 - **Organ crescendo:** every pipe in the room glows, then chords in a pattern that always leaves one safe spot. Static: `crescendo_safe_spot(pipes, room_rect, rng)`, tested to always leave a cell no ring band reaches at its chord time. In a room without pipes he uses the casket slam instead.
 - **Second phase:** he climbs into a coffin. Between his other attacks the coffin charges like the Pallbearers (0.9 s warned lane, smashing props, stopping at walls), with followups as Matron's gurney.
 
-- [ ] **Step 1: Write failing tests:** the slam costs 3 and its warning is shown whole, the procession always leaves its gap inside the room and moves it each time, the crescendo always has a safe spot over 200 seeds, and phase two chains the charge.
-- [ ] **Step 2: Implement. When testing is allowed, look at every attack in a real window, the casket slam's warning above all. Commit.**
+- [x] **Step 1: Write failing tests:** the slam costs 3 and its warning is shown whole, the procession always leaves its gap inside the room and moves it each time, the crescendo always has a safe spot over 200 seeds, and phase two chains the charge. Written in `tests/test_parlour_bosses.gd`, not yet run.
+- [ ] **Step 2: Implement. When testing is allowed, look at every attack in a real window, the casket slam's warning above all. Commit.** Implemented and committed before testing; the tests and the look in a real window are still to do.
+  - **The casket:** a `GroundStrike` of radius 44 locked under Grandpa, whose fill always runs the whole 1.2 s, with `LOOK_CASKET` (a second ring 8 px out and a coffin shadow growing over the spot). His own warning circle shows whole too. The second phase never shortens it, and the coffin charge keeps its 0.9 s; every other windup is 0.8 times as long.
+  - **The procession:** 5 slots of 40 px around Grandpa (`procession_slot`), 4 marching and 1 gap, so "4 warned lanes with one gap". The band is moved inside the room like the Foreman's steam lines, and the lanes turn each time. Each lane is a `ProcessionLane` (`scripts/world/procession_lane.gd`): warned for 1 s, then a row of bearers and a coffin marches down it at 300 px/s and costs a pill once.
+  - **The crescendo:** the rings of the beat do no damage, so the crescendo's rings cost a pill, or it would be no attack. Every pipe glows 1.3 s (staggered 0.1 s) and chords with a ring that stops 26 px short of one safe cell, at least 74 px from every pipe and within 120 px of Grandpa when one is. Its reach shows as a red arc while it glows. A pipe that would reach under 24 px is held quiet instead, so no harmless push can shove him off the spot. If he falls first, the pipes never chord.
+  - **The numbers:** 1700 final health (944.444 in the `.tres`), speed 75, pays 16, rests 0.65 s and 0.45 s below half health. Matron and Smokey end at 1500 and rest 0.8/0.6 and 0.7/0.5. He does not summon.
 
 ### Task 14: Funeral Parlour floor content
 

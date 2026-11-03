@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/enemy_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/actors/behaviors/funeral_director_behavior.gd" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "mortimer_grimsby"
+display_name = "Mortimer Grimsby, Funeral Director"
+max_hp = 944.444
+speed = 75.0
+pension_drop = 16
+is_boss = true
+body_size = Vector2(42, 50)
+color = Color(0.45, 0.12, 0.2, 1)
+frame_width = 64
+behavior_script = ExtResource("2")
+mark = "carnation_hat"

@@ -25,6 +25,7 @@ var _forced_glow := 0.0
 var _forced_glow_total := 0.0
 var _forced_reach := PipeRing.REACH
 var _forced_damage := 0
+var _held_left := 0.0
 var _overlay: Node2D
 var _light: PointLight2D
 
@@ -61,6 +62,7 @@ class Overlay extends Node2D:
 # Glows for glow_time, then chords once with a ring of the given reach and damage, then picks its
 # own beat up again from the start, so a forced chord is never followed by a second one at once.
 func force_chord(glow_time: float, reach: float, damage: int) -> void:
+	_held_left = 0.0
 	_forced_glow = maxf(glow_time, 0.01)
 	_forced_glow_total = _forced_glow
 	_forced_reach = reach
@@ -71,9 +73,24 @@ func is_forced() -> bool:
 	return _forced_glow > 0.0
 
 
+# Stays quiet for a while, through its own chords, then picks its beat up again from the start.
+func hold(seconds: float) -> void:
+	_forced_glow = 0.0
+	_held_left = seconds
+
+
+# A crescendo that never chords, as when the boss who called it falls first.
+func cancel_force() -> void:
+	if _forced_glow > 0.0:
+		_forced_glow = 0.0
+		_time = beat.offset
+
+
 func state() -> int:
 	if _forced_glow > 0.0:
 		return PipeBeat.GLOW
+	if _held_left > 0.0:
+		return PipeBeat.QUIET
 	return beat.state_at(_time)
 
 
@@ -93,6 +110,10 @@ func _physics_process(delta: float) -> void:
 		_forced_glow -= delta
 		if _forced_glow <= 0.0:
 			_send_ring(_forced_reach, _forced_damage)
+			_time = beat.offset
+	elif _held_left > 0.0:
+		_held_left -= delta
+		if _held_left <= 0.0:
 			_time = beat.offset
 	else:
 		var before := _time

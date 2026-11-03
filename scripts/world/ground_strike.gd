@@ -25,6 +25,12 @@ const THROW_ARC := 28.0
 # thorns. Both hurt the same way.
 const LOOK_COAL := "coal"
 const LOOK_THORNS := "thorns"
+# A coffin slammed down from above: the heaviest attack, so its mark is the clearest. A second ring
+# stands outside the first and the coffin's shadow grows over the spot as it falls.
+const LOOK_CASKET := "casket"
+const CASKET_RING_GAP := 8.0
+const CASKET_SHADOW := Color(0.05, 0.02, 0.03)
+const CASKET_WOOD := Color("4a2a1c")
 const WREATH := Color("3f6b34")
 const WREATH_BLOOM := Color("d9576b")
 const THORN := Color("2c4a24")
@@ -197,6 +203,8 @@ func _draw() -> void:
 	if _landed:
 		var progress := 1.0 - maxf(_show_left, 0.0) / SHOW_TIME
 		draw_circle(Vector2.ZERO, _radius * minf(0.6 + progress, 1.0), Color(DUST_COLOR, 0.7 * (1.0 - progress)))
+		if _look == LOOK_CASKET:
+			_draw_coffin(1.0, CASKET_WOOD, 1.0 - progress)
 		return
 	if _delay > 0.0:
 		draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 24, Color(COLOR, WAITING_ALPHA), 1.0)
@@ -209,6 +217,9 @@ func _draw() -> void:
 	var filled := fill()
 	draw_circle(Vector2.ZERO, _radius * filled, Color(COLOR, 0.15 + 0.3 * filled))
 	draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 24, COLOR, 2.0)
+	if _look == LOOK_CASKET:
+		draw_arc(Vector2.ZERO, _radius + CASKET_RING_GAP, 0.0, TAU, 32, COLOR, 2.0)
+		_draw_coffin(0.3 + 0.7 * filled, CASKET_SHADOW, 0.25 + 0.5 * filled)
 	if _thrown_from != Vector2.INF:
 		var start := _thrown_from - global_position
 		var at := start.lerp(Vector2.ZERO, filled) + Vector2(0.0, -sin(filled * PI) * THROW_ARC)
@@ -218,6 +229,14 @@ func _draw() -> void:
 		else:
 			draw_circle(at, 4.0, COAL_GLOW)
 			draw_circle(at, 3.0, COAL)
+
+
+# A coffin's outline across the spot, at a share of its full size.
+func _draw_coffin(size: float, color: Color, alpha: float) -> void:
+	var r := _radius * 0.9 * size
+	var shape := PackedVector2Array([Vector2(-r * 0.35, -r), Vector2(r * 0.35, -r), Vector2(r * 0.5, -r * 0.45), Vector2(r * 0.3, r), Vector2(-r * 0.3, r), Vector2(-r * 0.5, -r * 0.45)])
+	draw_colored_polygon(shape, Color(color, alpha))
+	draw_polyline(shape + PackedVector2Array([shape[0]]), Color(0, 0, 0, alpha), 1.0)
 
 
 # A ring of thorns reads as brambles, never as a warning: a dark green ring bristling with spikes.
