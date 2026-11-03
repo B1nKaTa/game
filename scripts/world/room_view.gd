@@ -24,8 +24,6 @@ const RECIPE_PROMPT := "Take recipe"
 const FREE_COLOR := Color("67f0d0")
 const KEY_COLOR := Color("ece9e0")
 const BOMB_COLOR := Color("ff9a3c")
-# What a mimic chest wakes into. It pays well and drops a Slip, and only floors 2 and deeper roll one.
-const MIMIC: EnemyDef = preload("res://data/enemies/mimic.tres")
 const MIMIC_SHOUT := "Surprise!"
 const MIMIC_SHOUT_TIME := 1.2
 # Where a Gilded Urn's two items wait, in cells from the urn: one each side, a row lower.
@@ -766,9 +764,12 @@ func _open_safe(at: Vector2) -> void:
 
 
 # Touched, the chest was never a chest. It waits a moment, as any enemy does when a room starts,
-# so its first lunge always shows its warning in full.
+# and its first lunge always shows its warning in full. It pays well and drops a Slip.
 func _wake_mimic(at: Vector2) -> void:
-	var mimic := _spawn_enemy(MIMIC, at)
+	# The floor names what wakes. One that names nothing never rolls a mimic, so this is only a guard.
+	if _floor_def.mimic == null:
+		return
+	var mimic := _spawn_enemy(_floor_def.mimic, at)
 	mimic.wait_for_room_start()
 	mimic.say(MIMIC_SHOUT, MIMIC_SHOUT_TIME)
 	notice.emit("That chest has teeth!")

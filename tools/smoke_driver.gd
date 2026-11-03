@@ -974,6 +974,9 @@ func _check_chests(scene: Node) -> void:
 	var player: Player = scene.player
 	var run: RunState = player.run
 	var floor_def: FloorDef = scene.debug_floor_def()
+	# The probe runs on the first floor, which names no mimic, so it lends that floor one while it runs.
+	var mimic_before: EnemyDef = floor_def.mimic
+	floor_def.mimic = _enemy_def("mimic")
 	var keys_before := run.keys
 	while run.keys > 0:
 		run.use_key()
@@ -1069,6 +1072,7 @@ func _check_chests(scene: Node) -> void:
 		run.use_key()
 	for i in keys_before:
 		run.add_key()
+	floor_def.mimic = mimic_before
 	_checked_chests = true
 
 

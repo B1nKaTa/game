@@ -178,6 +178,16 @@ func test_the_mimic_pays_well_drops_a_slip_and_warns_first() -> void:
 	assert_true(MimicBehavior.should_lunge(30.0, 0.0))
 
 
+func test_floors_that_roll_mimics_name_them_and_one_naming_none_rolls_none() -> void:
+	for path: String in FLOOR_TWO:
+		var def: FloorDef = load(path)
+		assert_true(def.mimic != null and def.mimic.id == "mimic", path)
+	var unnamed := FloorDef.new()
+	unnamed.depth = 2
+	unnamed.chest_weights = {"lunchbox": 1, "mimic": 50}
+	assert_near(float(unnamed.chest_odds()[ChestRules.MIMIC]), 0.0)
+
+
 func test_no_regular_enemy_drops_a_slip() -> void:
 	for path: String in FLOOR_ONE + FLOOR_TWO:
 		var def: FloorDef = load(path)
