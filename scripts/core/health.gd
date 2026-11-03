@@ -37,6 +37,8 @@ func heal(amount: int) -> void:
 func raise_max(new_max: int) -> void:
 	var difference := new_max - max_pills
 	max_pills = new_max
+	# A lower maximum never leaves him holding more pills than it allows.
+	pills = mini(pills, max_pills)
 	if difference > 0:
 		pills += difference
 	changed.emit()

@@ -49,6 +49,17 @@ func test_raise_max_adds_the_difference() -> void:
 	assert_eq(health.pills, 3)
 
 
+func test_a_lower_max_never_leaves_more_pills_than_it_allows() -> void:
+	var health := Health.new(34)
+	health.raise_max(4)
+	assert_eq(health.max_pills, 4)
+	assert_eq(health.pills, 4)
+	var hurt := Health.new(6)
+	hurt.hit(4)
+	hurt.raise_max(4)
+	assert_eq(hurt.pills, 2, "a lower maximum takes nothing he is not holding")
+
+
 func test_run_starts_with_upgrades_applied() -> void:
 	var run := _run({"pills": 2})
 	assert_eq(run.stats.max_pills, 6)
