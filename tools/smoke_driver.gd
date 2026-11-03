@@ -785,6 +785,7 @@ func _check_fight_room(scene: Node) -> void:
 	await _check_room_start(scene)
 	await _check_blast(scene)
 	await _check_shield(scene)
+	await _check_dentures(scene)
 	await _check_boss_moves(scene)
 	var floor_def: FloorDef = load("res://data/floors/floor_1.tres")
 	await _check_far_boss_waits(scene, floor_def.floor_boss)
@@ -905,6 +906,57 @@ func _check_shield(scene: Node) -> void:
 	_check(officer.hp < after_swing, "thrown dentures go over the shield")
 	scene.player.recall_teeth()
 	scene.player.aim_source = Callable()
+	await _dismiss_all()
+
+
+# The teeth fly, bite, lie chattering and come back, and the cane swings the whole time they are away.
+func _check_dentures(scene: Node) -> void:
+	var view := await _enter_made_room(scene, _fight_layout(20, 11, {}))
+	var player: Player = scene.player
+	var run: RunState = player.run
+	player.recall_teeth()
+	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(4, 5)))
+	var far: Enemy = view._spawn_enemy(_enemy_def("intern_reaper"), RoomBackdrop.cell_center(Vector2i(8, 5)) - Player.FEET_OFFSET, true)
+	far.set_physics_process(false)
+	var near: Enemy = view._spawn_enemy(_enemy_def("intern_reaper"), player.global_position + Vector2(-30, 0), true)
+	near.set_physics_process(false)
+	var far_hp: float = far.hp
+	var near_hp: float = near.hp
+	var expected := ThrownDentures.bite_damage(run.bite_damage_mult())
+	player.aim_source = func() -> Vector2: return far.global_position
+	await _press("throw")
+	var thrown_at := Time.get_ticks_msec()
+	_check(not player.has_teeth(), "the throw key sends the teeth out")
+	await _wait(0.6)
+	_check(absf((far_hp - far.hp) - expected) < 0.01, "the teeth bite for %f, did %f" % [expected, far_hp - far.hp])
+	# The cane never left his hand, so it swings while the teeth lie by the far enemy.
+	await _swing_at(scene, near)
+	_check(not player.has_teeth(), "the teeth are still away during the swing")
+	_check(near.hp < near_hp, "a swing lands while the teeth are away")
+	var waited := 0.0
+	while not player.has_teeth() and waited < run.stats.teeth_return_delay + 2.0:
+		await _wait(0.1)
+		waited += 0.1
+	var away := (Time.get_ticks_msec() - thrown_at) / 1000.0
+	_check(player.has_teeth(), "the teeth come back on their own, away %f s" % away)
+	_check(away >= run.stats.teeth_return_delay, "and not before their delay, away %f s" % away)
+	await _dismiss_all()
+	# Extra Strong Dentures let one throw bite through two enemies in a row.
+	var bites_before: int = run.stats.bites_per_throw
+	run.stats.bites_per_throw = 2
+	var first: Enemy = view._spawn_enemy(_enemy_def("intern_reaper"), RoomBackdrop.cell_center(Vector2i(7, 5)) - Player.FEET_OFFSET, true)
+	var second: Enemy = view._spawn_enemy(_enemy_def("intern_reaper"), RoomBackdrop.cell_center(Vector2i(9, 5)) - Player.FEET_OFFSET, true)
+	first.set_physics_process(false)
+	second.set_physics_process(false)
+	var first_hp: float = first.hp
+	var second_hp: float = second.hp
+	player.aim_source = func() -> Vector2: return second.global_position
+	await _press("throw")
+	await _wait(0.7)
+	_check(first.hp < first_hp and second.hp < second_hp, "with the item one throw bites both enemies in a row")
+	run.stats.bites_per_throw = bites_before
+	player.recall_teeth()
+	player.aim_source = Callable()
 	await _dismiss_all()
 
 
