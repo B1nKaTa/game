@@ -10,6 +10,9 @@ const POTION_SLOT_AT := Vector2(414, 5)
 const COUNTER_TEXT_OFFSET := Vector2(15, -2)
 const NOTICE_TOP := 40.0
 const NOTICE_TIME := 3.5
+# A faint band behind the top row, so full pills never read as empty over a pale floor.
+const TOP_BAND_SIZE := Vector2(640, 22)
+const TOP_BAND := Color(0.0, 0.0, 0.0, 0.4)
 
 var _run: RunState
 var _status: Label
@@ -42,6 +45,7 @@ func setup(run: RunState) -> void:
 
 
 func _ready() -> void:
+	_add_rect(Vector2.ZERO, TOP_BAND_SIZE, TOP_BAND)
 	_status = _add_label(Vector2(8, 4), 12)
 	_items = _add_label(Vector2(8, 22), 9)
 	_message = _add_label(Vector2(0, 150), 20)
