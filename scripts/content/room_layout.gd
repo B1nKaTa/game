@@ -64,19 +64,21 @@ const DECOR_SYMBOLS := "gnwuktlmf"
 # A freshly mopped cell: everyone walks on it, Grandpa and chargers slide. Kept well clear of doors.
 const SYMBOL_WET := "W"
 const WET_DOOR_CLEARANCE := 2
-const ALLOWED := "#.EIHTBXCSPROQVZAYgnwuktlmWJFKDf"
+const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDf"
 # Nothing can walk through these, so nothing may be dropped or summoned on them.
 const SOLID_SYMBOLS := "#lXOQVPAYJFKD"
 # Routes may not need a hole or a wall, and may not need a bomb for a crate or a rock.
 const WALL_LIKE := "#l"
 const WALLS := "#lV"
 const WALLS_AND_BOMB_ONLY := "#lVXOAYKD"
-const MUST_REACH_WITHOUT_BREAKING := "EBIHSPR"
+const MUST_REACH_WITHOUT_BREAKING := "EBIHSP"
 # A vault lays this many labeled pickups out in the open, this many cells apart so names never overlap.
 const VAULT_EXTRAS := 3
 const PICKUP_SPACING := 3
 # A long name is wider than three cells, so two on one row stand further apart.
 const SAME_ROW_SPACING := 4
+# A plan reward above the station counts as this much further away, squared in cells.
+const ABOVE_THE_PLAN := 100.0
 # Enemy cells a combat room holds by size when no floor says otherwise, as on the first floor.
 const ENEMIES_BY_SIZE := {SIZE_SMALL: 4, SIZE_MEDIUM: 6, SIZE_LARGE: 11}
 const REQUIRED := {
@@ -87,7 +89,7 @@ const REQUIRED := {
 	TYPE_MINI_BOSS: {"B": 1},
 	TYPE_FLOOR_BOSS: {"B": 1},
 	TYPE_TREASURE: {"I": 3},
-	TYPE_SHOP: {"S": 5, "P": 1, "R": 7},
+	TYPE_SHOP: {"S": 5, "P": 1},
 	TYPE_SECRET: {"T": 2},
 	TYPE_VAULT: {"I": 3, "T": 3},
 	TYPE_CROSSROADS: {},
@@ -167,6 +169,32 @@ func vault_extra_cells(count: int) -> Array[Vector2i]:
 			break
 		cells.append(found)
 	return cells
+
+
+# Where a shop's Retirement Plan lays its free items, one spot per tier: the nearest plain floor to
+# the station, clear of the doors and the wares, and far enough that its Take prompt never shares
+# the station's reach. Spots below come first, since the plan's own text stands above it.
+func plan_reward_cells(count: int) -> Array[Vector2i]:
+	var plans := cells_of(SYMBOL_PLAN)
+	if plans.is_empty():
+		return []
+	var station := plans[0]
+	var taken: Array[Vector2i] = cells_of("S")
+	taken.append(station)
+	var found: Array[Vector2i] = []
+	for i in count:
+		var best := Vector2i(-1, -1)
+		var best_distance := INF
+		for cell in cells_of(SYMBOL_FLOOR):
+			var distance := Vector2(cell - station).length_squared() + (ABOVE_THE_PLAN if cell.y < station.y else 0.0)
+			if distance < best_distance and not _touches_a_door(cell) and _spaced_from(cell, taken):
+				best_distance = distance
+				best = cell
+		if best == Vector2i(-1, -1):
+			break
+		taken.append(best)
+		found.append(best)
+	return found
 
 
 # Plain floor cells as near each wanted cell as the spacing allows, kept off the door cells and apart

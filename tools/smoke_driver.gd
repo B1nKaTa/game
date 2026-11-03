@@ -1556,7 +1556,6 @@ func _take_the_stairwell(scene: Node) -> void:
 	_check(get_tree().get_nodes_in_group("enemies").is_empty(), "nothing waits to fight on the landing")
 	_check(health.pills == pills_before + mini(scene.LANDING_HEAL, missing), "the landing heals him, %d to %d" % [pills_before, health.pills])
 	_check(run.items.size() == items_before and run.keys == keys_before, "his items and Slips come down with him")
-	_check(not run.mini_boss_down, "the mini boss of the floor above is left behind")
 	_check(not scene.is_cleared, "the new floor is not cleared yet")
 	_landings_reached += 1
 	await _wait(0.2)

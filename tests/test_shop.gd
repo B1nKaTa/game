@@ -54,19 +54,6 @@ func test_a_promised_item_can_still_be_taken() -> void:
 	assert_false(run.has_item(item.id))
 
 
-func test_reward_place_only_uses_what_is_still_ahead() -> void:
-	assert_eq(ShopRules.reward_place(false, false, 0.0), ShopRules.PLACE_SHOP)
-	assert_eq(ShopRules.reward_place(false, false, 0.99), ShopRules.PLACE_SHOP)
-	assert_eq(ShopRules.reward_place(true, false, 0.99), ShopRules.PLACE_TREASURE)
-	assert_eq(ShopRules.reward_place(false, true, 0.99), ShopRules.PLACE_BOSS)
-
-
-func test_reward_place_can_be_any_of_the_three() -> void:
-	assert_eq(ShopRules.reward_place(true, true, 0.0), ShopRules.PLACE_SHOP)
-	assert_eq(ShopRules.reward_place(true, true, 0.5), ShopRules.PLACE_TREASURE)
-	assert_eq(ShopRules.reward_place(true, true, 0.99), ShopRules.PLACE_BOSS)
-
-
 func test_station_text_while_locked() -> void:
 	var text := RetirementStation.status_lines(240, 250, false)
 	assert_eq(text[0], "Retirement Plan: 240 / 1000")
@@ -123,12 +110,59 @@ func test_arriving_around_a_shop() -> void:
 	assert_eq(progress.arrival_cell(0, 1), parent.layout.door_cell(RoomLayout.SOUTH))
 
 
-func test_shop_layout_has_room_for_every_reward() -> void:
-	for layout in _pool():
-		if layout.room_type == RoomLayout.TYPE_SHOP:
-			assert_eq(layout.cells_of("S").size(), 5)
-			assert_eq(layout.cells_of("P").size(), 1)
-			assert_eq(layout.cells_of("R").size(), ProgressData.RETIREMENT_TIERS.size())
+func _shops() -> Array[RoomLayout]:
+	var shops: Array[RoomLayout] = []
+	for folder in ["floor_1", "cemetery", "sunset_shores"]:
+		for layout in RoomCatalog.load_valid("res://data/rooms/%s/" % folder):
+			if layout.room_type == RoomLayout.TYPE_SHOP:
+				shops.append(layout)
+	return shops
+
+
+func test_every_shop_has_its_wares_and_a_plan() -> void:
+	var shops := _shops()
+	assert_true(shops.size() >= 3, "one shop per floor at least")
+	for layout in shops:
+		assert_eq(layout.cells_of("S").size(), 5)
+		assert_eq(layout.cells_of("P").size(), 1)
+
+
+func test_every_plan_tier_has_its_own_spot_beside_the_plan() -> void:
+	var tiers := ProgressData.RETIREMENT_TIERS.size()
+	for layout in _shops():
+		var station := layout.cells_of("P")[0]
+		var spots := layout.plan_reward_cells(tiers)
+		assert_eq(spots.size(), tiers, layout.resource_path)
+		var seen := {}
+		for spot in spots:
+			assert_false(seen.has(spot), "each spot once")
+			seen[spot] = true
+			assert_eq(layout.symbol_at(spot), RoomLayout.SYMBOL_FLOOR)
+			assert_false(layout.touches_a_door(spot))
+		# Its Take prompt and the plan's Pay in never answer the same press.
+		var first := spots[0]
+		var reach := RetirementStation.USE_RADIUS + Pickup.COLLECT_RADIUS + absf(Player.FEET_OFFSET.y)
+		assert_true(Vector2(first - station).length() * RoomBackdrop.TILE > reach, "%s first at %s" % [layout.resource_path, str(first)])
+		assert_true(first.y >= station.y, "below the plan's own text")
+		assert_true(maxi(absi(first.x - station.x), absi(first.y - station.y)) <= 4, "right beside the plan")
+
+
+func test_the_plan_reward_spots_keep_off_the_wares() -> void:
+	var layout := RoomLayout.new()
+	layout.rows = PackedStringArray([
+		"##########",
+		"#........#",
+		"#........#",
+		"#...P....#",
+		"#........#",
+		"#....S...#",
+		"#........#",
+		"##########"])
+	var spots := layout.plan_reward_cells(2)
+	assert_eq(spots.size(), 2)
+	for spot in spots:
+		assert_true(maxi(absi(spot.x - 5), absi(spot.y - 5)) >= RoomLayout.PICKUP_SPACING, "apart from the ware at 5,5: %s" % str(spot))
+		assert_true(maxi(absi(spot.x - 4), absi(spot.y - 3)) >= RoomLayout.PICKUP_SPACING, "apart from the plan: %s" % str(spot))
 
 
 func test_summons_never_land_on_the_plan_station() -> void:

@@ -82,13 +82,6 @@ func bounds() -> Rect2i:
 	return box
 
 
-func has_unvisited_treasure(progress: FloorProgress) -> bool:
-	for candidate in rooms:
-		if candidate.room_type == RoomLayout.TYPE_TREASURE and not progress.is_visited(candidate.id):
-			return true
-	return false
-
-
 # The rooms a player can walk to from the start before ever owning a Thermos.
 func reached_without_bomb() -> Dictionary:
 	var hidden_ids: Array[int] = []

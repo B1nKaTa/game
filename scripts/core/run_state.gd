@@ -11,9 +11,6 @@ var health: Health
 var items: Array[ItemDef] = []
 var keys := 0
 var bombs := STARTING_BOMBS
-var treasure_rewards: Array[ItemDef] = []
-var boss_rewards: Array[ItemDef] = []
-var mini_boss_down := false
 var unlocked_items := {}
 # The one potion Grandpa carries, and the buff he is under, if any.
 var potion: PotionDef

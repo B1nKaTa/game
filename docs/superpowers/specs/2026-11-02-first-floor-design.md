@@ -112,7 +112,7 @@ Each floor has one shop, behind an open `$` door on the side of a regular room t
 
 The Retirement Plan stands in the shop. Holding E pays in 10 Pension at a time, up to 1000. The balance is saved between runs. A Thermos blast in a later run cashes out the whole balance. In the same run as a deposit the plan stays locked.
 
-Reaching 10, 50, 100, 250, 500, 750 and 1000 for the first time each gives one free item for that run only. It waits in the shop, the treasure room if not yet entered, or after the mini boss if not yet beaten. The item chosen is a random run item for now, with a free Thermos if none are left, until the real reward list is decided. Each tier pays once ever, so cashing out and paying back in can't earn it twice.
+Reaching 10, 50, 100, 250, 500, 750 and 1000 for the first time each gives one free item for that run only. It appears in the shop, on its own free spot beside the Retirement Plan station (changed 2026-11-03: it no longer waits in the treasure room or after the mini boss). The item chosen is a random run item for now, with a free Thermos if none are left, until the real reward list is decided. Each tier pays once ever, so cashing out and paying back in can't earn it twice.
 
 ### Secret Rooms
 

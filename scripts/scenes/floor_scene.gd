@@ -260,7 +260,6 @@ func _go_down() -> void:
 		return
 	_depth += 1
 	is_cleared = false
-	_run.mini_boss_down = false
 	var leaving := _room_view
 	for view: RoomView in _room_views.values():
 		if view != leaving and is_instance_valid(view) and not view.is_inside_tree():

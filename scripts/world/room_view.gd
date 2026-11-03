@@ -447,8 +447,6 @@ func _on_enemy_defeated(enemy: Enemy) -> void:
 	_last_death_at = spot
 	if _room.room_type == RoomLayout.TYPE_MINI_BOSS and enemy.def.is_boss:
 		_drop_consumable(spot, RoomRules.DROP_KEY)
-		_run.mini_boss_down = true
-		_drop_boss_rewards(spot)
 		if _rng.randf() < RoomRules.MINI_BOSS_RECIPE_CHANCE:
 			_drop_recipe(spot + Vector2(-RoomBackdrop.TILE, RoomBackdrop.TILE))
 	if _room.room_type == RoomLayout.TYPE_FLOOR_BOSS and enemy.def.is_boss and not enemy.is_summon:
@@ -515,8 +513,6 @@ func _create_rewards() -> void:
 		_create_chest(cell)
 	if _room.room_type == RoomLayout.TYPE_SHOP:
 		_create_shop()
-	if _room.room_type == RoomLayout.TYPE_TREASURE:
-		_create_treasure_rewards()
 	if _room.room_type == RoomLayout.TYPE_VAULT:
 		_create_vault_extras()
 
@@ -535,7 +531,7 @@ func _create_shop() -> void:
 	var cells := _room.layout.cells_of("S")
 	for i in stock.size():
 		_add_shop_entry(RoomBackdrop.cell_center(cells[i]), stock[i])
-	_reward_cells = _room.layout.cells_of("R")
+	_reward_cells = _room.layout.plan_reward_cells(ProgressData.RETIREMENT_TIERS.size())
 	var station := RetirementStation.new()
 	station.setup(_bank, _player.feet())
 	station.position = RoomBackdrop.cell_center(_room.layout.cells_of(RoomLayout.SYMBOL_PLAN)[0])
@@ -587,7 +583,7 @@ func _on_deposit_wanted(amount: int) -> void:
 		_award_plan_reward()
 
 
-# Rewards last for this run only, and wait wherever the player can still reach them.
+# Rewards last for this run only. Each tier's item lies on its own spot beside the station.
 func _award_plan_reward() -> void:
 	var picked := RoomRules.pick_items(Content.items(), _run, 1, _rng)
 	if picked.is_empty():
@@ -596,17 +592,15 @@ func _award_plan_reward() -> void:
 		return
 	var item := picked[0]
 	_run.promise(item)
-	var treasure_ahead := _map.has_unvisited_treasure(_progress)
-	match ShopRules.reward_place(treasure_ahead, not _run.mini_boss_down, _rng.randf()):
-		ShopRules.PLACE_TREASURE:
-			_run.treasure_rewards.append(item)
-			notice.emit("Retirement Plan bonus: a free item awaits in the treasure room")
-		ShopRules.PLACE_BOSS:
-			_run.boss_rewards.append(item)
-			notice.emit("Retirement Plan bonus: a free item awaits after the mini boss")
-		_:
-			_add_free_item(RoomBackdrop.cell_center(_reward_cells.pop_front()), item)
-			notice.emit("Retirement Plan bonus: a free item, right here")
+	_add_free_item(RoomBackdrop.cell_center(_next_reward_cell()), item)
+	notice.emit("Retirement Plan bonus: a free item, beside the plan")
+
+
+# Every tier has a spot. Should a spot ever be missing, the nearest floor below the station does.
+func _next_reward_cell() -> Vector2i:
+	if not _reward_cells.is_empty():
+		return _reward_cells.pop_front()
+	return _room.layout.nearest_floor_cell(_room.layout.cells_of(RoomLayout.SYMBOL_PLAN)[0] + Vector2i.DOWN)
 
 
 func _on_plan_blasted() -> void:
@@ -644,23 +638,6 @@ func _drop_boss_choice(at: Vector2) -> void:
 		_choice_group.add(pickup)
 		pickup.collected.connect(_choice_group.take.bind(pickup))
 	boss_choice_dropped.emit(_choice_cells.size())
-
-
-func _create_treasure_rewards() -> void:
-	var anchor := _room.layout.cells_of("I")[0]
-	for i in _run.treasure_rewards.size():
-		var cell := _room.layout.nearest_floor_cell(anchor + Vector2i(i, 3))
-		_add_free_item(RoomBackdrop.cell_center(cell), _run.treasure_rewards[i])
-	_run.treasure_rewards.clear()
-
-
-func _drop_boss_rewards(at: Vector2) -> void:
-	var tile := float(RoomBackdrop.TILE)
-	for i in _run.boss_rewards.size():
-		var spot := at + Vector2((i + 1) * tile, tile)
-		var cell := _room.layout.nearest_floor_cell(Vector2i(floori(spot.x / tile), floori(spot.y / tile)))
-		_add_free_item(RoomBackdrop.cell_center(cell), _run.boss_rewards[i])
-	_run.boss_rewards.clear()
 
 
 func _create_chest(cell: Vector2i) -> void:

@@ -112,13 +112,3 @@ func test_a_built_floor_can_be_walked_through_every_door_and_back() -> void:
 				var other := map.room(room.doors[side])
 				assert_eq(progress.arrival_cell(other.id, room.id), other.layout.door_cell(-side), "seed %d" % seed_value)
 				assert_eq(progress.arrival_cell(room.id, other.id), room.layout.door_cell(side), "seed %d" % seed_value)
-
-
-func test_the_map_knows_about_unvisited_treasure() -> void:
-	var map := _make_map()
-	var treasure := _add(map, RoomLayout.TYPE_TREASURE, Vector2i(2, 0))
-	map.join(map.room(1), treasure)
-	var progress := FloorProgress.new(map)
-	assert_true(map.has_unvisited_treasure(progress))
-	progress.enter(treasure.id)
-	assert_false(map.has_unvisited_treasure(progress))
