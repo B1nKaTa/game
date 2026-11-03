@@ -140,7 +140,7 @@ func test_cut_grass_stays_cut_and_leaves_the_breakable_group() -> void:
 
 func test_a_hole_has_its_own_layer_that_walls_and_shots_do_not_use() -> void:
 	assert_true(Hole.LAYER != 1)
-	assert_eq(ThrownCane.WALL_LAYER & Hole.LAYER, 0, "the thrown cane flies over holes")
+	assert_eq(ThrownDentures.WALL_LAYER & Hole.LAYER, 0, "thrown dentures fly over holes")
 	var hole := _in_tree(Hole.new(), Vector2(5000, 5000)) as Hole
 	assert_eq(hole.collision_layer, Hole.LAYER)
 	hole.free()

@@ -1,7 +1,7 @@
 class_name GrassTuft
 extends BreakableBlock
 
-# Decor that blocks nothing. A swing, a thrown cane, a blast or a boss cuts it, and it
+# Decor that blocks nothing. A swing, thrown dentures, a blast or a boss cuts it, and it
 # stays cut. It leaves the breakable group once cut, so nothing counts it twice.
 var variant := 0
 var cut := false

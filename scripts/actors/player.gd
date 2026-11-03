@@ -4,9 +4,9 @@ extends CharacterBody2D
 signal died
 signal swing_landed(heavy: bool, finisher: bool)
 signal swing_missed(heavy: bool)
-signal cane_thrown
-signal cane_hit
-signal cane_caught
+signal teeth_thrown
+signal teeth_bit
+signal teeth_caught
 signal hurt
 signal bomb_requested(at: Vector2)
 signal potion_drunk(potion: PotionDef)
@@ -39,8 +39,9 @@ var on_wet := false
 var _slow := SlowEffect.new()
 var _combo := CaneCombo.new()
 var _charge := ChargeSwing.new()
-var _cane := CaneThrow.new()
-var _thrown_cane: ThrownCane
+# His false teeth, the thrown attack. The cane itself never leaves his hand.
+var _teeth := DentureThrow.new()
+var _thrown_teeth: ThrownDentures
 var _dodge := DodgeTimer.new()
 var _aim := Vector2.RIGHT
 var _dodge_direction := Vector2.RIGHT
@@ -182,12 +183,25 @@ func _handle_potion() -> void:
 		potion_drunk.emit(drunk)
 
 
+# The teeth only hold back another throw. His cane never leaves his hand, so a swing, the combo and
+# the charge never wait for them to come back.
+static func can_throw(teeth: DentureThrow) -> bool:
+	return teeth.is_held()
+
+
+static func can_swing(_teeth: DentureThrow) -> bool:
+	return true
+
+
+func has_teeth() -> bool:
+	return _teeth.is_held()
+
+
 func _handle_attacks() -> void:
-	if not _cane.is_held():
+	if Input.is_action_just_pressed("throw") and can_throw(_teeth):
+		_throw_teeth()
+	if not can_swing(_teeth):
 		_charge.cancel()
-		return
-	if Input.is_action_just_pressed("throw"):
-		_throw_cane()
 		return
 	if Input.is_action_just_pressed("attack"):
 		var damage := _combo.try_attack()
@@ -199,45 +213,48 @@ func _handle_attacks() -> void:
 			_swing(ChargeSwing.DAMAGE, CHARGE_REACH, CHARGE_ANGLE, ChargeSwing.KNOCKBACK, true, false)
 
 
-func _throw_cane() -> void:
+func _throw_teeth() -> void:
 	var parent := get_parent()
-	if parent == null or not _cane.try_throw():
+	if parent == null:
 		return
-	_charge.cancel()
-	var spawn := global_position + _aim * ThrownCane.LENGTH
+	# Denture Adhesive's last level shortens the wait, so the delay is read at every throw.
+	_teeth.return_delay = run.stats.teeth_return_delay
+	if not _teeth.try_throw():
+		return
+	var spawn := global_position + _aim * ThrownDentures.SPAWN_AHEAD
 	# His upper body can overlap a wall now, so the wall check starts from where he stands.
-	var query := PhysicsRayQueryParameters2D.create(_feet.global_position, spawn, ThrownCane.WALL_LAYER)
+	var query := PhysicsRayQueryParameters2D.create(_feet.global_position, spawn, ThrownDentures.WALL_LAYER)
 	var wall := get_world_2d().direct_space_state.intersect_ray(query)
 	if not wall.is_empty():
 		var collider: Object = wall.get("collider")
 		if collider is BreakableBlock:
 			collider.hit_by(BreakableBlock.SOURCE_CANE)
-		spawn = wall["position"] + wall["normal"] * ThrownCane.WALL_BACKOFF
-	_thrown_cane = ThrownCane.new()
-	_thrown_cane.setup(_cane, self, _aim, run.damage_mult())
-	_thrown_cane.hit_enemy.connect(cane_hit.emit)
-	_thrown_cane.caught.connect(cane_caught.emit)
-	parent.add_child(_thrown_cane)
-	_thrown_cane.global_position = spawn
-	cane_thrown.emit()
+		spawn = wall["position"] + wall["normal"] * ThrownDentures.WALL_BACKOFF
+	_thrown_teeth = ThrownDentures.new()
+	_thrown_teeth.setup(_teeth, self, _aim, run.bite_damage_mult(), run.stats.bite_range, run.stats.bites_per_throw)
+	_thrown_teeth.hit_enemy.connect(teeth_bit.emit)
+	_thrown_teeth.caught.connect(teeth_caught.emit)
+	parent.add_child(_thrown_teeth)
+	_thrown_teeth.global_position = spawn
+	teeth_thrown.emit()
 	if not wall.is_empty():
-		_cane.drop()
+		_teeth.drop()
 
 
 func cancel_charge() -> void:
 	_charge.cancel()
 
 
-func recall_cane() -> void:
-	if is_instance_valid(_thrown_cane):
-		_thrown_cane.queue_free()
-	_thrown_cane = null
-	_cane.catch_cane()
+func recall_teeth() -> void:
+	if is_instance_valid(_thrown_teeth):
+		_thrown_teeth.queue_free()
+	_thrown_teeth = null
+	_teeth.catch_teeth()
 
 
 func _exit_tree() -> void:
-	if is_instance_valid(_thrown_cane):
-		_thrown_cane.queue_free()
+	if is_instance_valid(_thrown_teeth):
+		_thrown_teeth.queue_free()
 
 
 func _swing(damage: float, reach: float, angle: float, push: float, heavy: bool, finisher: bool) -> void:
@@ -343,7 +360,7 @@ func _draw() -> void:
 		draw_line(-_dodge_direction * 6.0, -_dodge_direction * 26.0, Color(1.0, 1.0, 1.0, 0.35), 8.0)
 	var swinging := _active_swing != null
 	var pointing := _active_swing.direction if swinging else _aim
-	if not has_art and _cane.is_held():
+	if not has_art:
 		draw_line(Vector2.ZERO, pointing * 20.0, Color("a8692f"), 3.0)
 	if show_crosshair:
 		var lines := crosshair_lines(get_local_mouse_position())

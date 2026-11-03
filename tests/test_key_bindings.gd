@@ -101,6 +101,27 @@ func test_an_older_file_cannot_put_a_new_actions_key_on_two_actions() -> void:
 	_reset()
 
 
+func test_the_throw_is_named_for_the_dentures() -> void:
+	var label := ""
+	for entry in KeyBindings.ACTIONS:
+		if entry["action"] == "throw":
+			label = entry["label"]
+	assert_eq(label, "Throw dentures")
+	for entry in KeyBindings.ACTIONS:
+		assert_false(String(entry["label"]).to_lower().contains("throw cane"), entry["label"])
+
+
+func test_a_file_saved_when_the_cane_was_thrown_still_binds_the_throw() -> void:
+	# The action kept its id when the cane became dentures, so older files still name it "throw".
+	_reset()
+	var file := FileAccess.open(PATH, FileAccess.WRITE)
+	file.store_string("{\"throw\": {\"type\": \"key\", \"code\": %d}}" % KEY_F)
+	file.close()
+	KeyBindings.load_from(PATH)
+	assert_eq(KeyBindings.label_for("throw"), "F")
+	_reset()
+
+
 func test_prompts_follow_the_bound_key() -> void:
 	_reset()
 	assert_eq(KeyBindings.with_key("interact", "Buy"), "E: Buy")

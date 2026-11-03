@@ -1,6 +1,6 @@
 extends TestCase
 
-const EXPECTED := ["combo_hit", "charged_hit", "swing_miss", "cane_throw", "cane_catch", "player_hurt", "enemy_death", "coin_pickup", "door_open"]
+const EXPECTED := ["combo_hit", "charged_hit", "swing_miss", "teeth_throw", "teeth_catch", "player_hurt", "enemy_death", "coin_pickup", "door_open"]
 
 
 func _samples(bytes: PackedByteArray) -> PackedInt32Array:

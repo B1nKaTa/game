@@ -8,7 +8,7 @@ const ACTIONS := [
 	{"action": "move_left", "label": "Move left"},
 	{"action": "move_right", "label": "Move right"},
 	{"action": "attack", "label": "Attack, hold to charge"},
-	{"action": "throw", "label": "Throw cane"},
+	{"action": "throw", "label": "Throw dentures"},
 	{"action": "dodge", "label": "Dodge"},
 	{"action": "bomb", "label": "Place Thermos"},
 	{"action": "potion", "label": "Drink potion"},

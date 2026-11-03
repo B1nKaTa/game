@@ -102,14 +102,16 @@ func test_swift_tea_speeds_him_up_then_runs_out() -> void:
 	assert_true(run.buff == null)
 
 
-func test_fury_adds_cane_damage_then_runs_out() -> void:
+func test_fury_adds_cane_and_bite_damage_then_runs_out() -> void:
 	var run := _run()
 	assert_near(run.damage_mult(), 1.0)
 	run.give_potion(_potion("fury_liniment"))
 	run.drink_potion()
 	assert_near(run.damage_mult(), 1.5)
+	assert_near(run.bite_damage_mult(), 1.5, "the dentures hit harder too")
 	run.tick_buff(16.0)
 	assert_near(run.damage_mult(), 1.0)
+	assert_near(run.bite_damage_mult(), 1.0)
 
 
 func test_drinking_the_next_buff_replaces_the_running_one() -> void:

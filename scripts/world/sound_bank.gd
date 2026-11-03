@@ -10,8 +10,9 @@ const SOUNDS := {
 	"combo_hit": {"from": 220.0, "to": 110.0, "time": 0.08, "shape": SQUARE, "volume": 0.45},
 	"charged_hit": {"from": 150.0, "to": 45.0, "time": 0.2, "shape": SQUARE, "volume": 0.6},
 	"swing_miss": {"from": 0.0, "to": 0.0, "time": 0.1, "shape": NOISE, "volume": 0.2},
-	"cane_throw": {"from": 300.0, "to": 700.0, "time": 0.12, "shape": SINE, "volume": 0.45},
-	"cane_catch": {"from": 600.0, "to": 400.0, "time": 0.07, "shape": SINE, "volume": 0.4},
+	# The dentures clack, so their sounds are short square chatters.
+	"teeth_throw": {"from": 1100.0, "to": 1700.0, "time": 0.1, "shape": SQUARE, "volume": 0.28},
+	"teeth_catch": {"from": 1500.0, "to": 1000.0, "time": 0.06, "shape": SQUARE, "volume": 0.3},
 	"player_hurt": {"from": 300.0, "to": 100.0, "time": 0.25, "shape": SQUARE, "volume": 0.45},
 	"enemy_death": {"from": 500.0, "to": 80.0, "time": 0.3, "shape": SQUARE, "volume": 0.4},
 	"coin_pickup": {"from": 880.0, "to": 1320.0, "time": 0.08, "shape": SINE, "volume": 0.4},

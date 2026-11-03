@@ -2,7 +2,7 @@ class_name Hole
 extends StaticBody2D
 
 # Grandpa and enemies that walk can't cross it, and nothing breaks it. Shots and the
-# thrown cane fly over because it sits on its own layer, and ghosts ignore it.
+# thrown dentures fly over because it sits on its own layer, and ghosts ignore it.
 const LAYER := 8
 
 var palette: RoomPalette

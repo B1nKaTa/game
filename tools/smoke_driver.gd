@@ -640,13 +640,13 @@ func _check_props_room(scene: Node) -> void:
 	_check(rocks.size() == 2 and barrels.size() == 2 and piles.size() == 1 and holes.size() == 1 and crates.size() == 1, "the props room built every prop")
 	if _failed:
 		return
-	# Shots and the thrown cane ask layer 1: rocks and barrels stop them, holes do not.
+	# Shots and thrown dentures ask layer 1: rocks and barrels stop them, holes do not.
 	var space: PhysicsDirectSpaceState2D = scene.player.get_world_2d().direct_space_state
 	var across_rock := _ray(space, rocks[0].global_position, 1)
 	var across_hole := _ray(space, holes[0].global_position, 1)
 	var across_hole_layer := _ray(space, holes[0].global_position, Hole.LAYER)
-	_check(not across_rock.is_empty(), "a rock stops shots and the thrown cane")
-	_check(across_hole.is_empty(), "shots and the thrown cane fly over a hole")
+	_check(not across_rock.is_empty(), "a rock stops shots and thrown dentures")
+	_check(across_hole.is_empty(), "shots and thrown dentures fly over a hole")
 	_check(not across_hole_layer.is_empty(), "a hole sits on its own layer")
 	# Grandpa cannot walk across the hole, nor dodge across it.
 	var hole_x: float = holes[0].global_position.x
@@ -902,8 +902,8 @@ func _check_shield(scene: Node) -> void:
 	await get_tree().physics_frame
 	Input.action_release("throw")
 	await _wait(0.5)
-	_check(officer.hp < after_swing, "a thrown cane goes over the shield")
-	scene.player.recall_cane()
+	_check(officer.hp < after_swing, "thrown dentures go over the shield")
+	scene.player.recall_teeth()
 	scene.player.aim_source = Callable()
 	await _dismiss_all()
 

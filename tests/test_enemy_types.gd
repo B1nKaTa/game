@@ -109,7 +109,7 @@ func test_a_strike_from_the_front_is_blocked_and_from_behind_lands() -> void:
 	enemy.free()
 
 
-func test_a_thrown_cane_or_blast_ignores_the_shield() -> void:
+func test_thrown_dentures_or_a_blast_ignore_the_shield() -> void:
 	var enemy := _officer()
 	var hp := enemy.hp
 	enemy.take_damage(14.0, Vector2.ZERO)

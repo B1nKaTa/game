@@ -37,9 +37,9 @@ func _ready() -> void:
 func watch_player(player: Player) -> void:
 	player.swing_landed.connect(on_swing_landed)
 	player.swing_missed.connect(on_swing_missed)
-	player.cane_thrown.connect(on_cane_thrown)
-	player.cane_hit.connect(on_cane_hit)
-	player.cane_caught.connect(on_cane_caught)
+	player.teeth_thrown.connect(on_teeth_thrown)
+	player.teeth_bit.connect(on_teeth_bit)
+	player.teeth_caught.connect(on_teeth_caught)
 	player.hurt.connect(on_hurt)
 	player.died.connect(on_player_died)
 
@@ -64,17 +64,17 @@ func on_swing_missed(_heavy: bool) -> void:
 	_play("swing_miss")
 
 
-func on_cane_thrown() -> void:
-	_play("cane_throw")
+func on_teeth_thrown() -> void:
+	_play("teeth_throw")
 
 
-func on_cane_hit() -> void:
-	_begin_hit_stop(HitStop.CANE_HIT)
+func on_teeth_bit() -> void:
+	_begin_hit_stop(HitStop.BITE_HIT)
 	_play("combo_hit")
 
 
-func on_cane_caught() -> void:
-	_play("cane_catch")
+func on_teeth_caught() -> void:
+	_play("teeth_catch")
 
 
 func on_hurt() -> void:

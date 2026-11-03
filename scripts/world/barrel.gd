@@ -1,7 +1,7 @@
 class_name Barrel
 extends BreakableBlock
 
-# Blocks walking and shots, but a cane hit, a thrown cane, a bomb or a boss breaks it.
+# Blocks walking and shots, but a cane hit, thrown dentures, a bomb or a boss breaks it.
 
 
 func art_id() -> String:

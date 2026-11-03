@@ -39,9 +39,9 @@ func test_a_finisher_freezes_but_does_not_shake() -> void:
 	feedback.free()
 
 
-func test_a_cane_hit_freezes() -> void:
+func test_a_bite_freezes() -> void:
 	var feedback := _fresh()
-	feedback.on_cane_hit()
+	feedback.on_teeth_bit()
 	assert_near(Engine.time_scale, 0.0)
 	feedback.tick_real(0.2)
 	assert_near(Engine.time_scale, 1.0)
@@ -59,7 +59,7 @@ func test_leaving_the_tree_always_restores_time() -> void:
 
 func test_the_player_dying_ends_a_freeze() -> void:
 	var feedback := _fresh()
-	feedback.on_cane_hit()
+	feedback.on_teeth_bit()
 	feedback.on_player_died()
 	assert_near(Engine.time_scale, 1.0)
 	feedback.free()

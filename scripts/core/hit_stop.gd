@@ -2,7 +2,7 @@ class_name HitStop
 extends RefCounted
 
 const HEAVY_HIT := 0.06
-const CANE_HIT := 0.06
+const BITE_HIT := 0.06
 const FINISHER := 0.03
 const MAX_TIME := 0.1
 

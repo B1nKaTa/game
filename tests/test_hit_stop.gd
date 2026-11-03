@@ -1,9 +1,9 @@
 extends TestCase
 
 
-func test_charged_swings_and_cane_hits_freeze_longest() -> void:
+func test_charged_swings_and_bites_freeze_longest() -> void:
 	assert_near(HitStop.duration_for(true, false), 0.06)
-	assert_near(HitStop.CANE_HIT, 0.06)
+	assert_near(HitStop.BITE_HIT, 0.06)
 
 
 func test_finisher_freezes_briefly_and_plain_combo_hits_not_at_all() -> void:

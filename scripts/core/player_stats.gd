@@ -18,6 +18,12 @@ var thermos_damage_mult := 1.0
 # How many levels of Thermos upgrade are owned, and whether that is every level there is.
 var thermos_level := 0
 var thermos_maxed := false
+# The thrown dentures: what their bite is multiplied by, how far they fly, how many enemies one
+# throw bites, and how long they lie before coming back.
+var bite_damage_mult := 1.0
+var bite_range := DentureThrow.BASE_RANGE
+var bites_per_throw := 1
+var teeth_return_delay := DentureThrow.RETURN_DELAY
 
 
 static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Array[ItemDef]) -> PlayerStats:
@@ -25,6 +31,10 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 	var speed := 0.0
 	var cut := 0.0
 	var damage := 0.0
+	var bite := 0.0
+	var reach := 0.0
+	var bites := 1
+	var quick_return := false
 	var pension := 0.0
 	var warning := 0.0
 	var reveals := false
@@ -46,9 +56,16 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 		pension += effect.pension_bonus * count
 		warning += effect.warning_bonus * count
 		thermos += effect.thermos_damage_bonus * count
+		bite += effect.bite_damage_bonus * count
+		reach += effect.bite_range_bonus * count
+		if count > 0:
+			bites = maxi(bites, effect.bites_through)
 		if effect is UpgradeDef and effect.thermos_damage_bonus > 0.0:
 			thermos_levels += count
 			thermos_all = count >= effect.max_level()
+		# The last level of Denture Adhesive also brings the teeth back sooner.
+		if effect is UpgradeDef and effect.bite_range_bonus > 0.0 and count > 0 and count >= effect.max_level():
+			quick_return = true
 		if count > 0 and effect.reveals_enemy_health:
 			reveals = true
 	var stats := PlayerStats.new()
@@ -62,4 +79,8 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 	stats.thermos_damage_mult = 1.0 + thermos
 	stats.thermos_level = thermos_levels
 	stats.thermos_maxed = thermos_all
+	stats.bite_damage_mult = 1.0 + bite
+	stats.bite_range = DentureThrow.BASE_RANGE + reach
+	stats.bites_per_throw = bites
+	stats.teeth_return_delay = DentureThrow.QUICK_RETURN_DELAY if quick_return else DentureThrow.RETURN_DELAY
 	return stats

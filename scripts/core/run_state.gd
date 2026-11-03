@@ -154,9 +154,14 @@ func move_speed() -> float:
 	return stats.move_speed * (1.0 + (buff.speed_bonus if buff != null else 0.0))
 
 
-# What the cane and the thrown cane multiply their damage by. A Thermos has its own stat.
+# What the cane multiplies its damage by. The dentures and a Thermos have their own stats.
 func damage_mult() -> float:
 	return stats.damage_mult + (buff.damage_bonus if buff != null else 0.0)
+
+
+# What the thrown dentures multiply their bite by. A buff such as Fury Liniment covers them as well.
+func bite_damage_mult() -> float:
+	return stats.bite_damage_mult + (buff.damage_bonus if buff != null else 0.0)
 
 
 func pension_amount(base: int) -> int:
