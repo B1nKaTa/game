@@ -1,6 +1,6 @@
 extends Node
 
-const TIMEOUT := 720.0
+const TIMEOUT := 1080.0
 const MAX_STEPS := 150
 const VIEW := Vector2(640, 360)
 const AIM_TOLERANCE := 1.5
@@ -61,15 +61,16 @@ func _run() -> void:
 	_check(spent_ok, "can buy an upgrade")
 	var pension_before: int = Progress.data.pension
 
-	# The open paths of both depths: the Records Basement, the stairwell, then Sunset Shores.
-	await _clear_two_floors(RECORDS_PATH, OPEN_DEEP_PATH)
+	# The open paths of every depth: the Records Basement, Sunset Shores, then the Funeral Parlour.
+	await _clear_three_floors(RECORDS_PATH, OPEN_DEEP_PATH, OPEN_DEEP_PATH)
 	_check(Progress.data.pension > pension_before, "Pension was earned during the run")
 	_check(_checked_chests, "every kind of chest was opened in the chest room")
 	await _wait(2.5)
 	_expect_scene("WaitingRoom")
 	_check(Progress.data.floors_cleared == 1, "clearing the first floor is counted")
 	_check(Progress.data.clears_at(2) == 1, "clearing a second floor is counted apart")
-	_check(Progress.data.has_cleared_path("floor_1") and Progress.data.has_cleared_path("sunset_shores"), "both cleared paths are remembered")
+	_check(Progress.data.clears_at(3) == 1, "clearing a third floor is counted apart")
+	_check(Progress.data.has_cleared_path("floor_1") and Progress.data.has_cleared_path("sunset_shores") and Progress.data.has_cleared_path("funeral_parlour"), "every cleared path is remembered")
 	_check(Progress.data.legacy_clears == 0, "a fresh save keeps no old clears")
 	var ids: Array = get_tree().current_scene.open_merchant_ids()
 	_check(ids.has("potion_merchant") and not ids.has("bomb_merchant"), "a second-floor clear brings the potion merchant, not the bomb merchant")
@@ -79,20 +80,22 @@ func _run() -> void:
 	ids = get_tree().current_scene.open_merchant_ids()
 	_check(ids.has("potion_merchant") and ids.has("bomb_merchant"), "clearing both second-floor paths brings the bomb merchant too")
 	Progress.reload()
-	_check(Progress.data.floors_cleared == 1 and Progress.data.clears_at(2) == 1 and not Progress.data.has_cleared_path("furnace_works"), "clears come back from the save as it was written")
+	_check(Progress.data.floors_cleared == 1 and Progress.data.clears_at(2) == 1 and Progress.data.clears_at(3) == 1 and not Progress.data.has_cleared_path("furnace_works"), "clears come back from the save as it was written")
 
-	# The first clears opened the locked path of each depth: the Cemetery, then the Furnace Works.
+	# The first clears opened the locked path of each depth: the Cemetery, the Furnace Works, the Mall.
 	var pension_before_second: int = Progress.data.pension
-	await _clear_two_floors(CEMETERY_PATH, LOCKED_DEEP_PATH)
+	await _clear_three_floors(CEMETERY_PATH, LOCKED_DEEP_PATH, LOCKED_DEEP_PATH)
 	_check(Progress.data.pension > pension_before_second, "the locked paths earn Pension too")
 	await _wait(2.5)
 	_expect_scene("WaitingRoom")
 	_check(Progress.data.floors_cleared == 2, "clearing the second first-floor path is counted too")
 	_check(Progress.data.clears_at(2) == 2, "clearing the second second-floor path is counted too")
-	_check(_paths_cleared == 4, "all four paths were cleared, got %d" % _paths_cleared)
+	_check(Progress.data.clears_at(3) == 2, "clearing the second third-floor path is counted too")
+	_check(Progress.data.has_cleared_path("golden_years_mall"), "the Mall's clear is remembered")
+	_check(_paths_cleared == 6, "all six paths were cleared, got %d" % _paths_cleared)
 	_check(_checked_care_home, "the care home fights were checked")
 	_check(_checked_furnace, "the boiler hall fights were checked")
-	_check(_landings_reached == 2, "both runs took the stairwell to the landing")
+	_check(_landings_reached == 4, "both runs took both stairwells to their landings, got %d" % _landings_reached)
 	ids = get_tree().current_scene.open_merchant_ids()
 	_check(ids.has("potion_merchant") and ids.has("bomb_merchant"), "clearing both second-floor paths for real brings the bomb merchant")
 
@@ -144,9 +147,9 @@ func _run() -> void:
 		get_tree().quit(0)
 
 
-# One run down both depths: a first-floor path, its boss's items, the stairwell and the landing, then
-# a path from the second Crossroads, whose boss ends the run.
-func _clear_two_floors(first_index: int, deep_index: int) -> void:
+# One run down every depth: a first-floor path, its boss's items, the stairwell and the landing, a path
+# from the second Crossroads and its stairwell, then a path from the third, whose boss ends the run.
+func _clear_three_floors(first_index: int, second_index: int, third_index: int) -> void:
 	Game.begin_run()
 	await _wait(0.5)
 	_expect_scene("FloorScene")
@@ -166,10 +169,21 @@ func _clear_two_floors(first_index: int, deep_index: int) -> void:
 	if _failed:
 		return
 	await _check_crossroads(scene)
-	await _walk_a_path(scene, deep_index)
-	await _clear_whole_floor(scene, deep_index)
+	await _walk_a_path(scene, second_index)
+	await _clear_whole_floor(scene, second_index)
+	if _failed:
+		return
+	_check(not scene.is_over, "a second-floor boss no longer ends the run")
+	await _take_the_stairwell(scene)
+	if _failed:
+		return
+	_check(scene.debug_depth() == 3, "the second stairwell leads to the third depth")
+	await _check_crossroads(scene)
+	await _walk_a_path(scene, third_index)
+	await _clear_whole_floor(scene, third_index)
 	await _wait(0.1)
-	_check(scene.is_over, "a second-floor boss ends the run")
+	_check(scene.is_over, "a third-floor boss ends the run")
+	_check(_hud_message(scene) == "FLOOR CLEARED", "the run ends with FLOOR CLEARED, got '%s'" % _hud_message(scene))
 
 
 # Explores every room through its real door, secret room included, and leaves the boss for last.
@@ -558,6 +572,12 @@ func _find_hud(scene: Node) -> Hud:
 		if child is Hud:
 			return child
 	return null
+
+
+# The big centered line the run ends on.
+func _hud_message(scene: Node) -> String:
+	var hud := _find_hud(scene)
+	return hud._message.text if hud != null else ""
 
 
 func _die_in_a_run() -> void:
@@ -1403,7 +1423,7 @@ func _check_crossroads(scene: Node) -> void:
 	var depth: int = scene.debug_depth()
 	var cleared: int = Progress.data.clears_at(depth)
 	var home: FloorDef = scene.debug_floor_def()
-	var home_name := "The Crossroads" if depth == 1 else "Floor 2"
+	var home_name := "The Crossroads" if depth == 1 else "Floor %d" % depth
 	var map: FloorMap = scene.debug_map()
 	var here: FloorRoom = map.room(scene.debug_current_id())
 	_check(here.room_type == RoomLayout.TYPE_CROSSROADS, "each depth's paths start from a Crossroads")
@@ -1760,7 +1780,9 @@ func _check_boss_choice(scene: Node, view: RoomView, pool_before: int) -> void:
 func _take_the_stairwell(scene: Node) -> void:
 	var view: RoomView = scene.debug_room_view()
 	var stairs: Door = view.stairwell()
-	_check(stairs != null, "a fallen first-floor boss opens a stairwell")
+	var depth_above: int = scene.debug_depth()
+	var floor_below := "Floor %d" % (depth_above + 1)
+	_check(stairs != null, "a fallen floor boss above the last depth opens a stairwell, depth %d" % depth_above)
 	if stairs == null:
 		return
 	for cell in view._choice_cells:
@@ -1780,15 +1802,15 @@ func _take_the_stairwell(scene: Node) -> void:
 	var away := layout.open_spots_near(wanted, taken)
 	_put_feet(scene, RoomBackdrop.cell_center(away[0]) if not away.is_empty() else stairs.global_position + Vector2(0, 80))
 	await _wait(0.1)
-	_check(scene.debug_depth() == 1, "the stairwell waits until he walks onto it")
+	_check(scene.debug_depth() == depth_above, "the stairwell waits until he walks onto it")
 	_stand_on(scene, stairs)
 	await _wait(0.2)
-	_check(scene.debug_depth() == 2, "walking onto the stairwell takes him down a floor")
+	_check(scene.debug_depth() == depth_above + 1, "walking onto the stairwell takes him down a floor")
 	var map: FloorMap = scene.debug_map()
 	var landing: FloorRoom = map.room(scene.debug_current_id())
 	_check(landing.room_type == RoomLayout.TYPE_LANDING, "the stairwell leads to the landing")
-	_check(scene.debug_floor_def().display_name == "Floor 2", "the landing is Floor 2")
-	_check(scene.debug_mini_map().floor_name() == "Floor 2" and scene.debug_big_map().floor_name() == "Floor 2", "both maps name Floor 2")
+	_check(scene.debug_floor_def().display_name == floor_below, "the landing is %s, got %s" % [floor_below, scene.debug_floor_def().display_name])
+	_check(scene.debug_mini_map().floor_name() == floor_below and scene.debug_big_map().floor_name() == floor_below, "both maps name %s" % floor_below)
 	_check(get_tree().get_nodes_in_group("enemies").is_empty(), "nothing waits to fight on the landing")
 	_check(health.pills == pills_before + mini(scene.LANDING_HEAL, missing), "the landing heals him, %d to %d" % [pills_before, health.pills])
 	_check(run.items.size() == items_before and run.keys == keys_before, "his items and Slips come down with him")
@@ -1800,7 +1822,7 @@ func _take_the_stairwell(scene: Node) -> void:
 	if landing.doors.is_empty():
 		return
 	await _walk_through_door(scene, landing.doors.values()[0])
-	_check(map.room(scene.debug_current_id()).room_type == RoomLayout.TYPE_CROSSROADS, "the landing leads to the second Crossroads")
+	_check(map.room(scene.debug_current_id()).room_type == RoomLayout.TYPE_CROSSROADS, "the landing leads to the next Crossroads")
 
 
 # --- Sunset Shores: wet floors, sedatives, the care home's staff and bosses ---

@@ -5,12 +5,17 @@ extends Node2D
 const PATHS_BY_DEPTH := {
 	1: ["res://data/floors/floor_1.tres", "res://data/floors/cemetery.tres"],
 	2: ["res://data/floors/sunset_shores.tres", "res://data/floors/furnace_works.tres"],
+	3: ["res://data/floors/funeral_parlour.tres", "res://data/floors/golden_years_mall.tres"],
 }
 # The deepest floor there is. A floor boss falling here ends the run.
-const LAST_DEPTH := 2
+const LAST_DEPTH := 3
 const CROSSROADS_FLOOR := "res://data/floors/crossroads.tres"
 const CROSSROADS_LAYOUT := "res://data/rooms/crossroads/crossroads.tres"
-const LANDING_FLOOR := "res://data/floors/landing.tres"
+# The landing each depth below the first starts on. Its FloorDef names the floor on the sign and maps.
+const LANDINGS_BY_DEPTH := {
+	2: "res://data/floors/landing.tres",
+	3: "res://data/floors/landing_3.tres",
+}
 const LANDING_LAYOUT := "res://data/rooms/landing/landing.tres"
 # Pills healed on reaching the landing, up to his maximum.
 const LANDING_HEAL := 2
@@ -18,7 +23,8 @@ const MESSAGE_TIME := 2.0
 
 var player: Player
 var is_cleared := false
-# Which depth of floors the run has reached: 1 for the first Crossroads and its floors, 2 below.
+# Which depth of floors the run has reached: 1 for the first Crossroads and its floors, then one more
+# for each stairwell taken.
 var _depth := 1
 var is_over := false
 var _map: FloorMap
@@ -244,8 +250,8 @@ func _on_floor_cleared() -> void:
 
 
 # Every path ends here, whichever floor was taken. Above the last depth the boss room opens a stairwell
-# down, and on the last one the run ends. A third floor slots in here: raise LAST_DEPTH, list its paths
-# in PATHS_BY_DEPTH, and every path above reaches it without any other change.
+# down, and on the last one the run ends. A deeper floor slots in here: raise LAST_DEPTH, list its paths
+# in PATHS_BY_DEPTH, give it a landing in LANDINGS_BY_DEPTH, and every path above reaches it.
 func _continue_after_floor() -> void:
 	if _floor_def.depth < LAST_DEPTH:
 		_room_view.add_stairwell()
@@ -265,7 +271,7 @@ func _go_down() -> void:
 		if view != leaving and is_instance_valid(view) and not view.is_inside_tree():
 			view.free()
 	_room_views.clear()
-	_floor_def = load(LANDING_FLOOR)
+	_floor_def = load(LANDINGS_BY_DEPTH[_depth])
 	_map = FloorMap.with_landing_and_crossroads(load(LANDING_LAYOUT), load(CROSSROADS_LAYOUT))
 	_progress = FloorProgress.new(_map)
 	_mini_map.setup(_map, _progress, false, _floor_def.display_name)

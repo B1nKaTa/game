@@ -451,7 +451,7 @@ Read these as models first: `floor_scene.gd` (`PATHS_BY_DEPTH`, `_go_down`, `_co
   - The Mall: `depth = 3`, `open_after_depth = 3`, `clears_to_open = 1`, `danger = 4`, id `"golden_years_mall"`, display name "Golden Years Mall at 7 a.m.", closed hint "Beat a third-floor boss first".
   - Both paths: `health_mult = 1.8`, `pension_mult = 2.0`, `enemies_by_size = {"small": 6, "medium": 8, "large": 13}`, and the floor-3 chest row from Task 3.
 
-- [ ] **Step 1: Write the failing tests:**
+- [x] **Step 1: Write the failing tests:** (written, not yet run)
 
 ```gdscript
 extends TestCase
@@ -502,17 +502,17 @@ func test_the_third_landing_names_floor_3() -> void:
 	assert_eq(landing.depth, 3)
 ```
 
-- [x] **Step 2: When testing is allowed, run the tests to make sure they fail. then implement.**
+- [ ] **Step 2: When testing is allowed, run the tests to make sure they fail, then implement.** Implemented; the tests are written but not yet run.
   - **`_go_down`:** load `LANDINGS_BY_DEPTH[_depth]` after raising `_depth`. Everything else stays: the map, the 2-pill heal and its notice.
   - **`_continue_after_floor`:** needs no change, since it already compares against `LAST_DEPTH`.
   - **Saves:** `ProgressData` needs no change, since `deep_clears` already keeps any depth.
-- [ ] **Step 3: Extend the smoke driver.**
+- [x] **Step 3: Extend the smoke driver.** Written, not yet run. `tools/smoke.ps1` has no timeout of its own, so only `TIMEOUT` (now 1080 s) was raised; the run time is still to be measured.
   - **The run:** `_clear_two_floors` becomes `_clear_three_floors(first, second, third)`. It checks `debug_depth() == 3`, the landing's "Floor 3" name and the heal, the Mall refused before a third-floor clear, then open after one.
   - **The run's end:** a floor-3 boss ends the run with "FLOOR CLEARED".
   - **Paths:** the second pass clears the Mall.
   - **Timeout:** raise `TIMEOUT` and the timeout in `tools/smoke.ps1` to fit the longer run, and report the new run time.
-- [x] **Step 4: When testing is allowed, run the tests.and 3 full loops.**
-- [ ] **Step 5: Commit**, one commit each for the floor defs, the scene change and the smoke driver.
+- [ ] **Step 4: When testing is allowed, run the tests and 3 full loops.**
+- [x] **Step 5: Commit**, one commit each for the floor defs, the scene change and the smoke driver. Made as one commit for the task, as the build brief asked.
 
 ### Task 7: The games' rules
 

@@ -20,9 +20,9 @@ extends Resource
 # How many floor bosses at open_after_depth must have fallen, on any path there, before this path
 # opens. Zero means always open.
 @export var clears_to_open: int = 0
-# 1 for a floor reached from the first Crossroads, 2 for one reached from the second.
+# 1 for a floor reached from the first Crossroads, 2 for one from the second, and so on down.
 @export var depth: int = 1
-# Whose clears clears_to_open counts: the first floor's, or the second's.
+# Which depth's clears clears_to_open counts, on any path at that depth.
 @export var open_after_depth: int = 1
 # Skulls on the path's sign at the Crossroads.
 @export var danger: int = 1
