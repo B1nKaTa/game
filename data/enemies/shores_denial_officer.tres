@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/enemy_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/actors/behaviors/shield_behavior.gd" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "shores_denial_officer"
+display_name = "Claims Denial Officer"
+max_hp = 110.0
+speed = 38.0
+pension_drop = 1
+body_size = Vector2(28, 32)
+color = Color(0.72, 0.5, 0.38, 1)
+behavior_script = ExtResource("2")
+max_per_room = 2
+shield_half_angle = 70.0
