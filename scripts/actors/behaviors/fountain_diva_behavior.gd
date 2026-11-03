@@ -21,10 +21,10 @@ const SPLASH_TRIES := 40
 const WET_TIME := 4.0
 const WARNING_RADIUS := 34.0
 # Shorter than Barbara's and Klaus's rests, and as short as the Reverend's.
-const COOLDOWN := 0.8
+const COOLDOWN := 0.6
 const KEEP_NEAR := 120.0
 const FIRST_SUMMON := 5.0
-const SUMMON_EVERY := 12.0
+const SUMMON_EVERY := 10.0
 const SUMMON_COUNT := 3
 const SUMMON_DISTANCE := 100.0
 const SUMMON_SPREAD := 0.3

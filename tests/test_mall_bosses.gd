@@ -117,7 +117,7 @@ func test_she_calls_a_line_of_walkers_who_pay_nothing() -> void:
 		assert_true(count >= 0 and count <= Diva.SUMMON_COUNT)
 		assert_true(alive + count <= maxi(Diva.MAX_ENEMIES, alive))
 	assert_eq(Diva.summon_count(1, Diva.MAX_ENEMIES), 3, "a whole line")
-	assert_near(Diva.SUMMON_EVERY, 12.0)
+	assert_near(Diva.SUMMON_EVERY, 10.0)
 	var walker := Enemy.new()
 	walker.setup(def.summon, null, 0.5)
 	walker.is_summon = true
@@ -134,7 +134,7 @@ func test_she_alternates_her_two_attacks() -> void:
 func test_gloria_is_at_least_as_hard_as_barbara_klaus_and_the_reverend() -> void:
 	var def := _load("gloria")
 	assert_true(def.is_boss)
-	assert_true(absf(def.max_hp * MALL_HEALTH - 560.0) < 0.5, str(def.max_hp * MALL_HEALTH))
+	assert_true(absf(def.max_hp * MALL_HEALTH - 640.0) < 0.5, str(def.max_hp * MALL_HEALTH))
 	assert_near(def.speed, 70.0)
 	assert_eq(def.pension_drop, 8)
 	for id in ["activities_coordinator", "foreman_klaus"]:

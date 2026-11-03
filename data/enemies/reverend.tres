@@ -8,7 +8,7 @@
 script = ExtResource("1")
 id = "reverend"
 display_name = "The Reverend, Officiant of Last Words"
-max_hp = 311.111
+max_hp = 355.556
 speed = 75.0
 pension_drop = 8
 is_boss = true

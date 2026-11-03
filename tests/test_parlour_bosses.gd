@@ -75,7 +75,7 @@ func test_he_never_summons_over_the_cap() -> void:
 		assert_true(alive + count <= maxi(Reverend.MAX_ENEMIES, alive), "%d alive, %d called" % [alive, count])
 	assert_eq(Reverend.summon_count(1, Reverend.MAX_ENEMIES), 3, "alone he calls all three")
 	assert_eq(Reverend.MAX_ENEMIES, 5)
-	assert_near(Reverend.SUMMON_EVERY, 12.0)
+	assert_near(Reverend.SUMMON_EVERY, 9.0)
 
 
 func test_he_calls_mourners_who_pay_nothing() -> void:
@@ -97,7 +97,7 @@ func test_he_alternates_his_two_attacks() -> void:
 func test_the_reverend_is_at_least_as_hard_as_barbara_and_klaus() -> void:
 	var def := _load("reverend")
 	assert_true(def.is_boss)
-	assert_true(absf(def.max_hp * PARLOUR_HEALTH - 560.0) < 0.5, str(def.max_hp * PARLOUR_HEALTH))
+	assert_true(absf(def.max_hp * PARLOUR_HEALTH - 640.0) < 0.5, str(def.max_hp * PARLOUR_HEALTH))
 	assert_near(def.speed, 75.0)
 	assert_eq(def.pension_drop, 8)
 	for id in ["activities_coordinator", "foreman_klaus"]:

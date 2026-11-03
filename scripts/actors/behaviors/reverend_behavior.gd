@@ -20,10 +20,10 @@ const OUT_STEPS := 6
 const BACK_STEPS := 10
 const WARNING_RADIUS := 34.0
 # A little shorter than Barbara's and Klaus's rests, as he must be at least as hard as they are.
-const COOLDOWN := 0.8
+const COOLDOWN := 0.6
 const KEEP_NEAR := 110.0
 const FIRST_SUMMON := 5.0
-const SUMMON_EVERY := 12.0
+const SUMMON_EVERY := 9.0
 const SUMMON_COUNT := 3
 const SUMMON_DISTANCE := 100.0
 const MAX_ENEMIES := 5
