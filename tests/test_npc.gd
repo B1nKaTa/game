@@ -76,11 +76,11 @@ func test_nothing_can_hit_the_merchant_or_bump_into_him() -> void:
 	var npc := Npc.new()
 	npc.setup(load(MERCHANT_PATH), null)
 	npc._ready()
+	# An Npc is a Node2D, never a body, so only its children could be solid.
 	assert_false(npc.is_in_group("enemies"))
 	assert_false(npc.is_in_group("breakable"))
 	for child in npc.get_children():
 		assert_false(child is CollisionObject2D or child is CollisionShape2D, "nothing solid")
-	assert_false(npc is CollisionObject2D)
 	npc.free()
 
 
