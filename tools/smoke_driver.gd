@@ -29,6 +29,7 @@ var _checked_potions := false
 var _checked_fuel := false
 var _checked_graveyard := false
 var _checked_care_home := false
+var _checked_furnace := false
 var _paths_cleared := 0
 var _boss_choice_count := -1
 var _boss_choices_checked := 0
@@ -85,6 +86,7 @@ func _run() -> void:
 	_check(Progress.data.clears_at(2) == 2, "clearing the second second-floor path is counted too")
 	_check(_paths_cleared == 4, "all four paths were cleared, got %d" % _paths_cleared)
 	_check(_checked_care_home, "the care home fights were checked")
+	_check(_checked_furnace, "the boiler hall fights were checked")
 	_check(_landings_reached == 2, "both runs took the stairwell to the landing")
 	ids = get_tree().current_scene.open_merchant_ids()
 	_check(ids.has("potion_merchant") and ids.has("bomb_merchant"), "clearing both second-floor paths for real brings the bomb merchant")
@@ -133,7 +135,7 @@ func _run() -> void:
 	_check(Progress.data.level_of(upgrade.id) == 1, "upgrade survives a reload")
 
 	if not _failed:
-		print("SMOKE PASS paths cleared: %d, landings reached: %d, boss choices checked: %d, rooms of sizes %s, big room view checked: %s, block memory checked: %s, props checked: %s, fight checked: %s, graveyard checked: %s, care home checked: %s, vault opened: %s, potions checked: %s, fuel checked: %s, pickups off solids: %d" % [_paths_cleared, _landings_reached, _boss_choices_checked, str(_sizes_seen.keys()), str(_followed_a_big_room), str(_checked_block_memory), str(_checked_props), str(_checked_fight), str(_checked_graveyard), str(_checked_care_home), str(_opened_a_vault), str(_checked_potions), str(_checked_fuel), _pickups_off_solids])
+		print("SMOKE PASS paths cleared: %d, landings reached: %d, boss choices checked: %d, rooms of sizes %s, big room view checked: %s, block memory checked: %s, props checked: %s, fight checked: %s, graveyard checked: %s, care home checked: %s, furnace checked: %s, vault opened: %s, potions checked: %s, fuel checked: %s, pickups off solids: %d" % [_paths_cleared, _landings_reached, _boss_choices_checked, str(_sizes_seen.keys()), str(_followed_a_big_room), str(_checked_block_memory), str(_checked_props), str(_checked_fight), str(_checked_graveyard), str(_checked_care_home), str(_checked_furnace), str(_opened_a_vault), str(_checked_potions), str(_checked_fuel), _pickups_off_solids])
 		get_tree().quit(0)
 
 
@@ -184,6 +186,8 @@ func _clear_whole_floor(scene: Node, path_index: int) -> void:
 		await _check_graveyard_fights(scene)
 	if depth == 2 and path_index == OPEN_DEEP_PATH and not _checked_care_home:
 		await _check_care_home_fights(scene)
+	if depth == 2 and path_index == LOCKED_DEEP_PATH and not _checked_furnace:
+		await _check_furnace_fights(scene)
 	var walked_back := false
 	var guard := 0
 	while not scene.is_cleared and not _failed and guard < MAX_STEPS:
@@ -1834,4 +1838,280 @@ func _check_matron(scene: Node, health: Health) -> void:
 	mercy.take_damage(INF, Vector2.ZERO)
 	await _wait(LightsOut.FADE_OUT + 0.2)
 	_check(_props_in(view, LightsOut).is_empty(), "the dark ends when she falls")
+	await _dismiss_all()
+
+
+# --- The Furnace Works: vents, burning ground, the boiler hall's staff and bosses ---
+
+func _check_furnace_fights(scene: Node) -> void:
+	_checked_furnace = true
+	var health: Health = scene.player.run.health
+	var pills_before := health.max_pills
+	health.raise_max(pills_before + 30)
+	var back_id: int = scene.debug_current_id()
+	await _check_vents(scene, health)
+	await _check_stoker(scene, health)
+	await _check_steam_valve(scene, health)
+	await _check_soot_ghost(scene)
+	await _check_klaus(scene, health)
+	await _check_old_smokey(scene, health)
+	var def: FloorDef = scene.debug_floor_def()
+	await _check_far_boss_waits(scene, def.mini_boss)
+	await _check_far_boss_waits(scene, def.floor_boss)
+	await _dismiss_all()
+	scene._enter_room(back_id)
+	await _wait(0.1)
+	health.pills = pills_before
+	health.raise_max(pills_before)
+
+
+func _wait_for(check: Callable, limit: float) -> bool:
+	var waited := 0.0
+	while not check.call() and waited < limit:
+		await get_tree().physics_frame
+		waited += get_physics_process_delta_time()
+	return check.call()
+
+
+# A flare costs Grandpa a pill and hurts an enemy on a vent, but never a boss.
+func _check_vents(scene: Node, health: Health) -> void:
+	var view := await _enter_made_room(scene, _fight_layout(20, 11, {Vector2i(8, 5): "U", Vector2i(12, 5): "U"}))
+	var vents: Array = _props_in(view, FloorVent)
+	_check(vents.size() == 2, "the made room laid its vents")
+	var mine: FloorVent = vents[0] if vents[0].position.x < vents[1].position.x else vents[1]
+	var theirs: FloorVent = vents[1] if mine == vents[0] else vents[0]
+	_put_feet(scene, mine.global_position)
+	var reaper: Enemy = view._spawn_enemy(_enemy_def("furnace_intern_reaper"), theirs.global_position)
+	reaper.set_physics_process(false)
+	var boss: Enemy = view._spawn_enemy(scene.debug_floor_def().floor_boss, RoomBackdrop.cell_center(Vector2i(16, 8)), true)
+	boss.set_physics_process(false)
+	mine.force_flare(0.2, 0.3)
+	theirs.force_flare(0.2, 0.3)
+	var pills: int = health.pills
+	var hp: float = reaper.hp
+	await _wait(0.2 + 0.15)
+	_check(health.pills == pills - FloorVent.PLAYER_DAMAGE, "a flare costs him a pill, %d to %d" % [pills, health.pills])
+	_check(is_equal_approx(reaper.hp, hp - FloorVent.ENEMY_DAMAGE), "a flare hurts an enemy on it too")
+	_put_feet(scene, boss.global_position)
+	var boss_vent := FloorVent.new()
+	boss_vent.position = boss.global_position
+	view.add_child(boss_vent)
+	var boss_hp: float = boss.hp
+	boss_vent.force_flare(0.05, 0.2)
+	await _wait(0.3)
+	_check(is_equal_approx(boss.hp, boss_hp), "a boss never feels the vents")
+	await _dismiss_all()
+
+
+# Coal lands on a warned mark and leaves fire that keeps hurting whoever stands in it.
+func _check_stoker(scene: Node, health: Health) -> void:
+	var view := await _enter_made_room(scene, _fight_layout(20, 11, {}))
+	var spot := RoomBackdrop.cell_center(Vector2i(6, 5))
+	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(6, 8)))
+	var stoker: Enemy = view._spawn_enemy(_enemy_def("stoker"), RoomBackdrop.cell_center(Vector2i(14, 5)))
+	stoker.set_physics_process(false)
+	var reaper: Enemy = view._spawn_enemy(_enemy_def("furnace_intern_reaper"), spot)
+	reaper.set_physics_process(false)
+	StokerBehavior.throw_coal(stoker, spot, StokerBehavior.COAL_WARNING, StokerBehavior.BURN_TIME)
+	var strikes := _strikes_in(view)
+	_check(strikes.size() == 1 and strikes[0].fill() < 0.2, "the coal's spot is marked first")
+	await _wait(StokerBehavior.COAL_WARNING + 0.1)
+	_check(strikes[0].is_burning(), "the coal leaves burning ground")
+	var hp: float = reaper.hp
+	await _wait(GroundStrike.BURN_EVERY + 0.1)
+	_check(reaper.hp < hp, "the fire hurts an enemy standing in it")
+	var pills: int = health.pills
+	_put_feet(scene, spot)
+	await _wait(Health.INVULN_TIME + 0.2)
+	_check(health.pills < pills, "the fire hurts him when he steps in")
+	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(6, 8)))
+	await _wait(StokerBehavior.BURN_TIME)
+	_check(_strikes_in(view).is_empty(), "the fire burns out")
+	await _dismiss_all()
+
+
+# A valve starts beside a wall, a hit never moves it, and its steam costs a pill down its lane.
+func _check_steam_valve(scene: Node, health: Health) -> void:
+	var layout := _fight_layout(20, 11, {Vector2i(9, 5): "E", Vector2i(12, 7): "E"})
+	var floor_def := FloorDef.new()
+	floor_def.enemies = [_enemy_def("steam_valve")]
+	for entry in EnemyPlan.plan(layout, floor_def, 0, RandomNumberGenerator.new()):
+		_check(EnemyPlan.beside_a_wall(layout, entry["cell"]), "a valve starts beside a wall, at %s" % str(entry["cell"]))
+	var view := await _enter_made_room(scene, _fight_layout(20, 11, {}))
+	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(10, 4)))
+	var valve: Enemy = view._spawn_enemy(_enemy_def("steam_valve"), RoomBackdrop.cell_center(Vector2i(10, 1)))
+	await _wait(0.1)
+	var at: Vector2 = valve.global_position
+	valve.take_damage(1.0, Vector2(400, 0))
+	await _wait(0.2)
+	_check(valve.global_position.distance_to(at) < 0.5, "a hit never moves a valve")
+	var behavior = valve._behavior
+	behavior._lane = Vector2.RIGHT
+	behavior._cooldown = 0.0
+	var pills: int = health.pills
+	var warned := await _wait_for(func(): return valve._warning != null, 2.0)
+	_check(warned and valve.warning_lane_direction().is_equal_approx(Vector2.DOWN), "it turns to its next lane and warns it first")
+	_check(valve.warning_lane_length() > 0.0, "the steam shows its lane")
+	await _wait(SteamValveBehavior.WINDUP + 0.2)
+	_check(health.pills == pills - 1, "the steam costs a pill down its lane, %d to %d" % [pills, health.pills])
+	await _dismiss_all()
+
+
+# In the smoke nothing reaches it, but it always comes back out beside him, and goes in again.
+func _check_soot_ghost(scene: Node) -> void:
+	var view := await _enter_made_room(scene, _fight_layout(20, 11, {}))
+	var feet := RoomBackdrop.cell_center(Vector2i(6, 5))
+	_put_feet(scene, feet)
+	var ghost: Enemy = view._spawn_enemy(_enemy_def("soot_ghost"), RoomBackdrop.cell_center(Vector2i(15, 5)))
+	await _wait(0.2)
+	_check(ghost.submerged, "it starts in the smoke")
+	var hp: float = ghost.hp
+	ghost.take_damage(30.0, Vector2.ZERO)
+	_check(is_equal_approx(ghost.hp, hp), "nothing reaches it in the smoke")
+	var out := await _wait_for(func(): return not ghost.submerged, SootGhostBehavior.FIRST_SMOKE + SootGhostBehavior.RISE_WINDUP + 0.5)
+	_check(out, "it comes out of the smoke")
+	_check(ghost.global_position.distance_to(feet) <= SootGhostBehavior.SWIPE_RANGE + 2.0, "beside him")
+	ghost.take_damage(5.0, Vector2.ZERO)
+	_check(ghost.hp < hp, "out in the open it can be hit")
+	var back := await _wait_for(func(): return ghost.submerged, SootGhostBehavior.OPEN_TIME + 0.5)
+	_check(back, "it fades into the smoke again")
+	var again := await _wait_for(func(): return not ghost.submerged, SootGhostBehavior.SMOKE_TIME + SootGhostBehavior.RISE_WINDUP + 0.5)
+	_check(again, "and always comes back out")
+	await _dismiss_all()
+
+
+func _jets_in(view: Node) -> Array:
+	var found := []
+	for child in view.get_children():
+		if child is SteamJet and not child.is_queued_for_deletion():
+			found.append(child)
+	return found
+
+
+func _check_klaus(scene: Node, health: Health) -> void:
+	var def: FloorDef = scene.debug_floor_def()
+	var view := await _enter_made_room(scene, _fight_layout(30, 17, {}))
+	var center := RoomBackdrop.cell_center(Vector2i(18, 8))
+	_put_feet(scene, center + Vector2(-100, 0))
+	var klaus: Enemy = view._spawn_enemy(def.mini_boss, center, true)
+	_check(absf(klaus.max_hp() - 500.0) < 0.5, "Klaus ends with 500 health, %f" % klaus.max_hp())
+	var behavior = klaus._behavior
+	behavior._summon_timer = 99.0
+	await _wait(0.05)
+	klaus.global_position = center
+	# The ring rolls out to him at 100 px and costs a pill.
+	behavior._cooldown = 99.0
+	var pills: int = health.pills
+	behavior._begin(klaus, ForemanBehavior.Attack.SLAM)
+	_check(_props_in(view, Shockwave).size() == 1, "the slam shows the ring's reach first")
+	await _wait(ForemanBehavior.SLAM_WINDUP + ForemanBehavior.RING_TIME + 0.1)
+	_check(health.pills == pills - 1, "the ring costs a pill as it passes, %d to %d" % [pills, health.pills])
+	await _wait(Health.INVULN_TIME)
+	# Standing inside the hollow, past the slam but short of where the ring starts, is safe from the ring.
+	behavior._cooldown = 99.0
+	klaus.global_position = center
+	_put_feet(scene, center + Vector2(0, 140 + 30))
+	pills = health.pills
+	behavior._begin(klaus, ForemanBehavior.Attack.SLAM)
+	await _wait(ForemanBehavior.SLAM_WINDUP + ForemanBehavior.RING_TIME + 0.1)
+	_check(health.pills == pills, "beyond the ring's reach is safe")
+	# Steam lines: three lanes, and the clear one is safe.
+	behavior._cooldown = 99.0
+	behavior._across = Vector2.DOWN
+	behavior._gap = -1
+	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(10, 8)))
+	behavior._begin(klaus, ForemanBehavior.Attack.STEAM)
+	await _wait(ForemanBehavior.STEAM_WINDUP + 0.05)
+	behavior._cooldown = 99.0
+	var jets := _jets_in(view)
+	_check(jets.size() == 3 and jets[0].is_warning(), "three steam lanes are warned, %d" % jets.size())
+	var lanes := ForemanBehavior.steam_lanes(ForemanBehavior.room_rect(klaus.room_cells), Vector2.RIGHT, -1, scene.player.feet().global_position)
+	var clear: Rect2 = lanes[behavior._gap]
+	_put_feet(scene, clear.get_center())
+	pills = health.pills
+	await _wait(ForemanBehavior.STEAM_WARNING + SteamJet.BLOW_TIME)
+	_check(health.pills == pills, "the clear lane is safe")
+	# Two Stokers, who pay nothing.
+	behavior._cooldown = 99.0
+	behavior._summon_timer = 0.0
+	await _wait(BossMoves.SUMMON_WARNING + 0.2)
+	var stokers := 0
+	for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
+		if enemy != klaus:
+			stokers += 1
+			_check(enemy.is_summon and enemy.coin_value() == 0 and enemy.def.id == "stoker", "he calls Stokers who pay nothing")
+	_check(stokers == ForemanBehavior.SUMMON_COUNT, "he calls two, %d" % stokers)
+	await _dismiss_all()
+
+
+func _check_old_smokey(scene: Node, health: Health) -> void:
+	var def: FloorDef = scene.debug_floor_def()
+	var changes := {}
+	for x in range(4, 26):
+		changes[Vector2i(x, 5)] = "U"
+		changes[Vector2i(x, 11)] = "U"
+	var view := await _enter_made_room(scene, _fight_layout(30, 17, changes))
+	var center := RoomBackdrop.cell_center(Vector2i(18, 8))
+	_put_feet(scene, center + Vector2(-80, 0))
+	var smokey: Enemy = view._spawn_enemy(def.floor_boss, center, true)
+	_check(absf(smokey.max_hp() - 1500.0) < 0.5, "Old Smokey ends with 1500 health, %f" % smokey.max_hp())
+	var behavior = smokey._behavior
+	await _wait(0.05)
+	smokey.global_position = center
+	# Fire breath: a warned cone, then two pills.
+	behavior._cooldown = 99.0
+	var pills: int = health.pills
+	behavior._begin(smokey, ChiefStokerBehavior.Attack.BREATH, false)
+	_check(smokey.warning_cone_length() > 0.0, "the breath shows its cone first")
+	await _wait(ChiefStokerBehavior.BREATH_WINDUP + 0.1)
+	_check(health.pills == pills - Enemy.HEAVY_DAMAGE, "the breath costs two pills, %d to %d" % [pills, health.pills])
+	behavior._cooldown = 99.0
+	await _wait(Health.INVULN_TIME)
+	# Bellows: a warned lane, then a pull toward him that costs nothing.
+	behavior._cooldown = 99.0
+	behavior._next = ChiefStokerBehavior.Attack.NONE
+	smokey.global_position = center
+	_put_feet(scene, center + Vector2(-180, 0))
+	pills = health.pills
+	behavior._begin(smokey, ChiefStokerBehavior.Attack.BELLOWS, false)
+	_check(smokey.warning_lane_length() > 0.0, "the bellows show a lane first")
+	var was: float = scene.player.feet().global_position.distance_to(center)
+	await _wait(ChiefStokerBehavior.BELLOWS_WINDUP + 0.05)
+	_check(scene.player.is_pushed(), "the bellows pull him")
+	await _wait(ChiefStokerBehavior.BELLOWS_TIME)
+	_check(scene.player.feet().global_position.distance_to(center) < was - 60.0, "toward the fire")
+	_check(health.pills == pills, "the pull itself costs nothing")
+	# Vent grid: every vent but a way through flares, and none under him.
+	behavior._cooldown = 99.0
+	behavior._next = ChiefStokerBehavior.Attack.NONE
+	var feet_cell := Vector2i(10, 5)
+	_put_feet(scene, RoomBackdrop.cell_center(feet_cell))
+	behavior._begin(smokey, ChiefStokerBehavior.Attack.GRID, false)
+	await _wait(ChiefStokerBehavior.GRID_WINDUP + 0.05)
+	behavior._cooldown = 99.0
+	behavior._next = ChiefStokerBehavior.Attack.NONE
+	var warning := 0
+	var all := 0
+	for vent: FloorVent in _props_in(view, FloorVent):
+		all += 1
+		warning += 1 if vent.is_warning() else 0
+		if vent.position.distance_to(RoomBackdrop.cell_center(feet_cell)) < 1.0:
+			_check(not vent.is_warning(), "the vent under him stays cold")
+	_check(warning * 2 >= all, "most vents flare in the grid, %d of %d" % [warning, all])
+	await _wait(ChiefStokerBehavior.GRID_WARN + ChiefStokerBehavior.GRID_FLARE + 0.1)
+	# Coal rain: five burning marks.
+	behavior._cooldown = 99.0
+	behavior._next = ChiefStokerBehavior.Attack.NONE
+	_put_feet(scene, center + Vector2(-90, 60))
+	behavior._begin(smokey, ChiefStokerBehavior.Attack.RAIN, false)
+	await _wait(ChiefStokerBehavior.RAIN_WINDUP + 0.05)
+	behavior._cooldown = 99.0
+	var marks := _strikes_in(view)
+	_check(marks.size() >= 4, "coal rains on five marks, %d landed on open ground" % marks.size())
+	_check(marks.size() > 0 and is_equal_approx(marks[0].linger(), ChiefStokerBehavior.RAIN_BURN), "each mark leaves fire")
+	# The second phase makes the room's vents flare more often.
+	smokey.take_damage(smokey.max_hp() * 0.55, Vector2.ZERO)
+	await _wait(0.1)
+	var vents: Array = _props_in(view, FloorVent)
+	_check(not vents.is_empty() and is_equal_approx(vents[0].cycle.period, FloorVent.PERIOD * ChiefStokerBehavior.PHASE_TWO_VENT_PERIOD), "below half health the vents flare faster")
 	await _dismiss_all()
