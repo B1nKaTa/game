@@ -211,11 +211,38 @@ func test_travel_completes_from_any_position_and_direction() -> void:
 			return
 
 
+func test_adhesive_levels_raise_bite_range_and_return() -> void:
+	var adhesive := _shipped_upgrade("denture_adhesive")
+	assert_true(adhesive != null, "Denture Adhesive ships")
+	if adhesive == null:
+		return
+	assert_eq(adhesive.merchant, "black_market", "sold beside Reinforced Cane")
+	assert_eq(adhesive.prices, PackedInt32Array([50, 120, 240]))
+	var upgrades: Array[UpgradeDef] = [adhesive]
+	var bites := [1.0, 1.15, 1.30, 1.45]
+	var ranges := [170.0, 210.0, 250.0, 290.0]
+	var delays := [3.0, 3.0, 3.0, 2.0]
+	for level in 4:
+		var stats := PlayerStats.compute(upgrades, {adhesive.id: level}, _no_items())
+		assert_near(stats.bite_damage_mult, bites[level], "bite at level %d" % level)
+		assert_near(stats.bite_range, ranges[level], "range at level %d" % level)
+		assert_near(stats.teeth_return_delay, delays[level], "return at level %d" % level)
+		assert_near(stats.damage_mult, 1.0, "the cane is untouched at level %d" % level)
+
+
 func test_one_bite_ends_a_flight_and_the_item_allows_a_second() -> void:
 	assert_false(ThrownDentures.keeps_flying(1, 1))
 	assert_true(ThrownDentures.keeps_flying(1, 2), "on through the first enemy")
 	assert_false(ThrownDentures.keeps_flying(2, 2), "and stopped by the second")
 	assert_false(ThrownDentures.keeps_flying(1, 0), "never fewer than one bite")
+
+
+func test_an_old_save_without_adhesive_loads_at_level_zero() -> void:
+	var raw := {"version": ProgressData.VERSION, "pension": 10, "upgrades": {"reinforced_cane": 2}, "opening_seen": true}
+	var data := ProgressData.from_dict(raw)
+	assert_true(data != null)
+	assert_eq(data.level_of("denture_adhesive"), 0)
+	assert_eq(data.level_of("reinforced_cane"), 2)
 
 
 # --- reach and the thrown actor ---

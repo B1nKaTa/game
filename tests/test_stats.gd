@@ -68,7 +68,7 @@ func test_upgrade_prices() -> void:
 
 func test_shipped_content_loads() -> void:
 	assert_eq(Content.items().size(), 12)
-	assert_eq(Content.upgrades().size(), 6)
+	assert_eq(Content.upgrades().size(), 7)
 	for upgrade in Content.upgrades():
 		assert_true(upgrade.max_level() > 0, upgrade.id)
 
@@ -80,7 +80,7 @@ func test_upgrades_default_to_the_black_market() -> void:
 func test_upgrades_for_filters_by_merchant() -> void:
 	var market := Content.upgrades_for("black_market")
 	var optometrist := Content.upgrades_for("optometrist")
-	assert_eq(market.size(), 4)
+	assert_eq(market.size(), 5)
 	assert_eq(optometrist.size(), 1)
 	assert_eq(optometrist[0].id, "prescription_glasses")
 	assert_eq(Content.upgrades_for("nobody").size(), 0)
