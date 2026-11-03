@@ -213,8 +213,8 @@ func test_old_smokey_is_at_least_as_tough_as_matron_mercy() -> void:
 	assert_true(def.max_hp * FURNACE_HEALTH >= matron.max_hp * 1.4 - 0.5, str(def.max_hp * FURNACE_HEALTH))
 	assert_eq(def.pension_drop, 16)
 	assert_near(def.speed, 70.0)
-	assert_true(ChiefStokerBehavior.BASE_COOLDOWN <= MatronBehavior.BASE_COOLDOWN)
-	assert_true(ChiefStokerBehavior.PHASE_TWO_COOLDOWN <= MatronBehavior.PHASE_TWO_COOLDOWN)
+	assert_true(ChiefStokerBehavior.BASE_COOLDOWN < MatronBehavior.BASE_COOLDOWN, "he rests less than she does")
+	assert_true(ChiefStokerBehavior.PHASE_TWO_COOLDOWN < MatronBehavior.PHASE_TWO_COOLDOWN)
 
 
 func test_a_gust_pushes_him_for_its_time() -> void:

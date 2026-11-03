@@ -31,8 +31,9 @@ const BELLOWS_TIME := 0.5
 # The bellows are for drawing him in, so not when he is already close.
 const BELLOWS_START := 100.0
 const WARNING_RADIUS := 40.0
-const BASE_COOLDOWN := 0.8
-const PHASE_TWO_COOLDOWN := 0.6
+# A little shorter than Matron Mercy's rests: measured with the simulated player, the same rests left him easier.
+const BASE_COOLDOWN := 0.7
+const PHASE_TWO_COOLDOWN := 0.5
 const PHASE_TWO_SPEED := 1.2
 const PHASE_TWO_WINDUP_SCALE := 0.8
 const PHASE_TWO_VENT_PERIOD := 0.75
