@@ -121,3 +121,56 @@ func test_a_thrown_coal_marks_the_spot_and_then_burns() -> void:
 	assert_true(strike.is_burning())
 	strike.free()
 	stoker.free()
+
+
+# --- the soot ghost ---
+
+func test_smoke_always_leads_back_out() -> void:
+	assert_eq(SootGhostBehavior.next_state(SootGhostBehavior.State.SMOKE), SootGhostBehavior.State.RISING)
+	assert_eq(SootGhostBehavior.next_state(SootGhostBehavior.State.RISING), SootGhostBehavior.State.OPEN)
+	assert_eq(SootGhostBehavior.next_state(SootGhostBehavior.State.OPEN), SootGhostBehavior.State.SMOKE)
+
+
+func test_its_timing_follows_the_plan() -> void:
+	assert_near(SootGhostBehavior.SMOKE_TIME, 1.5)
+	assert_near(SootGhostBehavior.RISE_WINDUP, 0.85)
+	assert_near(SootGhostBehavior.SWIPE_RANGE, 28.0)
+	assert_near(SootGhostBehavior.OPEN_TIME, 2.5)
+	assert_eq(_load("soot_ghost").max_per_room, 3)
+	assert_eq(_load("soot_ghost").hidden_look, "smoke")
+
+
+func test_it_comes_out_beside_him_inside_its_swipe() -> void:
+	var feet := Vector2(200, 200)
+	for side in [-1.0, 1.0]:
+		var spot := SootGhostBehavior.beside(feet, side)
+		assert_true(spot.distance_to(feet) > 10.0, "not right under him")
+		assert_true(SootGhostBehavior.swipe_hits(spot, feet), "standing still is a hit")
+	assert_false(SootGhostBehavior.swipe_hits(feet, feet + Vector2(30, 0)))
+
+
+func test_the_warning_beside_him_leaves_time_to_step_out() -> void:
+	var walk := PlayerStats.BASE_SPEED * (SootGhostBehavior.RISE_WINDUP - 0.25)
+	var needed := SootGhostBehavior.SWIPE_RANGE + SootGhostBehavior.BESIDE
+	assert_true(walk > needed, "%f against %f" % [walk, needed])
+
+
+# Mirrors the Plot Holder's rule: nothing reaches it in the smoke, but a room can still be cleared.
+func test_in_the_smoke_it_takes_no_ordinary_damage_but_can_still_be_cleared() -> void:
+	var ghost := Enemy.new()
+	ghost.setup(_load("soot_ghost"), null, 0.5)
+	ghost.set_submerged(true)
+	var hp := ghost.hp
+	ghost.take_damage(50.0, Vector2.ZERO)
+	assert_near(ghost.hp, hp)
+	assert_false(ghost.take_strike(50.0, Vector2.ZERO, Vector2.RIGHT))
+	ghost.take_damage(INF, Vector2.ZERO)
+	assert_true(ghost.is_dead())
+	ghost.free()
+
+
+func test_a_ghost_goes_round_the_whole_cycle_on_its_own_timers() -> void:
+	var behavior := SootGhostBehavior.new()
+	var total := SootGhostBehavior.FIRST_SMOKE + SootGhostBehavior.RISE_WINDUP + SootGhostBehavior.OPEN_TIME + SootGhostBehavior.SMOKE_TIME
+	assert_true(total < 6.0, "it is out at least once every %f seconds" % total)
+	assert_eq(behavior.state(), SootGhostBehavior.State.SMOKE)

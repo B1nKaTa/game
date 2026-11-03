@@ -24,3 +24,5 @@ extends Resource
 @export var mark: String = ""
 # Bolted to a wall: it starts on a cell beside one and never moves, not even when hit.
 @export var wall_mounted: bool = false
+# What shows of it while it hides underground or in smoke: "mound" or "smoke".
+@export var hidden_look: String = "mound"

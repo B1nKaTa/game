@@ -27,6 +27,7 @@ const SAME_CELL_REACH := 0.71
 const HEAVY_DAMAGE := 2
 const MOUND_COLOR := Color("5a4a33")
 const MOUND_EDGE := Color("2b2218")
+const SMOKE_COLOR := Color("8f8a94")
 const DAZE_COLOR := Color("ffe58a")
 const SAY_COLOR := Color("fff6d8")
 # Warnings draw above everything in the room, the dark of Lights Out included, so none is ever hidden.
@@ -487,7 +488,13 @@ func _on_summon_mark_finished(spot: Vector2) -> void:
 
 
 func _draw() -> void:
-	if submerged:
+	if submerged and def.hidden_look == "smoke":
+		# A drifting wisp of soot, faint enough to read as nothing to hit.
+		var drift := Time.get_ticks_msec() / 300.0
+		for i in 3:
+			var at := Vector2(cos(drift + i * 2.1) * 6.0, sin(drift * 1.3 + i) * 3.0 - i * 4.0)
+			draw_circle(at, 7.0 - i * 1.5, Color(SMOKE_COLOR, 0.45 - i * 0.1))
+	elif submerged:
 		var mound := PackedVector2Array([Vector2(-11, 7), Vector2(-7, 0), Vector2(-2, -4), Vector2(4, -3), Vector2(9, 2), Vector2(12, 7)])
 		draw_colored_polygon(mound, MOUND_COLOR)
 		draw_polyline(mound, MOUND_EDGE, 1.0)
