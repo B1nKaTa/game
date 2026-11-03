@@ -172,13 +172,16 @@ func _burn() -> void:
 
 
 func _draw() -> void:
+	# A round grille with embers glowing through, so a vent never passes for the floor's iron plate.
 	var half := RoomBackdrop.TILE / 2.0 - 3.0
 	draw_rect(Rect2(-half, -half, half * 2.0, half * 2.0), GRATE)
-	for i in 4:
-		var y := -half + 4.0 + i * 6.5
-		draw_rect(Rect2(-half + 3.0, y, half * 2.0 - 6.0, 3.0), SLOT)
 	draw_rect(Rect2(-half, -half, half * 2.0, half * 2.0), GRATE_EDGE, false, 2.0)
-	draw_rect(Rect2(-half + 4.0, -2.0, 3.0, 2.0), Color(EMBER, 0.5))
+	draw_circle(Vector2.ZERO, half - 1.0, SLOT)
+	draw_circle(Vector2.ZERO, half * 0.45, Color(EMBER, 0.55))
+	for i in 8:
+		var spoke := Vector2.from_angle(TAU * i / 8.0)
+		draw_line(spoke * 3.0, spoke * (half - 1.0), GRATE, 2.0)
+	draw_arc(Vector2.ZERO, half - 1.0, 0.0, TAU, 20, Color(EMBER, 0.7), 1.0)
 
 
 func _draw_overlay(layer: Node2D) -> void:
@@ -186,7 +189,7 @@ func _draw_overlay(layer: Node2D) -> void:
 		VentCycle.WARN:
 			var fill := warn_progress()
 			var size := REACH * 2.0
-			layer.draw_rect(Rect2(-REACH, -REACH, size, size), Color(WARN_FILL, 0.15 + 0.35 * fill))
+			layer.draw_rect(Rect2(-REACH, -REACH, size, size), Color(WARN_FILL, 0.25 + 0.45 * fill))
 			layer.draw_rect(Rect2(-REACH, -REACH, size, size), WARN_RING, false, 2.0)
 		VentCycle.FLARE:
 			var wobble := sin(Time.get_ticks_msec() / 45.0 + position.x) * 2.0

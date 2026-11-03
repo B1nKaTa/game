@@ -81,10 +81,14 @@ func _draw() -> void:
 				draw_colored_polygon(PackedVector2Array([mid + Vector2(0, -6), mid + Vector2(6, 0), mid + Vector2(0, 6), mid + Vector2(-6, 0)]), _palette.carpet_motif)
 				draw_rect(Rect2(tile.position + Vector2(1, 1), Vector2(2, 2)), _palette.carpet_motif)
 				continue
-			# Iron grating: dark slots across the plate, with a bolt in each corner.
+			# Iron tread plate: short raised ridges in a herringbone, with a bolt in each corner. It must
+			# never look like a vent, so it has no dark slots.
 			if _palette.floor_pattern == 2 and _palette.patch_of(Vector2i(x, y), _seed) == 1:
-				for slot in 4:
-					draw_rect(Rect2(tile.position + Vector2(4, 4 + slot * 7), Vector2(TILE - 8, 3)), _palette.carpet_motif)
+				for row in 3:
+					for column in 3:
+						var at := tile.position + Vector2(6 + column * 9, 6 + row * 9)
+						var lean := 3.0 if (row + column) % 2 == 0 else -3.0
+						draw_line(at + Vector2(-lean, -2), at + Vector2(lean, 2), _palette.carpet_motif, 2.0)
 				for corner in [Vector2(2, 2), Vector2(TILE - 4, 2), Vector2(2, TILE - 4), Vector2(TILE - 4, TILE - 4)]:
 					draw_rect(Rect2(tile.position + corner, Vector2(2, 2)), _palette.speckle)
 				draw_rect(tile, _palette.grout, false, 1.0)
