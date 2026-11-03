@@ -174,3 +174,32 @@ func test_a_ghost_goes_round_the_whole_cycle_on_its_own_timers() -> void:
 	var total := SootGhostBehavior.FIRST_SMOKE + SootGhostBehavior.RISE_WINDUP + SootGhostBehavior.OPEN_TIME + SootGhostBehavior.SMOKE_TIME
 	assert_true(total < 6.0, "it is out at least once every %f seconds" % total)
 	assert_eq(behavior.state(), SootGhostBehavior.State.SMOKE)
+
+
+# --- the returning enemies ---
+
+func test_returning_enemies_keep_their_numbers_and_take_the_floors_colors() -> void:
+	for id in ["intern_reaper", "burnt_out_auditor"]:
+		var mine := _load("furnace_" + id)
+		var theirs := _load(id)
+		assert_near(mine.max_hp, theirs.max_hp, id)
+		assert_near(mine.speed, theirs.speed, id)
+		assert_eq(mine.pension_drop, theirs.pension_drop, id)
+		assert_eq(mine.behavior_script, theirs.behavior_script, id)
+		assert_eq(mine.display_name, theirs.display_name, id)
+		assert_eq(mine.max_per_room, theirs.max_per_room, id)
+		assert_true(mine.id != theirs.id and mine.color != theirs.color, id)
+
+
+# --- the numbers ---
+
+func test_new_enemies_match_the_first_floor_role_they_fill() -> void:
+	var pairs := {"stoker": "filing_clerk", "steam_valve": "notary_public", "soot_ghost": "plot_holder"}
+	for id: String in pairs:
+		var def := _load(id)
+		var theirs := _load(pairs[id])
+		assert_false(def.is_boss, id)
+		assert_false(def.display_name.is_empty(), id)
+		assert_eq(def.pension_drop, theirs.pension_drop, id)
+		assert_true(absf(def.max_hp - theirs.max_hp) <= 4.0, id)
+		assert_true(def.behavior_script.new() is EnemyBehavior, id)
