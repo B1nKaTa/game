@@ -115,6 +115,9 @@ func test_a_spin_lands_three_known_symbols() -> void:
 
 func test_each_game_returns_about_ninety_percent() -> void:
 	# Item and heal wins count at the Pension a shop charges for them, so the slot's return is comparable.
+	# Blackjack under its fixed payouts returns about 94.4% (300,000 rounds), near the top of the window,
+	# and 20,000 rounds swing it by about 0.8%, so it gets enough rounds to measure the rules, not the luck.
+	var rounds := {"slot": 20000, "blackjack": 80000, "poker": 20000}
 	for game in ["slot", "blackjack", "poker"]:
-		var back := ArcadeOdds.simulated_return(game, 20000, _rng(9))
+		var back := ArcadeOdds.simulated_return(game, rounds[game], _rng(9))
 		assert_true(back > 0.85 and back < 0.95, "%s returns %f" % [game, back])
