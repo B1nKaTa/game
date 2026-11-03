@@ -22,9 +22,12 @@ static func plan(layout: RoomLayout, floor_def: FloorDef, extra: int, rng: Rando
 	for cell in cells:
 		taken[cell] = true
 	var counts := {}
-	for cell in cells:
+	for start in cells:
 		var def := pick(floor_def, counts, rng)
 		counts[def] = counts.get(def, 0) + 1
+		var cell := start
+		if def.wall_mounted:
+			cell = wall_spot(layout, start, taken, spare)
 		entries.append({"def": def, "cell": cell, "leader": true})
 		for member in def.group_size - 1:
 			var spot := _next_to(cell, spare, taken, rng)
@@ -51,6 +54,31 @@ static func pick(floor_def: FloorDef, counts: Dictionary, rng: RandomNumberGener
 		if roll < 0:
 			return floor_def.enemies[i]
 	return floor_def.enemies[options[-1]]
+
+
+# Something bolted to a wall starts on the nearest good cell beside one: open floor, as far from the
+# doors as any enemy, and free. A cell already beside a wall is kept. With none, it keeps its cell.
+static func wall_spot(layout: RoomLayout, cell: Vector2i, taken: Dictionary, spare: Array[Vector2i]) -> Vector2i:
+	if beside_a_wall(layout, cell):
+		return cell
+	var best := cell
+	var best_distance := INF
+	for candidate in spare:
+		var distance := Vector2(candidate - cell).length_squared()
+		if not taken.has(candidate) and beside_a_wall(layout, candidate) and distance < best_distance:
+			best_distance = distance
+			best = candidate
+	if best != cell:
+		taken[best] = true
+		spare.erase(best)
+	return best
+
+
+static func beside_a_wall(layout: RoomLayout, cell: Vector2i) -> bool:
+	for side in RoomLayout.SIDES:
+		if RoomLayout.WALL_LIKE.contains(layout.symbol_at(cell + side)):
+			return true
+	return false
 
 
 # The nearest free good cell, or the same cell when a crowd has used them all up.

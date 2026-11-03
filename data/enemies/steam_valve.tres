@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/enemy_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/actors/behaviors/steam_valve_behavior.gd" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "steam_valve"
+display_name = "Leaky Steam Valve"
+max_hp = 34.0
+speed = 0.0
+pension_drop = 1
+body_size = Vector2(22, 22)
+color = Color(0.62, 0.66, 0.72, 1)
+behavior_script = ExtResource("2")
+max_per_room = 2
+mark = "valve"
+wall_mounted = true

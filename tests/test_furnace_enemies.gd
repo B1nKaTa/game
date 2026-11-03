@@ -5,6 +5,91 @@ func _load(id: String) -> EnemyDef:
 	return load("res://data/enemies/%s.tres" % id)
 
 
+func _room(changes: Dictionary) -> RoomLayout:
+	var rows := ["#".repeat(20)]
+	for y in range(1, 10):
+		rows.append("#" + ".".repeat(18) + "#")
+	rows.append("#".repeat(20))
+	for cell: Vector2i in changes:
+		var row: String = rows[cell.y]
+		rows[cell.y] = row.substr(0, cell.x) + changes[cell] + row.substr(cell.x + 1)
+	var layout := RoomLayout.new()
+	layout.room_type = RoomLayout.TYPE_COMBAT
+	layout.rows = PackedStringArray(rows)
+	return layout
+
+
+func _only(def: EnemyDef) -> FloorDef:
+	var floor_def := FloorDef.new()
+	floor_def.enemies = [def]
+	return floor_def
+
+
+# --- the steam valve ---
+
+func test_the_valve_turns_through_all_four_lanes_clockwise() -> void:
+	var lane := Vector2.UP
+	var seen := {}
+	for i in 4:
+		var next := SteamValveBehavior.next_lane(lane)
+		assert_true(next.is_equal_approx(lane.rotated(PI / 2.0)), "a quarter turn clockwise from %s" % str(lane))
+		seen[next] = true
+		lane = next
+	assert_eq(seen.size(), 4)
+	assert_true(lane.is_equal_approx(Vector2.UP), "and round again")
+
+
+func test_its_lanes_follow_the_plan() -> void:
+	assert_near(SteamValveBehavior.WINDUP, 0.8)
+	assert_near(SteamValveBehavior.LANE_LENGTH, 140.0)
+	assert_near(SteamValveBehavior.LANE_WIDTH, 18.0)
+
+
+func test_a_jet_hits_only_inside_its_lane() -> void:
+	assert_true(SteamJet.lane_hits(Vector2.ZERO, Vector2.RIGHT, 140.0, 18.0, Vector2(100, 8)))
+	assert_false(SteamJet.lane_hits(Vector2.ZERO, Vector2.RIGHT, 140.0, 18.0, Vector2(100, 10)), "beside it")
+	assert_false(SteamJet.lane_hits(Vector2.ZERO, Vector2.RIGHT, 140.0, 18.0, Vector2(150, 0)), "past its end")
+	assert_false(SteamJet.lane_hits(Vector2.ZERO, Vector2.RIGHT, 140.0, 18.0, Vector2(-5, 0)), "behind it")
+	assert_true(SteamJet.lane_hits(Vector2(10, 10), Vector2.UP, 50.0, 18.0, Vector2(12, -30)))
+
+
+func test_the_valve_is_fixed_weak_and_counts_toward_the_room() -> void:
+	var def := _load("steam_valve")
+	assert_true(def.wall_mounted)
+	assert_near(def.speed, 0.0)
+	assert_true(absf(def.max_hp - _load("notary_public").max_hp) <= 4.0, "about a Notary Public")
+	assert_eq(def.pension_drop, 1)
+	assert_false(def.is_boss)
+
+
+func test_a_valve_starts_beside_a_wall() -> void:
+	var layout := _room({Vector2i(9, 5): "E", Vector2i(13, 3): "E"})
+	for seed_value in 20:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = seed_value
+		var entries := EnemyPlan.plan(layout, _only(_load("steam_valve")), 0, rng)
+		assert_eq(entries.size(), 2)
+		var cells := {}
+		for entry in entries:
+			var cell: Vector2i = entry["cell"]
+			assert_true(EnemyPlan.beside_a_wall(layout, cell), "at %s" % str(cell))
+			assert_eq(layout.symbol_at(cell), RoomLayout.SYMBOL_FLOOR)
+			for side in RoomLayout.SIDES:
+				assert_true(Vector2(cell - layout.door_cell(side)).length() >= RoomLayout.MIN_FIGHTER_DOOR_DISTANCE, "clear of the doors")
+			cells[cell] = true
+		assert_eq(cells.size(), 2, "never two on one cell")
+
+
+func test_other_enemies_keep_their_cells() -> void:
+	var layout := _room({Vector2i(9, 5): "E", Vector2i(13, 3): "E"})
+	var entries := EnemyPlan.plan(layout, _only(_load("stoker")), 0, RandomNumberGenerator.new())
+	var cells: Array[Vector2i] = []
+	for entry in entries:
+		cells.append(entry["cell"])
+	assert_true(cells.has(Vector2i(9, 5)) and cells.has(Vector2i(13, 3)), str(cells))
+
+
+
 # --- the stoker ---
 
 func test_a_stoker_keeps_its_distance() -> void:

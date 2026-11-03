@@ -237,6 +237,10 @@ func _physics_process(delta: float) -> void:
 	_route_left -= delta
 	desired_velocity = Vector2.ZERO
 	_behavior.tick(self, delta)
+	# Something bolted to the wall stays put, however hard it is hit.
+	if def.wall_mounted:
+		_knockback = Vector2.ZERO
+		desired_velocity = Vector2.ZERO
 	velocity = desired_velocity + _knockback
 	_knockback = _knockback.lerp(Vector2.ZERO, minf(KNOCKBACK_DECAY * delta, 1.0))
 	move_and_slide()
@@ -370,6 +374,11 @@ func set_warning_lane(direction: Vector2, length: float, width: float, through_p
 
 func warning_lane_direction() -> Vector2:
 	return _lane_direction
+
+
+# How far the warned lane really runs, since it ends at the first wall.
+func warning_lane_length() -> float:
+	return _lane_length
 
 
 func _clear_length(direction: Vector2, length: float, through_props: bool) -> float:

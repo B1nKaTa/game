@@ -22,3 +22,5 @@ extends Resource
 @export var shield_half_angle: float = 0.0
 # A placeholder sign drawn on the body, so a type reads without art. See EnemyMarks.
 @export var mark: String = ""
+# Bolted to a wall: it starts on a cell beside one and never moves, not even when hit.
+@export var wall_mounted: bool = false
