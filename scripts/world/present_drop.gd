@@ -8,7 +8,7 @@ extends Node2D
 const WARNING := 0.9
 const RADIUS := 18.0
 const SHOTS := 6
-const SHOT_SPEED := 150.0
+const SHOT_SPEED := 125.0
 const SPOKE := 64.0
 const SPOKE_WIDTH := 10.0
 const BURST_SHOW := 0.3
