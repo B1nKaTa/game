@@ -18,6 +18,9 @@ const FIRE_OUTER := Color(1.0, 0.5, 0.08, 0.5)
 const FIRE_INNER := Color(1.0, 0.85, 0.3, 0.75)
 const FIRE_EDGE := Color("ffb02e")
 const EMBER := Color("fff4c0")
+const COAL := Color("1c1614")
+const COAL_GLOW := Color("ff8a2a")
+const THROW_ARC := 28.0
 
 var _source: Enemy
 var _radius := 20.0
@@ -33,6 +36,8 @@ var _linger := 0.0
 var _burn_left := 0.0
 # When each body standing in the fire may be hurt again, by instance id.
 var _burn_wait := {}
+# Where a thrown lump of coal left from, drawn flying in over the warning. Unset means nothing is thrown.
+var _thrown_from := Vector2.INF
 
 
 static func hits(center: Vector2, radius: float, feet: Vector2) -> bool:
@@ -56,6 +61,10 @@ func setup(source: Enemy, radius: float, warning: float, delay := 0.0, follow_ti
 	_follow_left = follow_time
 	_damage = damage
 	_linger = linger
+
+
+func throw_from(point: Vector2) -> void:
+	_thrown_from = point
 
 
 func damage() -> int:
@@ -180,6 +189,11 @@ func _draw() -> void:
 	var filled := fill()
 	draw_circle(Vector2.ZERO, _radius * filled, Color(COLOR, 0.15 + 0.3 * filled))
 	draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 24, COLOR, 2.0)
+	if _thrown_from != Vector2.INF:
+		var start := _thrown_from - global_position
+		var at := start.lerp(Vector2.ZERO, filled) + Vector2(0.0, -sin(filled * PI) * THROW_ARC)
+		draw_circle(at, 4.0, COAL_GLOW)
+		draw_circle(at, 3.0, COAL)
 
 
 # Burning ground reads as fire, never as a warning: a flickering orange pool with a bright rim and embers.

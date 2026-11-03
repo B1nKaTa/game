@@ -23,6 +23,16 @@ const CARD_COLOR := Color("fff6d8")
 const CARD_DOT := Color("d9576b")
 const LANYARD_COLOR := Color("3b7dd8")
 const BADGE_COLOR := Color("fff6d8")
+const SHOVEL_HANDLE := Color("5a3b22")
+const SHOVEL_BLADE := Color("9aa0a8")
+const COAL_COLOR := Color("1a1513")
+const VALVE_WHEEL := Color("d9453b")
+const VALVE_HUB := Color("e8e2d6")
+const SOOT_EYES := Color("ffb347")
+const HARD_HAT := Color("f2c230")
+const HAT_BRIM := Color("8a6a12")
+const STOVEPIPE := Color("2a2426")
+const STOVEPIPE_BAND := Color("ff8a2a")
 
 var _def: EnemyDef
 var _facing := Vector2.RIGHT
@@ -92,6 +102,25 @@ func _draw() -> void:
 			draw_rect(Rect2(-half.x * 0.6, -half.y - 8.0, half.x * 1.2, 9.0), CAP_COLOR)
 			draw_rect(Rect2(-half.x * 0.6, -half.y - 4.0, half.x * 1.2, 3.0), CAP_BAND)
 			draw_rect(Rect2(-2.0, -half.y - 7.0, 4.0, 3.0), CAP_BAND)
+		"shovel":
+			draw_line(Vector2(half.x + 2.0, -half.y + 2.0), Vector2(half.x + 2.0, half.y - 7.0), SHOVEL_HANDLE, 2.0)
+			draw_rect(Rect2(half.x - 1.0, half.y - 8.0, 7.0, 7.0), SHOVEL_BLADE)
+			draw_circle(Vector2(half.x + 2.5, half.y - 6.0), 2.0, COAL_COLOR)
+		"valve":
+			draw_arc(Vector2.ZERO, half.x * 0.6, 0.0, TAU, 16, VALVE_WHEEL, 2.0)
+			draw_line(Vector2(-half.x * 0.6, 0.0), Vector2(half.x * 0.6, 0.0), VALVE_WHEEL, 2.0)
+			draw_line(Vector2(0.0, -half.x * 0.6), Vector2(0.0, half.x * 0.6), VALVE_WHEEL, 2.0)
+			draw_circle(Vector2.ZERO, 2.5, VALVE_HUB)
+		"soot":
+			draw_circle(Vector2(-3.5, -half.y + 7.0), 2.0, SOOT_EYES)
+			draw_circle(Vector2(3.5, -half.y + 7.0), 2.0, SOOT_EYES)
+		"hard_hat":
+			draw_rect(Rect2(-half.x * 0.6, -half.y - 6.0, half.x * 1.2, 7.0), HARD_HAT)
+			draw_rect(Rect2(-half.x * 0.85, -half.y, half.x * 1.7, 2.0), HAT_BRIM)
+		"stovepipe":
+			draw_rect(Rect2(-half.x * 0.45, -half.y - 14.0, half.x * 0.9, 15.0), STOVEPIPE)
+			draw_rect(Rect2(-half.x * 0.45, -half.y - 4.0, half.x * 0.9, 2.0), STOVEPIPE_BAND)
+			draw_rect(Rect2(-half.x * 0.7, -half.y, half.x * 1.4, 3.0), STOVEPIPE)
 	if _def.shield_half_angle > 0.0:
 		var reach := maxf(half.x, half.y) + SHIELD_GAP
 		var half_arc := deg_to_rad(_def.shield_half_angle)
