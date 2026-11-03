@@ -298,11 +298,43 @@ func _handle_movement() -> void:
 			speed *= CHARGE_SLOWDOWN
 		# What he carries onto the wet is never more than a walk, so a dodge does not fling him.
 		velocity = SlideRule.velocity(velocity.limit_length(speed), input * speed, on_wet, get_physics_process_delta_time())
+		if not on_wet:
+			velocity = _round_corners(velocity, input, speed)
 		if not _visual.is_playing_once():
 			_visual.play("walk" if input != Vector2.ZERO else "idle")
 	if _push_left > 0.0:
 		velocity += _push
 	move_and_slide()
+
+
+# Walking straight into a corner by a pixel or two steps him round it, sideways only, and only when
+# both the step and the walk on from there are clear, so he never slips into a wall or through one.
+func _round_corners(wanted: Vector2, input: Vector2, speed: float) -> Vector2:
+	if not is_inside_tree() or input.is_zero_approx() or (absf(input.x) > 0.01 and absf(input.y) > 0.01):
+		return wanted
+	var delta := get_physics_process_delta_time()
+	var ahead := input.normalized() * speed * delta
+	var hit := move_and_collide(ahead, true)
+	if hit == null:
+		return wanted
+	var obstacle := _rect_of(hit.get_collider_shape())
+	if not obstacle.has_area():
+		return wanted
+	var step := CornerSlide.nudge(Rect2(_feet.global_position - FEET_BOX_SIZE / 2.0, FEET_BOX_SIZE), obstacle, input)
+	if step == Vector2.ZERO:
+		return wanted
+	var clear := step + step.normalized() * 0.5
+	if test_move(global_transform, clear) or test_move(global_transform.translated(clear), ahead):
+		return wanted
+	return step.normalized() * minf(speed, clear.length() / delta)
+
+
+func _rect_of(shape_owner: Object) -> Rect2:
+	var holder := shape_owner as CollisionShape2D
+	if holder == null or not holder.shape is RectangleShape2D:
+		return Rect2()
+	var size: Vector2 = (holder.shape as RectangleShape2D).size
+	return Rect2(holder.global_position - size / 2.0, size)
 
 
 func _draw() -> void:

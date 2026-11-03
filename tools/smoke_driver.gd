@@ -1855,6 +1855,7 @@ func _check_furnace_fights(scene: Node) -> void:
 	await _check_soot_ghost(scene)
 	await _check_klaus(scene, health)
 	await _check_old_smokey(scene, health)
+	await _check_corner_slide(scene)
 	var def: FloorDef = scene.debug_floor_def()
 	await _check_far_boss_waits(scene, def.mini_boss)
 	await _check_far_boss_waits(scene, def.floor_boss)
@@ -2115,3 +2116,27 @@ func _check_old_smokey(scene: Node, health: Health) -> void:
 	var vents: Array = _props_in(view, FloorVent)
 	_check(not vents.is_empty() and is_equal_approx(vents[0].cycle.period, FloorVent.PERIOD * ChiefStokerBehavior.PHASE_TWO_VENT_PERIOD), "below half health the vents flare faster")
 	await _dismiss_all()
+
+
+# Walking straight past a prop that clips his feet by a few pixels slides him round its corner, but
+# a real overlap still stops him.
+func _check_corner_slide(scene: Node) -> void:
+	var view := await _enter_made_room(scene, _fight_layout(20, 11, {Vector2i(10, 5): "O"}))
+	var rocks: Array = _props_in(view, RockBlock)
+	_check(rocks.size() == 1, "the made room has its rock")
+	if rocks.is_empty():
+		return
+	var rect: Rect2 = rocks[0].body_rect()
+	for entry in [[3.0, true], [9.0, false]]:
+		var overlap: float = entry[0]
+		_put_feet(scene, Vector2(rect.position.x - Player.FEET_BOX_SIZE.x / 2.0 - 20.0, rect.end.y + Player.FEET_BOX_SIZE.y / 2.0 - overlap))
+		await get_tree().physics_frame
+		Input.action_press("move_right")
+		await _wait(0.7)
+		Input.action_release("move_right")
+		await get_tree().physics_frame
+		var passed: bool = scene.player.feet().global_position.x > rect.end.x
+		if entry[1]:
+			_check(passed, "clipping a corner by %d px slides him round it" % overlap)
+		else:
+			_check(not passed, "a %d px overlap still blocks him" % overlap)
