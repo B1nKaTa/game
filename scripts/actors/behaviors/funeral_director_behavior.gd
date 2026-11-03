@@ -352,9 +352,11 @@ func _play_crescendo(enemy: Enemy) -> float:
 	for pipe in pipes:
 		origins.append(pipe.ring_origin())
 	var grid := enemy.walk_grid
-	var is_open := Callable()
-	if grid != null:
-		is_open = func(spot: Vector2) -> bool: return grid.is_open(WalkGrid.cell_of(spot))
+	# Never under his own body, where Grandpa cannot stand.
+	var body_at := enemy.global_position
+	var keep_off := maxf(enemy.def.body_size.x, enemy.def.body_size.y) / 2.0 + SAFE_MARGIN
+	var is_open := func(spot: Vector2) -> bool:
+		return spot.distance_to(body_at) > keep_off and (grid == null or grid.is_open(WalkGrid.cell_of(spot)))
 	var safe := crescendo_safe_spot(origins, ForemanBehavior.room_rect(enemy.room_cells), _rng, enemy.target_ground(), is_open)
 	var reaches := crescendo_reaches(origins, safe)
 	var longest := CRESCENDO_GLOW
