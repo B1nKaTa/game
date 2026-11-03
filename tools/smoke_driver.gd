@@ -1,11 +1,14 @@
 extends Node
 
-const TIMEOUT := 420.0
+const TIMEOUT := 720.0
 const MAX_STEPS := 150
 const VIEW := Vector2(640, 360)
 const AIM_TOLERANCE := 1.5
 const RECORDS_PATH := 0
 const CEMETERY_PATH := 1
+# The second Crossroads lists its paths the same way: the open one west, the locked one east.
+const OPEN_DEEP_PATH := 0
+const LOCKED_DEEP_PATH := 1
 
 var _failed := false
 var _boss_rooms_seen := 0
@@ -25,6 +28,9 @@ var _checked_potions := false
 var _checked_fuel := false
 var _checked_graveyard := false
 var _paths_cleared := 0
+var _boss_choice_count := -1
+var _boss_choices_checked := 0
+var _landings_reached := 0
 
 
 func _ready() -> void:
@@ -48,17 +54,16 @@ func _run() -> void:
 	_check(spent_ok, "can buy an upgrade")
 	var pension_before: int = Progress.data.pension
 
-	await _clear_whole_floor(RECORDS_PATH)
+	# The open paths of both depths: the Records Basement, the stairwell, then Sunset Shores.
+	await _clear_two_floors(RECORDS_PATH, OPEN_DEEP_PATH)
 	_check(Progress.data.pension > pension_before, "Pension was earned during the run")
 	await _wait(2.5)
 	_expect_scene("WaitingRoom")
-	_check(Progress.data.floors_cleared == 1, "clearing the floor is counted")
+	_check(Progress.data.floors_cleared == 1, "clearing the first floor is counted")
+	_check(Progress.data.clears_at(2) == 1, "clearing a second floor is counted apart")
+	_check(Progress.data.has_cleared_path("floor_1") and Progress.data.has_cleared_path("sunset_shores"), "both cleared paths are remembered")
+	_check(Progress.data.legacy_clears == 0, "a fresh save keeps no old clears")
 	var ids: Array = get_tree().current_scene.open_merchant_ids()
-	_check(not ids.has("potion_merchant") and not ids.has("bomb_merchant"), "a first-floor clear opens no merchant")
-	Progress.data.record_floor_cleared(2, "sunset_shores")
-	Game.return_to_waiting()
-	await _wait(0.5)
-	ids = get_tree().current_scene.open_merchant_ids()
 	_check(ids.has("potion_merchant") and not ids.has("bomb_merchant"), "a second-floor clear brings the potion merchant, not the bomb merchant")
 	Progress.data.record_floor_cleared(2, "furnace_works")
 	Game.return_to_waiting()
@@ -66,18 +71,20 @@ func _run() -> void:
 	ids = get_tree().current_scene.open_merchant_ids()
 	_check(ids.has("potion_merchant") and ids.has("bomb_merchant"), "clearing both second-floor paths brings the bomb merchant too")
 	Progress.reload()
-	_check(Progress.data.floors_cleared == 1 and Progress.data.clears_at(2) == 0, "clears come back from the save as it was written")
+	_check(Progress.data.floors_cleared == 1 and Progress.data.clears_at(2) == 1 and not Progress.data.has_cleared_path("furnace_works"), "clears come back from the save as it was written")
 
-	# The first clear opened the second path, and clearing it counts the same.
+	# The first clears opened the locked path of each depth: the Cemetery, then the Furnace Works.
 	var pension_before_second: int = Progress.data.pension
-	await _clear_whole_floor(CEMETERY_PATH)
-	_check(Progress.data.pension > pension_before_second, "the second path earns Pension too")
+	await _clear_two_floors(CEMETERY_PATH, LOCKED_DEEP_PATH)
+	_check(Progress.data.pension > pension_before_second, "the locked paths earn Pension too")
 	await _wait(2.5)
 	_expect_scene("WaitingRoom")
-	_check(Progress.data.floors_cleared == 2, "clearing the second path is counted too")
-	_check(_paths_cleared == 2, "both paths were cleared")
+	_check(Progress.data.floors_cleared == 2, "clearing the second first-floor path is counted too")
+	_check(Progress.data.clears_at(2) == 2, "clearing the second second-floor path is counted too")
+	_check(_paths_cleared == 4, "all four paths were cleared, got %d" % _paths_cleared)
+	_check(_landings_reached == 2, "both runs took the stairwell to the landing")
 	ids = get_tree().current_scene.open_merchant_ids()
-	_check(not ids.has("potion_merchant") and not ids.has("bomb_merchant"), "first-floor clears of any path open no merchant")
+	_check(ids.has("potion_merchant") and ids.has("bomb_merchant"), "clearing both second-floor paths for real brings the bomb merchant")
 
 	Progress.add_pension(60)
 	var reached: int = Progress.retirement_deposit(60)
@@ -123,21 +130,13 @@ func _run() -> void:
 	_check(Progress.data.level_of(upgrade.id) == 1, "upgrade survives a reload")
 
 	if not _failed:
-		print("SMOKE PASS paths cleared: %d, rooms of sizes %s, big room view checked: %s, block memory checked: %s, props checked: %s, fight checked: %s, graveyard checked: %s, vault opened: %s, potions checked: %s, fuel checked: %s, pickups off solids: %d" % [_paths_cleared, str(_sizes_seen.keys()), str(_followed_a_big_room), str(_checked_block_memory), str(_checked_props), str(_checked_fight), str(_checked_graveyard), str(_opened_a_vault), str(_checked_potions), str(_checked_fuel), _pickups_off_solids])
+		print("SMOKE PASS paths cleared: %d, landings reached: %d, boss choices checked: %d, rooms of sizes %s, big room view checked: %s, block memory checked: %s, props checked: %s, fight checked: %s, graveyard checked: %s, vault opened: %s, potions checked: %s, fuel checked: %s, pickups off solids: %d" % [_paths_cleared, _landings_reached, _boss_choices_checked, str(_sizes_seen.keys()), str(_followed_a_big_room), str(_checked_block_memory), str(_checked_props), str(_checked_fight), str(_checked_graveyard), str(_opened_a_vault), str(_checked_potions), str(_checked_fuel), _pickups_off_solids])
 		get_tree().quit(0)
 
 
-# Explores every room through its real door, secret room included, and leaves the boss for last.
-func _clear_whole_floor(path_index: int) -> void:
-	# Each floor checks all of this for itself, whatever the last one saw.
-	_boss_rooms_seen = 0
-	_cleared_rooms = {}
-	_saw_shop = false
-	_opened_a_vault = false
-	_checked_vault_room = false
-	_checked_stone_memory = false
-	_checked_block_memory = false
-	_followed_a_big_room = false
+# One run down both depths: a first-floor path, its boss's items, the stairwell and the landing, then
+# a path from the second Crossroads, whose boss ends the run.
+func _clear_two_floors(first_index: int, deep_index: int) -> void:
 	Game.begin_run()
 	await _wait(0.5)
 	_expect_scene("FloorScene")
@@ -148,9 +147,36 @@ func _clear_whole_floor(path_index: int) -> void:
 	if not _checked_potions:
 		await _check_potion_drinking(scene)
 	await _check_crossroads(scene)
-	await _walk_a_path(scene, path_index)
+	await _walk_a_path(scene, first_index)
+	await _clear_whole_floor(scene, first_index)
+	if _failed:
+		return
+	_check(not scene.is_over, "a first-floor boss no longer ends the run")
+	await _take_the_stairwell(scene)
+	if _failed:
+		return
+	await _check_crossroads(scene)
+	await _walk_a_path(scene, deep_index)
+	await _clear_whole_floor(scene, deep_index)
+	await _wait(0.1)
+	_check(scene.is_over, "a second-floor boss ends the run")
+
+
+# Explores every room through its real door, secret room included, and leaves the boss for last.
+func _clear_whole_floor(scene: Node, path_index: int) -> void:
+	# Each floor checks all of this for itself, whatever the last one saw.
+	_boss_rooms_seen = 0
+	_cleared_rooms = {}
+	_saw_shop = false
+	_opened_a_vault = false
+	_checked_vault_room = false
+	_checked_stone_memory = false
+	_checked_block_memory = false
+	_followed_a_big_room = false
 	var map: FloorMap = scene.debug_map()
-	if path_index == CEMETERY_PATH and not _checked_graveyard:
+	var depth: int = scene.debug_depth()
+	var choices_before := _boss_choices_checked
+	if depth == 1 and path_index == CEMETERY_PATH and not _checked_graveyard:
 		await _check_graveyard_fights(scene)
 	var walked_back := false
 	var guard := 0
@@ -179,6 +205,8 @@ func _clear_whole_floor(path_index: int) -> void:
 		var next: int = map.next_step(at, _next_goal(scene, map))
 		await _walk_through_door(scene, next)
 	_check(scene.is_cleared, "floor can be cleared")
+	_check(scene.debug_depth() == depth, "nothing took him down before the floor was done")
+	_check(_boss_choices_checked == choices_before + 1, "the floor boss's item choice was checked")
 	_check(walked_back, "the check walked back through a door")
 	_check(_saw_shop, "the shop was checked")
 	_check(_boss_rooms_seen >= 2, "both bosses showed a boss bar")
@@ -447,17 +475,30 @@ func _clear_room(scene: Node) -> void:
 	if boss_here:
 		_boss_rooms_seen += 1
 		_check(hud.is_boss_bar_visible(), "boss bar is visible during a boss fight")
+	var view: RoomView = scene.debug_room_view()
+	var map: FloorMap = scene.debug_map()
+	var is_floor_boss_room: bool = map.room(room_id).room_type == RoomLayout.TYPE_FLOOR_BOSS
+	var pool_before := _offerable_items(scene.player.run)
+	_boss_choice_count = -1
+	if is_floor_boss_room:
+		view.boss_choice_dropped.connect(_on_boss_choice_dropped)
 	for enemy in get_tree().get_nodes_in_group("enemies"):
 		enemy.take_damage(INF, Vector2.ZERO)
 	await _wait(0.1)
 	if boss_here:
 		_check(not hud.is_boss_bar_visible(), "boss bar is hidden after the boss falls")
+	if is_floor_boss_room:
+		await _check_boss_choice(scene, view, pool_before)
 	_check_pickups_off_solids(scene, room_id)
+	var stairs: Door = view.stairwell()
 	for pickup in get_tree().get_nodes_in_group("pickups"):
 		# Walking onto a pickup near a door can leave the room, and then the rest are out of reach.
-		if scene.is_over or scene.debug_current_id() != room_id:
+		if scene.is_over or scene.debug_current_id() != room_id or scene.debug_map() != map:
 			return
 		if not is_instance_valid(pickup) or not pickup.is_inside_tree():
+			continue
+		# The stairwell is taken on purpose later, never by walking onto a coin beside it.
+		if stairs != null and pickup.global_position.distance_to(stairs.global_position) < Door.ENTER_RADIUS * 3.0:
 			continue
 		if pickup.requires_interact:
 			# Buying could spend the Pension this check expects to see earned.
@@ -1083,13 +1124,16 @@ func _check_thermos_fuel(scene: Node) -> void:
 
 func _check_crossroads(scene: Node) -> void:
 	var view: CrossroadsView = scene.debug_room_view()
-	var cleared: int = Progress.data.floors_cleared
+	var depth: int = scene.debug_depth()
+	var cleared: int = Progress.data.clears_at(depth)
+	var home: FloorDef = scene.debug_floor_def()
+	var home_name := "The Crossroads" if depth == 1 else "Floor 2"
 	var map: FloorMap = scene.debug_map()
 	var here: FloorRoom = map.room(scene.debug_current_id())
-	_check(here.room_type == RoomLayout.TYPE_CROSSROADS, "every run starts in the Crossroads")
+	_check(here.room_type == RoomLayout.TYPE_CROSSROADS, "each depth's paths start from a Crossroads")
 	_check(get_tree().get_nodes_in_group("enemies").is_empty(), "nothing waits to fight in the Crossroads")
-	_check(scene.debug_mini_map().floor_name() == "The Crossroads", "the mini map names the Crossroads")
-	_check(scene.debug_big_map().floor_name() == "The Crossroads", "the big map names the Crossroads")
+	_check(scene.debug_mini_map().floor_name() == home_name, "the mini map names the Crossroads' floor, depth %d" % depth)
+	_check(scene.debug_big_map().floor_name() == home_name, "the big map names the Crossroads' floor, depth %d" % depth)
 	_check(scene.debug_progress().is_visited(here.id), "the Crossroads shows on the map")
 	var south := RoomBackdrop.cell_center(here.layout.door_cell(RoomLayout.SOUTH))
 	_put_feet(scene, south)
@@ -1109,18 +1153,18 @@ func _check_crossroads(scene: Node) -> void:
 	if should_be_closed:
 		_stand_on(scene, cemetery_door)
 		await _wait(0.3)
-		_check(scene.debug_current_id() == here.id and scene.debug_floor_def().id == "crossroads", "walking into the closed path does nothing")
+		_check(scene.debug_current_id() == here.id and scene.debug_floor_def() == home, "walking into the closed path does nothing")
 		_check(scene.debug_map() == map, "and builds no floor")
 		# Asking the scene outright is refused too, so the rule lives in more than the door.
 		scene.debug_choose_path(CEMETERY_PATH)
 		await get_tree().process_frame
-		_check(scene.debug_floor_def().id == "crossroads", "a closed path cannot be chosen at all")
+		_check(scene.debug_floor_def() == home, "a closed path cannot be chosen at all")
 	# A door he arrives standing on waits until he has stepped away.
 	var records_door: Door = view.door_to(RECORDS_PATH)
 	_stand_on(scene, records_door)
 	view.refresh_doors()
 	await _wait(0.15)
-	_check(scene.debug_floor_def().id == "crossroads", "a door he stands on waits until he steps away")
+	_check(scene.debug_floor_def() == home, "a door he stands on waits until he steps away")
 	_put_feet(scene, south)
 	await _wait(0.05)
 
@@ -1135,7 +1179,7 @@ func _walk_a_path(scene: Node, index: int) -> void:
 	_stand_on(scene, door)
 	await _wait(0.15)
 	var def: FloorDef = scene.debug_floor_def()
-	var wanted: FloorDef = load(scene.PATH_FLOORS[index])
+	var wanted: FloorDef = load(scene.PATHS_BY_DEPTH[scene.debug_depth()][index])
 	_check(def == wanted, "walking out by a door enters its floor, got %s" % def.id)
 	var map: FloorMap = scene.debug_map()
 	_check(scene.debug_current_id() == map.start_id, "a path leads to the start room of its floor")
@@ -1394,3 +1438,91 @@ func _check_undertaker(scene: Node, health: Health) -> void:
 	await _wait(0.5)
 	_check(health.pills == pills_now, "a strike comes to nothing once its boss has fallen")
 	_check(_strikes_in(view).is_empty(), "and leaves no mark behind")
+
+
+# --- The second floor: the boss's items, the stairwell, the landing ---
+
+func _offerable_items(run: RunState) -> int:
+	var count := 0
+	for item in Content.items():
+		if run.can_offer(item) and not run.has_item(item.id) and not run.is_promised(item.id):
+			count += 1
+	return count
+
+
+func _on_boss_choice_dropped(count: int) -> void:
+	_boss_choice_count = count
+
+
+func _choice_pickups(view: RoomView) -> Array:
+	var found := []
+	for cell in view._choice_cells:
+		for child in view.get_children():
+			if child is Pickup and not child.is_queued_for_deletion() and child.global_position.distance_to(view.to_global(RoomBackdrop.cell_center(cell))) < 1.0:
+				found.append(child)
+	return found
+
+
+# Two free items lie where the floor boss fell, fewer only when the run's pool has run that low.
+# Taking one clears the other away.
+func _check_boss_choice(scene: Node, view: RoomView, pool_before: int) -> void:
+	var expected := mini(RoomView.BOSS_CHOICE_COUNT, pool_before)
+	_check(_boss_choice_count == expected, "a floor boss lays out %d items to choose from, got %d (pool %d)" % [expected, _boss_choice_count, pool_before])
+	var choices := _choice_pickups(view)
+	_check(choices.size() == _boss_choice_count, "each offered item lies in the room, found %d" % choices.size())
+	_boss_choices_checked += 1
+	if choices.size() < 2:
+		return
+	var run: RunState = scene.player.run
+	var items_before := run.items.size()
+	choices[0].collect()
+	await _wait(0.05)
+	_check(run.items.size() == items_before + 1, "taking one of the boss's items adds it")
+	_check(_gone(choices[1]), "taking one of the boss's items clears the other away")
+
+
+func _take_the_stairwell(scene: Node) -> void:
+	var view: RoomView = scene.debug_room_view()
+	var stairs: Door = view.stairwell()
+	_check(stairs != null, "a fallen first-floor boss opens a stairwell")
+	if stairs == null:
+		return
+	for cell in view._choice_cells:
+		_check(stairs.position.distance_to(RoomBackdrop.cell_center(cell)) >= RoomBackdrop.TILE * RoomLayout.PICKUP_SPACING, "the stairwell keeps clear of the boss's items")
+	var run: RunState = scene.player.run
+	var health: Health = run.health
+	# He comes down hurt, so the landing's heal shows.
+	health.pills = maxi(1, health.max_pills - 3)
+	var pills_before := health.pills
+	var missing := health.max_pills - pills_before
+	var items_before := run.items.size()
+	var keys_before := run.keys
+	var layout: RoomLayout = scene.debug_map().room(scene.debug_current_id()).layout
+	var stair_cell := Vector2i(floori(stairs.position.x / RoomBackdrop.TILE), floori(stairs.position.y / RoomBackdrop.TILE))
+	var wanted: Array[Vector2i] = [stair_cell + Vector2i(0, 3)]
+	var taken: Array[Vector2i] = [stair_cell]
+	var away := layout.open_spots_near(wanted, taken)
+	_put_feet(scene, RoomBackdrop.cell_center(away[0]) if not away.is_empty() else stairs.global_position + Vector2(0, 80))
+	await _wait(0.1)
+	_check(scene.debug_depth() == 1, "the stairwell waits until he walks onto it")
+	_stand_on(scene, stairs)
+	await _wait(0.2)
+	_check(scene.debug_depth() == 2, "walking onto the stairwell takes him down a floor")
+	var map: FloorMap = scene.debug_map()
+	var landing: FloorRoom = map.room(scene.debug_current_id())
+	_check(landing.room_type == RoomLayout.TYPE_LANDING, "the stairwell leads to the landing")
+	_check(scene.debug_floor_def().display_name == "Floor 2", "the landing is Floor 2")
+	_check(scene.debug_mini_map().floor_name() == "Floor 2" and scene.debug_big_map().floor_name() == "Floor 2", "both maps name Floor 2")
+	_check(get_tree().get_nodes_in_group("enemies").is_empty(), "nothing waits to fight on the landing")
+	_check(health.pills == pills_before + mini(scene.LANDING_HEAL, missing), "the landing heals him, %d to %d" % [pills_before, health.pills])
+	_check(run.items.size() == items_before and run.keys == keys_before, "his items and Slips come down with him")
+	_check(not run.mini_boss_down, "the mini boss of the floor above is left behind")
+	_check(not scene.is_cleared, "the new floor is not cleared yet")
+	_landings_reached += 1
+	await _wait(0.2)
+	_check(scene.debug_current_id() == landing.id, "arriving on the landing does not walk him onward")
+	_check(landing.doors.size() == 1, "the landing has one way on")
+	if landing.doors.is_empty():
+		return
+	await _walk_through_door(scene, landing.doors.values()[0])
+	_check(map.room(scene.debug_current_id()).room_type == RoomLayout.TYPE_CROSSROADS, "the landing leads to the second Crossroads")
