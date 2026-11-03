@@ -32,3 +32,11 @@ static func cutoff_points(player: Vector2, moving: Vector2, boss: Vector2, count
 
 static func can_summon(alive: int, cap: int) -> bool:
 	return alive < cap
+
+
+# Spread evenly over a total angle, with the middle one aimed down the lane that was shown.
+static func fan_directions(aim: Vector2, count: int, spread: float) -> Array[Vector2]:
+	var directions: Array[Vector2] = []
+	for i in count:
+		directions.append(aim.rotated(spread * (i / float(count - 1) - 0.5)) if count > 1 else aim)
+	return directions
