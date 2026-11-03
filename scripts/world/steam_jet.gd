@@ -77,7 +77,8 @@ func _process(delta: float) -> void:
 	if _blow_left <= 0.0:
 		queue_free()
 		return
-	if _has_hit or not is_instance_valid(_source) or not is_instance_valid(_source.target):
+	# A damage of 0 is only air moving, as a gust of the bellows.
+	if _has_hit or _damage == 0 or not is_instance_valid(_source) or not is_instance_valid(_source.target):
 		return
 	if hits(_source.target_ground()):
 		_has_hit = true

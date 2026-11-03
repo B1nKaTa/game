@@ -47,6 +47,9 @@ var _dodge_direction := Vector2.RIGHT
 var _active_swing: SwingAttack
 var _visual: SpriteVisual
 var _feet: Marker2D
+# A gust that shoves him along for a while, as the bellows do. A dodge breaks free of it.
+var _push := Vector2.ZERO
+var _push_left := 0.0
 
 
 static func arrival_position(cell: Vector2i) -> Vector2:
@@ -106,6 +109,15 @@ func slow(fraction: float, seconds: float) -> void:
 	queue_redraw()
 
 
+func push(shove: Vector2, seconds: float) -> void:
+	_push = shove
+	_push_left = seconds
+
+
+func is_pushed() -> bool:
+	return _push_left > 0.0
+
+
 func slow_factor() -> float:
 	return _slow.speed_factor()
 
@@ -119,6 +131,7 @@ func _physics_process(delta: float) -> void:
 	_charge.tick(delta)
 	_dodge.tick(delta)
 	_slow.tick(delta)
+	_push_left = maxf(_push_left - delta, 0.0)
 	run.health.tick(delta)
 	run.tick_buff(delta)
 	_advance_swing(delta)
@@ -276,7 +289,8 @@ func _handle_movement() -> void:
 		_dodge_direction = input.normalized() if input != Vector2.ZERO else _aim
 	on_wet = _feet != null and WetFloor.is_wet_at(get_tree() if is_inside_tree() else null, _feet.global_position)
 	if _dodge.is_active():
-		# A dodge goes where it is aimed, wet floor or not.
+		# A dodge goes where it is aimed, wet floor or not, and breaks free of any gust.
+		_push_left = 0.0
 		velocity = _dodge_direction * DODGE_SPEED
 	else:
 		var speed := run.move_speed() * _slow.speed_factor()
@@ -286,6 +300,8 @@ func _handle_movement() -> void:
 		velocity = SlideRule.velocity(velocity.limit_length(speed), input * speed, on_wet, get_physics_process_delta_time())
 		if not _visual.is_playing_once():
 			_visual.play("walk" if input != Vector2.ZERO else "idle")
+	if _push_left > 0.0:
+		velocity += _push
 	move_and_slide()
 
 

@@ -64,6 +64,9 @@ var _warning_whole := false
 var _lane_direction := Vector2.RIGHT
 var _lane_length := 0.0
 var _lane_width := 0.0
+var _cone_direction := Vector2.RIGHT
+var _cone_length := 0.0
+var _cone_angle := 0.0
 var _visual: SpriteVisual
 var _marks: EnemyMarks
 var _show_bar := false
@@ -363,6 +366,26 @@ func _warning_share() -> float:
 func clear_warning() -> void:
 	_warning = null
 	_lane_length = 0.0
+	_cone_length = 0.0
+
+
+# Adds a cone to the warning, for a breath that fans out from the body. Angle is the whole width.
+func set_warning_cone(direction: Vector2, length: float, angle_deg: float) -> void:
+	_cone_direction = direction
+	_cone_length = length
+	_cone_angle = deg_to_rad(angle_deg)
+
+
+func warning_cone_length() -> float:
+	return _cone_length
+
+
+func warning_cone_direction() -> Vector2:
+	return _cone_direction
+
+
+func warning_cone_angle() -> float:
+	return rad_to_deg(_cone_angle)
 
 
 # Adds a lane to the warning, for attacks that travel in a line. It ends at the first wall or
@@ -517,6 +540,18 @@ func _draw_warning(layer: Node2D) -> void:
 			layer.draw_rect(lane, Color(WARNING_COLOR, 0.15 + 0.3 * progress))
 			layer.draw_rect(outline, WARNING_COLOR, false, 2.0)
 			layer.draw_set_transform(Vector2.ZERO)
+		if _cone_length > 0.0:
+			var base := _cone_direction.angle() - _cone_angle / 2.0
+			var fill := PackedVector2Array([Vector2.ZERO])
+			var outline := PackedVector2Array([Vector2.ZERO])
+			for i in 13:
+				var edge := Vector2.from_angle(base + _cone_angle * i / 12.0)
+				fill.append(edge * _cone_length * progress)
+				outline.append(edge * _cone_length)
+			outline.append(Vector2.ZERO)
+			if progress > 0.0:
+				layer.draw_colored_polygon(fill, Color(WARNING_COLOR, 0.2 + 0.3 * progress))
+			layer.draw_polyline(outline, WARNING_COLOR, 2.0)
 	if def == null:
 		return
 	var top := -def.body_size.y / 2.0
