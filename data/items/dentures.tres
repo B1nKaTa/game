@@ -6,5 +6,6 @@
 script = ExtResource("1")
 id = "dentures"
 display_name = "Extra Strong Dentures"
-description = "More cane damage. Don't ask how."
-damage_bonus = 0.25
+description = "Thrown dentures bite 50% harder and through up to 2 enemies. Don't ask how."
+bite_damage_bonus = 0.5
+bites_through = 2

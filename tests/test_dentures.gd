@@ -230,11 +230,49 @@ func test_adhesive_levels_raise_bite_range_and_return() -> void:
 		assert_near(stats.damage_mult, 1.0, "the cane is untouched at level %d" % level)
 
 
+func test_extra_strong_dentures_bite_harder_and_through_two() -> void:
+	var item := _shipped_item("dentures")
+	assert_true(item != null, "Extra Strong Dentures ship")
+	if item == null:
+		return
+	var items: Array[ItemDef] = [item]
+	var stats := PlayerStats.compute(_no_upgrades(), {}, items)
+	assert_near(stats.bite_damage_mult, 1.5)
+	assert_eq(stats.bites_per_throw, 2)
+	assert_near(stats.damage_mult, 1.0, "the cane gets nothing from them any more")
+	assert_true(item.description.contains("2 enemies"))
+
+
+func test_the_item_and_adhesive_add_up() -> void:
+	var adhesive := _shipped_upgrade("denture_adhesive")
+	var item := _shipped_item("dentures")
+	if adhesive == null or item == null:
+		assert_true(false, "both ship")
+		return
+	var upgrades: Array[UpgradeDef] = [adhesive]
+	var items: Array[ItemDef] = [item]
+	var stats := PlayerStats.compute(upgrades, {adhesive.id: 3}, items)
+	assert_near(stats.bite_damage_mult, 1.95)
+	assert_near(stats.bite_range, 290.0)
+	assert_eq(stats.bites_per_throw, 2)
+
+
 func test_one_bite_ends_a_flight_and_the_item_allows_a_second() -> void:
 	assert_false(ThrownDentures.keeps_flying(1, 1))
 	assert_true(ThrownDentures.keeps_flying(1, 2), "on through the first enemy")
 	assert_false(ThrownDentures.keeps_flying(2, 2), "and stopped by the second")
 	assert_false(ThrownDentures.keeps_flying(1, 0), "never fewer than one bite")
+
+
+func test_fury_covers_the_teeth_and_the_cane() -> void:
+	var run := RunState.new(_no_upgrades(), {})
+	run.give_potion(Content.potion("fury_liniment"))
+	run.drink_potion()
+	assert_near(run.damage_mult(), 1.5)
+	assert_near(run.bite_damage_mult(), 1.5)
+	run.tick_buff(16.0)
+	assert_near(run.bite_damage_mult(), 1.0)
+	assert_true(Content.potion("fury_liniment").description.contains("dentures"))
 
 
 func test_an_old_save_without_adhesive_loads_at_level_zero() -> void:
