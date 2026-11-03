@@ -15,7 +15,7 @@ Work happens on the `next-build` branch while the `first-floor` copy stays untou
 | 6 | Special items with mana | Design talk first |
 | 7 | Art for enemies and the room | Spends generations, so only with approval |
 | 7b | Living floor stages 1 to 5, see the living floor design | Stages 1 to 5 built (stage 4: potions, merchants by floors cleared, Thermos fuel, reinforced stones, vaults; stage 5: the Crossroads and the Unkempt Cemetery) |
-| 8 | Second floor, reached from both first floors | After the first floors feel right. It slots in at `_continue_after_floor` in the floor scene |
+| 8 | Second floor, reached from both first floors | Step 1 (the connection) and step 2 (Sunset Shores) built on `second-floor`. The Furnace Works waits until Sunset Shores is played |
 
 ## Round 1: Secret rooms
 
@@ -77,3 +77,16 @@ Built and checked by tests, the full-loop check and screenshots, not yet played:
 - The next floor slots in at `_continue_after_floor` in the floor scene.
 
 To play and judge together: whether the signs get noticed, whether two skulls read as a warning, how a Plot Holder's mound and warning read in a crowd, whether rows, furrows and open graves feel fair at speed, whether both new bosses feel equal to the first floor's, whether the rows of graves in layouts get in the way, and every placeholder drawing.
+
+## Second floor step 2 status
+
+Built on the `second-floor` branch and checked by tests, the full-loop check and screenshots, not yet played:
+
+- Sunset Shores Eternal Care is its own `FloorDef` with `data/rooms/sunset_shores/` (33 layouts made from the Cemetery's shapes, turned over and refurnished), a warm pastel palette with `floor_pattern = 1` for woven carpet, `health_mult` 1.4, `pension_mult` 1.5 and rooms of 5, 7 and 12 enemies.
+- New layout symbols: `W` wet floor (kept two cells from doors, with a sign beside each patch), `J` wheelchair and `F` food trolley (like barrels), `K` armchair and `D` bed (like rocks), `f` flower vase (like grass).
+- New rules: `SlowEffect` (strongest slow wins, never under 40% speed), `SlideRule` (wet floors ease toward the wanted speed at 4 per second), darts on `Projectile`, `Enemy.daze`, `Enemy.say` and a behavior's `damage_scale`.
+- Enemy warnings, shots, ground marks and summon marks now draw on a layer above the room, so Lights Out and any later overlay can never hide them.
+- Enemies: Orderly, Med-Cart Nurse, Bingo Caller, and the Seasonal Temp and Claims Denial Officer in the floor's colors. Bosses: Barbara, Activities Coordinator, and Matron Mercy, Head of Comfort Care, with Lights Out as a `LightsOut` node.
+- The full-loop check now runs the care home's fights on its first clear of Sunset Shores.
+
+To play and judge together: the list at the end of the Sunset Shores entry in `docs/playtest-notes.md`. The Furnace Works (step 3) waits until then.
