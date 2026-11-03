@@ -43,6 +43,10 @@ extends Resource
 @export var vault_count: int = 1
 # The Thermos upgrade level that breaks this floor's reinforced stones. A later floor can ask for less.
 @export var vault_stone_level: int = 3
+@export_group("Chests")
+# How often a layout's C cell becomes each kind of chest, as weights by ChestRules kind. The rare
+# kinds get likelier deeper down, and a first floor never rolls a mimic whatever this says.
+@export var chest_weights: Dictionary = {"lunchbox": 50, "locked": 30, "safe": 12, "urn": 8, "mimic": 0}
 @export_group("Difficulty")
 # Every enemy spawned on this floor, bosses included, starts with its EnemyDef's max_hp times this.
 # A boss made for one floor holds its final health divided by that floor's health_mult in its .tres.
@@ -64,6 +68,10 @@ func is_open_for(data: ProgressData) -> bool:
 # What is wrong with a layout's enemy cells for this floor's room sizes. Only combat rooms are counted.
 func room_size_errors(layout: RoomLayout) -> PackedStringArray:
 	return layout.enemy_count_errors(enemies_by_size)
+
+
+func chest_odds() -> Dictionary:
+	return ChestRules.odds_for_depth(chest_weights, depth)
 
 
 func room_palette() -> RoomPalette:

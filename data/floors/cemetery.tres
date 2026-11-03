@@ -72,3 +72,10 @@ palette = SubResource("palette")
 clears_to_open = 1
 danger = 2
 closed_hint = "Beat a floor boss first"
+chest_weights = {
+"locked": 30,
+"lunchbox": 50,
+"mimic": 0,
+"safe": 12,
+"urn": 8
+}

@@ -69,3 +69,10 @@ enemies_by_size = {
 "medium": 7,
 "small": 5
 }
+chest_weights = {
+"locked": 26,
+"lunchbox": 40,
+"mimic": 8,
+"safe": 16,
+"urn": 10
+}

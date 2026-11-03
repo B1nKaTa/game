@@ -24,3 +24,10 @@ floor_boss = ExtResource("6")
 clear_pension = 1
 treasure_pension = 8
 prop_pension = 1
+chest_weights = {
+"locked": 30,
+"lunchbox": 50,
+"mimic": 0,
+"safe": 12,
+"urn": 8
+}
