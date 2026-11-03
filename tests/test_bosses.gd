@@ -83,19 +83,32 @@ func test_every_floor_boss_windup_stays_readable_in_both_phases() -> void:
 			assert_true(FloorBossBehavior.windup_for(attack, phase_two) * PlayerStats.BASE_WARNING >= 0.2, str(attack))
 
 
-func test_a_boss_only_starts_an_attack_the_player_can_see() -> void:
-	assert_true(BossMoves.in_view(Vector2.ZERO))
-	assert_true(BossMoves.in_view(Vector2(250, 120)))
-	assert_true(BossMoves.in_view(Vector2(-250, -120)))
-	assert_false(BossMoves.in_view(Vector2(330, 0)), "past the side of the view")
-	assert_false(BossMoves.in_view(Vector2(0, 200)), "past the bottom of the view")
+# The Regional Reaper's body, centered on a point.
+func _reaper_at(center: Vector2) -> Rect2:
+	return Rect2(center - Vector2(20, 24), Vector2(40, 48))
 
 
-func test_in_view_fits_inside_the_screen_even_with_the_boss_body() -> void:
-	var half := RoomBackdrop.VIEW_SIZE / 2.0
-	var edge := Vector2(half.x - BossMoves.VIEW_MARGIN.x, half.y - BossMoves.VIEW_MARGIN.y)
-	assert_true(BossMoves.in_view(edge))
-	assert_true(edge.x + 20.0 < half.x and edge.y + 24.0 < half.y, "the Regional Reaper's body still fits")
+func test_in_a_room_the_screen_holds_whole_the_camera_does_not_follow_grandpa() -> void:
+	var room := Vector2(20, 11) * RoomBackdrop.TILE
+	assert_true(BossMoves.in_view(_reaper_at(Vector2(320, 280)), room, Vector2(320, 100)), "180 px below him and on screen")
+	assert_true(BossMoves.in_view(_reaper_at(Vector2(560, 290)), room, Vector2(48, 48)), "he stands in a corner, the boss across the room")
+	assert_false(BossMoves.in_view(_reaper_at(Vector2(625, 176)), room, Vector2(320, 176)), "part of its body is past the side")
+
+
+func test_in_a_big_room_the_view_follows_grandpa() -> void:
+	var room := Vector2(30, 17) * RoomBackdrop.TILE
+	var feet := Vector2(64, 64)
+	assert_true(BossMoves.in_view(_reaper_at(Vector2(600, 300)), room, feet))
+	assert_false(BossMoves.in_view(_reaper_at(Vector2(800, 450)), room, feet), "off the screen")
+	assert_false(BossMoves.in_view(_reaper_at(Vector2(620, 180)), room, feet), "half off the screen")
+
+
+func test_at_a_big_room_s_edge_the_view_stops_and_shows_more_of_the_room() -> void:
+	var room := Vector2(30, 17) * RoomBackdrop.TILE
+	var feet := Vector2(900, 500)
+	assert_true(BossMoves.in_view(_reaper_at(Vector2(360, 300)), room, feet), "540 px away, yet the camera stopped at the wall")
+	assert_false(BossMoves.in_view(_reaper_at(Vector2(340, 300)), room, feet), "its body crosses the view's edge")
+	assert_true(BossMoves.view_rect(room, feet).end.is_equal_approx(room), "the view ends at the room's corner")
 
 
 func test_a_ring_points_all_the_way_around() -> void:

@@ -68,7 +68,7 @@ func tick(enemy: Enemy, delta: float) -> void:
 	if distance < KEEP_AWAY:
 		enemy.desired_velocity = -enemy.direction_to_target() * enemy.def.speed
 	elif distance > TOO_FAR:
-		enemy.desired_velocity = enemy.direction_to_target() * enemy.def.speed
+		enemy.desired_velocity = enemy.chase_direction() * enemy.def.speed
 	if _wait <= 0.0 and enemy.target_in_view():
 		_telegraph.start(CALL_WINDUP)
 		enemy.set_warning(_telegraph, WARNING_RADIUS, true)

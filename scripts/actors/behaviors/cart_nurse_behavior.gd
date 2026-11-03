@@ -66,7 +66,7 @@ func _wanted(enemy: Enemy, delta: float) -> Vector2:
 		enemy.set_warning(_telegraph, WARNING_RADIUS)
 		enemy.set_warning_lane(_direction, CHARGE_TIME * CHARGE_SPEED, LANE_WIDTH)
 		return Vector2.ZERO
-	return enemy.direction_to_target() * enemy.def.speed
+	return enemy.chase_direction() * enemy.def.speed
 
 
 func _charging(enemy: Enemy, delta: float) -> Vector2:

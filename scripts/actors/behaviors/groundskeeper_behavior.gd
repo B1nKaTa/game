@@ -69,8 +69,8 @@ func tick(enemy: Enemy, delta: float) -> void:
 	_cooldown -= delta
 	var offset := enemy.target.global_position - enemy.global_position
 	# Far off in a big room it walks over, and starts nothing he cannot see.
-	if not BossMoves.in_view(offset):
-		enemy.desired_velocity = offset.normalized() * enemy.def.speed * BossMoves.CATCH_UP_SPEED
+	if not enemy.target_in_view():
+		enemy.desired_velocity = enemy.chase_direction() * enemy.def.speed * BossMoves.CATCH_UP_SPEED
 		return
 	if _summon_timer <= 0.0:
 		_summon_timer = SUMMON_EVERY
@@ -81,7 +81,7 @@ func tick(enemy: Enemy, delta: float) -> void:
 		_begin(enemy, choose_attack(near, _last, randf()))
 		return
 	if not near:
-		enemy.desired_velocity = offset.normalized() * enemy.def.speed
+		enemy.desired_velocity = enemy.chase_direction() * enemy.def.speed
 
 
 func _begin(enemy: Enemy, attack: int) -> void:

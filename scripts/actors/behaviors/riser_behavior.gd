@@ -35,7 +35,7 @@ func tick(enemy: Enemy, delta: float) -> void:
 		State.TUNNEL:
 			if not enemy.submerged:
 				enemy.set_submerged(true)
-			enemy.desired_velocity = enemy.direction_to_target() * enemy.def.speed * TUNNEL_SPEED_SCALE
+			enemy.desired_velocity = enemy.chase_direction() * enemy.def.speed * TUNNEL_SPEED_SCALE
 			_left -= delta
 			if _left <= 0.0:
 				_begin_rising(enemy)
@@ -49,7 +49,7 @@ func tick(enemy: Enemy, delta: float) -> void:
 				_state = next_state(_state)
 				_left = UP_TIME
 		State.UP:
-			enemy.desired_velocity = enemy.direction_to_target() * enemy.def.speed
+			enemy.desired_velocity = enemy.chase_direction() * enemy.def.speed
 			_left -= delta
 			if _left <= 0.0:
 				_state = next_state(_state)

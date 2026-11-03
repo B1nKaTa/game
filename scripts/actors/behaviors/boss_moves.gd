@@ -1,16 +1,22 @@
 class_name BossMoves
 extends RefCounted
 
-# A boss starts an attack only with its whole body inside the view around Grandpa. The camera
-# stops at the room's edges only by showing more of the room, so this holds there too.
-const VIEW_MARGIN := Vector2(36.0, 32.0)
+# A boss starts an attack only with its whole body inside what the camera really shows. The camera
+# sits on the room's middle when the room fits the view and stops at its edges otherwise, so the
+# view is worked out the way the floor places it, around Grandpa's feet. The margin keeps a body
+# pressed to the screen's edge out.
+const VIEW_MARGIN := Vector2(8.0, 8.0)
 const CATCH_UP_SPEED := 1.9
 const SUMMON_WARNING := 0.7
 
 
-static func in_view(offset: Vector2) -> bool:
-	var half := RoomBackdrop.VIEW_SIZE / 2.0 - VIEW_MARGIN
-	return absf(offset.x) <= half.x and absf(offset.y) <= half.y
+static func view_rect(room_size: Vector2, focus: Vector2) -> Rect2:
+	var center := RoomCamera.center_for(room_size, focus, RoomBackdrop.VIEW_SIZE)
+	return Rect2(center - RoomBackdrop.VIEW_SIZE / 2.0, RoomBackdrop.VIEW_SIZE)
+
+
+static func in_view(body: Rect2, room_size: Vector2, focus: Vector2) -> bool:
+	return view_rect(room_size, focus).grow_individual(-VIEW_MARGIN.x, -VIEW_MARGIN.y, -VIEW_MARGIN.x, -VIEW_MARGIN.y).encloses(body)
 
 
 static func ring_directions(count: int, start_angle: float) -> Array[Vector2]:

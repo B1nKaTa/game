@@ -21,7 +21,7 @@ static func blows_when_killed(lit: bool) -> bool:
 
 func tick(enemy: Enemy, delta: float) -> void:
 	if _lit:
-		enemy.desired_velocity = enemy.direction_to_target() * enemy.def.speed * FUSE_CRAWL
+		enemy.desired_velocity = enemy.chase_direction() * enemy.def.speed * FUSE_CRAWL
 		enemy.blink()
 		if _telegraph.tick(delta):
 			enemy.clear_warning()
@@ -29,7 +29,7 @@ func tick(enemy: Enemy, delta: float) -> void:
 			enemy.take_damage(INF, Vector2.ZERO)
 		return
 	_rushed += delta
-	enemy.desired_velocity = enemy.direction_to_target() * enemy.def.speed
+	enemy.desired_velocity = enemy.chase_direction() * enemy.def.speed
 	if enemy.distance_to_target() <= START_RANGE or _rushed >= RUSH_LIMIT:
 		_lit = true
 		_telegraph.start(FUSE)

@@ -31,6 +31,9 @@ const DAZE_COLOR := Color("ffe58a")
 const SAY_COLOR := Color("fff6d8")
 # Warnings draw above everything in the room, the dark of Lights Out included, so none is ever hidden.
 const WARNING_Z := 60
+# How often a walker looks again for its way to Grandpa, and how near a waypoint counts as reached.
+const ROUTE_EVERY := 0.3
+const WAYPOINT_REACH := 4.0
 
 var def: EnemyDef
 var hp: float = 0.0
@@ -48,6 +51,8 @@ var summon_spot: Callable
 var open_ground: Callable
 # Underground it is only a moving mound: nothing can hit it and it crosses anything. See set_submerged.
 var submerged := false
+# The room's walkable cells, shared by its enemies. Without one, an enemy walks straight at Grandpa.
+var walk_grid: WalkGrid
 var _warning_fraction := 0.5
 var _behavior: EnemyBehavior
 var _knockback := Vector2.ZERO
@@ -72,6 +77,9 @@ var _warning_layer: Node2D
 # The floor's difficulty, set once before the enemy enters the room.
 var _health_mult := 1.0
 var _pension_mult := 1.0
+var _route_left := 0.0
+var _routing := false
+var _waypoint := Vector2.ZERO
 
 
 func setup(enemy_def: EnemyDef, chase_target: Node2D, warning_fraction: float, show_health_bar := false) -> void:
@@ -224,6 +232,7 @@ func _physics_process(delta: float) -> void:
 	if _wake_left > 0.0:
 		_wake_left -= delta
 		return
+	_route_left -= delta
 	desired_velocity = Vector2.ZERO
 	_behavior.tick(self, delta)
 	velocity = desired_velocity + _knockback
@@ -398,7 +407,32 @@ func enemies_alive() -> int:
 
 
 func target_in_view() -> bool:
-	return BossMoves.in_view(target.global_position - global_position)
+	return BossMoves.in_view(body_rect(), Vector2(room_cells) * RoomBackdrop.TILE, target_ground())
+
+
+# Which way to walk toward Grandpa: straight while nothing stands between, otherwise around
+# the walls and props cell by cell. Ghosts and anything underground always go straight.
+func chase_direction() -> Vector2:
+	if walk_grid == null or def.ignores_walls or submerged:
+		return direction_to_target()
+	if _route_left <= 0.0 or (_routing and global_position.distance_to(_waypoint) <= WAYPOINT_REACH):
+		_route_left = ROUTE_EVERY
+		_plan_route()
+	return global_position.direction_to(_waypoint) if _routing else direction_to_target()
+
+
+func _plan_route() -> void:
+	var goal := target_ground()
+	# The narrower half of its collision box. Sliding takes care of a pixel or two of scraping.
+	var half_width := minf(def.body_size.x, def.body_size.y) * 0.4 - 1.0
+	_routing = false
+	if walk_grid.line_is_clear(global_position, goal, half_width):
+		return
+	var next := walk_grid.next_cell(WalkGrid.cell_of(global_position), WalkGrid.cell_of(goal))
+	if next == WalkGrid.NO_CELL or next == WalkGrid.cell_of(goal):
+		return
+	_routing = true
+	_waypoint = RoomBackdrop.cell_center(next)
 
 
 func target_motion() -> Vector2:

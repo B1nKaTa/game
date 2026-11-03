@@ -54,6 +54,8 @@ var _doors: Array[Door] = []
 var _coins: Array[Pickup] = []
 var _last_death_at := Vector2.ZERO
 var _broken_cells := {}
+# Where enemies can walk. A broken prop opens its cell.
+var _walk_grid: WalkGrid
 var _spawned := 0
 # The cells a floor boss's item choice was laid on, so later things placed in the room keep clear.
 var _choice_cells: Array[Vector2i] = []
@@ -72,6 +74,7 @@ func setup(room: FloorRoom, map: FloorMap, floor_def: FloorDef, run: RunState, p
 
 
 func _ready() -> void:
+	_walk_grid = WalkGrid.from_layout(_room.layout)
 	var backdrop := RoomBackdrop.new()
 	var palette := _floor_def.room_palette()
 	backdrop.setup(_room.layout.rows, palette, _room.decor_seed)
@@ -334,7 +337,7 @@ func _create_decor(palette: RoomPalette) -> void:
 
 
 func _on_block_broken(at: Vector2) -> void:
-	_broken_cells[_cell_of(at)] = true
+	_mark_broken(_cell_of(at))
 	var drop := RoomRules.block_drop(_rng.randf())
 	if drop == RoomRules.DROP_COIN:
 		_drop_coin(at, _floor_def.prop_pension)
@@ -343,13 +346,13 @@ func _on_block_broken(at: Vector2) -> void:
 
 
 func _on_rock_broken(at: Vector2, hides_coin: bool, cell: Vector2i) -> void:
-	_broken_cells[cell] = true
+	_mark_broken(cell)
 	if hides_coin:
 		_drop_coin(at, _floor_def.prop_pension)
 
 
 func _on_barrel_broken(at: Vector2, cell: Vector2i) -> void:
-	_broken_cells[cell] = true
+	_mark_broken(cell)
 	var drop := RoomRules.barrel_drop(_rng.randf())
 	if drop == RoomRules.DROP_COIN:
 		_drop_coin(at, _floor_def.prop_pension)
@@ -357,12 +360,18 @@ func _on_barrel_broken(at: Vector2, cell: Vector2i) -> void:
 		_drop_consumable(at, drop)
 
 
-func _on_vase_broken(_at: Vector2, cell: Vector2i) -> void:
+func _mark_broken(cell: Vector2i) -> void:
 	_broken_cells[cell] = true
+	if _walk_grid != null:
+		_walk_grid.open_cell(cell)
+
+
+func _on_vase_broken(_at: Vector2, cell: Vector2i) -> void:
+	_mark_broken(cell)
 
 
 func _on_pile_broken(at: Vector2, cell: Vector2i) -> void:
-	_broken_cells[cell] = true
+	_mark_broken(cell)
 	if RoomRules.pile_drops_coin(_rng.randf()):
 		_drop_coin(at, _floor_def.prop_pension)
 
@@ -396,6 +405,7 @@ func _spawn_enemy(def: EnemyDef, at: Vector2, summoned := false) -> Enemy:
 	enemy.apply_floor(_floor_def.health_mult, _floor_def.pension_mult)
 	enemy.is_summon = summoned
 	enemy.room_cells = _room.layout.size_in_cells()
+	enemy.walk_grid = _walk_grid
 	enemy.position = at
 	enemy.defeated.connect(_on_enemy_defeated)
 	enemy.summon_requested.connect(_spawn_summon)

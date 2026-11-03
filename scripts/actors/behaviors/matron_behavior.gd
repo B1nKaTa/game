@@ -127,8 +127,8 @@ func tick(enemy: Enemy, delta: float) -> void:
 	_cooldown -= delta
 	var offset := enemy.target.global_position - enemy.global_position
 	var speed := enemy.def.speed * (PHASE_TWO_SPEED if phase_two else 1.0)
-	if not BossMoves.in_view(offset):
-		enemy.desired_velocity = offset.normalized() * speed * BossMoves.CATCH_UP_SPEED
+	if not enemy.target_in_view():
+		enemy.desired_velocity = enemy.chase_direction() * speed * BossMoves.CATCH_UP_SPEED
 		return
 	var near := offset.length() <= NEAR
 	if _cooldown <= 0.0 or (_next != Attack.NONE and _cooldown <= cooldown_for(phase_two) * 0.5):
@@ -140,7 +140,7 @@ func tick(enemy: Enemy, delta: float) -> void:
 		_begin(enemy, attack, phase_two)
 		return
 	if not near:
-		enemy.desired_velocity = offset.normalized() * speed
+		enemy.desired_velocity = enemy.chase_direction() * speed
 
 
 func _visitors(enemy: Enemy) -> int:

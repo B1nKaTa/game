@@ -755,6 +755,9 @@ func _check_fight_room(scene: Node) -> void:
 	await _check_boss_moves(scene)
 	var floor_def: FloorDef = load("res://data/floors/floor_1.tres")
 	await _check_far_boss_waits(scene, floor_def.floor_boss)
+	await _check_boss_seen_from_a_corner(scene, floor_def.floor_boss)
+	await _check_walks_around_a_wall(scene, _enemy_def("intern_reaper"))
+	await _check_walks_around_a_wall(scene, floor_def.floor_boss)
 	await _check_thermos_fuel(scene)
 	await _dismiss_all()
 	scene.player.aim_source = Callable()
@@ -937,14 +940,47 @@ func _check_far_boss_waits(scene: Node, boss_def: EnemyDef) -> void:
 	while waited < 6.0:
 		await get_tree().physics_frame
 		waited += get_physics_process_delta_time()
-		var offset: Vector2 = scene.player.global_position - boss.global_position
-		if BossMoves.in_view(offset):
+		if boss.target_in_view():
 			came_near = true
 			break
 		if boss._warning != null:
 			started_far = true
 	_check(not started_far, "a far %s starts no attack from beyond the screen" % boss_def.id)
 	_check(came_near, "a far %s comes into view" % boss_def.id)
+	await _dismiss_all()
+
+
+# In a room the screen holds whole, a boss across it from Grandpa in a corner is on screen, so it attacks.
+func _check_boss_seen_from_a_corner(scene: Node, boss_def: EnemyDef) -> void:
+	var view := await _enter_made_room(scene, _fight_layout(20, 11, {}))
+	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(1, 1)))
+	var boss: Enemy = view._spawn_enemy(boss_def, RoomBackdrop.cell_center(Vector2i(17, 8)), true)
+	await get_tree().physics_frame
+	_check(boss.target_in_view(), "a %s across a whole-screen room counts as seen" % boss_def.id)
+	await _dismiss_all()
+
+
+# A wall straight between them is walked around through its gap, not pushed into.
+func _check_walks_around_a_wall(scene: Node, def: EnemyDef) -> void:
+	var wall := {}
+	for y in range(1, 8):
+		wall[Vector2i(10, y)] = "#"
+	var view := await _enter_made_room(scene, _fight_layout(20, 11, wall))
+	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(14, 3)))
+	var walker: Enemy = view._spawn_enemy(def, RoomBackdrop.cell_center(Vector2i(6, 3)), true)
+	var start_x := walker.global_position.x
+	var crossed := false
+	var waited := 0.0
+	# A boss stops to attack on the way, so it gets longer.
+	var limit := 16.0 if def.is_boss else 8.0
+	while waited < limit and is_instance_valid(walker):
+		await get_tree().physics_frame
+		waited += get_physics_process_delta_time()
+		if walker.global_position.x > RoomBackdrop.cell_center(Vector2i(10, 1)).x:
+			crossed = true
+			break
+	_check(crossed, "a %s gets round a wall from x %d" % [def.id, start_x])
+	scene.player.run.health.heal(99)
 	await _dismiss_all()
 
 

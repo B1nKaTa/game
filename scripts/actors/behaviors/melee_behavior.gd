@@ -24,4 +24,4 @@ func tick(enemy: Enemy, delta: float) -> void:
 			_telegraph.start(WINDUP)
 			enemy.set_warning(_telegraph, STRIKE_RANGE)
 		return
-	enemy.desired_velocity = enemy.direction_to_target() * enemy.def.speed
+	enemy.desired_velocity = enemy.chase_direction() * enemy.def.speed
