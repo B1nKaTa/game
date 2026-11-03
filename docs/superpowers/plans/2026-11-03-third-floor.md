@@ -716,8 +716,12 @@ Read these as models first:
 - **Collection plate:** a boomerang out 180 px and back along a warned curve (a lane out, plus marks along the return). Static: `plate_path(from, aim, length, bend) -> Array[Vector2]`.
 - **Summon:** 3 Mourners every 12 s, through `request_summon_at`, with at most 5 enemies in the room (`BossMoves.can_summon`). They pay nothing.
 
-- [ ] **Step 1: Write failing tests:** the eulogy has 6 spots evenly spaced along the line, every plate path point is inside the room rectangle, and he never summons over the cap.
-- [ ] **Step 2: Implement. When testing is allowed, look at every attack in a real window. Commit.**
+- [x] **Step 1: Write failing tests:** the eulogy has 6 spots evenly spaced along the line, every plate path point is inside the room rectangle, and he never summons over the cap. Written in `tests/test_parlour_bosses.gd`, not yet run.
+- [ ] **Step 2: Implement. When testing is allowed, look at every attack in a real window. Commit.** Implemented and committed before testing; the tests and the look in a real window are still to do.
+  - **The eulogy:** the line runs from him to 60 px past Grandpa (at least 140 px), so it always passes through him, and it shows as a lane during the 0.6 s windup.
+  - **The plate:** `plate_path` takes an optional room rectangle and keeps every point inside it, which is what the test checks. `CollectionPlate` (`scripts/world/collection_plate.gd`) marks the way back for the whole windup, the way out being his warned lane, then flies at 320 px/s and costs a pill once a throw.
+  - **The summon:** `summon_count(alive, cap)` calls only as many as fit under 5, at most 3.
+  - **The numbers:** 560 final health (311.111 in the `.tres`), speed 75, pays 8, rests 0.8 s. Barbara and Klaus end at 500 and rest 0.825 s, call 2 and alternate two attacks.
 
 ### Task 13: Mortimer Grimsby, Funeral Director (floor boss)
 

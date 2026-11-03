@@ -43,6 +43,10 @@ const TEAR := Color("8fd0ff")
 const STEM := Color("3f6b34")
 const BLOOMS: Array[Color] = [Color("d9576b"), Color("f2e6c8"), Color("e6a3c8")]
 const GLOVE := Color("f4f1e6")
+const COLLAR := Color("15131a")
+const COLLAR_TAB := Color("fbf7ef")
+const BOOK := Color("4a1c24")
+const BOOK_EDGE := Color("e2b33c")
 
 var _def: EnemyDef
 var _facing := Vector2.RIGHT
@@ -151,6 +155,12 @@ func _draw() -> void:
 		"white_gloves":
 			draw_rect(Rect2(-half.x - 2.0, 0.0, 4.0, 4.0), GLOVE)
 			draw_rect(Rect2(half.x - 2.0, 0.0, 4.0, 4.0), GLOVE)
+		"collar":
+			# A clerical collar and a hymn book held to one side.
+			draw_rect(Rect2(-half.x * 0.5, -half.y + 8.0, half.x, 4.0), COLLAR)
+			draw_rect(Rect2(-2.0, -half.y + 8.0, 4.0, 4.0), COLLAR_TAB)
+			draw_rect(Rect2(half.x - 4.0, 0.0, 9.0, 11.0), BOOK)
+			draw_rect(Rect2(half.x - 4.0, 0.0, 9.0, 11.0), BOOK_EDGE, false, 1.0)
 	if _def.shield_half_angle > 0.0:
 		var reach := maxf(half.x, half.y) + SHIELD_GAP
 		var half_arc := deg_to_rad(_def.shield_half_angle)
