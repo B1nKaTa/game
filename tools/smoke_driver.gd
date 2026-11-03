@@ -465,7 +465,7 @@ func _check_merchant(scene: Node) -> void:
 	var merchants: Array[Npc] = []
 	for child in view.get_children():
 		if child is Npc:
-			merchants.append(child)
+			merchants.append(child as Npc)
 	_check(merchants.size() == 1, "a shop has one merchant, found %d" % merchants.size())
 	if merchants.size() != 1:
 		return
@@ -993,10 +993,10 @@ func _check_boss_seen_from_a_corner(scene: Node, boss_def: EnemyDef) -> void:
 func _check_walks_around_a_wall(scene: Node, def: EnemyDef) -> void:
 	var wall := {}
 	for y in range(1, 8):
-		wall[Vector2i(10, y)] = "#"
+		wall[Vector2i(8, y)] = "#"
 	var view := await _enter_made_room(scene, _fight_layout(20, 11, wall))
-	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(14, 3)))
-	var walker: Enemy = view._spawn_enemy(def, RoomBackdrop.cell_center(Vector2i(6, 3)), true)
+	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(13, 3)))
+	var walker: Enemy = view._spawn_enemy(def, RoomBackdrop.cell_center(Vector2i(4, 3)), true)
 	var start_x := walker.global_position.x
 	var crossed := false
 	var waited := 0.0
@@ -1005,10 +1005,10 @@ func _check_walks_around_a_wall(scene: Node, def: EnemyDef) -> void:
 	while waited < limit and is_instance_valid(walker):
 		await get_tree().physics_frame
 		waited += get_physics_process_delta_time()
-		if walker.global_position.x > RoomBackdrop.cell_center(Vector2i(10, 1)).x:
+		if walker.global_position.x > RoomBackdrop.cell_center(Vector2i(8, 1)).x:
 			crossed = true
 			break
-	_check(crossed, "a %s gets round a wall from x %d" % [def.id, start_x])
+	_check(crossed, "a %s gets round a wall from x %d" % [def.id, roundi(start_x)])
 	scene.player.run.health.heal(99)
 	await _dismiss_all()
 
