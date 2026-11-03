@@ -1,14 +1,25 @@
 extends Node2D
 
-# The one place that says which floors a run can start on. Each entry gets an exit at the Crossroads,
-# west first and then east, and its FloorDef says when it opens.
-const PATH_FLOORS: Array[String] = ["res://data/floors/floor_1.tres", "res://data/floors/cemetery.tres"]
+# The one place that says which floors each depth offers. Each entry gets an exit at that depth's
+# Crossroads, west first and then east, and its FloorDef says when it opens.
+const PATHS_BY_DEPTH := {
+	1: ["res://data/floors/floor_1.tres", "res://data/floors/cemetery.tres"],
+	2: ["res://data/floors/sunset_shores.tres", "res://data/floors/furnace_works.tres"],
+}
+# The deepest floor there is. A floor boss falling here ends the run.
+const LAST_DEPTH := 2
 const CROSSROADS_FLOOR := "res://data/floors/crossroads.tres"
 const CROSSROADS_LAYOUT := "res://data/rooms/crossroads/crossroads.tres"
+const LANDING_FLOOR := "res://data/floors/landing.tres"
+const LANDING_LAYOUT := "res://data/rooms/landing/landing.tres"
+# Pills healed on reaching the landing, up to his maximum.
+const LANDING_HEAL := 2
 const MESSAGE_TIME := 2.0
 
 var player: Player
 var is_cleared := false
+# Which depth of floors the run has reached: 1 for the first Crossroads and its floors, 2 below.
+var _depth := 1
 var is_over := false
 var _map: FloorMap
 var _floor_def: FloorDef
@@ -100,6 +111,10 @@ func debug_floor_def() -> FloorDef:
 	return _floor_def
 
 
+func debug_depth() -> int:
+	return _depth
+
+
 # Walks out of the Crossroads along a path at once, for checks that are not about the walking.
 func debug_choose_path(index: int) -> void:
 	_choose_path(index)
@@ -114,7 +129,7 @@ func _add_map_view(is_big: bool) -> FloorMapView:
 
 func _path_defs() -> Array[FloorDef]:
 	var defs: Array[FloorDef] = []
-	for path in PATH_FLOORS:
+	for path: String in PATHS_BY_DEPTH[_depth]:
 		defs.append(load(path))
 	return defs
 
@@ -193,6 +208,7 @@ func _make_room_view(room: FloorRoom) -> RoomView:
 	else:
 		view = RoomView.new()
 		view.door_entered.connect(func(id: int): _enter_room.call_deferred(id))
+		view.stairwell_entered.connect(func(): _go_down.call_deferred())
 	view.setup(room, _map, _floor_def, _run, player, _rng, _progress, Progress)
 	view.notice.connect(_hud.show_notice)
 	view.pension_earned.connect(func(amount: int): Progress.add_pension(amount))
@@ -227,11 +243,41 @@ func _on_floor_cleared() -> void:
 	_continue_after_floor()
 
 
-# Every path ends here, whichever floor was taken. No second floor exists yet, so a floor boss's fall
-# ends the run. When one does, build it here the way _choose_path builds a first floor, and both paths
-# reach it without any other change.
+# Every path ends here, whichever floor was taken. Above the last depth the boss room opens a stairwell
+# down, and on the last one the run ends. A third floor slots in here: raise LAST_DEPTH, list its paths
+# in PATHS_BY_DEPTH, and every path above reaches it without any other change.
 func _continue_after_floor() -> void:
+	if _floor_def.depth < LAST_DEPTH:
+		_room_view.add_stairwell()
+		return
 	_end_run("FLOOR CLEARED")
+
+
+# Takes the stairwell: a safe landing that heals him, with the next Crossroads beyond it. Everything he
+# carries lives on the run, so it comes along. Only what belonged to the floor above stays behind.
+func _go_down() -> void:
+	if is_over or _depth >= LAST_DEPTH:
+		return
+	_depth += 1
+	is_cleared = false
+	_run.mini_boss_down = false
+	var leaving := _room_view
+	for view: RoomView in _room_views.values():
+		if view != leaving and is_instance_valid(view) and not view.is_inside_tree():
+			view.free()
+	_room_views.clear()
+	_floor_def = load(LANDING_FLOOR)
+	_map = FloorMap.with_landing_and_crossroads(load(LANDING_LAYOUT), load(CROSSROADS_LAYOUT))
+	_progress = FloorProgress.new(_map)
+	_mini_map.setup(_map, _progress, false, _floor_def.display_name)
+	_big_map.setup(_map, _progress, true, _floor_def.display_name)
+	_current_id = -1
+	_enter_room(_map.start_id)
+	leaving.queue_free()
+	var missing := _run.health.max_pills - _run.health.pills
+	_run.health.heal(LANDING_HEAL)
+	var healed := mini(LANDING_HEAL, missing)
+	_hud.show_notice("You catch your breath. +%d pills" % healed if healed > 0 else "You catch your breath.")
 
 
 func _end_run(message: String) -> void:

@@ -13,6 +13,7 @@ signal notice(text: String)
 signal hit_blocked
 # How many items a fallen floor boss laid out to choose from.
 signal boss_choice_dropped(count: int)
+signal stairwell_entered
 
 const HEAL_AMOUNT := 2
 const SHOP_PROMPT := "Buy"
@@ -32,6 +33,10 @@ const COIN_SCATTER := 10.0
 const BOSS_CHOICE_COUNT := 2
 # Where those items wait, in cells from where the boss fell: one each side, a row lower.
 const BOSS_CHOICE_OFFSETS: Array[Vector2i] = [Vector2i(-2, 1), Vector2i(2, 1)]
+# The stairwell is a door that leads to no room of this floor, so it carries no room id.
+const STAIRWELL_ID := -2
+const STAIRWELL_ICON := "v"
+const FLOOR_SIGN_COLOR := Color("ece9e0")
 
 var _room: FloorRoom
 var _map: FloorMap
@@ -73,6 +78,8 @@ func _ready() -> void:
 	add_child(backdrop)
 	Lighting.add_room_mood(self, _room.layout.size_in_cells(), palette)
 	_create_decor(palette)
+	if _room.room_type == RoomLayout.TYPE_LANDING:
+		_add_floor_sign()
 	_create_doors()
 	_create_blocks()
 	_create_props(palette)
@@ -180,6 +187,46 @@ func _add_treasure_door(target_id: int, side: Vector2i) -> void:
 func _on_treasure_door_unlocked() -> void:
 	_run.use_key()
 	doors_opened.emit()
+
+
+# The way down from a fallen floor boss's room, on open floor near the middle and clear of the
+# boss's items. It waits until he has stepped off it, as any door he arrives on does.
+func add_stairwell() -> void:
+	if stairwell() != null:
+		return
+	var wanted: Array[Vector2i] = [_room.layout.size_in_cells() / 2]
+	var spots := _room.layout.open_spots_near(wanted, _choice_cells)
+	var cell: Vector2i = spots[0] if not spots.is_empty() else _room.layout.nearest_floor_cell(wanted[0])
+	var door := Door.new()
+	door.setup(STAIRWELL_ID, STAIRWELL_ICON, _player.feet())
+	door.locked = false
+	door.position = RoomBackdrop.cell_center(cell)
+	door.entered.connect(func(_id: int): stairwell_entered.emit())
+	add_child(door)
+	door.rearm()
+	_doors.append(door)
+	notice.emit("A stairwell leads down.")
+
+
+func stairwell() -> Door:
+	return door_to(STAIRWELL_ID)
+
+
+# The landing names the floor below on a plain sign by the far wall.
+func _add_floor_sign() -> void:
+	var sign_label := Label.new()
+	sign_label.text = _floor_def.display_name
+	sign_label.add_theme_font_size_override("font_size", 12)
+	sign_label.add_theme_color_override("font_color", FLOOR_SIGN_COLOR)
+	sign_label.add_theme_constant_override("outline_size", 4)
+	sign_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	sign_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var width := float(_room.layout.size_in_cells().x * RoomBackdrop.TILE)
+	sign_label.size = Vector2(width, 16)
+	sign_label.position = Vector2(0, RoomBackdrop.TILE * 2.5)
+	sign_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	sign_label.z_index = 5
+	add_child(sign_label)
 
 
 func _add_door(target_id: int, icon: String, side: Vector2i) -> Door:
