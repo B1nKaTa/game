@@ -1,0 +1,102 @@
+class_name LightsOut
+extends Node2D
+
+# The care home's lights go out. A warning first: the room dims and "Lights out!" shows over
+# Grandpa. Then everything goes dark but a soft circle around him. Warnings, marks and shots draw
+# above this layer, so every attack still shows. It ends early if the boss who called it falls.
+const Z := 50
+const DARK := 0.85
+const WARNING_DIM := 0.35
+const FADE_OUT := 0.4
+const LIGHT_RADIUS := 70.0
+const CLEAR_RADIUS := 45.0
+const EDGE_RADIUS := 90.0
+const REACH := 4000.0
+const TEXT := "Lights out!"
+const TEXT_COLOR := Color("fff6d8")
+
+var _source: Enemy
+var _target: Node2D
+var _warning := 1.0
+var _dark := 4.0
+var _darkness := DARK
+var _age := 0.0
+var _fading := -1.0
+var _hole: GradientTexture2D
+
+
+# How dark the room is at a moment, from 0 to the darkness asked for.
+static func shade_at(age: float, warning: float, dark: float, darkness: float) -> float:
+	if age < warning:
+		return darkness * WARNING_DIM * clampf(age / warning, 0.0, 1.0)
+	if age < warning + dark:
+		return darkness
+	return darkness * clampf(1.0 - (age - warning - dark) / FADE_OUT, 0.0, 1.0)
+
+
+func setup(source: Enemy, target: Node2D, warning: float, dark: float, darkness := DARK) -> void:
+	_source = source
+	_target = target
+	_warning = warning
+	_dark = dark
+	_darkness = darkness
+
+
+func is_dark() -> bool:
+	return _age >= _warning and _age < _warning + _dark and _fading < 0.0
+
+
+func total_time() -> float:
+	return _warning + _dark + FADE_OUT
+
+
+func _ready() -> void:
+	z_index = Z
+	var unshaded := CanvasItemMaterial.new()
+	unshaded.light_mode = CanvasItemMaterial.LIGHT_MODE_UNSHADED
+	material = unshaded
+	var gradient := Gradient.new()
+	gradient.set_color(0, Color(0, 0, 0, 0))
+	gradient.set_color(1, Color(0, 0, 0, 1))
+	gradient.add_point(CLEAR_RADIUS / EDGE_RADIUS, Color(0, 0, 0, 0))
+	gradient.add_point(LIGHT_RADIUS / EDGE_RADIUS, Color(0, 0, 0, 0.55))
+	_hole = GradientTexture2D.new()
+	_hole.gradient = gradient
+	_hole.width = 128
+	_hole.height = 128
+	_hole.fill = GradientTexture2D.FILL_RADIAL
+	_hole.fill_from = Vector2(0.5, 0.5)
+	_hole.fill_to = Vector2(1.0, 0.5)
+
+
+func _process(delta: float) -> void:
+	_age += delta
+	if _fading < 0.0 and (not is_instance_valid(_source) or _source.is_dead()):
+		# The boss is down: skip ahead to the fade.
+		_age = maxf(_age, _warning + _dark)
+		_fading = 0.0
+	queue_redraw()
+	if _age >= total_time():
+		queue_free()
+
+
+func _draw() -> void:
+	if not is_instance_valid(_target):
+		return
+	var shade := shade_at(_age, _warning, _dark, _darkness)
+	var feet: Vector2 = _target.feet().global_position if _target.has_method("feet") else _target.global_position
+	var center := to_local(feet)
+	var tint := Color(1, 1, 1, shade)
+	var square := Rect2(center - Vector2(EDGE_RADIUS, EDGE_RADIUS), Vector2(EDGE_RADIUS, EDGE_RADIUS) * 2.0)
+	draw_texture_rect(_hole, square, false, tint)
+	var black := Color(0, 0, 0, shade)
+	draw_rect(Rect2(square.position.x - REACH, square.position.y - REACH, REACH * 2.0 + square.size.x, REACH), black)
+	draw_rect(Rect2(square.position.x - REACH, square.end.y, REACH * 2.0 + square.size.x, REACH), black)
+	draw_rect(Rect2(square.position.x - REACH, square.position.y, REACH, square.size.y), black)
+	draw_rect(Rect2(square.end.x, square.position.y, REACH, square.size.y), black)
+	if _age < _warning + 0.4:
+		var font := ThemeDB.fallback_font
+		var width := font.get_string_size(TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
+		var at := center + Vector2(-width / 2.0, -46.0)
+		draw_string_outline(font, at, TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, 5, Color.BLACK)
+		draw_string(font, at, TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, TEXT_COLOR)

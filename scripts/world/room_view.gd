@@ -103,7 +103,7 @@ func clear_passing_effects() -> void:
 		var is_flying_coin: bool = child is Pickup and child.is_flying()
 		if child is Thermos and child.is_fuse_burning():
 			_run.add_bomb()
-		if child is Projectile or child is DeathBurst or child is Thermos or child is EnemyBlast or child is SummonMark or child is GroundStrike or is_flying_coin:
+		if child is Projectile or child is DeathBurst or child is Thermos or child is EnemyBlast or child is SummonMark or child is GroundStrike or child is LightsOut or is_flying_coin:
 			child.queue_free()
 
 
