@@ -56,6 +56,8 @@ var _cooldown := 1.2
 var _summon_wait := 6.0
 var _volleys_left := 0
 var _volley_wait := 0.0
+# Every volley flies down the lane that was shown, so none of them comes unwarned.
+var _volley_aim := Vector2.RIGHT
 var _row_gap := 0
 
 
@@ -188,7 +190,8 @@ func _begin(enemy: Enemy, attack: int, phase_two: bool) -> void:
 			enemy.set_warning(_telegraph, SHOVEL_RANGE)
 		Attack.WREATHS:
 			enemy.set_warning(_telegraph, WARNING_RADIUS)
-			enemy.set_warning_lane(enemy.direction_to_target(), WREATH_SPEED, LANE_WIDTH, false)
+			_volley_aim = enemy.direction_to_target()
+			enemy.set_warning_lane(_volley_aim, WREATH_SPEED, LANE_WIDTH, false)
 		_:
 			enemy.set_warning(_telegraph, WARNING_RADIUS)
 
@@ -229,5 +232,5 @@ func _finish_attack(enemy: Enemy, phase_two: bool) -> void:
 func _fire_volley(enemy: Enemy) -> void:
 	_volleys_left -= 1
 	_volley_wait = VOLLEY_GAP
-	for direction in fan_directions(enemy.direction_to_target(), WREATH_SHOTS, WREATH_SPREAD):
+	for direction in fan_directions(_volley_aim, WREATH_SHOTS, WREATH_SPREAD):
 		enemy.shoot(direction, WREATH_SPEED)
