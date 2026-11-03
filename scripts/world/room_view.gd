@@ -80,10 +80,13 @@ func refresh_doors() -> void:
 
 
 # The room stays alive while the player is away, so remembered pickups keep their place.
-# Effects and shots in flight don't belong in that memory.
+# Effects and shots in flight don't belong in that memory. A Thermos that never went off goes
+# back in the pocket, so stepping through a door doesn't cost one.
 func clear_passing_effects() -> void:
 	for child in get_children():
 		var is_flying_coin: bool = child is Pickup and child.is_flying()
+		if child is Thermos and child.is_fuse_burning():
+			_run.add_bomb()
 		if child is Projectile or child is DeathBurst or child is Thermos or child is EnemyBlast or child is SummonMark or child is GroundStrike or is_flying_coin:
 			child.queue_free()
 

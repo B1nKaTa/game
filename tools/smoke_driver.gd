@@ -366,6 +366,7 @@ func _check_a_broken_block_stays_broken(scene: Node, here_id: int) -> void:
 	if block == null:
 		return
 	_checked_block_memory = true
+	_check_a_thermos_left_behind_comes_back(scene)
 	block.take_blast()
 	await _wait(0.1)
 	var blocks_left := _plain_block_count()
@@ -373,6 +374,16 @@ func _check_a_broken_block_stays_broken(scene: Node, here_id: int) -> void:
 	await _walk_through_door(scene, map.next_step(here_id, map.start_id))
 	await _walk_through_door(scene, here_id)
 	_check(_plain_block_count() == blocks_left, "a broken block stays broken on return")
+
+
+func _check_a_thermos_left_behind_comes_back(scene: Node) -> void:
+	var run: RunState = scene.player.run
+	var view: RoomView = scene.debug_room_view()
+	var before := run.bombs
+	view.place_bomb(scene.player.global_position)
+	view.clear_passing_effects()
+	_check(run.bombs == before + 1, "a Thermos left with its fuse burning goes back in the pocket")
+	run.use_bomb()
 
 
 func _plain_block() -> BreakableBlock:

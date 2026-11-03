@@ -40,6 +40,10 @@ static func blast_color(upgrade_level: int) -> Color:
 	return colors[clampi(upgrade_level, 0, colors.size() - 1)]
 
 
+func is_fuse_burning() -> bool:
+	return not _gone_off
+
+
 func tick_fuse(delta: float) -> bool:
 	if _gone_off:
 		return false
@@ -67,11 +71,11 @@ func _explode() -> void:
 			enemy.take_damage(blast_damage(), global_position.direction_to(enemy.global_position) * PUSH)
 	BreakableBlock.smash(get_tree(), global_position, BLAST_RADIUS, BreakableBlock.SOURCE_BLAST)
 	ReinforcedRock.blast(get_tree(), global_position, BLAST_RADIUS, level)
+	SecretWall.blast(get_tree(), global_position, BLAST_RADIUS)
 	if is_instance_valid(_player) and global_position.distance_to(_player.feet().global_position) <= BLAST_RADIUS:
 		_player.take_hit(PLAYER_DAMAGE)
 	exploded.emit()
 
-	SecretWall.blast(get_tree(), global_position, BLAST_RADIUS)
 
 func _draw() -> void:
 	if _gone_off:

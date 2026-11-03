@@ -91,6 +91,14 @@ func test_thermos_blast_reaches_a_body_by_its_edge() -> void:
 	assert_false(Thermos.in_blast(Vector2.ZERO, far))
 
 
+func test_thermos_fuse_burns_until_it_goes_off() -> void:
+	var thermos := Thermos.new()
+	assert_true(thermos.is_fuse_burning())
+	thermos.tick_fuse(Thermos.FUSE_TIME + 0.01)
+	assert_false(thermos.is_fuse_burning())
+	thermos.free()
+
+
 func test_thermos_fuse_runs_out_once() -> void:
 	var thermos := Thermos.new()
 	assert_false(thermos.tick_fuse(Thermos.FUSE_TIME - 0.01))
