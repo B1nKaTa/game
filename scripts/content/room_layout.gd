@@ -86,7 +86,15 @@ const SYMBOL_HYMN_CART := "j"
 const SYMBOL_PEW := "h"
 const SYMBOL_WREATH := "r"
 const SYMBOL_CANDLE := "c"
-const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc"
+# Escalator strips laid in the mall's floor, one symbol per way they run. Walkable, never harmful,
+# and kept well clear of doors so nobody is carried out of a room or into one.
+const SYMBOL_STRIP_RIGHT := ">"
+const SYMBOL_STRIP_LEFT := "<"
+const SYMBOL_STRIP_UP := "^"
+const SYMBOL_STRIP_DOWN := "v"
+const STRIP_SYMBOLS := "><^v"
+const STRIP_DOOR_CLEARANCE := 2
+const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc><^v"
 # Nothing can walk through these, so nothing may be dropped or summoned on them.
 const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGojh"
 # Routes may not need a hole or a wall, and may not need a bomb for a crate or a rock.
@@ -128,6 +136,22 @@ const REQUIRED := {
 
 @export var room_type: String = ""
 @export var rows: PackedStringArray = []
+# The room's escalator strips reverse every few seconds, after a chime. Old layouts have none.
+@export var strips_reverse: bool = false
+
+
+# The way a strip symbol runs, or zero for anything else.
+static func strip_direction(symbol: String) -> Vector2i:
+	match symbol:
+		SYMBOL_STRIP_RIGHT:
+			return Vector2i.RIGHT
+		SYMBOL_STRIP_LEFT:
+			return Vector2i.LEFT
+		SYMBOL_STRIP_UP:
+			return Vector2i.UP
+		SYMBOL_STRIP_DOWN:
+			return Vector2i.DOWN
+	return Vector2i.ZERO
 
 
 func validate() -> PackedStringArray:
@@ -182,6 +206,8 @@ func validate() -> PackedStringArray:
 				errors.append("wet floor at %s is within %d cells of a door" % [str(cell), WET_DOOR_CLEARANCE])
 			if symbol == SYMBOL_VENT and _within_of_a_door(cell, VENT_DOOR_CLEARANCE):
 				errors.append("vent at %s is within %d cells of a door" % [str(cell), VENT_DOOR_CLEARANCE])
+			if STRIP_SYMBOLS.contains(symbol) and _within_of_a_door(cell, STRIP_DOOR_CLEARANCE):
+				errors.append("strip at %s is within %d cells of a door" % [str(cell), STRIP_DOOR_CLEARANCE])
 	for side in SIDES:
 		if not open.has(door_cell(side)):
 			errors.append("needs a bomb to reach the door at %s" % str(door_cell(side)))

@@ -787,8 +787,11 @@ Same models as Step 3, plus `scripts/world/wet_floor.gd`, `scripts/world/lights_
 - **Dodging:** a dodge ignores the carry, as it ignores sliding.
 - **Ghosts:** ghosts and anything underground are not carried.
 
-- [ ] **Step 1: Write failing tests** for `carry` (with, against, and across a strip) and `ConveyorCycle` (the chime always comes before each reversal, and the sign flips each period).
-- [ ] **Step 2: Implement. When testing is allowed, screenshot a room with strips. Commit.**
+- [x] **Step 1: Write failing tests** for `carry` (with, against, and across a strip) and `ConveyorCycle` (the chime always comes before each reversal, and the sign flips each period). In `tests/test_mall_hazard.gd`, with the strip's own reversal, a boss's order, who rides and the door rule.
+- [ ] **Step 2: Implement. When testing is allowed, screenshot a room with strips. Commit.** Implemented, tests run and passing (878); the screenshot waits for a real window.
+  - **The symbols:** `>`, `<`, `^` and `v`, the way each strip runs, walkable, never within 2 cells of a door. A layout's `strips_reverse` (default false, so old layouts load as before) makes its strips reverse.
+  - **The strip:** `ConveyorStrip` carries at 60 px/s. A reversing room's strips run 6 s each way, chiming with flashing arrows for the last 1 s. `take_control(REVERSE or SPEED_UP)` chimes 1 s, then reverses, or runs ×1.5 for 4 s.
+  - **Who rides:** Grandpa's walk and every enemy with `rides_strips()` (not ghosts, mounds or wall fixtures). A dodge sets his velocity outright, so it ignores the carry.
 
 ### Task 16: Mall regular enemies
 

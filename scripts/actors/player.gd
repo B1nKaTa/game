@@ -317,6 +317,9 @@ func _handle_movement() -> void:
 		velocity = SlideRule.velocity(velocity.limit_length(speed), input * speed, on_wet, get_physics_process_delta_time())
 		if not on_wet:
 			velocity = _round_corners(velocity, input, speed)
+		# An escalator strip carries him on top of his walk. A dodge goes where it is aimed instead.
+		if _feet != null and is_inside_tree():
+			velocity += ConveyorStrip.carry_at(get_tree(), _feet.global_position)
 		if not _visual.is_playing_once():
 			_visual.play("walk" if input != Vector2.ZERO else "idle")
 	if _push_left > 0.0:

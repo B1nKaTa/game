@@ -254,6 +254,8 @@ func _physics_process(delta: float) -> void:
 	if _push_left > 0.0:
 		_push_left -= delta
 		velocity += _push
+	if rides_strips() and is_inside_tree():
+		velocity += ConveyorStrip.carry_at(get_tree(), global_position)
 	_knockback = _knockback.lerp(Vector2.ZERO, minf(KNOCKBACK_DECAY * delta, 1.0))
 	move_and_slide()
 	if def.ignores_walls or submerged:
@@ -321,6 +323,12 @@ func apply_push(shove: Vector2, seconds: float) -> void:
 
 func is_pushed() -> bool:
 	return _push_left > 0.0
+
+
+# An escalator strip carries whatever walks on the floor. Ghosts float over it, a mound is under it,
+# and something bolted to a wall never moves.
+func rides_strips() -> bool:
+	return def != null and not def.ignores_walls and not def.wall_mounted and not submerged
 
 
 func wait_for_room_start() -> void:

@@ -408,6 +408,12 @@ func _create_props(palette: RoomPalette) -> void:
 		pipe.setup(cell, layout.inward_of(cell))
 		pipe.position = RoomBackdrop.cell_center(cell)
 		add_child(pipe)
+	for symbol in RoomLayout.STRIP_SYMBOLS:
+		for cell in layout.cells_of(symbol):
+			var strip := ConveyorStrip.new()
+			strip.setup(Vector2(RoomLayout.strip_direction(symbol)), layout.strips_reverse)
+			strip.position = RoomBackdrop.cell_center(cell)
+			add_child(strip)
 
 
 func _place_prop(prop: BreakableBlock, cell: Vector2i) -> void:
