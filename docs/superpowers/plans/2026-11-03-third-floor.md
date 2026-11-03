@@ -95,7 +95,7 @@
   - `PlayerStats.bite_damage_mult: float`, `bite_range: float`, `bites_per_throw: int`, `teeth_return_delay: float`
   - `RunState.bite_damage_mult() -> float`, which adds a running buff's `damage_bonus`
 
-- [ ] **Step 1: Write the failing tests** in `tests/test_dentures.gd`. Keep every state test of the old file, renamed to the teeth, and add:
+- [x] **Step 1: Write the failing tests** in `tests/test_dentures.gd`. Keep every state test of the old file, renamed to the teeth, and add:
 
 ```gdscript
 func test_a_shorter_delay_brings_them_back_sooner() -> void:
@@ -147,7 +147,7 @@ Also update the old counts: `test_stats.gd` expects 7 upgrades and 5 at the Blac
 
 - [ ] **Step 2: When testing is allowed, run the tests to make sure they fail.** Expected: `DentureThrow`, `bite_damage_mult` and `denture_adhesive` are unknown.
 
-- [ ] **Step 3: Implement.**
+- [x] **Step 3: Implement.**
   - **`DentureThrow`:** the old `CaneThrow` with `catch_cane` renamed `catch_teeth`, a `return_delay` member set by `_init`, and the three constants above.
   - **`StatEffect`:** add the three fields, each with a one-line comment. Note on `damage_bonus` that it is cane damage only.
   - **`PlayerStats.compute`:** sum `bite_damage_bonus` and `bite_range_bonus` times the level, take the largest `bites_through` of anything owned (never below 1), and set `teeth_return_delay` to `QUICK_RETURN_DELAY` when an upgrade with `bite_range_bonus > 0` is at its last level.
@@ -159,7 +159,7 @@ Also update the old counts: `test_stats.gd` expects 7 upgrades and 5 at the Blac
 
 - [ ] **Step 4: When testing is allowed, run the tests.** Expected: `N tests, 0 failed`.
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
 ```powershell
 git commit -m @'
@@ -188,7 +188,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
   - Sounds `"teeth_throw"` and `"teeth_catch"`, and `HitStop.BITE_HIT`
   - The input action keeps its id `"throw"`, so old `keys.json` files still bind it. Its label becomes "Throw dentures".
 
-- [ ] **Step 1: Write the failing tests.** In `tests/test_dentures.gd`:
+- [x] **Step 1: Write the failing tests.** In `tests/test_dentures.gd`:
 
 ```gdscript
 func test_the_cane_swings_whatever_the_teeth_are_doing() -> void:
@@ -233,12 +233,12 @@ In `tests/test_key_bindings.gd`, assert the throw's label is "Throw dentures", a
 
 - [ ] **Step 2: When testing is allowed, run the tests to make sure they fail.**
 
-- [ ] **Step 3: Implement `ThrownDentures`.**
+- [x] **Step 3: Implement `ThrownDentures`.**
   - **Flight:** as `ThrownCane`, but `_range` from setup replaces `MAX_RANGE`, and `_bitten` holds the instance ids already bitten. A bite emits `hit_enemy` and drops the teeth unless `keeps_flying(_bitten.size(), _bites_allowed)`.
   - **The world:** walls, barrels, piles and grass are met exactly as before, with `BreakableBlock.SOURCE_CANE`, since the spec says the world treats the teeth as it treated the thrown cane.
   - **Drawing:** a small set of teeth from the side, gums top and bottom, four white teeth each, the jaw opening `JAW_OPEN` px at `CHATTER_SPEED` while flying, and slower with a little hop while dropped. Flip with the throw's direction.
 
-- [ ] **Step 4: Implement the player.**
+- [x] **Step 4: Implement the player.**
   - **State:** `_teeth := DentureThrow.new()` and `_thrown_teeth: ThrownDentures`.
   - **`_handle_attacks`:** the throw fires when `can_throw(_teeth)`, then the swing code runs every frame regardless. Remove the early return and the old `_charge.cancel()` on throw. `can_swing` returns `true` and is the documented rule the tests hold.
   - **`_throw_teeth`:** set `_teeth.return_delay = run.stats.teeth_return_delay` before `try_throw`, spawn at `SPAWN_AHEAD`, and pass `run.bite_damage_mult()`, `run.stats.bite_range` and `run.stats.bites_per_throw`.
@@ -246,7 +246,7 @@ In `tests/test_key_bindings.gd`, assert the throw's label is "Throw dentures", a
   - **Callers:** `floor_scene.gd` calls `recall_teeth()`, and `CombatFeedback.watch_player` connects the renamed signals.
   - **Feedback:** `SoundBank` gets `"teeth_throw"` (a short rising square clack) and `"teeth_catch"` in place of the cane sounds, and `HitStop.CANE_HIT` becomes `BITE_HIT`.
 
-- [ ] **Step 5: Extend the smoke driver.** Add `_check_dentures(scene)` to `_check_fight_room`, after `_check_shield`, in a made room:
+- [x] **Step 5: Extend the smoke driver.** Add `_check_dentures(scene)` to `_check_fight_room`, after `_check_shield`, in a made room:
   - **Bite:** a frozen Intern Reaper 128 px away. Aim at it, press `throw`, and check `has_teeth()` is false and its health fell by `ThrownDentures.bite_damage(run.bite_damage_mult())`.
   - **Melee while away:** a second frozen enemy 30 px behind him. `_swing_at` it while the teeth lie by the first, and check it was hurt and `has_teeth()` is still false.
   - **Return:** wait until `has_teeth()`, and check it took at least `run.stats.teeth_return_delay` seconds from the throw.
@@ -257,7 +257,7 @@ In `tests/test_key_bindings.gd`, assert the throw's label is "Throw dentures", a
 
 - [ ] **Step 7: When testing is allowed, look at it in a real window.** Screenshot the teeth flying, lying on the floor and coming back, and the Black Market panel with five upgrades at its fullest (lesson: the 360 px screen hides tall panels).
 
-- [ ] **Step 8: Commit.** One commit for the actor, player and feedback rename with its tests, one for the smoke check.
+- [x] **Step 8: Commit.** One commit for the actor, player and feedback rename with its tests, one for the smoke check.
 
 ### Task 3: Chest rules and each floor's odds
 
@@ -288,7 +288,7 @@ In `tests/test_key_bindings.gd`, assert the throw's label is "Throw dentures", a
 - **Urn:** 2 items from the usual pool. With none left, twice `treasure_pension`.
 - **Mimic:** `pension_drop = 5` before the floor's multiplier, and a Slip.
 
-- [ ] **Step 1: Write the failing tests** in `tests/test_chests.gd`:
+- [x] **Step 1: Write the failing tests** in `tests/test_chests.gd`:
 
 ```gdscript
 func test_first_floors_never_roll_a_mimic() -> void:
@@ -333,11 +333,11 @@ Also: rolls follow the weights within 2% over 20000 seeded rolls; a first floor 
 
 - [ ] **Step 2: When testing is allowed, run them to make sure they fail.**
 
-- [ ] **Step 3: Implement `ChestRules` and `FloorDef`.** In `FloorDef`, add an `@export_group("Chests")` with `chest_weights` defaulting to the first-floor row, and `chest_odds()` returning `ChestRules.odds_for_depth(chest_weights, depth)`. Write the row for each floor into its `.tres` (keys sorted, as Godot writes them).
+- [x] **Step 3: Implement `ChestRules` and `FloorDef`.** In `FloorDef`, add an `@export_group("Chests")` with `chest_weights` defaulting to the first-floor row, and `chest_odds()` returning `ChestRules.odds_for_depth(chest_weights, depth)`. Write the row for each floor into its `.tres` (keys sorted, as Godot writes them).
 
 - [ ] **Step 4: When testing is allowed, run the tests.**
 
-- [ ] **Step 5: Commit** ("Roll five kinds of chest by each floor's odds").
+- [x] **Step 5: Commit** ("Roll five kinds of chest by each floor's odds").
 
 ### Task 4: Chests in rooms, and the mimic
 
@@ -371,7 +371,7 @@ Also: rolls follow the weights within 2% over 20000 seeded rolls; a first floor 
   - **Urn:** a tall gold urn.
 - **The urn's choice:** two items on open spots beside it, kept in a `ChoiceGroup` held in `RoomView._urn_groups` (lesson: a signal alone does not keep a `RefCounted` alive).
 
-- [ ] **Step 1: Write the failing tests:**
+- [x] **Step 1: Write the failing tests:**
 
 ```gdscript
 func test_a_safe_ignores_the_key_and_opens_to_a_blast() -> void:
@@ -408,26 +408,26 @@ Also: a blast wakes a mimic but leaves honest chests; a locked chest waits for i
 
 - [ ] **Step 2: When testing is allowed, run them to make sure they fail.**
 
-- [ ] **Step 3: Implement** `Chest`, the mimic and the `RoomView` changes as above. `Pickup._draw` calls a new `_draw_body()`, which `Chest` overrides. `_create_rewards` rolls each `C` cell with `ChestRules.roll(_floor_def.chest_odds(), _rng.randf())`. Remove `CHEST_COLOR`, `CHEST_LABEL` and `CHEST_PROMPT`.
+- [x] **Step 3: Implement** `Chest`, the mimic and the `RoomView` changes as above. `Pickup._draw` calls a new `_draw_body()`, which `Chest` overrides. `_create_rewards` rolls each `C` cell with `ChestRules.roll(_floor_def.chest_odds(), _rng.randf())`. Remove `CHEST_COLOR`, `CHEST_LABEL` and `CHEST_PROMPT`.
 
 - [ ] **Step 4: When testing is allowed, run the tests.**
 
-- [ ] **Step 5: Commit** ("Turn chest cells into lunchboxes, locked chests, safes, urns and mimics").
+- [x] **Step 5: Commit** ("Turn chest cells into lunchboxes, locked chests, safes, urns and mimics").
 
 ### Task 5: The chest room in the full loop, and the step's wrap-up
 
 **Files:**
 - Modify: `tools/smoke_driver.gd`, `docs/playtest-notes.md`, `LESSONS.md`, this plan
 
-- [ ] **Step 1: Add `_check_chests(scene)` to `_check_fight_room`.** It runs in a made room, with every kind placed by `view._create_chest`, so it never depends on what the floors rolled:
+- [x] **Step 1: Add `_check_chests(scene)` to `_check_fight_room`.** It runs in a made room, with every kind placed by `view._create_chest`, so it never depends on what the floors rolled:
   - **Lunchbox:** opens to the interact key with no Slip, and pays at least `lunchbox_pension`.
   - **Locked Chest:** stays shut without a Slip, then opens and spends one.
   - **Urn:** one Slip is not enough. Two open it and are spent, it lays out `mini(2, offerable)` items, and taking one clears the other.
   - **Safe:** a Slip and an Auditor's `EnemyBlast` leave it shut. The player's Thermos opens it and pays at least `safe_pension`.
   - **Mimic:** it asks for a Slip like a locked chest and sleeps until touched. Touched, it becomes a `mimic` enemy that never bites before its warning shows. Beaten, it pays at least 5 and drops a Slip.
   - **The run:** after the probe, Slips are put back as they were. `_run` checks `_checked_chests` after the first run.
-- [ ] **Step 2: Mimics in the loop.** Before `_clear_room` gathers pickups, `_beat_mimics_first()` wakes and beats any mimic the room rolled. Otherwise walking onto a coin beside one could leave a live enemy in a room the loop counts as clear. The pass line reports chests checked and mimics beaten on the way.
-- [ ] **Step 3: Update `docs/playtest-notes.md`** with what to try, and `LESSONS.md` if anything tricky came up.
+- [x] **Step 2: Mimics in the loop.** Before `_clear_room` gathers pickups, `_beat_mimics_first()` wakes and beats any mimic the room rolled. Otherwise walking onto a coin beside one could leave a live enemy in a room the loop counts as clear. The pass line reports chests checked and mimics beaten on the way.
+- [x] **Step 3: Update `docs/playtest-notes.md`** with what to try, and `LESSONS.md` if anything tricky came up.
 - [ ] **Step 4: When testing is allowed:** run the tests, then 3 full loops from an exported copy, and screenshot each chest kind and the mimic awake in a real window. Fix anything found, push, then stop for the user to play.
 
 ---
