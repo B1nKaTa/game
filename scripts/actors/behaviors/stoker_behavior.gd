@@ -11,7 +11,7 @@ const COOLDOWN := 2.4
 const FIRST_THROW := 1.0
 const COAL_RADIUS := 22.0
 const COAL_WARNING := 0.8
-const BURN_TIME := 2.5
+const BURN_TIME := 1.8
 
 enum { BACK_OFF = -1, HOLD = 0, CLOSE_IN = 1 }
 

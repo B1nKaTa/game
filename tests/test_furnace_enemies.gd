@@ -102,7 +102,7 @@ func test_a_stoker_keeps_its_distance() -> void:
 func test_its_coal_follows_the_plan() -> void:
 	assert_near(StokerBehavior.COAL_WARNING, 0.8)
 	assert_near(StokerBehavior.COAL_RADIUS, 22.0)
-	assert_near(StokerBehavior.BURN_TIME, 2.5)
+	assert_near(StokerBehavior.BURN_TIME, 1.8)
 
 
 func test_a_coal_mark_leaves_time_to_walk_out() -> void:

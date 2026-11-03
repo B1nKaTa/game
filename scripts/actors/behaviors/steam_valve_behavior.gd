@@ -8,7 +8,7 @@ const WINDUP := 0.8
 const LANE_LENGTH := 140.0
 const LANE_WIDTH := 18.0
 const WARNING_RADIUS := 16.0
-const COOLDOWN := 1.0
+const COOLDOWN := 1.4
 const FIRST_VENT := 1.2
 # A lane shorter than this ends in a wall right away, so it is not worth venting.
 const MIN_LANE := 40.0
