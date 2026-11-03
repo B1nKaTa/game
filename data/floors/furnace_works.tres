@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="FloorDef" load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/floor_def.gd" id="1"]
+[ext_resource type="Resource" path="res://data/enemies/intern_reaper.tres" id="2"]
+[ext_resource type="Resource" path="res://data/enemies/filing_clerk.tres" id="3"]
+[ext_resource type="Resource" path="res://data/enemies/debt_ghost.tres" id="4"]
+[ext_resource type="Resource" path="res://data/enemies/senior_adjuster.tres" id="5"]
+[ext_resource type="Resource" path="res://data/enemies/regional_reaper.tres" id="6"]
+[ext_resource type="Resource" path="res://data/enemies/seasonal_temp.tres" id="7"]
+[ext_resource type="Resource" path="res://data/enemies/notary_public.tres" id="8"]
+[ext_resource type="Resource" path="res://data/enemies/burnt_out_auditor.tres" id="9"]
+[ext_resource type="Resource" path="res://data/enemies/denial_officer.tres" id="10"]
+
+[resource]
+script = ExtResource("1")
+id = "furnace_works"
+display_name = "The Furnace Works"
+rooms_dir = "res://data/rooms/floor_1/"
+enemies = [ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10")]
+enemy_weights = PackedInt32Array(5, 3, 4, 4, 3, 2, 2)
+extra_enemy_steps = PackedFloat32Array(0.5, 0.8)
+mini_boss = ExtResource("5")
+floor_boss = ExtResource("6")
+clear_pension = 1
+treasure_pension = 8
+prop_pension = 1
+depth = 2
+open_after_depth = 2
+clears_to_open = 1
+danger = 3
+closed_hint = "Beat a second-floor boss first"
