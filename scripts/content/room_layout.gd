@@ -68,7 +68,7 @@ const SYMBOL_CRACK := "k"
 const SYMBOL_TORCH := "t"
 const SYMBOL_LANTERN := "l"
 const SYMBOL_STUMP := "m"
-const DECOR_SYMBOLS := "gnwuktlmfp"
+const DECOR_SYMBOLS := "gnwuktlmfprc"
 # A freshly mopped cell: everyone walks on it, Grandpa and chargers slide. Kept well clear of doors.
 const SYMBOL_WET := "W"
 const WET_DOOR_CLEARANCE := 2
@@ -80,13 +80,19 @@ const VENT_DOOR_CLEARANCE := 2
 const SYMBOL_GAME := "G"
 # An organ pipe set in the border wall, as a lantern is. It chords on a beat and pushes with a ring.
 const SYMBOL_ORGAN_PIPE := "o"
-const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGo"
+# Funeral parlour stock. A hymn-book cart breaks like a barrel, a chapel pew like a rock, and a wreath
+# stand and a candle stand block nothing and break to anything, like grass.
+const SYMBOL_HYMN_CART := "j"
+const SYMBOL_PEW := "h"
+const SYMBOL_WREATH := "r"
+const SYMBOL_CANDLE := "c"
+const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc"
 # Nothing can walk through these, so nothing may be dropped or summoned on them.
-const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGo"
+const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGojh"
 # Routes may not need a hole or a wall, and may not need a bomb for a crate or a rock.
 const WALL_LIKE := "#lo"
 const WALLS := "#lVo"
-const WALLS_AND_BOMB_ONLY := "#lVXOAYKDMo"
+const WALLS_AND_BOMB_ONLY := "#lVXOAYKDMoh"
 const MUST_REACH_WITHOUT_BREAKING := "EBIHSPG"
 # A vault lays this many labeled pickups out in the open, this many cells apart so names never overlap.
 const VAULT_EXTRAS := 3

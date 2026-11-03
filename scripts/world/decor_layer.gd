@@ -119,3 +119,22 @@ func _draw_placeholder(kind: String, variant: int, at: Vector2) -> void:
 			for x in [-6.0, 0.0, 6.0]:
 				draw_line(Vector2(x, -6), Vector2(x, 8), p.furnace, 2.0)
 			draw_rect(Rect2(-half + 1, -half + 1, half * 2.0 - 2, half * 2.0 - 2), Color.BLACK, false, 1.0)
+		RoomDecor.STAINED_GLASS:
+			# A soft pane of colour lying on the floor, split by its leading.
+			var glass := Lighting.stained_glass_color(at)
+			draw_set_transform(at, 0.0, Vector2(1.0, 0.6))
+			draw_circle(Vector2.ZERO, 11.0, Color(glass, 0.22))
+			draw_circle(Vector2.ZERO, 6.0, Color(glass.lightened(0.3), 0.18))
+			draw_line(Vector2(-11, 0), Vector2(11, 0), Color(0, 0, 0, 0.18), 1.0)
+			draw_line(Vector2(0, -11), Vector2(0, 11), Color(0, 0, 0, 0.18), 1.0)
+		RoomDecor.COFFIN_STAND:
+			var lie := variant % 2 == 0
+			if not lie:
+				draw_set_transform(at, PI / 2.0)
+			draw_rect(Rect2(-13, 4, 26, 4), Color("7a2f3a"))
+			draw_line(Vector2(-10, 8), Vector2(-10, 11), p.brass, 2.0)
+			draw_line(Vector2(10, 8), Vector2(10, 11), p.brass, 2.0)
+			var lid := PackedVector2Array([Vector2(-13, -2), Vector2(-8, -6), Vector2(13, -5), Vector2(13, 3), Vector2(-8, 4), Vector2(-13, 1)])
+			draw_colored_polygon(lid, p.coffin_wood)
+			draw_polyline(lid + PackedVector2Array([lid[0]]), Color.BLACK, 1.0)
+			draw_line(Vector2(-6, -1), Vector2(11, -1), p.coffin_lid, 2.0)

@@ -755,11 +755,15 @@ Read these as models first:
 - **Floor def:** the 3 new enemies and 2 returning ones with weights, the Reverend and Mortimer Grimsby, and Task 6's multipliers and chest odds.
 - **Income:** check income per full clear with the income probe approach (see `LESSONS.md`). Aim for about 2× the first floor's 125 to 136 without blasting.
 
-- [ ] **Step 1: Palette, props and decor, and commit.**
-- [ ] **Step 2: Layouts. When testing is allowed, run the layout validation tests over the folder, then commit.**
-- [ ] **Step 3: The floor def. When testing is allowed, run the tests and 3 full loops, then commit.**
+- [x] **Step 1: Palette, props and decor, and commit.** Written; committed with the layouts and the floor def in one commit for the task, as the build brief asked. Not yet seen in a window.
+  - **Props:** `ChapelPew` (`h`, a `RockBlock`, can hide a coin at the furniture rate), `HymnCart` (`j`, a `Barrel`), `WreathStand` (`r`) and `CandleStand` (`c`, with its own flickering light), both like a vase. Their colours are new palette fields.
+  - **Decor:** `stained_glass` (a coloured pool of light on the floor, its colour fixed by its spot) and `coffin_stand`. Walls get `wall_pattern = 2`, upright wooden panels under a rail.
+  - **Palette:** burgundy carpet with a gold woven motif and a dark wooden patch tone, dark wood walls, dim mauve ambient, violet fill light, warm candle torches, a 6% flicker.
+- [ ] **Step 2: Layouts. When testing is allowed, run the layout validation tests over the folder, then commit.** 33 layouts written in the Furnace Works' proportions (7 medium, 3 large and 3 small combat rooms with 8, 13 and 6 enemy cells, and every other room type). Pews stand in rows that make lanes, 12 rooms have wall pipes, both floor boss rooms have at least 12, and three combat rooms hold a `C` cell. Not yet validated in Godot: checked instead with a PowerShell port of `RoomLayout.validate()`, the enemy counts and `vault_extra_cells`, which passed all 33 and, as a control, failed the Furnace Works' rooms only on their second-floor enemy counts.
+- [ ] **Step 3: The floor def. When testing is allowed, run the tests and 3 full loops, then commit.** Written: the three new enemies and the two returning ones (weights 3, 4, 3, 3, 2), the Reverend, Mortimer Grimsby, Task 6's multipliers and chest odds, and a treasure worth 16 (twice the first floor's 8). Tests in `tests/test_parlour_floor.gd`, not yet run; the shop and chest tests now cover the folder too.
+  - **Income:** not measured, since nothing may run. Every enemy that paid 1 pays 2, as on the second floors, and rooms hold one more enemy, so a full clear should land a little above the second floors' 217, short of the 250 to 270 aimed for. The probe and any tuning wait for testing.
 - [ ] **Step 4: When testing is allowed, screenshot small, medium and large rooms in a real window next to Sunset Shores rooms.** The floors must look clearly different.
-- [ ] **Step 5: Update `docs/playtest-notes.md` and `LESSONS.md`, push, then stop for the user to play.**
+- [ ] **Step 5: Update `docs/playtest-notes.md` and `LESSONS.md`, push, then stop for the user to play.** Notes and lessons updated and pushed; the play waits for testing.
 
 ---
 

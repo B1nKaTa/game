@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="RoomLayout" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/room_layout.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+room_type = "floor_boss"
+rows = PackedStringArray(
+"####o####o###o###o###o####o###",
+"#............................#",
+"#..hhhh..hhh.......hhh..hhhh.#",
+"o............................o",
+"#..hhhh..hhh.......hhh..hhhh.#",
+"#....c..................r....#",
+"#..hhhh..hhh.......hhh..hhhh.#",
+"#............................#",
+"#...............B............#",
+"#............................#",
+"#..hhhh..hhh.......hhh..hhhh.#",
+"#....r..................c....#",
+"#..hhhh..hhh.......hhh..hhhh.#",
+"o............................o",
+"#..hhhh..hhh.......hhh..hhhh.#",
+"#............................#",
+"####o####o###o###o###o####o###"
+)

@@ -320,9 +320,16 @@ func _create_props(palette: RoomPalette) -> void:
 		tree.palette = palette
 		_place_prop(tree, cell)
 		tree.broken.connect(_on_rock_broken.bind(false, cell))
-	for symbol: String in [RoomLayout.SYMBOL_ARMCHAIR, RoomLayout.SYMBOL_BED]:
+	for symbol: String in [RoomLayout.SYMBOL_ARMCHAIR, RoomLayout.SYMBOL_BED, RoomLayout.SYMBOL_PEW]:
 		for cell in layout.cells_of(symbol):
-			var furniture: RockBlock = Armchair.new() if symbol == RoomLayout.SYMBOL_ARMCHAIR else CareBed.new()
+			var furniture: RockBlock
+			match symbol:
+				RoomLayout.SYMBOL_ARMCHAIR:
+					furniture = Armchair.new()
+				RoomLayout.SYMBOL_PEW:
+					furniture = ChapelPew.new()
+				_:
+					furniture = CareBed.new()
 			furniture.palette = palette
 			furniture.hides_coin = RoomRules.furniture_hides_coin(_rng.randf())
 			_place_prop(furniture, cell)
@@ -347,11 +354,26 @@ func _create_props(palette: RoomPalette) -> void:
 			barrel.palette = palette
 			_place_prop(barrel, cell)
 			barrel.broken.connect(_on_barrel_broken.bind(cell))
+	for cell in layout.cells_of(RoomLayout.SYMBOL_HYMN_CART):
+		var cart := HymnCart.new()
+		cart.palette = palette
+		_place_prop(cart, cell)
+		cart.broken.connect(_on_barrel_broken.bind(cell))
 	for cell in layout.cells_of(RoomLayout.SYMBOL_VASE):
 		var vase := FlowerVase.new()
 		vase.palette = palette
 		_place_prop(vase, cell)
 		vase.broken.connect(_on_vase_broken.bind(cell))
+	for symbol: String in [RoomLayout.SYMBOL_WREATH, RoomLayout.SYMBOL_CANDLE]:
+		for cell in layout.cells_of(symbol):
+			var stand: BreakableBlock
+			if symbol == RoomLayout.SYMBOL_WREATH:
+				stand = WreathStand.new()
+			else:
+				stand = CandleStand.new()
+			stand.palette = palette
+			_place_prop(stand, cell)
+			stand.broken.connect(_on_vase_broken.bind(cell))
 	for cell in layout.cells_of(RoomLayout.SYMBOL_PIPE_VALVE):
 		var stub := PipeValve.new()
 		stub.palette = palette

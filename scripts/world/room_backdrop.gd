@@ -73,6 +73,12 @@ func _draw() -> void:
 						draw_line(Vector2(tile.position.x, top), Vector2(tile.end.x, top), _palette.brick_line, 1.0)
 						var joint := tile.position.x + (TILE / 4.0 if course % 2 == 0 else TILE * 0.75)
 						draw_line(Vector2(joint, top), Vector2(joint, top + TILE / 4.0), _palette.brick_line, 1.0)
+				# Wood panelling: upright boards, with a rail across the panels.
+				if _palette.wall_pattern == 2:
+					for board in 4:
+						var left := tile.position.x + board * TILE / 4.0
+						draw_line(Vector2(left, tile.position.y), Vector2(left, tile.end.y), _palette.brick_line, 1.0)
+					draw_rect(Rect2(tile.position + Vector2(0, TILE * 0.3), Vector2(TILE, 3)), _palette.wall_line)
 				continue
 			draw_rect(tile, _palette.floor_color(Vector2i(x, y), _seed))
 			# A patterned floor lays carpet on its middle tone, woven and seamless, and tiles the rest.

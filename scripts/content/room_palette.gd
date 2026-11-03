@@ -55,6 +55,19 @@ extends Resource
 @export var coal_shine := Color("6a6268")
 @export var pipe := Color("7c7f86")
 @export var valve_wheel := Color("c8463c")
+# Funeral parlour stock. Hymn-book carts break like barrels, chapel pews like rocks, and wreath and
+# candle stands block nothing and break to anything, like grass.
+@export var pew := Color("5a3423")
+@export var pew_edge := Color("24130b")
+@export var hymn_cart := Color("6b4a2a")
+@export var hymn_book := Color("7a2f3a")
+@export var wreath_leaf := Color("3f6b34")
+@export var wreath_bloom := Color("e6e0d0")
+@export var candle_wax := Color("efe6cf")
+@export var candle_flame := Color("ffd27a")
+@export var brass := Color("c9a25a")
+@export var coffin_wood := Color("4a2a1c")
+@export var coffin_lid := Color("6b3d26")
 @export_group("Decor")
 @export var grass := Color("557f48")
 @export var grass_cut := Color("3f5f38")
@@ -83,7 +96,7 @@ extends Resource
 # 0 leaves the floor plain.
 @export var floor_pattern := 0
 @export var carpet_motif := Color(1.0, 1.0, 1.0, 0.12)
-# 1 draws courses of brick on the walls, 0 a single line.
+# 1 draws courses of brick on the walls, 2 upright wooden panels under a rail, 0 a single line.
 @export var wall_pattern := 0
 @export var brick_line := Color(0.0, 0.0, 0.0, 0.3)
 # How much every torch and lantern's light wobbles, as a share of its strength. 0 keeps it steady.

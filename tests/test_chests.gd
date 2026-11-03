@@ -278,7 +278,7 @@ func test_a_lunchbox_opens_for_free() -> void:
 
 func test_shipped_rooms_still_hold_chest_cells() -> void:
 	var chests := 0
-	for dir in ["res://data/rooms/floor_1/", "res://data/rooms/cemetery/", "res://data/rooms/sunset_shores/", "res://data/rooms/furnace_works/"]:
+	for dir in ["res://data/rooms/floor_1/", "res://data/rooms/cemetery/", "res://data/rooms/sunset_shores/", "res://data/rooms/furnace_works/", "res://data/rooms/funeral_parlour/"]:
 		for layout in RoomCatalog.load_valid(dir):
 			chests += layout.cells_of("C").size()
 	assert_true(chests >= 12, "had %d chest cells" % chests)

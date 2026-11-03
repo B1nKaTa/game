@@ -20,6 +20,10 @@ const PIPE := "pipe"
 const COAL_DUST := "coal_dust"
 # A furnace mouth set in the wall, like a lantern, glowing orange.
 const FURNACE := "furnace"
+# A pool of coloured light on the floor, from a stained-glass window.
+const STAINED_GLASS := "stained_glass"
+# A coffin resting on a draped stand, against the panelling or out on the floor.
+const COFFIN_STAND := "coffin_stand"
 const SYMBOL_KINDS := {
 	RoomLayout.SYMBOL_GRASS: GRASS,
 	RoomLayout.SYMBOL_BONES: BONES,
@@ -45,7 +49,7 @@ static func noise(cell: Vector2i, seed_value: int) -> float:
 
 
 static func is_light(kind: String) -> bool:
-	return kind == TORCH or kind == LANTERN or kind == FURNACE
+	return kind == TORCH or kind == LANTERN or kind == FURNACE or kind == STAINED_GLASS
 
 
 # Every piece of decor in a room: {kind, cell, variant, offset}. Lanterns sit on wall cells.
