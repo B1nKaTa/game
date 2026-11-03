@@ -90,6 +90,17 @@ func test_a_missing_or_damaged_file_keeps_the_defaults() -> void:
 	_reset()
 
 
+func test_an_older_file_cannot_put_a_new_actions_key_on_two_actions() -> void:
+	_reset()
+	var file := FileAccess.open(PATH, FileAccess.WRITE)
+	file.store_string("{\"interact\": {\"type\": \"key\", \"code\": %d}}" % KEY_H)
+	file.close()
+	KeyBindings.load_from(PATH)
+	assert_eq(KeyBindings.label_for("interact"), "H")
+	assert_eq(KeyBindings.label_for("potion"), "E", "the action missing from the file takes the freed key")
+	_reset()
+
+
 func test_prompts_follow_the_bound_key() -> void:
 	_reset()
 	assert_eq(KeyBindings.with_key("interact", "Buy"), "E: Buy")

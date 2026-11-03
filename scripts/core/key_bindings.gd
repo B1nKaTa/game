@@ -84,7 +84,8 @@ static func save_to(path := SAVE_PATH) -> bool:
 	return true
 
 
-# Anything missing or damaged in the file just keeps its default.
+# Anything missing or damaged in the file just keeps its default. Loading swaps like a rebind,
+# so a file older than a new action can't leave that action's default key on two actions.
 static func load_from(path := SAVE_PATH) -> void:
 	if not FileAccess.file_exists(path):
 		return
@@ -96,7 +97,7 @@ static func load_from(path := SAVE_PATH) -> void:
 		if raw.has(action) and InputMap.has_action(action):
 			var event := _from_raw(raw[action])
 			if event != null:
-				_set_event(action, event)
+				rebind(action, event)
 
 
 static func _set_event(action: String, event: InputEvent) -> void:
