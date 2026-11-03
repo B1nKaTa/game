@@ -1744,7 +1744,7 @@ func _check_matron(scene: Node, health: Health) -> void:
 	var mercy: Enemy = view._spawn_enemy(def.floor_boss, RoomBackdrop.cell_center(Vector2i(18, 8)), true)
 	var behavior = mercy._behavior
 	await _wait(0.05)
-	_check(absf(mercy.max_hp() - 1200.0) < 0.5, "Matron Mercy ends with 1200 health, %f" % mercy.max_hp())
+	_check(absf(mercy.max_hp() - 1500.0) < 0.5, "Matron Mercy ends with 1500 health, %f" % mercy.max_hp())
 	# The gurney charge shows a lane, breaks the armchair in its way and costs two pills.
 	var pills: int = health.pills
 	behavior._cooldown = 99.0
@@ -1766,7 +1766,7 @@ func _check_matron(scene: Node, health: Health) -> void:
 		if enemy != mercy:
 			visitors += 1
 			_check(enemy.is_summon and enemy.coin_value() == 0 and enemy.def.id == "orderly", "she calls Orderlies who pay nothing")
-	_check(visitors == MatronBehavior.MAX_VISITORS, "at most two Orderlies come, %d" % visitors)
+	_check(visitors == MatronBehavior.MAX_VISITORS, "at most %d Orderlies come, %d" % [MatronBehavior.MAX_VISITORS, visitors])
 	for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
 		if enemy != mercy:
 			enemy.dismiss()

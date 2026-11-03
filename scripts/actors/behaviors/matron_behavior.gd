@@ -3,18 +3,20 @@ extends EnemyBehavior
 
 # Runs the ward: fans of sedative syringes that slow Grandpa, a gurney charge that smashes props
 # and costs two pills, Lights Out, when the room goes dark but for a circle around him and she
-# only throws syringes, and Visiting Hours, when Orderlies come in, two at most. Below half health
-# she is quicker and her gurney charge runs straight into a volley.
+# only throws syringes, and Visiting Hours, when Orderlies come in, three at most. Below half health
+# she is quicker, a volley is two fans one after the other, each with its own warned lane, and her
+# gurney charge runs straight into a volley.
 const NEAR := 60.0
 const SEDATIVE_WINDUP := 0.7
-const SYRINGES := 3
-const SYRINGE_SPREAD := deg_to_rad(30.0)
+const SYRINGES := 5
+const PHASE_TWO_FANS := 2
+const SYRINGE_SPREAD := deg_to_rad(50.0)
 const SYRINGE_SPEED := 170.0
 const SEDATIVE_LANE := 180.0
 const SEDATIVE_LANE_WIDTH := 48.0
 const GURNEY_WINDUP := 0.9
-const GURNEY_LENGTH := 220.0
-const GURNEY_SPEED := 360.0
+const GURNEY_LENGTH := 420.0
+const GURNEY_SPEED := 460.0
 const GURNEY_HIT_RANGE := 26.0
 const GURNEY_LANE_WIDTH := 52.0
 # She pulls up this far short of a wall, about half her body.
@@ -23,16 +25,16 @@ const STEP := 4.0
 const LIGHTS_OUT_WINDUP := 0.5
 const LIGHTS_OUT_WARNING := 1.0
 const LIGHTS_OUT_TIME := 4.0
-const LIGHTS_OUT_EVERY := 20.0
+const LIGHTS_OUT_EVERY := 14.0
 # The first Lights Out waits a while, so the fight opens in the light.
 const FIRST_LIGHTS_OUT := 8.0
 const DARK_COOLDOWN := 1.3
 const VISITING_WINDUP := 0.7
-const MAX_VISITORS := 2
+const MAX_VISITORS := 3
 const VISIT_DISTANCE := 100.0
 const WARNING_RADIUS := 40.0
-const BASE_COOLDOWN := 1.1
-const PHASE_TWO_COOLDOWN := 0.85
+const BASE_COOLDOWN := 0.8
+const PHASE_TWO_COOLDOWN := 0.6
 const PHASE_TWO_SPEED := 1.2
 const PHASE_TWO_WINDUP_SCALE := 0.8
 const SAY_TIME := 1.2
@@ -49,6 +51,8 @@ var _since_lights_out := LIGHTS_OUT_EVERY - FIRST_LIGHTS_OUT
 var _dark_left := 0.0
 # Every syringe flies down the lane that was shown.
 var _aim := Vector2.RIGHT
+# Fans still to come in this volley, the one being warned of included.
+var _fans_left := 0
 var _rng := RandomNumberGenerator.new()
 
 
@@ -78,6 +82,10 @@ static func followup(attack: int, phase_two: bool) -> int:
 	if phase_two and attack == Attack.GURNEY:
 		return Attack.SEDATIVE
 	return Attack.NONE
+
+
+static func fans_for(phase_two: bool) -> int:
+	return PHASE_TWO_FANS if phase_two else 1
 
 
 static func windup_for(attack: int, phase_two: bool) -> float:
@@ -156,6 +164,9 @@ func _begin(enemy: Enemy, attack: int, phase_two: bool) -> void:
 	_telegraph.start(windup_for(attack, phase_two))
 	match attack:
 		Attack.SEDATIVE:
+			# A new volley counts its fans. The second fan of one only aims again.
+			if _fans_left <= 0:
+				_fans_left = fans_for(phase_two)
 			_aim = enemy.direction_to_target()
 			enemy.set_warning(_telegraph, WARNING_RADIUS)
 			enemy.set_warning_lane(_aim, SEDATIVE_LANE, SEDATIVE_LANE_WIDTH, false)
@@ -180,6 +191,9 @@ func _finish_attack(enemy: Enemy, phase_two: bool) -> void:
 		Attack.SEDATIVE:
 			for direction in BossMoves.fan_directions(_aim, SYRINGES, SYRINGE_SPREAD):
 				OrderlyBehavior.fire_dart(enemy, direction, SYRINGE_SPEED)
+			_fans_left -= 1
+			if _fans_left > 0:
+				_next = Attack.SEDATIVE
 		Attack.GURNEY:
 			var end := charge_end(enemy.global_position, _aim, GURNEY_LENGTH, enemy.open_ground) if enemy.open_ground.is_valid() else enemy.global_position + _aim * GURNEY_LENGTH
 			_dash.start(_aim, enemy.global_position.distance_to(end), GURNEY_SPEED, GURNEY_HIT_RANGE, Enemy.HEAVY_DAMAGE)
