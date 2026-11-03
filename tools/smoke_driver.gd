@@ -9,6 +9,8 @@ const CEMETERY_PATH := 1
 # The second Crossroads lists its paths the same way: the open one west, the locked one east.
 const OPEN_DEEP_PATH := 0
 const LOCKED_DEEP_PATH := 1
+# A mimic's base pay, so "pays well" means at least the base before any floor multiplier.
+const MIMIC_PAY_AT_LEAST := 5
 
 var _failed := false
 var _boss_rooms_seen := 0
@@ -34,6 +36,8 @@ var _paths_cleared := 0
 var _boss_choice_count := -1
 var _boss_choices_checked := 0
 var _landings_reached := 0
+var _checked_chests := false
+var _mimics_beaten_in_loop := 0
 
 
 func _ready() -> void:
@@ -60,6 +64,7 @@ func _run() -> void:
 	# The open paths of both depths: the Records Basement, the stairwell, then Sunset Shores.
 	await _clear_two_floors(RECORDS_PATH, OPEN_DEEP_PATH)
 	_check(Progress.data.pension > pension_before, "Pension was earned during the run")
+	_check(_checked_chests, "every kind of chest was opened in the chest room")
 	await _wait(2.5)
 	_expect_scene("WaitingRoom")
 	_check(Progress.data.floors_cleared == 1, "clearing the first floor is counted")
@@ -135,7 +140,7 @@ func _run() -> void:
 	_check(Progress.data.level_of(upgrade.id) == 1, "upgrade survives a reload")
 
 	if not _failed:
-		print("SMOKE PASS paths cleared: %d, landings reached: %d, boss choices checked: %d, rooms of sizes %s, big room view checked: %s, block memory checked: %s, props checked: %s, fight checked: %s, graveyard checked: %s, care home checked: %s, furnace checked: %s, vault opened: %s, potions checked: %s, fuel checked: %s, pickups off solids: %d" % [_paths_cleared, _landings_reached, _boss_choices_checked, str(_sizes_seen.keys()), str(_followed_a_big_room), str(_checked_block_memory), str(_checked_props), str(_checked_fight), str(_checked_graveyard), str(_checked_care_home), str(_checked_furnace), str(_opened_a_vault), str(_checked_potions), str(_checked_fuel), _pickups_off_solids])
+		print("SMOKE PASS paths cleared: %d, landings reached: %d, boss choices checked: %d, rooms of sizes %s, big room view checked: %s, block memory checked: %s, props checked: %s, fight checked: %s, graveyard checked: %s, care home checked: %s, furnace checked: %s, vault opened: %s, potions checked: %s, fuel checked: %s, pickups off solids: %d, chests checked: %s, mimics beaten on the way: %d" % [_paths_cleared, _landings_reached, _boss_choices_checked, str(_sizes_seen.keys()), str(_followed_a_big_room), str(_checked_block_memory), str(_checked_props), str(_checked_fight), str(_checked_graveyard), str(_checked_care_home), str(_checked_furnace), str(_opened_a_vault), str(_checked_potions), str(_checked_fuel), _pickups_off_solids, str(_checked_chests), _mimics_beaten_in_loop])
 		get_tree().quit(0)
 
 
@@ -527,6 +532,7 @@ func _clear_room(scene: Node) -> void:
 	if is_floor_boss_room:
 		await _check_boss_choice(scene, view, pool_before)
 	_check_pickups_off_solids(scene, room_id)
+	await _beat_mimics_first()
 	var stairs: Door = view.stairwell()
 	for pickup in get_tree().get_nodes_in_group("pickups"):
 		# Walking onto a pickup near a door can leave the room, and then the rest are out of reach.
@@ -786,6 +792,7 @@ func _check_fight_room(scene: Node) -> void:
 	await _check_blast(scene)
 	await _check_shield(scene)
 	await _check_dentures(scene)
+	await _check_chests(scene)
 	await _check_boss_moves(scene)
 	var floor_def: FloorDef = load("res://data/floors/floor_1.tres")
 	await _check_far_boss_waits(scene, floor_def.floor_boss)
@@ -958,6 +965,144 @@ func _check_dentures(scene: Node) -> void:
 	player.recall_teeth()
 	player.aim_source = Callable()
 	await _dismiss_all()
+
+
+# Every kind of chest, laid out in one room whatever the floors happened to roll: what opens each,
+# what that costs and what comes out. The mimic wakes into a fight that keeps the warning rules.
+func _check_chests(scene: Node) -> void:
+	var view := await _enter_made_room(scene, _fight_layout(20, 11, {}))
+	var player: Player = scene.player
+	var run: RunState = player.run
+	var floor_def: FloorDef = scene.debug_floor_def()
+	var keys_before := run.keys
+	while run.keys > 0:
+		run.use_key()
+	# A lunchbox opens with the key alone and pays a little.
+	var lunch: Chest = view._create_chest(Vector2i(4, 3), ChestRules.LUNCHBOX)
+	var pension: int = Progress.data.pension
+	_put_feet(scene, lunch.global_position)
+	await _wait(0.1)
+	await _press("interact")
+	await _wait(0.2)
+	_check(_gone(lunch), "a lunchbox opens with the interact key and no Slip")
+	_check(Progress.data.pension >= pension + ChestRules.lunchbox_pension(floor_def.treasure_pension), "a lunchbox pays a little Pension")
+	# A locked chest waits for its one Slip and spends it.
+	var locked: Chest = view._create_chest(Vector2i(8, 3), ChestRules.LOCKED)
+	_put_feet(scene, locked.global_position)
+	await _wait(0.1)
+	await _press("interact")
+	await _wait(0.1)
+	_check(not _gone(locked), "a locked chest stays shut without a Slip")
+	run.add_key()
+	await _press("interact")
+	await _wait(0.2)
+	_check(_gone(locked) and run.keys == 0, "one Slip opens the locked chest and is spent")
+	# A gilded urn wants two Slips, then lays out two items of which only one can be taken.
+	var urn: Chest = view._create_chest(Vector2i(12, 3), ChestRules.URN)
+	var offer := mini(ChestRules.URN_CHOICES, _offerable_items(run))
+	var lying_before := _item_pickups(view)
+	run.add_key()
+	_put_feet(scene, urn.global_position)
+	await _wait(0.1)
+	await _press("interact")
+	await _wait(0.1)
+	_check(not _gone(urn) and run.keys == 1, "one Slip is not enough for the urn")
+	run.add_key()
+	await _press("interact")
+	await _wait(0.2)
+	_check(_gone(urn) and run.keys == 0, "two Slips open the urn and are spent")
+	var offered := _item_pickups(view).filter(func(p: Pickup) -> bool: return not lying_before.has(p))
+	_check(offered.size() == offer, "the urn lays out %d items, found %d" % [offer, offered.size()])
+	if offered.size() >= 2:
+		offered[0].collect()
+		await _wait(0.1)
+		_check(_gone(offered[1]), "taking one of the urn's items clears the other away")
+	# A safe ignores Slips and an Auditor's blast, and only the player's Thermos bursts it.
+	var safe: Chest = view._create_chest(Vector2i(15, 8), ChestRules.SAFE)
+	run.add_key()
+	_put_feet(scene, safe.global_position)
+	await _wait(0.1)
+	await _press("interact")
+	await _wait(0.1)
+	_check(not _gone(safe) and run.keys == 1, "a Slip does nothing to a safe deposit box")
+	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(3, 8)))
+	EnemyBlast.go(view, safe.position, 80.0, 10.0, 0.0, player, 0)
+	await _wait(0.2)
+	_check(not _gone(safe), "an Auditor's blast leaves the safe shut")
+	pension = Progress.data.pension
+	view.place_bomb(safe.position)
+	await _wait(Thermos.FUSE_TIME + 0.3)
+	_check(_gone(safe), "the player's Thermos bursts the safe")
+	_check(Progress.data.pension >= pension + ChestRules.safe_pension(floor_def.treasure_pension), "the safe pays a big pile of Pension")
+	# A mimic sleeps as a locked chest until touched, then warns before every lunge, pays and drops a Slip.
+	var mimic_chest: Chest = view._create_chest(Vector2i(4, 8), ChestRules.MIMIC)
+	_check(mimic_chest.requires_interact and mimic_chest.prompt == ChestRules.prompt_for(ChestRules.LOCKED), "a mimic asks for a Slip like a locked chest")
+	_put_feet(scene, mimic_chest.global_position + Vector2(64, 0))
+	await _wait(0.2)
+	_check(not _gone(mimic_chest), "a mimic sleeps until it is touched")
+	_put_feet(scene, mimic_chest.global_position)
+	await _wait(0.1)
+	_check(_gone(mimic_chest), "touching the mimic wakes it")
+	var mimic: Enemy = null
+	for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
+		if enemy.def.id == "mimic":
+			mimic = enemy
+	_check(mimic != null, "the woken chest is an enemy")
+	if mimic != null:
+		var pills: int = run.health.pills
+		var warned := false
+		var waited := 0.0
+		while waited < 2.5 and not warned:
+			await get_tree().physics_frame
+			waited += get_physics_process_delta_time()
+			warned = mimic._warning != null
+			_check(warned or run.health.pills == pills, "the mimic never bites before its warning")
+		_check(warned, "the mimic shows a warning before it lunges")
+		var keys := run.keys
+		pension = Progress.data.pension
+		mimic.take_damage(INF, Vector2.ZERO)
+		await _wait(0.2)
+		_check(Progress.data.pension >= pension + MIMIC_PAY_AT_LEAST, "a beaten mimic pays well")
+		_check(run.keys > keys or _slip_lying(view), "a beaten mimic drops a Slip")
+	await _dismiss_all()
+	while run.keys > 0:
+		run.use_key()
+	for i in keys_before:
+		run.add_key()
+	_checked_chests = true
+
+
+# Mimics a room rolled are woken and beaten before its pickups are gathered, so walking onto a coin
+# beside one can never leave a live enemy behind in a room that counts as clear.
+func _beat_mimics_first() -> void:
+	var woke := false
+	for pickup in get_tree().get_nodes_in_group("pickups"):
+		if pickup is Chest and pickup.kind == ChestRules.MIMIC and not pickup.is_queued_for_deletion():
+			pickup.collect()
+			woke = true
+	if not woke:
+		return
+	await _wait(0.05)
+	for enemy in get_tree().get_nodes_in_group("enemies"):
+		if enemy.def.id == "mimic":
+			_mimics_beaten_in_loop += 1
+			enemy.take_damage(INF, Vector2.ZERO)
+	await _wait(0.05)
+
+
+func _item_pickups(view: RoomView) -> Array:
+	var found := []
+	for child in view.get_children():
+		if child is Pickup and not child is Chest and child.requires_interact and not child.is_queued_for_deletion():
+			found.append(child)
+	return found
+
+
+func _slip_lying(view: RoomView) -> bool:
+	for child in view.get_children():
+		if child is Pickup and child._label == RoomRules.KEY_NAME and not child.is_queued_for_deletion():
+			return true
+	return false
 
 
 func _check_boss_moves(scene: Node) -> void:
