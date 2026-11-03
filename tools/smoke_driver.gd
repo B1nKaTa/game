@@ -947,6 +947,8 @@ func _check_dentures(scene: Node) -> void:
 	var away := (Time.get_ticks_msec() - thrown_at) / 1000.0
 	_check(player.has_teeth(), "the teeth come back on their own, away %f s" % away)
 	_check(away >= run.stats.teeth_return_delay, "and not before their delay, away %f s" % away)
+	# Aim must not point at an enemy about to be freed, or the aim reads a dead body every frame.
+	player.aim_source = Callable()
 	await _dismiss_all()
 	# Extra Strong Dentures let one throw bite through two enemies in a row.
 	var bites_before: int = run.stats.bites_per_throw
