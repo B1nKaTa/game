@@ -27,6 +27,7 @@ var _checked_stone_memory := false
 var _checked_potions := false
 var _checked_fuel := false
 var _checked_graveyard := false
+var _checked_care_home := false
 var _paths_cleared := 0
 var _boss_choice_count := -1
 var _boss_choices_checked := 0
@@ -82,6 +83,7 @@ func _run() -> void:
 	_check(Progress.data.floors_cleared == 2, "clearing the second first-floor path is counted too")
 	_check(Progress.data.clears_at(2) == 2, "clearing the second second-floor path is counted too")
 	_check(_paths_cleared == 4, "all four paths were cleared, got %d" % _paths_cleared)
+	_check(_checked_care_home, "the care home fights were checked")
 	_check(_landings_reached == 2, "both runs took the stairwell to the landing")
 	ids = get_tree().current_scene.open_merchant_ids()
 	_check(ids.has("potion_merchant") and ids.has("bomb_merchant"), "clearing both second-floor paths for real brings the bomb merchant")
@@ -130,7 +132,7 @@ func _run() -> void:
 	_check(Progress.data.level_of(upgrade.id) == 1, "upgrade survives a reload")
 
 	if not _failed:
-		print("SMOKE PASS paths cleared: %d, landings reached: %d, boss choices checked: %d, rooms of sizes %s, big room view checked: %s, block memory checked: %s, props checked: %s, fight checked: %s, graveyard checked: %s, vault opened: %s, potions checked: %s, fuel checked: %s, pickups off solids: %d" % [_paths_cleared, _landings_reached, _boss_choices_checked, str(_sizes_seen.keys()), str(_followed_a_big_room), str(_checked_block_memory), str(_checked_props), str(_checked_fight), str(_checked_graveyard), str(_opened_a_vault), str(_checked_potions), str(_checked_fuel), _pickups_off_solids])
+		print("SMOKE PASS paths cleared: %d, landings reached: %d, boss choices checked: %d, rooms of sizes %s, big room view checked: %s, block memory checked: %s, props checked: %s, fight checked: %s, graveyard checked: %s, care home checked: %s, vault opened: %s, potions checked: %s, fuel checked: %s, pickups off solids: %d" % [_paths_cleared, _landings_reached, _boss_choices_checked, str(_sizes_seen.keys()), str(_followed_a_big_room), str(_checked_block_memory), str(_checked_props), str(_checked_fight), str(_checked_graveyard), str(_checked_care_home), str(_opened_a_vault), str(_checked_potions), str(_checked_fuel), _pickups_off_solids])
 		get_tree().quit(0)
 
 
@@ -178,6 +180,8 @@ func _clear_whole_floor(scene: Node, path_index: int) -> void:
 	var choices_before := _boss_choices_checked
 	if depth == 1 and path_index == CEMETERY_PATH and not _checked_graveyard:
 		await _check_graveyard_fights(scene)
+	if depth == 2 and path_index == OPEN_DEEP_PATH and not _checked_care_home:
+		await _check_care_home_fights(scene)
 	var walked_back := false
 	var guard := 0
 	while not scene.is_cleared and not _failed and guard < MAX_STEPS:
@@ -1526,3 +1530,244 @@ func _take_the_stairwell(scene: Node) -> void:
 		return
 	await _walk_through_door(scene, landing.doors.values()[0])
 	_check(map.room(scene.debug_current_id()).room_type == RoomLayout.TYPE_CROSSROADS, "the landing leads to the second Crossroads")
+
+
+# --- Sunset Shores: wet floors, sedatives, the care home's staff and bosses ---
+
+func _check_care_home_fights(scene: Node) -> void:
+	_checked_care_home = true
+	var back_id: int = scene.debug_current_id()
+	var health: Health = scene.player.run.health
+	var pills_before := health.max_pills
+	health.raise_max(pills_before + 30)
+	await _check_wet_floor(scene)
+	await _check_orderly(scene, health)
+	await _check_cart_nurse(scene)
+	await _check_bingo_caller(scene, health)
+	await _check_barbara(scene, health)
+	await _check_matron(scene, health)
+	var def: FloorDef = scene.debug_floor_def()
+	await _check_far_boss_waits(scene, def.mini_boss)
+	await _check_far_boss_waits(scene, def.floor_boss)
+	await _dismiss_all()
+	scene._enter_room(back_id)
+	await _wait(0.1)
+	health.pills = pills_before
+	health.raise_max(pills_before)
+
+
+func _walk_and_let_go(scene: Node, from: Vector2) -> float:
+	_put_feet(scene, from)
+	await get_tree().physics_frame
+	Input.action_press("move_right")
+	await _wait(0.35)
+	Input.action_release("move_right")
+	await get_tree().physics_frame
+	var let_go: float = scene.player.feet().global_position.x
+	await _wait(0.15)
+	return scene.player.feet().global_position.x - let_go
+
+
+# On a wet floor he keeps moving after letting go, and on a dry one he stops at once.
+func _check_wet_floor(scene: Node) -> void:
+	var changes := {}
+	for x in range(5, 15):
+		changes[Vector2i(x, 3)] = "W"
+	var view := await _enter_made_room(scene, _fight_layout(20, 11, changes))
+	_check(_props_in(view, WetFloor).size() == 10, "the made room laid its wet floor")
+	_check(_props_in(view, WetSign).size() == 1, "a wet patch gets one caution sign")
+	var dry := await _walk_and_let_go(scene, RoomBackdrop.cell_center(Vector2i(5, 7)))
+	var wet := await _walk_and_let_go(scene, RoomBackdrop.cell_center(Vector2i(5, 3)))
+	_check(scene.player.on_wet, "his feet on the wet floor count as wet")
+	_check(dry < 2.0, "on a dry floor he stops when he lets go, slid %f" % dry)
+	_check(wet > 8.0, "on a wet floor he slides on, slid %f" % wet)
+	var caution: WetSign = _props_in(view, WetSign)[0]
+	_check(caution.hit_by(BreakableBlock.SOURCE_CANE), "the caution sign can be knocked over")
+
+
+func _check_orderly(scene: Node, health: Health) -> void:
+	var view := await _enter_made_room(scene, _fight_layout(20, 11, {}))
+	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(4, 5)))
+	var orderly: Enemy = view._spawn_enemy(_enemy_def("orderly"), RoomBackdrop.cell_center(Vector2i(12, 5)) - Player.FEET_OFFSET)
+	orderly.set_physics_process(false)
+	var pills: int = health.pills
+	var behavior = orderly._behavior
+	behavior._aim = orderly.direction_to_target()
+	behavior._telegraph.start(behavior.WINDUP)
+	orderly.set_warning(behavior._telegraph, behavior.WARNING_RADIUS)
+	orderly.set_warning_lane(behavior._aim, behavior.LANE_LENGTH, behavior.LANE_WIDTH, false)
+	_check(orderly._lane_length > 0.0, "the orderly shows a lane first")
+	orderly.set_physics_process(true)
+	var waited := 0.0
+	while health.pills == pills and waited < 3.0:
+		await _wait(0.05)
+		waited += 0.05
+	_check(health.pills == pills - 1, "a dart costs one pill, %d to %d" % [pills, health.pills])
+	_check(scene.player.is_slowed() and is_equal_approx(scene.player.slow_factor(), 0.5), "a dart slows him by half")
+	await _wait(1.6)
+	_check(not scene.player.is_slowed(), "the slow wears off")
+	await _dismiss_all()
+
+
+func _check_cart_nurse(scene: Node) -> void:
+	var view := await _enter_made_room(scene, _fight_layout(20, 11, {Vector2i(9, 5): "J"}))
+	var chairs := _props_in(view, Wheelchair)
+	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(16, 9)))
+	var nurse: Enemy = view._spawn_enemy(_enemy_def("cart_nurse"), RoomBackdrop.cell_center(Vector2i(13, 5)))
+	await _wait(0.05)
+	var behavior = nurse._behavior
+	behavior._cooldown = 99.0
+	behavior._direction = Vector2.LEFT
+	behavior._charge_left = behavior.CHARGE_TIME * 3.0
+	var waited := 0.0
+	while not nurse.is_dazed() and waited < 3.0:
+		await _wait(0.05)
+		waited += 0.05
+	_check(_gone(chairs[0]), "the nurse's cart smashes a wheelchair in her way")
+	_check(nurse.is_dazed(), "running into the wall stuns her")
+	var hp: float = nurse.hp
+	nurse.take_damage(5.0, Vector2.ZERO)
+	_check(is_equal_approx(nurse.hp, hp - 10.0), "a stunned nurse takes double damage")
+	await _wait(behavior.STUN_TIME + 0.1)
+	hp = nurse.hp
+	nurse.take_damage(5.0, Vector2.ZERO)
+	_check(is_equal_approx(nurse.hp, hp - 5.0), "and normal damage once she recovers")
+	await _dismiss_all()
+
+
+func _check_bingo_caller(scene: Node, health: Health) -> void:
+	var view := await _enter_made_room(scene, _fight_layout(20, 11, {}))
+	var center := RoomBackdrop.cell_center(Vector2i(6, 5))
+	_put_feet(scene, center)
+	var caller: Enemy = view._spawn_enemy(_enemy_def("bingo_caller"), RoomBackdrop.cell_center(Vector2i(15, 5)))
+	caller._behavior._wait = 0.0
+	var waited := 0.0
+	while _strikes_in(view).is_empty() and waited < 2.0:
+		await _wait(0.02)
+		waited += 0.02
+	var marks := _strikes_in(view)
+	_check(marks.size() == BingoCallerBehavior.MARKS, "the caller marks three spots, %d" % marks.size())
+	for mark in marks:
+		_check(mark.global_position.distance_to(center) <= BingoCallerBehavior.MARK_REACH + 1.0, "each mark lies near him")
+	var pills: int = health.pills
+	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(6, 9)) + Vector2(0, 8))
+	await _wait(BingoCallerBehavior.MARK_WARNING + 0.1)
+	_check(health.pills == pills, "walking away from the marks avoids them")
+	await _dismiss_all()
+
+
+func _check_barbara(scene: Node, health: Health) -> void:
+	var def: FloorDef = scene.debug_floor_def()
+	var view := await _enter_made_room(scene, _fight_layout(30, 17, {}))
+	var center := RoomBackdrop.cell_center(Vector2i(10, 8))
+	_put_feet(scene, center)
+	var barbara: Enemy = view._spawn_enemy(def.mini_boss, RoomBackdrop.cell_center(Vector2i(18, 8)), true)
+	var behavior = barbara._behavior
+	behavior._summon_timer = 99.0
+	await _wait(0.05)
+	behavior._cooldown = 99.0
+	behavior._begin(barbara, ActivitiesCoordinatorBehavior.Attack.BINGO)
+	_check(_strikes_in(view).is_empty(), "the grid waits for its windup")
+	await _wait(behavior.BINGO_WINDUP + 0.05)
+	behavior._cooldown = 99.0
+	var tiles := _strikes_in(view)
+	_check(tiles.size() == 12, "the bingo grid marks 12 tiles, %d" % tiles.size())
+	var safe_x: float = ActivitiesCoordinatorBehavior.column_x(center, behavior._safe_column)
+	for tile in tiles:
+		_check(absf(tile.global_position.x - safe_x) > 1.0, "no tile lies in the safe column")
+	var pills: int = health.pills
+	_put_feet(scene, Vector2(safe_x, center.y))
+	await _wait(ActivitiesCoordinatorBehavior.TILE_WARNING + ActivitiesCoordinatorBehavior.ROW_STEP * 4 + 0.2)
+	_check(health.pills == pills, "standing in the safe column avoids the whole grid")
+	behavior._cooldown = 99.0
+	behavior._begin(barbara, ActivitiesCoordinatorBehavior.Attack.CAGE)
+	_check(barbara._lane_length > 0.0, "the ball cage shows a lane first")
+	await _wait(behavior.CAGE_WINDUP + 0.05)
+	var balls := 0
+	for child in view.get_children():
+		if child is Projectile:
+			balls += 1
+	_check(balls == ActivitiesCoordinatorBehavior.BALLS, "the cage fires five balls, %d" % balls)
+	behavior._cooldown = 99.0
+	behavior._summon_timer = 0.0
+	await _wait(BossMoves.SUMMON_WARNING + 0.2)
+	var residents := 0
+	for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
+		if enemy != barbara:
+			residents += 1
+			_check(enemy.is_summon and enemy.coin_value() == 0, "residents pay nothing")
+			_check(enemy.def.id == "resident", "she wakes residents")
+	_check(residents == ActivitiesCoordinatorBehavior.SUMMON_COUNT, "she wakes two, %d" % residents)
+	await _dismiss_all()
+
+
+func _check_matron(scene: Node, health: Health) -> void:
+	var def: FloorDef = scene.debug_floor_def()
+	var view := await _enter_made_room(scene, _fight_layout(30, 17, {Vector2i(14, 8): "K"}))
+	var chairs := _props_in(view, Armchair)
+	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(12, 8)) + Vector2(0, 17))
+	var mercy: Enemy = view._spawn_enemy(def.floor_boss, RoomBackdrop.cell_center(Vector2i(18, 8)), true)
+	var behavior = mercy._behavior
+	await _wait(0.05)
+	_check(absf(mercy.max_hp() - 1200.0) < 0.5, "Matron Mercy ends with 1200 health, %f" % mercy.max_hp())
+	# The gurney charge shows a lane, breaks the armchair in its way and costs two pills.
+	var pills: int = health.pills
+	behavior._cooldown = 99.0
+	behavior._begin(mercy, MatronBehavior.Attack.GURNEY, false)
+	_check(mercy._lane_length > 0.0, "the gurney shows a lane first")
+	await _wait(behavior.GURNEY_WINDUP + 1.0)
+	_check(_gone(chairs[0]), "the gurney breaks an armchair in its way")
+	_check(health.pills == pills - Enemy.HEAVY_DAMAGE, "the gurney costs two pills, %d to %d" % [pills, health.pills])
+	await _wait(1.0)
+	# Visiting Hours never brings a third Orderly.
+	for i in 2:
+		mercy.global_position = RoomBackdrop.cell_center(Vector2i(18, 8))
+		behavior._cooldown = 99.0
+		behavior._next = MatronBehavior.Attack.NONE
+		behavior._begin(mercy, MatronBehavior.Attack.VISITING, false)
+		await _wait(behavior.VISITING_WINDUP + BossMoves.SUMMON_WARNING + 0.2)
+	var visitors := 0
+	for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
+		if enemy != mercy:
+			visitors += 1
+			_check(enemy.is_summon and enemy.coin_value() == 0 and enemy.def.id == "orderly", "she calls Orderlies who pay nothing")
+	_check(visitors == MatronBehavior.MAX_VISITORS, "at most two Orderlies come, %d" % visitors)
+	for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
+		if enemy != mercy:
+			enemy.dismiss()
+	await _wait(0.1)
+	# Lights Out: a warning, then dark, with only syringes thrown and every warning drawn above it.
+	behavior._cooldown = 99.0
+	behavior._next = MatronBehavior.Attack.NONE
+	behavior._begin(mercy, MatronBehavior.Attack.LIGHTS_OUT, false)
+	await _wait(behavior.LIGHTS_OUT_WINDUP + 0.1)
+	var dark: Array = _props_in(view, LightsOut)
+	_check(dark.size() == 1, "Lights Out darkens the room")
+	if dark.is_empty():
+		return
+	_check(not dark[0].is_dark(), "it warns before going dark")
+	await _wait(behavior.LIGHTS_OUT_WARNING)
+	_check(dark[0].is_dark(), "then the room goes dark")
+	behavior._cooldown = 0.0
+	var waited := 0.0
+	while mercy._warning == null and waited < 2.0:
+		await _wait(0.05)
+		waited += 0.05
+	_check(behavior._attack == MatronBehavior.Attack.SEDATIVE, "in the dark she only throws syringes")
+	_check(mercy._warning_layer.z_index + mercy.z_index > LightsOut.Z, "her warning draws above the dark")
+	var probe := GroundStrike.new()
+	probe.setup(mercy, 10.0, 0.5)
+	_check(probe.z_index > LightsOut.Z, "ground marks draw above the dark")
+	probe.free()
+	await _wait(behavior.LIGHTS_OUT_TIME + LightsOut.FADE_OUT + 0.2)
+	_check(_props_in(view, LightsOut).is_empty(), "the lights come back on")
+	# The dark lifts at once when she falls.
+	behavior._since_lights_out = 99.0
+	behavior._cooldown = 99.0
+	behavior._next = MatronBehavior.Attack.NONE
+	behavior._begin(mercy, MatronBehavior.Attack.LIGHTS_OUT, false)
+	await _wait(behavior.LIGHTS_OUT_WINDUP + 0.3)
+	mercy.take_damage(INF, Vector2.ZERO)
+	await _wait(LightsOut.FADE_OUT + 0.2)
+	_check(_props_in(view, LightsOut).is_empty(), "the dark ends when she falls")
+	await _dismiss_all()
