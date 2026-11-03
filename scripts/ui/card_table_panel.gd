@@ -18,6 +18,11 @@ const FELT_SIZE := Vector2(500, 150)
 const BUTTON_FONT_SIZE := 11
 const TITLE_FONT_SIZE := 14
 const INFO_FONT_SIZE := 10
+# The overlay covers most of the screen, so it hides the room behind it: the room's own table names
+# and prompts would otherwise show through under the buttons.
+const PANEL_BACK := Color(0.08, 0.06, 0.1, 0.96)
+const PANEL_EDGE := Color("e0b04a")
+const PANEL_PADDING := 6
 const FELT := Color("1f6b40")
 const FELT_EDGE := Color("0c3a22")
 const FELT_TEXT := Color("f4efe2")
@@ -130,6 +135,10 @@ func _ready() -> void:
 	var panel := PanelContainer.new()
 	panel.position = PANEL_POSITION
 	panel.custom_minimum_size = PANEL_SIZE
+	var back := _make_box(PANEL_BACK)
+	back.border_color = PANEL_EDGE
+	back.set_content_margin_all(PANEL_PADDING)
+	panel.add_theme_stylebox_override("panel", back)
 	add_child(panel)
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 3)
