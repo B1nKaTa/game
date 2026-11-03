@@ -72,6 +72,7 @@ func _explode() -> void:
 	BreakableBlock.smash(get_tree(), global_position, BLAST_RADIUS, BreakableBlock.SOURCE_BLAST)
 	ReinforcedRock.blast(get_tree(), global_position, BLAST_RADIUS, level)
 	SecretWall.blast(get_tree(), global_position, BLAST_RADIUS)
+	Chest.blast(get_tree(), global_position, BLAST_RADIUS)
 	if is_instance_valid(_player) and global_position.distance_to(_player.feet().global_position) <= BLAST_RADIUS:
 		_player.take_hit(PLAYER_DAMAGE)
 	exploded.emit()

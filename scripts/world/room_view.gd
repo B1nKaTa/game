@@ -24,9 +24,12 @@ const RECIPE_PROMPT := "Take recipe"
 const FREE_COLOR := Color("67f0d0")
 const KEY_COLOR := Color("ece9e0")
 const BOMB_COLOR := Color("ff9a3c")
-const CHEST_COLOR := Color("a8692f")
-const CHEST_LABEL := "Locked Chest"
-const CHEST_PROMPT := "Use Slip"
+# What a mimic chest wakes into. It pays well and drops a Slip, and only floors 2 and deeper roll one.
+const MIMIC: EnemyDef = preload("res://data/enemies/mimic.tres")
+const MIMIC_SHOUT := "Surprise!"
+const MIMIC_SHOUT_TIME := 1.2
+# Where a Gilded Urn's two items wait, in cells from the urn: one each side, a row lower.
+const URN_CHOICE_OFFSETS: Array[Vector2i] = [Vector2i(-2, 1), Vector2i(2, 1)]
 const PENSION_COLOR := Color("ffd24a")
 const ITEM_COLOR := Color("7dd3fc")
 const HEAL_COLOR := Color("e4524f")
@@ -62,6 +65,8 @@ var _spawned := 0
 # The cells a floor boss's item choice was laid on, so later things placed in the room keep clear.
 var _choice_cells: Array[Vector2i] = []
 var _choice_group: ChoiceGroup
+# Each opened Gilded Urn's pair of items. Kept here, since a signal alone would not keep a group alive.
+var _urn_groups: Array[ChoiceGroup] = []
 
 
 func setup(room: FloorRoom, map: FloorMap, floor_def: FloorDef, run: RunState, player: Player, rng: RandomNumberGenerator, progress: FloorProgress, bank: Node) -> void:
@@ -467,6 +472,8 @@ func _on_enemy_defeated(enemy: Enemy) -> void:
 	if enemy.coin_value() > 0:
 		_drop_coin(spot, enemy.coin_value())
 	_last_death_at = spot
+	if enemy.def.drops_key and not enemy.is_summon:
+		_drop_consumable(spot, RoomRules.DROP_KEY)
 	if _room.room_type == RoomLayout.TYPE_MINI_BOSS and enemy.def.is_boss:
 		_drop_consumable(spot, RoomRules.DROP_KEY)
 		if _rng.randf() < RoomRules.MINI_BOSS_RECIPE_CHANCE:
@@ -532,7 +539,7 @@ func _create_rewards() -> void:
 	for cell in _room.layout.cells_of("T"):
 		_create_treasure(cell)
 	for cell in _room.layout.cells_of("C"):
-		_create_chest(cell)
+		_create_chest(cell, ChestRules.roll(_floor_def.chest_odds(), _rng.randf()))
 	if _room.room_type == RoomLayout.TYPE_SHOP:
 		_create_shop()
 	if _room.room_type == RoomLayout.TYPE_VAULT:
@@ -678,15 +685,93 @@ func _drop_boss_choice(at: Vector2) -> void:
 	boss_choice_dropped.emit(_choice_cells.size())
 
 
-func _create_chest(cell: Vector2i) -> void:
-	var chest := _add_pickup(RoomBackdrop.cell_center(cell), CHEST_LABEL, CHEST_COLOR, func(): _open_chest(cell), true)
-	chest.prompt = CHEST_PROMPT
-	chest.can_take = func(): return _run.keys > 0
+# One chest of the given kind on a C cell. ChestRules holds what each kind costs and pays.
+func _create_chest(cell: Vector2i, kind: String) -> Chest:
+	var chest := Chest.new()
+	chest.kind = kind
+	chest.setup(ChestRules.display_name(kind), PENSION_COLOR, _player.feet(), kind != ChestRules.SAFE)
+	chest.prompt = ChestRules.prompt_for(kind)
+	chest.position = RoomBackdrop.cell_center(cell)
+	match kind:
+		ChestRules.LUNCHBOX:
+			chest.collected.connect(_open_lunchbox.bind(cell))
+		ChestRules.URN:
+			chest.can_take = func(): return ChestRules.can_open(kind, _run.keys)
+			chest.collected.connect(_open_urn.bind(cell))
+		ChestRules.SAFE:
+			chest.blasted_open.connect(_open_safe)
+		ChestRules.MIMIC:
+			# It shows a Locked Chest's prompt rules, so nothing gives it away but its breathing.
+			chest.can_take = func(): return ChestRules.can_open(ChestRules.LOCKED, _run.keys)
+			chest.woke.connect(_wake_mimic)
+		_:
+			chest.can_take = func(): return ChestRules.can_open(ChestRules.LOCKED, _run.keys)
+			chest.collected.connect(_open_locked.bind(cell))
+	add_child(chest)
+	return chest
 
 
-func _open_chest(cell: Vector2i) -> void:
-	if _run.use_key():
+func _spend_slips(count: int) -> bool:
+	if _run.keys < count:
+		return false
+	for i in count:
+		_run.use_key()
+	return true
+
+
+# Free to open: a little Pension, and now and then a small potion or a Thermos.
+func _open_lunchbox(cell: Vector2i) -> void:
+	var at := RoomBackdrop.cell_center(cell)
+	_drop_coin(at, ChestRules.lunchbox_pension(_floor_def.treasure_pension))
+	var extra := ChestRules.lunchbox_extra(_rng.randf())
+	if extra != RoomRules.DROP_NONE:
+		_drop_consumable(at, extra)
+	notice.emit("Someone's lunch. Still warm, somehow.")
+
+
+func _open_locked(cell: Vector2i) -> void:
+	if _spend_slips(ChestRules.slips_needed(ChestRules.LOCKED)):
 		_create_treasure(cell)
+
+
+# Two Slips buy a pick of two items from the run's usual pool. Taking one clears the other away.
+func _open_urn(cell: Vector2i) -> void:
+	if not _spend_slips(ChestRules.slips_needed(ChestRules.URN)):
+		return
+	var picked := RoomRules.pick_items(Content.items(), _run, ChestRules.URN_CHOICES, _rng)
+	var wanted: Array[Vector2i] = []
+	for i in picked.size():
+		wanted.append(cell + URN_CHOICE_OFFSETS[i])
+	var taken: Array[Vector2i] = [cell]
+	var spots := _room.layout.open_spots_near(wanted, taken)
+	if spots.is_empty():
+		_drop_coin(RoomBackdrop.cell_center(cell), ChestRules.urn_fallback_pension(_floor_def.treasure_pension))
+		return
+	var group := ChoiceGroup.new()
+	_urn_groups.append(group)
+	for i in spots.size():
+		var item := picked[i]
+		_run.promise(item)
+		var pickup := _add_item_pickup(RoomBackdrop.cell_center(spots[i]), item)
+		group.add(pickup)
+		pickup.collected.connect(group.take.bind(pickup))
+	notice.emit("The urn holds two things. Take one.")
+
+
+# Only the player's Thermos gets here. The box bursts into a pile of coins.
+func _open_safe(at: Vector2) -> void:
+	for amount in ChestRules.coin_split(ChestRules.safe_pension(_floor_def.treasure_pension), ChestRules.SAFE_COINS):
+		_drop_coin(at, amount)
+	notice.emit("The safe bursts open!")
+
+
+# Touched, the chest was never a chest. It waits a moment, as any enemy does when a room starts,
+# so its first lunge always shows its warning in full.
+func _wake_mimic(at: Vector2) -> void:
+	var mimic := _spawn_enemy(MIMIC, at)
+	mimic.wait_for_room_start()
+	mimic.say(MIMIC_SHOUT, MIMIC_SHOUT_TIME)
+	notice.emit("That chest has teeth!")
 
 
 func _create_item_choice(cells: Array[Vector2i]) -> void:

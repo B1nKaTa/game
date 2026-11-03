@@ -27,6 +27,13 @@ func _counts(odds: Dictionary, rolls: int, seed_value: int) -> Dictionary:
 	return counts
 
 
+func _chest(kind: String) -> Chest:
+	var chest := Chest.new()
+	chest.kind = kind
+	chest.setup(ChestRules.display_name(kind), Color.WHITE, null, kind != ChestRules.SAFE)
+	return chest
+
+
 # --- the odds, floor by floor ---
 
 func test_every_floor_names_odds_for_every_kind() -> void:
@@ -155,6 +162,96 @@ func test_coins_split_evenly_and_never_into_nothing() -> void:
 func test_an_urn_offers_two_items_or_pays_when_none_are_left() -> void:
 	assert_eq(ChestRules.URN_CHOICES, 2)
 	assert_eq(ChestRules.urn_fallback_pension(8), 16)
+
+
+func test_the_mimic_pays_well_drops_a_slip_and_warns_first() -> void:
+	var mimic: EnemyDef = load("res://data/enemies/mimic.tres")
+	assert_eq(mimic.id, "mimic")
+	assert_true(mimic.drops_key)
+	assert_false(mimic.is_boss)
+	var intern: EnemyDef = load("res://data/enemies/intern_reaper.tres")
+	assert_true(mimic.pension_drop >= intern.pension_drop * 4, "pays well against a regular enemy")
+	assert_true(MimicBehavior.WINDUP >= 0.5, "its lunge is warned long enough to react")
+	assert_true(MimicBehavior.lane_length() > 0.0, "and shows a lane")
+	assert_false(MimicBehavior.should_lunge(30.0, 0.2), "rests first")
+	assert_false(MimicBehavior.should_lunge(MimicBehavior.START_RANGE + 1.0, 0.0), "out of reach")
+	assert_true(MimicBehavior.should_lunge(30.0, 0.0))
+
+
+func test_no_regular_enemy_drops_a_slip() -> void:
+	for path: String in FLOOR_ONE + FLOOR_TWO:
+		var def: FloorDef = load(path)
+		for enemy: EnemyDef in def.enemies:
+			assert_false(enemy.drops_key, enemy.id)
+
+
+# --- the chest itself ---
+
+func test_a_safe_ignores_the_key_and_opens_to_a_blast() -> void:
+	var safe := _chest(ChestRules.SAFE)
+	var opened := [0]
+	safe.blasted_open.connect(func(_at: Vector2): opened[0] += 1)
+	var taken := [0]
+	safe.collected.connect(func(): taken[0] += 1)
+	safe.collect()
+	assert_eq(taken[0], 0, "the interact key does nothing")
+	assert_false(safe.is_queued_for_deletion())
+	assert_eq(Chest.blast_among([safe], Vector2(500, 500), 56.0), 0, "a far blast misses")
+	assert_eq(Chest.blast_among([safe], Vector2(30, 0), 56.0), 1)
+	assert_eq(opened[0], 1)
+	assert_false(safe.blast_open(), "opens once")
+	safe.free()
+
+
+func test_a_mimic_wakes_when_reached_for() -> void:
+	var mimic := _chest(ChestRules.MIMIC)
+	var woke := [0]
+	mimic.woke.connect(func(_at: Vector2): woke[0] += 1)
+	var taken := [0]
+	mimic.collected.connect(func(): taken[0] += 1)
+	mimic.collect()
+	assert_eq(woke[0], 1)
+	assert_eq(taken[0], 0, "it gives nothing away by being opened")
+	assert_true(mimic.is_queued_for_deletion())
+	assert_false(mimic.wake(), "wakes once")
+	mimic.free()
+
+
+func test_a_blast_wakes_a_mimic_but_leaves_honest_chests() -> void:
+	var mimic := _chest(ChestRules.MIMIC)
+	var locked := _chest(ChestRules.LOCKED)
+	var lunch := _chest(ChestRules.LUNCHBOX)
+	assert_eq(Chest.blast_among([mimic, locked, lunch], Vector2.ZERO, 56.0), 1)
+	assert_true(mimic.is_open())
+	assert_false(locked.is_queued_for_deletion())
+	assert_false(lunch.is_queued_for_deletion())
+	mimic.free()
+	locked.free()
+	lunch.free()
+
+
+func test_a_locked_chest_waits_for_its_slip() -> void:
+	var locked := _chest(ChestRules.LOCKED)
+	var slips := [0]
+	locked.can_take = func(): return ChestRules.can_open(ChestRules.LOCKED, slips[0])
+	var taken := [0]
+	locked.collected.connect(func(): taken[0] += 1)
+	locked.collect()
+	assert_eq(taken[0], 0, "no Slip, no opening")
+	assert_false(locked.is_queued_for_deletion())
+	slips[0] = 1
+	locked.collect()
+	assert_eq(taken[0], 1)
+	locked.free()
+
+
+func test_a_lunchbox_opens_for_free() -> void:
+	var lunch := _chest(ChestRules.LUNCHBOX)
+	var taken := [0]
+	lunch.collected.connect(func(): taken[0] += 1)
+	lunch.collect()
+	assert_eq(taken[0], 1)
+	lunch.free()
 
 
 func test_shipped_rooms_still_hold_chest_cells() -> void:

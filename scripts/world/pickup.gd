@@ -121,10 +121,15 @@ func _pay() -> void:
 
 
 func _draw() -> void:
-	draw_circle(Vector2.ZERO, 8.0, _color)
-	draw_arc(Vector2.ZERO, 8.0, 0.0, TAU, 16, Color.BLACK, 1.0)
+	_draw_body()
 	if _flying:
 		return
 	draw_string(ThemeDB.fallback_font, Vector2(-18, -12), _label, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color.WHITE)
 	if _prompt_shown:
 		draw_string(ThemeDB.fallback_font, Vector2(-18, 22), KeyBindings.with_key("interact", prompt), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("ffd24a"))
+
+
+# A plain coloured disc. Pickups with a shape of their own, such as chests, draw that instead.
+func _draw_body() -> void:
+	draw_circle(Vector2.ZERO, 8.0, _color)
+	draw_arc(Vector2.ZERO, 8.0, 0.0, TAU, 16, Color.BLACK, 1.0)

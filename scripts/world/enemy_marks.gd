@@ -33,6 +33,11 @@ const HARD_HAT := Color("f2c230")
 const HAT_BRIM := Color("8a6a12")
 const STOVEPIPE := Color("2a2426")
 const STOVEPIPE_BAND := Color("ff8a2a")
+const JAW_LID := Color("c9884a")
+const JAW_MOUTH := Color("3a1418")
+const JAW_TEETH := Color("f4f1e6")
+const JAW_TONGUE := Color("e07a8a")
+const JAW_LOCK := Color("e2b33c")
 
 var _def: EnemyDef
 var _facing := Vector2.RIGHT
@@ -121,6 +126,14 @@ func _draw() -> void:
 			draw_rect(Rect2(-half.x * 0.45, -half.y - 14.0, half.x * 0.9, 15.0), STOVEPIPE)
 			draw_rect(Rect2(-half.x * 0.45, -half.y - 4.0, half.x * 0.9, 2.0), STOVEPIPE_BAND)
 			draw_rect(Rect2(-half.x * 0.7, -half.y, half.x * 1.4, 3.0), STOVEPIPE)
+		"chest_jaw":
+			# The lid gapes over a row of teeth and a tongue, with the gold lock still on it.
+			draw_rect(Rect2(-half.x, -half.y, half.x * 2.0, 5.0), JAW_LID)
+			draw_rect(Rect2(-half.x, -half.y + 5.0, half.x * 2.0, 4.0), JAW_MOUTH)
+			for i in 5:
+				draw_rect(Rect2(-half.x + 2.0 + i * (half.x * 2.0 - 4.0) / 5.0, -half.y + 5.0, 2.5, 2.5), JAW_TEETH)
+			draw_rect(Rect2(-3.0, -half.y + 7.0, 6.0, 2.0), JAW_TONGUE)
+			draw_rect(Rect2(-2.0, -half.y + 1.0, 4.0, 3.0), JAW_LOCK)
 	if _def.shield_half_angle > 0.0:
 		var reach := maxf(half.x, half.y) + SHIELD_GAP
 		var half_arc := deg_to_rad(_def.shield_half_angle)

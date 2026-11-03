@@ -26,3 +26,5 @@ extends Resource
 @export var wall_mounted: bool = false
 # What shows of it while it hides underground or in smoke: "mound" or "smoke".
 @export var hidden_look: String = "mound"
+# Drops a Permission Slip when it falls, as a mimic does. Summons never drop one.
+@export var drops_key: bool = false
