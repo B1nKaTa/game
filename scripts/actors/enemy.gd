@@ -432,7 +432,8 @@ func _plan_route() -> void:
 	if next == WalkGrid.NO_CELL or next == WalkGrid.cell_of(goal):
 		return
 	_routing = true
-	_waypoint = RoomBackdrop.cell_center(next)
+	# Its collision box is 0.8 of its body, plus a hair, so a big body aims where it really fits.
+	_waypoint = walk_grid.fit_point(next, def.body_size * 0.4 + Vector2(0.5, 0.5))
 
 
 func target_motion() -> Vector2:

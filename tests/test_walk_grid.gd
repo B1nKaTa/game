@@ -94,3 +94,16 @@ func test_standing_on_a_cell_counted_as_blocked_still_finds_a_way_off() -> void:
 	var next := grid.next_cell(Vector2i(2, 1), Vector2i(4, 1))
 	assert_true(grid.is_open(next), str(next))
 	assert_eq(next, Vector2i(3, 1))
+
+
+# The Regional Reaper's collision box is 32 by 38.4, taller than a cell, so it stuck for good
+# pressing its head into the corner above a two-cell gap while aiming at the cell's middle.
+func test_a_tall_body_aims_where_it_fits_through_a_two_cell_gap() -> void:
+	var grid := _grid(["#######", "#..#..#", "#..#..#", "#.....#", "#.....#", "#######"])
+	var half := Vector2(16.5, 19.7)
+	var tile := float(RoomBackdrop.TILE)
+	var aim := grid.fit_point(Vector2i(3, 3), half)
+	assert_true(aim.y - half.y >= 3 * tile - 0.01, "clear of the wall above, %s" % str(aim))
+	assert_true(aim.y + half.y <= 5 * tile + 0.01, "clear of the wall below, %s" % str(aim))
+	var open := _grid(WALLED).fit_point(Vector2i(2, 2), half)
+	assert_true(open.is_equal_approx(_at(Vector2i(2, 2))), "in the open it aims at the middle")

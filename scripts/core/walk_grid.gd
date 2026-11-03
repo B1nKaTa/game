@@ -84,6 +84,25 @@ func next_cell(from: Vector2i, goal: Vector2i) -> Vector2i:
 	return best
 
 
+# Where in a cell a body of this half size should aim, so it fits between whatever blocks the
+# cells beside it. A body taller than a cell aims off the middle of a two-cell gap, since aiming
+# at a cell's middle would press its head into the wall above and stop it there for good.
+func fit_point(cell: Vector2i, half_size: Vector2) -> Vector2:
+	var tile := float(RoomBackdrop.TILE)
+	var center := RoomBackdrop.cell_center(cell)
+	var left := cell.x * tile if not is_open(cell + Vector2i.LEFT) else (cell.x - 1) * tile
+	var right := (cell.x + 1) * tile if not is_open(cell + Vector2i.RIGHT) else (cell.x + 2) * tile
+	var top := cell.y * tile if not is_open(cell + Vector2i.UP) else (cell.y - 1) * tile
+	var bottom := (cell.y + 1) * tile if not is_open(cell + Vector2i.DOWN) else (cell.y + 2) * tile
+	return Vector2(_fit(center.x, left, right, half_size.x), _fit(center.y, top, bottom, half_size.y))
+
+
+static func _fit(middle: float, low: float, high: float, half: float) -> float:
+	if high - low < half * 2.0:
+		return (low + high) / 2.0
+	return clampf(middle, low + half, high - half)
+
+
 # How many steps a cell is from the goal last asked for, or UNREACHED.
 func steps_to_goal(cell: Vector2i) -> int:
 	if cell.x < 0 or cell.y < 0 or cell.x >= size.x or cell.y >= size.y or _steps.is_empty():
