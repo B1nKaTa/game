@@ -138,3 +138,26 @@ func _draw_placeholder(kind: String, variant: int, at: Vector2) -> void:
 			draw_colored_polygon(lid, p.coffin_wood)
 			draw_polyline(lid + PackedVector2Array([lid[0]]), Color.BLACK, 1.0)
 			draw_line(Vector2(-6, -1), Vector2(11, -1), p.coffin_lid, 2.0)
+		RoomDecor.BENCH:
+			# Slats on two iron legs, seen from above.
+			var turned := variant % 2 == 1
+			if turned:
+				draw_set_transform(at, PI / 2.0)
+			for slat in 3:
+				draw_rect(Rect2(-13, -6 + slat * 4, 26, 3), p.bench.lightened(0.08 * slat))
+			draw_rect(Rect2(-13, -6, 26, 11), Color.BLACK, false, 1.0)
+			for x in [-10.0, 10.0]:
+				draw_line(Vector2(x, 5), Vector2(x, 9), Color("3c4048"), 2.0)
+		RoomDecor.FOOD_TABLE:
+			# A round food court table, two chairs and a forgotten tray.
+			for side in [-1.0, 1.0]:
+				draw_rect(Rect2(side * 11 - 3, -3, 6, 6), Color("d9453b"))
+			draw_circle(Vector2.ZERO, 8.0, p.food_table)
+			draw_arc(Vector2.ZERO, 8.0, 0.0, TAU, 16, Color.BLACK, 1.0)
+			draw_rect(Rect2(-4, -3, 7, 5), Color("f2c230"))
+			draw_circle(Vector2(3, 3), 1.5, Color("d9453b"))
+		RoomDecor.FLUORESCENT:
+			# The panel's glare lying on the polished floor, a long pale strip.
+			draw_rect(Rect2(-12, -4, 24, 8), Color(p.fluorescent, 0.16))
+			draw_rect(Rect2(-9, -2, 18, 4), Color(p.fluorescent, 0.22))
+			draw_line(Vector2(-10, 0), Vector2(10, 0), Color(1, 1, 1, 0.3), 1.0)

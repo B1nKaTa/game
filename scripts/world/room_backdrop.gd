@@ -79,6 +79,14 @@ func _draw() -> void:
 						var left := tile.position.x + board * TILE / 4.0
 						draw_line(Vector2(left, tile.position.y), Vector2(left, tile.end.y), _palette.brick_line, 1.0)
 					draw_rect(Rect2(tile.position + Vector2(0, TILE * 0.3), Vector2(TILE, 3)), _palette.wall_line)
+				# Closed shop shutters: thin slats across, with a bar and a lock at the foot.
+				if _palette.wall_pattern == 3:
+					for slat in 6:
+						var top := tile.position.y + 3.0 + slat * 4.0
+						draw_line(Vector2(tile.position.x, top), Vector2(tile.end.x, top), _palette.brick_line, 1.0)
+					draw_rect(Rect2(tile.position + Vector2(0, TILE - 5), Vector2(TILE, 3)), _palette.wall_line)
+					if posmod(x, 3) == 1:
+						draw_rect(Rect2(tile.position + Vector2(TILE / 2.0 - 2, TILE - 6), Vector2(4, 4)), _palette.carpet_motif)
 				continue
 			draw_rect(tile, _palette.floor_color(Vector2i(x, y), _seed))
 			# A patterned floor lays carpet on its middle tone, woven and seamless, and tiles the rest.
@@ -98,6 +106,13 @@ func _draw() -> void:
 				for corner in [Vector2(2, 2), Vector2(TILE - 4, 2), Vector2(2, TILE - 4), Vector2(TILE - 4, TILE - 4)]:
 					draw_rect(Rect2(tile.position + corner, Vector2(2, 2)), _palette.speckle)
 				draw_rect(tile, _palette.grout, false, 1.0)
+				continue
+			# Polished mall tile: each tile's own grout line and a square of reflected light in a corner.
+			# No streaks, so it never reads as a wet floor, and no arrows or dark bands, as a strip has.
+			if _palette.floor_pattern == 3:
+				draw_rect(tile, _palette.grout, false, 1.0)
+				draw_rect(Rect2(tile.position + Vector2(3, 3), Vector2(9, 9)), _palette.carpet_motif)
+				draw_rect(Rect2(tile.position + Vector2(3, 3), Vector2(4, 4)), _palette.speckle)
 				continue
 			draw_line(tile.position, tile.position + Vector2(TILE, 0), _palette.grout, 1.0)
 			draw_line(tile.position, tile.position + Vector2(0, TILE), _palette.grout, 1.0)

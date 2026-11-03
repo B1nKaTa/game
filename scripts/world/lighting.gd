@@ -10,6 +10,9 @@ const FILL_SCALE := 2.6
 const STAINED_GLASS_COLORS: Array[Color] = [Color(0.95, 0.35, 0.45), Color(0.4, 0.55, 1.0), Color(0.95, 0.8, 0.35), Color(0.45, 0.85, 0.5), Color(0.75, 0.45, 0.95)]
 const STAINED_GLASS_ENERGY := 0.55
 const STAINED_GLASS_SCALE := 0.9
+# A fluorescent panel overhead, cool and even.
+const FLUORESCENT_ENERGY := 0.6
+const FLUORESCENT_SCALE := 1.2
 
 
 # The same spot always gets the same colour, so a room looks the same each time it is drawn.
@@ -75,6 +78,8 @@ static func add_decor_light(parent: Node, kind: String, at: Vector2, palette: Ro
 		light = make_light(palette.furnace_fire, 1.0, 1.6)
 	elif kind == RoomDecor.STAINED_GLASS:
 		light = make_light(stained_glass_color(at), STAINED_GLASS_ENERGY, STAINED_GLASS_SCALE)
+	elif kind == RoomDecor.FLUORESCENT:
+		light = make_light(palette.fluorescent, FLUORESCENT_ENERGY, FLUORESCENT_SCALE)
 	else:
 		light = make_light(palette.torch if is_torch else palette.lantern_light, 1.0 if is_torch else 0.8, 1.4 if is_torch else 1.1)
 	light.position = at

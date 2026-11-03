@@ -857,6 +857,14 @@ The same work as Task 14, for `data/floors/golden_years_mall.tres` and `data/roo
 - **Strips:** in some rooms, never within 2 cells of a door, and some rooms reverse.
 - **Checks:** the income check, 3 full loops when testing is allowed, and screenshots against the Funeral Parlour. Then update the docs, push and stop for the user to play.
 
+- [x] **Palette, props and decor.** Committed with the layouts and the floor def in one commit for the task, as the build brief asked. Not yet seen in a window.
+  - **Props:** `ShoppingCart` (`a`) and `GumballMachine` (`z`) are `Barrel`s, `MallPlanter` (`d`) and `MallFountain` (`q`, rippling water) are `RockBlock`s that can hide a coin at the furniture rate, and `SaleSign` (`e`) breaks like grass. Their colours are new palette fields.
+  - **Look:** `floor_pattern = 3`, polished tile with a square of reflected light on each tile and no streaks, so it never reads as a wet floor. `wall_pattern = 3`, the slats of closed shop shutters. Decor `bench`, `food_table` and `fluorescent` (a light, cool and even, flickering at 0.12), with potted plants.
+- [x] **Layouts.** 33 layouts in `data/rooms/golden_years_mall/`, validated by `tests/test_mall_floor.gd` through `RoomLayout.validate()`, enemy counts and vault spots. They are the Funeral Parlour's room shapes and enemy cells with the Mall's props: pew runs became planters, and those in a room's middle third fountains, carts became shopping carts and gumball machines, stands became sale signs, and wall pipes plain wall. Escalator strips run in 10 rooms, 5 of which reverse, and both floor boss rooms have strips for the Santa's conveyor control.
+- [x] **Floor def.** The three new enemies and the two returning ones (weights 3, 4, 3, 3, 2), Gloria, the Mall Santa, Task 6's multipliers and chest odds, and a treasure worth 16. The shop and chest tests cover the folder too. 930 tests pass.
+- [ ] **Income, full loops and screenshots.** Not done: the brief allowed headless tests only, and an income probe runs real scenes. The rooms hold the Parlour's enemy cells and props, so a full clear should pay about what the Parlour's does.
+- [x] **Docs.** `docs/playtest-notes.md` and `LESSONS.md` updated, pushed; the play waits for the user.
+
 ---
 
 ## Step 5: Balance and review

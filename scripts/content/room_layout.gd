@@ -68,7 +68,7 @@ const SYMBOL_CRACK := "k"
 const SYMBOL_TORCH := "t"
 const SYMBOL_LANTERN := "l"
 const SYMBOL_STUMP := "m"
-const DECOR_SYMBOLS := "gnwuktlmfprc"
+const DECOR_SYMBOLS := "gnwuktlmfprce"
 # A freshly mopped cell: everyone walks on it, Grandpa and chargers slide. Kept well clear of doors.
 const SYMBOL_WET := "W"
 const WET_DOOR_CLEARANCE := 2
@@ -94,13 +94,20 @@ const SYMBOL_STRIP_UP := "^"
 const SYMBOL_STRIP_DOWN := "v"
 const STRIP_SYMBOLS := "><^v"
 const STRIP_DOOR_CLEARANCE := 2
-const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc><^v"
+# Mall stock. A shopping cart and a gumball machine break like barrels, a planter and a fountain like
+# rocks, and a sale sign blocks nothing and breaks to anything, like grass.
+const SYMBOL_CART := "a"
+const SYMBOL_GUMBALL := "z"
+const SYMBOL_PLANTER := "d"
+const SYMBOL_FOUNTAIN := "q"
+const SYMBOL_SALE_SIGN := "e"
+const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc><^vazdqe"
 # Nothing can walk through these, so nothing may be dropped or summoned on them.
-const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGojh"
+const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGojhazdq"
 # Routes may not need a hole or a wall, and may not need a bomb for a crate or a rock.
 const WALL_LIKE := "#lo"
 const WALLS := "#lVo"
-const WALLS_AND_BOMB_ONLY := "#lVXOAYKDMoh"
+const WALLS_AND_BOMB_ONLY := "#lVXOAYKDMohdq"
 const MUST_REACH_WITHOUT_BREAKING := "EBIHSPG"
 # A vault lays this many labeled pickups out in the open, this many cells apart so names never overlap.
 const VAULT_EXTRAS := 3

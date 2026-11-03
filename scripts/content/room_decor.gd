@@ -24,6 +24,10 @@ const FURNACE := "furnace"
 const STAINED_GLASS := "stained_glass"
 # A coffin resting on a draped stand, against the panelling or out on the floor.
 const COFFIN_STAND := "coffin_stand"
+# A mall bench, a food court table with its chairs, and a fluorescent panel's pale pool of light.
+const BENCH := "bench"
+const FOOD_TABLE := "food_table"
+const FLUORESCENT := "fluorescent"
 const SYMBOL_KINDS := {
 	RoomLayout.SYMBOL_GRASS: GRASS,
 	RoomLayout.SYMBOL_BONES: BONES,
@@ -49,7 +53,7 @@ static func noise(cell: Vector2i, seed_value: int) -> float:
 
 
 static func is_light(kind: String) -> bool:
-	return kind == TORCH or kind == LANTERN or kind == FURNACE or kind == STAINED_GLASS
+	return kind == TORCH or kind == LANTERN or kind == FURNACE or kind == STAINED_GLASS or kind == FLUORESCENT
 
 
 # Every piece of decor in a room: {kind, cell, variant, offset}. Lanterns sit on wall cells.
