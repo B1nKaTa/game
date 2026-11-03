@@ -84,3 +84,15 @@ func _draw_placeholder(kind: String, variant: int, at: Vector2) -> void:
 			draw_line(Vector2(0, 9), Vector2(lean, -8), p.sapling, 2.0)
 			draw_line(Vector2(lean * 0.4, 1), Vector2(lean + 5, -5), p.sapling, 1.0)
 			draw_line(Vector2(lean * 0.6, -2), Vector2(lean - 5, -7), p.sapling, 1.0)
+		RoomDecor.PLANT:
+			draw_rect(Rect2(-5, 2, 10, 8), p.plant_pot)
+			draw_rect(Rect2(-5, 2, 10, 8), Color.BLACK, false, 1.0)
+			for leaf in [Vector2(-7, -6), Vector2(0, -10), Vector2(7, -6), Vector2(-3, -3), Vector2(4, -2)]:
+				draw_line(Vector2(0, 2), leaf, p.plant_leaf, 2.0)
+				draw_circle(leaf, 2.0, p.plant_leaf)
+		RoomDecor.IV_STAND:
+			draw_line(Vector2(0, 10), Vector2(0, -12), p.iv_stand, 1.0)
+			draw_line(Vector2(-6, 10), Vector2(6, 10), p.iv_stand, 1.0)
+			draw_line(Vector2(-4, -12), Vector2(4, -12), p.iv_stand, 1.0)
+			draw_rect(Rect2(1, -11, 5, 7), p.iv_bag)
+			draw_line(Vector2(3.5, -4), Vector2(3.5, 2), p.iv_bag, 1.0)

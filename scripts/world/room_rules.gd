@@ -36,6 +36,8 @@ const PILE_COIN_CHANCE := 0.12
 const ROCK_COIN_CHANCE := 0.3
 # A graveyard has far more stones than an office has rocks, so each one hides a coin less often.
 const GRAVESTONE_COIN_CHANCE := 0.1
+# A care home has many armchairs and beds, so each hides a coin about as rarely as a gravestone.
+const FURNITURE_COIN_CHANCE := 0.1
 # A small potion fills the potion slot. Its effect lives in the potion data, so it heals as that says.
 const POTION_NAME := "Small Potion"
 const SMALL_POTION_ID := "small_potion"
@@ -117,3 +119,7 @@ static func pick_recipe(all: Array[ItemDef], found: Dictionary, run: RunState, r
 	var picked := options[rng.randi_range(0, options.size() - 1)]
 	run.offer_recipe(picked.id)
 	return picked
+
+
+static func furniture_hides_coin(roll: float) -> bool:
+	return roll < FURNITURE_COIN_CHANCE

@@ -37,6 +37,16 @@ extends Resource
 @export var gravestone_moss := Color("5d7d45")
 @export var dead_tree := Color("41352b")
 @export var dead_tree_edge := Color("1d1712")
+# Care home furniture. Wheelchairs and trolleys break like barrels, armchairs and beds like rocks.
+@export var wheelchair := Color("5b6470")
+@export var wheelchair_seat := Color("7a9cc6")
+@export var tray := Color("d8d2c4")
+@export var tray_frame := Color("8b8f96")
+@export var tray_food := Color("d9a441")
+@export var armchair := Color("a8637a")
+@export var armchair_edge := Color("4a2532")
+@export var bed := Color("9aa3ad")
+@export var bed_sheet := Color("b9d4e6")
 @export_group("Decor")
 @export var grass := Color("557f48")
 @export var grass_cut := Color("3f5f38")
@@ -54,6 +64,16 @@ extends Resource
 @export var wet := Color(0.72, 0.88, 1.0, 0.3)
 @export var wet_shine := Color(1.0, 1.0, 1.0, 0.55)
 @export var caution := Color("f2c230")
+@export var vase := Color("5f8fb5")
+@export var vase_flower := Color("f08aa8")
+@export var vase_leaf := Color("5c8a4a")
+@export var plant_pot := Color("b0613f")
+@export var plant_leaf := Color("5f9a52")
+@export var iv_stand := Color("c7ccd4")
+@export var iv_bag := Color(0.75, 0.9, 1.0, 0.85)
+# 1 draws a small woven motif on the carpet patches of the floor, 0 leaves the floor plain.
+@export var floor_pattern := 0
+@export var carpet_motif := Color(1.0, 1.0, 1.0, 0.12)
 # How many free floor cells, as a fraction, get a piece of scatter, and how much each
 # kind is wanted compared with the others. A kind left out of the weights never appears.
 @export var decor_density := 0.07
@@ -75,12 +95,15 @@ func weight_of(kind: String) -> float:
 
 
 # Patches of floor lean one way, and every cell wobbles a little, so it never reads as a checkerboard.
-func floor_color(cell: Vector2i, seed_value: int) -> Color:
+# Which of the three floor tones a cell's patch takes: 0 for floor_a, 1 for floor_b, 2 for floor_c.
+func patch_of(cell: Vector2i, seed_value: int) -> int:
 	var patch_roll := RoomDecor.noise(Vector2i(floori(cell.x / 3.0), floori(cell.y / 3.0)), seed_value + 101)
-	var base := floor_a
 	if patch_roll >= 0.66:
-		base = floor_c
-	elif patch_roll >= 0.33:
-		base = floor_b
+		return 2
+	return 1 if patch_roll >= 0.33 else 0
+
+
+func floor_color(cell: Vector2i, seed_value: int) -> Color:
+	var base: Color = [floor_a, floor_b, floor_c][patch_of(cell, seed_value)]
 	var wobble := (RoomDecor.noise(cell, seed_value) - 0.5) * 2.0 * floor_jitter
 	return Color(clampf(base.r + wobble, 0.0, 1.0), clampf(base.g + wobble, 0.0, 1.0), clampf(base.b + wobble, 0.0, 1.0))

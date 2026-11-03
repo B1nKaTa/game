@@ -13,6 +13,8 @@ const LANTERN := "lantern"
 const STUMP := "stump"
 const MOSS := "moss"
 const SAPLING := "sapling"
+const PLANT := "plant"
+const IV_STAND := "iv_stand"
 const SYMBOL_KINDS := {
 	RoomLayout.SYMBOL_GRASS: GRASS,
 	RoomLayout.SYMBOL_BONES: BONES,

@@ -68,6 +68,12 @@ func _draw() -> void:
 				draw_line(tile.position + Vector2(0, TILE / 2.0), tile.position + Vector2(TILE, TILE / 2.0), _palette.wall_line, 1.0)
 				continue
 			draw_rect(tile, _palette.floor_color(Vector2i(x, y), _seed))
+			# A patterned floor lays carpet on its middle tone, woven and seamless, and tiles the rest.
+			if _palette.floor_pattern == 1 and _palette.patch_of(Vector2i(x, y), _seed) == 1:
+				var mid := tile.get_center()
+				draw_colored_polygon(PackedVector2Array([mid + Vector2(0, -6), mid + Vector2(6, 0), mid + Vector2(0, 6), mid + Vector2(-6, 0)]), _palette.carpet_motif)
+				draw_rect(Rect2(tile.position + Vector2(1, 1), Vector2(2, 2)), _palette.carpet_motif)
+				continue
 			draw_line(tile.position, tile.position + Vector2(TILE, 0), _palette.grout, 1.0)
 			draw_line(tile.position, tile.position + Vector2(0, TILE), _palette.grout, 1.0)
 			if RoomDecor.noise(Vector2i(x, y), _seed + 7) < 0.25:

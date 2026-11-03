@@ -44,6 +44,13 @@ const SYMBOL_PILE := "Z"
 # Graveyard props. A gravestone can hide a coin, and a dead tree is only in the way. Both break like a rock.
 const SYMBOL_GRAVESTONE := "A"
 const SYMBOL_DEAD_TREE := "Y"
+# Care home props. Wheelchairs and food trolleys break like barrels, armchairs and beds like rocks,
+# and a flower vase blocks nothing and breaks to anything, like grass.
+const SYMBOL_WHEELCHAIR := "J"
+const SYMBOL_TROLLEY := "F"
+const SYMBOL_ARMCHAIR := "K"
+const SYMBOL_BED := "D"
+const SYMBOL_VASE := "f"
 # Decor blocks nothing. Lanterns hang in the border wall, the rest lie on the floor.
 const SYMBOL_GRASS := "g"
 const SYMBOL_BONES := "n"
@@ -53,17 +60,17 @@ const SYMBOL_CRACK := "k"
 const SYMBOL_TORCH := "t"
 const SYMBOL_LANTERN := "l"
 const SYMBOL_STUMP := "m"
-const DECOR_SYMBOLS := "gnwuktlm"
+const DECOR_SYMBOLS := "gnwuktlmf"
 # A freshly mopped cell: everyone walks on it, Grandpa and chargers slide. Kept well clear of doors.
 const SYMBOL_WET := "W"
 const WET_DOOR_CLEARANCE := 2
-const ALLOWED := "#.EIHTBXCSPROQVZAYgnwuktlmW"
+const ALLOWED := "#.EIHTBXCSPROQVZAYgnwuktlmWJFKDf"
 # Nothing can walk through these, so nothing may be dropped or summoned on them.
-const SOLID_SYMBOLS := "#lXOQVPAY"
+const SOLID_SYMBOLS := "#lXOQVPAYJFKD"
 # Routes may not need a hole or a wall, and may not need a bomb for a crate or a rock.
 const WALL_LIKE := "#l"
 const WALLS := "#lV"
-const WALLS_AND_BOMB_ONLY := "#lVXOAY"
+const WALLS_AND_BOMB_ONLY := "#lVXOAYKD"
 const MUST_REACH_WITHOUT_BREAKING := "EBIHSPR"
 # A vault lays this many labeled pickups out in the open, this many cells apart so names never overlap.
 const VAULT_EXTRAS := 3
