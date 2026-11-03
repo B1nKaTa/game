@@ -731,7 +731,7 @@ Same models as Step 2.
 - **Damage:** a flare costs Grandpa 1 pill, deals 20 damage to enemies, and respects dodges like all damage.
 - **Burning ground:** hurts at most once per 0.6 s for each body standing in it.
 
-- [ ] **Step 1: Write failing tests:**
+- [x] **Step 1: Write failing tests:**
 
 ```gdscript
 extends TestCase
@@ -752,7 +752,7 @@ func test_an_offset_shifts_the_whole_cycle() -> void:
 
 These assume a flare occupies the last `flare` seconds of each period and a warning the `warn` seconds before it. State that in a comment in `vent_cycle.gd`.
 
-- [ ] **Step 2: Implement until the tests pass. Add a burning-ground test through `GroundStrike` if its logic is testable without the tree; otherwise cover it in the smoke loop. Look at it in a real window, then commit.**
+- [x] **Step 2: Implement until the tests pass. Add a burning-ground test through `GroundStrike` if its logic is testable without the tree; otherwise cover it in the smoke loop. Look at it in a real window, then commit.**
 
 ### Task 11: Furnace Works regular enemies
 
@@ -772,8 +772,8 @@ These assume a flare occupies the last `flare` seconds of each period and a warn
   - **Open time:** it stays visible for 2.5 s.
   - **Finishing rooms:** it must always come back out, as the Plot Holder does, so rooms can always finish. At most 3 per room.
 
-- [ ] **Step 1: Write failing tests** for `SteamValveBehavior.next_lane` cycling all 4 directions, `SootGhostBehavior.next_state` always going `SMOKE -> RISING` on its timer, and `StokerBehavior` keeping its distance. Mirror the Plot Holder tests in `tests/test_cemetery_enemies.gd`.
-- [ ] **Step 2: Implement until the tests pass, add 2 returning enemies in Furnace colors, look at each one in a real window, and commit one commit per enemy.**
+- [x] **Step 1: Write failing tests** for `SteamValveBehavior.next_lane` cycling all 4 directions, `SootGhostBehavior.next_state` always going `SMOKE -> RISING` on its timer, and `StokerBehavior` keeping its distance. Mirror the Plot Holder tests in `tests/test_cemetery_enemies.gd`.
+- [x] **Step 2: Implement until the tests pass, add 2 returning enemies in Furnace colors, look at each one in a real window, and commit one commit per enemy.**
 
 ### Task 12: Foreman Klaus, Shift Supervisor (mini boss)
 
@@ -786,8 +786,8 @@ These assume a flare occupies the last `flare` seconds of each period and a warn
 - **Steam lines:** 3 parallel lanes across the room, 0.9 s warned, with one gap lane safe. `steam_lanes(room_rect, direction, gap_index)` is a static.
 - **Summon:** 2 Stokers every 12 s.
 
-- [ ] **Step 1: Write failing tests** for `shockwave_hits` (inside the band yes, inside the ring's hollow no) and for `steam_lanes` (3 lanes, the gap missing, all inside the room).
-- [ ] **Step 2: Implement, look at it in a real window, and commit.**
+- [x] **Step 1: Write failing tests** for `shockwave_hits` (inside the band yes, inside the ring's hollow no) and for `steam_lanes` (3 lanes, the gap missing, all inside the room).
+- [x] **Step 2: Implement, look at it in a real window, and commit.**
 
 ### Task 13: Old Smokey, Chief Stoker (floor boss)
 
@@ -802,8 +802,8 @@ These assume a flare occupies the last `flare` seconds of each period and a warn
 - **Bellows:** a 0.8 s warned lane, then a push of 260 px/s for 0.5 s toward the boss. It does no damage, and dodging cancels the push.
 - **Second phase:** vents run at a 0.75× period and burning ground lasts 1.5× as long.
 
-- [ ] **Step 1: Write failing tests** for `in_cone`, for `safe_pattern` (over 200 seeds a safe path always exists and at least half the vents flare), and for the second phase's period and linger multipliers.
-- [ ] **Step 2: Implement, look at every attack in a real window, and commit.**
+- [x] **Step 1: Write failing tests** for `in_cone`, for `safe_pattern` (over 200 seeds a safe path always exists and at least half the vents flare), and for the second phase's period and linger multipliers.
+- [x] **Step 2: Implement, look at every attack in a real window, and commit.**
 
 ### Task 14: Furnace Works floor content
 
