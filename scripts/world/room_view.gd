@@ -17,6 +17,8 @@ signal stairwell_entered
 
 const HEAL_AMOUNT := 2
 const SHOP_PROMPT := "Buy"
+# The same merchant keeps every shop on every floor.
+const MERCHANT: NpcDef = preload("res://data/npcs/shop_merchant.tres")
 const RECIPE_COLOR := Color("ffd65c")
 const RECIPE_PROMPT := "Take recipe"
 const FREE_COLOR := Color("67f0d0")
@@ -531,13 +533,29 @@ func _create_shop() -> void:
 	var cells := _room.layout.cells_of("S")
 	for i in stock.size():
 		_add_shop_entry(RoomBackdrop.cell_center(cells[i]), stock[i])
-	_reward_cells = _room.layout.plan_reward_cells(ProgressData.RETIREMENT_TIERS.size())
+	# The merchant stands first, so the plan's reward spots keep clear of him.
+	var merchant_at := _add_merchant()
+	_reward_cells = _room.layout.plan_reward_cells(ProgressData.RETIREMENT_TIERS.size(), merchant_at)
 	var station := RetirementStation.new()
 	station.setup(_bank, _player.feet())
 	station.position = RoomBackdrop.cell_center(_room.layout.cells_of(RoomLayout.SYMBOL_PLAN)[0])
 	station.deposit_wanted.connect(_on_deposit_wanted)
 	station.blasted.connect(_on_plan_blasted)
 	add_child(station)
+
+
+# He stands near his wares, which stay on the floor, and talks when Grandpa asks. Returns his cell.
+func _add_merchant() -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	var cell := _room.layout.merchant_cell()
+	if cell == Vector2i(-1, -1):
+		return cells
+	var merchant := Npc.new()
+	merchant.setup(MERCHANT, _player)
+	merchant.position = RoomBackdrop.cell_center(cell)
+	add_child(merchant)
+	cells.append(cell)
+	return cells
 
 
 func _add_shop_entry(at: Vector2, entry: Dictionary) -> void:

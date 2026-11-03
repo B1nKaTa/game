@@ -18,6 +18,7 @@ var _sizes_seen := {}
 var _followed_a_big_room := false
 var _checked_block_memory := false
 var _saw_shop := false
+var _talked_to_merchant := false
 var _checked_props := false
 var _pickups_off_solids := 0
 var _checked_fight := false
@@ -170,6 +171,7 @@ func _clear_whole_floor(scene: Node, path_index: int) -> void:
 	_boss_rooms_seen = 0
 	_cleared_rooms = {}
 	_saw_shop = false
+	_talked_to_merchant = false
 	_opened_a_vault = false
 	_checked_vault_room = false
 	_checked_stone_memory = false
@@ -202,6 +204,8 @@ func _clear_whole_floor(scene: Node, path_index: int) -> void:
 		if not walked_back and at != map.start_id:
 			walked_back = true
 			await _walk_back_and_return(scene, at)
+		if map.room(at).room_type == RoomLayout.TYPE_SHOP:
+			await _check_merchant(scene)
 		if map.room(at).room_type == RoomLayout.TYPE_SHOP and not _saw_shop:
 			_check_shop(scene)
 		if at != map.start_id:
@@ -213,6 +217,7 @@ func _clear_whole_floor(scene: Node, path_index: int) -> void:
 	_check(_boss_choices_checked == choices_before + 1, "the floor boss's item choice was checked")
 	_check(walked_back, "the check walked back through a door")
 	_check(_saw_shop, "the shop was checked")
+	_check(_talked_to_merchant, "the shop's merchant was talked to")
 	_check(_boss_rooms_seen >= 2, "both bosses showed a boss bar")
 	var has_vault := false
 	for room in map.rooms:
@@ -452,6 +457,30 @@ func _check_shop(scene: Node) -> void:
 	# Heal, Slip and Thermos are always sold. Items already found this run are not, so up to two may be missing.
 	_check(stock >= 3 and stock <= 5, "the shop shows its stock, found %d" % stock)
 	_saw_shop = true
+
+
+# Every shop visited has one merchant, and each press of interact beside him brings his next line.
+func _check_merchant(scene: Node) -> void:
+	var view: RoomView = scene.debug_room_view()
+	var merchants: Array[Npc] = []
+	for child in view.get_children():
+		if child is Npc:
+			merchants.append(child)
+	_check(merchants.size() == 1, "a shop has one merchant, found %d" % merchants.size())
+	if merchants.size() != 1:
+		return
+	var merchant := merchants[0]
+	var lines := merchant.def.lines
+	_put_feet(scene, merchant.global_position + Vector2(0, 8))
+	await _wait(0.1)
+	_check(merchant.is_near(), "beside the merchant Grandpa is offered a talk")
+	# A shop visited again carries on where he left off.
+	await _press("interact")
+	var said := lines.find(merchant.showing())
+	_check(said >= 0, "a press says one of his lines, '%s'" % merchant.showing())
+	await _press("interact")
+	_check(merchant.showing() == lines[(said + 1) % lines.size()], "the next press says his next line, '%s'" % merchant.showing())
+	_talked_to_merchant = true
 
 
 func _resting_pickups() -> int:

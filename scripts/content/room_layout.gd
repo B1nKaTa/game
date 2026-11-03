@@ -79,6 +79,7 @@ const PICKUP_SPACING := 3
 const SAME_ROW_SPACING := 4
 # A plan reward above the station counts as this much further away, squared in cells.
 const ABOVE_THE_PLAN := 100.0
+const MERCHANT_DOOR_CLEARANCE := 2
 # Enemy cells a combat room holds by size when no floor says otherwise, as on the first floor.
 const ENEMIES_BY_SIZE := {SIZE_SMALL: 4, SIZE_MEDIUM: 6, SIZE_LARGE: 11}
 const REQUIRED := {
@@ -171,29 +172,70 @@ func vault_extra_cells(count: int) -> Array[Vector2i]:
 	return cells
 
 
+# Where a shop's merchant stands: the plain floor nearest the middle of his wares, as far from each
+# ware and the Retirement Plan as labels stand apart, so no two of them answer one press, and two
+# steps clear of every door. A crowded room drops the spacing rather than leave him out.
+func merchant_cell() -> Vector2i:
+	var wares := cells_of("S")
+	if wares.is_empty():
+		return Vector2i(-1, -1)
+	var middle := Vector2.ZERO
+	for cell in wares:
+		middle += Vector2(cell)
+	middle /= wares.size()
+	var taken: Array[Vector2i] = wares.duplicate()
+	taken.append_array(cells_of(SYMBOL_PLAN))
+	var best := Vector2i(-1, -1)
+	var fallback := Vector2i(-1, -1)
+	var best_distance := INF
+	var fallback_distance := INF
+	for cell in cells_of(SYMBOL_FLOOR):
+		var distance := Vector2(cell).distance_squared_to(middle)
+		if _within_of_a_door(cell, MERCHANT_DOOR_CLEARANCE):
+			continue
+		if distance < fallback_distance:
+			fallback_distance = distance
+			fallback = cell
+		if distance < best_distance and _spaced_from(cell, taken):
+			best_distance = distance
+			best = cell
+	return best if best != Vector2i(-1, -1) else fallback
+
+
 # Where a shop's Retirement Plan lays its free items, one spot per tier: the nearest plain floor to
-# the station, clear of the doors and the wares, and far enough that its Take prompt never shares
-# the station's reach. Spots below come first, since the plan's own text stands above it.
-func plan_reward_cells(count: int) -> Array[Vector2i]:
+# the station, clear of the doors, the wares and whatever stands in avoid, such as the merchant, and
+# far enough that its Take prompt never shares the station's reach. Spots below come first, since the
+# plan's own text stands above it. When labels can no longer stay apart, each item still gets a spot.
+func plan_reward_cells(count: int, avoid: Array[Vector2i] = []) -> Array[Vector2i]:
 	var plans := cells_of(SYMBOL_PLAN)
 	if plans.is_empty():
 		return []
 	var station := plans[0]
+	var keep_clear: Array[Vector2i] = avoid.duplicate()
+	keep_clear.append(station)
 	var taken: Array[Vector2i] = cells_of("S")
-	taken.append(station)
+	taken.append_array(keep_clear)
 	var found: Array[Vector2i] = []
 	for i in count:
 		var best := Vector2i(-1, -1)
+		var fallback := Vector2i(-1, -1)
 		var best_distance := INF
+		var fallback_distance := INF
 		for cell in cells_of(SYMBOL_FLOOR):
+			if _touches_a_door(cell) or taken.has(cell) or not _spaced_from(cell, keep_clear):
+				continue
 			var distance := Vector2(cell - station).length_squared() + (ABOVE_THE_PLAN if cell.y < station.y else 0.0)
-			if distance < best_distance and not _touches_a_door(cell) and _spaced_from(cell, taken):
+			if distance < fallback_distance:
+				fallback_distance = distance
+				fallback = cell
+			if distance < best_distance and _spaced_from(cell, taken):
 				best_distance = distance
 				best = cell
-		if best == Vector2i(-1, -1):
+		var spot := best if best != Vector2i(-1, -1) else fallback
+		if spot == Vector2i(-1, -1):
 			break
-		taken.append(best)
-		found.append(best)
+		taken.append(spot)
+		found.append(spot)
 	return found
 
 
