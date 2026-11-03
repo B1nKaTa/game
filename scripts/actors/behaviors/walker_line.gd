@@ -8,10 +8,10 @@ const META := &"walker_line"
 const SIZE := 3
 # Walkers this close that have no line yet join one, as summoned walkers do.
 const GATHER_REACH := 160.0
-const WHISTLE_EVERY := 5.0
+const WHISTLE_EVERY := 6.5
 const FIRST_WHISTLE := 2.5
 const WHISTLE_TIME := 0.8
-const BREAK_TIME := 2.5
+const BREAK_TIME := 2.0
 const WHISTLE_TEXT := "Tweet tweet!"
 const SAY_TIME := 1.0
 # How far apart along the loop the members walk.

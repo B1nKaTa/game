@@ -78,7 +78,7 @@ func test_walkers_hurt_on_contact_at_most_once_in_0_8_seconds() -> void:
 
 func test_the_whistle_warns_then_the_line_breaks_off() -> void:
 	assert_near(WalkerLine.WHISTLE_TIME, 0.8)
-	assert_near(WalkerLine.BREAK_TIME, 2.5)
+	assert_near(WalkerLine.BREAK_TIME, 2.0)
 	var walk := PlayerStats.BASE_SPEED * (WalkerLine.WHISTLE_TIME - 0.3)
 	assert_true(walk > MallWalkerBehavior.WARNING_RADIUS, "time to step aside")
 
