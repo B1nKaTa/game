@@ -3,7 +3,15 @@ extends Node2D
 
 const HIT_RADIUS := 12.0
 const LIFETIME := 5.0
+# Shots fly above the dark of Lights Out, so one is never unseen.
+const SHOT_Z := 55
+const DART_BARREL := Color("dff3ff")
+const DART_PLUNGER := Color("7fb7d8")
+const DART_NEEDLE := Color("f4f4f4")
 
+# A sedative dart slows Grandpa by this much for this long when it lands. Zero means a plain shot.
+var slow_fraction := 0.0
+var slow_time := 0.0
 var _velocity := Vector2.ZERO
 var _target: Node2D
 var _damage := 1
@@ -14,6 +22,18 @@ func setup(direction: Vector2, speed: float, target: Node2D, damage: int) -> voi
 	_velocity = direction.normalized() * speed
 	_target = target
 	_damage = damage
+	z_index = SHOT_Z
+
+
+func make_dart(fraction: float, seconds: float) -> void:
+	slow_fraction = fraction
+	slow_time = seconds
+	rotation = _velocity.angle()
+	queue_redraw()
+
+
+func is_dart() -> bool:
+	return slow_fraction > 0.0
 
 
 func _physics_process(delta: float) -> void:
@@ -28,10 +48,18 @@ func _physics_process(delta: float) -> void:
 		return
 	global_position = next
 	if global_position.distance_to(_target.global_position) <= HIT_RADIUS:
-		_target.take_hit(_damage)
+		var landed: bool = _target.take_hit(_damage)
+		if landed and is_dart() and _target.has_method("slow"):
+			_target.slow(slow_fraction, slow_time)
 		queue_free()
 
 
 func _draw() -> void:
+	if is_dart():
+		draw_rect(Rect2(-7, -2.5, 10, 5), DART_BARREL)
+		draw_rect(Rect2(-7, -2.5, 10, 5), Color.BLACK, false, 1.0)
+		draw_rect(Rect2(-10, -1.5, 3, 3), DART_PLUNGER)
+		draw_line(Vector2(3, 0), Vector2(9, 0), DART_NEEDLE, 1.0)
+		return
 	draw_rect(Rect2(-4, -5, 8, 10), Color("efe8d2"))
 	draw_rect(Rect2(-4, -5, 8, 10), Color.BLACK, false, 1.0)

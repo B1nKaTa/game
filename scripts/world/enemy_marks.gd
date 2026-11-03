@@ -16,6 +16,13 @@ const SPADE_HANDLE := Color("6b4a2a")
 const SPADE_BLADE := Color("c9cdd6")
 const HAT_COLOR := Color("15131a")
 const HAT_BAND := Color("7a2f3a")
+const SYRINGE_COLOR := Color("dff3ff")
+const CAP_COLOR := Color("fbf7ef")
+const CAP_BAND := Color("d9576b")
+const CARD_COLOR := Color("fff6d8")
+const CARD_DOT := Color("d9576b")
+const LANYARD_COLOR := Color("3b7dd8")
+const BADGE_COLOR := Color("fff6d8")
 
 var _def: EnemyDef
 var _facing := Vector2.RIGHT
@@ -67,6 +74,24 @@ func _draw() -> void:
 			draw_rect(Rect2(-half.x * 0.6, -half.y - 10.0, half.x * 1.2, 12.0), HAT_COLOR)
 			draw_rect(Rect2(-half.x * 0.85, -half.y + 1.0, half.x * 1.7, 3.0), HAT_COLOR)
 			draw_rect(Rect2(-half.x * 0.6, -half.y - 2.0, half.x * 1.2, 2.0), HAT_BAND)
+		"syringe":
+			draw_rect(Rect2(-half.x + 2.0, -3.0, half.x * 2.0 - 8.0, 5.0), SYRINGE_COLOR)
+			draw_rect(Rect2(-half.x + 2.0, -3.0, half.x * 2.0 - 8.0, 5.0), Color.BLACK, false, 1.0)
+			draw_line(Vector2(half.x - 6.0, -0.5), Vector2(half.x + 2.0, -0.5), SYRINGE_COLOR, 1.0)
+		"nurse_cap":
+			draw_rect(Rect2(-half.x * 0.7, -half.y - 5.0, half.x * 1.4, 6.0), CAP_COLOR)
+			draw_rect(Rect2(-half.x * 0.7, -half.y - 2.0, half.x * 1.4, 2.0), CAP_BAND)
+		"card":
+			draw_rect(Rect2(-6.0, -4.0, 12.0, 12.0), CARD_COLOR)
+			for i in 3:
+				draw_rect(Rect2(-4.0 + i * 3.0, -2.0 + (i % 2) * 4.0, 2.0, 2.0), CARD_DOT)
+		"lanyard":
+			draw_polyline(PackedVector2Array([Vector2(-6.0, -half.y + 3.0), Vector2(0.0, 2.0), Vector2(6.0, -half.y + 3.0)]), LANYARD_COLOR, 2.0)
+			draw_rect(Rect2(-4.0, 2.0, 8.0, 6.0), BADGE_COLOR)
+		"matron_cap":
+			draw_rect(Rect2(-half.x * 0.6, -half.y - 8.0, half.x * 1.2, 9.0), CAP_COLOR)
+			draw_rect(Rect2(-half.x * 0.6, -half.y - 4.0, half.x * 1.2, 3.0), CAP_BAND)
+			draw_rect(Rect2(-2.0, -half.y - 7.0, 4.0, 3.0), CAP_BAND)
 	if _def.shield_half_angle > 0.0:
 		var reach := maxf(half.x, half.y) + SHIELD_GAP
 		var half_arc := deg_to_rad(_def.shield_half_angle)

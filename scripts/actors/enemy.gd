@@ -27,6 +27,10 @@ const SAME_CELL_REACH := 0.71
 const HEAVY_DAMAGE := 2
 const MOUND_COLOR := Color("5a4a33")
 const MOUND_EDGE := Color("2b2218")
+const DAZE_COLOR := Color("ffe58a")
+const SAY_COLOR := Color("fff6d8")
+# Warnings draw above everything in the room, the dark of Lights Out included, so none is ever hidden.
+const WARNING_Z := 60
 
 var def: EnemyDef
 var hp: float = 0.0
@@ -61,6 +65,10 @@ var _blew_itself_up := false
 var _dismissed := false
 var _blink_wait := 0.0
 var _wake_left := 0.0
+var _dazed_left := 0.0
+var _say_text := ""
+var _say_left := 0.0
+var _warning_layer: Node2D
 # The floor's difficulty, set once before the enemy enters the room.
 var _health_mult := 1.0
 var _pension_mult := 1.0
@@ -108,6 +116,33 @@ func _ready() -> void:
 	add_child(_marks)
 	# A soft glow keeps every enemy readable, however far it is from the room's torches.
 	add_child(Lighting.make_light(READ_GLOW_COLOR, READ_GLOW_ENERGY, READ_GLOW_SCALE))
+	_warning_layer = WarningLayer.new()
+	_warning_layer.enemy = self
+	_warning_layer.z_index = WARNING_Z
+	add_child(_warning_layer)
+
+
+# Draws the enemy's warnings and call-outs on their own layer, high above the room.
+class WarningLayer extends Node2D:
+	var enemy: Enemy
+
+	func _draw() -> void:
+		enemy._draw_warning(self)
+
+
+# Stars circle its head while it is stunned.
+func daze(seconds: float) -> void:
+	_dazed_left = maxf(_dazed_left, seconds)
+
+
+func is_dazed() -> bool:
+	return _dazed_left > 0.0
+
+
+# A few words over its head, such as a called-out bingo number.
+func say(text: String, seconds: float) -> void:
+	_say_text = text
+	_say_left = seconds
 
 
 func set_submerged(value: bool) -> void:
@@ -182,6 +217,10 @@ func land_ground_strike(at: Vector2, radius: float, damage := -1) -> void:
 func _physics_process(delta: float) -> void:
 	if not is_instance_valid(target):
 		return
+	_dazed_left = maxf(_dazed_left - delta, 0.0)
+	_say_left = maxf(_say_left - delta, 0.0)
+	if _warning_layer != null:
+		_warning_layer.queue_redraw()
 	if _wake_left > 0.0:
 		_wake_left -= delta
 		return
@@ -264,6 +303,8 @@ func take_damage(amount: float, push: Vector2) -> void:
 	# Only leaving outright reaches something underground, so a room can always finish.
 	if submerged and not is_inf(amount):
 		return
+	if not is_inf(amount) and _behavior != null:
+		amount *= _behavior.damage_scale(self)
 	hp -= amount
 	if _visual != null:
 		_visual.flash()
@@ -364,11 +405,12 @@ func target_motion() -> Vector2:
 	return target.velocity if target is CharacterBody2D else Vector2.ZERO
 
 
-func shoot(direction: Vector2, speed: float, damage := -1) -> void:
+func shoot(direction: Vector2, speed: float, damage := -1) -> Projectile:
 	var projectile := Projectile.new()
 	projectile.setup(direction, speed, target, attack_damage(damage))
 	projectile.position = position
 	get_parent().add_child(projectile)
+	return projectile
 
 
 func request_summon(count: int) -> void:
@@ -403,19 +445,38 @@ func _draw() -> void:
 		var mound := PackedVector2Array([Vector2(-11, 7), Vector2(-7, 0), Vector2(-2, -4), Vector2(4, -3), Vector2(9, 2), Vector2(12, 7)])
 		draw_colored_polygon(mound, MOUND_COLOR)
 		draw_polyline(mound, MOUND_EDGE, 1.0)
-	if _warning != null and _warning.shows_warning(_warning_share()):
-		var progress := _warning.warning_progress(_warning_share())
-		draw_circle(Vector2.ZERO, _warning_radius * progress, Color(0.89, 0.32, 0.31, 0.15 + 0.3 * progress))
-		draw_arc(Vector2.ZERO, _warning_radius, 0.0, TAU, 32, WARNING_COLOR, 2.0)
-		if _lane_length > 0.0:
-			var lane := Rect2(0.0, -_lane_width / 2.0, _lane_length * progress, _lane_width)
-			var outline := Rect2(0.0, -_lane_width / 2.0, _lane_length, _lane_width)
-			draw_set_transform(Vector2.ZERO, _lane_direction.angle())
-			draw_rect(lane, Color(WARNING_COLOR, 0.15 + 0.3 * progress))
-			draw_rect(outline, WARNING_COLOR, false, 2.0)
-			draw_set_transform(Vector2.ZERO)
 	if def != null and shows_health_bar():
 		var top := -def.body_size.y / 2.0 - 6.0
 		var fraction := clampf(hp / max_hp(), 0.0, 1.0)
 		draw_rect(Rect2(-BAR_WIDTH / 2.0, top, BAR_WIDTH, BAR_HEIGHT), Color.BLACK)
 		draw_rect(Rect2(-BAR_WIDTH / 2.0, top, BAR_WIDTH * fraction, BAR_HEIGHT), Color("e4524f"))
+
+
+func _draw_warning(layer: Node2D) -> void:
+	if _warning != null and _warning.shows_warning(_warning_share()):
+		var progress := _warning.warning_progress(_warning_share())
+		layer.draw_circle(Vector2.ZERO, _warning_radius * progress, Color(0.89, 0.32, 0.31, 0.15 + 0.3 * progress))
+		layer.draw_arc(Vector2.ZERO, _warning_radius, 0.0, TAU, 32, WARNING_COLOR, 2.0)
+		if _lane_length > 0.0:
+			var lane := Rect2(0.0, -_lane_width / 2.0, _lane_length * progress, _lane_width)
+			var outline := Rect2(0.0, -_lane_width / 2.0, _lane_length, _lane_width)
+			layer.draw_set_transform(Vector2.ZERO, _lane_direction.angle())
+			layer.draw_rect(lane, Color(WARNING_COLOR, 0.15 + 0.3 * progress))
+			layer.draw_rect(outline, WARNING_COLOR, false, 2.0)
+			layer.draw_set_transform(Vector2.ZERO)
+	if def == null:
+		return
+	var top := -def.body_size.y / 2.0
+	if _dazed_left > 0.0:
+		var spin := Time.get_ticks_msec() / 160.0
+		for i in 3:
+			var at := Vector2(0.0, top - 5.0) + Vector2.from_angle(spin + TAU * i / 3.0) * Vector2(11.0, 4.0)
+			layer.draw_circle(at, 2.0, DAZE_COLOR)
+			layer.draw_line(at - Vector2(3, 0), at + Vector2(3, 0), DAZE_COLOR, 1.0)
+	if _say_left > 0.0 and not _say_text.is_empty():
+		var font := ThemeDB.fallback_font
+		var size := 10
+		var width := font.get_string_size(_say_text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+		var at := Vector2(-width / 2.0, top - 12.0)
+		layer.draw_string_outline(font, at, _say_text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, 4, Color.BLACK)
+		layer.draw_string(font, at, _say_text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, SAY_COLOR)

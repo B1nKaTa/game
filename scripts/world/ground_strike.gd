@@ -29,6 +29,8 @@ static func hits(center: Vector2, radius: float, feet: Vector2) -> bool:
 # A delay lets a line or a row land one after another. A pit follows him for follow_time before locking in.
 func setup(source: Enemy, radius: float, warning: float, delay := 0.0, follow_time := 0.0, damage := -1) -> void:
 	_source = source
+	# Marks show above the room, the dark of Lights Out included.
+	z_index = Projectile.SHOT_Z
 	_radius = radius
 	_warning = warning
 	_left = warning

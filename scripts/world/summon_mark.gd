@@ -13,6 +13,7 @@ var _left := 0.5
 
 func setup(duration: float) -> void:
 	_duration = duration
+	z_index = Projectile.SHOT_Z
 	_left = duration
 
 
