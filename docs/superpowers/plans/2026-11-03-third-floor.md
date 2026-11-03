@@ -145,7 +145,7 @@ func test_an_old_save_without_adhesive_loads_at_level_zero() -> void:
 
 Also update the old counts: `test_stats.gd` expects 7 upgrades and 5 at the Black Market, and `test_vaults.gd`'s total becomes `2055 + 380 + 410`. In `test_potions.gd`, the Fury test also asserts `run.bite_damage_mult()`.
 
-- [ ] **Step 2: When testing is allowed, run the tests to make sure they fail.** Expected: `DentureThrow`, `bite_damage_mult` and `denture_adhesive` are unknown.
+- [x] **Step 2: When testing is allowed, run the tests to make sure they fail.** Expected: `DentureThrow`, `bite_damage_mult` and `denture_adhesive` are unknown.
 
 - [x] **Step 3: Implement.**
   - **`DentureThrow`:** the old `CaneThrow` with `catch_cane` renamed `catch_teeth`, a `return_delay` member set by `_init`, and the three constants above.
@@ -157,7 +157,7 @@ Also update the old counts: `test_stats.gd` expects 7 upgrades and 5 at the Blac
     - `fury_liniment.tres`: description "Cane and dentures hit 50% harder for 15 seconds." Its `damage_bonus` already feeds both multipliers.
     - `denture_adhesive.tres`: modelled on `reinforced_cane.tres`, no `merchant` line (so the Black Market sells it), `prices = PackedInt32Array(50, 120, 240)`, `bite_damage_bonus = 0.15`, `bite_range_bonus = 40.0`.
 
-- [ ] **Step 4: When testing is allowed, run the tests.** Expected: `N tests, 0 failed`.
+- [x] **Step 4: When testing is allowed, run the tests.** Expected: `N tests, 0 failed`.
 
 - [x] **Step 5: Commit.**
 
@@ -231,7 +231,7 @@ func test_one_bite_ends_a_flight_and_the_item_allows_a_second() -> void:
 
 In `tests/test_key_bindings.gd`, assert the throw's label is "Throw dentures", and that a file written as `{"throw": {"type": "key", "code": KEY_F}}` still binds the throw to F. Rename the old tests' calls (`on_cane_hit` → `on_teeth_bit`, `CANE_HIT` → `BITE_HIT`, the sound names, `ThrownCane.WALL_LAYER` → `ThrownDentures.WALL_LAYER`).
 
-- [ ] **Step 2: When testing is allowed, run the tests to make sure they fail.**
+- [x] **Step 2: When testing is allowed, run the tests to make sure they fail.**
 
 - [x] **Step 3: Implement `ThrownDentures`.**
   - **Flight:** as `ThrownCane`, but `_range` from setup replaces `MAX_RANGE`, and `_bitten` holds the instance ids already bitten. A bite emits `hit_enemy` and drops the teeth unless `keeps_flying(_bitten.size(), _bites_allowed)`.
@@ -253,9 +253,9 @@ In `tests/test_key_bindings.gd`, assert the throw's label is "Throw dentures", a
   - **Pierce:** set `run.stats.bites_per_throw = 2`, throw at the far one of two enemies in a row, check both were bitten, and put the value back.
   - **Wording:** `_check_shield` says "thrown dentures go over the shield" and calls `recall_teeth()`.
 
-- [ ] **Step 6: When testing is allowed, run the tests and 3 full loops.** Expected: `0 failed` and `SMOKE PASS` each time.
+- [x] **Step 6: When testing is allowed, run the tests and 3 full loops.** Expected: `0 failed` and `SMOKE PASS` each time.
 
-- [ ] **Step 7: When testing is allowed, look at it in a real window.** Screenshot the teeth flying, lying on the floor and coming back, and the Black Market panel with five upgrades at its fullest (lesson: the 360 px screen hides tall panels).
+- [x] **Step 7: When testing is allowed, look at it in a real window.** Screenshot the teeth flying, lying on the floor and coming back, and the Black Market panel with five upgrades at its fullest (lesson: the 360 px screen hides tall panels).
 
 - [x] **Step 8: Commit.** One commit for the actor, player and feedback rename with its tests, one for the smoke check.
 
@@ -331,11 +331,11 @@ func test_a_safe_holds_a_big_pile_over_several_coins() -> void:
 
 Also: rolls follow the weights within 2% over 20000 seeded rolls; a first floor ignores mimic weight in its data; a mimic has a Locked Chest's name and prompt; no key opens a safe or a mimic; lunchbox amounts and extras; `coin_split` sums.
 
-- [ ] **Step 2: When testing is allowed, run them to make sure they fail.**
+- [x] **Step 2: When testing is allowed, run them to make sure they fail.**
 
 - [x] **Step 3: Implement `ChestRules` and `FloorDef`.** In `FloorDef`, add an `@export_group("Chests")` with `chest_weights` defaulting to the first-floor row, and `chest_odds()` returning `ChestRules.odds_for_depth(chest_weights, depth)`. Write the row for each floor into its `.tres` (keys sorted, as Godot writes them).
 
-- [ ] **Step 4: When testing is allowed, run the tests.**
+- [x] **Step 4: When testing is allowed, run the tests.**
 
 - [x] **Step 5: Commit** ("Roll five kinds of chest by each floor's odds").
 
@@ -352,7 +352,7 @@ Also: rolls follow the weights within 2% over 20000 seeded rolls; a first floor 
   - `Chest extends Pickup`, with `kind: String`, signals `woke(at: Vector2)` and `blasted_open(at: Vector2)` (local positions), `wake() -> bool`, `blast_open() -> bool`, `is_open() -> bool`
   - `Chest.blast_among(nodes: Array, center: Vector2, radius: float) -> int` and `Chest.blast(tree, center, radius) -> int`. Only `Thermos._explode` calls it, so Auditor blasts and bosses open nothing.
   - `RoomView._create_chest(cell: Vector2i, kind: String) -> Chest`, for the smoke driver's chest room
-  - `EnemyDef.drops_key: bool`
+  - `EnemyDef.drops_key: bool`, and `FloorDef.mimic: EnemyDef`: what a mimic wakes into on that floor. A floor naming none never rolls one, and room code never names enemy data (a standing test checks this).
   - `MimicBehavior.should_lunge(distance, cooldown) -> bool`, `lane_length() -> float`, `WINDUP := 0.6`
 
 **Rules:**
@@ -362,7 +362,7 @@ Also: rolls follow the weights within 2% over 20000 seeded rolls; a first floor 
   - A mimic wakes when Grandpa's feet come within `Pickup.COLLECT_RADIUS`, when anything calls `collect()` on it, or when the player's Thermos goes off beside it.
 - **The mimic's look and fight:**
   - It is drawn exactly as a Locked Chest, with one tell: a slow breathing swell of 7% over 2.6 s.
-  - Woken, it becomes a `mimic` enemy on its cell, which waits `Enemy.ROOM_WAKE_TIME` and shouts "Surprise!". Its first lunge waits 0.4 s more, then shows a warning circle and a lane for its 0.6 s windup.
+  - Woken, it becomes a `mimic` enemy on its cell, which waits `Enemy.ROOM_WAKE_TIME` and shouts "Surprise!". Its first lunge waits 0.4 s more, then shows a warning circle and a lane for the whole of its 0.6 s windup, whatever the player's warning stat, since it starts right beside him.
   - It pays its Pension and drops a Slip (`drops_key`, never for a summon).
 - **Looks:** every kind is code-drawn and distinct by colour and shape, standing on one floor line:
   - **Lunchbox:** a red tin with a domed lid, a pale stripe and a wire handle.
@@ -406,11 +406,11 @@ func test_the_mimic_pays_well_drops_a_slip_and_warns_first() -> void:
 
 Also: a blast wakes a mimic but leaves honest chests; a locked chest waits for its Slip; a lunchbox opens for free; no regular enemy of floors 1 and 2 drops a Slip.
 
-- [ ] **Step 2: When testing is allowed, run them to make sure they fail.**
+- [x] **Step 2: When testing is allowed, run them to make sure they fail.**
 
 - [x] **Step 3: Implement** `Chest`, the mimic and the `RoomView` changes as above. `Pickup._draw` calls a new `_draw_body()`, which `Chest` overrides. `_create_rewards` rolls each `C` cell with `ChestRules.roll(_floor_def.chest_odds(), _rng.randf())`. Remove `CHEST_COLOR`, `CHEST_LABEL` and `CHEST_PROMPT`.
 
-- [ ] **Step 4: When testing is allowed, run the tests.**
+- [x] **Step 4: When testing is allowed, run the tests.**
 
 - [x] **Step 5: Commit** ("Turn chest cells into lunchboxes, locked chests, safes, urns and mimics").
 
@@ -428,7 +428,7 @@ Also: a blast wakes a mimic but leaves honest chests; a locked chest waits for i
   - **The run:** after the probe, Slips are put back as they were. `_run` checks `_checked_chests` after the first run.
 - [x] **Step 2: Mimics in the loop.** Before `_clear_room` gathers pickups, `_beat_mimics_first()` wakes and beats any mimic the room rolled. Otherwise walking onto a coin beside one could leave a live enemy in a room the loop counts as clear. The pass line reports chests checked and mimics beaten on the way.
 - [x] **Step 3: Update `docs/playtest-notes.md`** with what to try, and `LESSONS.md` if anything tricky came up.
-- [ ] **Step 4: When testing is allowed:** run the tests, then 3 full loops from an exported copy, and screenshot each chest kind and the mimic awake in a real window. Fix anything found, push, then stop for the user to play.
+- [x] **Step 4: When testing is allowed:** run the tests, then 3 full loops from an exported copy, and screenshot each chest kind and the mimic awake in a real window. Fix anything found, push, then stop for the user to play.
 
 ---
 
@@ -502,7 +502,7 @@ func test_the_third_landing_names_floor_3() -> void:
 	assert_eq(landing.depth, 3)
 ```
 
-- [ ] **Step 2: When testing is allowed, run the tests to make sure they fail, then implement.**
+- [x] **Step 2: When testing is allowed, run the tests to make sure they fail. then implement.**
   - **`_go_down`:** load `LANDINGS_BY_DEPTH[_depth]` after raising `_depth`. Everything else stays: the map, the 2-pill heal and its notice.
   - **`_continue_after_floor`:** needs no change, since it already compares against `LAST_DEPTH`.
   - **Saves:** `ProgressData` needs no change, since `deep_clears` already keeps any depth.
@@ -511,7 +511,7 @@ func test_the_third_landing_names_floor_3() -> void:
   - **The run's end:** a floor-3 boss ends the run with "FLOOR CLEARED".
   - **Paths:** the second pass clears the Mall.
   - **Timeout:** raise `TIMEOUT` and the timeout in `tools/smoke.ps1` to fit the longer run, and report the new run time.
-- [ ] **Step 4: When testing is allowed, run the tests and 3 full loops.**
+- [x] **Step 4: When testing is allowed, run the tests.and 3 full loops.**
 - [ ] **Step 5: Commit**, one commit each for the floor defs, the scene change and the smoke driver.
 
 ### Task 7: The games' rules
@@ -607,7 +607,7 @@ func test_each_game_returns_about_ninety_percent() -> void:
 - **Slot:** it counts an item at 60 Pension and a full heal at 30.
 - **Tuning:** tune the reel weights and, if needed, the poker table until all three land between 85% and 95%.
 
-- [ ] **Step 2: When testing is allowed, run the tests to make sure they fail, implement until they pass, and commit** ("Add the rules of the slot machine, blackjack and draw poker").
+- [x] **Step 2: When testing is allowed, run the tests to make sure they fail. implement until they pass, and commit** ("Add the rules of the slot machine, blackjack and draw poker").
 
 ### Task 8: The Arcade Room
 
@@ -627,7 +627,7 @@ func test_each_game_returns_about_ninety_percent() -> void:
   - **Validation:** the arcade layouts validate, hold one of each table and a merchant spot, and have no enemy cells.
   - **Plays:** a table's `plays_left` is 3 for the slot and 1 for the cards, and `refill()` restores it.
   - **Model:** follow `test_vaults.gd`'s builder tests.
-- [ ] **Step 2: When testing is allowed, run them to make sure they fail, then implement.**
+- [x] **Step 2: When testing is allowed, run them to make sure they fail. then implement.**
   - **The look:** the room is safe, with neon light and a loud carpet. Add a palette override for arcade rooms in `RoomView`: bright magenta and cyan fill lights and a high-contrast `carpet_motif`.
   - **The Dealer:** placeholder lines such as "Place your bets.", "The house is very understanding." and "No refunds, even in the afterlife."
 - [ ] **Step 3: When testing is allowed, run tests and 3 full loops, screenshot the room and its door's die, and commit.**
