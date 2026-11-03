@@ -194,14 +194,16 @@ func burst_from_ground() -> void:
 	DeathBurst.spawn(get_parent(), position, def.color, false)
 
 
-# A damage of -1 costs the enemy's usual damage. A boss's heaviest attacks pass 2.
-func strike_ground(at: Vector2, radius: float, warning: float, delay := 0.0, follow_time := 0.0, damage := -1) -> void:
+# A damage of -1 costs the enemy's usual damage. A boss's heaviest attacks pass 2. A linger leaves the
+# spot burning for that long after it lands.
+func strike_ground(at: Vector2, radius: float, warning: float, delay := 0.0, follow_time := 0.0, damage := -1, linger := 0.0) -> GroundStrike:
 	if open_ground.is_valid() and not open_ground.call(at):
-		return
+		return null
 	var strike := GroundStrike.new()
-	strike.setup(self, radius, warning, delay, follow_time, damage)
+	strike.setup(self, radius, warning, delay, follow_time, damage, linger)
 	get_parent().add_child(strike)
 	strike.global_position = at
+	return strike
 
 
 # Lands spot by spot along a line, and stops at the first wall or hole like the warning lane does.

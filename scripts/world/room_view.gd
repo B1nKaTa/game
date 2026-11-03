@@ -314,6 +314,11 @@ func _create_props(palette: RoomPalette) -> void:
 		var caution := WetSign.new()
 		caution.palette = palette
 		_place_prop(caution, cell)
+	for cell in layout.cells_of(RoomLayout.SYMBOL_VENT):
+		var vent := FloorVent.new()
+		vent.setup(cell)
+		vent.position = RoomBackdrop.cell_center(cell)
+		add_child(vent)
 
 
 func _place_prop(prop: BreakableBlock, cell: Vector2i) -> void:

@@ -64,7 +64,10 @@ const DECOR_SYMBOLS := "gnwuktlmf"
 # A freshly mopped cell: everyone walks on it, Grandpa and chargers slide. Kept well clear of doors.
 const SYMBOL_WET := "W"
 const WET_DOOR_CLEARANCE := 2
-const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDf"
+# A floor vent: walkable, but it flares on a rhythm and hurts whoever stands on it. Kept clear of doors too.
+const SYMBOL_VENT := "U"
+const VENT_DOOR_CLEARANCE := 2
+const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfU"
 # Nothing can walk through these, so nothing may be dropped or summoned on them.
 const SOLID_SYMBOLS := "#lXOQVPAYJFKD"
 # Routes may not need a hole or a wall, and may not need a bomb for a crate or a rock.
@@ -155,6 +158,8 @@ func validate() -> PackedStringArray:
 				errors.append_array(_door_clearance_errors(cell, symbol))
 			if symbol == SYMBOL_WET and _within_of_a_door(cell, WET_DOOR_CLEARANCE):
 				errors.append("wet floor at %s is within %d cells of a door" % [str(cell), WET_DOOR_CLEARANCE])
+			if symbol == SYMBOL_VENT and _within_of_a_door(cell, VENT_DOOR_CLEARANCE):
+				errors.append("vent at %s is within %d cells of a door" % [str(cell), VENT_DOOR_CLEARANCE])
 	for side in SIDES:
 		if not open.has(door_cell(side)):
 			errors.append("needs a bomb to reach the door at %s" % str(door_cell(side)))

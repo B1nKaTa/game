@@ -3,12 +3,21 @@ extends Node2D
 
 # A warned spot on the ground. A faint ring shows it is coming, a red circle fills for its whole
 # warning, and then it lands: it breaks props and hurts Grandpa if his feet are inside. It comes
-# to nothing if the boss that started it falls first.
+# to nothing if the boss that started it falls first. A strike that lingers leaves burning ground,
+# which keeps hurting whoever stands in it, each body at most once per BURN_EVERY, until it burns out.
 const COLOR := Color("e4524f")
 const FOLLOW_COLOR := Color("ffd24a")
 const DUST_COLOR := Color("b9a97a")
 const SHOW_TIME := 0.2
 const WAITING_ALPHA := 0.35
+const BURN_EVERY := 0.6
+const BURN_PLAYER_DAMAGE := 1
+const BURN_ENEMY_DAMAGE := 10.0
+const BURN_FADE := 0.4
+const FIRE_OUTER := Color(1.0, 0.5, 0.08, 0.5)
+const FIRE_INNER := Color(1.0, 0.85, 0.3, 0.75)
+const FIRE_EDGE := Color("ffb02e")
+const EMBER := Color("fff4c0")
 
 var _source: Enemy
 var _radius := 20.0
@@ -20,14 +29,23 @@ var _landed := false
 var _show_left := SHOW_TIME
 # What landing costs Grandpa. -1 means the enemy's usual damage.
 var _damage := -1
+var _linger := 0.0
+var _burn_left := 0.0
+# When each body standing in the fire may be hurt again, by instance id.
+var _burn_wait := {}
 
 
 static func hits(center: Vector2, radius: float, feet: Vector2) -> bool:
 	return center.distance_to(feet) <= radius
 
 
+# Whether a body standing in burning ground is hurt now, given how long until it may be hurt again.
+static func burns(center: Vector2, radius: float, point: Vector2, wait_left: float) -> bool:
+	return wait_left <= 0.0 and hits(center, radius, point)
+
+
 # A delay lets a line or a row land one after another. A pit follows him for follow_time before locking in.
-func setup(source: Enemy, radius: float, warning: float, delay := 0.0, follow_time := 0.0, damage := -1) -> void:
+func setup(source: Enemy, radius: float, warning: float, delay := 0.0, follow_time := 0.0, damage := -1, linger := 0.0) -> void:
 	_source = source
 	# Marks show above the room, the dark of Lights Out included.
 	z_index = Projectile.SHOT_Z
@@ -37,14 +55,27 @@ func setup(source: Enemy, radius: float, warning: float, delay := 0.0, follow_ti
 	_delay = delay
 	_follow_left = follow_time
 	_damage = damage
+	_linger = linger
 
 
 func damage() -> int:
 	return _damage
 
 
+func linger() -> float:
+	return _linger
+
+
 func is_following() -> bool:
 	return _follow_left > 0.0
+
+
+func is_burning() -> bool:
+	return _landed and _burn_left > 0.0
+
+
+func radius() -> float:
+	return _radius
 
 
 # How far the warning has filled, from 0 to 1.
@@ -67,13 +98,32 @@ func advance(delta: float) -> bool:
 	_left -= delta
 	if _left <= 0.0:
 		_landed = true
+		_burn_left = _linger
 		return true
 	return false
+
+
+# Counts down how long each body must wait before the fire may hurt it again.
+func tick_burn(delta: float) -> void:
+	_burn_left -= delta
+	for id in _burn_wait.keys():
+		_burn_wait[id] -= delta
+
+
+func burn_wait_of(id: int) -> float:
+	return _burn_wait.get(id, 0.0)
+
+
+func mark_burned(id: int) -> void:
+	_burn_wait[id] = BURN_EVERY
 
 
 func _process(delta: float) -> void:
 	queue_redraw()
 	if _landed:
+		if _burn_left > 0.0:
+			_burn(delta)
+			return
 		_show_left -= delta
 		if _show_left <= 0.0:
 			queue_free()
@@ -85,9 +135,36 @@ func _process(delta: float) -> void:
 		global_position = _source.target_ground()
 	if advance(delta):
 		_source.land_ground_strike(global_position, _radius, _damage)
+		# Whoever the landing just hurt is not burned again at once.
+		if _linger > 0.0 and is_instance_valid(_source.target):
+			mark_burned(_source.target.get_instance_id())
+
+
+# Burning ground goes out early when the enemy that made it falls, as a warning that never landed does.
+func _burn(delta: float) -> void:
+	tick_burn(delta)
+	if not is_instance_valid(_source) or _source.is_dead():
+		_burn_left = minf(_burn_left, BURN_FADE)
+		_show_left = 0.0
+		return
+	var target := _source.target
+	if is_instance_valid(target):
+		var id := target.get_instance_id()
+		if burns(global_position, _radius, _source.target_ground(), burn_wait_of(id)) and target.take_hit(BURN_PLAYER_DAMAGE):
+			mark_burned(id)
+	for enemy in get_tree().get_nodes_in_group("enemies"):
+		var id: int = enemy.get_instance_id()
+		if enemy.is_dead() or enemy.def.is_boss or enemy.submerged:
+			continue
+		if burns(global_position, _radius, enemy.global_position, burn_wait_of(id)):
+			mark_burned(id)
+			enemy.take_damage(BURN_ENEMY_DAMAGE, Vector2.ZERO)
 
 
 func _draw() -> void:
+	if _landed and _burn_left > 0.0:
+		_draw_fire()
+		return
 	if _landed:
 		var progress := 1.0 - maxf(_show_left, 0.0) / SHOW_TIME
 		draw_circle(Vector2.ZERO, _radius * minf(0.6 + progress, 1.0), Color(DUST_COLOR, 0.7 * (1.0 - progress)))
@@ -103,3 +180,18 @@ func _draw() -> void:
 	var filled := fill()
 	draw_circle(Vector2.ZERO, _radius * filled, Color(COLOR, 0.15 + 0.3 * filled))
 	draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 24, COLOR, 2.0)
+
+
+# Burning ground reads as fire, never as a warning: a flickering orange pool with a bright rim and embers.
+func _draw_fire() -> void:
+	var fade := clampf(_burn_left / BURN_FADE, 0.0, 1.0)
+	var t := Time.get_ticks_msec() / 1000.0
+	var flicker := 0.85 + 0.15 * sin(t * 13.0 + position.x)
+	draw_circle(Vector2.ZERO, _radius, Color(FIRE_OUTER, FIRE_OUTER.a * fade * flicker))
+	draw_circle(Vector2.ZERO, _radius * 0.55, Color(FIRE_INNER, FIRE_INNER.a * fade * flicker))
+	draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 24, Color(FIRE_EDGE, fade), 1.5)
+	for i in 5:
+		var angle := TAU * i / 5.0 + t * 0.7
+		var lift := fposmod(t * 1.6 + i * 0.37, 1.0)
+		var at := Vector2.from_angle(angle) * _radius * 0.6 + Vector2(0.0, -lift * 8.0)
+		draw_circle(at, 1.5, Color(EMBER, fade * (1.0 - lift)))
