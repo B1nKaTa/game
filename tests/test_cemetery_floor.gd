@@ -147,8 +147,7 @@ func test_rooms_look_like_a_graveyard_with_as_many_fighters_as_the_first_floor()
 		for symbol: String in counts:
 			counts[symbol] += layout.cells_of(symbol).size()
 		if layout.room_type == RoomLayout.TYPE_COMBAT:
-			var wanted := {RoomLayout.SIZE_SMALL: 4, RoomLayout.SIZE_MEDIUM: 6, RoomLayout.SIZE_LARGE: 11}
-			assert_eq(layout.cells_of("E").size(), wanted[layout.size_class()], layout.resource_path)
+			assert_eq(_def().room_size_errors(layout).size(), 0, layout.resource_path)
 	for symbol: String in counts:
 		assert_true(counts[symbol] >= 12, "'%s' appears %d times" % [symbol, counts[symbol]])
 

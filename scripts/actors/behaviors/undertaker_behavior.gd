@@ -149,7 +149,7 @@ static func corner_points(center: Vector2, count: int, distance: float, start_an
 
 
 func tick(enemy: Enemy, delta: float) -> void:
-	var phase_two := is_phase_two(enemy.hp, enemy.def.max_hp)
+	var phase_two := is_phase_two(enemy.hp, enemy.max_hp())
 	_summon_wait -= delta
 	if _volleys_left > 0:
 		_volley_wait -= delta

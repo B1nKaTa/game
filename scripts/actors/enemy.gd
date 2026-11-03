@@ -23,6 +23,8 @@ const MAX_PROPS_ACROSS_A_LANE := 8
 const ROOM_WAKE_TIME := 0.6
 # Half a cell's diagonal: a floor spot this close is the cell he stands in.
 const SAME_CELL_REACH := 0.71
+# What a boss's heaviest named attacks cost Grandpa, in pills.
+const HEAVY_DAMAGE := 2
 const MOUND_COLOR := Color("5a4a33")
 const MOUND_EDGE := Color("2b2218")
 
@@ -59,15 +61,34 @@ var _blew_itself_up := false
 var _dismissed := false
 var _blink_wait := 0.0
 var _wake_left := 0.0
+# The floor's difficulty, set once before the enemy enters the room.
+var _health_mult := 1.0
+var _pension_mult := 1.0
 
 
 func setup(enemy_def: EnemyDef, chase_target: Node2D, warning_fraction: float, show_health_bar := false) -> void:
 	def = enemy_def
-	hp = def.max_hp
+	hp = max_hp()
 	target = chase_target
 	_warning_fraction = warning_fraction
 	_show_bar = show_health_bar
 	_behavior = def.behavior_script.new()
+
+
+# A deeper floor makes the same enemy tougher and better paid. Call it before the enemy enters the room.
+func apply_floor(health_mult: float, pension_mult: float) -> void:
+	_health_mult = health_mult
+	_pension_mult = pension_mult
+	hp = max_hp()
+
+
+func max_hp() -> float:
+	return def.max_hp * _health_mult
+
+
+# What an attack costs Grandpa: its own damage when it names one, the enemy's usual damage otherwise.
+func attack_damage(damage := -1) -> int:
+	return damage if damage >= 0 else def.damage
 
 
 func _ready() -> void:
@@ -123,31 +144,32 @@ func burst_from_ground() -> void:
 	DeathBurst.spawn(get_parent(), position, def.color, false)
 
 
-func strike_ground(at: Vector2, radius: float, warning: float, delay := 0.0, follow_time := 0.0) -> void:
+# A damage of -1 costs the enemy's usual damage. A boss's heaviest attacks pass 2.
+func strike_ground(at: Vector2, radius: float, warning: float, delay := 0.0, follow_time := 0.0, damage := -1) -> void:
 	if open_ground.is_valid() and not open_ground.call(at):
 		return
 	var strike := GroundStrike.new()
-	strike.setup(self, radius, warning, delay, follow_time)
+	strike.setup(self, radius, warning, delay, follow_time, damage)
 	get_parent().add_child(strike)
 	strike.global_position = at
 
 
 # Lands spot by spot along a line, and stops at the first wall or hole like the warning lane does.
-func strike_line(points: Array[Vector2], radius: float, warning: float, step: float) -> void:
+func strike_line(points: Array[Vector2], radius: float, warning: float, step: float, damage := -1) -> void:
 	for i in points.size():
 		if open_ground.is_valid() and not open_ground.call(points[i]):
 			return
-		strike_ground(points[i], radius, warning, i * step)
+		strike_ground(points[i], radius, warning, i * step, 0.0, damage)
 
 
 # Breaks props as any boss attack does. A wall between shields Grandpa, as it does from a blast.
-func land_ground_strike(at: Vector2, radius: float) -> void:
+func land_ground_strike(at: Vector2, radius: float, damage := -1) -> void:
 	smash(at, radius)
 	if not is_inside_tree() or not is_instance_valid(target):
 		return
 	var feet := target_ground()
 	if GroundStrike.hits(at, radius, feet) and EnemyBlast.line_is_clear(get_world_2d().direct_space_state, at, feet):
-		hit_target(def.damage)
+		hit_target(attack_damage(damage))
 
 
 func _physics_process(delta: float) -> void:
@@ -175,8 +197,11 @@ static func clamp_inside_room(point: Vector2, cells: Vector2i) -> Vector2:
 
 
 # Summons pay nothing, or a boss left alive could be farmed forever.
+# A deeper floor pays more, rounded up. The small allowance keeps a whole result from rounding past itself.
 func coin_value() -> int:
-	return 0 if is_summon or is_group_follower or _blew_itself_up else def.pension_drop
+	if is_summon or is_group_follower or _blew_itself_up or def.pension_drop <= 0:
+		return 0
+	return ceili(def.pension_drop * _pension_mult - 0.0001)
 
 
 static func shield_covers(facing_way: Vector2, to_attacker: Vector2, half_angle_deg: float) -> bool:
@@ -332,9 +357,9 @@ func target_motion() -> Vector2:
 	return target.velocity if target is CharacterBody2D else Vector2.ZERO
 
 
-func shoot(direction: Vector2, speed: float) -> void:
+func shoot(direction: Vector2, speed: float, damage := -1) -> void:
 	var projectile := Projectile.new()
-	projectile.setup(direction, speed, target, def.damage)
+	projectile.setup(direction, speed, target, attack_damage(damage))
 	projectile.position = position
 	get_parent().add_child(projectile)
 
@@ -384,6 +409,6 @@ func _draw() -> void:
 			draw_set_transform(Vector2.ZERO)
 	if def != null and shows_health_bar():
 		var top := -def.body_size.y / 2.0 - 6.0
-		var fraction := clampf(hp / def.max_hp, 0.0, 1.0)
+		var fraction := clampf(hp / max_hp(), 0.0, 1.0)
 		draw_rect(Rect2(-BAR_WIDTH / 2.0, top, BAR_WIDTH, BAR_HEIGHT), Color.BLACK)
 		draw_rect(Rect2(-BAR_WIDTH / 2.0, top, BAR_WIDTH * fraction, BAR_HEIGHT), Color("e4524f"))

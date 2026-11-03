@@ -363,6 +363,7 @@ func _spawn_enemies() -> void:
 func _spawn_enemy(def: EnemyDef, at: Vector2, summoned := false) -> Enemy:
 	var enemy := Enemy.new()
 	enemy.setup(def, _player, _run.stats.warning_fraction, _run.stats.reveals_enemy_health)
+	enemy.apply_floor(_floor_def.health_mult, _floor_def.pension_mult)
 	enemy.is_summon = summoned
 	enemy.room_cells = _room.layout.size_in_cells()
 	enemy.position = at

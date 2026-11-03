@@ -10,18 +10,21 @@ var _left := 0.0
 var _speed := 0.0
 var _hit_range := 0.0
 var _has_hit := false
+var _damage := -1
 
 
 static func stops_at(collider: Object) -> bool:
 	return not collider is BreakableBlock
 
 
-func start(direction: Vector2, length: float, speed: float, hit_range: float) -> void:
+# A damage of -1 costs the boss's usual damage, and a heavy charge passes 2.
+func start(direction: Vector2, length: float, speed: float, hit_range: float, damage := -1) -> void:
 	_direction = direction
 	_left = length
 	_speed = speed
 	_hit_range = hit_range
 	_has_hit = false
+	_damage = damage
 
 
 func is_active() -> bool:
@@ -42,4 +45,4 @@ func tick(enemy: Enemy, delta: float) -> void:
 	enemy.smash(enemy.global_position + _direction * SMASH_AHEAD, SMASH_RADIUS)
 	if not _has_hit and enemy.distance_to_target() <= _hit_range:
 		_has_hit = true
-		enemy.hit_target(enemy.def.damage)
+		enemy.hit_target(enemy.attack_damage(_damage))

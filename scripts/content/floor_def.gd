@@ -43,6 +43,14 @@ extends Resource
 @export var vault_count: int = 1
 # The Thermos upgrade level that breaks this floor's reinforced stones. A later floor can ask for less.
 @export var vault_stone_level: int = 3
+@export_group("Difficulty")
+# Every enemy spawned on this floor, bosses included, starts with its EnemyDef's max_hp times this.
+# A boss made for one floor holds its final health divided by that floor's health_mult in its .tres.
+@export var health_mult: float = 1.0
+# Every enemy's Pension drop on this floor is multiplied by this and rounded up. Summons still pay nothing.
+@export var pension_mult: float = 1.0
+# How many enemy cells a combat room of each size holds on this floor.
+@export var enemies_by_size: Dictionary = {"small": 4, "medium": 6, "large": 11}
 
 
 func is_open(floors_cleared: int) -> bool:
@@ -51,6 +59,11 @@ func is_open(floors_cleared: int) -> bool:
 
 func is_open_for(data: ProgressData) -> bool:
 	return is_open(data.clears_at(open_after_depth))
+
+
+# What is wrong with a layout's enemy cells for this floor's room sizes. Only combat rooms are counted.
+func room_size_errors(layout: RoomLayout) -> PackedStringArray:
+	return layout.enemy_count_errors(enemies_by_size)
 
 
 func room_palette() -> RoomPalette:

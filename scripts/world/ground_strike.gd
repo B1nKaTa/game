@@ -18,6 +18,8 @@ var _warning := 0.5
 var _left := 0.5
 var _landed := false
 var _show_left := SHOW_TIME
+# What landing costs Grandpa. -1 means the enemy's usual damage.
+var _damage := -1
 
 
 static func hits(center: Vector2, radius: float, feet: Vector2) -> bool:
@@ -25,13 +27,18 @@ static func hits(center: Vector2, radius: float, feet: Vector2) -> bool:
 
 
 # A delay lets a line or a row land one after another. A pit follows him for follow_time before locking in.
-func setup(source: Enemy, radius: float, warning: float, delay := 0.0, follow_time := 0.0) -> void:
+func setup(source: Enemy, radius: float, warning: float, delay := 0.0, follow_time := 0.0, damage := -1) -> void:
 	_source = source
 	_radius = radius
 	_warning = warning
 	_left = warning
 	_delay = delay
 	_follow_left = follow_time
+	_damage = damage
+
+
+func damage() -> int:
+	return _damage
 
 
 func is_following() -> bool:
@@ -75,7 +82,7 @@ func _process(delta: float) -> void:
 	if is_following():
 		global_position = _source.target_ground()
 	if advance(delta):
-		_source.land_ground_strike(global_position, _radius)
+		_source.land_ground_strike(global_position, _radius, _damage)
 
 
 func _draw() -> void:

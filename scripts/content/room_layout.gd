@@ -67,6 +67,8 @@ const VAULT_EXTRAS := 3
 const PICKUP_SPACING := 3
 # A long name is wider than three cells, so two on one row stand further apart.
 const SAME_ROW_SPACING := 4
+# Enemy cells a combat room holds by size when no floor says otherwise, as on the first floor.
+const ENEMIES_BY_SIZE := {SIZE_SMALL: 4, SIZE_MEDIUM: 6, SIZE_LARGE: 11}
 const REQUIRED := {
 	TYPE_COMBAT: {"E": 2},
 	TYPE_ITEM: {"I": 2},
@@ -222,6 +224,20 @@ func size_in_cells() -> Vector2i:
 	if rows.is_empty():
 		return Vector2i.ZERO
 	return Vector2i(rows[0].length(), rows.size())
+
+
+# A combat room holds as many enemy cells as its floor asks for its size. Pass a floor's
+# enemies_by_size, or nothing for the first floor's numbers. Other room types are not counted.
+func enemy_count_errors(by_size: Dictionary = {}) -> PackedStringArray:
+	var errors: PackedStringArray = []
+	if room_type != TYPE_COMBAT:
+		return errors
+	var wanted: Dictionary = by_size if not by_size.is_empty() else ENEMIES_BY_SIZE
+	var size := size_class()
+	var count := cells_of("E").size()
+	if wanted.has(size) and count != int(wanted[size]):
+		errors.append("a %s combat room needs %d enemy cells, has %d" % [size, int(wanted[size]), count])
+	return errors
 
 
 func size_class() -> String:

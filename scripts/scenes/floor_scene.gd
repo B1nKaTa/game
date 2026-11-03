@@ -299,7 +299,7 @@ func _end_run(message: String) -> void:
 
 
 func _on_boss_spawned(boss: Enemy) -> void:
-	_hud.show_boss_bar(boss.def.display_name, boss.def.max_hp)
+	_hud.show_boss_bar(boss.def.display_name, boss.max_hp())
 	boss.health_changed.connect(_hud.set_boss_health)
 	boss.defeated.connect(_on_boss_defeated)
 

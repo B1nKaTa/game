@@ -86,7 +86,7 @@ static func ring_count(phase_two: bool) -> int:
 
 
 func tick(enemy: Enemy, delta: float) -> void:
-	var phase_two := is_phase_two(enemy.hp, enemy.def.max_hp)
+	var phase_two := is_phase_two(enemy.hp, enemy.max_hp())
 	_summon_wait -= delta
 	if _dash.is_active():
 		_dash.tick(enemy, delta)
