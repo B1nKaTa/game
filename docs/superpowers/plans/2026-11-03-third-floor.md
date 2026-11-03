@@ -673,8 +673,11 @@ Read these as models first:
 - **Damage:** the ring does none. It pushes Grandpa at 220 px/s for 0.35 s, and enemies the same.
 - **Dodging:** a dodge passes through, as `Player._handle_movement` already cancels a push while dodging.
 
-- [ ] **Step 1: Write failing tests** for `PipeBeat` (glow before each chord, offsets shift it, the cycle repeats) and `PipeRing.push_for` (inside the band pushes outward, the hollow and beyond do not, and the push never costs a pill).
-- [ ] **Step 2: Implement, and when testing is allowed run the tests and screenshot a room with pipes. Commit.**
+- [x] **Step 1: Write failing tests** for `PipeBeat` (glow before each chord, offsets shift it, the cycle repeats) and `PipeRing.push_for` (inside the band pushes outward, the hollow and beyond do not, and the push never costs a pill). Written in `tests/test_parlour_hazard.gd`, not yet run.
+- [ ] **Step 2: Implement, and when testing is allowed run the tests and screenshot a room with pipes. Commit.** Implemented and committed before testing; the tests, the screenshot and the `.uid` files of the new scripts wait for the first run.
+  - **The symbol:** `o`, in a plain border wall cell as a lantern is, counted as wall everywhere, and kept off the cells beside a door.
+  - **The chord:** `PipeBeat.CHORD` is the last 0.1 s of each period, and `chords_between` sends each ring exactly once whatever the frame times.
+  - **The ring:** drawn on the room's side of the wall only, reach 150 px. `force_chord(glow, reach, damage)` lets a floor boss play every pipe at once; only those rings may cost a pill, and they show their whole reach while they glow.
 
 ### Task 11: Funeral Parlour regular enemies
 

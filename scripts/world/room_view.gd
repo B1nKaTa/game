@@ -155,7 +155,7 @@ func clear_passing_effects() -> void:
 		var is_flying_coin: bool = child is Pickup and child.is_flying()
 		if child is Thermos and child.is_fuse_burning():
 			_run.add_bomb()
-		if child is Projectile or child is DeathBurst or child is Thermos or child is EnemyBlast or child is SummonMark or child is GroundStrike or child is LightsOut or child is SteamJet or child is Shockwave or child is FlameBurst or is_flying_coin:
+		if child is Projectile or child is DeathBurst or child is Thermos or child is EnemyBlast or child is SummonMark or child is GroundStrike or child is LightsOut or child is SteamJet or child is Shockwave or child is FlameBurst or child is PipeRing or is_flying_coin:
 			child.queue_free()
 
 
@@ -381,6 +381,11 @@ func _create_props(palette: RoomPalette) -> void:
 		vent.setup(cell)
 		vent.position = RoomBackdrop.cell_center(cell)
 		add_child(vent)
+	for cell in layout.cells_of(RoomLayout.SYMBOL_ORGAN_PIPE):
+		var pipe := OrganPipe.new()
+		pipe.setup(cell, layout.inward_of(cell))
+		pipe.position = RoomBackdrop.cell_center(cell)
+		add_child(pipe)
 
 
 func _place_prop(prop: BreakableBlock, cell: Vector2i) -> void:

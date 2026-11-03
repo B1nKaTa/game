@@ -84,6 +84,9 @@ var _pension_mult := 1.0
 var _route_left := 0.0
 var _routing := false
 var _waypoint := Vector2.ZERO
+# A shove that carries it along for a while, as an organ pipe's ring does. It adds to any knockback.
+var _push := Vector2.ZERO
+var _push_left := 0.0
 
 
 func setup(enemy_def: EnemyDef, chase_target: Node2D, warning_fraction: float, show_health_bar := false) -> void:
@@ -246,6 +249,9 @@ func _physics_process(delta: float) -> void:
 		_knockback = Vector2.ZERO
 		desired_velocity = Vector2.ZERO
 	velocity = desired_velocity + _knockback
+	if _push_left > 0.0:
+		_push_left -= delta
+		velocity += _push
 	_knockback = _knockback.lerp(Vector2.ZERO, minf(KNOCKBACK_DECAY * delta, 1.0))
 	move_and_slide()
 	if def.ignores_walls or submerged:
@@ -300,6 +306,19 @@ func take_strike(amount: float, push: Vector2, to_attacker: Vector2) -> bool:
 		return false
 	take_damage(amount, push)
 	return true
+
+
+# A shove for a while on top of its own walk, such as an organ pipe's ring. A boss barely moves, as
+# with any knockback, and nothing bolted down or underground moves at all.
+func apply_push(shove: Vector2, seconds: float) -> void:
+	if def == null or def.wall_mounted or submerged:
+		return
+	_push = shove * (BOSS_KNOCKBACK_SCALE if def.is_boss else 1.0)
+	_push_left = seconds
+
+
+func is_pushed() -> bool:
+	return _push_left > 0.0
 
 
 func wait_for_room_start() -> void:

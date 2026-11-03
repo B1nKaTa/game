@@ -78,13 +78,15 @@ const VENT_DOOR_CLEARANCE := 2
 # An Arcade game table. An arcade room's tables are, in reading order, the slot machine, blackjack and
 # draw poker. Solid, like the Retirement Plan, and never broken.
 const SYMBOL_GAME := "G"
-const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpG"
+# An organ pipe set in the border wall, as a lantern is. It chords on a beat and pushes with a ring.
+const SYMBOL_ORGAN_PIPE := "o"
+const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGo"
 # Nothing can walk through these, so nothing may be dropped or summoned on them.
-const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMG"
+const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGo"
 # Routes may not need a hole or a wall, and may not need a bomb for a crate or a rock.
-const WALL_LIKE := "#l"
-const WALLS := "#lV"
-const WALLS_AND_BOMB_ONLY := "#lVXOAYKDM"
+const WALL_LIKE := "#lo"
+const WALLS := "#lVo"
+const WALLS_AND_BOMB_ONLY := "#lVXOAYKDMo"
 const MUST_REACH_WITHOUT_BREAKING := "EBIHSPG"
 # A vault lays this many labeled pickups out in the open, this many cells apart so names never overlap.
 const VAULT_EXTRAS := 3
@@ -140,10 +142,12 @@ func validate() -> PackedStringArray:
 			if not ALLOWED.contains(symbol):
 				errors.append("unknown symbol '%s' at %d,%d" % [symbol, x, y])
 			var on_border := x == 0 or y == 0 or x == size.x - 1 or y == size.y - 1
-			if on_border and symbol != SYMBOL_WALL and symbol != SYMBOL_LANTERN:
+			if on_border and symbol != SYMBOL_WALL and symbol != SYMBOL_LANTERN and symbol != SYMBOL_ORGAN_PIPE:
 				errors.append("border must be wall at %d,%d" % [x, y])
 			if symbol == SYMBOL_LANTERN and not _lantern_spot_ok(Vector2i(x, y), size):
 				errors.append("a lantern needs a plain border wall cell at %d,%d" % [x, y])
+			if symbol == SYMBOL_ORGAN_PIPE and not _lantern_spot_ok(Vector2i(x, y), size):
+				errors.append("an organ pipe needs a plain border wall cell at %d,%d" % [x, y])
 	if not errors.is_empty():
 		return errors
 	var required: Dictionary = REQUIRED[room_type]
@@ -407,6 +411,18 @@ func door_cell(side: Vector2i) -> Vector2i:
 
 func wall_cell(side: Vector2i) -> Vector2i:
 	return door_cell(side) + side
+
+
+# The way into the room from a cell of its border wall, as an organ pipe faces.
+func inward_of(cell: Vector2i) -> Vector2:
+	var size := size_in_cells()
+	if cell.x <= 0:
+		return Vector2.RIGHT
+	if cell.x >= size.x - 1:
+		return Vector2.LEFT
+	if cell.y <= 0:
+		return Vector2.DOWN
+	return Vector2.UP
 
 
 func cells_of(symbol: String) -> Array[Vector2i]:
