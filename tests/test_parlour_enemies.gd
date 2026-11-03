@@ -74,10 +74,10 @@ func test_a_wreath_lands_near_him() -> void:
 
 
 func test_her_wreaths_follow_the_plan() -> void:
-	assert_near(FloristBehavior.THROW_EVERY, 3.2)
+	assert_near(FloristBehavior.THROW_EVERY, 4.0)
 	assert_near(FloristBehavior.WREATH_WARNING, 0.9)
 	assert_near(FloristBehavior.WREATH_RADIUS, 26.0)
-	assert_near(FloristBehavior.THORN_TIME, 3.0)
+	assert_near(FloristBehavior.THORN_TIME, 2.0)
 	assert_near(GroundStrike.BURN_EVERY, 0.6, "thorns hurt at most once in 0.6 seconds")
 
 

@@ -7,11 +7,11 @@ const TOO_CLOSE := 130.0
 const TOO_FAR := 210.0
 const WINDUP := 0.4
 const WARNING_RADIUS := 18.0
-const THROW_EVERY := 3.2
+const THROW_EVERY := 4.0
 const FIRST_THROW := 1.2
 const WREATH_RADIUS := 26.0
 const WREATH_WARNING := 0.9
-const THORN_TIME := 3.0
+const THORN_TIME := 2.0
 # How far from his feet a wreath may land.
 const SPREAD := 40.0
 
