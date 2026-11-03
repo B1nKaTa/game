@@ -700,8 +700,12 @@ Read these as models first:
   - **Losing one:** when one dies, the other drops the coffin (a solid prop for 6 s) and fights alone with the melee behavior's rules.
   - **Static:** `PallbearerBehavior.alone(partner_alive: bool) -> bool`.
 
-- [ ] **Step 1: Write failing tests** for each static, as `test_furnace_enemies.gd` does.
-- [ ] **Step 2: Implement until they pass. When testing is allowed, look at each in a real window. Commit one commit per enemy, and one for the two returning enemies.**
+- [x] **Step 1: Write failing tests** for each static, as `test_furnace_enemies.gd` does. Written in `tests/test_parlour_enemies.gd`, not yet run.
+- [ ] **Step 2: Implement until they pass. When testing is allowed, look at each in a real window. Commit one commit per enemy, and one for the two returning enemies.** Implemented before testing, in one commit for the task as the build brief asked; the tests and the look in a real window are still to do.
+  - **Packs:** `MourningPack` (`scripts/actors/behaviors/mourning_pack.gd`) is shared through the members' metadata. A group's leader gathers its followers, and mourners with no pack (the Reverend's summons) gather any free mourners within 160 px. The first living member runs the clock, so a pack never wails three times as fast. The warning on each member shows whole.
+  - **Wreaths:** `GroundStrike` gained a look, `LOOK_THORNS`, which draws a thrown wreath and a ring of brambles instead of coal and fire. The damage rules are the burning ground's.
+  - **Pallbearers:** the leader pairs with the nearest follower of its kind within 96 px and runs the pair's clock; both show their own lane and ram together. One hit a ram for the pair, from either bearer or the coffin between them (`ram_hits`). The dropped coffin is `DroppedCoffin`, solid for 6 s unless it would land on Grandpa's feet, broken only by blasts and bosses.
+  - **Colours:** mourners pale lavender, the Florist green, Pallbearers charcoal, the Plot Holder mustard and the Seasonal Temp cyan.
 
 ### Task 12: The Reverend, Officiant of Last Words (mini boss)
 

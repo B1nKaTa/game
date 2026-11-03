@@ -21,6 +21,14 @@ const EMBER := Color("fff4c0")
 const COAL := Color("1c1614")
 const COAL_GLOW := Color("ff8a2a")
 const THROW_ARC := 28.0
+# What lands and what it leaves: a lump of coal that burns, or a thorny wreath that leaves a ring of
+# thorns. Both hurt the same way.
+const LOOK_COAL := "coal"
+const LOOK_THORNS := "thorns"
+const WREATH := Color("3f6b34")
+const WREATH_BLOOM := Color("d9576b")
+const THORN := Color("2c4a24")
+const THORN_TIP := Color("a7c48a")
 
 var _source: Enemy
 var _radius := 20.0
@@ -38,6 +46,7 @@ var _burn_left := 0.0
 var _burn_wait := {}
 # Where a thrown lump of coal left from, drawn flying in over the warning. Unset means nothing is thrown.
 var _thrown_from := Vector2.INF
+var _look := LOOK_COAL
 
 
 static func hits(center: Vector2, radius: float, feet: Vector2) -> bool:
@@ -65,6 +74,14 @@ func setup(source: Enemy, radius: float, warning: float, delay := 0.0, follow_ti
 
 func throw_from(point: Vector2) -> void:
 	_thrown_from = point
+
+
+func set_look(kind: String) -> void:
+	_look = kind
+
+
+func look() -> String:
+	return _look
 
 
 func damage() -> int:
@@ -172,7 +189,10 @@ func _burn(delta: float) -> void:
 
 func _draw() -> void:
 	if _landed and _burn_left > 0.0:
-		_draw_fire()
+		if _look == LOOK_THORNS:
+			_draw_thorns()
+		else:
+			_draw_fire()
 		return
 	if _landed:
 		var progress := 1.0 - maxf(_show_left, 0.0) / SHOW_TIME
@@ -192,8 +212,26 @@ func _draw() -> void:
 	if _thrown_from != Vector2.INF:
 		var start := _thrown_from - global_position
 		var at := start.lerp(Vector2.ZERO, filled) + Vector2(0.0, -sin(filled * PI) * THROW_ARC)
-		draw_circle(at, 4.0, COAL_GLOW)
-		draw_circle(at, 3.0, COAL)
+		if _look == LOOK_THORNS:
+			draw_arc(at, 5.0, 0.0, TAU, 12, WREATH, 3.0)
+			draw_circle(at + Vector2(0, -5), 1.5, WREATH_BLOOM)
+		else:
+			draw_circle(at, 4.0, COAL_GLOW)
+			draw_circle(at, 3.0, COAL)
+
+
+# A ring of thorns reads as brambles, never as a warning: a dark green ring bristling with spikes.
+func _draw_thorns() -> void:
+	var fade := clampf(_burn_left / BURN_FADE, 0.0, 1.0)
+	draw_circle(Vector2.ZERO, _radius, Color(THORN, 0.25 * fade))
+	draw_arc(Vector2.ZERO, _radius * 0.85, 0.0, TAU, 28, Color(THORN, 0.9 * fade), 4.0)
+	for i in 14:
+		var way := Vector2.from_angle(TAU * i / 14.0 + 0.2 * (i % 2))
+		var base := way * _radius * 0.85
+		var tip := base + way.rotated(0.5 if i % 2 == 0 else -0.5) * 6.0
+		draw_line(base, tip, Color(THORN_TIP, fade), 1.0)
+	for i in 3:
+		draw_circle(Vector2.from_angle(TAU * i / 3.0 + 0.6) * _radius * 0.85, 2.0, Color(WREATH_BLOOM, fade))
 
 
 # Burning ground reads as fire, never as a warning: a flickering orange pool with a bright rim and embers.

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/enemy_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/actors/behaviors/riser_behavior.gd" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "parlour_plot_holder"
+display_name = "Delinquent Plot Holder"
+max_hp = 46.0
+speed = 58.0
+pension_drop = 1
+body_size = Vector2(20, 24)
+color = Color(0.86, 0.7, 0.3, 1)
+behavior_script = ExtResource("2")
+max_per_room = 3
+mark = "dirt"

@@ -38,6 +38,11 @@ const JAW_MOUTH := Color("3a1418")
 const JAW_TEETH := Color("f4f1e6")
 const JAW_TONGUE := Color("e07a8a")
 const JAW_LOCK := Color("e2b33c")
+const VEIL := Color(0.08, 0.06, 0.1, 0.75)
+const TEAR := Color("8fd0ff")
+const STEM := Color("3f6b34")
+const BLOOMS: Array[Color] = [Color("d9576b"), Color("f2e6c8"), Color("e6a3c8")]
+const GLOVE := Color("f4f1e6")
 
 var _def: EnemyDef
 var _facing := Vector2.RIGHT
@@ -134,6 +139,18 @@ func _draw() -> void:
 				draw_rect(Rect2(-half.x + 2.0 + i * (half.x * 2.0 - 4.0) / 5.0, -half.y + 5.0, 2.5, 2.5), JAW_TEETH)
 			draw_rect(Rect2(-3.0, -half.y + 7.0, 6.0, 2.0), JAW_TONGUE)
 			draw_rect(Rect2(-2.0, -half.y + 1.0, 4.0, 3.0), JAW_LOCK)
+		"veil":
+			# A black veil over the head, with a tear running from under it.
+			draw_rect(Rect2(-half.x, -half.y - 2.0, half.x * 2.0, half.y * 0.8), VEIL)
+			draw_circle(Vector2(-3.0, -half.y * 0.1), 1.5, TEAR)
+			draw_line(Vector2(-3.0, -half.y * 0.1), Vector2(-3.0, half.y * 0.2), TEAR, 1.0)
+		"bouquet":
+			draw_line(Vector2(half.x - 2.0, half.y - 4.0), Vector2(half.x + 3.0, -2.0), STEM, 2.0)
+			for i in BLOOMS.size():
+				draw_circle(Vector2(half.x + 1.0 + i * 2.5, -4.0 + (i % 2) * 2.0), 2.5, BLOOMS[i])
+		"white_gloves":
+			draw_rect(Rect2(-half.x - 2.0, 0.0, 4.0, 4.0), GLOVE)
+			draw_rect(Rect2(half.x - 2.0, 0.0, 4.0, 4.0), GLOVE)
 	if _def.shield_half_angle > 0.0:
 		var reach := maxf(half.x, half.y) + SHIELD_GAP
 		var half_arc := deg_to_rad(_def.shield_half_angle)
