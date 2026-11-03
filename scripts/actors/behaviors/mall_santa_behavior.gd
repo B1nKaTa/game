@@ -15,12 +15,12 @@ const SLEIGH_LENGTH := 380.0
 const SLEIGH_SPEED := 430.0
 const SLEIGH_HIT_RANGE := 28.0
 const SLEIGH_LANE_WIDTH := 52.0
-const PRESENT_WINDUP := 0.6
+const PRESENT_WINDUP := 0.75
 const PRESENTS := 4
 # How far from his feet a present may land.
 const PRESENT_REACH := 90.0
 const PRESENT_TRIES := 40
-const RING_WINDUP := 0.6
+const RING_WINDUP := 0.8
 const RING_DAMAGE := Enemy.HEAVY_DAMAGE
 const CONVEYOR_WINDUP := 0.5
 const CONVEYOR_EVERY := 8.0
@@ -34,7 +34,7 @@ const PHASE_TWO_WINDUP_SCALE := 0.8
 const KEEP_NEAR := 90.0
 const MAX_ELVES := 3
 const FIRST_ELVES := 1.5
-const ELF_EVERY := 7.0
+const ELF_EVERY := 9.0
 const ELF_DISTANCE := 90.0
 const SAY_TIME := 1.0
 
