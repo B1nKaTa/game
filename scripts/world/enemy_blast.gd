@@ -29,7 +29,8 @@ static func line_is_clear(space: PhysicsDirectSpaceState2D, from: Vector2, to: V
 	return true
 
 
-# Hits enemies and Grandpa inside the radius, and breaks by the same rules as a Thermos.
+# Hits enemies and Grandpa inside the radius, and breaks what a Thermos breaks, except secret
+# walls and reinforced stone, which wait for the player's own Thermos.
 static func go(parent: Node2D, center: Vector2, radius: float, enemy_damage: float, push: float, player: Node2D, player_damage: int) -> void:
 	var tree := parent.get_tree()
 	var space: PhysicsDirectSpaceState2D = parent.get_world_2d().direct_space_state

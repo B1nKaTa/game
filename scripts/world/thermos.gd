@@ -71,6 +71,7 @@ func _explode() -> void:
 		_player.take_hit(PLAYER_DAMAGE)
 	exploded.emit()
 
+	SecretWall.blast(get_tree(), global_position, BLAST_RADIUS)
 
 func _draw() -> void:
 	if _gone_off:

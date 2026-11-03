@@ -76,6 +76,16 @@ func test_the_secret_wall_and_the_plan_never_yield_to_bosses_or_the_cane() -> vo
 	station.free()
 
 
+func test_only_the_players_thermos_opens_a_secret_wall() -> void:
+	var wall := _in_tree(SecretWall.new(), Vector2(4000, 4000))
+	BreakableBlock.smash_among([wall], Vector2(4000, 4000), 40.0, BreakableBlock.SOURCE_BLAST)
+	assert_false(wall.is_queued_for_deletion(), "an Auditor's blast leaves the crack alone")
+	assert_eq(SecretWall.blast_among([wall], Vector2(4200, 4000), 40.0), 0, "too far away")
+	assert_eq(SecretWall.blast_among([wall], Vector2(4000, 4000), 40.0), 1)
+	assert_true(wall.is_queued_for_deletion())
+	wall.free()
+
+
 func test_breaking_announces_the_spot_once() -> void:
 	var barrel := Barrel.new()
 	var spots: Array[Vector2] = []
