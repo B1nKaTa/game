@@ -203,6 +203,8 @@ func _set_yard_rules(in_yard: bool) -> void:
 	if in_yard and not player.bomb_requested.is_connected(_on_yard_bomb):
 		player.bomb_requested.connect(_on_yard_bomb)
 		player.hurt.connect(_on_yard_hurt)
+		# Forms filed or refiled earlier in this visit count in the yard.
+		_run.refresh_stats()
 		_run.bombs = RunState.YARD_SUPPLY
 		_run.changed.emit()
 		_refresh_coach()
@@ -471,6 +473,20 @@ func _close_panel() -> void:
 	# What he wears may have changed at the Decor Office, and he wears it here as in runs.
 	_run.look = RunState.look_from(Progress.data.cosmetics_worn, CosmeticDef.all())
 	player.refresh_look()
+	_refresh_run_stats()
+
+
+# A panel may have filed or refiled a form, so his stats are worked out again, keeping any yard items.
+# Outside the yard his Thermoses follow the forms as at a run's start. In it the supply stays full.
+func _refresh_run_stats() -> void:
+	_run.refresh_stats()
+	if not _in_yard():
+		_run.bombs = RunState.STARTING_BOMBS + _run.stats.bonus_bombs
+		_run.changed.emit()
+
+
+func _in_yard() -> bool:
+	return player.bomb_requested.is_connected(_on_yard_bomb)
 
 
 func _exit_tree() -> void:

@@ -124,3 +124,68 @@ func test_new_lines_start_again_at_the_first() -> void:
 	npc.set_lines(second)
 	assert_eq(npc.talk(), "three")
 	npc.free()
+
+
+# --- forms filed during the visit ---
+
+func _form(id: String) -> UpgradeDef:
+	for def in Content.upgrades():
+		if def.id == id:
+			return def
+	return null
+
+
+# The Waiting Room's run, made as Progress.make_run makes it, from the save's own dictionaries.
+func _visit_run(data: ProgressData) -> RunState:
+	return RunState.new(Content.upgrades(), data.upgrades, data.form_choices)
+
+
+func test_a_form_filed_during_the_visit_counts_in_the_yard() -> void:
+	var data := ProgressData.new()
+	data.pension = 1000
+	var run := _visit_run(data)
+	run.add_item(load("res://data/items/titanium_hip.tres"))
+	var pills_before := run.health.max_pills
+	assert_true(data.buy(_form("black_market_pills")))
+	run.refresh_stats()
+	assert_eq(run.stats.max_pills, pills_before + 1, "the filed level adds its pill")
+	assert_eq(run.health.max_pills, pills_before + 1)
+	assert_eq(run.health.pills, run.health.max_pills, "the new pill is his to use at once")
+	assert_true(run.has_item("titanium_hip"), "refreshing keeps the items tried in the yard")
+	assert_true(run.stats.move_speed > PlayerStats.BASE_SPEED)
+
+
+func test_a_form_refiled_during_the_visit_counts_in_the_yard() -> void:
+	var data := ProgressData.new()
+	data.pension = 1000
+	var cane := _form("reinforced_cane")
+	var run := _visit_run(data)
+	assert_true(data.buy(cane))
+	assert_true(data.buy(cane, UpgradeDef.OPTION_A))
+	run.refresh_stats()
+	var with_a := run.stats.damage_mult
+	assert_near(with_a, PlayerStats.compute(Content.upgrades(), {"reinforced_cane": 2}, run.items, {"reinforced_cane": "a"}).damage_mult)
+	assert_true(data.refile(cane))
+	run.refresh_stats()
+	assert_near(run.stats.damage_mult, PlayerStats.compute(Content.upgrades(), {"reinforced_cane": 2}, run.items, {"reinforced_cane": "b"}).damage_mult)
+	assert_true(run.stats.damage_mult < with_a, "Lightweight trades cane damage for speed")
+
+
+func test_refreshing_never_leaves_more_pills_than_the_maximum() -> void:
+	var data := ProgressData.new()
+	data.upgrades["black_market_pills"] = 1
+	var run := _visit_run(data)
+	assert_eq(run.health.max_pills, PlayerStats.BASE_PILLS + 1)
+	data.upgrades.erase("black_market_pills")
+	run.refresh_stats()
+	assert_eq(run.health.max_pills, PlayerStats.BASE_PILLS)
+	assert_true(run.health.pills <= run.health.max_pills)
+
+
+# The scene refreshes the run on entering the yard and after every panel, which is where forms are filed.
+func test_the_waiting_room_refreshes_stats_on_entering_the_yard_and_closing_a_panel() -> void:
+	var source := FileAccess.get_file_as_string("res://scripts/scenes/waiting_room.gd")
+	var yard_rules := source.substr(source.find("func _set_yard_rules"), 400)
+	assert_true(yard_rules.contains("_run.refresh_stats()"), "entering the yard")
+	var close_panel := source.substr(source.find("func _close_panel"), 700)
+	assert_true(close_panel.contains("\n\t_refresh_run_stats()"), "closing a panel calls it, not only declares it")

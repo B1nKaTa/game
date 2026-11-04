@@ -95,18 +95,21 @@ func was_recipe_offered(id: String) -> bool:
 
 func add_item(item: ItemDef) -> void:
 	items.append(item)
-	stats = PlayerStats.compute(_upgrades, _levels, items, _choices)
-	health.heal_bonus = stats.heal_bonus
-	if stats.max_pills != health.max_pills:
-		health.raise_max(stats.max_pills)
-	else:
-		changed.emit()
+	refresh_stats()
 
 
 # Drops every item, as leaving the Training Yard does, and puts his stats and pills back. A lower
 # maximum never leaves him holding more pills than it allows.
 func clear_items() -> void:
 	items.clear()
+	refresh_stats()
+
+
+# Works his stats out again from the forms and the items he holds, keeping the items. The levels and
+# choices are the dictionaries the run was made with, which Progress.make_run takes straight from the
+# save, so a form filed or refiled since then counts here. A higher maximum adds the pills it gains,
+# and a lower one never leaves him holding more pills than it allows (Health.raise_max).
+func refresh_stats() -> void:
 	stats = PlayerStats.compute(_upgrades, _levels, items, _choices)
 	health.heal_bonus = stats.heal_bonus
 	if stats.max_pills != health.max_pills:
