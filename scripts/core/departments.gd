@@ -72,6 +72,15 @@ const STATIONS: Array[Dictionary] = [
 	{"id": "forms_counter", "department": LOBBY, "cell": Vector2i(11, 3), "title": "Forms Counter. Refiling, Window 2", "prompt": "Refile", "label": "Forms", "size": Vector2(28, 36), "color": Color("7a6f5a")},
 	# The TrophyWall draws the frames on the top wall above it, so the station itself draws no board.
 	{"id": "trophy_wall", "department": LOBBY, "cell": Vector2i(20, 3), "title": "Trophy Wall", "prompt": "Look", "board": false},
+	# A PosterBoard draws the cork board and its posters, so the station draws none. It stands off the
+	# middle column, since (10, 2) would be beside the cell a north door would use.
+	{"id": "bounty_board", "department": BOUNTY_OFFICE, "cell": Vector2i(6, 2), "title": "Bounty Office. Overdue Accounts", "prompt": "Wanted posters", "board": false},
+]
+
+# People who stand in a department, each made from its NpcDef on the department's first entry. They
+# talk on their own, and the scene listens to what they say where it needs to.
+const NPCS: Array[Dictionary] = [
+	{"id": "deputy_dolores", "department": BOUNTY_OFFICE, "cell": Vector2i(10, 6), "def": "res://data/npcs/deputy_dolores.tres"},
 ]
 
 # The trophy wall's frames hang centred over this lobby column, on the line between the top wall and
@@ -164,6 +173,13 @@ static func closed_hint(id: String) -> String:
 	if opens_on.is_empty():
 		return ""
 	return "Opens when %s is cleared" % FLOOR_NAMES.get(opens_on, "a floor")
+
+
+static func station_entry(station_id: String) -> Dictionary:
+	for station: Dictionary in STATIONS:
+		if station["id"] == station_id:
+			return station
+	return {}
 
 
 static func merchant_entry(merchant_id: String) -> Dictionary:

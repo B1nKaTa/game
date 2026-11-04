@@ -116,6 +116,27 @@ func _save_condolences() -> void:
 	condolences_changed.emit(data.condolences)
 
 
+func take_bounty(def: BountyDef) -> bool:
+	if not BountyBoard.take(def, data):
+		return false
+	_save_both_currencies()
+	return true
+
+
+# Pays a won poster straight into the save, so no run multiplier touches it. Empty when nothing was paid.
+func collect_bounty(def: BountyDef) -> Dictionary:
+	var paid := BountyBoard.collect(def, data)
+	if not paid.is_empty():
+		_save_both_currencies()
+	return paid
+
+
+func _save_both_currencies() -> void:
+	_store.save_progress(data)
+	pension_changed.emit(data.pension)
+	condolences_changed.emit(data.condolences)
+
+
 func start_run() -> void:
 	data.start_run()
 	_store.save_progress(data)

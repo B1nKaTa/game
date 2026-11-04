@@ -5,6 +5,7 @@ extends RefCounted
 # share them. Progress wraps take and collect in saving calls.
 
 const DIR := "res://data/bounties/"
+const FLOORS_DIR := "res://data/floors/"
 # A recipe already found pays this share of the poster's Pension again instead.
 const FOUND_RECIPE_SHARE := 0.5
 
@@ -34,6 +35,21 @@ static func posters(defs: Array[BountyDef], floors: Dictionary, data: ProgressDa
 		if floor_reachable(floors.get(def.floor_id) as FloorDef, data):
 			list.append(def)
 	return list
+
+
+# Each poster's floor, by id. A floor's file is named after its id, as every shipped floor is.
+static func floors_for(defs: Array[BountyDef]) -> Dictionary:
+	var floors := {}
+	for def in defs:
+		if not floors.has(def.floor_id):
+			floors[def.floor_id] = load(FLOORS_DIR + def.floor_id + ".tres")
+	return floors
+
+
+# What the Bounty Office's board shows for this save.
+static func showing(data: ProgressData) -> Array[BountyDef]:
+	var defs := all()
+	return posters(defs, floors_for(defs), data)
 
 
 static func is_taken(def: BountyDef, data: ProgressData) -> bool:

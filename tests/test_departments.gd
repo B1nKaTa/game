@@ -101,3 +101,18 @@ func test_a_sign_keeps_its_text_inside_the_room() -> void:
 	assert_near(DepartmentSign.text_left(100.0, 40.0, 32.0, 600.0), 80.0)
 	assert_near(DepartmentSign.text_left(48.0, 200.0, 32.0, 600.0), 32.0)
 	assert_near(DepartmentSign.text_left(590.0, 100.0, 32.0, 608.0), 508.0)
+
+
+func test_npcs_stand_on_open_floor_clear_of_doors_and_stations() -> void:
+	var layouts := Departments.load_layouts()
+	var taken := {}
+	for entry: Dictionary in Departments.STATIONS:
+		taken["%s %s" % [entry["department"], str(entry["cell"])]] = true
+	for entry: Dictionary in Departments.NPCS:
+		var layout: RoomLayout = layouts[entry["department"]]
+		var cell: Vector2i = entry["cell"]
+		assert_eq(layout.symbol_at(cell), RoomLayout.SYMBOL_FLOOR, "%s on floor" % entry["id"])
+		for side in RoomLayout.SIDES:
+			assert_true(Vector2(cell).distance_to(Vector2(layout.door_cell(side))) >= 3.0, "%s clear of doors" % entry["id"])
+		assert_false(taken.has("%s %s" % [entry["department"], str(cell)]), "%s shares a cell" % entry["id"])
+		assert_true(load(entry["def"]) is NpcDef, entry["id"])

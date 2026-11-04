@@ -8,6 +8,8 @@ const KEY_BOARD := "key_board"
 const CRAFTER := "crafter"
 const TROPHY_WALL := "trophy_wall"
 const FORMS_COUNTER := "forms_counter"
+const BOUNTY_BOARD := "bounty_board"
+const DEPUTY_DOLORES := "deputy_dolores"
 const MERCHANT_PROMPT := "Trade"
 const RUN_DOOR_ICON := ">"
 const NOW_SERVING_AT := Vector2(360, 24)
@@ -31,6 +33,10 @@ var _views := {}
 # Every station made so far, by id.
 var _stations := {}
 var _open_merchants: Array = []
+# Every department NPC made so far, by Departments.NPCS id.
+var _npcs := {}
+# The Bounty Office's cork board, once that department has been entered.
+var _poster_board: PosterBoard
 var _panel: CanvasLayer
 # The frame a panel last closed on, so the press that closed it never opens it again at once.
 var _panel_closed_frame := -1
@@ -179,6 +185,16 @@ func _furnish(view: RoomView, room: FloorRoom) -> void:
 	for entry: Dictionary in Departments.STATIONS:
 		if entry["department"] == department:
 			_add_station(view, entry)
+	for entry: Dictionary in Departments.NPCS:
+		if entry["department"] == department:
+			_add_npc(view, entry)
+	if department == Departments.BOUNTY_OFFICE:
+		_poster_board = PosterBoard.new()
+		_poster_board.position = RoomBackdrop.cell_center(Departments.station_entry(BOUNTY_BOARD)["cell"])
+		view.add_child(_poster_board)
+		# Under the station, so the station's prompt draws over the board.
+		view.move_child(_poster_board, (_stations[BOUNTY_BOARD] as Node).get_index())
+		_refresh_poster_board()
 	if department == Departments.LOBBY:
 		_add_run_door(view)
 		var wall := TrophyWall.new()
@@ -193,6 +209,44 @@ func _add_station(view: RoomView, entry: Dictionary) -> void:
 	made.position = RoomBackdrop.cell_center(entry["cell"])
 	view.add_child(made)
 	_stations[made.id] = made
+
+
+func _add_npc(view: RoomView, entry: Dictionary) -> void:
+	var npc := Npc.new()
+	npc.setup(load(entry["def"]) as NpcDef, player)
+	npc.position = RoomBackdrop.cell_center(entry["cell"])
+	view.add_child(npc)
+	_npcs[entry["id"]] = npc
+	if entry["id"] == DEPUTY_DOLORES:
+		npc.talked.connect(_on_dolores_talked)
+
+
+# She says her line either way, and with a poster ready to collect she opens the board's panel too.
+func _on_dolores_talked(_line: String) -> void:
+	if _panel != null:
+		return
+	for def in BountyBoard.showing(Progress.data):
+		if BountyBoard.can_collect(def, Progress.data):
+			_open_bounty_panel(Departments.station_entry(BOUNTY_BOARD).get("title", ""))
+			return
+
+
+func _open_bounty_panel(title: String) -> void:
+	var bounties := BountyPanel.new()
+	bounties.setup(title)
+	bounties.paid.connect(_hud.show_notice)
+	_show_panel(bounties)
+
+
+func _refresh_poster_board() -> void:
+	if not is_instance_valid(_poster_board):
+		return
+	var posters := BountyBoard.showing(Progress.data)
+	var taken := -1
+	for i in posters.size():
+		if BountyBoard.is_taken(posters[i], Progress.data):
+			taken = i
+	_poster_board.show_posters(posters.size(), taken)
 
 
 func _add_run_door(view: RoomView) -> void:
@@ -243,6 +297,8 @@ func _open_station(opened: WaitingStation) -> void:
 			_show_panel(refile)
 		TROPHY_WALL:
 			_show_lines(Mementos.wall_lines(Progress.data))
+		BOUNTY_BOARD:
+			_open_bounty_panel(opened.title)
 
 
 # Shows the first line now and the rest one after another, in place of whatever was waiting.
@@ -270,6 +326,7 @@ func _close_panel() -> void:
 	_panel = null
 	_panel_closed_frame = Engine.get_process_frames()
 	player.set_physics_process(true)
+	_refresh_poster_board()
 
 
 func _exit_tree() -> void:

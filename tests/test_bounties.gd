@@ -156,3 +156,34 @@ func test_a_won_item_joins_the_pool_only_once_won() -> void:
 	assert_false(run.can_offer(gloves))
 	run.unlocked_items = {"undertakers_gloves": true}
 	assert_true(run.can_offer(gloves))
+
+
+func test_the_extra_text_names_what_the_poster_pays() -> void:
+	assert_eq(BountyPanel.extra_text(_poster("senior_adjuster")), "a recipe for Agnes")
+	assert_eq(BountyPanel.extra_text(_poster("tired_undertaker")), "a unique item")
+	assert_eq(BountyPanel.extra_text(_poster("regional_reaper")), "something to wear")
+
+
+func test_a_row_names_the_boss_and_the_whole_reward() -> void:
+	assert_eq(BountyPanel.row_text(_poster("senior_adjuster")), "WANTED: Senior Adjuster  40 Pension, 10 Condolences, + a recipe for Agnes")
+
+
+func test_each_poster_button_says_what_it_does() -> void:
+	var data := ProgressData.new()
+	var adjuster := _poster("senior_adjuster")
+	var reaper := _poster("regional_reaper")
+	assert_eq(BountyPanel.button_text(adjuster, data), BountyPanel.TAKE)
+	BountyBoard.take(adjuster, data)
+	assert_eq(BountyPanel.button_text(adjuster, data), BountyPanel.TAKEN)
+	assert_eq(BountyPanel.button_text(reaper, data), BountyPanel.ONE_AT_A_TIME)
+	data.record_boss_beaten("senior_adjuster", false)
+	assert_eq(BountyPanel.button_text(adjuster, data), BountyPanel.COLLECT)
+
+
+func test_the_paid_notice_names_the_extra() -> void:
+	var paid := {"pension": 40, "condolences": 10, "extra_kind": BountyDef.EXTRA_RECIPE, "extra_id": "support_stockings", "extra_was_new": true}
+	assert_eq(BountyPanel.paid_text(_poster("senior_adjuster"), paid), "Paid: 40 Pension, 10 Condolences, and a recipe for Agnes")
+
+
+func test_the_board_shows_what_the_fresh_save_can_reach() -> void:
+	assert_eq(BountyBoard.showing(ProgressData.new()).size(), 2)

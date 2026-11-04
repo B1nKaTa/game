@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="NpcDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/npc_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "deputy_dolores"
+display_name = "Deputy Dolores, Overdue Accounts"
+color = Color(0.36, 0.42, 0.62, 1)
+body_size = Vector2(22, 30)
+lines = Array[String](["Every soul has a balance. Some are overdue.", "Take a poster. Bring me proof. Paperwork is proof.", "One account at a time, dear. I'm not made of ink.", "Paid in full. Lovely. Next!"])
