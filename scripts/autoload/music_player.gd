@@ -110,7 +110,7 @@ func _load(id: String) -> AudioStream:
 		if MusicRules.loops(id):
 			wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
 			wav.loop_begin = 0
-			wav.loop_end = int(wav.get_length() * wav.mix_rate)
+			wav.loop_end = roundi(wav.get_length() * wav.mix_rate)
 		else:
 			wav.loop_mode = AudioStreamWAV.LOOP_DISABLED
 	return stream
