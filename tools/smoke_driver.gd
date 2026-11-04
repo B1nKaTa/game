@@ -220,7 +220,14 @@ func _clear_every_depth(path_index: int) -> void:
 	_check(scene.PATHS_BY_DEPTH.size() == _last_depth, "every depth down to the last lists its paths")
 	var starting_pills: int = scene.player.run.stats.max_pills
 	_check(starting_pills >= 4, "run starts with pills")
-	_check(scene.player.run.potion == null, "a run starts with an empty slot when nothing was brewed")
+	# Once the Purser's Office is open, the Bon Voyage Bag may put a potion in the slot.
+	var bag: String = scene.debug_bon_voyage()
+	_check(bag.is_empty() != BonVoyage.is_packed(Progress.data), "the Bon Voyage Bag is packed only while the Purser's Office is open, got '%s'" % bag)
+	var bag_potion := not bag.is_empty() and bag != BonVoyage.THERMOS
+	if bag_potion:
+		_check(scene.player.run.potion != null and scene.player.run.potion.id == bag, "the bag's potion is in the slot")
+	else:
+		_check(scene.player.run.potion == null, "a run starts with an empty slot when nothing was brewed")
 	if not _checked_potions:
 		await _check_potion_drinking(scene)
 	for depth in range(1, _last_depth + 1):

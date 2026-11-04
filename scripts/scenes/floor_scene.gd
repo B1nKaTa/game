@@ -49,6 +49,8 @@ var _camera: Camera2D
 # never opens it again at once.
 var _card_panel: CardTablePanel
 var _card_panel_closed_frame := -1
+# What the Purser's Bon Voyage Bag put in this run: a potion's id, BonVoyage.THERMOS, or "" for none.
+var _bon_voyage := ""
 
 
 func _ready() -> void:
@@ -63,6 +65,9 @@ func _ready() -> void:
 	var brewed := Progress.take_brewed_potion()
 	if brewed != null:
 		_run.give_potion(brewed)
+	# After the brew, so a brew always keeps its slot, and before a dev run's kit, which sets its own.
+	if BonVoyage.is_packed(Progress.data):
+		_bon_voyage = BonVoyage.pack(_run, Content.potions_for_sale(), _rng.randf(), _rng.randf())
 	if Progress.is_dev_run():
 		DevStart.apply_kit(_run, Content.items())
 	_hud = Hud.new()
@@ -70,9 +75,14 @@ func _ready() -> void:
 	add_child(_hud)
 	_hud.set_pension(Progress.data.pension)
 	Progress.pension_changed.connect(_hud.set_pension)
+	var start_notes := PackedStringArray()
 	if _run.has_perk(Mementos.START_PENSION_PERK):
 		Progress.add_pension(Mementos.START_PENSION)
-		_hud.show_notice("Your name badge still works: +%d Pension" % Mementos.START_PENSION)
+		start_notes.append("Your name badge still works: +%d Pension" % Mementos.START_PENSION)
+	if not _bon_voyage.is_empty():
+		start_notes.append(BonVoyage.notice(_bon_voyage, Content.potions_for_sale()))
+	if not start_notes.is_empty():
+		_hud.show_notice(".  ".join(start_notes))
 	# Shown after the badge's notice, in its place, since it matters more.
 	if _run.cursed:
 		_hud.show_notice(CURSED_NOTICE)
@@ -144,6 +154,10 @@ func debug_floor_def() -> FloorDef:
 
 func debug_depth() -> int:
 	return _depth
+
+
+func debug_bon_voyage() -> String:
+	return _bon_voyage
 
 
 func debug_card_panel() -> CardTablePanel:
