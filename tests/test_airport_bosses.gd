@@ -232,6 +232,18 @@ func test_the_stamp_mark_fills_over_its_whole_windup_and_lands_for_three() -> vo
 	strike.free()
 
 
+# A landing's dust lasts a fifth of a second, too short to read a word, so the stamp's ink stays.
+func test_the_departed_ink_stays_long_enough_to_read() -> void:
+	assert_true(TerminalStrike.shown_after_landing(TerminalStrike.LOOK_STAMP) >= 0.8)
+	assert_near(TerminalStrike.shown_after_landing(TerminalStrike.LOOK_TRAY), GroundStrike.SHOW_TIME, "a tray lands as any strike does")
+	assert_true(TerminalStrike.INK_FADE < TerminalStrike.INK_TIME, "it fades only at the end")
+	var strike := TerminalStrike.new()
+	strike.kind = TerminalStrike.LOOK_STAMP
+	assert_false(strike.ink_fades(GroundStrike.SHOW_TIME + 0.1), "still there after the dust")
+	assert_true(strike.ink_fades(TerminalStrike.INK_TIME), "then gone")
+	strike.free()
+
+
 func test_he_can_step_out_from_under_the_stamp_in_time() -> void:
 	var walk := PlayerStats.BASE_SPEED * (Augustine.STAMP_WINDUP - 0.3)
 	assert_true(walk > Augustine.STAMP_RADIUS * 2.0, "%f" % walk)

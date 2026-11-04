@@ -14,8 +14,18 @@ const STAMP_SHADOW := Color(0.05, 0.03, 0.08)
 const STAMP_HANDLE := Color("7a2f3a")
 const INK := Color("c4161c")
 const INK_TEXT := "DEPARTED"
+# The ink stays this long after the stamp lands, fading over its last INK_FADE, so it can be read.
+# A landing's dust alone lasts GroundStrike.SHOW_TIME, far too short for a word.
+const INK_TIME := 1.0
+const INK_FADE := 0.4
 
 var kind := LOOK_TRAY
+var _ink_left := INK_TIME
+
+
+# How long a strike of this look stays drawn after it lands.
+static func shown_after_landing(look_kind: String) -> float:
+	return INK_TIME if look_kind == LOOK_STAMP else SHOW_TIME
 
 
 # A strike with one of these looks, placed in the source's room as Enemy.strike_ground places one.
@@ -31,6 +41,23 @@ static func strike(source: Enemy, at: Vector2, radius: float, warning: float, de
 	return spot
 
 
+# A landed stamp keeps its ink a while: its dust plays out as any landing's does, then the word stays.
+func _process(delta: float) -> void:
+	if _landed and kind == LOOK_STAMP:
+		queue_redraw()
+		_show_left = maxf(_show_left - delta, 0.0)
+		if ink_fades(delta):
+			queue_free()
+		return
+	super(delta)
+
+
+# Counts the ink down. Returns true once it has gone.
+func ink_fades(delta: float) -> bool:
+	_ink_left -= delta
+	return _ink_left <= 0.0
+
+
 func _draw() -> void:
 	super()
 	if _delay > 0.0:
@@ -38,7 +65,7 @@ func _draw() -> void:
 	var r := radius()
 	if _landed:
 		if kind == LOOK_STAMP:
-			var fade := clampf(_show_left / SHOW_TIME, 0.0, 1.0)
+			var fade := clampf(_ink_left / INK_FADE, 0.0, 1.0)
 			draw_rect(Rect2(-r * 0.7, -r * 0.35, r * 1.4, r * 0.7), Color(INK, 0.8 * fade), false, 3.0)
 			var font := ThemeDB.fallback_font
 			var width := font.get_string_size(INK_TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x
