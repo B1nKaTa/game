@@ -227,3 +227,175 @@ Real-window screenshots from a renamed `git archive` copy with an extra probe au
 - Esc discards every tab's unsaved changes, not only the open tab's, after the one confirm.
 - The run timer sits in the top row's gap before the Slip counter, since the small map's floor name
   holds the row's right end. It fits with eleven pills and 9999 Pension; more pills would crowd it.
+
+---
+
+# Stage 2: Controller Support Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Build spec section 6 (controller), the Input tab's controller column (section 2) and the Vibration
+option: default pad bindings, twin-stick aim, the active-device switch, device-aware prompts, pad rebinding,
+rumble, hot-plugging, and controller focus in every panel.
+
+**Architecture:** Pure rules go on core classes that tests reach: `PadInput` (defaults, names by family, stick
+aim, dead zone, which device an event belongs to, rumble strengths), `ActiveDevice` (static state: pad or
+keys, which pad, its family, cursor hiding rule), `PadRumble` (static gate and play), `PadFocus` (a Node every
+panel adds: first focus, focus kept inside, gold highlight, re-focus after a rebuild, shoulder tabs).
+`KeyBindings` grows a second slot per action. A new autoload `PadWatch` only wires events, hot-plug and the
+cursor. Tests never name `PadWatch` (LESSONS 2026-11-04).
+
+**Tech Stack:** Godot 4.7.2 built-in joypad input (`InputEventJoypadButton/Motion`, `Input.get_joy_axis`,
+`Input.get_joy_name`, `Input.start_joy_vibration`, `Input.joy_connection_changed`). No add-ons.
+
+## Global Constraints
+
+- Never name another game anywhere. No new dependencies.
+- Old `keys.json` files load unchanged; the controller column lives under `KeyBindings.PAD_KEY` ("pad").
+- Every action the keyboard has must have a controller binding; a test checks none is unbound.
+- Xbox-style names: A/B/X/Y, LB/RB, LT/RT, View, Menu. PlayStation-style: Cross/Circle/Square/Triangle,
+  L1/R1, L2/R2, Create/Share, Options. Anything else gets Xbox-style names.
+- Vibration is off when the Vibration option is off.
+- Panels the full loop drives keep polling `Input.is_action_just_pressed` in `_process` (LESSONS 2026-11-03).
+- Tests and `--smoke` never write `keys.json` or `settings.cfg` in the real user folder.
+- CRLF line endings on every file.
+
+## Engine facts checked first (headless probe, 2026-11-05)
+
+- 4.7's `ui_accept` holds Enter, Kp Enter and Space only, and `ui_cancel` only Escape. `ui_up/down/left/right`
+  already hold the D-pad and the left stick. So `InputSetup` adds pad A to `ui_accept`, and B gets its own
+  fixed action `ui_pad_back`, so Esc is never seen twice in one frame.
+- `InputMap.add_action` defaults to a 0.2 dead zone.
+- `Input.parse_input_event` then `Input.flush_buffered_events()` updates action state and `Input.get_joy_axis`
+  in a `--script` run, so headless tests can drive pads with synthetic events. A synthetic device has an
+  empty `Input.get_joy_name`, which gets the Xbox-style default.
+
+## Default layout
+
+| Action | Controller (rebindable slot) | Fixed extra |
+|---|---|---|
+| move_up/down/left/right | left stick up/down/left/right | D-pad (always moves, never rebound) |
+| attack | right trigger (hold to charge) | |
+| throw | left trigger | |
+| dodge | A / Cross | |
+| interact | X / Square | |
+| bomb | RB / R1 | |
+| potion | LB / L1 | |
+| map | View / Create | |
+| pause | Menu / Options | |
+| aim (not an action) | right stick | |
+| menus | A confirm, B back (`ui_pad_back`), LB/RB tabs (`ui_tab_prev`/`ui_tab_next`), D-pad/left stick move focus | |
+
+## File Structure
+
+| File | Responsibility |
+|---|---|
+| `scripts/core/pad_input.gd` (new, `PadInput`) | Default pad events, fixed D-pad extras, family by joy name, button/axis names, describe, raw round trip, stick dead zone and aim point, event-to-device rule, capture filter, rumble strengths |
+| `scripts/core/active_device.gd` (new, `ActiveDevice`) | Static `using_pad`, `pad_id`, `family`; `note(event)`, `lost(device)`, `hidden_mode(mode)` |
+| `scripts/core/pad_rumble.gd` (new, `PadRumble`) | Static `enabled`, `last`; `play(kind)` gated by option and device |
+| `scripts/ui/pad_focus.gd` (new, `PadFocus`) | Focus helper node added by every panel |
+| `scripts/autoload/pad_watch.gd` (new autoload `PadWatch`) | `_input` → `ActiveDevice.note`, `signal device_changed`, `signal pad_lost`, cursor hiding in `_process`, hot-plug |
+| `scripts/core/input_setup.gd` | Pad defaults, extras, menu actions |
+| `scripts/core/key_bindings.gd` | Two slots per action, pad rebind/snapshot/save/load, device-aware `with_key` and `prompt_label` |
+| `scripts/actors/player.gd` | Right-stick aim in `_aim_point`, crosshair at the pad aim point |
+| `scripts/world/combat_feedback.gd`, `scripts/world/ground_strike.gd` | Rumble on hurt, heavy hit landed, boss strike landing |
+| `scripts/autoload/settings.gd` | `PadRumble.enabled` from the Vibration option |
+| `scripts/ui/options_panel.gd` | Controller column rebinding, shoulder tabs, B back, notes |
+| every panel in `scripts/ui/`, `scripts/scenes/title_screen.gd`, `waiting_room.gd`, `floor_scene.gd` | `PadFocus`, B = Leave, pause on pad loss |
+| `tools/smoke_driver.gd` | `_check_controller()` with synthetic joypad events |
+
+### Task 11: Pad rules (`PadInput`) and the default layout
+
+**Files:** Create `scripts/core/pad_input.gd`; Modify `scripts/core/input_setup.gd`; Test `tests/test_pad_input.gd`
+
+**Interfaces — Produces:**
+- `const XBOX := "xbox"`, `PLAYSTATION := "playstation"`, `PLAYSTATION_4 := "playstation_4"`
+- `const STICK_DEAD_ZONE := 0.25`, `const AIM_REACH := 60.0`, `const SWITCH_AXIS := 0.5`, `const CAPTURE_AXIS := 0.6`, `const ACTION_DEAD_ZONE := 0.25`
+- `static func default_event(action: String) -> InputEvent`, `static func extras(action: String) -> Array[InputEvent]`
+- `static func family_for(joy_name: String) -> String`
+- `static func button_name(button: int, family: String) -> String`, `static func axis_name(axis: int, sign: float, family: String) -> String`, `static func describe(event: InputEvent, family: String) -> String` ("?" for null/non-pad)
+- `static func is_pad(event) -> bool`, `static func same(a, b) -> bool` (button index, or axis and sign)
+- `static func to_raw(event) -> Dictionary` (`{"type":"joy_button","button":n}` / `{"type":"joy_axis","axis":n,"sign":±1}`), `static func from_raw(raw) -> InputEvent`
+- `static func stick_dir(stick: Vector2) -> Vector2` (ZERO inside the dead zone, else normalized)
+- `static func aim_point(from: Vector2, stick: Vector2, last_dir: Vector2) -> Vector2` (from + dir·AIM_REACH; resting stick keeps last_dir)
+- `static func device_of(event) -> String` (`"pad"`, `"keys"`, or `""` for drift and jitter)
+- `static func capture(event) -> InputEvent` (a clean pad event to bind, or null: releases, D-pad, small axis moves)
+- `InputSetup.ensure()` adds every pad default and extra, `ui_accept` + A, `ui_pad_back` (B), `ui_tab_prev` (LB), `ui_tab_next` (RB)
+
+- [ ] Step 1: tests — every `KeyBindings.ACTIONS` entry has a pad event after `ensure()` and no two share one; the default table above; names in both families for A/B/X/Y, shoulders, triggers, View/Menu, PS4 "Share" vs PS5 "Create"; family of "Xbox Series Controller", "PS5 Controller", "DualSense Wireless Controller", "PS4 Controller", "Nintendo Switch Pro Controller" (Xbox default), ""; dead zone; aim point straight, diagonal, resting; device_of for buttons, big and small axis moves, keys, mouse clicks, big and tiny mouse motion; capture skips D-pad and releases; raw round trip; synthetic `Input.parse_input_event` + `flush_buffered_events` of the right trigger presses `attack`, the left stick moves `get_vector`.
+- [ ] Step 2: run `powershell -File tools/test.ps1 -- --only=pad_input` style (the runner reads `--only=`), expect "could not load".
+- [ ] Step 3: implement. Step 4: pass. Step 5: commit "Add the controller rules and default layout".
+
+### Task 12: Two binding slots in `KeyBindings`
+
+**Files:** Modify `scripts/core/key_bindings.gd`; Test `tests/test_key_bindings.gd`
+
+**Interfaces — Produces:**
+- `KeyBindings.key_event(action) -> InputEvent`, `pad_event(action) -> InputEvent`
+- `label_for(action)` stays the keyboard label; `pad_label_for(action, family) -> String`
+- `rebind(action, event) -> String` works on the slot of the event's kind, swaps only with that slot, never touches extras
+- `snapshot()` gains `PAD_KEY: {action: raw}`; `restore` puts both back; `save_to` writes both; `load_from` reads `pad` with swaps, ignoring bad entries
+- `static func with_device(action, text, pad: bool, family) -> String`; `with_key(action, text)` uses `ActiveDevice`; `prompt_label(action) -> String`
+
+- [ ] Step 1: tests — rebinding a pad button swaps with the pad slot only (keyboard unchanged); a pad rebind leaves the D-pad extra in place; save/load round trip of both columns in `OS.get_temp_dir()`; an old file without `pad` keeps the pad defaults; a damaged `pad` entry keeps its default; `with_device("interact", "Talk", true, PadInput.XBOX) == "X: Talk"` and `"Square: Talk"` for PlayStation; the existing test file moves from `user://test_keys.json` to the temp folder.
+- [ ] Steps 2–5: fail, implement, pass, commit "Give every action a controller binding beside its key".
+
+### Task 13: Active device, rumble and the `PadWatch` autoload
+
+**Files:** Create `scripts/core/active_device.gd`, `scripts/core/pad_rumble.gd`, `scripts/autoload/pad_watch.gd`; Modify `project.godot` (autoload after Settings), `scripts/autoload/settings.gd`, `scripts/world/combat_feedback.gd`, `scripts/world/ground_strike.gd`; Test `tests/test_active_device.gd`
+
+**Interfaces — Produces:**
+- `ActiveDevice.using_pad: bool`, `pad_id: int` (-1 none), `family: String`; `static func note(event) -> bool` (true when the device changed); `static func lost(device: int) -> bool` (true when it was the active pad); `static func reset()`; `static func hidden_mode(mode: Input.MouseMode) -> Input.MouseMode`
+- `PadRumble.HIT_TAKEN`, `HEAVY_LANDED`, `BOSS_SLAM`; `static var enabled := true`; `static var last := ""`; `static func play(kind) -> bool`; `static func strength(kind) -> Vector3` (weak, strong, seconds)
+- `PadWatch.device_changed`, `PadWatch.pad_lost`
+- `CombatFeedback.on_hurt` → HIT_TAKEN; `on_swing_landed(heavy)` → HEAVY_LANDED; `GroundStrike` landing from a boss → BOSS_SLAM
+
+- [ ] Step 1: tests — note() switches on a pad button, stays on drift, switches back on a key; the family follows the pad's name; lost() of the active pad drops to keys; hidden_mode maps VISIBLE→HIDDEN and CONFINED→CONFINED_HIDDEN; rumble plays only with the option on and a pad active; heavy is stronger than a hit taken and a boss slam the strongest; source checks that combat_feedback and ground_strike call PadRumble.
+- [ ] Steps 2–5: fail, implement, pass, commit "Follow the last used device and rumble on heavy moments".
+
+### Task 14: Right-stick aim and prompts that follow the device
+
+**Files:** Modify `scripts/actors/player.gd`, `scripts/ui/hud.gd`, prompt users (`npc.gd`, `pickup.gd`, `door.gd`, `waiting_station.gd`, `arcade_table.gd`, `retirement_station.gd`, `floor_map_view.gd`, `ending_card.gd`, `card_table_panel.gd`); Test `tests/test_game_options.gd`
+
+**Interfaces — Produces:**
+- `Player.pad_aim_point(from, stick, last_dir, mouse_aim, last_move) -> Vector2` (static: stick held aims; resting keeps the last stick way; with Mouse aim off and no stick used, the move way)
+- `_aim_point()` order: `aim_source`, pad (when `ActiveDevice.using_pad`), Mouse aim off, mouse.
+- The crosshair draws at the aim point whenever a pad aims.
+
+- [ ] Step 1: tests for `pad_aim_point`; a source test that every `with_key` caller goes through the device-aware path (no prompt builds "%s: %s" itself).
+- [ ] Steps 2–5: fail, implement (HUD potion slot refreshes on `PadWatch.device_changed`), pass, commit "Aim with the right stick and name the pad's buttons in prompts".
+
+### Task 15: `PadFocus` and controller focus in every panel
+
+**Files:** Create `scripts/ui/pad_focus.gd`; Modify every panel in `scripts/ui/`, `scripts/scenes/title_screen.gd`, `scripts/scenes/waiting_room.gd`, `scripts/scenes/floor_scene.gd`; Test `tests/test_pad_focus.gd`
+
+**Interfaces — Produces:**
+- `PadFocus.new()` added as the last child in a panel's `_ready`; it treats its parent as the panel.
+- `var tabs := Callable()` (called with -1/+1 on LB/RB or Q/E where a panel has tabs); `var pad_only := false` (card tables: buttons take focus only while a pad is active, so Space never presses a clicked bet)
+- `static func focusables(root: Node) -> Array[Control]` (visible, focus_mode not NONE, tree order); `static func first_of(list) -> Control` (first enabled, else first); `static func refocus_index(index, count) -> int`; `static func focus_style() -> StyleBoxFlat` (2 px gold border, no fill)
+- Behavior in `_process`: when a pad is active or a focus key is pressed and nothing inside the panel has focus, focus the control at the remembered index (after a rebuild) or the first; plain Buttons get the gold focus style; ScrollContainers follow focus.
+- B: `ui_pad_back` closes every panel exactly as its Leave/Esc does: the Waiting Room and floor scene send it down their Esc path for panels only (never to open pause); menus that answer Esc themselves (Options, pause, slot picker, confirm, credits) check it beside `pause`. The ending card also takes A and B.
+
+- [ ] Step 1: tests — `focusables` order and filters on a hand-built tree kept out of the scene tree; `first_of` skips disabled; `refocus_index` clamps; a source test that every panel script in `scripts/ui/` that has a Leave or closes adds `PadFocus`, and that the menus check `ui_pad_back`.
+- [ ] Steps 2–5: fail, implement, pass, commit "Drive every panel with a controller".
+
+### Task 16: The Input tab's controller column, shoulder tabs and hot-plugging
+
+**Files:** Modify `scripts/ui/options_panel.gd`, `scripts/scenes/floor_scene.gd`; Test `tests/test_options_source.gd`
+
+- Controller cell per action is a button showing `KeyBindings.pad_label_for(action, ActiveDevice.family)`; pressing it waits for a pad input (`PadInput.capture`), Esc or `CAPTURE_TIME` (5 s) cancels, the D-pad never binds; a swap shows "Swapped with X". Defaults resets both columns. LB/RB switch tabs, B leaves. Notes: Vibration's "works once controllers are supported" goes; the Input note says the right stick aims and the D-pad always moves.
+- Hot-plug: `PadWatch` drops to keys when the active pad leaves; the floor scene pauses on `pad_lost` when no pause is open and the run is not over.
+
+- [ ] Steps: source tests (controller column, no "coming", `ui_tab_prev`), implement, commit "Rebind the controller column and pause when the pad goes".
+
+### Task 17: Full-loop controller check and screenshots
+
+**Files:** Modify `tools/smoke_driver.gd`; probe `tools/probes/pad_look.gd` (screenshot autoload in a copy)
+
+- `_check_controller()` before `_check_resume()`: in the Waiting Room, a pad X press beside a merchant opens its panel, focus lands inside it, D-pad down moves focus, B closes it. In a run, a few seconds of play: left stick moves him, right stick turns his aim (aim_source cleared), right trigger swings, a hit taken while the pad is active records `PadRumble.last`, a synthetic disconnect pauses the run; a key press hands the device back.
+- Screenshots in a real window: Input tab with both columns (Xbox and PlayStation names), prompts in both namings, focus highlights in the title screen, a merchant panel, the bounty board and the card table.
+
+## Stage 2 self-review
+
+- Spec 6 layout: Task 11. Aim: Task 14. Active device and cursor: Task 13. Prompts and names: Tasks 11, 12, 14. Menus: Task 15. Vibration: Task 13. Hot-plug: Tasks 13, 16. Input tab controller column: Task 16. Tests and full loop: every task, Task 17.
+- The trophy wall shows its lines as HUD notices and has no panel, so it needs no focus.
