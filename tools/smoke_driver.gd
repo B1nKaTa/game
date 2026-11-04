@@ -99,13 +99,21 @@ func _run() -> void:
 	_check(ids.has("potion_merchant") and not ids.has("bomb_merchant"), "a second-floor clear brings the potion merchant, not the bomb merchant")
 	await _check_bounty_collected(get_tree().current_scene)
 	await _check_decor(get_tree().current_scene)
+	Progress.reload()
+	_check(Progress.data.floors_cleared == 1 and Progress.data.clears_at(2) == 1 and Progress.data.clears_at(3) == 1 and not Progress.data.has_cleared_path("furnace_works"), "clears come back from the save as it was written")
+	# A Furnace Works clear made up in memory only. Arriving saves the Boiler Room as seen, which writes
+	# the made-up clear too, so the save is put back as it was afterwards.
+	var save_text := FileAccess.get_file_as_string(Progress.SMOKE_PATH)
 	Progress.data.record_floor_cleared(2, "furnace_works")
 	Game.return_to_waiting()
 	await _wait(0.5)
 	ids = get_tree().current_scene.open_merchant_ids()
 	_check(ids.has("potion_merchant") and ids.has("bomb_merchant"), "clearing both second-floor paths brings the bomb merchant too")
+	var file := FileAccess.open(Progress.SMOKE_PATH, FileAccess.WRITE)
+	file.store_string(save_text)
+	file.close()
 	Progress.reload()
-	_check(Progress.data.floors_cleared == 1 and Progress.data.clears_at(2) == 1 and Progress.data.clears_at(3) == 1 and not Progress.data.has_cleared_path("furnace_works"), "clears come back from the save as it was written")
+	_check(not Progress.data.has_cleared_path("furnace_works"), "the made-up clear is gone once the save is put back")
 
 	# The first clears opened the locked path of each depth: the Cemetery, the Furnace Works, the Mall.
 	var pension_before_second: int = Progress.data.pension
