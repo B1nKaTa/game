@@ -104,12 +104,94 @@ def please_hold():
 
 
 # ---------------------------------------------------------------------------------------------
-# Final Arrangements: Mortimer Grimsby's boss fight. The hold tune in F minor at 172 bpm, with
+# Final Arrangements: Mortimer Grimsby's boss fight. The hold tune in F minor at 168 bpm, with
+# church organ stabs, a driving bass and full drums. 32 bars: intro (4), A (8), B (8), A again
+# with the organ (8), and a tag (4) that leads back to the intro.
+# ---------------------------------------------------------------------------------------------
+
+FINAL_A = [("Ab4", 1), ("C5", 0.5), ("F5", 1.5), ("Eb5", 1),
+          ("Db5", 2), ("r", 0.5), ("C5", 0.5), ("Ab4", 1),
+          ("Bb4", 1), ("Db5", 0.5), ("F5", 1.5), ("Eb5", 1),
+          ("E5", 3), ("G4", 1),
+          ("Ab4", 1), ("C5", 0.5), ("F5", 1.5), ("Eb5", 1),
+          ("Db5", 1), ("F5", 1), ("Ab5", 1), ("G5", 1),
+          ("F5", 1), ("Eb5", 0.5), ("Db5", 1.5), ("C5", 1),
+          ("C5", 0.5), ("E5", 0.5), ("G5", 0.5), ("Bb5", 0.5), ("C6", 2)]
+FINAL_B = [("F5", 0.5), ("Ab5", 0.5), ("Db6", 0.5), ("Ab5", 0.5), ("F5", 0.5), ("Ab5", 0.5), ("Db6", 1),
+          ("G5", 0.5), ("Bb5", 0.5), ("Eb6", 0.5), ("Bb5", 0.5), ("G5", 0.5), ("Bb5", 0.5), ("Eb6", 1),
+          ("E5", 0.5), ("G5", 0.5), ("C6", 0.5), ("G5", 0.5), ("Bb5", 1), ("G5", 1),
+          ("Ab5", 2), ("F5", 2),
+          ("F5", 0.5), ("Ab5", 0.5), ("Db6", 0.5), ("Ab5", 0.5), ("F5", 0.5), ("Ab5", 0.5), ("Db6", 1),
+          ("G5", 0.5), ("Bb5", 0.5), ("Eb6", 0.5), ("F6", 0.5), ("Eb6", 1), ("Bb5", 1),
+          ("Db6", 1), ("C6", 0.5), ("Bb5", 0.5), ("Ab5", 1), ("G5", 1),
+          ("C6", 1.5), ("Bb5", 0.5), ("G5", 1), ("E5", 1)]
+FINAL_TAG = [("F5", 1), ("Ab5", 1), ("C6", 1), ("F6", 1),
+            ("Eb6", 1), ("Db6", 1), ("C6", 1), ("Ab5", 1),
+            ("G5", 1), ("Bb5", 1), ("C6", 1), ("E6", 1),
+            ("G6", 2), ("r", 2)]
+FINAL_CHORDS = (["Fm", "Db", "Bbm", "C7"]
+               + ["Fm", "Db", "Bbm", "C7", "Fm", "Db", "Bbm", "C7"]
+               + ["Db", "Eb", "C7", "Fm", "Db", "Eb", "Bbm", "C7"]
+               + ["Fm", "Db", "Bbm", "C7", "Fm", "Db", "Bbm", "C7"]
+               + ["Fm", "Db", "C7", "C7"])
+
+
+def final_arrangements():
+    s = Song(168, 32 * 4, reverb=0.22)
+    for bar, sym in enumerate(FINAL_CHORDS):
+        b = bar * 4
+        notes, _ = chord(sym, 53)
+        intro = bar < 4
+        organ_bar = intro or 20 <= bar < 28
+        # Organ: whole-bar chords in the intro, stabs on 1 and the "and" of 2 elsewhere.
+        if organ_bar:
+            for m in notes:
+                if intro:
+                    s.note("organ", m, b, 4, vel=0.7, gain=0.5)
+                else:
+                    s.note("organ", m, b, 1, vel=0.7, gain=0.45)
+                    s.note("organ", m, b + 1.5, 0.5, vel=0.6, gain=0.45)
+        else:
+            for m in notes:
+                s.note("thin", m + 12, b, 0.25, vel=0.6, gain=0.25)
+                s.note("thin", m + 12, b + 1.5, 0.25, vel=0.5, gain=0.25)
+        # Bass: driving eighths, root and octave.
+        root = bass_note(sym, 33)
+        for e in range(8):
+            m = root + (12 if e % 2 else 0)
+            s.note("bass", m, b + e * 0.5, 0.45, vel=0.85, gain=0.8, wet=0.05)
+            s.note("square", m + 12, b + e * 0.5, 0.3, vel=0.4, gain=0.15, wet=0.05)
+        # Drums: four on the floor in the intro, then a driving beat.
+        if intro:
+            for q in range(4):
+                s.hit("kick", b + q, vel=0.9, gain=0.9, wet=0.05)
+            if bar == 3:
+                for q in range(8):
+                    s.hit("snare", b + 2 + q * 0.25, vel=0.4 + q * 0.07, gain=0.6)
+        else:
+            for k in (0, 1.5, 2):
+                s.hit("kick", b + k, vel=0.95, gain=0.95, wet=0.05)
+            s.hit("snare", b + 1, vel=0.85, gain=0.75)
+            s.hit("snare", b + 3, vel=0.85, gain=0.75)
+            for e in range(8):
+                s.hit("openhat" if e == 7 else "hat", b + e * 0.5, vel=0.7 if e % 2 else 0.5, gain=0.5)
+    # The tune: the hold theme in minor, then the new hook, then the theme an octave up with the organ.
+    at = s.line("pulse", 16, FINAL_A, vel=0.9, gain=0.6)
+    at = s.line("pulse", at, FINAL_B, vel=0.9, gain=0.55)
+    s.line("pulse", at, FINAL_A, vel=0.9, gain=0.5, transpose=12)
+    s.line("square", at, FINAL_A, vel=0.7, gain=0.3)
+    s.line("pulse", 28 * 4, FINAL_TAG, vel=0.9, gain=0.6)
+    s.line("organ", 28 * 4, FINAL_TAG, vel=0.6, gain=0.3, transpose=-12)
+    return s
+
+
+# ---------------------------------------------------------------------------------------------
+# Final Arrangements, the second take (kept, not played): the hold tune in F minor at 164 bpm, with
 # church organ, a saw bass, fast arpeggios and full drums. 36 bars: intro (4), A (8), B (8),
 # a hushed breakdown (4), A a half step higher (8), and a tag (4) that drops back into the intro.
 # ---------------------------------------------------------------------------------------------
 
-BOSS_A = [("Ab4", 0.5), ("F4", 0.5), ("Ab4", 0.5), ("C5", 1.5), ("Bb4", 0.5), ("Ab4", 0.5),
+ALT_A = [("Ab4", 0.5), ("F4", 0.5), ("Ab4", 0.5), ("C5", 1.5), ("Bb4", 0.5), ("Ab4", 0.5),
           ("Bb4", 0.5), ("Ab4", 0.5), ("F4", 2), ("C5", 0.5), ("Eb5", 0.5),
           ("Db5", 0.5), ("Bb4", 0.5), ("Db5", 0.5), ("F5", 1.5), ("Eb5", 0.5), ("Db5", 0.5),
           ("Db5", 0.5), ("C5", 0.5), ("E5", 2), ("G5", 0.5), ("Bb5", 0.5),
@@ -117,8 +199,8 @@ BOSS_A = [("Ab4", 0.5), ("F4", 0.5), ("Ab4", 0.5), ("C5", 1.5), ("Bb4", 0.5), ("
           ("Bb5", 0.5), ("C6", 0.5), ("Db6", 1.5), ("C6", 0.5), ("Bb5", 0.5), ("Ab5", 0.5),
           ("Gb5", 0.5), ("F5", 0.5), ("Eb5", 0.5), ("Db5", 0.5), ("C5", 0.5), ("Bb4", 0.5), ("Ab4", 1),
           ("G4", 0.5), ("Bb4", 0.5), ("C5", 0.5), ("E5", 0.5), ("G5", 0.5), ("Bb5", 0.5), ("C6", 1)]
-BOSS_A_CHORDS = ["Fm", "Fm", "Bbm", "C7", "Fm", "Db", "Bbm", "C7"]
-BOSS_B = [("F5", 0.5), ("Ab5", 0.5), ("Db6", 0.5), ("Ab5", 0.5), ("F5", 0.5), ("Ab5", 0.5), ("Db6", 1),
+ALT_A_CHORDS = ["Fm", "Fm", "Bbm", "C7", "Fm", "Db", "Bbm", "C7"]
+ALT_B = [("F5", 0.5), ("Ab5", 0.5), ("Db6", 0.5), ("Ab5", 0.5), ("F5", 0.5), ("Ab5", 0.5), ("Db6", 1),
           ("G5", 0.5), ("Bb5", 0.5), ("Eb6", 0.5), ("Bb5", 0.5), ("G5", 0.5), ("Bb5", 0.5), ("Eb6", 1),
           ("E5", 0.5), ("G5", 0.5), ("C6", 0.5), ("G5", 0.5), ("Bb5", 1), ("G5", 1),
           ("Ab5", 1.5), ("G5", 0.5), ("F5", 2),
@@ -126,21 +208,21 @@ BOSS_B = [("F5", 0.5), ("Ab5", 0.5), ("Db6", 0.5), ("Ab5", 0.5), ("F5", 0.5), ("
           ("G5", 0.5), ("Bb5", 0.5), ("Eb6", 0.5), ("F6", 0.5), ("Eb6", 1), ("Bb5", 1),
           ("Db6", 1), ("C6", 0.5), ("Bb5", 0.5), ("Ab5", 1), ("G5", 1),
           ("C6", 1.5), ("Bb5", 0.5), ("G5", 1), ("E5", 1)]
-BOSS_B_CHORDS = ["Db", "Eb", "C7", "Fm", "Db", "Eb", "Bbm", "C7"]
-BREAK_TUNE = [("Ab4", 2), ("C5", 1), ("F5", 1), ("Eb5", 2), ("Db5", 2),
+ALT_B_CHORDS = ["Db", "Eb", "C7", "Fm", "Db", "Eb", "Bbm", "C7"]
+ALT_BREAK = [("Ab4", 2), ("C5", 1), ("F5", 1), ("Eb5", 2), ("Db5", 2),
               ("Bb4", 2), ("Db5", 1), ("F5", 1), ("E5", 2), ("G5", 1), ("C6", 1)]
-BREAK_CHORDS = ["Fm", "Db", "Bbm", "C7"]
-UP_CHORDS = ["F#m", "F#m", "Bm", "C#7", "F#m", "D", "Bm", "C#7"]
-TAG = [("F5", 1), ("Ab5", 1), ("C6", 1), ("F6", 1),
+ALT_BREAK_CHORDS = ["Fm", "Db", "Bbm", "C7"]
+ALT_UP_CHORDS = ["F#m", "F#m", "Bm", "C#7", "F#m", "D", "Bm", "C#7"]
+ALT_TAG = [("F5", 1), ("Ab5", 1), ("C6", 1), ("F6", 1),
        ("Eb6", 1), ("Db6", 1), ("C6", 1), ("Ab5", 1),
        ("G5", 0.5), ("Ab5", 0.5), ("Bb5", 0.5), ("C6", 0.5), ("Db6", 0.5), ("E6", 0.5), ("F6", 1),
        ("G6", 2), ("r", 2)]
-TAG_CHORDS = ["Fm", "Db", "C7", "C7"]
-BOSS_CHORDS = (["Fm", "Db", "Bbm", "C7"] + BOSS_A_CHORDS + BOSS_B_CHORDS + BREAK_CHORDS
-               + UP_CHORDS + TAG_CHORDS)
+ALT_TAG_CHORDS = ["Fm", "Db", "C7", "C7"]
+ALT_CHORDS = (["Fm", "Db", "Bbm", "C7"] + ALT_A_CHORDS + ALT_B_CHORDS + ALT_BREAK_CHORDS
+               + ALT_UP_CHORDS + ALT_TAG_CHORDS)
 
 
-def _drums(s, b, fill=False):
+def _alt_drums(s, b, fill=False):
     for k in (0, 1.5, 2):
         s.hit("kick", b + k, vel=0.95, gain=0.9, wet=0.04)
     for k in (1, 3):
@@ -153,9 +235,9 @@ def _drums(s, b, fill=False):
             s.hit("snare", b + 2 + q * 0.25, vel=0.5 + q * 0.06, gain=0.55)
 
 
-def final_arrangements():
+def final_arrangements_alt():
     s = Song(164, 36 * 4, reverb=0.26)
-    for bar, sym in enumerate(BOSS_CHORDS):
+    for bar, sym in enumerate(ALT_CHORDS):
         b = bar * 4
         intro, breakdown = bar < 4, 20 <= bar < 24
         notes, _ = chord(sym, 53)
@@ -194,18 +276,19 @@ def final_arrangements():
                 for q in range(8):
                     s.hit("snare", b + 2 + q * 0.25, vel=0.4 + q * 0.07, gain=0.55)
         elif not breakdown:
-            _drums(s, b, fill=bar in (11, 19, 31))
+            _alt_drums(s, b, fill=bar in (11, 19, 31))
         if bar in (4, 24):
             s.hit("crash", b, vel=0.7, gain=0.4, pan=-0.2)
     # The tune: the hold theme in minor, the new hook, the theme hushed on vibes, then a half step up.
-    s.line("pulse", 4 * 4, BOSS_A, vel=0.9, gain=0.62, wide=True)
-    s.line("pulse", 12 * 4, BOSS_B, vel=0.9, gain=0.58, wide=True)
-    s.line("vibes", 20 * 4, BREAK_TUNE, vel=0.75, gain=0.7)
-    s.line("pulse", 24 * 4, BOSS_A, vel=0.9, gain=0.55, transpose=1, wide=True)
-    s.line("organ", 24 * 4, BOSS_A, vel=0.55, gain=0.2, transpose=-11)
-    s.line("pulse", 32 * 4, TAG, vel=0.9, gain=0.62, wide=True)
-    s.line("organ", 32 * 4, TAG, vel=0.6, gain=0.3, transpose=-12)
+    s.line("pulse", 4 * 4, ALT_A, vel=0.9, gain=0.62, wide=True)
+    s.line("pulse", 12 * 4, ALT_B, vel=0.9, gain=0.58, wide=True)
+    s.line("vibes", 20 * 4, ALT_BREAK, vel=0.75, gain=0.7)
+    s.line("pulse", 24 * 4, ALT_A, vel=0.9, gain=0.55, transpose=1, wide=True)
+    s.line("organ", 24 * 4, ALT_A, vel=0.55, gain=0.2, transpose=-11)
+    s.line("pulse", 32 * 4, ALT_TAG, vel=0.9, gain=0.62, wide=True)
+    s.line("organ", 32 * 4, ALT_TAG, vel=0.6, gain=0.3, transpose=-12)
     return s
 
 
-SONGS = {"please_hold": please_hold, "final_arrangements": final_arrangements}
+SONGS = {"please_hold": please_hold, "final_arrangements": final_arrangements,
+         "final_arrangements_alt": final_arrangements_alt}
