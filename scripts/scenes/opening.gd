@@ -15,6 +15,7 @@ var _label: Label
 
 
 func _ready() -> void:
+	MusicPlayer.play(MusicRules.opening())
 	var layer := CanvasLayer.new()
 	add_child(layer)
 	var background := ColorRect.new()

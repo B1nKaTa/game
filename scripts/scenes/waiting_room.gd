@@ -203,6 +203,7 @@ func _enter_department(target_id: int) -> void:
 		remove_child(_room_view)
 	_progress.enter(target_id)
 	_current_id = target_id
+	MusicPlayer.play(MusicRules.waiting_room(Departments.id_of(target_id)))
 	_room_view = _views.get(target_id)
 	var is_new := _room_view == null
 	if is_new:
