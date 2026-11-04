@@ -899,7 +899,7 @@ option_b = SubResource("Resource_light")
 
 Edit the `.tres` files with the Edit tool. Never use `Set-Content`, which adds a BOM.
 
-- [ ] **Step 1: Write the failing tests** in `tests/test_forms.gd`:
+- [x] **Step 1: Write the failing tests** in `tests/test_forms.gd`:
 
   ```gdscript
   extends TestCase
@@ -968,13 +968,13 @@ Edit the `.tres` files with the Edit tool. Never use `Set-Content`, which adds a
 
 - [ ] **Step 2: When testing is allowed, run them to make sure they fail.**
 
-- [ ] **Step 3: Implement** the fields, `compute`, `RunState` and the data.
+- [x] **Step 3: Implement** the fields, `compute`, `RunState` and the data.
   - Options are plain `StatEffect`s, never `UpgradeDef`s, so the `effect is UpgradeDef` special cases in `compute` (Thermos levels, the quick return) ignore them, as they should.
   - `prescription_glasses` has one level, so its milestone is 1. Buying it is the choice.
 
 - [ ] **Step 4: When testing is allowed, run the tests.**
 
-- [ ] **Step 5: Commit** ("Give every form two options at its milestone").
+- [x] **Step 5: Commit** ("Give every form two options at its milestone").
 
 ### Task 8: The options in play
 
@@ -992,7 +992,7 @@ Edit the `.tres` files with the Edit tool. Never use `Set-Content`, which adds a
   - `Thermos.radius: float` (default `BLAST_RADIUS`), used everywhere the blast reads its radius.
   - `FloorMapView.shown_ids(map: FloorMap, progress: FloorProgress, show_secrets: bool) -> Array[int]` (static), and `FloorMapView.show_secrets: bool`.
 
-- [ ] **Step 1: Write the failing tests:**
+- [x] **Step 1: Write the failing tests:**
 
   ```gdscript
   func test_a_slower_lock_holds_the_next_swing_longer() -> void:
@@ -1037,7 +1037,7 @@ Edit the `.tres` files with the Edit tool. Never use `Set-Content`, which adds a
 
 - [ ] **Step 2: When testing is allowed, run them to make sure they fail.**
 
-- [ ] **Step 3: Implement.**
+- [x] **Step 3: Implement.**
   - **Swing:** in `Player`, before `_combo.try_attack()`, set `_combo.lock_time = CaneCombo.LOCK_TIME / run.stats.swing_speed`.
   - **Dodge:** `_dodge.try_start(run.stats.dodge_cooldown, DodgeTimer.DURATION * run.stats.dodge_length)`.
   - **Weak spot:** in `_strike_enemies`, pass `PlayerStats.strike_damage(swing.damage, enemy.hp / enemy.max_hp(), run.stats.wounded_damage_mult)` to `take_strike`. Do the same where `ThrownDentures` bites, if it can reach the enemy's health (`enemy.hp`). Otherwise leave the teeth as they are and say so in the commit.
@@ -1053,7 +1053,7 @@ Edit the `.tres` files with the Edit tool. Never use `Set-Content`, which adds a
 
 - [ ] **Step 4: When testing is allowed, run the tests and one full loop.**
 
-- [ ] **Step 5: Commit** ("Make each form option change play").
+- [x] **Step 5: Commit** ("Make each form option change play").
 
 ### Task 9: Filing forms, the stamp and refiling
 
@@ -1083,7 +1083,7 @@ Edit the `.tres` files with the Edit tool. Never use `Set-Content`, which adds a
   - Keep the panel inside 360 px. The Black Market sells five forms.
 - **`RefilePanel`:** one row per form with a choice: "<form>: <current option> → <other option>  Free" or "40 Pension". The button is disabled when unaffordable.
 
-- [ ] **Step 1: Write the failing tests:**
+- [x] **Step 1: Write the failing tests:**
 
   ```gdscript
   func _data_with(pension: int, levels := {}) -> ProgressData:
@@ -1164,11 +1164,11 @@ Edit the `.tres` files with the Edit tool. Never use `Set-Content`, which adds a
 
 - [ ] **Step 2: When testing is allowed, run them to make sure they fail.**
 
-- [ ] **Step 3: Implement** `ProgressData`, `Progress`, `FormText`, `MerchantPanel`, `RefilePanel` and the station.
+- [x] **Step 3: Implement** `ProgressData`, `Progress`, `FormText`, `MerchantPanel`, `RefilePanel` and the station.
 
 - [ ] **Step 4: When testing is allowed, run the tests. Screenshot** the Black Market panel at its fullest, with a milestone row showing both options and the stamp mid-animation, and the refile panel with all seven forms.
 
-- [ ] **Step 5: Commit**: one for filing and refiling in `ProgressData` with tests ("File forms with a milestone choice and refile them for a fee"), and one for the panels ("Show upgrades as stamped forms").
+- [x] **Step 5: Commit**: one for filing and refiling in `ProgressData` with tests ("File forms with a milestone choice and refile them for a fee"), and one for the panels ("Show upgrades as stamped forms").
 
 ---
 
@@ -1189,7 +1189,7 @@ Edit the `.tres` files with the Edit tool. Never use `Set-Content`, which adds a
   - `RoomRules.CHEST_CONDOLENCES_CHANCE := 0.05`, `CHEST_CONDOLENCES := 3`, and `RoomRules.chest_condolences(roll: float) -> int`.
   - `Hud.set_condolences(amount: int)` and `Hud.status_text(pension: int, condolences: int, show_condolences: bool) -> String` (static). The Waiting Room shows both. A run shows Pension only.
 
-- [ ] **Step 1: Write the failing tests** in `tests/test_condolences.gd`:
+- [x] **Step 1: Write the failing tests** in `tests/test_condolences.gd`:
 
   ```gdscript
   extends TestCase
@@ -1234,7 +1234,7 @@ Edit the `.tres` files with the Edit tool. Never use `Set-Content`, which adds a
 
 - [ ] **Step 2: When testing is allowed, run them to make sure they fail.**
 
-- [ ] **Step 3: Implement.**
+- [x] **Step 3: Implement.**
   - **`floor_scene._on_boss_defeated(boss)`:** return early `if boss.is_summon or not boss.def.is_boss`. Then `var paid := Progress.record_boss_beaten(boss.def.id, boss.def == _floor_def.floor_boss)`, and show `"+%d Condolences" % paid` as a notice when `paid > 0`.
   - **Chests:** in `RoomView`, after each of `_open_lunchbox`, `_open_locked`, `_open_urn` and `_open_safe`:
 
@@ -1252,7 +1252,7 @@ Edit the `.tres` files with the Edit tool. Never use `Set-Content`, which adds a
 
 - [ ] **Step 4: When testing is allowed, run the tests, and screenshot the HUD** in the Waiting Room with both counters at 9999, and during a run with a pop-up showing.
 
-- [ ] **Step 5: Commit** ("Add Condolences, earned from first boss beats and rare chests").
+- [x] **Step 5: Commit** ("Add Condolences, earned from first boss beats and rare chests").
 
 ### Task 11: Bounty data and rules
 
