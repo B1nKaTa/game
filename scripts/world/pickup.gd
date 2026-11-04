@@ -124,9 +124,11 @@ func _draw() -> void:
 	_draw_body()
 	if _flying:
 		return
-	draw_string(ThemeDB.fallback_font, Vector2(-18, -12), _label, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color.WHITE)
+	# Centred and outlined, as people's names are, so they read on the palest floors and long names
+	# never run into the next ware.
+	Npc._draw_centered(self, _label, Vector2(0, -12), Color.WHITE)
 	if _prompt_shown:
-		draw_string(ThemeDB.fallback_font, Vector2(-18, 22), KeyBindings.with_key("interact", prompt), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("ffd24a"))
+		Npc._draw_centered(self, KeyBindings.with_key("interact", prompt), Vector2(0, 22), Color("ffd24a"))
 
 
 # A plain coloured disc. Pickups with a shape of their own, such as chests, draw that instead.
