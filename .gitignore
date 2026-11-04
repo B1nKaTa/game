@@ -1,3 +1,4 @@
 .godot/
 export/
 .superpowers/
+__pycache__/
