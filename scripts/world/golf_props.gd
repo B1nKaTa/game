@@ -16,4 +16,4 @@ static func build(view: RoomView, layout: RoomLayout, palette: RoomPalette) -> v
 # The golf course's lingering effects, which a stored room clears when Grandpa leaves. RoomView's own
 # is_passing_effect asks this too.
 static func is_passing_effect(child: Node) -> bool:
-	return child is BunkerPatch or child is PuttRoll
+	return child is BunkerPatch or child is PuttRoll or child is SprinklerSweep
