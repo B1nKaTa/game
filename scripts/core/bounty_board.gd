@@ -92,7 +92,7 @@ static func collect(def: BountyDef, data: ProgressData) -> Dictionary:
 		was_new = not data.is_unlocked(def.extra_id)
 		data.items_unlocked[def.extra_id] = true
 	elif def.extra_kind == BountyDef.EXTRA_COSMETIC:
-		# The cosmetic defs come with the Decor Office. Until then the id is owned all the same.
+		# Owned at once, ready to wear from the Decor Office.
 		was_new = not data.cosmetics_owned.has(def.extra_id)
 		data.cosmetics_owned[def.extra_id] = true
 	data.add_pension(pension)

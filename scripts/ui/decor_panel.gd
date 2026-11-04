@@ -120,17 +120,6 @@ func _show_tab(decor: bool) -> void:
 	_rebuild()
 
 
-# What the full-loop check presses: the tab, then a row's button by its cosmetic id.
-func show_decor_tab(decor: bool) -> void:
-	_show_tab(decor)
-
-
-func press(id: String) -> void:
-	var def := CosmeticDef.find(id, CosmeticDef.all())
-	if def != null:
-		_press(def)
-
-
 func _rebuild() -> void:
 	_tab_room.button_pressed = _showing_decor
 	_tab_grandpa.button_pressed = not _showing_decor
