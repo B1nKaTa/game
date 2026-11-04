@@ -56,6 +56,20 @@ func test_newly_opened_skips_seen_ones_and_the_always_open_rooms() -> void:
 	assert_eq(Departments.newly_opened(data), [Departments.TRAINING_YARD])
 
 
+func test_opening_news_comes_three_names_a_line_and_fits_the_notice() -> void:
+	var data := _data(DevStart.ALL_PATHS)
+	var lines := Departments.opening_notices(Departments.newly_opened(data))
+	assert_eq(lines, [
+		"New departments open: Bounty Office, Training Yard, Apothecary Wing.",
+		"New departments open: Boiler Room, Decor Office, Back Room.",
+	])
+	for line in lines:
+		var width := ThemeDB.fallback_font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
+		assert_true(width < 600.0, "%s is %d px" % [line, width])
+	assert_eq(Departments.opening_notices([Departments.BOUNTY_OFFICE]), ["New departments open: Bounty Office."])
+	assert_eq(Departments.opening_notices([]), [])
+
+
 func test_merchants_keep_their_rules_and_name_a_department() -> void:
 	for entry: Dictionary in Departments.MERCHANTS:
 		assert_true(Departments.index_of(entry["department"]) >= 0, entry["id"])

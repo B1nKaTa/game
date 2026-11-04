@@ -127,10 +127,7 @@ func _announce_new_departments() -> void:
 	var opened := Departments.newly_opened(Progress.data)
 	if opened.is_empty():
 		return
-	var names: Array[String] = []
-	for id in opened:
-		names.append(Departments.entry(id)["name"])
-	_notices.append("New departments open: %s." % ", ".join(names))
+	_notices.append_array(Departments.opening_notices(opened))
 	for id in opened:
 		var line: String = Departments.entry(id)["arrival"]
 		if not line.is_empty():

@@ -52,6 +52,9 @@ const FLOOR_NAMES := {
 	"golden_years_mall": "Golden Years Mall at 7 a.m.",
 }
 
+# How many department names one arrival notice holds before the news goes on to the next notice.
+const NAMES_PER_NOTICE := 3
+
 # When a merchant appears is read by MerchantRules: "depth" and "clears" count clears at a depth,
 # "paths" names the paths that must all have been cleared, and "legacy_clears" keeps a merchant open
 # for a save made before clears were kept by depth. No rule means always there. "kind" picks the
@@ -183,6 +186,18 @@ static func newly_opened(data: ProgressData) -> Array[String]:
 		if id != LOBBY and id != HALLWAY and not data.departments_seen.has(id):
 			ids.append(id)
 	return ids
+
+
+# The arrival news for those departments, a few names to a line, since the HUD's notice is one line
+# of the 640 px screen and all six names together fill it edge to edge.
+static func opening_notices(ids: Array[String]) -> Array[String]:
+	var lines: Array[String] = []
+	for start in range(0, ids.size(), NAMES_PER_NOTICE):
+		var names: Array[String] = []
+		for id in ids.slice(start, start + NAMES_PER_NOTICE):
+			names.append(entry(id)["name"])
+		lines.append("New departments open: %s." % ", ".join(names))
+	return lines
 
 
 static func closed_hint(id: String) -> String:
