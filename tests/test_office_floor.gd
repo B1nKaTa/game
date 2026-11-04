@@ -127,6 +127,17 @@ func test_the_palest_carpet_under_a_wall_light_and_the_fill_stays_below_white() 
 		assert_true(peak < 1.0, "the carpet near a wall light burns to white (%.2f)" % peak)
 
 
+func test_no_enemy_of_the_floor_washes_out_to_white_in_the_light() -> void:
+	var defs: Array[EnemyDef] = []
+	defs.assign(_def().enemies)
+	defs.append(_def().mini_boss)
+	defs.append(_def().floor_boss)
+	defs.append(_def().mini_boss.summon)
+	for def in defs:
+		var lit := _lit(SpriteVisual.readable(def.color), 1.5)
+		assert_true(minf(lit.r, minf(lit.g, lit.b)) < 0.85, "%s turns white in the office light" % def.id)
+
+
 # --- its rooms ---
 
 func test_every_layout_in_the_folder_is_valid() -> void:
