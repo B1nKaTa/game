@@ -13,5 +13,6 @@ static func build(view: RoomView, layout: RoomLayout, _palette: RoomPalette) -> 
 
 
 # Anything a cruise attack leaves in the room for a while, which a stored room must clear.
-static func is_passing_effect(_child: Node) -> bool:
-	return false
+static func is_passing_effect(child: Node) -> bool:
+	return (child is ShuffleboardPuck or child is DeckLane or child is QuoitRing or child is AnchorDrop
+		or child is FoghornBlast)

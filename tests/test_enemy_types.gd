@@ -7,6 +7,7 @@ const BEHAVIORS := [
 	"riser_behavior", "groundskeeper_behavior", "undertaker_behavior",
 	# The Last Resort Cruise
 	"early_bird_diner_behavior", "shuffleboard_shark_behavior", "sunbather_behavior",
+	"cruise_director_behavior", "commodore_behavior",
 ]
 const ExploderBehavior := preload("res://scripts/actors/behaviors/exploder_behavior.gd")
 const PackBehavior := preload("res://scripts/actors/behaviors/pack_behavior.gd")
