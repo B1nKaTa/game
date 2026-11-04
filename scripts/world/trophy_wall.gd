@@ -16,9 +16,9 @@ const QUESTION := Color(0.3, 0.27, 0.22, 0.45)
 const CAPTION := Color("ece9e0")
 const CAPTION_SIZE := 7
 const CAPTION_Y := 21.0
-# Every second caption hangs lower, since a long name like "Mortimer" is as wide as a frame step and
-# two empty frames side by side would run their names together.
-const CAPTION_STAGGER := 10.0
+# Every second caption hangs a whole caption lower, since a name like "Commodore" is wider than a
+# frame step and two empty frames side by side would run their names together.
+const CAPTION_STAGGER := 13.0
 
 var _hung := {}
 
