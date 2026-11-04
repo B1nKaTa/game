@@ -15,6 +15,10 @@ const LOOK_ORNAMENT := "ornament"
 const COIN_GOLD := Color("e8c04a")
 const COIN_SHINE := Color("fff4c0")
 const ORNAMENT_RED := Color("d93a3a")
+# Head Office: a note of hold music, a black quaver.
+const LOOK_NOTE := "note"
+const NOTE_INK := Color("15131a")
+const NOTE_GLOW := Color(1.0, 0.95, 0.75, 0.8)
 
 # A sedative dart slows Grandpa by this much for this long when it lands. Zero means a plain shot.
 var slow_fraction := 0.0
@@ -79,6 +83,13 @@ func _draw() -> void:
 		draw_arc(Vector2.ZERO, 5.0, 0.0, TAU, 16, Color.BLACK, 1.0)
 		draw_rect(Rect2(-1.5, -7.0, 3.0, 2.5), COIN_GOLD)
 		draw_circle(Vector2(-1.5, -1.5), 1.5, COIN_SHINE)
+		return
+	if look == LOOK_NOTE:
+		# A pale glow behind, so a black note reads on dark carpet as well as pale.
+		draw_circle(Vector2(0.0, 1.0), 6.0, NOTE_GLOW)
+		draw_circle(Vector2(-1.0, 3.0), 3.0, NOTE_INK)
+		draw_line(Vector2(1.5, 3.0), Vector2(1.5, -6.0), NOTE_INK, 1.5)
+		draw_line(Vector2(1.5, -6.0), Vector2(5.0, -3.0), NOTE_INK, 1.5)
 		return
 	draw_rect(Rect2(-4, -5, 8, 10), Color("efe8d2"))
 	draw_rect(Rect2(-4, -5, 8, 10), Color.BLACK, false, 1.0)
