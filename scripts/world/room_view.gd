@@ -453,6 +453,8 @@ func _create_props(palette: RoomPalette) -> void:
 			strip.setup(Vector2(RoomLayout.strip_direction(symbol)), layout.strips_reverse)
 			strip.position = RoomBackdrop.cell_center(cell)
 			add_child(strip)
+	# Departures, Terminal Zero: its stock and its queue barriers.
+	TerminalProps.build(self, layout, palette)
 
 
 func _place_prop(prop: BreakableBlock, cell: Vector2i) -> void:

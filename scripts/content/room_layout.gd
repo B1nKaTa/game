@@ -70,7 +70,8 @@ const SYMBOL_CRACK := "k"
 const SYMBOL_TORCH := "t"
 const SYMBOL_LANTERN := "l"
 const SYMBOL_STUMP := "m"
-const DECOR_SYMBOLS := "gnwuktlmfprce"
+# Departures, Terminal Zero added "7" at the end.
+const DECOR_SYMBOLS := "gnwuktlmfprce7"
 # A freshly mopped cell: everyone walks on it, Grandpa and chargers slide. Kept well clear of doors.
 const SYMBOL_WET := "W"
 const WET_DOOR_CLEARANCE := 2
@@ -103,13 +104,27 @@ const SYMBOL_GUMBALL := "z"
 const SYMBOL_PLANTER := "d"
 const SYMBOL_FOUNTAIN := "q"
 const SYMBOL_SALE_SIGN := "e"
-const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc><^vazdqe"
+# Departures, Terminal Zero: a queue barrier line marked on the carpet. While it is down it is plain
+# floor. On a timer, after a chime and a flash, its rope rises, and while it is up it blocks Grandpa
+# and his dentures only: staff duck under the rope, so enemies and their shots pass and the walk grid
+# never changes. Kept well clear of doors, so a raised barrier never cuts one off.
+const SYMBOL_BARRIER := "="
+const BARRIER_DOOR_CLEARANCE := 2
+# Departures, Terminal Zero stock. A luggage trolley breaks like a barrel, a row of departure seats
+# like a rock, and a stack of suitcases blocks nothing and breaks to anything, like grass.
+const SYMBOL_LUGGAGE_TROLLEY := "6"
+const SYMBOL_SUITCASES := "7"
+const SYMBOL_SEATS := "8"
+# Each path's symbols are added at the end: Departures, Terminal Zero added "=678".
+const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc><^vazdqe=678"
 # Nothing can walk through these, so nothing may be dropped or summoned on them.
-const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGojhazdq"
+# Departures, Terminal Zero added "68" at the end.
+const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGojhazdq68"
 # Routes may not need a hole or a wall, and may not need a bomb for a crate or a rock.
 const WALL_LIKE := "#lo"
 const WALLS := "#lVo"
-const WALLS_AND_BOMB_ONLY := "#lVXOAYKDMohdq"
+# Departures, Terminal Zero added "8" at the end.
+const WALLS_AND_BOMB_ONLY := "#lVXOAYKDMohdq8"
 const MUST_REACH_WITHOUT_BREAKING := "EBIHSPG"
 # A vault lays this many labeled pickups out in the open, this many cells apart so names never overlap.
 const VAULT_EXTRAS := 3
@@ -218,9 +233,14 @@ func validate() -> PackedStringArray:
 				errors.append("vent at %s is within %d cells of a door" % [str(cell), VENT_DOOR_CLEARANCE])
 			if STRIP_SYMBOLS.contains(symbol) and _within_of_a_door(cell, STRIP_DOOR_CLEARANCE):
 				errors.append("strip at %s is within %d cells of a door" % [str(cell), STRIP_DOOR_CLEARANCE])
+			# Departures, Terminal Zero.
+			if symbol == SYMBOL_BARRIER and _within_of_a_door(cell, BARRIER_DOOR_CLEARANCE):
+				errors.append("barrier at %s is within %d cells of a door" % [str(cell), BARRIER_DOOR_CLEARANCE])
 	for side in SIDES:
 		if not open.has(door_cell(side)):
 			errors.append("needs a bomb to reach the door at %s" % str(door_cell(side)))
+	# Departures, Terminal Zero.
+	errors.append_array(_barrier_errors())
 	if room_type == TYPE_VAULT and vault_extra_cells(VAULT_EXTRAS).size() < VAULT_EXTRAS:
 		errors.append("no room for %d open pickups clear of the doors" % VAULT_EXTRAS)
 	if room_type == TYPE_ARCADE:
@@ -552,3 +572,38 @@ func _flood_from_door(blocked: String) -> Dictionary:
 			seen[next] = true
 			open.append(next)
 	return seen
+
+
+# --- Departures, Terminal Zero ---
+
+# A raised barrier is a wall to Grandpa alone, so with every barrier up he must still reach every
+# door, everything he has to reach and every other open cell: a barrier line is something to walk
+# round, never a fence that shuts him in.
+func _barrier_errors() -> PackedStringArray:
+	var errors: PackedStringArray = []
+	if cells_of(SYMBOL_BARRIER).is_empty():
+		return errors
+	var roped := _flood_from_door(WALLS + SYMBOL_BARRIER)
+	var roped_open := _flood_from_door(WALLS_AND_BOMB_ONLY + SYMBOL_BARRIER)
+	var size := size_in_cells()
+	for y in size.y:
+		for x in size.x:
+			var cell := Vector2i(x, y)
+			var symbol := rows[y][x]
+			if symbol == SYMBOL_BARRIER or WALLS.contains(symbol):
+				continue
+			if not roped.has(cell):
+				errors.append("raised barriers shut off %s" % str(cell))
+			elif MUST_REACH_WITHOUT_BREAKING.contains(symbol) and not roped_open.has(cell):
+				errors.append("raised barriers shut off '%s' at %s" % [symbol, str(cell)])
+	for side in SIDES:
+		if not roped_open.has(door_cell(side)):
+			errors.append("raised barriers shut off the door at %s" % str(door_cell(side)))
+	return errors
+
+
+# Which way a barrier's rope runs: across, unless its line runs up and down.
+func barrier_runs_across(cell: Vector2i) -> bool:
+	var beside := symbol_at(cell + WEST) == SYMBOL_BARRIER or symbol_at(cell + EAST) == SYMBOL_BARRIER
+	var above_below := symbol_at(cell + NORTH) == SYMBOL_BARRIER or symbol_at(cell + SOUTH) == SYMBOL_BARRIER
+	return beside or not above_below

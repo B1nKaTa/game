@@ -84,7 +84,8 @@ func feet() -> Node2D:
 func _ready() -> void:
 	add_to_group("player")
 	collision_layer = 2
-	collision_mask = 1 | Hole.LAYER
+	# Departures, Terminal Zero: a raised queue barrier stops him, and nothing else.
+	collision_mask = 1 | Hole.LAYER | QueueBarrier.LAYER
 	var shape := CollisionShape2D.new()
 	var rect := RectangleShape2D.new()
 	rect.size = FEET_BOX_SIZE
@@ -260,7 +261,7 @@ func _throw_teeth() -> void:
 		return
 	var spawn := global_position + _aim * ThrownDentures.SPAWN_AHEAD
 	# His upper body can overlap a wall now, so the wall check starts from where he stands.
-	var query := PhysicsRayQueryParameters2D.create(_feet.global_position, spawn, ThrownDentures.WALL_LAYER)
+	var query := PhysicsRayQueryParameters2D.create(_feet.global_position, spawn, ThrownDentures.BLOCKED_BY)
 	var wall := get_world_2d().direct_space_state.intersect_ray(query)
 	if not wall.is_empty():
 		var collider: Object = wall.get("collider")

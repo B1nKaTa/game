@@ -13,6 +13,8 @@ const PICKUP_RADIUS := 18.0
 const RETURN_SPEED := 400.0
 const CATCH_RADIUS := 8.0
 const WALL_LAYER := 1
+# What stops them in flight: walls and props, and a raised queue barrier (Departures, Terminal Zero).
+const BLOCKED_BY := WALL_LAYER | QueueBarrier.LAYER
 const WALL_BACKOFF := 4.0
 # How far ahead of him they leave his hand.
 const SPAWN_AHEAD := 20.0
@@ -84,7 +86,7 @@ func _fly(delta: float) -> void:
 	var from := global_position
 	var to := from + _direction * step
 	var wall_hit := false
-	var query := PhysicsRayQueryParameters2D.create(from, to, WALL_LAYER)
+	var query := PhysicsRayQueryParameters2D.create(from, to, BLOCKED_BY)
 	var result := get_world_2d().direct_space_state.intersect_ray(query)
 	if not result.is_empty():
 		wall_hit = true
