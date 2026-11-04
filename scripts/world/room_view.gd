@@ -141,6 +141,11 @@ func _ready() -> void:
 
 
 # Call each time the player arrives, so the door he stands on waits until he steps away.
+# Whether this room's fight is on: enemies still standing in a room not yet cleared.
+func is_fighting() -> bool:
+	return _alive > 0 and not _finished
+
+
 func refresh_doors() -> void:
 	for door in _doors:
 		door.rearm()
@@ -695,7 +700,7 @@ func _create_rewards() -> void:
 		_create_item_choice(cells)
 	for cell in _room.layout.cells_of("H"):
 		var heal := _add_pickup(RoomBackdrop.cell_center(cell), "Heal", HEAL_COLOR, func(): _run.health.heal(HEAL_AMOUNT))
-		heal.can_take = func(): return _run.health.pills < _run.health.max_pills
+		heal.can_take = _run.can_take_heal
 	for cell in _room.layout.cells_of("T"):
 		_create_treasure(cell)
 		_pay_chest_condolences()

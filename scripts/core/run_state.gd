@@ -29,6 +29,8 @@ var perks: Dictionary = {}
 var look: Dictionary = {}
 # A run taken on a cursed ticket: tougher enemies that pay more Pension.
 var cursed := false
+# The Game tab's Pick up heals at full pills. Off, a heal on the floor waits there while pills are full.
+var heals_at_full := false
 var _promised := {}
 var _offered_recipes := {}
 var _upgrades: Array[UpgradeDef]
@@ -188,6 +190,11 @@ func use_bomb() -> bool:
 	bombs -= 1
 	changed.emit()
 	return true
+
+
+# Whether a heal lying on the floor may be picked up now.
+func can_take_heal() -> bool:
+	return heals_at_full or health.pills < health.max_pills
 
 
 func can_take_potion() -> bool:

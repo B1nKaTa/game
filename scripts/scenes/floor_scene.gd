@@ -58,6 +58,8 @@ var _run_earned := 0
 # Room, and the card while it shows.
 var _ending_due := false
 var _ending_card: EndingCard
+# How long this run has gone, for the Game tab's run timer. It stops while the game is paused.
+var _run_time := 0.0
 
 
 func _ready() -> void:
@@ -112,7 +114,7 @@ func _ready() -> void:
 	_run.health.rescued.connect(_on_rescued)
 	player.bomb_requested.connect(_on_bomb_requested)
 	player.show_crosshair = true
-	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
+	Input.mouse_mode = Settings.cursor_mode(true)
 	add_child(player)
 	_feedback.watch_player(player)
 	var glow := Lighting.make_light(Color(1.0, 0.85, 0.6), 0.7, 0.8)
@@ -121,6 +123,8 @@ func _ready() -> void:
 	_mini_map = _add_map_view(false)
 	_big_map = _add_map_view(true)
 	_big_map.opened_changed.connect(_on_big_map_changed)
+	_apply_game_settings()
+	Settings.changed.connect(_apply_game_settings)
 	_enter_room(_map.start_id)
 
 
@@ -261,8 +265,24 @@ func _tip_hat(room: FloorRoom) -> void:
 	_hud.show_notice("You tip your hat. +%d pill" % Mementos.BOSS_ROOM_HEAL)
 
 
-func _process(_delta: float) -> void:
+# The Game tab's options, read again whenever Options is changed from the pause menu.
+func _apply_game_settings() -> void:
+	_feedback.shake_enabled = Settings.game("screen_shake")
+	_feedback.hit_stop_enabled = Settings.game("hit_stop")
+	_run.heals_at_full = Settings.game("heal_at_full")
+	player.mouse_aim = Settings.game("mouse_aim")
+	_mini_map.modulate.a = Settings.game("minimap_opacity") / 100.0
+	_hud.show_timer = Settings.game("run_timer")
+	_hud.set_run_time(_run_time)
+
+
+func _process(delta: float) -> void:
 	_follow_player()
+	if not is_over:
+		_run_time += delta
+	_hud.set_run_time(_run_time)
+	var fighting := _room_view != null and _room_view.is_fighting()
+	_mini_map.visible = GameSettings.minimap_visible(Settings.game("hide_minimap_in_combat"), fighting, _big_map.is_open())
 
 
 # Shake moves the camera through its offset, so following never fights it.
@@ -319,7 +339,7 @@ func _open_card_table(table: ArcadeTable) -> void:
 	player.cancel_charge()
 	player.set_physics_process(false)
 	_big_map.enabled = false
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	Input.mouse_mode = Settings.cursor_mode(false)
 
 
 func _close_card_table() -> void:
@@ -332,7 +352,7 @@ func _close_card_table() -> void:
 		return
 	player.set_physics_process(true)
 	_big_map.enabled = true
-	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
+	Input.mouse_mode = Settings.cursor_mode(true)
 
 
 func _on_pension_earned(amount: int) -> void:

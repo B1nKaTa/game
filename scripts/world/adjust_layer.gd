@@ -31,7 +31,6 @@ func _ready() -> void:
 	_rect = ColorRect.new()
 	_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_rect.size = Vector2(GameSettings.VIEW)
 	var shader := Shader.new()
 	shader.code = SHADER
 	var material := ShaderMaterial.new()

@@ -63,7 +63,10 @@ func _ready() -> void:
 	_run = Progress.make_run()
 	player = Player.new()
 	player.setup(_run)
+	player.mouse_aim = Settings.game("mouse_aim")
+	Settings.changed.connect(_apply_game_settings)
 	add_child(player)
+	Input.mouse_mode = Settings.cursor_mode(false)
 	player.add_child(Lighting.make_light(Color(1.0, 0.85, 0.6), 0.7, 0.8))
 	_map = Departments.build_map(Departments.load_layouts())
 	_progress = FloorProgress.new(_map)
@@ -132,6 +135,11 @@ func _announce_new_departments() -> void:
 		if not line.is_empty():
 			_notices.append(line)
 	Progress.mark_departments_seen(opened)
+
+
+# The Game tab's options that matter here, read again whenever Options is changed.
+func _apply_game_settings() -> void:
+	player.mouse_aim = Settings.game("mouse_aim")
 
 
 func _process(delta: float) -> void:
@@ -463,7 +471,7 @@ func _open_card_table(table: ArcadeTable) -> void:
 	var cards := CardTablePanel.new()
 	cards.setup(table, _room_view, _rng)
 	_show_panel(cards)
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	Input.mouse_mode = Settings.cursor_mode(false)
 
 
 # Shows the first line now and the rest one after another, ahead of whatever was waiting. Arrival news
