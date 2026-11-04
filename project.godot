@@ -10,6 +10,7 @@ run/main_scene="res://scenes/boot.tscn"
 [autoload]
 
 Settings="*res://scripts/autoload/settings.gd"
+Sounds="*res://scripts/autoload/sounds.gd"
 Progress="*res://scripts/autoload/progress.gd"
 Game="*res://scripts/autoload/game.gd"
 

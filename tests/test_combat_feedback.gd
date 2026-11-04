@@ -105,12 +105,7 @@ func test_hit_stop_off_never_freezes() -> void:
 	feedback.free()
 
 
+# Its sounds go through the Sounds pool, whose players are on the Effects bus (test_sfx).
 func test_sounds_play_on_the_effects_bus() -> void:
 	assert_eq(CombatFeedback.BUS, "Effects")
-	var feedback := _fresh()
-	feedback._ready()
-	for child in feedback.get_children():
-		if child is AudioStreamPlayer:
-			assert_eq(String(child.bus), "Effects")
-	Engine.time_scale = 1.0
-	feedback.free()
+	assert_eq(SfxPool.BUS, "Effects")

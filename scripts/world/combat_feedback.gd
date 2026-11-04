@@ -1,12 +1,10 @@
 class_name CombatFeedback
 extends Node
 
-const POOL_SIZE := 8
-const VOLUME_DB := -8.0
-const MIN_REPEAT_GAP := 0.04
 const MAX_REAL_DELTA := 0.1
-# Every sound here plays on the Effects bus, which the Audio tab's Effects slider sets.
-const BUS := "Effects"
+# Every sound here plays through the Sounds pool (Sfx) on the Effects bus, which the Audio tab's
+# Effects slider sets.
+const BUS := SfxPool.BUS
 
 # The Game tab's Screen shake and Hit-stop. The floor scene sets them from Settings.
 var shake_enabled := true
@@ -16,11 +14,9 @@ var _hit_stop := HitStop.new()
 var _shake := ScreenShake.new()
 var _rng := RandomNumberGenerator.new()
 var _camera: Camera2D
-var _streams := {}
-var _players: Array[AudioStreamPlayer] = []
-var _next_player := 0
-var _last_played := {}
 var _last_ticks := 0
+# Light hits alternate between two knocks, so the combo's first two hits sound apart.
+var _second_knock := false
 
 
 func setup(camera: Camera2D) -> void:
@@ -31,15 +27,6 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_rng.randomize()
 	_last_ticks = Time.get_ticks_usec()
-	for sound_name in SoundBank.names():
-		_streams[sound_name] = SoundBank.make_stream(sound_name)
-	GameSettings.ensure_buses()
-	for i in POOL_SIZE:
-		var player := AudioStreamPlayer.new()
-		player.volume_db = VOLUME_DB
-		player.bus = BUS
-		add_child(player)
-		_players.append(player)
 
 
 func watch_player(player: Player) -> void:
@@ -50,6 +37,8 @@ func watch_player(player: Player) -> void:
 	player.teeth_caught.connect(on_teeth_caught)
 	player.hurt.connect(on_hurt)
 	player.died.connect(on_player_died)
+	if player.run != null:
+		player.run.health.rescued.connect(on_lethal_save)
 
 
 func watch_room(room: RoomView) -> void:
@@ -65,7 +54,16 @@ func on_swing_landed(heavy: bool, finisher: bool) -> void:
 	_begin_hit_stop(HitStop.duration_for(heavy, finisher))
 	if heavy:
 		_shake.start(ScreenShake.CHARGED_HIT, ScreenShake.CHARGED_TIME)
-	_play("charged_hit" if heavy else "combo_hit")
+	_play(hit_sound(heavy, finisher))
+
+
+# The knock a landed swing makes: the charge's big whack, the combo's last hit, or one of two knocks.
+func hit_sound(heavy: bool, finisher: bool) -> String:
+	if heavy or finisher:
+		_second_knock = false
+		return "charged_hit" if heavy else "combo_finisher"
+	_second_knock = not _second_knock
+	return "combo_hit_a" if _second_knock else "combo_hit_b"
 
 
 func on_swing_missed(_heavy: bool) -> void:
@@ -78,7 +76,7 @@ func on_teeth_thrown() -> void:
 
 func on_teeth_bit() -> void:
 	_begin_hit_stop(HitStop.BITE_HIT)
-	_play("combo_hit")
+	_play("teeth_bite")
 
 
 func on_teeth_caught() -> void:
@@ -93,16 +91,22 @@ func on_hurt() -> void:
 func on_player_died() -> void:
 	_hit_stop.cancel()
 	_apply_time_scale()
+	_play("player_death")
+
+
+# A hit that would have finished him left one pill instead.
+func on_lethal_save() -> void:
+	_play("lethal_save")
 
 
 func on_enemy_died(_at: Vector2, is_boss: bool) -> void:
 	if is_boss:
 		_shake.start(ScreenShake.BOSS_DEATH, ScreenShake.BOSS_DEATH_TIME)
-	_play("enemy_death")
+	_play("boss_death" if is_boss else "enemy_death")
 
 
 func on_pension_earned(_amount: int) -> void:
-	_play("coin_pickup")
+	_play("coin")
 
 
 func on_doors_opened() -> void:
@@ -118,8 +122,9 @@ func on_hit_blocked() -> void:
 	_play("shield_block")
 
 
+# Each pickup makes its own sound where it is taken (RoomView), so this only marks the moment.
 func on_consumable_taken() -> void:
-	_play("consumable_pickup")
+	pass
 
 
 func is_shaking() -> bool:
@@ -166,18 +171,4 @@ func _exit_tree() -> void:
 
 
 func _play(sound_name: String) -> void:
-	if _players.is_empty() or not _streams.has(sound_name):
-		return
-	var now := Time.get_ticks_usec()
-	if now - int(_last_played.get(sound_name, -1000000)) < int(MIN_REPEAT_GAP * 1000000.0):
-		return
-	_last_played[sound_name] = now
-	var player := _players[_next_player]
-	for i in _players.size():
-		var candidate := _players[(_next_player + i) % _players.size()]
-		if not candidate.playing:
-			player = candidate
-			break
-	_next_player = (_players.find(player) + 1) % _players.size()
-	player.stream = _streams[sound_name]
-	player.play()
+	Sfx.play(sound_name)
