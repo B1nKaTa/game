@@ -14,8 +14,12 @@ const ACTIONS := [
 	{"action": "potion", "label": "Drink potion"},
 	{"action": "interact", "label": "Interact"},
 	{"action": "map", "label": "Floor map"},
+	{"action": "pause", "label": "Pause / back"},
 ]
 const TYPE_KEY := "key"
+# The controller column's bindings, under their own key in keys.json. Stage 2 fills it; until then a
+# save keeps whatever is there, so an old file and a newer one both load unchanged.
+const PAD_KEY := "pad"
 const TYPE_MOUSE := "mouse"
 
 
@@ -45,7 +49,9 @@ static func with_key(action: String, text: String) -> String:
 
 
 # If another action already uses this input, the two swap, so no action ever ends up without one.
-static func rebind(action: String, event: InputEvent) -> void:
+# Returns the action it swapped with, or "" when the input was free.
+static func rebind(action: String, event: InputEvent) -> String:
+	var swapped := ""
 	var previous: InputEvent = null
 	var current := InputMap.action_get_events(action)
 	if not current.is_empty():
@@ -57,7 +63,40 @@ static func rebind(action: String, event: InputEvent) -> void:
 		for other_event in InputMap.action_get_events(other):
 			if _same(other_event, event) and previous != null:
 				_set_event(other, previous)
+				swapped = other
 	_set_event(action, event)
+	return swapped
+
+
+# The label an action shows in menus, or the action's own name when it has none.
+static func action_label(action: String) -> String:
+	for entry in ACTIONS:
+		if entry["action"] == action:
+			return entry["label"]
+	return action
+
+
+# Every action's binding as it would be saved, to put back with restore.
+static func snapshot() -> Dictionary:
+	var raw := {}
+	for entry in ACTIONS:
+		var action: String = entry["action"]
+		if not InputMap.has_action(action):
+			continue
+		var events := InputMap.action_get_events(action)
+		if not events.is_empty():
+			raw[action] = _to_raw(events[0])
+	return raw
+
+
+# Puts back bindings from snapshot exactly, without swapping.
+static func restore(raw: Dictionary) -> void:
+	for entry in ACTIONS:
+		var action: String = entry["action"]
+		if raw.has(action) and InputMap.has_action(action):
+			var event := _from_raw(raw[action])
+			if event != null:
+				_set_event(action, event)
 
 
 static func reset_to_defaults() -> void:
@@ -68,14 +107,11 @@ static func reset_to_defaults() -> void:
 
 
 static func save_to(path := SAVE_PATH) -> bool:
-	var raw := {}
-	for entry in ACTIONS:
-		var action: String = entry["action"]
-		if not InputMap.has_action(action):
-			continue
-		var events := InputMap.action_get_events(action)
-		if not events.is_empty():
-			raw[action] = _to_raw(events[0])
+	var raw := snapshot()
+	if FileAccess.file_exists(path):
+		var old: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+		if old is Dictionary and old.has(PAD_KEY):
+			raw[PAD_KEY] = old[PAD_KEY]
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
 		return false

@@ -128,3 +128,42 @@ func test_prompts_follow_the_bound_key() -> void:
 	KeyBindings.rebind("interact", _key(KEY_F))
 	assert_eq(KeyBindings.with_key("interact", "Buy"), "F: Buy")
 	_reset()
+
+
+func test_a_rebind_names_the_action_it_swapped_with() -> void:
+	_reset()
+	assert_eq(KeyBindings.rebind("bomb", _key(KEY_E)), "interact")
+	assert_eq(KeyBindings.label_for("interact"), "Q")
+	assert_eq(KeyBindings.rebind("bomb", _key(KEY_F7)), "", "a free key swaps with nothing")
+	_reset()
+
+
+func test_pause_is_an_action_on_escape() -> void:
+	_reset()
+	assert_true(InputMap.has_action("pause"))
+	assert_eq(KeyBindings.label_for("pause"), "Escape")
+	var listed := KeyBindings.ACTIONS.filter(func(entry): return entry["action"] == "pause")
+	assert_eq(listed.size(), 1)
+
+
+func test_a_snapshot_puts_the_bindings_back() -> void:
+	_reset()
+	var before := KeyBindings.snapshot()
+	KeyBindings.rebind("dodge", _key(KEY_F8))
+	assert_eq(KeyBindings.label_for("dodge"), "F8")
+	KeyBindings.restore(before)
+	assert_eq(KeyBindings.label_for("dodge"), "Space")
+	_reset()
+
+
+func test_saving_keeps_a_controller_section_it_does_not_know() -> void:
+	_reset()
+	var file := FileAccess.open(PATH, FileAccess.WRITE)
+	file.store_string(JSON.stringify({"dodge": {"type": "key", "code": KEY_SPACE}, KeyBindings.PAD_KEY: {"dodge": {"type": "joy_button", "button": 0}}}))
+	file.close()
+	KeyBindings.load_from(PATH)
+	assert_true(KeyBindings.save_to(PATH))
+	var raw: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(PATH))
+	assert_true(raw.has(KeyBindings.PAD_KEY), "stage 2's controller column survives a save")
+	assert_eq(raw[KeyBindings.PAD_KEY]["dodge"]["button"], 0.0)
+	_reset()

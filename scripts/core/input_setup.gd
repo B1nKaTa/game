@@ -12,6 +12,7 @@ static func ensure() -> void:
 	_key("map", KEY_M)
 	_key("bomb", KEY_Q)
 	_key("potion", KEY_H)
+	_key("pause", KEY_ESCAPE)
 	_mouse("attack", MOUSE_BUTTON_LEFT)
 	_mouse("throw", MOUSE_BUTTON_RIGHT)
 

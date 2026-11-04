@@ -426,7 +426,9 @@ func _open_station(opened: WaitingStation) -> void:
 		return
 	match opened.id:
 		KEY_BOARD:
-			_show_panel(KeysPanel.new())
+			var options := OptionsPanel.new()
+			options.setup(GameSettings.INPUT)
+			_show_panel(options)
 		CRAFTER:
 			var craft := CraftPanel.new()
 			craft.setup(opened.title)
