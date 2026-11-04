@@ -56,13 +56,21 @@ func _ready() -> void:
 	var brewed := Progress.take_brewed_potion()
 	if brewed != null:
 		_run.give_potion(brewed)
+	if Progress.is_dev_run():
+		DevStart.apply_kit(_run, Content.items())
 	_hud = Hud.new()
 	_hud.setup(_run)
 	add_child(_hud)
 	_hud.set_pension(Progress.data.pension)
 	Progress.pension_changed.connect(_hud.set_pension)
-	_floor_def = load(CROSSROADS_FLOOR)
-	_map = FloorMap.with_only_crossroads(load(CROSSROADS_LAYOUT))
+	if Progress.is_dev_run():
+		# A dev run skips straight to its landing, with that depth's Crossroads beyond it.
+		_depth = DevStart.START_DEPTH
+		_floor_def = load(LANDINGS_BY_DEPTH[_depth])
+		_map = _landing_map()
+	else:
+		_floor_def = load(CROSSROADS_FLOOR)
+		_map = FloorMap.with_only_crossroads(load(CROSSROADS_LAYOUT))
 	_camera = Camera2D.new()
 	add_child(_camera)
 	_feedback = CombatFeedback.new()
@@ -311,7 +319,7 @@ func _go_down() -> void:
 			view.free()
 	_room_views.clear()
 	_floor_def = load(LANDINGS_BY_DEPTH[_depth])
-	_map = FloorMap.with_landing_and_crossroads(load(LANDING_LAYOUT), load(CROSSROADS_LAYOUT))
+	_map = _landing_map()
 	_progress = FloorProgress.new(_map)
 	_mini_map.setup(_map, _progress, false, _floor_def.display_name)
 	_big_map.setup(_map, _progress, true, _floor_def.display_name)
@@ -322,6 +330,10 @@ func _go_down() -> void:
 	_run.health.heal(LANDING_HEAL)
 	var healed := mini(LANDING_HEAL, missing)
 	_hud.show_notice("You catch your breath. +%d pills" % healed if healed > 0 else "You catch your breath.")
+
+
+func _landing_map() -> FloorMap:
+	return FloorMap.with_landing_and_crossroads(load(LANDING_LAYOUT), load(CROSSROADS_LAYOUT))
 
 
 func _end_run(message: String) -> void:

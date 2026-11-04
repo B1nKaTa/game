@@ -29,5 +29,15 @@ func begin_run() -> void:
 	get_tree().change_scene_to_file(FLOOR_SCENE)
 
 
+# Debug builds only: a fresh run on the Floor 3 landing with everything bought. See DevStart.
+func begin_dev_run() -> void:
+	if not DevStart.is_available():
+		return
+	Progress.begin_dev_run(DevStart.progress(Content.upgrades(), Content.recipes()))
+	begin_run()
+
+
+# A dev run ends here however it ended, so its progress is gone before the Waiting Room reads any.
 func return_to_waiting() -> void:
+	Progress.end_dev_run()
 	get_tree().change_scene_to_file(WAITING_SCENE)

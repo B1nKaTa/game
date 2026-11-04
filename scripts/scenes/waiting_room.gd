@@ -31,6 +31,8 @@ const CRAFTER_CELL := Vector2i(10, 7)
 const CRAFTER_COLOR := Color("c98a3c")
 const CRAFTER_ART := "crafter"
 const CRAFTER_TITLE := "Agnes, Afterlife Arts and Crafts"
+# On the bottom wall, below the floor and clear of the merchants.
+const DEV_HINT_AT := Vector2(12, 340)
 
 var player: Player
 var _hud: Hud
@@ -83,6 +85,16 @@ func _process(_delta: float) -> void:
 			_open_keys_panel()
 		elif _near_crafter():
 			_open_craft_panel()
+
+
+# Debug builds only, and never while a panel is open, since the key settings panel listens for keys.
+func _unhandled_input(event: InputEvent) -> void:
+	if not DevStart.is_available() or _any_panel_open():
+		return
+	var key := event as InputEventKey
+	if key != null and key.pressed and not key.echo and key.physical_keycode == DevStart.KEY:
+		get_viewport().set_input_as_handled()
+		Game.begin_dev_run()
 
 
 func _any_panel_open() -> bool:
@@ -178,3 +190,5 @@ func _draw() -> void:
 		elif _near_crafter():
 			draw_string(ThemeDB.fallback_font, RoomBackdrop.cell_center(CRAFTER_CELL) + Vector2(-30, -24), KeyBindings.with_key("interact", "Craft"), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color.WHITE)
 	draw_string(ThemeDB.fallback_font, Vector2(240, 24), "NOW SERVING: 666", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("e4524f"))
+	if DevStart.is_available():
+		draw_string(ThemeDB.fallback_font, DEV_HINT_AT, DevStart.HINT, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("ffd34f"))
