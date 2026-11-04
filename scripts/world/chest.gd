@@ -73,7 +73,16 @@ func _process(delta: float) -> void:
 				_near = near
 				queue_redraw()
 		_:
+			_rattle_if_locked()
 			super._process(delta)
+
+
+# Reaching for a chest he cannot open yet rattles its lock.
+func _rattle_if_locked() -> void:
+	if not Input.is_action_just_pressed("interact") or not is_instance_valid(_player) or not can_take.is_valid():
+		return
+	if global_position.distance_to(_player.global_position) <= COLLECT_RADIUS and not can_take.call():
+		Sfx.play("chest_rattle")
 
 
 func _touched() -> bool:
@@ -90,6 +99,7 @@ func collect() -> void:
 		_:
 			if can_take.is_valid() and not can_take.call():
 				return
+			Sfx.play("chest_open")
 			super.collect()
 
 
@@ -97,6 +107,7 @@ func wake() -> bool:
 	if _opened or kind != ChestRules.MIMIC or is_queued_for_deletion():
 		return false
 	_opened = true
+	Sfx.play("mimic_snarl")
 	woke.emit(position)
 	queue_free()
 	return true
@@ -106,6 +117,7 @@ func blast_open() -> bool:
 	if _opened or kind != ChestRules.SAFE or is_queued_for_deletion():
 		return false
 	_opened = true
+	Sfx.play("chest_open")
 	blasted_open.emit(position)
 	queue_free()
 	return true

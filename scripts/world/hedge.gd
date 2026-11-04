@@ -20,3 +20,8 @@ func _draw_placeholder() -> void:
 		draw_circle(at, 6.0, p.hedge_leaf)
 	draw_rect(Rect2(-16, -14, 32, 3), p.hedge_leaf.lightened(0.2))
 	draw_rect(Rect2(-16, -14, 32, 28), p.hedge.darkened(0.45), false, 1.0)
+
+
+# Leaves, not stone.
+func break_sound() -> String:
+	return "grass_cut"

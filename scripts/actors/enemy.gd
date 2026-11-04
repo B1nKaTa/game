@@ -404,6 +404,8 @@ func take_damage(amount: float, push: Vector2) -> void:
 	if not is_inf(amount) and _behavior != null:
 		amount *= _behavior.damage_scale(self)
 	hp -= amount
+	if hp > 0.0 and not is_inf(amount):
+		Sfx.play("boss_hit" if def.is_boss else "enemy_hit")
 	if _visual != null:
 		_visual.flash()
 	health_changed.emit(hp)
@@ -602,6 +604,8 @@ func shoot(direction: Vector2, speed: float, damage := -1) -> Projectile:
 func request_summon(count: int) -> void:
 	if def.summon == null:
 		return
+	if count > 0:
+		Sfx.play("summon")
 	for i in count:
 		var angle := TAU * i / float(count)
 		summon_requested.emit(def.summon, position + Vector2.from_angle(angle) * SUMMON_SPREAD)
@@ -623,6 +627,7 @@ func request_summon_at(points: Array[Vector2], warning_time: float) -> void:
 
 func _on_summon_mark_finished(spot: Vector2) -> void:
 	if not _dead:
+		Sfx.play("summon")
 		summon_requested.emit(def.summon, spot)
 
 

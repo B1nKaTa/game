@@ -421,6 +421,9 @@ func _enter_room(target_id: int) -> void:
 	add_child(_room_view)
 	move_child(_room_view, 0)
 	_room_view.refresh_doors()
+	# A room with a fight in it shuts its doors behind him.
+	if _room_view.is_fighting():
+		Sfx.play("door_close")
 	# A cleared floor boss's room keeps its way down, a resumed one too.
 	if is_cleared and _map.room(target_id).room_type == RoomLayout.TYPE_FLOOR_BOSS and _floor_def.depth < LAST_DEPTH:
 		_room_view.add_stairwell()
@@ -474,6 +477,7 @@ func _on_pause_key() -> void:
 	if _big_map.is_open():
 		_big_map.set_open(false)
 		return
+	Sfx.play("pause_open")
 	_pause = PauseMenu.new()
 	_pause.setup(true)
 	_pause.resumed.connect(_close_pause)
@@ -487,6 +491,7 @@ func _on_pause_key() -> void:
 func _close_pause() -> void:
 	if _pause == null:
 		return
+	Sfx.play("pause_close")
 	_pause.queue_free()
 	_pause = null
 	_pause_closed_frame = Engine.get_process_frames()
@@ -643,6 +648,7 @@ func _go_down() -> void:
 	_safe_room = -1
 	_enter_room(_map.start_id)
 	leaving.queue_free()
+	Sfx.play("landing_arrive")
 	var missing := _run.health.max_pills - _run.health.pills
 	_run.health.heal(landing_heal())
 	var healed := mini(landing_heal(), missing)

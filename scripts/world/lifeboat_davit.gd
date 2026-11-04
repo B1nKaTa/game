@@ -25,3 +25,8 @@ func _draw_placeholder() -> void:
 	var boat := PackedVector2Array([Vector2(-6, -5), Vector2(14, -5), Vector2(11, 3), Vector2(-3, 3)])
 	draw_colored_polygon(boat, BOAT)
 	draw_polyline(boat + PackedVector2Array([boat[0]]), BOAT_EDGE, 1.0)
+
+
+# Furniture, so it splinters like wood.
+func break_sound() -> String:
+	return "wood_break"

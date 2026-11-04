@@ -25,3 +25,8 @@ func _draw_placeholder() -> void:
 		PackedVector2Array([Vector2(0, -6), Vector2(1, -26)]),
 	]:
 		draw_polyline(branch, p.dead_tree, 3.0)
+
+
+# Furniture, so it splinters like wood.
+func break_sound() -> String:
+	return "wood_break"

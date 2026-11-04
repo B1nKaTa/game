@@ -89,7 +89,13 @@ func take_blast() -> void:
 	hit_by(SOURCE_BLAST)
 
 
+# What breaking it sounds like. Furniture splinters by default; stone and leaves say otherwise.
+func break_sound() -> String:
+	return "wood_break"
+
+
 func _break() -> void:
+	Sfx.play(break_sound())
 	broken.emit(global_position)
 	var parent := get_parent()
 	if parent != null and is_inside_tree():

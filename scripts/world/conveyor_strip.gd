@@ -30,6 +30,7 @@ var _boost_left := 0.0
 var _pending := -1
 var _pending_left := 0.0
 var _crawl := 0.0
+var _was_chiming := false
 
 
 # What the strip under a point adds to a walk there, from a list of strips, so tests need no tree.
@@ -72,6 +73,10 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	advance(delta)
+	var chiming := is_chiming()
+	if chiming and not _was_chiming:
+		Sfx.play("escalator_hum")
+	_was_chiming = chiming
 	queue_redraw()
 
 

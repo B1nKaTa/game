@@ -33,3 +33,8 @@ func _draw_placeholder() -> void:
 	var body := PackedVector2Array([Vector2(-4, -2), Vector2(4, -2), Vector2(6, 6), Vector2(3, 10), Vector2(-3, 10), Vector2(-6, 6)])
 	draw_colored_polygon(body, p.vase)
 	draw_polyline(body + PackedVector2Array([body[0]]), Color.BLACK, 1.0)
+
+
+# Pottery shatters like stone.
+func break_sound() -> String:
+	return "rock_break"

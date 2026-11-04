@@ -19,3 +19,8 @@ func _draw_placeholder() -> void:
 	draw_rect(Rect2(-8, -13, 16, 5), Color.WHITE.darkened(0.05))
 	draw_line(Vector2(-9, 0), Vector2(9, 0), p.bed_sheet.darkened(0.2), 1.0)
 	draw_rect(Rect2(-11, -15, 22, 30), Color.BLACK, false, 1.0)
+
+
+# Furniture, so it splinters like wood.
+func break_sound() -> String:
+	return "wood_break"

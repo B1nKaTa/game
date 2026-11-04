@@ -137,6 +137,7 @@ func _physics_process(delta: float) -> void:
 	var flaring := is_flaring()
 	if flaring and not _was_flaring:
 		_restart_hit_list()
+		Sfx.play("steam_hiss")
 	_was_flaring = flaring
 	if flaring:
 		_burn()

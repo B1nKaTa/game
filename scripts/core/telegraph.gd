@@ -5,9 +5,15 @@ var _duration := 0.0
 var _remaining := 0.0
 
 
+# A windup at least this long is a heavy attack, and gives a quiet warning hum as it starts.
+const HEAVY_WINDUP := 0.5
+
+
 func start(duration: float) -> void:
 	_duration = duration
 	_remaining = duration
+	if duration >= HEAVY_WINDUP:
+		Sfx.play("attack_warning")
 
 
 func tick(delta: float) -> bool:

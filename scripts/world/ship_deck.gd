@@ -33,6 +33,7 @@ var _crawl := 0.0
 # A boss's order: its own horn, then a harder slide that way.
 var _forced_side := Vector2.ZERO
 var _forced_horn := 0.0
+var _was_warning := false
 var _forced_left := 0.0
 var _forced_speed := 0.0
 var _forced_horn_time := 1.0
@@ -75,6 +76,10 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	advance(delta)
+	var warning := is_warning()
+	if warning and not _was_warning:
+		Sfx.play("ship_horn")
+	_was_warning = warning
 	_slide_pickups(delta)
 	queue_redraw()
 

@@ -21,3 +21,8 @@ func _draw_placeholder() -> void:
 	draw_line(Vector2(-6, -6), Vector2(2, 0), p.rock_edge, 1.0)
 	draw_line(Vector2(2, 0), Vector2(0, 8), p.rock_edge, 1.0)
 	draw_line(Vector2(-9, -9), Vector2(-3, -11), p.rock.lightened(0.25), 2.0)
+
+
+# Stone breaks with a crunch.
+func break_sound() -> String:
+	return "rock_break"

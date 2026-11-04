@@ -31,6 +31,7 @@ func hit_by(source: String) -> bool:
 	if cut or not can_break_by(source):
 		return false
 	cut = true
+	Sfx.play("grass_cut")
 	if is_in_group("breakable"):
 		remove_from_group("breakable")
 	var parent := get_parent()

@@ -92,6 +92,8 @@ func cut_left() -> float:
 
 
 func cut() -> void:
+	if _cut_left <= 0.0:
+		Sfx.play("tape_cut")
 	_cut_left = RedTapeRule.CUT_TIME
 	queue_redraw()
 
