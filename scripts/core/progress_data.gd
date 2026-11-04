@@ -213,8 +213,48 @@ static func bounty_matches_boss(poster_id: String, boss_id: String) -> bool:
 	return not poster_id.is_empty() and poster_id == boss_id
 
 
+# A deal and a cursed offer last only the visit they were called on.
 func start_run() -> void:
 	run_count += 1
+	clerk_deal = ""
+	cursed_offer = false
+
+
+# Calls the ticket of the run just finished, once. Returns the event called, or "" when nothing was:
+# a number not called, a ticket already called, or a deal with every form filed in full.
+func call_ticket(upgrade_defs: Array[UpgradeDef], roll: float) -> String:
+	if ticket_called >= run_count:
+		return ""
+	ticket_called = run_count
+	var event := TicketRules.event_for(run_count)
+	match event:
+		TicketRules.CLERK_DEAL:
+			clerk_deal = TicketRules.deal_form(upgrade_defs, self, roll)
+			if clerk_deal.is_empty():
+				return ""
+		TicketRules.CURSED_OFFER:
+			cursed_offer = true
+	return event
+
+
+# Opting in to the cursed ticket, only while one is on offer, makes the next run a cursed one.
+func accept_cursed_ticket() -> bool:
+	if not cursed_offer:
+		return false
+	cursed_offer = false
+	cursed_next_run = true
+	return true
+
+
+func decline_cursed_ticket() -> void:
+	cursed_offer = false
+
+
+# Whether the run starting now is cursed. A cursed ticket lasts one run.
+func take_cursed_run() -> bool:
+	var cursed := cursed_next_run
+	cursed_next_run = false
+	return cursed
 
 
 # Returns how many tiers this deposit newly reached. A tier pays once ever, so

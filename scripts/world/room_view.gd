@@ -559,7 +559,8 @@ func _spawn_enemies() -> void:
 func _spawn_enemy(def: EnemyDef, at: Vector2, summoned := false) -> Enemy:
 	var enemy := Enemy.new()
 	enemy.setup(def, _player, _run.stats.warning_fraction, _run.stats.reveals_enemy_health)
-	enemy.apply_floor(_floor_def.health_mult, _floor_def.pension_mult)
+	# A cursed run's tougher, better-paying enemies come on top of the floor's own numbers.
+	enemy.apply_floor(_floor_def.health_mult * _run.enemy_health_mult(), _floor_def.pension_mult * _run.enemy_pension_mult())
 	enemy.is_summon = summoned
 	enemy.room_cells = _room.layout.size_in_cells()
 	enemy.walk_grid = _walk_grid

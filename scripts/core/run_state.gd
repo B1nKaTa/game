@@ -25,6 +25,8 @@ var buff_left := 0.0
 var perks: Dictionary = {}
 # What Grandpa wears this run, slot -> CosmeticDef. Looks only: nothing reads it for a stat.
 var look: Dictionary = {}
+# A run taken on a cursed ticket: tougher enemies that pay more Pension.
+var cursed := false
 var _promised := {}
 var _offered_recipes := {}
 var _upgrades: Array[UpgradeDef]
@@ -52,6 +54,14 @@ static func look_from(worn: Dictionary, defs: Array[CosmeticDef]) -> Dictionary:
 			if def.id == str(worn[slot]) and def.slot == str(slot) and not def.is_decor():
 				found[def.slot] = def
 	return found
+
+
+func enemy_health_mult() -> float:
+	return TicketRules.CURSED_HEALTH_MULT if cursed else 1.0
+
+
+func enemy_pension_mult() -> float:
+	return TicketRules.CURSED_PENSION_MULT if cursed else 1.0
 
 
 func has_perk(id: String) -> bool:

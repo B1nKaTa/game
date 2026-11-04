@@ -20,6 +20,7 @@ const LANDING_LAYOUT := "res://data/rooms/landing/landing.tres"
 # Pills healed on reaching the landing, up to his maximum.
 const LANDING_HEAL := 2
 const MESSAGE_TIME := 2.0
+const CURSED_NOTICE := "Cursed ticket: tougher enemies, better pay"
 
 var player: Player
 var is_cleared := false
@@ -50,6 +51,8 @@ func _ready() -> void:
 	_rng.randomize()
 	Progress.start_run()
 	_run = Progress.make_run()
+	# Before the first room is built, so every enemy of a cursed run is spawned tougher.
+	_run.cursed = Progress.take_cursed_run()
 	var crafted := Progress.take_crafted_item()
 	if crafted != null:
 		_run.add_item(crafted)
@@ -66,6 +69,9 @@ func _ready() -> void:
 	if _run.has_perk(Mementos.START_PENSION_PERK):
 		Progress.add_pension(Mementos.START_PENSION)
 		_hud.show_notice("Your name badge still works: +%d Pension" % Mementos.START_PENSION)
+	# Shown after the badge's notice, in its place, since it matters more.
+	if _run.cursed:
+		_hud.show_notice(CURSED_NOTICE)
 	if Progress.is_dev_run():
 		# A dev run skips straight to its landing, with that depth's Crossroads beyond it.
 		_depth = DevStart.START_DEPTH
@@ -311,6 +317,9 @@ func _on_floor_cleared() -> void:
 	is_cleared = true
 	# Merchants open on floors cleared, so the clear is saved before anything else can end the run.
 	Progress.record_floor_cleared(_floor_def.depth, _floor_def.id)
+	if _run.cursed:
+		Progress.add_condolences(ProgressData.CURSED_FLOOR_CONDOLENCES)
+		_hud.show_notice("Cursed ticket: +%d Condolences" % ProgressData.CURSED_FLOOR_CONDOLENCES)
 	_continue_after_floor()
 
 

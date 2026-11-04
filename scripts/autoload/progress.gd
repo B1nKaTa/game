@@ -170,6 +170,38 @@ func start_run() -> void:
 	_store.save_progress(data)
 
 
+# Calls the last run's ticket on return to the Waiting Room. Saves only when a ticket was called, so a
+# visit with nothing new leaves the save as it was.
+func call_ticket() -> String:
+	var before := data.ticket_called
+	var event := data.call_ticket(Content.upgrades(), randf())
+	if data.ticket_called != before:
+		_store.save_progress(data)
+	return event
+
+
+func accept_cursed_ticket() -> bool:
+	if not data.accept_cursed_ticket():
+		return false
+	_store.save_progress(data)
+	return true
+
+
+func decline_cursed_ticket() -> void:
+	if not data.cursed_offer:
+		return
+	data.decline_cursed_ticket()
+	_store.save_progress(data)
+
+
+# Read once, as a run starts, and saved at once, so a cursed run cut short never curses the next.
+func take_cursed_run() -> bool:
+	var cursed := data.take_cursed_run()
+	if cursed:
+		_store.save_progress(data)
+	return cursed
+
+
 func retirement_deposit(amount: int) -> int:
 	var reached := data.retirement_deposit(amount)
 	_save_pension()
