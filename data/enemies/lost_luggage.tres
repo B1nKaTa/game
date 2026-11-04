@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/enemy_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/actors/behaviors/lost_luggage_behavior.gd" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "lost_luggage"
+display_name = "Lost Luggage"
+max_hp = 44.0
+speed = 50.0
+pension_drop = 1
+body_size = Vector2(22, 18)
+color = Color(0.55, 0.32, 0.62, 1)
+behavior_script = ExtResource("2")
+max_per_room = 3
+mark = "suitcase"
