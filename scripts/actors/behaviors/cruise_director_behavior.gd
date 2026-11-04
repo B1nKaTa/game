@@ -17,7 +17,7 @@ const KARAOKE_START := KARAOKE_LENGTH + 20.0
 const KARAOKE_OUTER := Color(1.0, 0.45, 0.85, 0.75)
 const KARAOKE_INNER := Color(1.0, 0.92, 0.55, 0.85)
 const QUOIT_WINDUP := 0.6
-const QUOITS := 3
+const QUOIT_COUNT := 3
 # The first quoit lands right on him and the rest this far out, at least QUOIT_APART from each other.
 const QUOIT_SPREAD := 72.0
 const QUOIT_APART := 50.0
@@ -161,7 +161,7 @@ func _finish_attack(enemy: Enemy) -> void:
 # The quoits' spots are marked at once, under and around him, each filling for its own warning.
 func _toss_quoits(enemy: Enemy) -> void:
 	var room := ForemanBehavior.room_rect(enemy.room_cells)
-	for spot in quoit_spots(enemy.target_ground(), QUOITS, _rng, room):
+	for spot in quoit_spots(enemy.target_ground(), QUOIT_COUNT, _rng, room):
 		if enemy.open_ground.is_valid() and not enemy.open_ground.call(spot):
 			continue
 		var quoit := QuoitRing.new()

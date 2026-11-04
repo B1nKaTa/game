@@ -84,7 +84,7 @@ func test_quoits_land_on_him_and_around_him_inside_the_room() -> void:
 		rng.seed = seed_value
 		var room := ForemanBehavior.room_rect(ROOMS[seed_value % 3])
 		var feet := Vector2(rng.randf_range(room.position.x, room.end.x), rng.randf_range(room.position.y, room.end.y))
-		var spots := Director.quoit_spots(feet, Director.QUOITS, rng, room)
+		var spots := Director.quoit_spots(feet, Director.QUOIT_COUNT, rng, room)
 		assert_true(spots.size() >= 2, "seed %d: %d quoits" % [seed_value, spots.size()])
 		assert_true(spots[0].distance_to(feet) <= QuoitRing.RADIUS * 1.5, "seed %d: the first lands on him" % seed_value)
 		for i in spots.size():
@@ -94,7 +94,7 @@ func test_quoits_land_on_him_and_around_him_inside_the_room() -> void:
 	var middle := ForemanBehavior.room_rect(Vector2i(20, 11))
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 4
-	assert_eq(Director.quoit_spots(middle.get_center(), Director.QUOITS, rng, middle).size(), Director.QUOITS, "in the open all three land")
+	assert_eq(Director.quoit_spots(middle.get_center(), Director.QUOIT_COUNT, rng, middle).size(), Director.QUOIT_COUNT, "in the open all three land")
 
 
 func test_a_quoit_lands_once_then_lies_a_while_and_slows() -> void:
@@ -215,7 +215,7 @@ func test_hard_to_port_comes_only_on_a_rolling_deck_and_rolls_harder() -> void:
 	for last in [ANCHOR, FOGHORN, PORT, BUOYS]:
 		for i in 20:
 			assert_true(Commodore.choose_attack(last, true, 99.0, i / 20.0) != last, "never twice running")
-	assert_near(Commodore.PORT_HORN, ShipRoll.HORN, "warned as the ship's own roll is")
+	assert_near(Commodore.PORT_HORN, ShipRoll.HORN_TIME, "warned as the ship's own roll is")
 	assert_true(Commodore.PORT_SPEED >= ShipRoll.SPEED * 2.0, "a strong roll")
 	assert_true(Commodore.PORT_SPEED > PlayerStats.BASE_SPEED, "too strong to walk against, so he must brace for it")
 	assert_eq(Commodore.port_side(0.1), Vector2.LEFT)
@@ -226,7 +226,7 @@ func test_every_lifebuoy_lane_stays_inside_the_room() -> void:
 	for cells in ROOMS:
 		var room := ForemanBehavior.room_rect(cells)
 		for feet_y in [room.position.y, room.get_center().y, room.end.y, room.position.y + 20.0]:
-			var rows := Commodore.buoy_rows(room, feet_y, Commodore.BUOYS)
+			var rows := Commodore.buoy_rows(room, feet_y, Commodore.BUOY_COUNT)
 			assert_true(rows.size() >= 2, "%s: %d rows" % [str(cells), rows.size()])
 			for i in rows.size():
 				assert_true(rows[i] - Commodore.BUOY_WIDTH / 2.0 >= room.position.y - 0.01, "%s row %d" % [str(cells), i])
@@ -234,7 +234,7 @@ func test_every_lifebuoy_lane_stays_inside_the_room() -> void:
 				if i > 0:
 					assert_near(rows[i] - rows[i - 1], Commodore.BUOY_SPACING)
 	var big := ForemanBehavior.room_rect(Vector2i(30, 17))
-	var rows := Commodore.buoy_rows(big, big.get_center().y, Commodore.BUOYS)
+	var rows := Commodore.buoy_rows(big, big.get_center().y, Commodore.BUOY_COUNT)
 	assert_eq(rows.size(), 3)
 	assert_near(rows[1], big.get_center().y, "the middle one runs level with him")
 	assert_true(Commodore.BUOY_SPACING - Commodore.BUOY_WIDTH >= Player.FEET_BOX_SIZE.y * 2.0, "room to stand between them")

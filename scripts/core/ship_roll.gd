@@ -8,20 +8,20 @@ extends RefCounted
 enum { QUIET, HORN, SLIDE }
 
 const PERIOD := 9.0
-const HORN := 1.5
-const SLIDE := 2.0
+const HORN_TIME := 1.5
+const SLIDE_TIME := 2.0
 # How fast the roll carries whoever stands on the deck, on top of their own walk. Grandpa walks at
 # 120, so he can still walk against it, slowly.
 const SPEED := 70.0
 const SIDES: Array[Vector2] = [Vector2.LEFT, Vector2.RIGHT]
 
 var period := PERIOD
-var horn := HORN
-var slide := SLIDE
+var horn := HORN_TIME
+var slide := SLIDE_TIME
 var offset := 0.0
 
 
-func _init(period_seconds := PERIOD, horn_seconds := HORN, slide_seconds := SLIDE, offset_seconds := 0.0) -> void:
+func _init(period_seconds := PERIOD, horn_seconds := HORN_TIME, slide_seconds := SLIDE_TIME, offset_seconds := 0.0) -> void:
 	period = maxf(period_seconds, 0.01)
 	slide = clampf(slide_seconds, 0.0, period)
 	horn = clampf(horn_seconds, 0.0, period - slide)

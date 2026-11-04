@@ -65,7 +65,7 @@ func setup(layout: RoomLayout, seed_value: int, clear_spot := Callable(), player
 	_seed = seed_value
 	_clear_spot = clear_spot
 	_player = player
-	_roll = ShipRoll.new(ShipRoll.PERIOD, ShipRoll.HORN, ShipRoll.SLIDE, fposmod(float(seed_value) * 0.37, ShipRoll.PERIOD))
+	_roll = ShipRoll.new(ShipRoll.PERIOD, ShipRoll.HORN_TIME, ShipRoll.SLIDE_TIME, fposmod(float(seed_value) * 0.37, ShipRoll.PERIOD))
 
 
 func _ready() -> void:

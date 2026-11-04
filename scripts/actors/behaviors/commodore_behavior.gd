@@ -21,14 +21,14 @@ const FOGHORN_SHOVE := 220.0
 const FOGHORN_SHOVE_TIME := 0.3
 const PORT_WINDUP := 0.5
 # The ordered roll sounds the ship's horn for as long as the ship's own roll does, then slides harder.
-const PORT_HORN := ShipRoll.HORN
+const PORT_HORN := ShipRoll.HORN_TIME
 const PORT_SLIDE := 2.5
 const PORT_SPEED := ShipRoll.SPEED * 2.2
 const PORT_EVERY := 11.0
 const FIRST_PORT := 6.0
 const BUOY_WINDUP := 0.6
 const BUOY_WARNING := 1.0
-const BUOYS := 3
+const BUOY_COUNT := 3
 const BUOY_WIDTH := 30.0
 const BUOY_SPACING := 96.0
 const WET_EVERY := 8.0
@@ -219,7 +219,7 @@ func _roll_buoys(enemy: Enemy) -> void:
 	var room := ForemanBehavior.room_rect(enemy.room_cells)
 	var way := Vector2.RIGHT if _rng.randf() < 0.5 else Vector2.LEFT
 	var start_x := room.position.x if way == Vector2.RIGHT else room.end.x
-	for row in buoy_rows(room, enemy.target_ground().y, BUOYS):
+	for row in buoy_rows(room, enemy.target_ground().y, BUOY_COUNT):
 		var lane := DeckLane.new()
 		lane.setup(enemy, way, room.size.x, BUOY_WIDTH, BUOY_WARNING + BUOY_WINDUP, DeckLane.LOOK_LIFEBUOY)
 		enemy.get_parent().add_child(lane)

@@ -46,10 +46,10 @@ func test_the_deck_lies_quiet_then_the_horn_sounds_then_it_slides() -> void:
 
 func test_the_roll_follows_the_spec() -> void:
 	assert_near(ShipRoll.PERIOD, 9.0)
-	assert_near(ShipRoll.SLIDE, 2.0)
-	assert_true(ShipRoll.HORN >= 1.0, "the horn leaves time to brace")
+	assert_near(ShipRoll.SLIDE_TIME, 2.0)
+	assert_true(ShipRoll.HORN_TIME >= 1.0, "the horn leaves time to brace")
 	assert_true(ShipRoll.SPEED < PlayerStats.BASE_SPEED * 0.75, "he can still walk against it")
-	assert_true(ShipRoll.SPEED * ShipRoll.SLIDE >= RoomBackdrop.TILE * 3.0, "it carries him a real way")
+	assert_true(ShipRoll.SPEED * ShipRoll.SLIDE_TIME >= RoomBackdrop.TILE * 3.0, "it carries him a real way")
 
 
 func test_the_roll_repeats_and_an_offset_moves_it() -> void:
@@ -67,7 +67,7 @@ func test_the_roll_repeats_and_an_offset_moves_it() -> void:
 
 func test_the_horn_always_sounds_before_each_slide() -> void:
 	for offset in [0.0, 1.3, 4.5, 8.9]:
-		var roll := ShipRoll.new(ShipRoll.PERIOD, ShipRoll.HORN, ShipRoll.SLIDE, offset)
+		var roll := ShipRoll.new(ShipRoll.PERIOD, ShipRoll.HORN_TIME, ShipRoll.SLIDE_TIME, offset)
 		var last := roll.state_at(0.0)
 		var time := 0.0
 		for step in 2000:
