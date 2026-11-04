@@ -2,7 +2,8 @@ class_name XRaySweep
 extends Node2D
 
 # Sergeant Wanda's X-ray sweep: a scanning beam as tall (or as wide) as the room. It first shows where
-# it starts, filling red as any warned lane does, then crosses the whole room at an even speed. Feet
+# it starts, filling red as any warned lane does, with all the room it will cross tinted red and
+# chevrons pointing its way, then crosses the whole room at an even speed, tinting what is left. Feet
 # it passes over cost a pill, once, unless they stand on the one marked safe spot, the inspection mat
 # (a SafeSpotMark the boss lays). A dodge passes through it, as through any hit. It comes to nothing
 # if Wanda falls first. Placed at the room's origin, so its numbers are room positions.
@@ -13,6 +14,13 @@ const WIDTH := 22.0
 const SPEED := 240.0
 # Feet this near the safe spot's middle are spared. A little wider than the mark itself.
 const SAFE_REACH := SafeSpotMark.RADIUS + 4.0
+# The stretch still to be scanned is tinted, from faint to clearer over the warning, so a room wider
+# than the view still shows the warning round him while the beam's start is off screen.
+const AHEAD_ALPHA_FROM := 0.08
+const AHEAD_ALPHA_TO := 0.26
+const AHEAD_ALPHA_SWEEPING := 0.2
+# Chevrons over that stretch point the way the beam will come, this far apart.
+const CHEVRON_STEP := 128.0
 
 var _source: Enemy
 var _room := Rect2()
@@ -50,6 +58,15 @@ static func spared(feet: Vector2, safe: Vector2) -> bool:
 # How long it lasts from the start of its warning until it has crossed the room.
 static func duration(room: Rect2, along_x: bool, warning: float) -> float:
 	return warning + (room.size.x if along_x else room.size.y) / SPEED
+
+
+# The part of the room the beam has still to cross, from where it is now to where it ends.
+static func ahead_rect(room: Rect2, along_x: bool, at: float, to: float) -> Rect2:
+	var low := minf(at, to)
+	var high := maxf(at, to)
+	if along_x:
+		return Rect2(low, room.position.y, high - low, room.size.y)
+	return Rect2(room.position.x, low, room.size.x, high - low)
 
 
 func setup(source: Enemy, room: Rect2, along_x: bool, feet: Vector2, safe: Vector2, warning: float, damage := -1) -> void:
@@ -100,6 +117,17 @@ func _process(delta: float) -> void:
 		queue_free()
 
 
+func _way() -> Vector2:
+	var heading := signf(_to - _from)
+	return Vector2(heading, 0.0) if _along_x else Vector2(0.0, heading)
+
+
+func _draw_chevron(tip: Vector2, color: Color, size := 1.0) -> void:
+	var back := -_way() * 6.0 * size
+	var side := (Vector2(0.0, 7.0) if _along_x else Vector2(7.0, 0.0)) * size
+	draw_polyline(PackedVector2Array([tip + back - side, tip, tip + back + side]), color, 2.0 * size)
+
+
 func _beam_rect(at: float) -> Rect2:
 	if _along_x:
 		return Rect2(at - WIDTH / 2.0, _room.position.y, WIDTH, _room.size.y)
@@ -107,21 +135,26 @@ func _beam_rect(at: float) -> Rect2:
 
 
 func _draw() -> void:
+	var ahead := ahead_rect(_room, _along_x, _at, _to)
 	if _left > 0.0:
 		var progress := clampf(1.0 - _left / maxf(_warning, 0.001), 0.0, 1.0)
+		draw_rect(ahead, Color(COLOR, AHEAD_ALPHA_FROM + (AHEAD_ALPHA_TO - AHEAD_ALPHA_FROM) * progress))
 		var start := _beam_rect(_from)
 		draw_rect(start, Color(COLOR, 0.15 + 0.35 * progress))
 		draw_rect(start, COLOR, false, 2.0)
-		# Chevrons along the way it will sweep.
-		var way := signf(_to - _from)
+		# Chevrons along the way it will sweep, next to its start and over the whole stretch.
 		var middle := start.get_center()
 		for i in 3:
-			var step := Vector2(way * (18.0 + i * 12.0), 0.0) if _along_x else Vector2(0.0, way * (18.0 + i * 12.0))
-			var tip := middle + step
-			var back := (Vector2(-way * 6.0, 0.0) if _along_x else Vector2(0.0, -way * 6.0))
-			var side := (Vector2(0.0, 7.0) if _along_x else Vector2(7.0, 0.0))
-			draw_polyline(PackedVector2Array([tip + back - side, tip, tip + back + side]), Color(COLOR, 0.4 + 0.5 * progress), 2.0)
+			_draw_chevron(middle + _way() * (18.0 + i * 12.0), Color(COLOR, 0.4 + 0.5 * progress))
+		var across := Vector2.DOWN if _along_x else Vector2.RIGHT
+		var along_steps := floori((ahead.size.x if _along_x else ahead.size.y) / CHEVRON_STEP)
+		var across_steps := floori((ahead.size.y if _along_x else ahead.size.x) / CHEVRON_STEP)
+		for a in range(1, along_steps + 1):
+			for b in across_steps + 1:
+				var at := middle + _way() * a * CHEVRON_STEP + across * ((b + 0.5) * CHEVRON_STEP - (ahead.size.y if _along_x else ahead.size.x) / 2.0)
+				_draw_chevron(at, Color(COLOR, 0.45 + 0.5 * progress), 1.6)
 		return
+	draw_rect(ahead, Color(COLOR, AHEAD_ALPHA_SWEEPING))
 	var beam := _beam_rect(_at)
 	draw_rect(beam, BEAM)
 	draw_rect(beam.grow_individual(-WIDTH * 0.3, 0.0, -WIDTH * 0.3, 0.0) if _along_x else beam.grow_individual(0.0, -WIDTH * 0.3, 0.0, -WIDTH * 0.3), BEAM_CORE)

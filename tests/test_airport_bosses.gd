@@ -101,6 +101,23 @@ func test_a_sweep_waits_out_its_warning_then_moves_at_its_speed() -> void:
 	sweep.free()
 
 
+# In a room wider than the view the beam starts off screen, so its warning is the whole stretch it
+# has still to cross: all the room during the warning, then what lies ahead of the beam.
+func test_the_sweep_warns_over_all_the_room_it_has_still_to_cross() -> void:
+	for room in _rooms():
+		for along_x in [true, false]:
+			var feet := room.position + Vector2(40, 40)
+			var ends := XRaySweep.sweep_ends(room, along_x, feet)
+			var whole := XRaySweep.ahead_rect(room, along_x, ends.x, ends.y)
+			assert_true(whole.is_equal_approx(room), "the warning covers the room: %s" % str(whole))
+			var middle := (ends.x + ends.y) / 2.0
+			var half := XRaySweep.ahead_rect(room, along_x, middle, ends.y)
+			assert_true(half.has_point(feet), "feet the beam has not reached are inside it")
+			var behind := room.end - Vector2(10, 10)
+			assert_false(half.has_point(behind), "what it has passed is not")
+	assert_true(XRaySweep.AHEAD_ALPHA_FROM > 0.0 and XRaySweep.AHEAD_ALPHA_TO > XRaySweep.AHEAD_ALPHA_FROM, "it shows from the start and clears up")
+
+
 func test_the_mat_stays_marked_until_the_beam_has_crossed() -> void:
 	for room in _rooms():
 		for along_x in [true, false]:
