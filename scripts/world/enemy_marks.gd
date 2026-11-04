@@ -227,6 +227,9 @@ func _draw() -> void:
 			draw_colored_polygon(PackedVector2Array([Vector2(-half.x * 0.8, -half.y + 2.0), Vector2(half.x * 0.8, -half.y + 2.0), Vector2(half.x * 1.2, -half.y - 9.0)]), ELF_HAT)
 			draw_circle(Vector2(half.x * 1.2, -half.y - 9.0), 2.0, Projectile.COIN_GOLD)
 			draw_rect(Rect2(-half.x * 0.8, -half.y + 1.0, half.x * 1.6, 2.0), SANTA_RED)
+		# Fairway's End's marks, drawn in their own file.
+		"caddie_bib", "golf_cap", "gopher_teeth", "pro_visor", "boater":
+			GolfMarks.draw_mark(self, _def.mark, half)
 	if _def.shield_half_angle > 0.0:
 		var reach := maxf(half.x, half.y) + SHIELD_GAP
 		var half_arc := deg_to_rad(_def.shield_half_angle)
