@@ -123,6 +123,15 @@ func test_trays_land_around_him_apart_and_in_the_room() -> void:
 				assert_true(spots[i].distance_to(spots[j]) >= Wanda.TRAY_RADIUS * 2.0 - 0.01, "apart")
 
 
+func test_trays_find_four_spots_even_in_a_corner() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 9
+	for room in _rooms():
+		for corner in [room.position, Vector2(room.end.x, room.position.y), room.end, Vector2(room.position.x, room.end.y)]:
+			for i in 20:
+				assert_eq(Wanda.tray_spots(corner, rng, room).size(), Wanda.TRAYS, "%s in %s" % [str(corner), str(room)])
+
+
 func test_a_tray_mark_leaves_time_to_walk_out() -> void:
 	var walk := PlayerStats.BASE_SPEED * (Wanda.TRAY_WARNING - 0.3)
 	assert_true(walk > Wanda.TRAY_RADIUS * 2.0, "%f" % walk)

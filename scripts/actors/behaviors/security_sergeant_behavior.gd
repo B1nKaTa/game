@@ -105,15 +105,27 @@ static func tray_spots(feet: Vector2, rng: RandomNumberGenerator, room := Rect2(
 		var spot: Vector2 = inside.call(feet + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(TRAY_RADIUS * 2.0, TRAY_REACH))
 		if _apart(spot, spots) and spot.distance_to(feet) <= TRAY_REACH:
 			spots.append(spot)
-	# A cramped corner: walk round him at set distances until every tray has a spot.
-	for reach: float in [TRAY_REACH, TRAY_REACH * 0.75, TRAY_REACH * 0.5]:
-		for step in 24:
+	if spots.size() >= TRAYS:
+		return spots
+	# A cramped corner: walk round him at set distances. Random spots near a wall can block every
+	# ring between them, so a walk that still comes up short starts again from his feet alone. The
+	# rings stay a hair inside the reach, so rounding never puts one past it.
+	_ring_walk(feet, spots, inside)
+	if spots.size() < TRAYS:
+		spots.clear()
+		spots.append(inside.call(feet))
+		_ring_walk(feet, spots, inside)
+	return spots
+
+
+static func _ring_walk(feet: Vector2, spots: Array[Vector2], inside: Callable) -> void:
+	for reach: float in [TRAY_REACH - 0.5, TRAY_REACH * 0.8, TRAY_REACH * 0.62]:
+		for step in 48:
 			if spots.size() >= TRAYS:
-				return spots
-			var spot: Vector2 = inside.call(feet + Vector2.from_angle(TAU * step / 24.0) * reach)
+				return
+			var spot: Vector2 = inside.call(feet + Vector2.from_angle(TAU * step / 48.0) * reach)
 			if _apart(spot, spots) and spot.distance_to(feet) <= TRAY_REACH:
 				spots.append(spot)
-	return spots
 
 
 static func _apart(spot: Vector2, others: Array[Vector2]) -> bool:
@@ -186,8 +198,13 @@ func _sweep(enemy: Enemy) -> void:
 	var grid := enemy.walk_grid
 	var body_at := enemy.global_position
 	var keep_off := maxf(enemy.def.body_size.x, enemy.def.body_size.y) / 2.0 + SAFE_OFF_BODY
+	# Never on a queue barrier's cell, where a rising rope would push him off the mat.
+	var roped := {}
+	for barrier in QueueBarrier.barriers_in(enemy.get_tree() if enemy.is_inside_tree() else null):
+		roped[barrier.cell()] = true
 	var is_open := func(spot: Vector2) -> bool:
-		return spot.distance_to(body_at) > keep_off and (grid == null or grid.is_open(WalkGrid.cell_of(spot)))
+		var cell := WalkGrid.cell_of(spot)
+		return spot.distance_to(body_at) > keep_off and not roped.has(cell) and (grid == null or grid.is_open(cell))
 	var feet := enemy.target_ground()
 	var safe := xray_safe_spot(room, _rng, feet, is_open)
 	var sweep := XRaySweep.new()
