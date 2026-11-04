@@ -18,6 +18,8 @@ const TYPE_CROSSROADS := "crossroads"
 const TYPE_LANDING := "landing"
 # A safe dead end with a Dealer and three game tables, rolled on about one floor in four.
 const TYPE_ARCADE := "arcade"
+# A Waiting Room department. It holds no fight, only the stations the Waiting Room places in it.
+const TYPE_DEPARTMENT := "department"
 const DEFAULT_SIZE := Vector2i(20, 11)
 const NORTH := Vector2i.UP
 const SOUTH := Vector2i.DOWN
@@ -139,6 +141,7 @@ const REQUIRED := {
 	TYPE_CROSSROADS: {},
 	TYPE_LANDING: {},
 	TYPE_ARCADE: {SYMBOL_GAME: 3},
+	TYPE_DEPARTMENT: {},
 }
 
 @export var room_type: String = ""

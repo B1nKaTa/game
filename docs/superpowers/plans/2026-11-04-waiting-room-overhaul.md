@@ -461,7 +461,7 @@ Every new save field is added here at once, with its fallback, so each later tas
 - `enemies = []`, no bosses, `arcade_chance = 0.0`.
 - No palette, so it keeps today's default look.
 
-- [ ] **Step 1: Write the failing tests** in `tests/test_departments.gd`:
+- [x] **Step 1: Write the failing tests** in `tests/test_departments.gd`:
 
   ```gdscript
   extends TestCase
@@ -546,14 +546,14 @@ Every new save field is added here at once, with its fallback, so each later tas
 
 - [ ] **Step 2: When testing is allowed, run them to make sure they fail.**
 
-- [ ] **Step 3: Implement** `Departments`, the layouts, the FloorDef and `TYPE_DEPARTMENT`.
+- [x] **Step 3: Implement** `Departments`, the layouts, the FloorDef and `TYPE_DEPARTMENT`.
   - `is_open` returns true for an empty `opens_on`, or when `data.has_cleared_path(opens_on)`. Otherwise, for an entry with a `"merchant"`, it returns `MerchantRules.is_open(that merchant entry, data)`.
   - In `RoomRules.ICONS`, a department door shows `"<"`, the default. The name comes from `DepartmentSign` (Task 4).
   - Write the layouts with the Write tool, modelled on `data/rooms/landing/landing.tres`.
 
 - [ ] **Step 4: When testing is allowed, run the tests.** `test_room_layouts.gd` and `test_boss_spawn_room.gd` must still pass. The latter skips rooms without `B`.
 
-- [ ] **Step 5: Commit** ("Describe the Waiting Room departments and lay them out on the room grid").
+- [x] **Step 5: Commit** ("Describe the Waiting Room departments and lay them out on the room grid").
 
 ### Task 4: The Waiting Room rebuilt on the grid
 

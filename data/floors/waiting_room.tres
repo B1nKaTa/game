@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="FloorDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/floor_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/content/room_palette.gd" id="2"]
+
+[sub_resource type="Resource" id="palette"]
+script = ExtResource("2")
+decor_density = 0.0
+
+[resource]
+script = ExtResource("1")
+id = "waiting_room"
+display_name = "The Waiting Room"
+rooms_dir = "res://data/rooms/waiting_room/"
+enemies = []
+palette = SubResource("palette")
+arcade_chance = 0.0

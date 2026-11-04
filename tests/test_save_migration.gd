@@ -60,3 +60,10 @@ func test_bad_new_fields_fall_back() -> void:
 	assert_eq(data.condolences, 0)
 	assert_false(data.form_choices.has("reinforced_cane"), "only a or b is kept")
 	assert_eq(data.bounty_taken, "")
+
+
+func test_old_saves_open_the_departments_of_their_cleared_floors() -> void:
+	var open := Departments.open_ids(_today())
+	for id in [Departments.BOUNTY_OFFICE, Departments.TRAINING_YARD, Departments.APOTHECARY_WING, Departments.BOILER_ROOM, Departments.DECOR_OFFICE]:
+		assert_true(open.has(id), id)
+	assert_false(open.has(Departments.BACK_ROOM), "the Mall was never cleared")
