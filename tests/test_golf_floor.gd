@@ -136,6 +136,12 @@ func test_sand_reads_against_the_palest_fairway() -> void:
 	assert_true(_difference(palette.sand, palette.sand_grain) > 0.25, "the grains show on the sand")
 
 
+# The dusk light is mauve and orange, and a warm sand turned salmon under it, so every red warning
+# faded into a bunker. A sand with nearly as much blue as red stays a pale cream there.
+func test_sand_is_cool_enough_that_red_warnings_show_on_it() -> void:
+	var sand := _def().room_palette().sand
+	assert_true(sand.b >= sand.r * 0.8, "sand %s is too warm" % str(sand))
+
 
 # --- its rooms ---
 
