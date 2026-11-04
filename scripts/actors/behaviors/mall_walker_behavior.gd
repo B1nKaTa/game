@@ -37,22 +37,44 @@ var _seen_whistle := 0
 # A rectangle LOOP_CELLS wide and high with a corner at origin, as corners in walking order: top left,
 # top right, bottom right, bottom left. It is moved to lie inside the room, half a cell off the walls,
 # and turned to start from another corner when is_open says the first way crosses something solid.
+# When no turn of it is open, it is the open loop nearest the origin anywhere in the room, and with
+# none at all, a loop of no size where it started, so the line marks time instead of walking into props.
+# Off its loop, a walker finds its way back round props by the walk grid (Enemy.walk_direction_to).
 static func walker_loop(origin: Vector2, room_cells: Vector2i, is_open := Callable()) -> Array[Vector2]:
 	var tile := float(RoomBackdrop.TILE)
 	var size := Vector2(LOOP_CELLS) * tile
 	var area := ForemanBehavior.room_rect(room_cells).grow(-tile / 2.0)
 	var tries: Array[Vector2] = [origin, origin - Vector2(size.x, 0.0), origin - size, origin - Vector2(0.0, size.y)]
-	var first: Array[Vector2] = []
 	for top_left in tries:
 		var at := Vector2(
 			clampf(top_left.x, area.position.x, maxf(area.end.x - size.x, area.position.x)),
 			clampf(top_left.y, area.position.y, maxf(area.end.y - size.y, area.position.y)))
-		var corners: Array[Vector2] = [at, at + Vector2(size.x, 0.0), at + size, at + Vector2(0.0, size.y)]
-		if first.is_empty():
-			first = corners
+		var corners := _corners(at, size)
 		if not is_open.is_valid() or _loop_is_open(corners, is_open):
 			return corners
-	return first
+	var best: Array[Vector2] = []
+	var best_distance := INF
+	var x := area.position.x
+	while x + size.x <= area.end.x + 0.01:
+		var y := area.position.y
+		while y + size.y <= area.end.y + 0.01:
+			var at := Vector2(x, y)
+			var distance := (at + size / 2.0).distance_squared_to(origin)
+			if distance < best_distance:
+				var corners := _corners(at, size)
+				if _loop_is_open(corners, is_open):
+					best_distance = distance
+					best = corners
+			y += tile
+		x += tile
+	if not best.is_empty():
+		return best
+	var stay := Vector2(clampf(origin.x, area.position.x, area.end.x), clampf(origin.y, area.position.y, area.end.y))
+	return _corners(stay, Vector2.ZERO)
+
+
+static func _corners(at: Vector2, size: Vector2) -> Array[Vector2]:
+	return [at, at + Vector2(size.x, 0.0), at + size, at + Vector2(0.0, size.y)]
 
 
 static func _loop_is_open(corners: Array[Vector2], is_open: Callable) -> bool:
@@ -113,7 +135,7 @@ func tick(enemy: Enemy, delta: float) -> void:
 	if away > NEAR_SPOT:
 		# Back on the loop at a brisk pace, then in step with the line.
 		var pace := enemy.def.speed * (CATCH_UP if away > WalkerLine.GAP else 1.0)
-		enemy.desired_velocity = enemy.global_position.direction_to(spot) * pace
+		enemy.desired_velocity = enemy.walk_direction_to(spot) * pace
 
 
 func _join(enemy: Enemy, delta: float) -> void:

@@ -64,6 +64,25 @@ func test_a_loop_avoids_blocked_cells_when_it_can() -> void:
 			assert_true(from.lerp(to, step / 8.0).x <= 340.0, "the loop turned away from the blocked side")
 
 
+func test_a_loop_moves_to_open_floor_when_no_turn_of_it_is_open() -> void:
+	# Open only from x 400, far right of the start, so all four turns at the start cross something.
+	var is_open := func(spot: Vector2) -> bool: return spot.x >= 400.0
+	var loop := MallWalkerBehavior.walker_loop(Vector2(100, 150), Vector2i(20, 11), is_open)
+	assert_near(MallWalkerBehavior.loop_length(loop), 2.0 * (4.0 + 3.0) * RoomBackdrop.TILE, "still a full loop")
+	for corner in loop:
+		assert_true(corner.x >= 400.0, "%s lies on open floor" % str(corner))
+	assert_true(loop[0].x <= 400.0 + RoomBackdrop.TILE, "the open loop nearest the start")
+
+
+func test_a_loop_with_nowhere_open_stays_where_it_started() -> void:
+	var is_open := func(_spot: Vector2) -> bool: return false
+	var loop := MallWalkerBehavior.walker_loop(Vector2(200, 150), Vector2i(20, 11), is_open)
+	assert_eq(loop.size(), 4)
+	for corner in loop:
+		assert_true(corner.is_equal_approx(Vector2(200, 150)), "marks time at the start, not through props")
+	assert_true(MallWalkerBehavior.point_along(loop, 50.0).is_equal_approx(Vector2(200, 150)))
+
+
 func test_walkers_hurt_on_contact_at_most_once_in_0_8_seconds() -> void:
 	var clock := MallWalkerBehavior.ContactClock.new()
 	var hits := 0

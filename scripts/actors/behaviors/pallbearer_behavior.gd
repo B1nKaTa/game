@@ -197,7 +197,7 @@ func _carry_on(enemy: Enemy, delta: float) -> void:
 	# The follower keeps its end of the coffin, beside the leader across the way to Grandpa.
 	var spot := leader.global_position + leader.direction_to_target().orthogonal() * CARRY_GAP
 	if enemy.global_position.distance_to(spot) > 3.0:
-		enemy.desired_velocity = enemy.global_position.direction_to(spot) * enemy.def.speed * FOLLOW_SPEED
+		enemy.desired_velocity = enemy.walk_direction_to(spot) * enemy.def.speed * FOLLOW_SPEED
 
 
 func _ram(enemy: Enemy, delta: float) -> void:

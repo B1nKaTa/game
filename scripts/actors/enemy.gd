@@ -39,6 +39,8 @@ const WARNING_Z := 60
 # How often a walker looks again for its way to Grandpa, and how near a waypoint counts as reached.
 const ROUTE_EVERY := 0.3
 const WAYPOINT_REACH := 4.0
+# A goal that moves further than this from where its route was planned gets a new route at once.
+const ROUTE_GOAL_SLACK := 64.0
 # A whistle sends an enemy toward Grandpa this much faster, until it is this near him.
 const RALLY_SPEED := 1.5
 const RALLY_NEAR := 30.0
@@ -91,6 +93,7 @@ var _pension_mult := 1.0
 var _route_left := 0.0
 var _routing := false
 var _waypoint := Vector2.ZERO
+var _route_goal := Vector2.INF
 # A shove that carries it along for a while, as an organ pipe's ring does. It adds to any knockback.
 var _push := Vector2.ZERO
 var _push_left := 0.0
@@ -530,14 +533,29 @@ func target_in_view() -> bool:
 func chase_direction() -> Vector2:
 	if walk_grid == null or def.ignores_walls or submerged:
 		return direction_to_target()
-	if _route_left <= 0.0 or (_routing and global_position.distance_to(_waypoint) <= WAYPOINT_REACH):
+	return _routed_direction(target_ground(), direction_to_target())
+
+
+# Which way to walk toward any point, such as a spot on a loop or beside a partner: straight while
+# nothing stands between, otherwise around the walls and props as chase_direction goes.
+func walk_direction_to(point: Vector2) -> Vector2:
+	var straight := global_position.direction_to(point)
+	if walk_grid == null or def.ignores_walls or submerged:
+		return straight
+	return _routed_direction(point, straight)
+
+
+# One route is kept at a time, so a goal far from the one it was planned for is planned afresh at once.
+func _routed_direction(goal: Vector2, straight: Vector2) -> Vector2:
+	var moved_goal := goal.distance_to(_route_goal) > ROUTE_GOAL_SLACK
+	if moved_goal or _route_left <= 0.0 or (_routing and global_position.distance_to(_waypoint) <= WAYPOINT_REACH):
 		_route_left = ROUTE_EVERY
-		_plan_route()
-	return global_position.direction_to(_waypoint) if _routing else direction_to_target()
+		_plan_route(goal)
+	return global_position.direction_to(_waypoint) if _routing else straight
 
 
-func _plan_route() -> void:
-	var goal := target_ground()
+func _plan_route(goal: Vector2) -> void:
+	_route_goal = goal
 	# The narrower half of its collision box. Sliding takes care of a pixel or two of scraping.
 	var half_width := minf(def.body_size.x, def.body_size.y) * 0.4 - 1.0
 	_routing = false
