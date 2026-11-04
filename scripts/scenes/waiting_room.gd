@@ -17,17 +17,8 @@ const TICKET_MACHINE := "ticket_machine"
 const NOTICEBOARD := "noticeboard"
 const MERCHANT_PROMPT := "Trade"
 const RUN_DOOR_ICON := ">"
-# On the lobby's top wall, left of the north door. A number that is not called shows the old 666.
-const TICKET_TEXT_AT := Vector2(164, 24)
-const TICKET_TEXT_SIZE := 12
-const TICKET_TEXT_COLOR := Color("ece9e0")
-const NOW_SERVING_COLOR := Color("e4524f")
-const NOT_CALLED := 666
-# On the lobby's bottom wall, below the floor and clear of the merchants.
-const DEV_HINT_AT := Vector2(12, 340)
-const DEV_HINT_COLOR := Color("ffd34f")
-# On screen, not in the room, so it shows in every department.
-const DEV_PROFILE_AT := Vector2(548, 338)
+# A number that is not called shows the old 666 on the lobby's ticket line.
+const NOT_CALLED := LobbyText.NOT_CALLED
 
 var player: Player
 var _hud: Hud
@@ -58,6 +49,8 @@ var _panel_closed_frame := -1
 # Arrival lines still to show, one every Hud.NOTICE_TIME.
 var _notices: Array[String] = []
 var _notice_wait := 0.0
+# The lobby's ticket line and DEV hint, on the HUD's layer so the camera never scrolls them away.
+var _lobby_text: LobbyText
 
 
 func _ready() -> void:
@@ -82,6 +75,8 @@ func _ready() -> void:
 	_hud.set_condolences(Progress.data.condolences)
 	Progress.condolences_changed.connect(_hud.set_condolences)
 	_add_dev_profile_label()
+	_lobby_text = LobbyText.new()
+	_hud.add_child(_lobby_text)
 	_enter_department(_map.start_id)
 	player.global_position = Player.arrival_position(Departments.RUN_DOOR_CELL + Vector2i.LEFT)
 	_follow_player()
@@ -91,6 +86,7 @@ func _ready() -> void:
 	Progress.notice = ""
 	_announce_new_departments()
 	_call_ticket()
+	_refresh_lobby_text()
 	_refresh_noticeboard()
 
 
@@ -136,7 +132,6 @@ func _announce_new_departments() -> void:
 
 
 func _process(delta: float) -> void:
-	queue_redraw()
 	_follow_player()
 	_show_queued_notices(delta)
 	var nearest := _station_in_range()
@@ -161,14 +156,8 @@ func _show_queued_notices(delta: float) -> void:
 func _add_dev_profile_label() -> void:
 	if not Progress.is_dev_run():
 		return
-	var label := Label.new()
+	var label := LobbyText.make_label(LobbyText.PROFILE_AT, LobbyText.PROFILE_SIZE, LobbyText.DEV_COLOR)
 	label.text = DevStart.PROFILE_LABEL
-	label.position = DEV_PROFILE_AT
-	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	label.add_theme_font_size_override("font_size", 12)
-	label.add_theme_color_override("font_color", DEV_HINT_COLOR)
-	label.add_theme_color_override("font_outline_color", Color.BLACK)
-	label.add_theme_constant_override("outline_size", 3)
 	_hud.add_child(label)
 
 
@@ -213,6 +202,7 @@ func _enter_department(target_id: int) -> void:
 		_furnish(_room_view, _map.room(target_id))
 	_room_view.refresh_doors()
 	_set_yard_rules(Departments.id_of(target_id) == Departments.TRAINING_YARD)
+	_refresh_lobby_text()
 	player.global_position = Player.arrival_position(_progress.arrival_cell(target_id, from_id))
 	_follow_player()
 
@@ -517,23 +507,15 @@ func _exit_tree() -> void:
 			view.free()
 
 
-func _draw() -> void:
-	if Departments.id_of(_current_id) != Departments.LOBBY:
+# The ticket line and the DEV hint show only in the lobby, fixed on screen wherever the camera is.
+func _refresh_lobby_text() -> void:
+	if _lobby_text == null:
 		return
-	var font := ThemeDB.fallback_font
-	var ticket := "YOUR TICKET: %d   " % (Progress.data.run_count + 1)
-	var serving := now_serving(Progress.data)
-	var serving_text := "NOW SERVING: %d" % serving
-	if serving != NOT_CALLED:
-		serving_text += "  Called!"
-	var serving_at := TICKET_TEXT_AT + Vector2(font.get_string_size(ticket, HORIZONTAL_ALIGNMENT_LEFT, -1, TICKET_TEXT_SIZE).x, 0)
-	draw_string_outline(font, TICKET_TEXT_AT, ticket, HORIZONTAL_ALIGNMENT_LEFT, -1, TICKET_TEXT_SIZE, 3, Color.BLACK)
-	draw_string(font, TICKET_TEXT_AT, ticket, HORIZONTAL_ALIGNMENT_LEFT, -1, TICKET_TEXT_SIZE, TICKET_TEXT_COLOR)
-	draw_string_outline(font, serving_at, serving_text, HORIZONTAL_ALIGNMENT_LEFT, -1, TICKET_TEXT_SIZE, 3, Color.BLACK)
-	draw_string(font, serving_at, serving_text, HORIZONTAL_ALIGNMENT_LEFT, -1, TICKET_TEXT_SIZE, NOW_SERVING_COLOR)
+	_lobby_text.visible = Departments.id_of(_current_id) == Departments.LOBBY
+	var hint := ""
 	if DevStart.is_available():
-		var waiting_hint := DevStart.WAITING_HINT_ON if Progress.is_dev_run() else DevStart.WAITING_HINT
-		draw_string(ThemeDB.fallback_font, DEV_HINT_AT, "%s   %s" % [DevStart.HINT, waiting_hint], HORIZONTAL_ALIGNMENT_LEFT, -1, 10, DEV_HINT_COLOR)
+		hint = "%s   %s" % [DevStart.HINT, DevStart.WAITING_HINT_ON if Progress.is_dev_run() else DevStart.WAITING_HINT]
+	_lobby_text.show_text(Progress.data.run_count, now_serving(Progress.data), hint)
 
 
 # What the full-loop check reads and drives.
@@ -585,6 +567,10 @@ func debug_map() -> FloorMap:
 
 func debug_current_id() -> int:
 	return _current_id
+
+
+func lobby_text() -> LobbyText:
+	return _lobby_text
 
 
 func lobby_decor() -> LobbyDecor:
