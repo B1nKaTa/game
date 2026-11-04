@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CosmeticDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/cosmetic_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "bingo_teal"
+display_name = "Bingo Night Teal"
+description = "Barbara's own shade. Eyes down."
+slot = "cardigan"
+price = 0
+color = Color(0.184313725, 0.560784314, 0.541176471, 1)
+shape = "band"

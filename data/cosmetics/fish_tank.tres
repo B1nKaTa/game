@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CosmeticDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/cosmetic_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "fish_tank"
+display_name = "Fish Tank"
+description = "The fish are also waiting."
+slot = "decor"
+price = 60
+color = Color(0.235294118, 0.541176471, 0.788235294, 1)
+shape = "tank"

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CosmeticDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/cosmetic_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "mustard_cardigan"
+display_name = "Mustard Cardigan"
+description = "The colour of a waiting room chair."
+slot = "cardigan"
+price = 25
+color = Color(0.788235294, 0.635294118, 0.235294118, 1)
+shape = "band"

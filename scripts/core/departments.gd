@@ -76,6 +76,8 @@ const STATIONS: Array[Dictionary] = [
 	# middle column, since (10, 2) would be beside the cell a north door would use.
 	{"id": "bounty_board", "department": BOUNTY_OFFICE, "cell": Vector2i(6, 2), "title": "Bounty Office. Overdue Accounts", "prompt": "Wanted posters", "board": false},
 	{"id": "item_rack", "department": TRAINING_YARD, "cell": Vector2i(15, 3), "title": "Item Rack", "prompt": "Try items", "label": "Rack", "size": Vector2(36, 28), "color": Color("6a5a48")},
+	# No named clerk keeps the Decor Office. Looks are bought and worn at this one counter.
+	{"id": "decor_counter", "department": DECOR_OFFICE, "cell": Vector2i(10, 4), "title": "Decor Office. Sympathy in Every Shade", "prompt": "Browse", "label": "Decor", "size": Vector2(44, 24), "color": Color("8a6a8a")},
 ]
 
 # People who stand in a department, each made from its NpcDef on the department's first entry. They

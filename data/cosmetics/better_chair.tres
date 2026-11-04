@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CosmeticDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/cosmetic_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "better_chair"
+display_name = "A Better Chair"
+description = "Padded. Nobody has died in it yet."
+slot = "decor"
+price = 40
+color = Color(0.541176471, 0.309803922, 0.22745098, 1)
+shape = "chair"

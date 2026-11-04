@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CosmeticDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/cosmetic_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "potted_fern"
+display_name = "Potted Fern"
+description = "Something alive in the lobby, for once."
+slot = "decor"
+price = 20
+color = Color(0.290196078, 0.541176471, 0.290196078, 1)
+shape = "fern"

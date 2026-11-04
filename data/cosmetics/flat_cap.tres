@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CosmeticDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/cosmetic_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "flat_cap"
+display_name = "Flat Cap"
+description = "For walking to the shop and complaining about it."
+slot = "hat"
+price = 30
+color = Color(0.352941176, 0.290196078, 0.22745098, 1)
+shape = "flat_cap"

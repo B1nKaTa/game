@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CosmeticDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/cosmetic_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "party_hat"
+display_name = "Party Hat"
+description = "Somebody is celebrating. Probably not you."
+slot = "hat"
+price = 40
+color = Color(0.894117647, 0.321568627, 0.309803922, 1)
+shape = "cone"

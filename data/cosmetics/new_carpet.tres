@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CosmeticDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/cosmetic_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "new_carpet"
+display_name = "New Carpet"
+description = "A rug for the middle of the lobby. Hides the stains."
+slot = "decor"
+price = 50
+color = Color(0.415686275, 0.164705882, 0.22745098, 1)
+shape = "carpet"

@@ -111,6 +111,27 @@ func record_boss_beaten(boss_id: String, is_floor_boss: bool) -> int:
 	return paid
 
 
+func buy_cosmetic(def: CosmeticDef) -> bool:
+	if not data.buy_cosmetic(def):
+		return false
+	_save_condolences()
+	return true
+
+
+func wear(def: CosmeticDef) -> bool:
+	if not data.wear(def):
+		return false
+	_store.save_progress(data)
+	return true
+
+
+func take_off(slot: String) -> void:
+	if not data.cosmetics_worn.has(slot):
+		return
+	data.take_off(slot)
+	_store.save_progress(data)
+
+
 func _save_condolences() -> void:
 	_store.save_progress(data)
 	condolences_changed.emit(data.condolences)

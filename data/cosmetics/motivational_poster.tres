@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CosmeticDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/cosmetic_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "motivational_poster"
+display_name = "Motivational Poster"
+description = "HANG IN THERE. You have no choice."
+slot = "decor"
+price = 15
+color = Color(0.850980392, 0.788235294, 0.62745098, 1)
+shape = "poster"

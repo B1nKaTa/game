@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CosmeticDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/cosmetic_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "burgundy_cardigan"
+display_name = "Burgundy Cardigan"
+description = "For formal occasions, such as your own wake."
+slot = "cardigan"
+price = 25
+color = Color(0.478431373, 0.164705882, 0.22745098, 1)
+shape = "band"

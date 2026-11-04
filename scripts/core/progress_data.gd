@@ -158,6 +158,39 @@ func spend_condolences(amount: int) -> bool:
 	return true
 
 
+func owns_cosmetic(id: String) -> bool:
+	return cosmetics_owned.has(id)
+
+
+# Only what is on sale can be bought, once, with Condolences. A poster's cosmetic is never for sale.
+func can_buy_cosmetic(def: CosmeticDef) -> bool:
+	return def != null and def.price > 0 and not owns_cosmetic(def.id) and condolences >= def.price
+
+
+func buy_cosmetic(def: CosmeticDef) -> bool:
+	if not can_buy_cosmetic(def):
+		return false
+	condolences -= def.price
+	cosmetics_owned[def.id] = true
+	return true
+
+
+# One look per slot. Decor stands in the lobby once owned, so it is never worn.
+func wear(def: CosmeticDef) -> bool:
+	if def == null or def.slot == CosmeticDef.SLOT_DECOR or not owns_cosmetic(def.id):
+		return false
+	cosmetics_worn[def.slot] = def.id
+	return true
+
+
+func take_off(slot: String) -> void:
+	cosmetics_worn.erase(slot)
+
+
+func is_worn(def: CosmeticDef) -> bool:
+	return def != null and cosmetics_worn.get(def.slot, "") == def.id
+
+
 # Pays the first-beat Condolences once per boss, and returns what was paid, which is 0 after the first.
 # It also marks a taken poster for this boss as won, on every beat, so a poster for a boss beaten
 # before is still winnable.

@@ -12,6 +12,7 @@ const BOUNTY_BOARD := "bounty_board"
 const DEPUTY_DOLORES := "deputy_dolores"
 const ITEM_RACK := "item_rack"
 const COACH_BERTRAM := "coach_bertram"
+const DECOR_COUNTER := "decor_counter"
 const MERCHANT_PROMPT := "Trade"
 const RUN_DOOR_ICON := ">"
 const NOW_SERVING_AT := Vector2(360, 24)
@@ -41,6 +42,8 @@ var _open_merchants: Array = []
 var _npcs := {}
 # The Bounty Office's cork board, once that department has been entered.
 var _poster_board: PosterBoard
+# The lobby's decor, rebuilt whenever a panel closes, since the Decor Office may have sold some.
+var _lobby_decor: LobbyDecor
 var _panel: CanvasLayer
 # The frame a panel last closed on, so the press that closed it never opens it again at once.
 var _panel_closed_frame := -1
@@ -226,6 +229,11 @@ func _furnish(view: RoomView, room: FloorRoom) -> void:
 		sign_node.setup(Departments.entry(target)["name"], not is_open, Departments.closed_hint(target), room_width)
 		view.add_child(sign_node)
 	var department := Departments.id_of(room.id)
+	# Before the stations, so every station and its prompt draws over the decor.
+	if department == Departments.LOBBY:
+		_lobby_decor = LobbyDecor.new()
+		view.add_child(_lobby_decor)
+		_lobby_decor.setup(Progress.data.cosmetics_owned)
 	for merchant: Dictionary in _open_merchants:
 		if merchant["department"] == department:
 			var entry := merchant.duplicate()
@@ -362,6 +370,10 @@ func _open_station(opened: WaitingStation) -> void:
 			rack.setup(opened.title, _run)
 			rack.taken.connect(_on_rack_taken)
 			_show_panel(rack)
+		DECOR_COUNTER:
+			var decor := DecorPanel.new()
+			decor.setup(opened.title)
+			_show_panel(decor)
 
 
 # Shows the first line now and the rest one after another, in place of whatever was waiting.
@@ -390,6 +402,8 @@ func _close_panel() -> void:
 	_panel_closed_frame = Engine.get_process_frames()
 	player.set_physics_process(true)
 	_refresh_poster_board()
+	if is_instance_valid(_lobby_decor):
+		_lobby_decor.setup(Progress.data.cosmetics_owned)
 
 
 func _exit_tree() -> void:
@@ -444,3 +458,7 @@ func open_panel() -> CanvasLayer:
 
 func debug_room_view() -> RoomView:
 	return _room_view
+
+
+func lobby_decor() -> LobbyDecor:
+	return _lobby_decor if is_instance_valid(_lobby_decor) else null
