@@ -142,10 +142,16 @@ write the plan from `plan-template.md` with the superpowers:writing-plans skill.
   `scripts/core/progress_data.gd` `FIRST_PATH_BY_DEPTH` and `PATHS_AT_DEPTH`.
 - **Merchants:** `MerchantRules.is_open` (`scripts/core/merchant_rules.gd`) reads an entry's
   `depth`/`clears`, `paths` or `legacy_clears`. Entries live in `Departments.MERCHANTS`.
-- **Dev shortcut:** `scripts/core/dev_start.gd` (`START_DEPTH`, `CLEARS_BY_DEPTH`, `PATHS_CLEARED`,
-  `ALL_PATHS`, `HINT`), reached by F3 and F4 in the Waiting Room through `scripts/autoload/game.gd`.
-- **The full loop:** `tools/smoke_driver.gd` (`_clear_three_floors`, `_check_crossroads`,
-  `_check_dev_start`, `TIMEOUT`), run by `tools/smoke.ps1`.
+- **Dev shortcut:** `scripts/core/dev_start.gd` (`START_DEPTH`, `START_KEYS` with F3, F5 and F6 for
+  depths 3, 4 and 5, `clears_by_depth`, `paths_cleared`, `ALL_PATHS`, `HINT`), reached in the Waiting
+  Room through `Game.begin_dev_run(start_depth)` (`scripts/autoload/game.gd`), which leaves the depth in
+  `Progress.dev_start_depth` for `floor_scene.gd`. F4 is the dev Waiting Room. The profiles are built
+  from `ProgressData.PATHS_AT_DEPTH`, so a new depth is covered once it is listed there.
+- **The full loop:** `tools/smoke_driver.gd` (`_clear_every_depth`, `_check_crossroads`,
+  `_check_dev_start`, `TIMEOUT`), run by `tools/smoke.ps1`. `_clear_every_depth` walks every depth
+  from 1 to the scene's `LAST_DEPTH` through `PATHS_BY_DEPTH`, west paths on the first run and east on
+  the second, so a new path is cleared as soon as it is listed. Path-specific fight checks hang off
+  `_clear_whole_floor` by depth and path index, as `_check_care_home_fights` does.
 
 ## 3. Boss and enemy rules (from the lessons)
 
