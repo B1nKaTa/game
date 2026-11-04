@@ -219,3 +219,28 @@ func test_dolores_has_a_word_for_every_poster_and_for_paying() -> void:
 	for def in BountyBoard.all():
 		assert_false(dolores.moment("take:" + def.id).is_empty(), def.id)
 	assert_eq(dolores.moment("take:nobody"), "")
+
+
+# --- the deep floors' keepers ---
+
+const KEEPERS := ["res://data/npcs/purser.tres", "res://data/npcs/pro_shop_keeper.tres", "res://data/npcs/duty_free_clerk.tres", "res://data/npcs/severance_clerk.tres"]
+
+
+func test_each_keeper_has_a_rotation_of_short_openers_and_a_word_for_each_run() -> void:
+	for path in KEEPERS:
+		var def: NpcDef = load(path)
+		assert_true(def.lines.size() >= 6 and def.lines.size() <= 10, path)
+		for line in def.lines:
+			assert_true(line.length() <= 80, line)
+		assert_false(def.moment(NpcDef.DIED).is_empty(), path)
+		assert_false(def.moment(NpcDef.BOSS_WIN).is_empty(), path)
+
+
+func test_a_keeper_greets_a_death_before_a_boss_and_says_nothing_after_a_quiet_run() -> void:
+	var def: NpcDef = load(KEEPERS[0])
+	assert_eq(def.greeting_key({"died": true, "bosses": 2}), NpcDef.DIED)
+	assert_eq(def.greeting_key({"died": false, "bosses": 1}), NpcDef.BOSS_WIN)
+	assert_eq(def.greeting_key({"died": false, "bosses": 0}), "")
+	assert_eq(def.greeting_key({}), "", "no run played yet")
+	var merchant: NpcDef = load(MERCHANT_PATH)
+	assert_eq(merchant.greeting_key({"died": true}), "", "no line, no greeting")
