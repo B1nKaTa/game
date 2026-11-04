@@ -1,6 +1,7 @@
 extends TestCase
 
 const NEW_TYPES := ["seasonal_temp", "notary_public", "burnt_out_auditor", "denial_officer"]
+# Each path adds its behaviors on a line of its own at the end. Departures, Terminal Zero: the last line.
 const BEHAVIORS := [
 	"charger_behavior", "melee_behavior", "thrower_behavior", "pack_behavior", "burst_shooter_behavior",
 	"exploder_behavior", "shield_behavior", "floor_boss_behavior", "mini_boss_behavior",
@@ -13,6 +14,9 @@ const BEHAVIORS := [
 	# Fairway's End
 	"caddie_behavior", "club_golfer_behavior", "gopher_behavior", "club_pro_behavior",
 	"club_president_behavior",
+	# Departures, Terminal Zero
+	"tour_group_behavior", "baggage_handler_behavior", "lost_luggage_behavior", "security_sergeant_behavior",
+	"head_of_departures_behavior",
 ]
 const ExploderBehavior := preload("res://scripts/actors/behaviors/exploder_behavior.gd")
 const PackBehavior := preload("res://scripts/actors/behaviors/pack_behavior.gd")

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/enemy_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/actors/behaviors/head_of_departures_behavior.gd" id="2"]
+[ext_resource type="Resource" path="res://data/enemies/tour_group.tres" id="3"]
+
+[resource]
+script = ExtResource("1")
+id = "augustine"
+display_name = "Augustine, Head of Departures"
+max_hp = 865.385
+speed = 80.0
+pension_drop = 16
+is_boss = true
+body_size = Vector2(44, 52)
+color = Color(0.8, 0.3, 0.55, 1)
+frame_width = 64
+behavior_script = ExtResource("2")
+summon = ExtResource("3")
+mark = "departures_cap"

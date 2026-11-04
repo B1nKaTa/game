@@ -2,51 +2,51 @@
 
 [ext_resource type="Script" path="res://scripts/content/floor_def.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/content/room_palette.gd" id="2"]
-[ext_resource type="Resource" path="res://data/enemies/weeping_mourner.tres" id="3"]
-[ext_resource type="Resource" path="res://data/enemies/florist.tres" id="4"]
-[ext_resource type="Resource" path="res://data/enemies/pallbearer.tres" id="5"]
-[ext_resource type="Resource" path="res://data/enemies/parlour_plot_holder.tres" id="6"]
-[ext_resource type="Resource" path="res://data/enemies/parlour_seasonal_temp.tres" id="7"]
-[ext_resource type="Resource" path="res://data/enemies/reverend.tres" id="8"]
-[ext_resource type="Resource" path="res://data/enemies/mortimer_grimsby.tres" id="9"]
+[ext_resource type="Resource" path="res://data/enemies/tour_group.tres" id="3"]
+[ext_resource type="Resource" path="res://data/enemies/baggage_handler.tres" id="4"]
+[ext_resource type="Resource" path="res://data/enemies/lost_luggage.tres" id="5"]
+[ext_resource type="Resource" path="res://data/enemies/airport_weeping_mourner.tres" id="6"]
+[ext_resource type="Resource" path="res://data/enemies/airport_mall_cop.tres" id="7"]
+[ext_resource type="Resource" path="res://data/enemies/sergeant_wanda.tres" id="8"]
+[ext_resource type="Resource" path="res://data/enemies/augustine.tres" id="9"]
 [ext_resource type="Resource" path="res://data/enemies/mimic.tres" id="10"]
 
 [sub_resource type="Resource" id="palette"]
 script = ExtResource("2")
-floor_a = Color(0.45, 0.1, 0.18, 1)
-floor_b = Color(0.38, 0.08, 0.15, 1)
-floor_c = Color(0.36, 0.24, 0.16, 1)
-floor_jitter = 0.02
-grout = Color(0, 0, 0, 0.2)
-speckle = Color(1, 0.85, 0.7, 0.08)
-wall = Color(0.2, 0.11, 0.08, 1)
-wall_line = Color(0.48, 0.32, 0.2, 0.55)
-darkness = Color(0.04, 0.02, 0.03, 1)
-ambient = Color(0.42, 0.34, 0.4, 1)
-torch = Color(1, 0.72, 0.42, 1)
-fill_light = Color(0.72, 0.55, 0.85, 1)
-crate = Color(0.42, 0.27, 0.17, 1)
-crate_edge = Color(0.2, 0.12, 0.07, 1)
-rock = Color(0.48, 0.42, 0.4, 1)
-rock_edge = Color(0.2, 0.16, 0.15, 1)
-barrel = Color(0.45, 0.3, 0.2, 1)
-barrel_band = Color(0.2, 0.12, 0.07, 1)
-cobweb = Color(0.85, 0.82, 0.8, 0.35)
-floor_crack = Color(0, 0, 0, 0.4)
-lantern = Color(1, 0.8, 0.5, 1)
-lantern_light = Color(1, 0.74, 0.45, 1)
+floor_a = Color(0.24, 0.32, 0.46, 1)
+floor_b = Color(0.3, 0.37, 0.5, 1)
+floor_c = Color(0.27, 0.33, 0.42, 1)
+floor_jitter = 0.015
+grout = Color(0, 0, 0, 0.18)
+speckle = Color(1, 1, 1, 0.06)
+wall = Color(0.6, 0.66, 0.72, 1)
+wall_line = Color(0.85, 0.9, 0.95, 0.5)
+darkness = Color(0.03, 0.03, 0.05, 1)
+ambient = Color(0.42, 0.45, 0.52, 1)
+torch = Color(0.88, 0.94, 1, 1)
+fill_light = Color(0.8, 0.86, 0.95, 1)
+crate = Color(0.5, 0.52, 0.56, 1)
+crate_edge = Color(0.22, 0.23, 0.26, 1)
+rock = Color(0.55, 0.58, 0.62, 1)
+rock_edge = Color(0.22, 0.24, 0.28, 1)
+barrel = Color(0.5, 0.52, 0.56, 1)
+barrel_band = Color(0.22, 0.23, 0.26, 1)
+cobweb = Color(0.85, 0.88, 0.92, 0.3)
+floor_crack = Color(0, 0, 0, 0.3)
+lantern = Color(0.9, 0.95, 1, 1)
+lantern_light = Color(0.85, 0.93, 1, 1)
 floor_pattern = 1
-carpet_motif = Color(0.95, 0.78, 0.4, 0.22)
-wall_pattern = 2
-brick_line = Color(0, 0, 0, 0.4)
-flicker = 0.06
+carpet_motif = Color(0.65, 0.75, 0.95, 0.18)
+wall_pattern = 0
+brick_line = Color(0, 0, 0, 0.3)
+flicker = 0.03
 decor_density = 0.07
 decor_weights = {
-"cobweb": 0.4,
-"coffin_stand": 1.2,
-"crack": 0.5,
-"lantern": 1.0,
-"stained_glass": 2.5
+"crack": 0.3,
+"departure_board": 1.5,
+"fluorescent": 2.0,
+"lantern": 0.4,
+"plant": 1.5
 }
 scatter_lights = 4
 
@@ -54,9 +54,9 @@ scatter_lights = 4
 script = ExtResource("1")
 id = "terminal_zero"
 display_name = "Departures, Terminal Zero"
-rooms_dir = "res://data/rooms/funeral_parlour/"
+rooms_dir = "res://data/rooms/terminal_zero/"
 enemies = [ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7")]
-enemy_weights = PackedInt32Array(3, 4, 3, 3, 2)
+enemy_weights = PackedInt32Array(3, 3, 4, 3, 2)
 extra_enemy_steps = PackedFloat32Array(0.5, 0.8)
 mini_boss = ExtResource("8")
 floor_boss = ExtResource("9")

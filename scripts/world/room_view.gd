@@ -167,6 +167,7 @@ func clear_passing_effects() -> void:
 
 # Anything an attack or a blast leaves in the room for a while. A new one must be added here, or it
 # freezes mid-way in a stored room and goes on when Grandpa comes back.
+# Each path adds its own on a line at the end: Departures, Terminal Zero added XRaySweep and RunwayLane.
 static func is_passing_effect(child: Node) -> bool:
 	# The Last Resort Cruise
 	if CruiseProps.is_passing_effect(child):
@@ -178,7 +179,9 @@ static func is_passing_effect(child: Node) -> bool:
 		or child is DroppedCoffin or child is PresentDrop or child is ClosingRing
 		or child is TapeSpread or child is PaperTrail or child is WriteUpMark or child is LaneDrop or child is HoldMusic
 		or child is TakeoverTether
-		or GolfProps.is_passing_effect(child))
+		or GolfProps.is_passing_effect(child)
+		# Departures, Terminal Zero
+		or child is XRaySweep or child is RunwayLane)
 
 
 func place_bomb(at: Vector2) -> void:
@@ -464,6 +467,8 @@ func _create_props(palette: RoomPalette) -> void:
 	_create_office_props(layout, palette)
 	# Fairway's End: sand bunkers and the course's props.
 	GolfProps.build(self, layout, palette)
+	# Departures, Terminal Zero: its stock and its queue barriers.
+	TerminalProps.build(self, layout, palette)
 
 
 func _place_prop(prop: BreakableBlock, cell: Vector2i) -> void:

@@ -281,6 +281,8 @@ func _draw() -> void:
 		# Fairway's End's marks, drawn in their own file.
 		"caddie_bib", "golf_cap", "gopher_teeth", "pro_visor", "boater":
 			GolfMarks.draw_mark(self, _def.mark, half)
+	# Departures, Terminal Zero draws its own marks.
+	TerminalMarks.draw_mark(self, _def.mark, half)
 	if _def.shield_half_angle > 0.0:
 		var reach := maxf(half.x, half.y) + SHIELD_GAP
 		var half_arc := deg_to_rad(_def.shield_half_angle)

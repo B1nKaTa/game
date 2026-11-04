@@ -31,6 +31,8 @@ const FLUORESCENT := "fluorescent"
 # Head Office: a potted ficus in a corner of the carpet, and a swivel chair pushed away from a desk.
 const FICUS := "ficus"
 const OFFICE_CHAIR := "office_chair"
+# Departures, Terminal Zero: a departures board on its stand, with rows of amber flight times.
+const DEPARTURE_BOARD := "departure_board"
 const SYMBOL_KINDS := {
 	RoomLayout.SYMBOL_GRASS: GRASS,
 	RoomLayout.SYMBOL_BONES: BONES,
