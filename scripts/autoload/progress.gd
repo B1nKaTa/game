@@ -4,10 +4,15 @@ signal pension_changed(amount: int)
 
 const SAVE_PATH := "user://save.json"
 const SMOKE_PATH := "user://smoke_save.json"
+const DEV_PATH := "user://save_dev.json"
 
 var data: ProgressData
 var notice := ""
 var _store: SaveStore
+# While a dev run is on, the real progress and its store wait here untouched, and every save goes to
+# the dev file instead.
+var _real_data: ProgressData
+var _real_store: SaveStore
 
 
 func _ready() -> void:
@@ -16,6 +21,35 @@ func _ready() -> void:
 	if smoke:
 		_store.delete_all()
 	reload()
+
+
+func is_dev_run() -> bool:
+	return _real_store != null
+
+
+# Swaps in progress made up for a dev run. Nothing it earns or spends can reach the real save, since
+# the real store is set aside until end_dev_run.
+func begin_dev_run(dev_data: ProgressData, dev_path := DEV_PATH) -> void:
+	if is_dev_run():
+		end_dev_run()
+	_real_data = data
+	_real_store = _store
+	_store = SaveStore.new(dev_path)
+	_store.delete_all()
+	data = dev_data
+	pension_changed.emit(data.pension)
+
+
+# Throws the dev run's progress away and brings back the real progress exactly as it was.
+func end_dev_run() -> void:
+	if not is_dev_run():
+		return
+	_store.delete_all()
+	_store = _real_store
+	data = _real_data
+	_real_store = null
+	_real_data = null
+	pension_changed.emit(data.pension)
 
 
 func reload() -> void:
