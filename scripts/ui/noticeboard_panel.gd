@@ -68,6 +68,7 @@ func _ready() -> void:
 	column.add_child(_letter)
 	var close := Button.new()
 	close.text = "Leave"
+	close.set_meta("sfx", "")
 	close.pressed.connect(func(): closed.emit())
 	column.add_child(close)
 	_rebuild()
@@ -83,6 +84,7 @@ func _rebuild() -> void:
 		button.text = row_text(letter, Progress.data)
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.add_theme_font_size_override("font_size", ROW_FONT)
+		button.set_meta("sfx", "")
 		button.pressed.connect(read.bind(letter["path"]))
 		_list.add_child(button)
 	_scroll.custom_minimum_size.y = minf(maxi(letters.size(), 1) * ROW_HEIGHT, LIST_MAX_HEIGHT)
@@ -96,6 +98,7 @@ func _rebuild() -> void:
 func read(path_id: String) -> void:
 	for letter in LetterBook.arrived(Progress.data):
 		if letter["path"] == path_id:
+			Sfx.play("letter_read")
 			_letter.text = "%s:  \"%s\"" % [letter["from"], letter["text"]]
 			Progress.read_letter(path_id)
 	_rebuild()

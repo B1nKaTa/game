@@ -138,6 +138,8 @@ func show_message(text: String) -> void:
 
 
 func show_notice(text: String) -> void:
+	if not text.is_empty():
+		Sfx.play("notice_pop")
 	_notice.text = text
 	_notice_left = NOTICE_TIME
 

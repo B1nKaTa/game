@@ -47,6 +47,8 @@ static func form_name(form_id: String, upgrade_defs: Array[UpgradeDef]) -> Strin
 
 
 func _ready() -> void:
+	# The machine prints his number as he steps up.
+	Sfx.play("ticket_print")
 	var panel := PanelContainer.new()
 	panel.position = PANEL_POSITION
 	panel.custom_minimum_size = PANEL_SIZE
@@ -69,6 +71,7 @@ func _ready() -> void:
 	column.add_child(_lines)
 	var close := Button.new()
 	close.text = "Leave"
+	close.set_meta("sfx", "")
 	close.pressed.connect(func(): closed.emit())
 	column.add_child(close)
 	_rebuild()
@@ -92,6 +95,7 @@ func _rebuild() -> void:
 		var take := Button.new()
 		take.text = TAKE_CURSED
 		take.add_theme_font_size_override("font_size", ROW_FONT)
+		take.set_meta("sfx", "")
 		take.pressed.connect(take_cursed)
 		choice.add_child(take)
 		var decline := Button.new()
@@ -105,6 +109,7 @@ func _rebuild() -> void:
 # The two buttons, which the full-loop check also presses.
 func take_cursed() -> void:
 	if Progress.accept_cursed_ticket():
+		Sfx.play("form_filed")
 		cursed_taken.emit(CURSED_TAKEN)
 	_rebuild()
 

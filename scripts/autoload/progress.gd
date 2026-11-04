@@ -358,6 +358,11 @@ func take_crafted_item() -> ItemDef:
 
 
 func record_floor_cleared(depth: int, path_id: String) -> void:
+	# A path's first clear hangs its boss's memento, which the Waiting Room sounds on return.
+	if not data.has_cleared_path(path_id):
+		for entry: Dictionary in Mementos.ALL:
+			if entry["path"] == path_id:
+				last_run["new_memento"] = true
 	data.record_floor_cleared(depth, path_id)
 	_store.save_progress(data)
 
