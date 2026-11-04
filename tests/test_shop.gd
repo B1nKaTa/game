@@ -112,7 +112,8 @@ func test_arriving_around_a_shop() -> void:
 
 func _shops() -> Array[RoomLayout]:
 	var shops: Array[RoomLayout] = []
-	for folder in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "golden_years_mall"]:
+	for folder in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "golden_years_mall",
+			"terminal_zero"]:
 		for layout in RoomCatalog.load_valid("res://data/rooms/%s/" % folder):
 			if layout.room_type == RoomLayout.TYPE_SHOP:
 				shops.append(layout)
