@@ -167,12 +167,14 @@ func clear_passing_effects() -> void:
 
 # Anything an attack or a blast leaves in the room for a while. A new one must be added here, or it
 # freezes mid-way in a stored room and goes on when Grandpa comes back.
+# Each path adds its own on a line at the end: Departures, Terminal Zero added XRaySweep and RunwayLane.
 static func is_passing_effect(child: Node) -> bool:
 	return (child is Projectile or child is DeathBurst or child is Thermos or child is EnemyBlast
 		or child is SummonMark or child is GroundStrike or child is LightsOut or child is SteamJet
 		or child is Shockwave or child is FlameBurst or child is PipeRing or child is CollectionPlate
 		or child is ProcessionLane or child is SafeSpotMark or child is PerfumeCloud or child is WetSplash
-		or child is DroppedCoffin or child is PresentDrop or child is ClosingRing)
+		or child is DroppedCoffin or child is PresentDrop or child is ClosingRing
+		or child is XRaySweep or child is RunwayLane)
 
 
 func place_bomb(at: Vector2) -> void:
