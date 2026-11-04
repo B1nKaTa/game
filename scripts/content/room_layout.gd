@@ -148,6 +148,9 @@ const REQUIRED := {
 @export var rows: PackedStringArray = []
 # The room's escalator strips reverse every few seconds, after a chime. Old layouts have none.
 @export var strips_reverse: bool = false
+# The Last Resort Cruise: the room's deck rolls every few seconds, after a horn. It lays no tile, so it
+# has no symbol. Old layouts never roll.
+@export var ship_rolls: bool = false
 
 
 # The way a strip symbol runs, or zero for anything else.

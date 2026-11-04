@@ -359,6 +359,8 @@ func _handle_movement() -> void:
 		# An escalator strip carries him on top of his walk. A dodge goes where it is aimed instead.
 		if _feet != null and is_inside_tree():
 			velocity += ConveyorStrip.carry_at(get_tree(), _feet.global_position)
+			# A rolling deck slides him too. A dodge holds him where it is aimed instead.
+			velocity += ShipDeck.slide_at(get_tree(), _feet.global_position)
 		if not _visual.is_playing_once():
 			_visual.play("walk" if input != Vector2.ZERO else "idle")
 	if _push_left > 0.0:
