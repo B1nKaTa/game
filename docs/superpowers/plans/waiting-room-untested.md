@@ -1,6 +1,46 @@
 # Waiting Room overhaul: what has not been run yet
 
-On 2026-11-04 the user put testing on hold. Everything on `waiting-room` from 3d1f790 onward is written but has never been parsed or run by Godot. Run all of it together when testing resumes, and expect small compile fixes on the first run.
+On 2026-11-04 the user put testing on hold. Everything on `waiting-room` from 3d1f790 onward was written without being parsed or run by Godot. The first test session below ran it all. The chunk notes further down are kept as they were written, and this section says which of them still stand.
+
+## First test session: results (2026-11-04, 2ce4093 to 9dd88ed)
+
+### Verified
+- **Import:** clean on the first run, with no parse or load errors. The 32 new `.uid` files are committed (2ce4093).
+- **Tests:** `1098 tests, 0 failed`, with no `SCRIPT ERROR`. Only one test was stale: the five floors' coverage tests did not exempt the department room type (b852ab8).
+- **Full loop:** 7 passes in 7 runs after one fix, each with both `SMOKE PASS` lines, every Waiting Room flag true, and "mini bosses beaten: 6".
+  - **The fix:** the loop's in-memory Furnace Works clear was written to disk by the arrival's departments-seen save (e01672b).
+  - **Flakes:** none.
+- **The real save, loaded read-only:**
+  - every upgrade level is intact, and the forms at their milestone take option a
+  - Bounty Office, Training Yard, Apothecary Wing and Boiler Room open, and announce once
+  - four mementos hang, and four letters arrive unread
+  - 0 Condolences, and ticket 14 counts as already called
+- **The dev Waiting Room:**
+  - the real F4 key works both ways with no panel open
+  - the hint fits the bottom wall, and "DEV PROFILE" clears the HUD
+  - the profile's own save is byte for byte the same afterwards, and `save_dev.json` is gone
+- **Screenshots:** every one owed below is taken, in `D:\grandpa-shots-wr\`. The ones taken before the layout fixes are in `before-fixes\`.
+
+### Fixed because of the screenshots
+- **The new-departments notice:** six names filled the 640 px line edge to edge, so it now runs three names a line (068c68b).
+- **The poster board:** its prompt printed over the board's WANTED title, and now sits higher (8844b40).
+- **The lobby lanterns:** the two lanterns under the ticket line moved from columns 6 and 11 to 3 and 13 (78c55e7).
+- **The trophy wall:** the empty-frame captions "Smokey" and "Mortimer" ran together, so alternate captions are now staggered (839f70b).
+- **Hats and bands:**
+  - Every hat floated above his hair, and the band lay across his beard.
+  - `HEAD` is now (0, -18) and `CHEST` (0, 1), measured on the sprite (abdd12c).
+- **The Mall's white tile:** the tiara and the candy stripe cane all but vanished there, and now have dark edges (194c779).
+- **The potion panel:** the Apothecary's panel was see-through, and now has an opaque backing (9dd88ed).
+
+### Still open
+- **The independent review:** Task 21 step 4, then step 5. After that, the push and the report (step 6).
+- **The red steps:** each task's "run them to make sure they fail" step was never run, since the code came before testing. They stay unticked.
+- **Looked at and left as they are:**
+  - **The cane skins:** a worn skin draws the placeholder cane line pointing along his aim, over the sprite's own vertical cane, so it reads as a stick held out in front. This is the documented deviation, and the art pass should replace it.
+  - **The Training Yard's closed-door hint:** "Opens when The Unkempt Cemetery is cleared" reaches the lobby's east wall over its own door, but stays inside the room.
+  - **The mini bosses:** the count is the number of paths beaten, which is 6 at most, not 12. All 7 runs showed 6, but the check still counts them rather than demanding them.
+  - **The Bounty panel:** its rows are about 23 px tall, not the guessed 20, so the list scrolls a row sooner. Leave still fits.
+- **Play only:** the "Things to look at in play" lists below, such as how Heavy Head and Long Stride feel, whether the letter line nags, and the placeholder looks of NPCs and hats.
 
 ## First test session
 
