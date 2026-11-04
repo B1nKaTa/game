@@ -13,9 +13,10 @@ const NOTICE_TIME := 3.5
 # A faint band behind the top row, so full pills never read as empty over a pale floor.
 const TOP_BAND_SIZE := Vector2(640, 22)
 const TOP_BAND := Color(0.0, 0.0, 0.0, 0.4)
-# The Game tab's run timer, at the right end of the top row, over the small map's corner.
-const TIMER_AT := Vector2(560, 1)
-const TIMER_WIDTH := 76.0
+# The Game tab's run timer, on the top row in the gap before the Slip counter, right-aligned to it,
+# since the small map's floor name holds the row's right end.
+const TIMER_AT := Vector2(250, 5)
+const TIMER_WIDTH := 44.0
 const TIMER_FONT := 10
 
 var _run: RunState
