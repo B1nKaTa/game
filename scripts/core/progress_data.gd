@@ -250,6 +250,11 @@ func decline_cursed_ticket() -> void:
 	cursed_offer = false
 
 
+func read_letter(path_id: String) -> void:
+	if not path_id.is_empty():
+		letters_read[path_id] = true
+
+
 # Whether the run starting now is cursed. A cursed ticket lasts one run.
 func take_cursed_run() -> bool:
 	var cursed := cursed_next_run

@@ -72,6 +72,9 @@ const STATIONS: Array[Dictionary] = [
 	{"id": "forms_counter", "department": LOBBY, "cell": Vector2i(11, 3), "title": "Forms Counter. Refiling, Window 2", "prompt": "Refile", "label": "Forms", "size": Vector2(28, 36), "color": Color("7a6f5a")},
 	# The TrophyWall draws the frames on the top wall above it, so the station itself draws no board.
 	{"id": "trophy_wall", "department": LOBBY, "cell": Vector2i(20, 3), "title": "Trophy Wall", "prompt": "Look", "board": false},
+	# A red box with a paper tongue, and a cork board that marks NEW while a letter waits unread.
+	{"id": "ticket_machine", "department": LOBBY, "cell": Vector2i(23, 3), "title": "Take a Number", "prompt": "Ticket", "size": Vector2(20, 28), "color": Color("c8323a"), "look": "ticket_machine"},
+	{"id": "noticeboard", "department": LOBBY, "cell": Vector2i(23, 7), "title": "Noticeboard. Letters from the Living", "prompt": "Read", "size": Vector2(34, 24), "color": Color("a8794a"), "look": "noticeboard"},
 	# A PosterBoard draws the cork board and its posters, so the station draws none. It stands off the
 	# middle column, since (10, 2) would be beside the cell a north door would use.
 	{"id": "bounty_board", "department": BOUNTY_OFFICE, "cell": Vector2i(6, 2), "title": "Bounty Office. Overdue Accounts", "prompt": "Wanted posters", "board": false},

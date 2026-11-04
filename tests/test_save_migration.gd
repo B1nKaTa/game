@@ -87,3 +87,7 @@ func _find(id: String) -> UpgradeDef:
 		if def.id == id:
 			return def
 	return null
+
+
+func test_old_saves_receive_the_letters_of_floors_already_cleared() -> void:
+	assert_eq(LetterBook.unread(_today()).size(), 5)

@@ -194,6 +194,13 @@ func decline_cursed_ticket() -> void:
 	_store.save_progress(data)
 
 
+func read_letter(path_id: String) -> void:
+	if data.letters_read.has(path_id):
+		return
+	data.read_letter(path_id)
+	_store.save_progress(data)
+
+
 # Read once, as a run starts, and saved at once, so a cursed run cut short never curses the next.
 func take_cursed_run() -> bool:
 	var cursed := data.take_cursed_run()

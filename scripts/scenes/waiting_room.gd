@@ -13,10 +13,16 @@ const DEPUTY_DOLORES := "deputy_dolores"
 const ITEM_RACK := "item_rack"
 const COACH_BERTRAM := "coach_bertram"
 const DECOR_COUNTER := "decor_counter"
+const TICKET_MACHINE := "ticket_machine"
+const NOTICEBOARD := "noticeboard"
 const MERCHANT_PROMPT := "Trade"
 const RUN_DOOR_ICON := ">"
-const NOW_SERVING_AT := Vector2(360, 24)
+# On the lobby's top wall, left of the north door. A number that is not called shows the old 666.
+const TICKET_TEXT_AT := Vector2(164, 24)
+const TICKET_TEXT_SIZE := 12
+const TICKET_TEXT_COLOR := Color("ece9e0")
 const NOW_SERVING_COLOR := Color("e4524f")
+const NOT_CALLED := 666
 # On the lobby's bottom wall, below the floor and clear of the merchants.
 const DEV_HINT_AT := Vector2(12, 340)
 const DEV_HINT_COLOR := Color("ffd34f")
@@ -81,6 +87,38 @@ func _ready() -> void:
 	_notice_wait = Hud.NOTICE_TIME if not Progress.notice.is_empty() else 0.0
 	Progress.notice = ""
 	_announce_new_departments()
+	_call_ticket()
+	_refresh_noticeboard()
+
+
+# After the department news: the last run's ticket, if it was a called number, then any letter waiting.
+func _call_ticket() -> void:
+	var event := Progress.call_ticket()
+	var number := Progress.data.run_count
+	match event:
+		TicketRules.CLERK_DEAL:
+			_notices.append("Number %d! The clerk slips you a deal on %s." % [number, TicketPanel.form_name(Progress.data.clerk_deal, Content.upgrades())])
+		TicketRules.NEW_ARRIVAL:
+			var line := TicketRules.arrival_line(Departments.open_ids(Progress.data), _rng.randf())
+			if not line.is_empty():
+				_notices.append(line)
+		TicketRules.CURSED_OFFER:
+			_notices.append("Number %d! A cursed ticket is on offer at the machine." % number)
+	if not LetterBook.unread(Progress.data).is_empty():
+		_notices.append("A letter has arrived on the noticeboard.")
+
+
+# The noticeboard says NEW while any letter waits unread.
+func _refresh_noticeboard() -> void:
+	var board := station(NOTICEBOARD)
+	if board != null:
+		board.badge = NoticeboardPanel.NEW_MARK if not LetterBook.unread(Progress.data).is_empty() else ""
+
+
+# The number on the lobby's sign: this visit's, once its ticket has been called, or the old 666.
+static func now_serving(data: ProgressData) -> int:
+	var called := not TicketRules.event_for(data.run_count).is_empty() and data.ticket_called == data.run_count
+	return data.run_count if called else NOT_CALLED
 
 
 func _announce_new_departments() -> void:
@@ -374,6 +412,15 @@ func _open_station(opened: WaitingStation) -> void:
 			var decor := DecorPanel.new()
 			decor.setup(opened.title)
 			_show_panel(decor)
+		TICKET_MACHINE:
+			var ticket := TicketPanel.new()
+			ticket.setup(opened.title)
+			ticket.cursed_taken.connect(_hud.show_notice)
+			_show_panel(ticket)
+		NOTICEBOARD:
+			var letters := NoticeboardPanel.new()
+			letters.setup(opened.title)
+			_show_panel(letters)
 
 
 # Shows the first line now and the rest one after another, in place of whatever was waiting.
@@ -402,6 +449,7 @@ func _close_panel() -> void:
 	_panel_closed_frame = Engine.get_process_frames()
 	player.set_physics_process(true)
 	_refresh_poster_board()
+	_refresh_noticeboard()
 	if is_instance_valid(_lobby_decor):
 		_lobby_decor.setup(Progress.data.cosmetics_owned)
 	# What he wears may have changed at the Decor Office, and he wears it here as in runs.
@@ -419,7 +467,17 @@ func _exit_tree() -> void:
 func _draw() -> void:
 	if Departments.id_of(_current_id) != Departments.LOBBY:
 		return
-	draw_string(ThemeDB.fallback_font, NOW_SERVING_AT, "NOW SERVING: 666", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, NOW_SERVING_COLOR)
+	var font := ThemeDB.fallback_font
+	var ticket := "YOUR TICKET: %d   " % (Progress.data.run_count + 1)
+	var serving := now_serving(Progress.data)
+	var serving_text := "NOW SERVING: %d" % serving
+	if serving != NOT_CALLED:
+		serving_text += "  Called!"
+	var serving_at := TICKET_TEXT_AT + Vector2(font.get_string_size(ticket, HORIZONTAL_ALIGNMENT_LEFT, -1, TICKET_TEXT_SIZE).x, 0)
+	draw_string_outline(font, TICKET_TEXT_AT, ticket, HORIZONTAL_ALIGNMENT_LEFT, -1, TICKET_TEXT_SIZE, 3, Color.BLACK)
+	draw_string(font, TICKET_TEXT_AT, ticket, HORIZONTAL_ALIGNMENT_LEFT, -1, TICKET_TEXT_SIZE, TICKET_TEXT_COLOR)
+	draw_string_outline(font, serving_at, serving_text, HORIZONTAL_ALIGNMENT_LEFT, -1, TICKET_TEXT_SIZE, 3, Color.BLACK)
+	draw_string(font, serving_at, serving_text, HORIZONTAL_ALIGNMENT_LEFT, -1, TICKET_TEXT_SIZE, NOW_SERVING_COLOR)
 	if DevStart.is_available():
 		draw_string(ThemeDB.fallback_font, DEV_HINT_AT, DevStart.HINT, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, DEV_HINT_COLOR)
 

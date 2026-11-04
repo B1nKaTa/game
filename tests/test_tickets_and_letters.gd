@@ -123,3 +123,59 @@ func test_a_new_arrival_speaks_only_from_an_open_department() -> void:
 		assert_false(line.is_empty())
 	assert_eq(TicketRules.arrival_line([], 0.5), "")
 	assert_true(TicketRules.arrival_line([Departments.TRAINING_YARD], 0.0).begins_with("Coach Bertram"))
+
+
+# --- letters ---
+
+func test_a_letter_arrives_with_each_floors_first_clear() -> void:
+	var data := ProgressData.new()
+	assert_eq(LetterBook.arrived(data).size(), 0)
+	data.record_floor_cleared(1, "floor_1")
+	assert_eq(LetterBook.arrived(data).size(), 1)
+	data.record_floor_cleared(1, "floor_1")
+	assert_eq(LetterBook.arrived(data).size(), 1, "one per floor, not per clear")
+
+
+func test_reading_a_letter_marks_it() -> void:
+	var data := ProgressData.new()
+	data.record_floor_cleared(1, "floor_1")
+	assert_eq(LetterBook.unread(data).size(), 1)
+	assert_true(NoticeboardPanel.row_text(LetterBook.arrived(data)[0], data).begins_with(NoticeboardPanel.NEW_MARK))
+	data.read_letter("floor_1")
+	assert_eq(LetterBook.unread(data).size(), 0)
+	assert_false(NoticeboardPanel.row_text(LetterBook.arrived(data)[0], data).begins_with(NoticeboardPanel.NEW_MARK))
+
+
+func test_every_path_has_a_letter() -> void:
+	var paths := LetterBook.LETTERS.map(func(l): return l["path"])
+	assert_eq(paths.size(), 6)
+	for id in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "golden_years_mall"]:
+		assert_true(paths.has(id), id)
+
+
+func test_letters_read_survive_a_save() -> void:
+	var data := ProgressData.new()
+	data.record_floor_cleared(1, "floor_1")
+	data.read_letter("floor_1")
+	var again := ProgressData.from_dict(data.to_dict())
+	assert_eq(LetterBook.unread(again).size(), 0)
+
+
+# --- the ticket machine ---
+
+func test_the_machine_shows_the_next_number_and_the_deal() -> void:
+	var data := ProgressData.new()
+	data.run_count = 4
+	var lines := TicketPanel.lines_for(data, Content.upgrades())
+	assert_eq(lines[0], "Your ticket: 5")
+	assert_eq(lines.size(), 2)
+	data.clerk_deal = "reinforced_cane"
+	data.cursed_offer = true
+	lines = TicketPanel.lines_for(data, Content.upgrades())
+	assert_true(lines.has("Deal of the visit: Reinforced Cane 25% off"), str(lines))
+	assert_true(lines.has(TicketPanel.CURSED_TEXT))
+
+
+func test_the_ticket_machine_and_noticeboard_stand_in_the_lobby() -> void:
+	for id in ["ticket_machine", "noticeboard"]:
+		assert_eq(Departments.station_entry(id).get("department", ""), Departments.LOBBY, id)
