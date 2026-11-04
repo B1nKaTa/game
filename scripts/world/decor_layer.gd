@@ -170,11 +170,14 @@ func _draw_placeholder(kind: String, variant: int, at: Vector2) -> void:
 				draw_circle(leaf_at, 4.0, p.plant_leaf.darkened(0.1 * (leaf % 3)))
 			draw_circle(Vector2(0, -2), 4.0, p.plant_leaf.lightened(0.15))
 		RoomDecor.OFFICE_CHAIR:
-			# A swivel chair from above: five feet round a seat with a back.
+			# A swivel chair from above: five feet round a seat with a back. Mid grey with a thin dark
+			# rim, so on the pale carpet it reads as furniture, never as a dark creature.
 			draw_set_transform(at, variant * PI / 2.0)
 			for foot in 5:
-				draw_line(Vector2.ZERO, Vector2.from_angle(TAU * foot / 5.0) * 9.0, Color("3a3d45"), 2.0)
-			draw_circle(Vector2.ZERO, 6.0, Color("2a2c33"))
-			draw_rect(Rect2(-6, -9, 12, 3), Color("2a2c33"))
+				draw_line(Vector2.ZERO, Vector2.from_angle(TAU * foot / 5.0) * 9.0, Color("8a8f99"), 2.0)
+			draw_circle(Vector2.ZERO, 6.0, Color("9aa0ab"))
+			draw_arc(Vector2.ZERO, 6.0, 0.0, TAU, 14, Color("4a4e58"), 1.0)
+			draw_rect(Rect2(-6, -9, 12, 3), Color("767c88"))
+			draw_rect(Rect2(-6, -9, 12, 3), Color("4a4e58"), false, 1.0)
 	# Departures, Terminal Zero draws its own decor.
 	TerminalDecor.draw_placeholder(self, kind, variant, p)
