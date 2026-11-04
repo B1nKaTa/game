@@ -60,6 +60,9 @@ var _ending_due := false
 var _ending_card: EndingCard
 # How long this run has gone, for the Game tab's run timer. It stops while the game is paused.
 var _run_time := 0.0
+# The pause menu while it is open, and the frame it closed on, so the Esc that closed it never opens it.
+var _pause: PauseMenu
+var _pause_closed_frame := -1
 
 
 func _ready() -> void:
@@ -283,6 +286,50 @@ func _process(delta: float) -> void:
 	_hud.set_run_time(_run_time)
 	var fighting := _room_view != null and _room_view.is_fighting()
 	_mini_map.visible = GameSettings.minimap_visible(Settings.game("hide_minimap_in_combat"), fighting, _big_map.is_open())
+	if Engine.get_process_frames() != _pause_closed_frame and Input.is_action_just_pressed("pause"):
+		_on_pause_key()
+
+
+# Esc closes whatever is open first: an Arcade table, then the big map. Only then does it pause.
+func _on_pause_key() -> void:
+	if is_over or _pause != null:
+		return
+	if _card_panel != null:
+		_card_panel.leave()
+		return
+	if _big_map.is_open():
+		_big_map.set_open(false)
+		return
+	_pause = PauseMenu.new()
+	_pause.setup(true)
+	_pause.resumed.connect(_close_pause)
+	_pause.quit_wanted.connect(_on_pause_quit)
+	add_child(_pause)
+	player.cancel_charge()
+	get_tree().paused = true
+	Input.mouse_mode = Settings.cursor_mode(false)
+
+
+func _close_pause() -> void:
+	if _pause == null:
+		return
+	_pause.queue_free()
+	_pause = null
+	_pause_closed_frame = Engine.get_process_frames()
+	get_tree().paused = false
+	Input.mouse_mode = Settings.cursor_mode(_card_panel == null)
+
+
+# Save and Quit. Everything a run earns is saved as it comes.
+func _on_pause_quit(to_desktop: bool) -> void:
+	if to_desktop:
+		get_tree().quit()
+	else:
+		Game.quit_to_title()
+
+
+func debug_pause_menu() -> PauseMenu:
+	return _pause
 
 
 # Shake moves the camera through its offset, so following never fights it.

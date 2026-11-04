@@ -54,6 +54,9 @@ var _notices: Array[String] = []
 var _notice_wait := 0.0
 # The lobby's ticket line and DEV hint, on the HUD's layer so the camera never scrolls them away.
 var _lobby_text: LobbyText
+# The pause menu while it is open, and the frame it closed on.
+var _pause: PauseMenu
+var _pause_closed_frame := -1
 
 
 func _ready() -> void:
@@ -152,6 +155,53 @@ func _process(delta: float) -> void:
 	if _panel == null and Engine.get_process_frames() != _panel_closed_frame and Input.is_action_just_pressed("interact"):
 		if nearest != null:
 			_open_station(nearest)
+	# Never on the frame a panel or the pause menu closed on, so one Esc never closes one and opens another.
+	var frame := Engine.get_process_frames()
+	if frame != _pause_closed_frame and frame != _panel_closed_frame and Input.is_action_just_pressed("pause"):
+		_on_pause_key()
+
+
+# Esc closes an open panel first, as its Leave button does. Only with none open does it pause.
+func _on_pause_key() -> void:
+	if _pause != null:
+		return
+	if _panel != null:
+		# Options answers Esc itself, asking before it throws changes away.
+		if _panel.has_method("handles_pause_key"):
+			return
+		if _panel.has_method("leave"):
+			_panel.leave()
+		else:
+			_close_panel()
+		return
+	_pause = PauseMenu.new()
+	_pause.setup(false)
+	_pause.resumed.connect(_close_pause)
+	_pause.quit_wanted.connect(_on_pause_quit)
+	add_child(_pause)
+	player.cancel_charge()
+	get_tree().paused = true
+
+
+func _close_pause() -> void:
+	if _pause == null:
+		return
+	_pause.queue_free()
+	_pause = null
+	_pause_closed_frame = Engine.get_process_frames()
+	get_tree().paused = false
+
+
+# Everything here is saved as it happens, so quitting needs nothing more.
+func _on_pause_quit(to_desktop: bool) -> void:
+	if to_desktop:
+		get_tree().quit()
+	else:
+		Game.quit_to_title()
+
+
+func debug_pause_menu() -> PauseMenu:
+	return _pause
 
 
 func _show_queued_notices(delta: float) -> void:
