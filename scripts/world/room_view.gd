@@ -3,6 +3,8 @@ extends Node2D
 
 signal door_entered(target_id: int)
 signal floor_cleared
+# The room's fight is over, or it never had one. The floor scene writes the run checkpoint on it.
+signal finished
 signal pension_earned(amount: int)
 signal boss_spawned(boss: Enemy)
 signal enemy_died(at: Vector2, is_boss: bool)
@@ -18,6 +20,13 @@ signal stairwell_entered
 signal arcade_game_wanted(table: ArcadeTable)
 
 const HEAL_AMOUNT := 2
+# The meta a pickup or chest carries when the run checkpoint keeps it, and the kinds it can be.
+const KEEP := "keep"
+const KEEP_ITEM := "item"
+const KEEP_FREE := "free"
+const KEEP_SHOP := "shop"
+const KEEP_RECIPE := "recipe"
+const KEEP_CHEST := "chest"
 const SHOP_PROMPT := "Buy"
 # The same merchant keeps every shop on every floor.
 const MERCHANT: NpcDef = preload("res://data/npcs/shop_merchant.tres")
@@ -81,6 +90,11 @@ var _choice_group: ChoiceGroup
 var _urn_groups: Array[ChoiceGroup] = []
 var _tables: Array[ArcadeTable] = []
 var _dealer: Npc
+# What the run checkpoint kept of this room, from snapshot(). Set before the room enters the tree, it
+# rebuilds the room cleared: no enemies, open doors, and only the kept items, stock and closed chests.
+var restore := {}
+# Choice groups put back from a checkpoint, kept here since a Callable holds no reference to them.
+var _restored_groups := {}
 
 
 # The floor's palette, for anything a boss lays down in the room later, such as a wet patch.
@@ -134,6 +148,9 @@ func _ready() -> void:
 	_create_doors()
 	_create_blocks()
 	_create_props(palette)
+	if not restore.is_empty():
+		_restore_contents()
+		return
 	_create_rewards()
 	_spawn_enemies()
 	if _alive == 0:
@@ -219,6 +236,10 @@ func _create_doors() -> void:
 		if not _room.doors.has(side):
 			continue
 		var target := _map.room(_room.doors[side])
+		# A resumed run finds the way to a room it already reached open: no crack, stone or lock.
+		if not restore.is_empty() and _progress.is_visited(target.id):
+			_add_door(target.id, RoomRules.door_icon(target.room_type), side)
+			continue
 		match target.room_type:
 			RoomLayout.TYPE_SECRET:
 				_add_secret_wall(side)
@@ -821,6 +842,11 @@ func _create_shop() -> void:
 	var cells := _room.layout.cells_of("S")
 	for i in stock.size():
 		_add_shop_entry(RoomBackdrop.cell_center(cells[i]), stock[i])
+	_create_shop_keeper()
+
+
+# The merchant and the Retirement Plan's station, which a resumed shop needs as well as its stock.
+func _create_shop_keeper() -> void:
 	# The merchant stands first, so the plan's reward spots keep clear of him.
 	var merchant_at := _add_merchant()
 	_reward_cells = _room.layout.plan_reward_cells(ProgressData.RETIREMENT_TIERS.size(), merchant_at)
@@ -875,6 +901,8 @@ func _add_shop_entry(at: Vector2, entry: Dictionary) -> void:
 			allowed = _run.can_add_bomb
 	var pickup := _add_pickup(at, "%s: %d" % [label, price], color, func(): _buy(price, give), true)
 	pickup.prompt = SHOP_PROMPT
+	var item_id: String = entry["item"].id if entry.get("item") != null else ""
+	pickup.set_meta(KEEP, {"kind": KEEP_SHOP, "shop": entry["kind"], "price": price, "id": item_id})
 	pickup.can_take = func(): return _bank.data.pension >= price and allowed.call()
 
 
@@ -922,6 +950,7 @@ func _on_plan_blasted() -> void:
 func _add_free_item(at: Vector2, item: ItemDef) -> Pickup:
 	var pickup := _add_item_pickup(at, item)
 	pickup.set_label("Free: %s" % item.display_name, FREE_COLOR)
+	pickup.get_meta(KEEP)["kind"] = KEEP_FREE
 	return pickup
 
 
@@ -943,6 +972,7 @@ func _drop_boss_choice(at: Vector2) -> void:
 		var pickup := _add_free_item(RoomBackdrop.cell_center(_choice_cells[i]), item)
 		_choice_group.add(pickup)
 		pickup.collected.connect(_choice_group.take.bind(pickup))
+		pickup.get_meta(KEEP)["group"] = "boss"
 	boss_choice_dropped.emit(_choice_cells.size())
 
 
@@ -953,6 +983,7 @@ func _create_chest(cell: Vector2i, kind: String) -> Chest:
 	chest.setup(ChestRules.display_name(kind), PENSION_COLOR, _player.feet(), kind != ChestRules.SAFE)
 	chest.prompt = ChestRules.prompt_for(kind)
 	chest.position = RoomBackdrop.cell_center(cell)
+	chest.set_meta(KEEP, {"kind": KEEP_CHEST, "chest": kind})
 	match kind:
 		ChestRules.LUNCHBOX:
 			chest.collected.connect(_open_lunchbox.bind(cell))
@@ -1019,6 +1050,7 @@ func _open_urn(cell: Vector2i) -> void:
 		var pickup := _add_item_pickup(RoomBackdrop.cell_center(spots[i]), item)
 		group.add(pickup)
 		pickup.collected.connect(group.take.bind(pickup))
+		pickup.get_meta(KEEP)["group"] = "urn%d" % _urn_groups.size()
 	notice.emit("The urn holds two things. Take one.")
 	_pay_chest_condolences()
 
@@ -1060,6 +1092,7 @@ func _create_item_choice(cells: Array[Vector2i]) -> void:
 		choices.append(choice)
 	for choice in choices:
 		choice.collected.connect(func(): _remove_others(choices, choice))
+		choice.get_meta(KEEP)["group"] = "room"
 	if picked.is_empty():
 		_drop_coin(RoomBackdrop.cell_center(cells[0]), _floor_def.treasure_pension, RunState.PENSION_REWARD)
 
@@ -1077,9 +1110,15 @@ func _drop_recipe(at: Vector2) -> bool:
 		return false
 	var tile := float(RoomBackdrop.TILE)
 	var cell := _room.layout.nearest_floor_cell(Vector2i(floori(at.x / tile), floori(at.y / tile)))
-	var pickup := _add_pickup(RoomBackdrop.cell_center(cell), "Recipe: %s" % item.display_name, RECIPE_COLOR, func(): _take_recipe(item), true)
-	pickup.prompt = RECIPE_PROMPT
+	_add_recipe_pickup(RoomBackdrop.cell_center(cell), item)
 	return true
+
+
+func _add_recipe_pickup(at: Vector2, item: ItemDef) -> Pickup:
+	var pickup := _add_pickup(at, "Recipe: %s" % item.display_name, RECIPE_COLOR, func(): _take_recipe(item), true)
+	pickup.prompt = RECIPE_PROMPT
+	pickup.set_meta(KEEP, {"kind": KEEP_RECIPE, "id": item.id})
+	return pickup
 
 
 func _take_recipe(item: ItemDef) -> void:
@@ -1102,6 +1141,7 @@ func _create_treasure(cell: Vector2i) -> void:
 func _add_item_pickup(at: Vector2, item: ItemDef) -> Pickup:
 	var pickup := _add_pickup(at, item.display_name, ITEM_COLOR, func(): _run.add_item(item), true)
 	pickup.can_take = func(): return not _run.has_item(item.id)
+	pickup.set_meta(KEEP, {"kind": KEEP_ITEM, "id": item.id})
 	return pickup
 
 
@@ -1122,6 +1162,85 @@ func _finish_room() -> void:
 		_drop_consumable(_last_death_at, RoomRules.clear_drop(_rng.randf()))
 	if _room.room_type == RoomLayout.TYPE_FLOOR_BOSS:
 		floor_cleared.emit()
+	finished.emit()
+
+
+func is_finished() -> bool:
+	return _finished
+
+
+# What the run checkpoint keeps of this room: whether it was cleared, and the items, stock, recipes and
+# closed chests still waiting in it, each on its cell. Loose coins, heals and consumables are left out.
+func snapshot() -> Dictionary:
+	var keep := []
+	for child in get_children():
+		if not child.has_meta(KEEP) or child.is_queued_for_deletion():
+			continue
+		if child is Chest and child.is_open():
+			continue
+		var entry: Dictionary = child.get_meta(KEEP).duplicate()
+		var cell := _cell_of(child.position)
+		entry["cell"] = [cell.x, cell.y]
+		keep.append(entry)
+	return {"cleared": _finished, "keep": keep}
+
+
+# Builds a cleared room again from its snapshot. The floor scene only restores rooms that were cleared.
+func _restore_contents() -> void:
+	if _room.room_type == RoomLayout.TYPE_SHOP:
+		_create_shop_keeper()
+	if _room.room_type == RoomLayout.TYPE_ARCADE:
+		_create_arcade()
+	for entry: Dictionary in restore.get("keep", []):
+		_restore_entry(entry)
+	_finished = true
+	for door in _doors:
+		door.locked = false
+
+
+func _restore_entry(entry: Dictionary) -> void:
+	var raw_cell: Array = entry.get("cell", [0, 0])
+	var cell := Vector2i(int(raw_cell[0]), int(raw_cell[1]))
+	var at := RoomBackdrop.cell_center(cell)
+	var item := _item_by_id(str(entry.get("id", "")))
+	match str(entry.get("kind", "")):
+		KEEP_ITEM, KEEP_FREE:
+			if item == null:
+				return
+			var pickup := _add_free_item(at, item) if entry["kind"] == KEEP_FREE else _add_item_pickup(at, item)
+			var group_id := str(entry.get("group", ""))
+			if group_id.is_empty():
+				return
+			pickup.get_meta(KEEP)["group"] = group_id
+			if not _restored_groups.has(group_id):
+				_restored_groups[group_id] = ChoiceGroup.new()
+			var group: ChoiceGroup = _restored_groups[group_id]
+			group.add(pickup)
+			pickup.collected.connect(group.take.bind(pickup))
+			if group_id == "boss":
+				_choice_cells.append(cell)
+		KEEP_SHOP:
+			var kind := str(entry.get("shop", ""))
+			if kind == ShopRules.KIND_ITEM and item == null:
+				return
+			_add_shop_entry(at, {"kind": kind, "price": int(entry.get("price", 0)), "item": item})
+		KEEP_RECIPE:
+			if item != null:
+				_add_recipe_pickup(at, item)
+		KEEP_CHEST:
+			var kind := str(entry.get("chest", ""))
+			if kind == ChestRules.MIMIC and _floor_def.mimic == null:
+				return
+			_create_chest(cell, kind)
+
+
+func _item_by_id(id: String) -> ItemDef:
+	if id.is_empty():
+		return null
+	for item in Content.items():
+		if item.id == id:
+			return item
+	return null
 
 
 # Head Office: red tape strung across lanes, each cell running the way its strand runs, water

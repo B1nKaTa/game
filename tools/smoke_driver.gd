@@ -63,6 +63,7 @@ var _mimics_beaten_in_loop := 0
 var _checked_arcade := false
 # Arcade Rooms the floors rolled whose games the loop played, by room view.
 var _arcades_played := {}
+var _checked_resume := false
 
 
 func _ready() -> void:
@@ -190,12 +191,13 @@ func _run() -> void:
 	_check(Progress.data.level_of(upgrade.id) == 2, "the cane's two filed levels survive a reload")
 	_check(Progress.data.choice_of(upgrade) == UpgradeDef.OPTION_B, "the cane's refiled option survives a reload")
 
+	await _check_resume()
 	await _check_dev_start()
 
 	_check(_checked_departments and _checked_forms and _checked_bounty and _checked_decor, "the Waiting Room checks of the first visits ran")
 	_check(_walked_departments and _checked_back_room and _checked_yard and _checked_tickets, "the Waiting Room checks after every floor ran")
 	if not _failed:
-		print("SMOKE PASS paths cleared: %d, landings reached: %d, boss choices checked: %d, rooms of sizes %s, big room view checked: %s, block memory checked: %s, props checked: %s, fight checked: %s, graveyard checked: %s, care home checked: %s, furnace checked: %s, vault opened: %s, potions checked: %s, fuel checked: %s, pickups off solids: %d, chests checked: %s, mimics beaten on the way: %d, arcade checked: %s, arcade rooms played on the way: %d" % [_paths_cleared, _landings_reached, _boss_choices_checked, str(_sizes_seen.keys()), str(_followed_a_big_room), str(_checked_block_memory), str(_checked_props), str(_checked_fight), str(_checked_graveyard), str(_checked_care_home), str(_checked_furnace), str(_opened_a_vault), str(_checked_potions), str(_checked_fuel), _pickups_off_solids, str(_checked_chests), _mimics_beaten_in_loop, str(_checked_arcade), _arcades_played.size()])
+		print("SMOKE PASS paths cleared: %d, landings reached: %d, boss choices checked: %d, rooms of sizes %s, big room view checked: %s, block memory checked: %s, props checked: %s, fight checked: %s, graveyard checked: %s, care home checked: %s, furnace checked: %s, vault opened: %s, potions checked: %s, fuel checked: %s, pickups off solids: %d, chests checked: %s, mimics beaten on the way: %d, arcade checked: %s, arcade rooms played on the way: %d, resume checked: %s" % [_paths_cleared, _landings_reached, _boss_choices_checked, str(_sizes_seen.keys()), str(_followed_a_big_room), str(_checked_block_memory), str(_checked_props), str(_checked_fight), str(_checked_graveyard), str(_checked_care_home), str(_checked_furnace), str(_opened_a_vault), str(_checked_potions), str(_checked_fuel), _pickups_off_solids, str(_checked_chests), _mimics_beaten_in_loop, str(_checked_arcade), _arcades_played.size(), str(_checked_resume)])
 		print("SMOKE PASS waiting room: departments checked at start: %s, forms checked: %s, bounty collected: %s, decor checked: %s, departments walked: %s, back room played: %s, yard checked: %s, tickets and letters checked: %s, mini bosses beaten: %d, Condolences: %d" % [str(_checked_departments), str(_checked_forms), str(_checked_bounty), str(_checked_decor), str(_walked_departments), str(_checked_back_room), str(_checked_yard), str(_checked_tickets), _mini_bosses_beaten, Progress.data.condolences])
 		get_tree().quit(0)
 
@@ -666,6 +668,54 @@ func _die_in_a_run() -> void:
 	scene.player.run.health.hit(999)
 	await _wait(0.1)
 	_check(scene.is_over, "death ends the run")
+
+
+# A checkpoint written mid-floor resumes into the same room, on the same floor rebuilt from its seed,
+# with the same RunState, and never starts a new run. The run's end deletes it.
+func _check_resume() -> void:
+	var path := ProjectSettings.globalize_path(Progress.SMOKE_RUN_PATH)
+	_check(not FileAccess.file_exists(path), "no checkpoint outlives the runs before")
+	Game.begin_run()
+	await _wait(0.5)
+	_expect_scene("FloorScene")
+	var scene := get_tree().current_scene
+	await _walk_a_path(scene, RECORDS_PATH)
+	await _wait(0.2)
+	_check(FileAccess.file_exists(path), "entering a floor writes the checkpoint")
+	_cleared_rooms = {}
+	await _clear_room(scene)
+	await _wait(0.3)
+	if scene.is_over:
+		_fail("the resume check's run ended early")
+		return
+	var room_id: int = scene.debug_current_id()
+	_check(scene.debug_room_view().is_finished(), "the resume check stands in a cleared room")
+	_check(scene.write_checkpoint(), "the pause menu's save writes the checkpoint")
+	var expected := RunCheckpoint.run_to_dict(scene.player.run)
+	var signature := RunCheckpoint.map_signature(scene.debug_map())
+	var floor_id: String = scene.debug_floor_def().id
+	var runs_before: int = Progress.data.run_count
+	var checkpoint := RunCheckpoint.read(Progress.SMOKE_RUN_PATH)
+	_check(int(checkpoint.get("room", -1)) == room_id, "the checkpoint names the room he stands in")
+	Game.resume_run()
+	await _wait(0.5)
+	_expect_scene("FloorScene")
+	scene = get_tree().current_scene
+	_check(scene.debug_resumed(), "the floor scene resumed the run")
+	_check(scene.debug_current_id() == room_id, "the run resumes into the same room, got %d for %d" % [scene.debug_current_id(), room_id])
+	_check(scene.debug_floor_def().id == floor_id, "the run resumes on the same floor")
+	_check(RunCheckpoint.map_signature(scene.debug_map()) == signature, "the floor is rebuilt the same from its seed")
+	_check(RunCheckpoint.run_to_dict(scene.player.run) == expected, "the run resumes with the same RunState")
+	_check(Progress.data.run_count == runs_before, "resuming never starts a new run")
+	_check(not scene.debug_room_view().is_fighting(), "the cleared room comes back cleared")
+	scene.player.run.health.lethal_saves = 0
+	scene.player.run.health.hit(999)
+	await _wait(0.1)
+	_check(scene.is_over, "death ends the resumed run")
+	_check(not FileAccess.file_exists(path), "a death deletes the checkpoint")
+	await _wait(2.5)
+	_expect_scene("WaitingRoom")
+	_checked_resume = not _failed
 
 
 # Each debug shortcut (F3, F5, F6) lands on its depth's landing with everything bought and both of

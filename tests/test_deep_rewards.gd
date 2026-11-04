@@ -109,7 +109,7 @@ func test_the_golden_parachute_pays_a_quarter_of_the_run_again_on_a_death() -> v
 
 func test_the_floor_scene_fills_the_jacket_on_each_floor_and_counts_what_the_run_earns() -> void:
 	var source := FileAccess.get_file_as_string("res://scripts/scenes/floor_scene.gd")
-	var choose := source.substr(source.find("func _choose_path"), 900)
+	var choose := source.substr(source.find("func _choose_path"), 1400)
 	assert_true(choose.contains("_run.start_floor()"))
 	assert_true(source.contains("view.pension_earned.connect(_on_pension_earned)"))
 	assert_true(source.contains("_run.health.rescued.connect(_on_rescued)"))

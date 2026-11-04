@@ -52,6 +52,23 @@ var _card_panel: CardTablePanel
 var _card_panel_closed_frame := -1
 # What the Purser's Bon Voyage Bag put in this run: a potion's id, BonVoyage.THERMOS, or "" for none.
 var _bon_voyage := ""
+# What the map is, for the checkpoint: the run's first Crossroads, a landing, or a floor built from
+# _floor_seed and entered from the side _exit_side.
+const MAP_START := "start"
+const MAP_LANDING := "landing"
+const MAP_FLOOR := "floor"
+const RESUMED_NOTICE := "Your run picks up where you left it."
+var _map_kind := MAP_START
+var _floor_seed := ""
+var _exit_side := Vector2i.ZERO
+# The room Grandpa came into the current room from, so a resumed run puts him on that door.
+var _arrived_from := -1
+# Snapshots of cleared rooms from a checkpoint, by room id, to rebuild them from.
+var _restored := {}
+var _resumed := false
+# The last cleared room a checkpoint was written in on this map, and the room he came into it from.
+var _safe_room := -1
+var _safe_from := -1
 # Pension the rooms of this run have paid, for the Golden Parachute on a death.
 var _run_earned := 0
 # Whether this run beat the Chairman for the first time, so the ending card shows before the Waiting
@@ -67,45 +84,24 @@ var _pause_closed_frame := -1
 
 func _ready() -> void:
 	_rng.randomize()
-	Progress.start_run()
-	_run = Progress.make_run()
-	# Before the first room is built, so every enemy of a cursed run is spawned tougher.
-	_run.cursed = Progress.take_cursed_run()
-	var crafted := Progress.take_crafted_item()
-	if crafted != null:
-		_run.add_item(crafted)
-	var brewed := Progress.take_brewed_potion()
-	if brewed != null:
-		_run.give_potion(brewed)
-	# After the brew, so a brew always keeps its slot, and before a dev run's kit, which sets its own.
-	if BonVoyage.is_packed(Progress.data):
-		_bon_voyage = BonVoyage.pack(_run, Content.potions_for_sale(), _rng.randf(), _rng.randf())
-	if Progress.is_dev_run():
-		DevStart.apply_kit(_run, Content.items())
+	# An interrupted run comes back from its checkpoint, and never starts a new run on the way.
+	var resume := Progress.resume
+	Progress.resume = {}
+	_resumed = not resume.is_empty() and not Progress.is_dev_run() and _resume_map(resume)
+	if _resumed:
+		_resume_run(resume)
+	else:
+		_start_run()
 	_hud = Hud.new()
 	_hud.setup(_run)
 	add_child(_hud)
 	_hud.set_pension(Progress.data.pension)
 	Progress.pension_changed.connect(_hud.set_pension)
-	var start_notes := PackedStringArray()
-	if _run.has_perk(Mementos.START_PENSION_PERK):
-		Progress.add_pension(Mementos.START_PENSION)
-		start_notes.append("Your name badge still works: +%d Pension" % Mementos.START_PENSION)
-	if not _bon_voyage.is_empty():
-		start_notes.append(BonVoyage.notice(_bon_voyage, Content.potions_for_sale()))
-	if not start_notes.is_empty():
-		_hud.show_notice(".  ".join(start_notes))
-	# Shown after the badge's notice, in its place, since it matters more.
-	if _run.cursed:
-		_hud.show_notice(CURSED_NOTICE)
-	if Progress.is_dev_run():
-		# A dev run skips straight to its landing, with that depth's Crossroads beyond it.
-		_depth = Progress.dev_start_depth
-		_floor_def = load(LANDINGS_BY_DEPTH[_depth])
-		_map = _landing_map()
+	if _resumed:
+		_hud.show_notice(tr(RESUMED_NOTICE))
 	else:
-		_floor_def = load(CROSSROADS_FLOOR)
-		_map = FloorMap.with_only_crossroads(load(CROSSROADS_LAYOUT))
+		_show_start_notes()
+		_start_map()
 	_camera = Camera2D.new()
 	add_child(_camera)
 	_feedback = CombatFeedback.new()
@@ -122,13 +118,178 @@ func _ready() -> void:
 	_feedback.watch_player(player)
 	var glow := Lighting.make_light(Color(1.0, 0.85, 0.6), 0.7, 0.8)
 	player.add_child(glow)
-	_progress = FloorProgress.new(_map)
+	if not _resumed:
+		_progress = FloorProgress.new(_map)
 	_mini_map = _add_map_view(false)
 	_big_map = _add_map_view(true)
 	_big_map.opened_changed.connect(_on_big_map_changed)
 	_apply_game_settings()
 	Settings.changed.connect(_apply_game_settings)
-	_enter_room(_map.start_id)
+	if _resumed:
+		_enter_resumed_room(resume)
+	else:
+		_enter_room(_map.start_id)
+
+
+func _start_run() -> void:
+	Progress.start_run()
+	_run = Progress.make_run()
+	# Before the first room is built, so every enemy of a cursed run is spawned tougher.
+	_run.cursed = Progress.take_cursed_run()
+	var crafted := Progress.take_crafted_item()
+	if crafted != null:
+		_run.add_item(crafted)
+	var brewed := Progress.take_brewed_potion()
+	if brewed != null:
+		_run.give_potion(brewed)
+	# After the brew, so a brew always keeps its slot, and before a dev run's kit, which sets its own.
+	if BonVoyage.is_packed(Progress.data):
+		_bon_voyage = BonVoyage.pack(_run, Content.potions_for_sale(), _rng.randf(), _rng.randf())
+	if Progress.is_dev_run():
+		DevStart.apply_kit(_run, Content.items())
+
+
+func _show_start_notes() -> void:
+	var start_notes := PackedStringArray()
+	if _run.has_perk(Mementos.START_PENSION_PERK):
+		Progress.add_pension(Mementos.START_PENSION)
+		start_notes.append("Your name badge still works: +%d Pension" % Mementos.START_PENSION)
+	if not _bon_voyage.is_empty():
+		start_notes.append(BonVoyage.notice(_bon_voyage, Content.potions_for_sale()))
+	if not start_notes.is_empty():
+		_hud.show_notice(".  ".join(start_notes))
+	# Shown after the badge's notice, in its place, since it matters more.
+	if _run.cursed:
+		_hud.show_notice(CURSED_NOTICE)
+
+
+func _start_map() -> void:
+	if Progress.is_dev_run():
+		# A dev run skips straight to its landing, with that depth's Crossroads beyond it.
+		_depth = Progress.dev_start_depth
+		_floor_def = load(LANDINGS_BY_DEPTH[_depth])
+		_map = _landing_map()
+		_map_kind = MAP_LANDING
+	else:
+		_floor_def = load(CROSSROADS_FLOOR)
+		_map = FloorMap.with_only_crossroads(load(CROSSROADS_LAYOUT))
+		_map_kind = MAP_START
+
+
+# --- The run checkpoint: written as rooms are cleared, on landings and on entering a floor ---
+
+# Writes the run as it stands into the slot's run.json. A dev run, a run that is over and the first
+# Crossroads (nothing to come back to yet) write nothing.
+func write_checkpoint() -> bool:
+	if is_over or Progress.is_dev_run() or _run == null or _map_kind == MAP_START or _current_id < 0:
+		return false
+	# He comes back in the last room he cleared, so a fight going on now starts over when he walks back in.
+	var room := _current_id
+	var from := _arrived_from
+	if _room_view != null and _room_view.is_finished():
+		_safe_room = room
+		_safe_from = from
+	elif _safe_room >= 0:
+		room = _safe_room
+		from = _safe_from
+	var rooms := {}
+	for id: int in _room_views:
+		var view: RoomView = _room_views[id]
+		if is_instance_valid(view) and view.is_finished() and not view is CrossroadsView:
+			rooms[str(id)] = view.snapshot()
+	var checkpoint := {
+		"depth": _depth,
+		"floor": _floor_def.resource_path,
+		"kind": _map_kind,
+		"seed": _floor_seed,
+		"exit_side": [_exit_side.x, _exit_side.y],
+		"visited": _progress.visited_ids().duplicate(),
+		"room": room,
+		"from": from,
+		"rooms": rooms,
+		"run": RunCheckpoint.run_to_dict(_run),
+		"rng": RunCheckpoint.rng_to_dict(_rng),
+		"run_earned": _run_earned,
+		"bon_voyage": _bon_voyage,
+		"is_cleared": is_cleared,
+		"ending_due": _ending_due,
+		"bosses": int(Progress.last_run.get("bosses", 0)),
+		"run_time": snappedf(_run_time, 0.1),
+	}
+	return Progress.write_checkpoint(checkpoint)
+
+
+func _write_checkpoint_soon() -> void:
+	write_checkpoint.call_deferred()
+
+
+# Rebuilds the checkpoint's map: a landing as every landing is, or the floor from its seed with the
+# Crossroads beside its start. False when the file names something this build cannot rebuild.
+func _resume_map(resume: Dictionary) -> bool:
+	var depth := int(resume.get("depth", 0))
+	var floor_path := str(resume.get("floor", ""))
+	if not PATHS_BY_DEPTH.has(depth) or not ResourceLoader.exists(floor_path):
+		return false
+	var def := load(floor_path) as FloorDef
+	if def == null:
+		return false
+	var kind := str(resume.get("kind", ""))
+	var map: FloorMap
+	if kind == MAP_LANDING:
+		map = _landing_map()
+	elif kind == MAP_FLOOR:
+		map = RunCheckpoint.build_floor(def, str(resume.get("seed", "")))
+		if map == null:
+			return false
+		var side: Array = resume.get("exit_side", [0, 0])
+		_exit_side = Vector2i(int(side[0]), int(side[1]))
+		if map.attach_crossroads(load(CROSSROADS_LAYOUT), -_exit_side) == null:
+			return false
+		_floor_seed = str(resume.get("seed", ""))
+	else:
+		return false
+	var room := int(resume.get("room", -1))
+	if room < 0 or room >= map.rooms.size():
+		return false
+	_depth = depth
+	_floor_def = def
+	_map = map
+	_map_kind = kind
+	_progress = FloorProgress.new(map)
+	for id in resume.get("visited", []):
+		if int(id) >= 0 and int(id) < map.rooms.size():
+			_progress.enter(int(id))
+	var rooms: Dictionary = resume.get("rooms", {})
+	for key in rooms:
+		if str(key).is_valid_int() and rooms[key] is Dictionary and rooms[key].get("cleared", false):
+			_restored[int(key)] = rooms[key]
+	is_cleared = bool(resume.get("is_cleared", false))
+	return true
+
+
+# The run itself comes back on a run made fresh from the save, as Progress.make_run makes any run, and
+# Progress.start_run is never called again, so the run count and the ticket stay as they were.
+func _resume_run(resume: Dictionary) -> void:
+	_run = Progress.make_run()
+	RunCheckpoint.apply_run(_run, resume.get("run", {}), Content.items())
+	RunCheckpoint.apply_rng(_rng, resume.get("rng", {}))
+	_run_earned = int(resume.get("run_earned", 0))
+	_bon_voyage = str(resume.get("bon_voyage", ""))
+	_ending_due = bool(resume.get("ending_due", false))
+	_run_time = float(resume.get("run_time", 0.0))
+	Progress.last_run = {"died": false, "bosses": int(resume.get("bosses", 0))}
+
+
+# Grandpa arrives in the room he was last in, by the door he first came in through.
+func _enter_resumed_room(resume: Dictionary) -> void:
+	var from := int(resume.get("from", -1))
+	_current_id = from if from >= 0 and from < _map.rooms.size() else -1
+	_enter_room(int(resume.get("room", _map.start_id)))
+	_write_checkpoint_soon()
+
+
+func debug_resumed() -> bool:
+	return _resumed
 
 
 func debug_map() -> FloorMap:
@@ -207,10 +368,17 @@ func _choose_path(index: int) -> void:
 	var def: FloorDef = _path_defs()[index]
 	if not def.is_open_for(Progress.data):
 		return
-	var map := FloorBuilder.build(_rng, def)
+	# Built from a seed of its own, so a resumed run can build the very same floor again.
+	var seed_text := RunCheckpoint.new_seed(_rng)
+	var map := RunCheckpoint.build_floor(def, seed_text)
 	if map == null:
 		_end_run("This floor could not be built. Returning to the Waiting Room.")
 		return
+	_floor_seed = seed_text
+	_restored.clear()
+	_safe_room = -1
+	_exit_side = _room_view.side_of_path(index)
+	_map_kind = MAP_FLOOR
 	var exit_side: Vector2i = _room_view.side_of_path(index)
 	var crossroads := map.attach_crossroads(_map.room(_current_id).layout, -exit_side)
 	var leaving := _room_view
@@ -226,6 +394,7 @@ func _choose_path(index: int) -> void:
 	_current_id = crossroads.id
 	_enter_room(map.start_id)
 	leaving.queue_free()
+	_write_checkpoint_soon()
 
 
 func _on_big_map_changed(is_open: bool) -> void:
@@ -242,6 +411,7 @@ func _enter_room(target_id: int) -> void:
 		remove_child(_room_view)
 	var first_visit := not _progress.is_visited(target_id)
 	_progress.enter(target_id)
+	_arrived_from = from_id
 	_current_id = target_id
 	_room_view = _room_views.get(target_id)
 	if _room_view == null:
@@ -250,6 +420,9 @@ func _enter_room(target_id: int) -> void:
 	add_child(_room_view)
 	move_child(_room_view, 0)
 	_room_view.refresh_doors()
+	# A cleared floor boss's room keeps its way down, a resumed one too.
+	if is_cleared and _map.room(target_id).room_type == RoomLayout.TYPE_FLOOR_BOSS and _floor_def.depth < LAST_DEPTH:
+		_room_view.add_stairwell()
 	player.global_position = Player.arrival_position(_progress.arrival_cell(target_id, from_id))
 	_mini_map.set_current(target_id)
 	_big_map.set_current(target_id)
@@ -320,8 +493,9 @@ func _close_pause() -> void:
 	Input.mouse_mode = Settings.cursor_mode(_card_panel == null)
 
 
-# Save and Quit. Everything a run earns is saved as it comes.
+# Save and Quit: the checkpoint first, so the run waits in its slot.
 func _on_pause_quit(to_desktop: bool) -> void:
+	write_checkpoint()
 	if to_desktop:
 		get_tree().quit()
 	else:
@@ -352,6 +526,9 @@ func _make_room_view(room: FloorRoom) -> RoomView:
 		view.stairwell_entered.connect(func(): _go_down.call_deferred())
 		view.arcade_game_wanted.connect(_open_card_table)
 	view.setup(room, _map, _floor_def, _run, player, _rng, _progress, Progress)
+	if _restored.has(room.id):
+		view.restore = _restored[room.id]
+	view.finished.connect(_write_checkpoint_soon)
 	view.notice.connect(_hud.show_notice)
 	view.pension_earned.connect(_on_pension_earned)
 	view.floor_cleared.connect(_on_floor_cleared)
@@ -459,6 +636,10 @@ func _go_down() -> void:
 	_mini_map.setup(_map, _progress, false, _floor_def.display_name)
 	_big_map.setup(_map, _progress, true, _floor_def.display_name)
 	_current_id = -1
+	_map_kind = MAP_LANDING
+	_floor_seed = ""
+	_restored.clear()
+	_safe_room = -1
 	_enter_room(_map.start_id)
 	leaving.queue_free()
 	var missing := _run.health.max_pills - _run.health.pills
@@ -480,6 +661,8 @@ func _end_run(message: String) -> void:
 	if is_over:
 		return
 	is_over = true
+	# Death, FLOOR CLEARED or anything else that ends the run ends its checkpoint too.
+	Progress.clear_checkpoint()
 	if _card_panel != null:
 		_card_panel.leave()
 	if _big_map != null:
