@@ -11,6 +11,7 @@ const PLAYSTATION := "playstation"
 # The older PlayStation pad's View-place button says Share; the newer one's says Create.
 const PLAYSTATION_4 := "playstation_4"
 const DEVICE_PAD := "pad"
+const ALL_DEVICES := -1
 const DEVICE_KEYS := "keys"
 const TYPE_BUTTON := "joy_button"
 const TYPE_AXIS := "joy_axis"
@@ -112,14 +113,17 @@ static func extras(action: String) -> Array[InputEvent]:
 	return list
 
 
+# A binding answers every pad (device -1), so a pad that is not the first one plugged in works too.
 static func button(index: int) -> InputEventJoypadButton:
 	var event := InputEventJoypadButton.new()
+	event.device = ALL_DEVICES
 	event.button_index = index as JoyButton
 	return event
 
 
 static func axis(index: int, sign_of: float) -> InputEventJoypadMotion:
 	var event := InputEventJoypadMotion.new()
+	event.device = ALL_DEVICES
 	event.axis = index as JoyAxis
 	event.axis_value = 1.0 if sign_of > 0.0 else -1.0
 	return event

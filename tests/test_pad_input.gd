@@ -193,3 +193,23 @@ func test_the_left_stick_walks() -> void:
 	Input.parse_input_event(_axis(JOY_AXIS_LEFT_X, 0.0))
 	Input.flush_buffered_events()
 	assert_eq(Input.get_vector("move_left", "move_right", "move_up", "move_down"), Vector2.ZERO)
+
+
+func test_any_connected_pad_drives_the_actions() -> void:
+	KeyBindings.reset_to_defaults()
+	for action in ["dodge", PadInput.BACK_ACTION, PadInput.TAB_NEXT_ACTION, "ui_accept"]:
+		for event in InputMap.action_get_events(action):
+			if PadInput.is_pad(event):
+				assert_eq(event.device, -1, "%s answers every pad" % action)
+	var press := _button(JOY_BUTTON_A)
+	press.device = 3
+	Input.parse_input_event(press)
+	Input.flush_buffered_events()
+	assert_true(Input.is_action_pressed("dodge"), "a fourth pad's A dodges")
+	Input.parse_input_event(_button(JOY_BUTTON_A, false))
+	var release := _button(JOY_BUTTON_A, false)
+	release.device = 3
+	Input.parse_input_event(release)
+	Input.flush_buffered_events()
+	assert_false(Input.is_action_pressed("dodge"))
+	assert_eq(PadInput.from_raw({"type": "joy_button", "button": 2}).device, -1, "a saved binding answers every pad too")
