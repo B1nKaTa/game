@@ -14,6 +14,9 @@ const WARN := Color("e4524f")
 const BAND_WIDTH := 8.0
 const HATCH_EVERY := 6.0
 const HOLD_LOOPS := Color("d0212e")
+const HOLD_RADIUS := 13.0
+# The loop is seen at a slant, flattened like the ring a sedative leaves at his feet.
+const HOLD_SQUASH := 0.45
 
 # Strung left to right when true, top to bottom when false.
 var across := true
@@ -60,11 +63,17 @@ static func runs_across(layout: RoomLayout, cell: Vector2i) -> bool:
 	return not (layout.symbol_at(cell + Vector2i.UP) == symbol or layout.symbol_at(cell + Vector2i.DOWN) == symbol)
 
 
-# Loops of tape round his ankles while he is held, drawn by whoever is held.
+# A loop of tape round his ankles while he is held, drawn by whoever is held. It is wider than his
+# legs, which are drawn over it, with a dark rim and pale hatching, so it shows over the red band he
+# stands on.
 static func draw_hold(canvas: CanvasItem, at: Vector2) -> void:
-	for side: float in [-1.0, 1.0]:
-		canvas.draw_arc(at + Vector2(side * 4.0, 2.0), 4.0, 0.0, TAU, 10, HOLD_LOOPS, 2.0)
-	canvas.draw_line(at + Vector2(-9.0, -1.0), at + Vector2(9.0, 3.0), HOLD_LOOPS, 2.0)
+	canvas.draw_set_transform(at, 0.0, Vector2(1.0, HOLD_SQUASH))
+	canvas.draw_arc(Vector2.ZERO, HOLD_RADIUS, 0.0, TAU, 24, BAND_EDGE, 5.0)
+	canvas.draw_arc(Vector2.ZERO, HOLD_RADIUS, 0.0, TAU, 24, HOLD_LOOPS, 3.0)
+	for i in 8:
+		var angle := TAU * i / 8.0
+		canvas.draw_line(Vector2.from_angle(angle) * (HOLD_RADIUS - 1.0), Vector2.from_angle(angle + 0.25) * (HOLD_RADIUS + 1.0), HATCH, 1.0)
+	canvas.draw_set_transform(Vector2.ZERO)
 
 
 func _ready() -> void:
