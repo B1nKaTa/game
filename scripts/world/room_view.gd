@@ -172,7 +172,8 @@ static func is_passing_effect(child: Node) -> bool:
 		or child is SummonMark or child is GroundStrike or child is LightsOut or child is SteamJet
 		or child is Shockwave or child is FlameBurst or child is PipeRing or child is CollectionPlate
 		or child is ProcessionLane or child is SafeSpotMark or child is PerfumeCloud or child is WetSplash
-		or child is DroppedCoffin or child is PresentDrop or child is ClosingRing)
+		or child is DroppedCoffin or child is PresentDrop or child is ClosingRing
+		or child is TapeSpread)
 
 
 func place_bomb(at: Vector2) -> void:
@@ -453,6 +454,7 @@ func _create_props(palette: RoomPalette) -> void:
 			strip.setup(Vector2(RoomLayout.strip_direction(symbol)), layout.strips_reverse)
 			strip.position = RoomBackdrop.cell_center(cell)
 			add_child(strip)
+	_create_office_props(layout, palette)
 
 
 func _place_prop(prop: BreakableBlock, cell: Vector2i) -> void:
@@ -1101,3 +1103,12 @@ func _finish_room() -> void:
 		_drop_consumable(_last_death_at, RoomRules.clear_drop(_rng.randf()))
 	if _room.room_type == RoomLayout.TYPE_FLOOR_BOSS:
 		floor_cleared.emit()
+
+
+# Head Office: red tape strung across lanes, each cell running the way its strand runs.
+func _create_office_props(layout: RoomLayout, _palette: RoomPalette) -> void:
+	for cell in layout.cells_of(RoomLayout.SYMBOL_RED_TAPE):
+		var tape := RedTape.new()
+		tape.across = RedTape.runs_across(layout, cell)
+		tape.position = RoomBackdrop.cell_center(cell)
+		add_child(tape)
