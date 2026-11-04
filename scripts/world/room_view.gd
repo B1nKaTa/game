@@ -674,6 +674,7 @@ func _create_rewards() -> void:
 		heal.can_take = func(): return _run.health.pills < _run.health.max_pills
 	for cell in _room.layout.cells_of("T"):
 		_create_treasure(cell)
+		_pay_chest_condolences()
 	for cell in _room.layout.cells_of("C"):
 		_create_chest(cell, ChestRules.roll(_floor_def.chest_odds(), _rng.randf()))
 	if _room.room_type == RoomLayout.TYPE_SHOP:
@@ -929,11 +930,13 @@ func _open_lunchbox(cell: Vector2i) -> void:
 	if extra != RoomRules.DROP_NONE:
 		_drop_consumable(at, extra)
 	notice.emit("Someone's lunch. Still warm, somehow.")
+	_pay_chest_condolences()
 
 
 func _open_locked(cell: Vector2i) -> void:
 	if _spend_slips(ChestRules.slips_needed(ChestRules.LOCKED)):
 		_create_treasure(cell)
+		_pay_chest_condolences()
 
 
 # Two Slips buy a pick of two items from the run's usual pool. Taking one clears the other away.
@@ -948,6 +951,7 @@ func _open_urn(cell: Vector2i) -> void:
 	var spots := _room.layout.open_spots_near(wanted, taken)
 	if spots.is_empty():
 		_drop_coin(RoomBackdrop.cell_center(cell), ChestRules.urn_fallback_pension(_floor_def.treasure_pension), RunState.PENSION_REWARD)
+		_pay_chest_condolences()
 		return
 	var group := ChoiceGroup.new()
 	_urn_groups.append(group)
@@ -958,6 +962,7 @@ func _open_urn(cell: Vector2i) -> void:
 		group.add(pickup)
 		pickup.collected.connect(group.take.bind(pickup))
 	notice.emit("The urn holds two things. Take one.")
+	_pay_chest_condolences()
 
 
 # Only the player's Thermos gets here. The box bursts into a pile of coins.
@@ -965,6 +970,15 @@ func _open_safe(at: Vector2) -> void:
 	for amount in ChestRules.coin_split(ChestRules.safe_pension(_floor_def.treasure_pension), ChestRules.SAFE_COINS):
 		_drop_coin(at, amount, RunState.PENSION_REWARD)
 	notice.emit("The safe bursts open!")
+	_pay_chest_condolences()
+
+
+# A chest opening now and then pays a few Condolences on top of what it holds.
+func _pay_chest_condolences() -> void:
+	var condolences := RoomRules.chest_condolences(_rng.randf())
+	if condolences > 0:
+		_bank.add_condolences(condolences)
+		notice.emit("+%d Condolences" % condolences)
 
 
 # Touched, the chest was never a chest. It waits a moment, as any enemy does when a room starts,

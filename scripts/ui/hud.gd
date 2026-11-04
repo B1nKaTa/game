@@ -28,6 +28,16 @@ var _boss_back: ColorRect
 var _boss_fill: ColorRect
 var _boss_max_hp := 1.0
 var _pension := 0
+var _condolences := 0
+# The Waiting Room shows Condolences beside Pension. A run shows Pension only, plus a pop-up when
+# Condolences are earned.
+var show_condolences := false
+
+
+static func status_text(pension: int, condolences: int, with_condolences: bool) -> String:
+	if with_condolences:
+		return "Pension: %d   Condolences: %d" % [pension, condolences]
+	return "Pension: %d" % pension
 
 
 static func bar_fraction(hp: float, max_hp: float) -> float:
@@ -73,6 +83,12 @@ func _ready() -> void:
 
 func set_pension(amount: int) -> void:
 	_pension = amount
+	if _status != null:
+		_refresh()
+
+
+func set_condolences(amount: int) -> void:
+	_condolences = amount
 	if _status != null:
 		_refresh()
 
@@ -148,7 +164,7 @@ func _add_label(at: Vector2, font_size: int) -> Label:
 
 
 func _refresh() -> void:
-	var text := "Pension: %d" % _pension
+	var text := status_text(_pension, _condolences, show_condolences)
 	if _run != null:
 		var pills := "■".repeat(_run.health.pills) + "□".repeat(_run.health.max_pills - _run.health.pills)
 		text = "Pills: %s   %s" % [pills, text]

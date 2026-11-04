@@ -1,6 +1,7 @@
 extends Node
 
 signal pension_changed(amount: int)
+signal condolences_changed(amount: int)
 
 const SAVE_PATH := "user://save.json"
 const SMOKE_PATH := "user://smoke_save.json"
@@ -89,6 +90,30 @@ func spend(amount: int) -> bool:
 		return false
 	_save_pension()
 	return true
+
+
+func add_condolences(amount: int) -> void:
+	data.add_condolences(amount)
+	_save_condolences()
+
+
+func spend_condolences(amount: int) -> bool:
+	if not data.spend_condolences(amount):
+		return false
+	_save_condolences()
+	return true
+
+
+# Saves at once, so a boss beaten in a run that ends in death still counts.
+func record_boss_beaten(boss_id: String, is_floor_boss: bool) -> int:
+	var paid := data.record_boss_beaten(boss_id, is_floor_boss)
+	_save_condolences()
+	return paid
+
+
+func _save_condolences() -> void:
+	_store.save_progress(data)
+	condolences_changed.emit(data.condolences)
 
 
 func start_run() -> void:

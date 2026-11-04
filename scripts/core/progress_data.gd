@@ -9,6 +9,10 @@ const NO_DEPOSIT_RUN := -1
 const REFILE_FEE := 40
 # The share the clerk takes off the one form on deal for a visit.
 const CLERK_DEAL_CUT := 0.25
+# Condolences paid the first time each boss falls, and for each floor cleared in a cursed run.
+const FIRST_MINI_BOSS_CONDOLENCES := 5
+const FIRST_FLOOR_BOSS_CONDOLENCES := 10
+const CURSED_FLOOR_CONDOLENCES := 10
 
 var pension: int = 0
 var upgrades: Dictionary = {}
@@ -141,6 +145,27 @@ func refile(def: UpgradeDef) -> bool:
 	form_choices[def.id] = UpgradeDef.OPTION_B if current == UpgradeDef.OPTION_A else UpgradeDef.OPTION_A
 	free_refile_used[def.id] = true
 	return true
+
+
+func add_condolences(amount: int) -> void:
+	condolences += maxi(amount, 0)
+
+
+func spend_condolences(amount: int) -> bool:
+	if amount < 0 or condolences < amount:
+		return false
+	condolences -= amount
+	return true
+
+
+# Pays the first-beat Condolences once per boss, and returns what was paid, which is 0 after the first.
+func record_boss_beaten(boss_id: String, is_floor_boss: bool) -> int:
+	if boss_id.is_empty() or bosses_beaten.has(boss_id):
+		return 0
+	bosses_beaten[boss_id] = true
+	var paid := FIRST_FLOOR_BOSS_CONDOLENCES if is_floor_boss else FIRST_MINI_BOSS_CONDOLENCES
+	add_condolences(paid)
+	return paid
 
 
 func start_run() -> void:

@@ -12,3 +12,8 @@ func test_bar_fraction_is_clamped() -> void:
 
 func test_bar_fraction_handles_zero_max() -> void:
 	assert_near(Hud.bar_fraction(10.0, 0.0), 0.0)
+
+
+func test_the_waiting_room_shows_both_currencies_and_a_run_only_pension() -> void:
+	assert_eq(Hud.status_text(12, 3, true), "Pension: 12   Condolences: 3")
+	assert_eq(Hud.status_text(12, 3, false), "Pension: 12")

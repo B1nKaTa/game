@@ -380,5 +380,11 @@ func _on_boss_spawned(boss: Enemy) -> void:
 	boss.defeated.connect(_on_boss_defeated)
 
 
-func _on_boss_defeated(_boss: Enemy) -> void:
+func _on_boss_defeated(boss: Enemy) -> void:
 	_hud.hide_boss_bar()
+	# Only a real mini boss or floor boss counts, never something one of them summoned.
+	if boss.is_summon or not boss.def.is_boss:
+		return
+	var paid := Progress.record_boss_beaten(boss.def.id, boss.def == _floor_def.floor_boss)
+	if paid > 0:
+		_hud.show_notice("+%d Condolences" % paid)

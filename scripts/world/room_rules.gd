@@ -48,6 +48,9 @@ const POTION_NAME := "Small Potion"
 const SMALL_POTION_ID := "small_potion"
 const TREASURE_RECIPE_CHANCE := 0.25
 const MINI_BOSS_RECIPE_CHANCE := 0.5
+# Now and then a chest holds a few Condolences, the cosmetic currency, as well as what it always holds.
+const CHEST_CONDOLENCES_CHANCE := 0.05
+const CHEST_CONDOLENCES := 3
 
 
 static func block_drop(roll: float) -> String:
@@ -132,3 +135,8 @@ static func furniture_hides_coin(roll: float) -> bool:
 
 static func coal_heap_hides_coin(roll: float) -> bool:
 	return roll < COAL_HEAP_COIN_CHANCE
+
+
+# The Condolences one chest opening pays, from one roll in [0, 1).
+static func chest_condolences(roll: float) -> int:
+	return CHEST_CONDOLENCES if roll < CHEST_CONDOLENCES_CHANCE else 0

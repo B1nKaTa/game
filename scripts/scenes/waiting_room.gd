@@ -54,9 +54,12 @@ func _ready() -> void:
 	add_child(_camera)
 	_hud = Hud.new()
 	_hud.setup(null)
+	_hud.show_condolences = true
 	add_child(_hud)
 	_hud.set_pension(Progress.data.pension)
 	Progress.pension_changed.connect(_hud.set_pension)
+	_hud.set_condolences(Progress.data.condolences)
+	Progress.condolences_changed.connect(_hud.set_condolences)
 	_enter_department(_map.start_id)
 	player.global_position = Player.arrival_position(Departments.RUN_DOOR_CELL + Vector2i.LEFT)
 	_follow_player()
