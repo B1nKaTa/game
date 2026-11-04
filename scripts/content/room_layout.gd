@@ -70,7 +70,7 @@ const SYMBOL_CRACK := "k"
 const SYMBOL_TORCH := "t"
 const SYMBOL_LANTERN := "l"
 const SYMBOL_STUMP := "m"
-const DECOR_SYMBOLS := "gnwuktlmfprce"
+const DECOR_SYMBOLS := "gnwuktlmfprce3"
 # A freshly mopped cell: everyone walks on it, Grandpa and chargers slide. Kept well clear of doors.
 const SYMBOL_WET := "W"
 const WET_DOOR_CLEARANCE := 2
@@ -104,16 +104,21 @@ const SYMBOL_PLANTER := "d"
 const SYMBOL_FOUNTAIN := "q"
 const SYMBOL_SALE_SIGN := "e"
 # Fairway's End. Sand bunkers lie in the fairway: walkable, never harmful, slow to wade through, and kept
-# well clear of doors. See SandRule.
+# well clear of doors. See SandRule. A flag pin blocks nothing and breaks to anything, like grass. A ball
+# washer breaks like a barrel. A hedge is solid and breaks like a rock, and a hedge cell with no hedge
+# beside it is a parked golf cart instead (GolfProps.is_parked_cart).
 const SYMBOL_SAND := "s"
 const SAND_DOOR_CLEARANCE := 2
-const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc><^vazdqes"
+const SYMBOL_FLAG := "3"
+const SYMBOL_BALL_WASHER := "4"
+const SYMBOL_HEDGE := "5"
+const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc><^vazdqes345"
 # Nothing can walk through these, so nothing may be dropped or summoned on them.
-const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGojhazdq"
+const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGojhazdq45"
 # Routes may not need a hole or a wall, and may not need a bomb for a crate or a rock.
 const WALL_LIKE := "#lo"
 const WALLS := "#lVo"
-const WALLS_AND_BOMB_ONLY := "#lVXOAYKDMohdq"
+const WALLS_AND_BOMB_ONLY := "#lVXOAYKDMohdq5"
 const MUST_REACH_WITHOUT_BREAKING := "EBIHSPG"
 # A vault lays this many labeled pickups out in the open, this many cells apart so names never overlap.
 const VAULT_EXTRAS := 3
