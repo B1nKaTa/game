@@ -404,6 +404,9 @@ func _close_panel() -> void:
 	_refresh_poster_board()
 	if is_instance_valid(_lobby_decor):
 		_lobby_decor.setup(Progress.data.cosmetics_owned)
+	# What he wears may have changed at the Decor Office, and he wears it here as in runs.
+	_run.look = RunState.look_from(Progress.data.cosmetics_worn, CosmeticDef.all())
+	player.refresh_look()
 
 
 func _exit_tree() -> void:

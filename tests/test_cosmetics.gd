@@ -110,3 +110,40 @@ func test_the_two_tabs_split_decor_from_looks() -> void:
 	assert_eq(looks.size(), 10)
 	assert_eq(looks[0].slot, CosmeticDef.SLOT_HAT)
 	assert_eq(looks[looks.size() - 1].slot, CosmeticDef.SLOT_CANE)
+
+
+func test_make_run_carries_what_is_worn() -> void:
+	var data := ProgressData.new()
+	data.cosmetics_owned = {"party_hat": true}
+	data.cosmetics_worn = {CosmeticDef.SLOT_HAT: "party_hat", CosmeticDef.SLOT_CANE: "no_such_cane"}
+	var look := RunState.look_from(data.cosmetics_worn, CosmeticDef.all())
+	assert_eq(look.size(), 1)
+	assert_eq((look[CosmeticDef.SLOT_HAT] as CosmeticDef).id, "party_hat")
+
+
+func test_a_look_saved_under_the_wrong_slot_or_decor_is_skipped() -> void:
+	var worn := {CosmeticDef.SLOT_CANE: "party_hat", CosmeticDef.SLOT_DECOR: "potted_fern"}
+	assert_eq(RunState.look_from(worn, CosmeticDef.all()).size(), 0)
+
+
+func test_the_cane_colour_falls_back_without_a_skin() -> void:
+	assert_eq(GrandpaLook.cane_color({}, Color.WHITE), Color.WHITE)
+	var sooty := GrandpaLook.cane_color({CosmeticDef.SLOT_CANE: _cosmetic("sooty_cane")}, Color.WHITE)
+	assert_true(sooty.is_equal_approx(Color("2a2622")), str(sooty))
+
+
+func test_a_dark_cane_still_draws_a_swing_arc_that_reads() -> void:
+	var arc := GrandpaLook.arc_color({CosmeticDef.SLOT_CANE: _cosmetic("sooty_cane")}, Color.WHITE)
+	assert_true(arc.get_luminance() >= GrandpaLook.ARC_MIN_LUMINANCE - 0.01, str(arc))
+	assert_true(GrandpaLook.has_stripes({CosmeticDef.SLOT_CANE: _cosmetic("candy_stripe")}))
+	assert_false(GrandpaLook.has_stripes({}))
+
+
+func test_a_worn_look_changes_no_stat() -> void:
+	var empty: Array[UpgradeDef] = []
+	var plain := RunState.new(empty, {})
+	var dressed := RunState.new(empty, {})
+	dressed.look = {CosmeticDef.SLOT_HAT: _cosmetic("party_hat"), CosmeticDef.SLOT_CANE: _cosmetic("sooty_cane")}
+	assert_near(dressed.damage_mult(), plain.damage_mult())
+	assert_near(dressed.move_speed(), plain.move_speed())
+	assert_eq(dressed.health.max_pills, plain.health.max_pills)

@@ -250,4 +250,5 @@ func make_run() -> RunState:
 	run.unlocked_items = data.items_unlocked
 	run.perks = Mementos.perks(data)
 	run.apply_perks()
+	run.look = RunState.look_from(data.cosmetics_worn, CosmeticDef.all())
 	return run

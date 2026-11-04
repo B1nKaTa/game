@@ -23,6 +23,8 @@ var buff: PotionDef
 var buff_left := 0.0
 # The memento perks this run carries, by Mementos perk id. Set before apply_perks.
 var perks: Dictionary = {}
+# What Grandpa wears this run, slot -> CosmeticDef. Looks only: nothing reads it for a stat.
+var look: Dictionary = {}
 var _promised := {}
 var _offered_recipes := {}
 var _upgrades: Array[UpgradeDef]
@@ -39,6 +41,17 @@ func _init(upgrades: Array[UpgradeDef], levels: Dictionary, choices: Dictionary 
 	health.changed.connect(changed.emit)
 	health.heal_bonus = stats.heal_bonus
 	bombs = STARTING_BOMBS + stats.bonus_bombs
+
+
+# The looks worn, by slot, from the save's cosmetics_worn. An id with no CosmeticDef, decor, or a look
+# saved under the wrong slot is skipped.
+static func look_from(worn: Dictionary, defs: Array[CosmeticDef]) -> Dictionary:
+	var found := {}
+	for slot in worn:
+		for def in defs:
+			if def.id == str(worn[slot]) and def.slot == str(slot) and not def.is_decor():
+				found[def.slot] = def
+	return found
 
 
 func has_perk(id: String) -> bool:

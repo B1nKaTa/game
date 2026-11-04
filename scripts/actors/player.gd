@@ -28,6 +28,8 @@ const CROSSHAIR_REACH := 8.0
 const CROSSHAIR_COLOR := Color(1.0, 0.9, 0.55, 0.95)
 const GHOST_EVERY := 0.05
 const SLOW_COLOR := Color(0.62, 0.86, 1.0, 0.9)
+const CANE_COLOR := Color("a8692f")
+const SWING_COLOR := Color("ffe58a")
 
 var run: RunState
 var show_crosshair := false
@@ -47,6 +49,8 @@ var _aim := Vector2.RIGHT
 var _dodge_direction := Vector2.RIGHT
 var _active_swing: SwingAttack
 var _visual: SpriteVisual
+# What he wears, drawn over the sprite. Made only once he wears something.
+var _look: GrandpaLook
 var _feet: Marker2D
 # A gust that shoves him along for a while, as the bellows do. A dodge breaks free of it.
 var _push := Vector2.ZERO
@@ -93,7 +97,17 @@ func _ready() -> void:
 	_visual = SpriteVisual.new()
 	add_child(_visual)
 	_visual.setup("grandpa", Vector2(20, 28), Color("7d9a5c"), SPRITE_FRAME_WIDTH)
+	if not run.look.is_empty():
+		refresh_look()
 	run.health.died.connect(died.emit)
+
+
+# Redraws what he wears from run.look, as after a change at the Decor Office.
+func refresh_look() -> void:
+	if _look == null:
+		_look = GrandpaLook.new()
+		add_child(_look)
+	_look.setup(run.look)
 
 
 func take_hit(amount: int) -> bool:
@@ -159,6 +173,8 @@ func _physics_process(delta: float) -> void:
 	if not to_mouse.is_zero_approx():
 		_aim = to_mouse.normalized()
 	_visual.set_facing_left(_aim.x < 0.0)
+	if _look != null:
+		_look.set_facing(_aim.x)
 	_visual.set_alpha(HurtLook.alpha_for(_dodge.is_active(), run.health.invulnerability_left()))
 	_handle_attacks()
 	_handle_bomb()
@@ -386,8 +402,13 @@ func _draw() -> void:
 		draw_line(-_dodge_direction * 6.0, -_dodge_direction * 26.0, Color(1.0, 1.0, 1.0, 0.35), 8.0)
 	var swinging := _active_swing != null
 	var pointing := _active_swing.direction if swinging else _aim
-	if not has_art:
-		draw_line(Vector2.ZERO, pointing * 20.0, Color("a8692f"), 3.0)
+	# A cane skin draws the placeholder cane even over the sprite, so the skin shows until the art pass.
+	if not has_art or run.look.has(CosmeticDef.SLOT_CANE):
+		draw_line(Vector2.ZERO, pointing * 20.0, GrandpaLook.cane_color(run.look, CANE_COLOR), 3.0)
+		if GrandpaLook.has_stripes(run.look):
+			for i in 3:
+				var band := pointing * (7.0 + i * 5.0)
+				draw_line(band - pointing, band + pointing, GrandpaLook.STRIPE_BAND, 3.0)
 	if show_crosshair:
 		var lines := crosshair_lines(get_local_mouse_position())
 		draw_multiline(lines, Color.BLACK, 3.0)
@@ -395,7 +416,7 @@ func _draw() -> void:
 	if swinging:
 		var center := _active_swing.direction.angle()
 		var half_angle := deg_to_rad(_active_swing.half_angle_deg)
-		draw_arc(Vector2.ZERO, _active_swing.reach, center - half_angle, center + half_angle, 12, Color("ffe58a"), 3.0)
+		draw_arc(Vector2.ZERO, _active_swing.reach, center - half_angle, center + half_angle, 12, GrandpaLook.arc_color(run.look, SWING_COLOR), 3.0)
 	if _charge.is_charging():
 		draw_arc(Vector2.ZERO, 22.0, -PI / 2.0, -PI / 2.0 + TAU * _charge.progress(), 24, Color("f4c542"), 2.0)
 	if _slow.is_active():
