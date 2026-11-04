@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="NpcDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/npc_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "purser"
+display_name = "Pemberton, Ship's Purser"
+color = Color(0.2, 0.32, 0.6, 1)
+body_size = Vector2(22, 30)
+lines = Array[String](["Welcome aboard. Again. The ship never actually leaves, love.", "Your Bon Voyage Bag is packed. I packed it. Don't ask what's in it.", "Lifeboats are for living passengers. You'll be fine. You're past fine.", "Shuffleboard at four. Buffet at five. Eternity from six onwards.", "A cabin upgrade? Certainly. There's a waiting list. It's very long.", "The captain sends his regards. He's also waiting for a number.", "Please keep your arms inside the afterlife at all times.", "Sea legs? You've barely got land legs, love."])
+moments = {
+"died": "Man overboard! Oh, it's only you. I'll pack another bag.",
+"boss_win": "A triumph! I'll tell the captain. He won't care, but I'll tell him."
+}

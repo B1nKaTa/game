@@ -91,3 +91,18 @@ func _find(id: String) -> UpgradeDef:
 
 func test_old_saves_receive_the_letters_of_floors_already_cleared() -> void:
 	assert_eq(LetterBook.unread(_today()).size(), 5)
+
+
+# The plaque's count is optional: an older save counts each path it cleared once, and a count survives.
+func test_path_clears_fall_back_to_one_per_cleared_path_and_survive_a_save() -> void:
+	var raw := {"version": 1, "pension": 0, "upgrades": {}, "opening_seen": true, "paths_cleared": {"head_office": true}}
+	var data := ProgressData.from_dict(raw)
+	assert_eq(data.clears_of_path("head_office"), 1)
+	assert_eq(data.clears_of_path("terminal_zero"), 0)
+	data.record_floor_cleared(5, "head_office")
+	assert_eq(data.clears_of_path("head_office"), 2)
+	var again := ProgressData.from_dict(JSON.parse_string(JSON.stringify(data.to_dict())))
+	assert_eq(again.clears_of_path("head_office"), 2)
+	var fresh := ProgressData.new()
+	fresh.record_floor_cleared(5, "head_office")
+	assert_eq(fresh.clears_of_path("head_office"), 1, "a first clear counts once")

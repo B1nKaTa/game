@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="NpcDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/npc_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "severance_clerk"
+display_name = "Mr. Hollis, Severance Desk"
+color = Color(0.45, 0.42, 0.38, 1)
+body_size = Vector2(22, 30)
+lines = Array[String](["Golden Handshake: more Pension per boss. The hand is cold. It's still gold.", "Your severance is ready. Your actual leaving is not.", "Please take a seat. The seat is also waiting.", "Fired, retired, expired? Same form, three boxes. Tick all three.", "Restructuring is ongoing. It has been ongoing since the Romans.", "The Chairman doesn't see visitors. He sees quarterly results.", "Exit interview: what did you enjoy least? Take your time. Take forever.", "Thank you for your service. Your service is not over."])
+moments = {
+"died": "Terminated again? I'll start the paperwork. I never stopped.",
+"boss_win": "Excellent results. Expect a raise in the next life, or the one after."
+}

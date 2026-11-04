@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="NpcDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/npc_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "duty_free_clerk"
+display_name = "Ingrid, Duty Free"
+color = Color(0.62, 0.36, 0.56, 1)
+body_size = Vector2(22, 30)
+lines = Array[String](["Frequent Flyer Miles: the more you die, the less you pay. Fair, really.", "Tax free. Death took care of the taxes. Death and the clerk.", "Liquids under a hundred millilitres. Souls, any size.", "Your flight is delayed. Indefinitely. Perfume?", "The giant chocolate bars sold out in 1987. Like everything else.", "Boarding passes are not valid for the way back.", "Points never expire. That's rather the theme down here.", "Window or aisle? It's all corridor in the end."])
+moments = {
+"died": "Missed your connection? Happens to everyone here. Mostly once.",
+"boss_win": "First class! Well. Economy plus. Plus nothing."
+}

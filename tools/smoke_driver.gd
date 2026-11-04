@@ -795,11 +795,11 @@ func _walk_to_department(scene: Node, id: String) -> void:
 	_check(scene.current_department() == id, "walked to the %s, stands in the %s" % [id, scene.current_department()])
 
 
-# A fresh save opens the lobby and the hallway only. The hallway's door walks him there, and the
-# Bounty Office's chained door keeps him in the lobby.
+# A fresh save opens the lobby and the corridors only. The hallway's door walks him there, and the
+# Bounty Office's chained door keeps him in the lobby, and out of the annexe beyond it.
 func _check_departments_at_start() -> void:
 	var scene := get_tree().current_scene
-	_check(str(scene.open_department_ids()) == str([Departments.LOBBY, Departments.HALLWAY]), "only the lobby and the hallway are open at the start, got %s" % str(scene.open_department_ids()))
+	_check(str(scene.open_department_ids()) == str(Departments.corridor_ids()), "only the lobby and the corridors are open at the start, got %s" % str(scene.open_department_ids()))
 	_check(scene.current_department() == Departments.LOBBY, "he starts in the lobby")
 	await _walk_to_department(scene, Departments.HALLWAY)
 	await _walk_to_department(scene, Departments.LOBBY)
@@ -875,10 +875,12 @@ func _take_first_bounty() -> void:
 	_check(Progress.data.bounty_taken == FIRST_POSTER, "the taken poster survives a reload")
 
 
-# The first run cleared the Records Basement, Sunset Shores and the Funeral Parlour, which open the
-# Bounty Office, the Apothecary Wing and the Decor Office. The poster is collected at the board.
+# The first run cleared the open path of every depth: the Records Basement, Sunset Shores, the Funeral
+# Parlour, the Last Resort Cruise and Departures, which open the Bounty Office, the Apothecary Wing, the
+# Decor Office, the Purser's Office and Duty Free. The poster is collected at the board.
 func _check_bounty_collected(scene: Node) -> void:
-	var wanted := [Departments.LOBBY, Departments.HALLWAY, Departments.BOUNTY_OFFICE, Departments.APOTHECARY_WING, Departments.DECOR_OFFICE]
+	var wanted := [Departments.LOBBY, Departments.HALLWAY, Departments.BOUNTY_OFFICE, Departments.APOTHECARY_WING, Departments.DECOR_OFFICE,
+		Departments.ANNEXE, Departments.UPPER_LANDING, Departments.PURSERS_OFFICE, Departments.DUTY_FREE]
 	_check(str(scene.open_department_ids()) == str(wanted), "the first clears open exactly their departments, got %s" % str(scene.open_department_ids()))
 	_check(Progress.data.bounty_won, "beating the %s won the taken poster" % FIRST_POSTER)
 	var poster := _poster(FIRST_POSTER)

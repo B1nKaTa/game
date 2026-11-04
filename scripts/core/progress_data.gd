@@ -30,6 +30,9 @@ var floors_cleared: int = 0
 var deep_clears: Dictionary = {}
 # The ids of every path whose floor boss has fallen at least once.
 var paths_cleared: Dictionary = {}
+# Path id -> how many times its floor boss has fallen, for the Executive Suite's plaque. Optional in a
+# save: an older one counts each cleared path once.
+var path_clears: Dictionary = {}
 # A save from before clears were kept by depth keeps the merchants its old count had opened.
 var legacy_clears: int = 0
 # The one brew waiting in the potion slot for the next run.
@@ -349,6 +352,8 @@ func record_floor_cleared(depth := 1, path_id := "") -> void:
 	else:
 		deep_clears[str(depth)] = clears_at(depth) + 1
 	if not path_id.is_empty():
+		# Counted before the path is marked, since a marked path with no count reads as one clear.
+		path_clears[path_id] = clears_of_path(path_id) + 1
 		paths_cleared[path_id] = true
 
 
@@ -360,6 +365,14 @@ func clears_at(depth: int) -> int:
 
 func has_cleared_path(id: String) -> bool:
 	return paths_cleared.has(id)
+
+
+# How many times a path's floor boss has fallen. A path cleared with no count, as a dev profile's or an
+# older save's, counts once.
+func clears_of_path(id: String) -> int:
+	if path_clears.has(id):
+		return int(path_clears[id])
+	return 1 if paths_cleared.has(id) else 0
 
 
 # Only one brew can wait at a time, and it costs Pension.
@@ -397,6 +410,7 @@ func to_dict() -> Dictionary:
 		"floors_cleared": floors_cleared,
 		"deep_clears": deep_clears,
 		"paths_cleared": paths_cleared,
+		"path_clears": path_clears,
 		"legacy_clears": legacy_clears,
 		"brewed_potion": brewed_potion,
 		"form_choices": form_choices,
@@ -450,6 +464,10 @@ static func from_dict(raw: Variant) -> ProgressData:
 		for key in deep:
 			data.deep_clears[str(key)] = maxi(int(deep[key]), 0)
 	data.paths_cleared = _id_set(raw.get("paths_cleared"))
+	var counts: Variant = raw.get("path_clears", {})
+	if counts is Dictionary:
+		for id in counts:
+			data.path_clears[str(id)] = maxi(int(counts[id]), 0)
 	# Only a save older than clears by depth lacks the key. Its count is frozen here, once.
 	data.legacy_clears = maxi(int(raw.get("legacy_clears", data.floors_cleared)), 0)
 	var brewed: Variant = raw.get("brewed_potion", "")

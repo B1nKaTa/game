@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="NpcDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/npc_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "pro_shop_keeper"
+display_name = "Duffy, Pro Shop Keeper"
+color = Color(0.3, 0.55, 0.32, 1)
+body_size = Vector2(22, 30)
+lines = Array[String](["Golf Glove? Grips the cane, charges the swing. Pays for itself in bruises.", "Keep your head down. Most folk here manage that without trying.", "We sell balls, tees and gloves. The handicap you brought yourself.", "Nobody gets a hole in one down here. We've all been in the hole a while.", "Slice it, hook it, swing it. Just don't swing it at me.", "Members only. You're a member now. Dues are paid in Pension.", "Sand wedge? No. Sand is for bunkers and hourglasses.", "Fore! That's not a warning. It's how many of you came in today."])
+moments = {
+"died": "Rough round? We've all had one. Some of us are still on it.",
+"boss_win": "Under par! Or over. I never did learn which one is good."
+}

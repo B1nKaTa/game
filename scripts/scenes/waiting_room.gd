@@ -15,6 +15,7 @@ const COACH_BERTRAM := "coach_bertram"
 const DECOR_COUNTER := "decor_counter"
 const TICKET_MACHINE := "ticket_machine"
 const NOTICEBOARD := "noticeboard"
+const EMPLOYEE_PLAQUE := "employee_plaque"
 const MERCHANT_PROMPT := "Trade"
 const RUN_DOOR_ICON := ">"
 # A number that is not called shows the old 666 on the lobby's ticket line.
@@ -322,7 +323,7 @@ func _furnish(view: RoomView, room: FloorRoom) -> void:
 	if department == Departments.LOBBY:
 		_add_run_door(view)
 		var wall := TrophyWall.new()
-		wall.position = Vector2(RoomBackdrop.cell_center(Vector2i(Departments.TROPHY_WALL_COLUMN, 0)).x, Departments.TROPHY_WALL_Y)
+		wall.position = Vector2(Departments.TROPHY_WALL_X, Departments.TROPHY_WALL_Y)
 		wall.setup(Progress.data)
 		view.add_child(wall)
 
@@ -345,6 +346,9 @@ func _add_npc(view: RoomView, entry: Dictionary) -> void:
 		npc.talked.connect(_on_dolores_talked)
 	elif entry["id"] == COACH_BERTRAM:
 		npc.talked.connect(_on_coach_talked)
+	# The deep floors' keepers greet him with a word on the run just played, if they have one.
+	if entry.get("greets", false):
+		npc.say_moment(npc.def.greeting_key(Progress.last_run))
 
 
 # She says her line either way, and with a poster ready to collect she opens the board's panel too.
@@ -425,6 +429,9 @@ func _open_station(opened: WaitingStation) -> void:
 			_show_panel(refile)
 		TROPHY_WALL:
 			_show_lines(Mementos.wall_lines(Progress.data))
+		EMPLOYEE_PLAQUE:
+			var clears := Progress.data.clears_of_path(Departments.entry(Departments.EXECUTIVE_SUITE)["opens_on"])
+			_show_lines(PackedStringArray([Departments.plaque_text(clears)]))
 		BOUNTY_BOARD:
 			_open_bounty_panel(opened.title)
 		ITEM_RACK:

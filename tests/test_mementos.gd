@@ -51,7 +51,7 @@ func test_neighbouring_captions_never_run_together() -> void:
 # The frames hang on the lobby's top wall, so none may cover the north door or a lantern.
 func test_the_frames_keep_clear_of_the_north_door_and_the_lanterns() -> void:
 	var lobby: RoomLayout = Departments.load_layouts()[Departments.LOBBY]
-	var middle := RoomBackdrop.cell_center(Vector2i(Departments.TROPHY_WALL_COLUMN, 0)).x
+	var middle := Departments.TROPHY_WALL_X
 	var left := middle + TrophyWall.frame_center(0).x - TrophyWall.FRAME_SIZE.x / 2.0
 	var right := middle + TrophyWall.frame_center(Mementos.ALL.size() - 1).x + TrophyWall.FRAME_SIZE.x / 2.0
 	var blocked: Array[int] = [lobby.door_cell(RoomLayout.NORTH).x]
