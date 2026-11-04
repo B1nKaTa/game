@@ -10,6 +10,8 @@ const MIN_SWING_SPEED := 0.5
 const MAX_SWING_SPEED := 2.0
 # A form option never brings the dentures back sooner than this.
 const MIN_TEETH_RETURN := 1.0
+# Below this share of its health an enemy shows its weak spot, which the Bifocals option hits harder.
+const WOUNDED_BELOW := 0.5
 
 var max_pills: int = BASE_PILLS
 var move_speed: float = BASE_SPEED
@@ -141,3 +143,8 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 	stats.blast_radius = Thermos.BLAST_RADIUS * (1.0 + radius)
 	stats.bonus_bombs = bombs
 	return stats
+
+
+# What a hit does once the weak spot is counted: wounded_mult applies only below WOUNDED_BELOW health.
+static func strike_damage(base: float, hp_fraction: float, wounded_mult: float) -> float:
+	return base * wounded_mult if hp_fraction < WOUNDED_BELOW else base

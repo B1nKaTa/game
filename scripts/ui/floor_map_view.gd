@@ -42,11 +42,24 @@ const LEGEND_BOTTOM := "T Treasure   $ Shop   M Mini boss   B Boss   V Vault   +
 const CLOSE_HINT := "Close"
 
 var enabled := true
+# The Night Vision option: secret rooms show, as outlines with a "?", before they are found.
+var show_secrets := false
 var _map: FloorMap
 var _progress: FloorProgress
 var _current_id := -1
 var _is_big := false
 var _floor_name := ""
+
+
+# The rooms the map shows: every visited room, and with show_secrets every secret room as well.
+static func shown_ids(map: FloorMap, progress: FloorProgress, with_secrets: bool) -> Array[int]:
+	var ids: Array[int] = []
+	ids.append_array(progress.visited_ids())
+	if with_secrets:
+		for room in map.rooms:
+			if room.room_type == RoomLayout.TYPE_SECRET and not ids.has(room.id):
+				ids.append(room.id)
+	return ids
 
 
 # A room's place on the map is its grid cell, counted from the floor's top left, whatever its size.
@@ -144,7 +157,7 @@ func _draw() -> void:
 	draw_rect(panel, Color("625e6f"), false, 1.0)
 	for room_id in _progress.visited_ids():
 		_draw_links(_map.room(room_id), panel, origin, spacing)
-	for room_id in _progress.visited_ids():
+	for room_id in shown_ids(_map, _progress, show_secrets):
 		_draw_room(_map.room(room_id), panel, origin, spacing)
 	if not _is_big:
 		_draw_floor_name()
@@ -187,6 +200,14 @@ func _draw_room(room: FloorRoom, panel: Rect2, origin: Vector2, spacing: Vector2
 	var is_crossroads := room.room_type == RoomLayout.TYPE_CROSSROADS
 	if is_crossroads:
 		rect = crossroads_rect(rect)
+	# A secret room Night Vision shows but Grandpa has not found is only an outline with a "?".
+	if not _progress.is_visited(room.id):
+		draw_rect(rect, ROOM_COLORS.get(room.room_type, Color.WHITE), false, 1.0)
+		var mark_size := BIG_FONT if _is_big else MINI_FONT
+		var mark := ThemeDB.fallback_font.get_string_size("?", HORIZONTAL_ALIGNMENT_LEFT, -1, mark_size)
+		var mark_ascent := ThemeDB.fallback_font.get_ascent(mark_size)
+		_draw_text(rect.get_center() + Vector2(-mark.x / 2.0, mark_ascent - mark.y / 2.0), "?", mark_size, ROOM_COLORS.get(room.room_type, Color.WHITE))
+		return
 	draw_rect(rect, ROOM_COLORS.get(room.room_type, Color.WHITE))
 	var is_current := room.id == _current_id
 	draw_rect(rect, CURRENT_COLOR if is_current else Color.BLACK, false, 2.0 if is_current else 1.0)

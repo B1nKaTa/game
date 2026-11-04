@@ -148,6 +148,8 @@ func debug_choose_path(index: int) -> void:
 func _add_map_view(is_big: bool) -> FloorMapView:
 	var view := FloorMapView.new()
 	view.setup(_map, _progress, is_big, _floor_def.display_name)
+	# The views last the whole run, through every path and floor, so this is set once.
+	view.show_secrets = _run.stats.reveals_secrets
 	_hud.add_child(view)
 	return view
 

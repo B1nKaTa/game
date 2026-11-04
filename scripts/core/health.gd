@@ -12,6 +12,8 @@ var _invuln := 0.0
 # Extra pills the first heal of a run restores, as the bedpan memento gives. Spent by the first heal
 # that finds him short of pills, so a heal at full health never wastes it.
 var first_heal_bonus := 0
+# Extra pills every heal restores, as the Stronger Dose option gives. Never past the maximum.
+var heal_bonus := 0
 
 
 func _init(start_pills: int) -> void:
@@ -43,6 +45,8 @@ func heal(amount: int) -> void:
 	if first_heal_bonus > 0 and amount > 0 and pills < max_pills:
 		bonus = first_heal_bonus
 		first_heal_bonus = 0
+	if amount > 0:
+		bonus += heal_bonus
 	pills = mini(pills + amount + bonus, max_pills)
 	changed.emit()
 

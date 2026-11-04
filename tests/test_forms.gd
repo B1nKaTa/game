@@ -71,3 +71,51 @@ func test_the_quick_return_and_boomerang_never_go_below_a_second() -> void:
 func test_a_spare_can_starts_the_run_with_one_more_thermos() -> void:
 	var run := _run("thermos_fuel", 2, "b")
 	assert_eq(run.bombs, RunState.STARTING_BOMBS + 1)
+
+
+func test_a_slower_lock_holds_the_next_swing_longer() -> void:
+	var combo := CaneCombo.new()
+	combo.lock_time = CaneCombo.LOCK_TIME / 0.9
+	combo.try_attack()
+	combo.tick(CaneCombo.LOCK_TIME + 0.001)
+	assert_eq(combo.try_attack(), 0, "still locked")
+
+
+func test_a_longer_dodge_lasts_longer() -> void:
+	var dodge := DodgeTimer.new()
+	dodge.try_start(1.0, DodgeTimer.DURATION * 1.3)
+	dodge.tick(DodgeTimer.DURATION + 0.01)
+	assert_true(dodge.is_active())
+
+
+func test_pills_heal_more_never_past_the_maximum() -> void:
+	var health := Health.new(4)
+	health.heal_bonus = 1
+	health.hit(3)
+	health.heal(1)
+	assert_eq(health.pills, 3)
+	health.heal(2)
+	assert_eq(health.pills, 4)
+
+
+func test_a_stronger_dose_reaches_the_run_health() -> void:
+	var run := _run("black_market_pills", 2, "b")
+	assert_eq(run.health.heal_bonus, 1)
+
+
+func test_pension_by_source() -> void:
+	var run := _run("bribed_clerk", 2, "a")
+	assert_eq(run.pension_amount(10, RunState.PENSION_ENEMY), ceili(10 * 1.2 * 1.2))
+	assert_eq(run.pension_amount(10, RunState.PENSION_REWARD), ceili(10 * 1.2))
+	assert_eq(run.pension_amount(10), ceili(10 * 1.2))
+
+
+func test_the_weak_spot_only_counts_below_half_health() -> void:
+	assert_near(PlayerStats.strike_damage(10.0, 0.6, 1.2), 10.0)
+	assert_near(PlayerStats.strike_damage(10.0, 0.4, 1.2), 12.0)
+
+
+func test_a_thermos_reaches_as_far_as_its_radius() -> void:
+	var body := Rect2(Thermos.BLAST_RADIUS + 5.0, -10, 20, 20)
+	assert_false(Thermos.in_blast(Vector2.ZERO, body))
+	assert_true(Thermos.in_blast(Vector2.ZERO, body, Thermos.BLAST_RADIUS * 1.3))

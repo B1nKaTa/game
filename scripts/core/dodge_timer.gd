@@ -7,10 +7,10 @@ var _active := 0.0
 var _cooldown := 0.0
 
 
-func try_start(cooldown: float) -> bool:
+func try_start(cooldown: float, duration := DURATION) -> bool:
 	if _active > 0.0 or _cooldown > 0.0:
 		return false
-	_active = DURATION
+	_active = duration
 	_cooldown = cooldown
 	return true
 

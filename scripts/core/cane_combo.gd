@@ -5,6 +5,8 @@ const DAMAGE := [10, 10, 18]
 const LOCK_TIME := 0.2
 const WINDOW := 0.45
 
+# How long each swing holds the next one back. The Lightweight and Heavy Head options change it.
+var lock_time := LOCK_TIME
 var _step := 0
 var _lock := 0.0
 var _window := 0.0
@@ -15,7 +17,7 @@ func try_attack() -> int:
 		return 0
 	var damage: int = DAMAGE[_step]
 	_step = (_step + 1) % DAMAGE.size()
-	_lock = LOCK_TIME
+	_lock = lock_time
 	_window = WINDOW
 	return damage
 

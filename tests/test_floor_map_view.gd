@@ -55,3 +55,17 @@ func test_rooms_keep_a_gap_their_door_link_can_show_in() -> void:
 func test_every_room_type_has_a_color() -> void:
 	for room_type: String in RoomRules.ICONS:
 		assert_true(FloorMapView.ROOM_COLORS.has(room_type), room_type)
+
+
+func test_night_vision_shows_secret_rooms_before_they_are_found() -> void:
+	var map := FloorMap.new()
+	var start := _add(map, RoomLayout.TYPE_COMBAT, Vector2i(0, 0))
+	var secret := _add(map, RoomLayout.TYPE_SECRET, Vector2i(1, 0))
+	var progress := FloorProgress.new(map)
+	progress.enter(start.id)
+	assert_false(FloorMapView.shown_ids(map, progress, false).has(secret.id), "hidden until found")
+	assert_true(FloorMapView.shown_ids(map, progress, true).has(secret.id), "Night Vision shows it")
+	assert_true(FloorMapView.shown_ids(map, progress, true).has(start.id))
+	progress.enter(secret.id)
+	assert_true(FloorMapView.shown_ids(map, progress, false).has(secret.id), "found rooms always show")
+	assert_eq(FloorMapView.shown_ids(map, progress, true).size(), 2, "never listed twice")

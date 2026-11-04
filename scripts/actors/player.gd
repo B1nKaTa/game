@@ -223,6 +223,8 @@ func _handle_attacks() -> void:
 		_charge.cancel()
 		return
 	if Input.is_action_just_pressed("attack"):
+		# The Heavy Head and Lightweight options change the pace, so it is read at every swing.
+		_combo.lock_time = CaneCombo.LOCK_TIME / run.stats.swing_speed
 		var damage := _combo.try_attack()
 		if damage > 0:
 			_swing(damage, ATTACK_REACH, ATTACK_ANGLE, ATTACK_PUSH, false, damage == CaneCombo.DAMAGE[-1])
@@ -251,6 +253,7 @@ func _throw_teeth() -> void:
 		spawn = wall["position"] + wall["normal"] * ThrownDentures.WALL_BACKOFF
 	_thrown_teeth = ThrownDentures.new()
 	_thrown_teeth.setup(_teeth, self, _aim, run.bite_damage_mult(), run.stats.bite_range, run.stats.bites_per_throw)
+	_thrown_teeth.wounded_mult = run.stats.wounded_damage_mult
 	_thrown_teeth.hit_enemy.connect(teeth_bit.emit)
 	_thrown_teeth.caught.connect(teeth_caught.emit)
 	parent.add_child(_thrown_teeth)
@@ -300,7 +303,8 @@ func _strike_enemies() -> void:
 		if enemy.is_queued_for_deletion() or enemy.submerged:
 			continue
 		if swing.try_hit(global_position, enemy.get_instance_id(), enemy.body_rect()):
-			if not enemy.take_strike(swing.damage, swing.direction * swing.push, global_position - enemy.global_position):
+			var damage := PlayerStats.strike_damage(swing.damage, enemy.hp / maxf(enemy.max_hp(), 1.0), run.stats.wounded_damage_mult)
+			if not enemy.take_strike(damage, swing.direction * swing.push, global_position - enemy.global_position):
 				swing.mark_blocked()
 	for block: BreakableBlock in get_tree().get_nodes_in_group("breakable"):
 		if block.is_queued_for_deletion() or not block.can_break_by(BreakableBlock.SOURCE_CANE):
@@ -321,7 +325,7 @@ func _finish_swing() -> void:
 
 func _handle_movement() -> void:
 	var input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
-	if Input.is_action_just_pressed("dodge") and _dodge.try_start(run.stats.dodge_cooldown):
+	if Input.is_action_just_pressed("dodge") and _dodge.try_start(run.stats.dodge_cooldown, DodgeTimer.DURATION * run.stats.dodge_length):
 		_dodge_direction = input.normalized() if input != Vector2.ZERO else _aim
 	on_wet = _feet != null and WetFloor.is_wet_at(get_tree() if is_inside_tree() else null, _feet.global_position)
 	if _dodge.is_active():

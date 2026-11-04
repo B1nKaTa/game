@@ -179,6 +179,7 @@ func place_bomb(at: Vector2) -> void:
 	thermos.setup(_player)
 	thermos.level = _run.stats.thermos_level
 	thermos.damage_mult = _run.stats.thermos_damage_mult
+	thermos.radius = _run.stats.blast_radius
 	thermos.position = at
 	thermos.exploded.connect(bomb_exploded.emit)
 	add_child(thermos)
@@ -599,7 +600,7 @@ func _on_enemy_defeated(enemy: Enemy) -> void:
 	enemy_died.emit(enemy.position, enemy.def.is_boss)
 	var spot := clear_spot(enemy.position)
 	if enemy.coin_value() > 0:
-		_drop_coin(spot, enemy.coin_value())
+		_drop_coin(spot, enemy.coin_value(), RunState.PENSION_REWARD if enemy.def.is_boss else RunState.PENSION_ENEMY)
 	_last_death_at = spot
 	if enemy.def.drops_key and not enemy.is_summon:
 		_drop_consumable(spot, RoomRules.DROP_KEY)
@@ -617,8 +618,9 @@ func _on_enemy_defeated(enemy: Enemy) -> void:
 		_finish_room()
 
 
-func _drop_coin(at: Vector2, base_amount: int) -> void:
-	var amount := _run.pension_amount(base_amount)
+# source is a RunState.PENSION_* id, or "" for Pension that only the general rate touches.
+func _drop_coin(at: Vector2, base_amount: int, source := "") -> void:
+	var amount := _run.pension_amount(base_amount, source)
 	var coin := _add_pickup(at + Vector2(_rng.randf_range(-COIN_SCATTER, COIN_SCATTER), _rng.randf_range(-COIN_SCATTER, COIN_SCATTER)), "+%d" % amount, PENSION_COLOR, func(): pension_earned.emit(amount))
 	# A coin lying in a pocket only a bomb opens would fly out through the stones.
 	if not _room.layout.coin_can_fly_from(_cell_of(at)):
@@ -922,7 +924,7 @@ func _spend_slips(count: int) -> bool:
 # Free to open: a little Pension, and now and then a small potion or a Thermos.
 func _open_lunchbox(cell: Vector2i) -> void:
 	var at := RoomBackdrop.cell_center(cell)
-	_drop_coin(at, ChestRules.lunchbox_pension(_floor_def.treasure_pension))
+	_drop_coin(at, ChestRules.lunchbox_pension(_floor_def.treasure_pension), RunState.PENSION_REWARD)
 	var extra := ChestRules.lunchbox_extra(_rng.randf())
 	if extra != RoomRules.DROP_NONE:
 		_drop_consumable(at, extra)
@@ -945,7 +947,7 @@ func _open_urn(cell: Vector2i) -> void:
 	var taken: Array[Vector2i] = [cell]
 	var spots := _room.layout.open_spots_near(wanted, taken)
 	if spots.is_empty():
-		_drop_coin(RoomBackdrop.cell_center(cell), ChestRules.urn_fallback_pension(_floor_def.treasure_pension))
+		_drop_coin(RoomBackdrop.cell_center(cell), ChestRules.urn_fallback_pension(_floor_def.treasure_pension), RunState.PENSION_REWARD)
 		return
 	var group := ChoiceGroup.new()
 	_urn_groups.append(group)
@@ -961,7 +963,7 @@ func _open_urn(cell: Vector2i) -> void:
 # Only the player's Thermos gets here. The box bursts into a pile of coins.
 func _open_safe(at: Vector2) -> void:
 	for amount in ChestRules.coin_split(ChestRules.safe_pension(_floor_def.treasure_pension), ChestRules.SAFE_COINS):
-		_drop_coin(at, amount)
+		_drop_coin(at, amount, RunState.PENSION_REWARD)
 	notice.emit("The safe bursts open!")
 
 
@@ -987,7 +989,7 @@ func _create_item_choice(cells: Array[Vector2i]) -> void:
 	for choice in choices:
 		choice.collected.connect(func(): _remove_others(choices, choice))
 	if picked.is_empty():
-		_drop_coin(RoomBackdrop.cell_center(cells[0]), _floor_def.treasure_pension)
+		_drop_coin(RoomBackdrop.cell_center(cells[0]), _floor_def.treasure_pension, RunState.PENSION_REWARD)
 
 
 func _remove_others(choices: Array[Pickup], taken: Pickup) -> void:
@@ -1019,7 +1021,7 @@ func _create_treasure(cell: Vector2i) -> void:
 		return
 	var picked := RoomRules.pick_items(Content.items(), _run, 1, _rng)
 	if picked.is_empty() or _rng.randf() < 0.5:
-		_drop_coin(RoomBackdrop.cell_center(cell), _floor_def.treasure_pension)
+		_drop_coin(RoomBackdrop.cell_center(cell), _floor_def.treasure_pension, RunState.PENSION_REWARD)
 		return
 	_add_item_pickup(RoomBackdrop.cell_center(cell), picked[0])
 

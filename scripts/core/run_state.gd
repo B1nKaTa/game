@@ -5,6 +5,9 @@ signal changed
 
 const STARTING_BOMBS := 1
 const MAX_CONSUMABLE := 99
+# Where Pension comes from, for the Bribed Clerk's options. Anything else gets the general rate only.
+const PENSION_ENEMY := "enemy"
+const PENSION_REWARD := "reward"
 
 var stats: PlayerStats
 var health: Health
@@ -32,6 +35,7 @@ func _init(upgrades: Array[UpgradeDef], levels: Dictionary, choices: Dictionary 
 	stats = PlayerStats.compute(_upgrades, _levels, items, _choices)
 	health = Health.new(stats.max_pills)
 	health.changed.connect(changed.emit)
+	health.heal_bonus = stats.heal_bonus
 	bombs = STARTING_BOMBS + stats.bonus_bombs
 
 
@@ -65,6 +69,7 @@ func was_recipe_offered(id: String) -> bool:
 func add_item(item: ItemDef) -> void:
 	items.append(item)
 	stats = PlayerStats.compute(_upgrades, _levels, items, _choices)
+	health.heal_bonus = stats.heal_bonus
 	if stats.max_pills != health.max_pills:
 		health.raise_max(stats.max_pills)
 	else:
@@ -183,5 +188,10 @@ func bite_damage_mult() -> float:
 	return stats.bite_damage_mult + (buff.damage_bonus if buff != null else 0.0)
 
 
-func pension_amount(base: int) -> int:
-	return ceili(base * stats.pension_mult)
+func pension_amount(base: int, source := "") -> int:
+	var mult := 1.0
+	if source == PENSION_ENEMY:
+		mult = stats.enemy_pension_mult
+	elif source == PENSION_REWARD:
+		mult = stats.reward_pension_mult
+	return ceili(base * stats.pension_mult * mult)
