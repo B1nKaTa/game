@@ -33,11 +33,31 @@ func begin_run() -> void:
 func begin_dev_run() -> void:
 	if not DevStart.is_available():
 		return
-	Progress.begin_dev_run(DevStart.progress(Content.upgrades(), Content.recipes(), OS.get_cmdline_user_args()))
+	Progress.begin_dev_run(DevStart.progress(Content.upgrades(), Content.recipes()))
 	begin_run()
 
 
-# A dev run ends here however it ended, so its progress is gone before the Waiting Room reads any.
+# Debug builds only: the Waiting Room again under a throwaway profile with every department open, or,
+# when a dev profile is already on, the real Waiting Room again with the real progress as it was. Only
+# the dev Waiting Room can have a dev profile on in the Waiting Room, since return_to_waiting ends any
+# other. See DevStart.
+func toggle_dev_waiting_room() -> void:
+	if not DevStart.is_available():
+		return
+	# The scene being left still runs until the change, so it is stopped first: nothing in it can save
+	# into whichever progress is swapped in.
+	var leaving := get_tree().current_scene
+	if leaving != null:
+		leaving.process_mode = Node.PROCESS_MODE_DISABLED
+	if Progress.is_dev_run():
+		Progress.end_dev_run()
+	else:
+		Progress.begin_dev_run(DevStart.progress(Content.upgrades(), Content.recipes(), true))
+	get_tree().change_scene_to_file(WAITING_SCENE)
+
+
+# A dev run ends here however it ended, so its progress is gone before the Waiting Room reads any. A
+# run started from the dev Waiting Room is a dev run on its profile, so it ends here too.
 func return_to_waiting() -> void:
 	Progress.end_dev_run()
 	get_tree().change_scene_to_file(WAITING_SCENE)

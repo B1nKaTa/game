@@ -39,10 +39,13 @@ func begin_dev_run(dev_data: ProgressData, dev_path := DEV_PATH) -> void:
 	_store.delete_all()
 	data = dev_data
 	pension_changed.emit(data.pension)
+	condolences_changed.emit(data.condolences)
 
 
-# Throws the dev run's progress away and brings back the real progress exactly as it was.
-func end_dev_run() -> void:
+# Throws the dev run's progress away and brings back the real progress exactly as it was. Nothing is
+# written to the real save here: the real progress was never touched while it waited. announce is
+# false when the game quits, as the scenes that listen may already be gone.
+func end_dev_run(announce := true) -> void:
 	if not is_dev_run():
 		return
 	_store.delete_all()
@@ -50,7 +53,19 @@ func end_dev_run() -> void:
 	data = _real_data
 	_real_store = null
 	_real_data = null
-	pension_changed.emit(data.pension)
+	if announce:
+		pension_changed.emit(data.pension)
+		condolences_changed.emit(data.condolences)
+
+
+# Quitting during a dev run or the dev Waiting Room ends it too, so its file never outlives the game.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		end_dev_run(false)
+
+
+func _exit_tree() -> void:
+	end_dev_run(false)
 
 
 func reload() -> void:

@@ -27,7 +27,19 @@ Afterwards, check the real save's MD5 again.
 - **The full loop and mementos:** once mementos hang, later runs change Pension and pill counts. The name badge adds 10 Pension at run start, the bedpan heals an extra pill, and the coal shovel and top hat change pills. Adjust the loop's exact-number checks.
 - **Arrival notice:** the "New departments open: …" line with five names may be wider than 640 px.
 - **Back Room tables:** the `G` cells don't build tables yet. That is Task 19 or 21.
-- **Seeing the departments in a dev run:** the dev profile exists only during a dev run. To look at the departments with everything open, call `Progress.begin_dev_run(DevStart.progress(..., ["--dev-all-departments"]))`, then load `waiting_room.tscn`.
+- **Seeing every department: the dev Waiting Room.** The `--dev-all-departments` flag is gone, since `Game.return_to_waiting()` ended its profile before the Waiting Room could read it.
+  - **Way in:** in a debug build, press F4 in the Waiting Room. It reloads the Waiting Room under `Progress.begin_dev_run(DevStart.progress(..., true))`, a throwaway profile with every department open. "DEV PROFILE" shows in the bottom right of every department, and the lobby's DEV hint says what F4 does.
+  - **Ways out:** each one ends the profile and brings back the real progress exactly as it was.
+    - F4 again reloads the real Waiting Room.
+    - F3 starts the Floor 3 dev run on a fresh profile of its own.
+    - The run door starts the same Floor 3 dev run on the dev Waiting Room's profile, since `floor_scene` treats any run under a dev profile as one. That run ends on return, so you come back to the real Waiting Room.
+    - Quitting the game ends it, through `Progress._notification` (window close) and `Progress._exit_tree`.
+  - **The real save:** every save goes to `user://save_dev.json` while it is on, and that file is deleted on the way out. Pension and Condolences earned or spent there are thrown away. `Game.toggle_dev_waiting_room` stops the scene being left before swapping profiles, so nothing in it can save into the other one.
+  - **Check on the first run:**
+    - F4 works with no panel open.
+    - The hint line fits on the lobby's bottom wall.
+    - "DEV PROFILE" clears the HUD.
+    - Leaving with F4 leaves the real save's MD5 as it was.
 
 ## Things to look at in play
 - Lobby layout: the run door is at (26,8), inside the room, and the trophy wall is at (20,3).
@@ -82,7 +94,7 @@ Written on 2026-11-04, from 5bac79e to d2873e1. None of it has been parsed or ru
 - **The scroll list:** `BountyPanel` sizes its `ScrollContainer` from a guessed `ROW_HEIGHT` of 20 px at a 9 px font. If the rows are taller, the list scrolls sooner. If they are shorter, a gap shows under them.
 
 ### Screenshots still owed (the plan asks for them)
-- The Bounty panel with every poster showing (`--dev-all-departments`), with one taken, and with one ready to collect. Check that the twelve rows and the Leave button fit in 360 px.
+- The Bounty panel with every poster showing (the dev Waiting Room, F4), with one taken, and with one ready to collect. Check that the twelve rows and the Leave button fit in 360 px.
 - The poster board at (6, 2) with the TAKEN mark, and the station prompt above it.
 - The dummy hit by a combo, a charged swing, the teeth and a Thermos, each showing a number.
 - The item rack panel with all six recipes, and the coach's bubble.
@@ -160,3 +172,20 @@ Written on 2026-11-04, from 07d3cca to e6a93ab. None of it has been parsed or ru
   - The Dealer stands at about (7, 2), where `merchant_cell` puts him, near the top wall, so his bubble may flip below him.
   - The tables are solid `ArcadeTable` blocks at (7, 5) and (12, 5).
 - **Cosmetic placeholders:** the hood, the tiara and the stripe bands are rough code drawings. Judge whether each reads at game scale.
+
+## Review fixes
+
+Written on 2026-11-04, from 0767e6c onwards, after a read-only review. None of it has been parsed or run.
+
+### Test files to run
+- **Changed:**
+  - `tests/test_forms.gd`: the blast radius lives in `PlayerStats.BASE_BLAST_RADIUS`, and `PlayerStats` names no `Thermos` constant
+  - `tests/test_training_yard.gd`: a form filed or refiled during the visit counts in the yard, and the scene refreshes the run's stats
+  - `tests/test_tickets_and_letters.gd`: a clerk's deal with every form maxed shows no "Called!"
+  - `tests/test_dev_start.gd`: the dev Waiting Room's profile, its key and gate, and that it never writes the real save on any way out
+
+### Watch for on the first run
+- **`Thermos.BLAST_RADIUS`** is now `const BLAST_RADIUS := PlayerStats.BASE_BLAST_RADIUS`. Check that the constant resolves, and that the default argument of `Thermos.in_blast` still takes it.
+- **Refreshing stats:** closing any panel now works his stats out again, and outside the yard it resets his Thermoses to a run's start. In the full loop, check nothing that pads the Waiting Room run's stats is undone by a panel closing.
+- **Source pins:** three new tests read `waiting_room.gd` and `game.gd` as text, since a test cannot load a script that names autoloads. If one fails after a harmless rewrite, update the substring it looks for.
+- **The dev Waiting Room:** see "Seeing every department" under the first test session's notes.

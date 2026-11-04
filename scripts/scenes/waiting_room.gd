@@ -26,6 +26,8 @@ const NOT_CALLED := 666
 # On the lobby's bottom wall, below the floor and clear of the merchants.
 const DEV_HINT_AT := Vector2(12, 340)
 const DEV_HINT_COLOR := Color("ffd34f")
+# On screen, not in the room, so it shows in every department.
+const DEV_PROFILE_AT := Vector2(548, 338)
 
 var player: Player
 var _hud: Hud
@@ -79,6 +81,7 @@ func _ready() -> void:
 	Progress.pension_changed.connect(_hud.set_pension)
 	_hud.set_condolences(Progress.data.condolences)
 	Progress.condolences_changed.connect(_hud.set_condolences)
+	_add_dev_profile_label()
 	_enter_department(_map.start_id)
 	player.global_position = Player.arrival_position(Departments.RUN_DOOR_CELL + Vector2i.LEFT)
 	_follow_player()
@@ -156,14 +159,35 @@ func _show_queued_notices(delta: float) -> void:
 	_notice_wait = Hud.NOTICE_TIME
 
 
+# While the dev Waiting Room's throwaway profile is on (F4), every department says so in the bottom
+# right corner of the screen, clear of the lobby's dev hint on the left.
+func _add_dev_profile_label() -> void:
+	if not Progress.is_dev_run():
+		return
+	var label := Label.new()
+	label.text = DevStart.PROFILE_LABEL
+	label.position = DEV_PROFILE_AT
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.add_theme_font_size_override("font_size", 12)
+	label.add_theme_color_override("font_color", DEV_HINT_COLOR)
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	label.add_theme_constant_override("outline_size", 3)
+	_hud.add_child(label)
+
+
 # Debug builds only, and never while a panel is open, since the key settings panel listens for keys.
 func _unhandled_input(event: InputEvent) -> void:
 	if not DevStart.is_available() or _panel != null:
 		return
 	var key := event as InputEventKey
-	if key != null and key.pressed and not key.echo and key.physical_keycode == DevStart.KEY:
+	if key == null or not key.pressed or key.echo:
+		return
+	if key.physical_keycode == DevStart.KEY:
 		get_viewport().set_input_as_handled()
 		Game.begin_dev_run()
+	elif key.physical_keycode == DevStart.WAITING_KEY:
+		get_viewport().set_input_as_handled()
+		Game.toggle_dev_waiting_room()
 
 
 func _follow_player() -> void:
@@ -511,7 +535,8 @@ func _draw() -> void:
 	draw_string_outline(font, serving_at, serving_text, HORIZONTAL_ALIGNMENT_LEFT, -1, TICKET_TEXT_SIZE, 3, Color.BLACK)
 	draw_string(font, serving_at, serving_text, HORIZONTAL_ALIGNMENT_LEFT, -1, TICKET_TEXT_SIZE, NOW_SERVING_COLOR)
 	if DevStart.is_available():
-		draw_string(ThemeDB.fallback_font, DEV_HINT_AT, DevStart.HINT, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, DEV_HINT_COLOR)
+		var waiting_hint := DevStart.WAITING_HINT_ON if Progress.is_dev_run() else DevStart.WAITING_HINT
+		draw_string(ThemeDB.fallback_font, DEV_HINT_AT, "%s   %s" % [DevStart.HINT, waiting_hint], HORIZONTAL_ALIGNMENT_LEFT, -1, 10, DEV_HINT_COLOR)
 
 
 # What the full-loop check reads and drives.

@@ -212,7 +212,7 @@ The dev shortcut is being built on `third-floor` by another agent: debug builds 
 - Test: the shortcut's own test file, which gets one new test.
 
 **Interfaces:**
-- Produces: a user argument `--dev-all-departments`. Within the shortcut's throwaway profile only, it marks all six path ids cleared (`floor_1`, `cemetery`, `sunset_shores`, `furnace_works`, `funeral_parlour`, `golden_years_mall`), so every department is open at once from Task 4 onwards.
+- Produces: a user argument `--dev-all-departments`. Within the shortcut's throwaway profile only, it marks all six path ids cleared (`floor_1`, `cemetery`, `sunset_shores`, `furnace_works`, `funeral_parlour`, `golden_years_mall`), so every department is open at once from Task 4 onwards. *Later replaced:* the flag is gone, and F4 in the Waiting Room opens the dev Waiting Room instead (see `waiting-room-untested.md`).
 
 - [x] **Step 1: Check the shortcut has landed.** `git log --oneline third-floor -10` must show the shortcut's commits. If they are not there yet, stop and tell the controller. Do not touch `third-floor`.
 
@@ -656,7 +656,7 @@ Later tasks add the trophy wall (15, 2), the forms counter (11, 3), the ticket m
 
 - [ ] **Step 4: When testing is allowed, run the tests and one full loop.** The smoke driver's opening checks (`open_merchant_ids() == ["black_market", "optometrist"]`, both merchant checks after clears) must pass unchanged.
 
-- [ ] **Step 5: When testing is allowed, screenshot** in a real window, using the shortcut's throwaway profile with `--dev-all-departments`:
+- [ ] **Step 5: When testing is allowed, screenshot** in a real window, in the dev Waiting Room (F4 in a debug build), whose throwaway profile has every department open:
   - the lobby, with the camera scrolling across its 30 cells
   - a closed door's sign
   - every department
@@ -740,7 +740,7 @@ Later tasks add the trophy wall (15, 2), the forms counter (11, 3), the ticket m
 
 - [x] **Step 3: Implement** `Mementos`, `TrophyWall` and the lobby station.
 
-- [ ] **Step 4: When testing is allowed, run the tests, and screenshot the wall** with no frames filled and with all six (`--dev-all-departments`).
+- [ ] **Step 4: When testing is allowed, run the tests, and screenshot the wall** with no frames filled and with all six (the dev Waiting Room, F4).
 
 - [x] **Step 5: Commit** ("Hang a memento on the trophy wall for each floor boss beaten").
 
@@ -1451,7 +1451,7 @@ The four cosmetic ids are created in Task 15. Until then, `collect` stores the i
   - On collecting, show a HUD notice, for example "Paid: 40 Pension, 10 Condolences, and a recipe for Agnes".
   - The panel is opaque and fits 360 px with 12 rows. Use 9 px font rows, or a `ScrollContainer` when more than 8 show.
 
-- [ ] **Step 4: When testing is allowed, run the tests. Screenshot** the panel with every poster showing (`--dev-all-departments`), with one taken, and with one ready to collect.
+- [ ] **Step 4: When testing is allowed, run the tests. Screenshot** the panel with every poster showing (the dev Waiting Room, F4), with one taken, and with one ready to collect.
 
 - [x] **Step 5: Commit** ("Open the Bounty Office with Deputy Dolores and her wanted posters").
 

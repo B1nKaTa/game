@@ -72,13 +72,120 @@ func test_earlier_floors_count_as_cleared_and_both_third_floor_paths_open() -> v
 		assert_true(data.is_unlocked(item.id), item.id)
 
 
-func test_all_departments_flag_clears_every_path_in_the_throwaway_profile_only() -> void:
-	var data := DevStart.progress(Content.upgrades(), Content.recipes(), PackedStringArray([DevStart.ALL_DEPARTMENTS_FLAG]))
+func _waiting_data() -> ProgressData:
+	return DevStart.progress(Content.upgrades(), Content.recipes(), true)
+
+
+func test_the_dev_waiting_room_profile_opens_every_department() -> void:
+	var data := _waiting_data()
 	for id in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "golden_years_mall"]:
 		assert_true(data.has_cleared_path(id), id)
+	for each: Dictionary in Departments.ALL:
+		assert_true(Departments.is_open(each["id"], data), each["id"])
 	assert_eq(data.clears_at(3), _dev_data().clears_at(3), "only path ids are added, not clears")
-	assert_false(_dev_data().has_cleared_path("golden_years_mall"), "without the flag the Mall stays uncleared")
+	assert_false(_dev_data().has_cleared_path("golden_years_mall"), "the Floor 3 run's profile leaves the Mall uncleared")
 	assert_true(PROGRESS_SCRIPT.DEV_PATH != PROGRESS_SCRIPT.SAVE_PATH, "the dev profile has its own file")
+
+
+func test_the_dev_waiting_room_has_its_own_key_and_hint() -> void:
+	assert_true(DevStart.WAITING_KEY != DevStart.KEY, "F3 still starts the Floor 3 run")
+	assert_false(DevStart.WAITING_HINT.is_empty())
+	assert_false(DevStart.WAITING_HINT_ON.is_empty())
+	assert_eq(DevStart.PROFILE_LABEL, "DEV PROFILE")
+
+
+# Release exports are not debug builds, and both ways in check the gate before anything else.
+func test_the_dev_waiting_room_is_gated_on_debug_builds() -> void:
+	assert_false(DevStart.allowed(false))
+	var game := FileAccess.get_file_as_string("res://scripts/autoload/game.gd")
+	var toggle := game.substr(game.find("func toggle_dev_waiting_room"), 120)
+	assert_true(toggle.contains("if not DevStart.is_available():"), "Game checks the gate first")
+	var scene := FileAccess.get_file_as_string("res://scripts/scenes/waiting_room.gd")
+	var keys := scene.substr(scene.find("func _unhandled_input"), 120)
+	assert_true(keys.contains("if not DevStart.is_available()"), "the Waiting Room checks the gate before reading F4")
+
+
+# Every way the Waiting Room's panels and arrival can touch the save, done under the dev profile.
+func _use_the_waiting_room(progress: Node) -> void:
+	progress.add_pension(500)
+	progress.spend(20)
+	progress.buy(Content.upgrades()[0])
+	progress.refile(Content.upgrades()[0])
+	progress.add_condolences(30)
+	progress.spend_condolences(5)
+	progress.mark_departments_seen(["back_room", "decor_office"])
+	progress.mark_coach_met()
+	progress.read_letter("floor_1")
+	progress.retirement_deposit(50)
+	progress.take_brewed_potion()
+	progress.call_ticket()
+
+
+func test_the_dev_waiting_room_never_writes_the_real_save() -> void:
+	var real := ProgressData.new()
+	real.pension = 17
+	real.condolences = 4
+	real.opening_seen = true
+	var progress := _progress_with_real_save(real)
+	var before := _real_save_text()
+	var kept: Dictionary = progress.data.to_dict().duplicate(true)
+	progress.begin_dev_run(_waiting_data(), DEV_PATH)
+	assert_true(progress.is_dev_run())
+	_use_the_waiting_room(progress)
+	assert_eq(_real_save_text(), before, "the real save is untouched while the dev Waiting Room is on")
+	# F4 again ends it, as Game.toggle_dev_waiting_room does.
+	progress.end_dev_run()
+	assert_false(progress.is_dev_run())
+	assert_eq(_real_save_text(), before, "the real save is untouched after leaving")
+	assert_false(FileAccess.file_exists(DEV_PATH), "the dev file is thrown away")
+	assert_eq(progress.data.to_dict(), kept, "the real progress is back exactly as it was")
+	assert_eq(progress.data.pension, 17, "Pension earned or spent there is thrown away")
+	assert_eq(progress.data.condolences, 4, "Condolences earned or spent there are thrown away")
+	progress.free()
+	SaveStore.new(REAL_PATH).delete_all()
+
+
+# F3 in the dev Waiting Room swaps its profile for the Floor 3 run's, and that run ends on return.
+func test_starting_the_floor_3_run_from_the_dev_waiting_room_keeps_the_real_progress() -> void:
+	var real := ProgressData.new()
+	real.pension = 17
+	var progress := _progress_with_real_save(real)
+	var before := _real_save_text()
+	var kept: Dictionary = progress.data.to_dict().duplicate(true)
+	progress.begin_dev_run(_waiting_data(), DEV_PATH)
+	progress.add_pension(40)
+	progress.begin_dev_run(_dev_data(), DEV_PATH)
+	assert_true(progress.is_dev_run())
+	assert_false(progress.data.has_cleared_path("golden_years_mall"), "the Floor 3 run's own profile")
+	progress.start_run()
+	progress.end_dev_run()
+	assert_eq(_real_save_text(), before)
+	assert_eq(progress.data.to_dict(), kept, "the real progress waited, not the dev Waiting Room's")
+	progress.free()
+	SaveStore.new(REAL_PATH).delete_all()
+
+
+func test_quitting_ends_the_dev_waiting_room() -> void:
+	var real := ProgressData.new()
+	real.pension = 17
+	var progress := _progress_with_real_save(real)
+	var before := _real_save_text()
+	var kept: Dictionary = progress.data.to_dict().duplicate(true)
+	progress.begin_dev_run(_waiting_data(), DEV_PATH)
+	_use_the_waiting_room(progress)
+	progress._notification(Node.NOTIFICATION_WM_CLOSE_REQUEST)
+	assert_false(progress.is_dev_run(), "closing the window ends it")
+	assert_false(FileAccess.file_exists(DEV_PATH))
+	assert_eq(progress.data.to_dict(), kept)
+	progress.begin_dev_run(_waiting_data(), DEV_PATH)
+	progress.add_pension(40)
+	progress._exit_tree()
+	assert_false(progress.is_dev_run(), "the game tearing down ends it")
+	assert_false(FileAccess.file_exists(DEV_PATH))
+	assert_eq(progress.data.to_dict(), kept)
+	assert_eq(_real_save_text(), before, "the real save is never written on the way out")
+	progress.free()
+	SaveStore.new(REAL_PATH).delete_all()
 
 
 func test_a_dev_run_never_writes_the_real_save() -> void:
