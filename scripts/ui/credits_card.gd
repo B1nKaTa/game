@@ -7,7 +7,9 @@ extends CanvasLayer
 signal closed
 
 const LAYER := 60
-const SPEED := 22.0
+const SPEED := 30.0
+# Where the first line starts: low on the screen, but already in view.
+const START_Y := 250.0
 const LINE_GAP := 6
 const LINES := [
 	["GRANDPA", 28],
@@ -36,7 +38,7 @@ func _ready() -> void:
 	add_child(MenuStyle.backing())
 	_column = VBoxContainer.new()
 	_column.add_theme_constant_override("separation", LINE_GAP)
-	_column.position = Vector2(0, GameSettings.VIEW.y)
+	_column.position = Vector2(0, START_Y)
 	_column.custom_minimum_size.x = GameSettings.VIEW.x
 	add_child(_column)
 	for line in LINES:
