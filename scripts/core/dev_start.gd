@@ -18,6 +18,10 @@ const BREWED_POTION := "healing_tonic"
 # lock is open as after a third-floor clear.
 const CLEARS_BY_DEPTH := {1: 2, 2: 2, 3: 1}
 const PATHS_CLEARED := ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour"]
+# Launched with `-- --dev-all-departments`, the dev profile also counts the Mall's path cleared, so
+# every Waiting Room department is open at once. It only ever touches the dev run's throwaway progress.
+const ALL_DEPARTMENTS_FLAG := "--dev-all-departments"
+const ALL_PATHS := ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "golden_years_mall"]
 
 
 static func is_available() -> bool:
@@ -29,7 +33,12 @@ static func allowed(debug_build: bool) -> bool:
 	return debug_build
 
 
-static func progress(upgrades: Array[UpgradeDef], recipes: Array[ItemDef]) -> ProgressData:
+static func all_departments(user_args: PackedStringArray) -> bool:
+	return user_args.has(ALL_DEPARTMENTS_FLAG)
+
+
+# user_args are the command line's user arguments (after `--`), passed in so tests can set them.
+static func progress(upgrades: Array[UpgradeDef], recipes: Array[ItemDef], user_args := PackedStringArray()) -> ProgressData:
 	var data := ProgressData.new()
 	data.opening_seen = true
 	data.pension = PENSION
@@ -40,6 +49,10 @@ static func progress(upgrades: Array[UpgradeDef], recipes: Array[ItemDef]) -> Pr
 			data.record_floor_cleared(depth)
 	for id: String in PATHS_CLEARED:
 		data.paths_cleared[id] = true
+	# Only the path ids are added, not more clears, so the third floor's locks stay as they were.
+	if all_departments(user_args):
+		for id: String in ALL_PATHS:
+			data.paths_cleared[id] = true
 	for item in recipes:
 		data.recipes_found[item.id] = true
 		data.items_unlocked[item.id] = true

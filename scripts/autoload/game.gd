@@ -33,7 +33,7 @@ func begin_run() -> void:
 func begin_dev_run() -> void:
 	if not DevStart.is_available():
 		return
-	Progress.begin_dev_run(DevStart.progress(Content.upgrades(), Content.recipes()))
+	Progress.begin_dev_run(DevStart.progress(Content.upgrades(), Content.recipes(), OS.get_cmdline_user_args()))
 	begin_run()
 
 

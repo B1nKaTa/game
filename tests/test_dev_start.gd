@@ -72,6 +72,15 @@ func test_earlier_floors_count_as_cleared_and_both_third_floor_paths_open() -> v
 		assert_true(data.is_unlocked(item.id), item.id)
 
 
+func test_all_departments_flag_clears_every_path_in_the_throwaway_profile_only() -> void:
+	var data := DevStart.progress(Content.upgrades(), Content.recipes(), PackedStringArray([DevStart.ALL_DEPARTMENTS_FLAG]))
+	for id in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "golden_years_mall"]:
+		assert_true(data.has_cleared_path(id), id)
+	assert_eq(data.clears_at(3), _dev_data().clears_at(3), "only path ids are added, not clears")
+	assert_false(_dev_data().has_cleared_path("golden_years_mall"), "without the flag the Mall stays uncleared")
+	assert_true(PROGRESS_SCRIPT.DEV_PATH != PROGRESS_SCRIPT.SAVE_PATH, "the dev profile has its own file")
+
+
 func test_a_dev_run_never_writes_the_real_save() -> void:
 	var real := ProgressData.new()
 	real.pension = 17

@@ -214,9 +214,9 @@ The dev shortcut is being built on `third-floor` by another agent: debug builds 
 **Interfaces:**
 - Produces: a user argument `--dev-all-departments`. Within the shortcut's throwaway profile only, it marks all six path ids cleared (`floor_1`, `cemetery`, `sunset_shores`, `furnace_works`, `funeral_parlour`, `golden_years_mall`), so every department is open at once from Task 4 onwards.
 
-- [ ] **Step 1: Check the shortcut has landed.** `git log --oneline third-floor -10` must show the shortcut's commits. If they are not there yet, stop and tell the controller. Do not touch `third-floor`.
+- [x] **Step 1: Check the shortcut has landed.** `git log --oneline third-floor -10` must show the shortcut's commits. If they are not there yet, stop and tell the controller. Do not touch `third-floor`.
 
-- [ ] **Step 2: Rebase.**
+- [x] **Step 2: Rebase.**
 
   ```powershell
   git -C C:\GameDev\game\.worktrees\waiting-room rebase third-floor
@@ -224,7 +224,7 @@ The dev shortcut is being built on `third-floor` by another agent: debug builds 
 
   The only commit on `waiting-room` is this plan, so no conflict is expected. Then read the shortcut's code and test, and note its seeding function, its profile path and how it is launched.
 
-- [ ] **Step 3: Write the failing test** in the shortcut's test file. Use the shortcut's real seeding function name in place of `seed_profile` below:
+- [x] **Step 3: Write the failing test** in the shortcut's test file. Use the shortcut's real seeding function name in place of `seed_profile` below:
 
   ```gdscript
   func test_all_departments_flag_clears_every_path_in_the_throwaway_profile_only() -> void:
@@ -239,11 +239,11 @@ The dev shortcut is being built on `third-floor` by another agent: debug builds 
 
 - [ ] **Step 4: When testing is allowed, run it to make sure it fails.**
 
-- [ ] **Step 5: Implement.** In the seeding function, when the flag is present, call `data.record_floor_cleared(depth, id)` for each of the six paths at its depth (1, 1, 2, 2, 3, 3). Keep it inside the same `OS.is_debug_build()` gate and the same throwaway profile as the rest of the shortcut. Add one line on the flag to wherever the shortcut documents its launch.
+- [x] **Step 5: Implement.** In the seeding function, when the flag is present, call `data.record_floor_cleared(depth, id)` for each of the six paths at its depth (1, 1, 2, 2, 3, 3). Keep it inside the same `OS.is_debug_build()` gate and the same throwaway profile as the rest of the shortcut. Add one line on the flag to wherever the shortcut documents its launch.
 
 - [ ] **Step 6: When testing is allowed, run the tests.** Expected: `N tests, 0 failed`. Compare the real save's MD5 before and after.
 
-- [ ] **Step 7: Commit.**
+- [x] **Step 7: Commit.**
 
   ```powershell
   git commit -m @'
