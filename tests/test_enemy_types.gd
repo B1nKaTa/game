@@ -5,7 +5,7 @@ const BEHAVIORS := [
 	"charger_behavior", "melee_behavior", "thrower_behavior", "pack_behavior", "burst_shooter_behavior",
 	"exploder_behavior", "shield_behavior", "floor_boss_behavior", "mini_boss_behavior",
 	"riser_behavior", "groundskeeper_behavior", "undertaker_behavior",
-	"caddie_behavior", "club_golfer_behavior", "gopher_behavior"]
+	"caddie_behavior", "club_golfer_behavior", "gopher_behavior", "club_pro_behavior"]
 # The last line of BEHAVIORS is Fairway's End's.
 const ExploderBehavior := preload("res://scripts/actors/behaviors/exploder_behavior.gd")
 const PackBehavior := preload("res://scripts/actors/behaviors/pack_behavior.gd")
