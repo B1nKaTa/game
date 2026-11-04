@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/enemy_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/actors/behaviors/security_sergeant_behavior.gd" id="2"]
+[ext_resource type="Resource" path="res://data/enemies/lost_luggage.tres" id="3"]
+
+[resource]
+script = ExtResource("1")
+id = "sergeant_wanda"
+display_name = "Sergeant Wanda, Airport Security"
+max_hp = 338.462
+speed = 75.0
+pension_drop = 8
+is_boss = true
+body_size = Vector2(32, 40)
+color = Color(0.9, 0.85, 0.3, 1)
+frame_width = 48
+behavior_script = ExtResource("2")
+summon = ExtResource("3")
+mark = "security_cap"
