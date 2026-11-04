@@ -156,6 +156,13 @@ func mark_burned(id: int) -> void:
 	_burn_wait[id] = BURN_EVERY
 
 
+# A burn is fire, so Grandpa takes it as a fire hit, which a memento can shrug off.
+func _burn_hit(target: Node2D) -> bool:
+	if target.has_method("take_fire_hit"):
+		return target.take_fire_hit(BURN_PLAYER_DAMAGE)
+	return target.take_hit(BURN_PLAYER_DAMAGE)
+
+
 func _process(delta: float) -> void:
 	queue_redraw()
 	if _landed:
@@ -189,7 +196,7 @@ func _burn(delta: float) -> void:
 	var target := _source.target
 	if is_instance_valid(target):
 		var id := target.get_instance_id()
-		if burns(global_position, _radius, _source.target_ground(), burn_wait_of(id)) and target.take_hit(BURN_PLAYER_DAMAGE):
+		if burns(global_position, _radius, _source.target_ground(), burn_wait_of(id)) and _burn_hit(target):
 			mark_burned(id)
 	for enemy in get_tree().get_nodes_in_group("enemies"):
 		var id: int = enemy.get_instance_id()

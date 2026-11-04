@@ -63,6 +63,9 @@ func _ready() -> void:
 	add_child(_hud)
 	_hud.set_pension(Progress.data.pension)
 	Progress.pension_changed.connect(_hud.set_pension)
+	if _run.has_perk(Mementos.START_PENSION_PERK):
+		Progress.add_pension(Mementos.START_PENSION)
+		_hud.show_notice("Your name badge still works: +%d Pension" % Mementos.START_PENSION)
 	if Progress.is_dev_run():
 		# A dev run skips straight to its landing, with that depth's Crossroads beyond it.
 		_depth = DevStart.START_DEPTH
@@ -194,6 +197,7 @@ func _enter_room(target_id: int) -> void:
 	if _room_view != null:
 		_room_view.clear_passing_effects()
 		remove_child(_room_view)
+	var first_visit := not _progress.is_visited(target_id)
 	_progress.enter(target_id)
 	_current_id = target_id
 	_room_view = _room_views.get(target_id)
@@ -207,6 +211,18 @@ func _enter_room(target_id: int) -> void:
 	_mini_map.set_current(target_id)
 	_big_map.set_current(target_id)
 	_follow_player()
+	if first_visit:
+		_tip_hat(_map.room(target_id))
+
+
+# The top hat memento: a pill on first walking into a boss room.
+func _tip_hat(room: FloorRoom) -> void:
+	if not _run.has_perk(Mementos.BOSS_ROOM_PILL_PERK):
+		return
+	if room.room_type != RoomLayout.TYPE_MINI_BOSS and room.room_type != RoomLayout.TYPE_FLOOR_BOSS:
+		return
+	_run.health.heal(Mementos.BOSS_ROOM_HEAL)
+	_hud.show_notice("You tip your hat. +%d pill" % Mementos.BOSS_ROOM_HEAL)
 
 
 func _process(_delta: float) -> void:

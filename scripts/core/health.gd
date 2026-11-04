@@ -9,6 +9,9 @@ const INVULN_TIME := 0.8
 var max_pills: int
 var pills: int
 var _invuln := 0.0
+# Extra pills the first heal of a run restores, as the bedpan memento gives. Spent by the first heal
+# that finds him short of pills, so a heal at full health never wastes it.
+var first_heal_bonus := 0
 
 
 func _init(start_pills: int) -> void:
@@ -27,10 +30,20 @@ func hit(amount: int) -> bool:
 	return true
 
 
+# A hit that would have landed but is shrugged off: no pill is lost, and he is safe for as long as
+# after a hit, so the same hazard cannot land on the very next frame.
+func shrug_off() -> void:
+	_invuln = INVULN_TIME
+
+
 func heal(amount: int) -> void:
 	if is_dead():
 		return
-	pills = mini(pills + amount, max_pills)
+	var bonus := 0
+	if first_heal_bonus > 0 and amount > 0 and pills < max_pills:
+		bonus = first_heal_bonus
+		first_heal_bonus = 0
+	pills = mini(pills + amount + bonus, max_pills)
 	changed.emit()
 
 

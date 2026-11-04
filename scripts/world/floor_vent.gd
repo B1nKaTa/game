@@ -160,7 +160,7 @@ func _burn() -> void:
 		var id: int = player.get_instance_id()
 		if _hit.has(id) or not player.has_method("feet"):
 			continue
-		if covers(global_position, player.feet().global_position) and player.take_hit(PLAYER_DAMAGE):
+		if covers(global_position, player.feet().global_position) and player.take_fire_hit(PLAYER_DAMAGE):
 			_hit[id] = true
 	for enemy in get_tree().get_nodes_in_group("enemies"):
 		var id: int = enemy.get_instance_id()

@@ -16,6 +16,8 @@ var unlocked_items := {}
 var potion: PotionDef
 var buff: PotionDef
 var buff_left := 0.0
+# The memento perks this run carries, by Mementos perk id. Set before apply_perks.
+var perks: Dictionary = {}
 var _promised := {}
 var _offered_recipes := {}
 var _upgrades: Array[UpgradeDef]
@@ -28,6 +30,20 @@ func _init(upgrades: Array[UpgradeDef], levels: Dictionary) -> void:
 	stats = PlayerStats.compute(_upgrades, _levels, items)
 	health = Health.new(stats.max_pills)
 	health.changed.connect(changed.emit)
+
+
+func has_perk(id: String) -> bool:
+	return perks.has(id)
+
+
+# Hands the perks that live on his health to it. Call once, after setting perks.
+func apply_perks() -> void:
+	health.first_heal_bonus = Mementos.FIRST_HEAL_EXTRA if has_perk(Mementos.FIRST_HEAL_PERK) else 0
+
+
+# How much likelier breakables are to hold a coin.
+func prop_coin_mult() -> float:
+	return Mementos.PROP_COIN_MULT if has_perk(Mementos.PROP_COINS_PERK) else 1.0
 
 
 # Recipe items only join the rotation once they have been crafted.

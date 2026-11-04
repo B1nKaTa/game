@@ -328,13 +328,13 @@ func _create_props(palette: RoomPalette) -> void:
 	for cell in layout.cells_of(RoomLayout.SYMBOL_ROCK):
 		var rock := RockBlock.new()
 		rock.palette = palette
-		rock.hides_coin = RoomRules.rock_hides_coin(_rng.randf())
+		rock.hides_coin = RoomRules.rock_hides_coin(_prop_coin_roll())
 		_place_prop(rock, cell)
 		rock.broken.connect(_on_rock_broken.bind(rock.hides_coin, cell))
 	for cell in layout.cells_of(RoomLayout.SYMBOL_GRAVESTONE):
 		var stone := Gravestone.new()
 		stone.palette = palette
-		stone.hides_coin = RoomRules.gravestone_hides_coin(_rng.randf())
+		stone.hides_coin = RoomRules.gravestone_hides_coin(_prop_coin_roll())
 		_place_prop(stone, cell)
 		stone.broken.connect(_on_rock_broken.bind(stone.hides_coin, cell))
 	for cell in layout.cells_of(RoomLayout.SYMBOL_DEAD_TREE):
@@ -357,13 +357,13 @@ func _create_props(palette: RoomPalette) -> void:
 				_:
 					furniture = CareBed.new()
 			furniture.palette = palette
-			furniture.hides_coin = RoomRules.furniture_hides_coin(_rng.randf())
+			furniture.hides_coin = RoomRules.furniture_hides_coin(_prop_coin_roll())
 			_place_prop(furniture, cell)
 			furniture.broken.connect(_on_rock_broken.bind(furniture.hides_coin, cell))
 	for cell in layout.cells_of(RoomLayout.SYMBOL_COAL_HEAP):
 		var heap := CoalHeap.new()
 		heap.palette = palette
-		heap.hides_coin = RoomRules.coal_heap_hides_coin(_rng.randf())
+		heap.hides_coin = RoomRules.coal_heap_hides_coin(_prop_coin_roll())
 		_place_prop(heap, cell)
 		heap.broken.connect(_on_rock_broken.bind(heap.hides_coin, cell))
 	for symbol: String in [RoomLayout.SYMBOL_BARREL, RoomLayout.SYMBOL_WHEELCHAIR, RoomLayout.SYMBOL_TROLLEY, RoomLayout.SYMBOL_COAL_SACK, RoomLayout.SYMBOL_CRATE]:
@@ -478,6 +478,8 @@ func _create_decor(palette: RoomPalette) -> void:
 func _on_block_broken(at: Vector2) -> void:
 	_mark_broken(_cell_of(at))
 	var drop := RoomRules.block_drop(_rng.randf())
+	if drop == RoomRules.DROP_NONE and _bonus_coin(RoomRules.BLOCK_COIN_CHANCE):
+		drop = RoomRules.DROP_COIN
 	if drop == RoomRules.DROP_COIN:
 		_drop_coin(at, _floor_def.prop_pension)
 	else:
@@ -493,10 +495,25 @@ func _on_rock_broken(at: Vector2, hides_coin: bool, cell: Vector2i) -> void:
 func _on_barrel_broken(at: Vector2, cell: Vector2i) -> void:
 	_mark_broken(cell)
 	var drop := RoomRules.barrel_drop(_rng.randf())
+	if drop == RoomRules.DROP_NONE and _bonus_coin(RoomRules.BARREL_COIN_CHANCE):
+		drop = RoomRules.DROP_COIN
 	if drop == RoomRules.DROP_COIN:
 		_drop_coin(at, _floor_def.prop_pension)
 	else:
 		_drop_consumable(at, drop)
+
+
+# A breakable's coin roll, which the bent shovel memento makes likelier: a roll under a coin chance
+# hides a coin, so dividing the roll multiplies every such chance.
+func _prop_coin_roll() -> float:
+	return _rng.randf() / _run.prop_coin_mult()
+
+
+# Blocks and barrels roll coins, keys and Thermoses on one roll, so the bent shovel adds its share of
+# coins only where they would have dropped nothing, and leaves the other drops as they were.
+func _bonus_coin(coin_chance: float) -> bool:
+	var mult := _run.prop_coin_mult()
+	return mult > 1.0 and _rng.randf() < coin_chance * (mult - 1.0)
 
 
 func _mark_broken(cell: Vector2i) -> void:
@@ -511,7 +528,7 @@ func _on_vase_broken(_at: Vector2, cell: Vector2i) -> void:
 
 func _on_pile_broken(at: Vector2, cell: Vector2i) -> void:
 	_mark_broken(cell)
-	if RoomRules.pile_drops_coin(_rng.randf()):
+	if RoomRules.pile_drops_coin(_prop_coin_roll()):
 		_drop_coin(at, _floor_def.prop_pension)
 
 
@@ -643,6 +660,11 @@ func _add_pickup(at: Vector2, label: String, color: Color, on_take: Callable, ne
 
 func _create_rewards() -> void:
 	var cells := _room.layout.cells_of("I")
+	# The empty sack memento lays one more item out in a treasure room, on open floor near the others.
+	if _room.room_type == RoomLayout.TYPE_TREASURE and not cells.is_empty() and _run.has_perk(Mementos.TREASURE_CHOICE_PERK):
+		var extra := _room.layout.open_spots_near(cells, cells)
+		for i in mini(Mementos.TREASURE_EXTRA, extra.size()):
+			cells.append(extra[i])
 	if not cells.is_empty():
 		_create_item_choice(cells)
 	for cell in _room.layout.cells_of("H"):

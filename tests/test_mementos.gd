@@ -45,3 +45,77 @@ func test_the_frames_keep_clear_of_the_north_door_and_the_lanterns() -> void:
 	for x in blocked:
 		var cell_left := float(x * RoomBackdrop.TILE)
 		assert_true(right <= cell_left or left >= cell_left + RoomBackdrop.TILE, "column %d" % x)
+
+
+func _plain_run() -> RunState:
+	var none: Array[UpgradeDef] = []
+	return RunState.new(none, {})
+
+
+func _run_with(perk: String) -> RunState:
+	var run := _plain_run()
+	run.perks = {perk: true}
+	run.apply_perks()
+	return run
+
+
+func test_the_bedpan_adds_one_pill_to_the_first_heal_only() -> void:
+	var run := _run_with(Mementos.FIRST_HEAL_PERK)
+	run.health.hit(3)
+	run.health.heal(1)
+	assert_eq(run.health.pills, PlayerStats.BASE_PILLS - 3 + 2)
+	run.health.heal(1)
+	assert_eq(run.health.pills, PlayerStats.BASE_PILLS - 3 + 3)
+
+
+func test_a_heal_on_full_pills_does_not_spend_the_bedpan() -> void:
+	var run := _run_with(Mementos.FIRST_HEAL_PERK)
+	run.health.heal(1)
+	run.health.hit(2)
+	run.health.heal(1)
+	assert_eq(run.health.pills, PlayerStats.BASE_PILLS)
+
+
+func test_without_the_bedpan_a_heal_is_plain() -> void:
+	var run := _plain_run()
+	run.apply_perks()
+	run.health.hit(3)
+	run.health.heal(1)
+	assert_eq(run.health.pills, PlayerStats.BASE_PILLS - 2)
+
+
+func test_the_coal_shovel_shrugs_off_every_second_fire_hit() -> void:
+	var player := Player.new()
+	player.setup(_run_with(Mementos.FIRE_PERK))
+	assert_true(player.take_fire_hit(1))
+	player.run.health.tick(Health.INVULN_TIME + 0.1)
+	assert_false(player.take_fire_hit(1), "the second is shrugged off")
+	assert_eq(player.run.health.pills, PlayerStats.BASE_PILLS - 1, "a shrugged hit costs nothing")
+	player.run.health.tick(Health.INVULN_TIME + 0.1)
+	assert_true(player.take_fire_hit(1))
+	player.free()
+
+
+func test_a_fire_hit_that_would_miss_does_not_use_up_the_shrug() -> void:
+	var player := Player.new()
+	player.setup(_run_with(Mementos.FIRE_PERK))
+	assert_true(player.take_fire_hit(1))
+	assert_false(player.take_fire_hit(1), "still safe from the first")
+	player.run.health.tick(Health.INVULN_TIME + 0.1)
+	assert_false(player.take_fire_hit(1), "the shrug was kept for a hit that would land")
+	assert_eq(player.run.health.pills, PlayerStats.BASE_PILLS - 1)
+	player.free()
+
+
+func test_without_the_coal_shovel_every_fire_hit_lands() -> void:
+	var player := Player.new()
+	player.setup(_plain_run())
+	assert_true(player.take_fire_hit(1))
+	player.run.health.tick(Health.INVULN_TIME + 0.1)
+	assert_true(player.take_fire_hit(1))
+	player.free()
+
+
+func test_the_bent_shovel_raises_prop_coin_odds() -> void:
+	assert_near(_run_with(Mementos.PROP_COINS_PERK).prop_coin_mult(), 1.25)
+	assert_near(_plain_run().prop_coin_mult(), 1.0)

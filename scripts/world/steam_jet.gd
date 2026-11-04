@@ -82,7 +82,11 @@ func _process(delta: float) -> void:
 		return
 	if hits(_source.target_ground()):
 		_has_hit = true
-		_source.hit_target(_source.attack_damage(_damage))
+		# Steam is fire, so Grandpa takes it as a fire hit, which a memento can shrug off.
+		if _source.target.has_method("take_fire_hit"):
+			_source.target.take_fire_hit(_source.attack_damage(_damage))
+		else:
+			_source.hit_target(_source.attack_damage(_damage))
 
 
 func _draw() -> void:

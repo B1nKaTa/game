@@ -51,6 +51,9 @@ var _feet: Marker2D
 # A gust that shoves him along for a while, as the bellows do. A dodge breaks free of it.
 var _push := Vector2.ZERO
 var _push_left := 0.0
+# Whether the next fire hit that would land is shrugged off, with the coal shovel. Only a fire hit
+# that lands sets it, and only a shrugged one clears it.
+var _fire_shrug_next := false
 
 
 static func arrival_position(cell: Vector2i) -> Vector2:
@@ -101,6 +104,22 @@ func take_hit(amount: int) -> bool:
 		if _visual != null:
 			_visual.flash(HURT_COLOR, HurtLook.RED_TIME)
 		hurt.emit()
+	return landed
+
+
+# A hit from fire: vents, burns and steam. With the coal shovel memento every second fire hit that
+# would land is shrugged off instead, and a shrugged hit returns false like any other that misses.
+func take_fire_hit(amount: int) -> bool:
+	if not run.has_perk(Mementos.FIRE_PERK):
+		return take_hit(amount)
+	var would_land := not _dodge.is_active() and not run.health.is_dead() and not run.health.is_invulnerable()
+	if would_land and _fire_shrug_next:
+		_fire_shrug_next = false
+		run.health.shrug_off()
+		return false
+	var landed := take_hit(amount)
+	if landed:
+		_fire_shrug_next = true
 	return landed
 
 

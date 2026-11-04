@@ -759,7 +759,7 @@ Later tasks add the trophy wall (15, 2), the forms counter (11, 3), the ticket m
   - `Player.take_fire_hit(amount: int) -> bool`. With the perk, every second call returns `false` and does nothing. Otherwise it calls `take_hit`.
   - `RoomView._prop_coin_roll() -> float`: `_rng.randf() / _run.prop_coin_mult()`. Every breakable's coin roll goes through it.
 
-- [ ] **Step 1: Write the failing tests:**
+- [x] **Step 1: Write the failing tests:**
 
   ```gdscript
   func _run_with(perk: String) -> RunState:
@@ -806,7 +806,7 @@ Later tasks add the trophy wall (15, 2), the forms counter (11, 3), the ticket m
 
 - [ ] **Step 2: When testing is allowed, run them to make sure they fail.**
 
-- [ ] **Step 3: Implement.**
+- [x] **Step 3: Implement.**
   - **`Progress.make_run()`:** set `run.perks = Mementos.perks(data)`, then `run.apply_perks()`.
   - **Name badge:** in `floor_scene._ready`, after `Progress.start_run()`, when `_run.has_perk(START_PENSION_PERK)`, call `Progress.add_pension(Mementos.START_PENSION)` and show the notice "Your name badge still works: +10 Pension".
   - **Bent shovel:** in `room_view.gd`, route every `_rng.randf()` that decides a prop's coin through `_prop_coin_roll()`. Find them by reading `_create_props` and the `_on_*_broken` handlers with their `RoomRules.*_COIN_CHANCE` rolls. Only coin rolls change, not bomb or item rolls.
@@ -820,7 +820,7 @@ Later tasks add the trophy wall (15, 2), the forms counter (11, 3), the ticket m
 
 - [ ] **Step 4: When testing is allowed, run the tests and one full loop.**
 
-- [ ] **Step 5: Commit** ("Give each memento its perk in runs").
+- [x] **Step 5: Commit** ("Give each memento its perk in runs").
 
 ---
 
