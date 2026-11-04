@@ -624,7 +624,7 @@ func _on_enemy_defeated(enemy: Enemy) -> void:
 	enemy_died.emit(enemy.position, enemy.def.is_boss)
 	var spot := clear_spot(enemy.position)
 	if enemy.coin_value() > 0:
-		_drop_coin(spot, enemy.coin_value(), RunState.PENSION_REWARD if enemy.def.is_boss else RunState.PENSION_ENEMY)
+		_drop_coin(spot, enemy.coin_value(), RunState.PENSION_BOSS if enemy.def.is_boss else RunState.PENSION_ENEMY)
 	_last_death_at = spot
 	if enemy.def.drops_key and not enemy.is_summon:
 		_drop_consumable(spot, RoomRules.DROP_KEY)

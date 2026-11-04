@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="UpgradeDef" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/upgrade_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/content/stat_effect.gd" id="2"]
+
+[sub_resource type="Resource" id="Resource_a"]
+script = ExtResource("2")
+boss_pension_bonus = 0.1
+
+[sub_resource type="Resource" id="Resource_b"]
+script = ExtResource("2")
+move_speed_bonus = 0.05
+
+[resource]
+script = ExtResource("1")
+id = "golden_handshake"
+display_name = "Golden Handshake"
+description = "Bosses pay more Pension. The hand is cold, but the gold is real."
+prices = PackedInt32Array(250, 500, 900)
+merchant = "severance_desk"
+boss_pension_bonus = 0.1
+milestone_level = 2
+option_a_name = "Hush Money"
+option_a_text = "Another 10% more Pension from bosses."
+option_a = SubResource("Resource_a")
+option_b_name = "Company Car"
+option_b_text = "You walk 5% faster."
+option_b = SubResource("Resource_b")

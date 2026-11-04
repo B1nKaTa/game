@@ -220,3 +220,45 @@ func test_the_blast_radius_lives_in_player_stats() -> void:
 	assert_near(PlayerStats.compute(none, {}, no_items).blast_radius, PlayerStats.BASE_BLAST_RADIUS)
 	var source := FileAccess.get_file_as_string("res://scripts/core/player_stats.gd")
 	assert_false(source.contains("Thermos."), "PlayerStats never reads a Thermos constant")
+
+
+# --- the deep floors' forms ---
+
+func test_the_golf_glove_charges_faster_by_level() -> void:
+	assert_near(_stats("golf_glove", 1).charge_time_mult, 0.9)
+	assert_near(_stats("golf_glove", 3).charge_time_mult, 0.7)
+	assert_eq(_shipped("golf_glove").merchant, "pro_shop")
+	assert_eq(_shipped("golf_glove").prices, PackedInt32Array([160, 320, 560]))
+
+
+func test_the_golf_gloves_options() -> void:
+	assert_near(_stats("golf_glove", 2, "a").charge_damage_mult, 1.1)
+	assert_near(_stats("golf_glove", 2, "b").swing_speed, 1.1)
+	assert_near(_run("golf_glove", 2, "a").charge_damage_mult(), 1.1)
+
+
+func test_frequent_flyer_miles_cut_shop_prices_by_level() -> void:
+	assert_near(_stats("frequent_flyer_miles", 1).shop_discount, 0.05)
+	assert_near(_stats("frequent_flyer_miles", 3, "b").shop_discount, 0.15)
+	assert_near(_stats("frequent_flyer_miles", 2, "a").shop_discount, 0.15)
+	assert_eq(_stats("frequent_flyer_miles", 2, "b").bonus_bombs, 1)
+	assert_eq(_shipped("frequent_flyer_miles").merchant, "duty_free")
+	assert_eq(_shipped("frequent_flyer_miles").prices, PackedInt32Array([200, 400, 700]))
+
+
+func test_the_golden_handshake_raises_boss_pension_by_level() -> void:
+	assert_near(_stats("golden_handshake", 3, "b").boss_pension_mult, 1.3)
+	assert_near(_stats("golden_handshake", 2, "a").boss_pension_mult, 1.3)
+	assert_near(_stats("golden_handshake", 2, "b").move_speed, PlayerStats.BASE_SPEED * 1.05)
+	var run := _run("golden_handshake", 1, "")
+	assert_eq(run.pension_amount(10, RunState.PENSION_BOSS), 11)
+	assert_eq(run.pension_amount(10, RunState.PENSION_REWARD), 10, "only bosses")
+	assert_eq(run.pension_amount(10, RunState.PENSION_ENEMY), 10)
+	assert_eq(_shipped("golden_handshake").merchant, "severance_desk")
+	assert_eq(_shipped("golden_handshake").prices, PackedInt32Array([250, 500, 900]))
+
+
+# A boss's Pension is still a reward for the Bribed Clerk's Fat Envelopes.
+func test_boss_pension_counts_as_a_reward_too() -> void:
+	var run := _run("bribed_clerk", 2, "b")
+	assert_eq(run.pension_amount(10, RunState.PENSION_BOSS), run.pension_amount(10, RunState.PENSION_REWARD))

@@ -10,6 +10,10 @@ const MIN_SWING_SPEED := 0.5
 const MAX_SWING_SPEED := 2.0
 # A form option never brings the dentures back sooner than this.
 const MIN_TEETH_RETURN := 1.0
+# A charged swing never charges in less than this share of its usual time, and a shop never cuts its
+# prices by more than this share.
+const MIN_CHARGE_TIME := 0.5
+const MAX_SHOP_DISCOUNT := 0.5
 # Below this share of its health an enemy shows its weak spot, which the Bifocals option hits harder.
 const WOUNDED_BELOW := 0.5
 # How far a Thermos blast reaches before the Big Bang option widens it. Thermos reads it from here, so
@@ -49,6 +53,19 @@ var reveals_secrets := false
 var blast_radius := BASE_BLAST_RADIUS
 # Thermoses added at the start of each run.
 var bonus_bombs := 0
+# The deep floors' stats. A charged swing's charge time and damage, as multiples of their usual.
+var charge_time_mult := 1.0
+var charge_damage_mult := 1.0
+# The share taken off a run's shop prices.
+var shop_discount := 0.0
+# What Pension from bosses is multiplied by, on top of pension_mult and reward_pension_mult.
+var boss_pension_mult := 1.0
+# The chance that a swing does double damage.
+var lucky_swing_chance := 0.0
+# Lethal hits survived on one pill, once more on each floor.
+var floor_lethal_saves := 0
+# The share of a run's Pension paid again on dying in it.
+var death_pension_bonus := 0.0
 
 
 # choices maps a form id to its milestone option. A form at or past its milestone with no entry
@@ -78,6 +95,13 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 	var radius := 0.0
 	var bombs := 0
 	var return_cut := 0.0
+	var charge_cut := 0.0
+	var charge_damage := 0.0
+	var discount := 0.0
+	var boss_pension := 0.0
+	var lucky := 0.0
+	var lethal_saves := 0
+	var death_pension := 0.0
 	var effects: Array = []
 	for upgrade in upgrades:
 		var level := int(levels.get(upgrade.id, 0))
@@ -107,6 +131,13 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 		radius += effect.blast_radius_bonus * count
 		bombs += effect.bonus_bombs * count
 		return_cut += effect.teeth_return_cut * count
+		charge_cut += effect.charge_time_cut * count
+		charge_damage += effect.charge_damage_bonus * count
+		discount += effect.shop_discount * count
+		boss_pension += effect.boss_pension_bonus * count
+		lucky += effect.lucky_swing_chance * count
+		lethal_saves += effect.floor_lethal_saves * count
+		death_pension += effect.death_pension_bonus * count
 		if count > 0:
 			bites = maxi(bites, effect.bites_through)
 		if effect is UpgradeDef and effect.thermos_damage_bonus > 0.0:
@@ -146,9 +177,26 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 	stats.reveals_secrets = secrets
 	stats.blast_radius = BASE_BLAST_RADIUS * (1.0 + radius)
 	stats.bonus_bombs = bombs
+	stats.charge_time_mult = maxf(1.0 - charge_cut, MIN_CHARGE_TIME)
+	stats.charge_damage_mult = 1.0 + charge_damage
+	stats.shop_discount = clampf(discount, 0.0, MAX_SHOP_DISCOUNT)
+	stats.boss_pension_mult = 1.0 + boss_pension
+	stats.lucky_swing_chance = clampf(lucky, 0.0, 1.0)
+	stats.floor_lethal_saves = lethal_saves
+	stats.death_pension_bonus = death_pension
 	return stats
 
 
 # What a hit does once the weak spot is counted: wounded_mult applies only below WOUNDED_BELOW health.
 static func strike_damage(base: float, hp_fraction: float, wounded_mult: float) -> float:
 	return base * wounded_mult if hp_fraction < WOUNDED_BELOW else base
+
+
+# A hit on a boss, with the gold gavel's mult. Anything else takes the hit as it is.
+static func boss_damage(base: float, is_boss: bool, boss_mult: float) -> float:
+	return base * boss_mult if is_boss else base
+
+
+# A swing's damage after the Lucky Tee's roll, in [0, 1): double when the roll falls under the chance.
+static func lucky_damage(base: float, chance: float, roll: float) -> float:
+	return base * 2.0 if roll < chance else base

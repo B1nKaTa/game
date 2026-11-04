@@ -6,6 +6,8 @@ const HOLD_DELAY := 0.2
 const DAMAGE := 30
 const KNOCKBACK := 220.0
 
+# How long this charge takes, which the Golf Glove shortens. Never below HOLD_DELAY's worth.
+var charge_time := CHARGE_TIME
 var _holding := false
 var _time := 0.0
 
@@ -16,7 +18,7 @@ func start() -> void:
 
 
 func release() -> bool:
-	var ready := _holding and _time >= CHARGE_TIME
+	var ready := _holding and _time >= charge_time
 	cancel()
 	return ready
 
@@ -40,4 +42,4 @@ func is_charging() -> bool:
 
 
 func progress() -> float:
-	return clampf((_time - HOLD_DELAY) / (CHARGE_TIME - HOLD_DELAY), 0.0, 1.0)
+	return clampf((_time - HOLD_DELAY) / maxf(charge_time - HOLD_DELAY, 0.01), 0.0, 1.0)

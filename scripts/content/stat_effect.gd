@@ -38,3 +38,18 @@ extends Resource
 @export var bonus_bombs: int = 0
 # Seconds cut from how long the thrown dentures lie before coming back.
 @export var teeth_return_cut: float = 0.0
+# The Waiting Room's deep-floor forms and the deep floors' poster rewards.
+# How much quicker a charged swing charges, as a fraction of its usual time.
+@export var charge_time_cut: float = 0.0
+# Extra damage a charged swing does, as a fraction of its base.
+@export var charge_damage_bonus: float = 0.0
+# How much cheaper everything in a run's shop is, as a fraction of its price.
+@export var shop_discount: float = 0.0
+# Extra Pension from bosses, on top of the general and reward bonuses.
+@export var boss_pension_bonus: float = 0.0
+# The chance that a swing does double damage.
+@export var lucky_swing_chance: float = 0.0
+# How many hits that would finish him leave him one pill instead, once more on every floor.
+@export var floor_lethal_saves: int = 0
+# The share of a run's Pension paid again when he dies in it.
+@export var death_pension_bonus: float = 0.0

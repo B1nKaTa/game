@@ -174,6 +174,7 @@ func test_the_deep_floors_counters_open_on_their_own_floors() -> void:
 		assert_false(MerchantRules.is_open(merchant, _data()), "%s waits" % id)
 		assert_true(MerchantRules.is_open(merchant, _data([cases[id]])), "%s opens" % id)
 		assert_eq(Departments.entry(merchant["department"])["opens_on"], cases[id], "%s stands in its floor's department" % id)
+		assert_false(Content.upgrades_for(id).is_empty(), "%s sells a form" % id)
 
 
 func test_the_plaque_counts_head_office_clears() -> void:

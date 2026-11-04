@@ -180,3 +180,25 @@ func test_summons_never_land_on_the_plan_station() -> void:
 	var layout := RoomLayout.new()
 	layout.rows = PackedStringArray(["###", "#P.", "###"])
 	assert_eq(layout.nearest_floor_cell(Vector2i(1, 1)), Vector2i(2, 1))
+
+
+func test_a_discount_takes_its_share_off_and_never_goes_below_one() -> void:
+	assert_eq(ShopRules.price_after(60, 0.0), 60)
+	assert_eq(ShopRules.price_after(60, 0.15), 51)
+	assert_eq(ShopRules.price_after(20, 0.15), 17)
+	assert_eq(ShopRules.price_after(25, 0.15), 21)
+	assert_eq(ShopRules.price_after(1, 0.5), 1)
+
+
+func test_frequent_flyer_miles_cut_every_price_in_the_stock() -> void:
+	var miles: UpgradeDef = load("res://data/upgrades/frequent_flyer_miles.tres")
+	var upgrades: Array[UpgradeDef] = [miles]
+	var run := RunState.new(upgrades, {miles.id: 3})
+	var plain := ShopRules.stock(Content.items(), _run(), _rng())
+	var cheap := ShopRules.stock(Content.items(), run, _rng())
+	# Three levels and the milestone's Air Miles, which a missing choice reads as.
+	assert_near(run.stats.shop_discount, 0.2)
+	assert_eq(plain.size(), cheap.size())
+	for i in plain.size():
+		assert_eq(cheap[i]["price"], ShopRules.price_after(plain[i]["price"], 0.2), str(i))
+		assert_true(cheap[i]["price"] < plain[i]["price"], str(i))

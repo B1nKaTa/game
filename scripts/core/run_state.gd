@@ -10,6 +10,8 @@ const YARD_SUPPLY := MAX_CONSUMABLE
 # Where Pension comes from, for the Bribed Clerk's options. Anything else gets the general rate only.
 const PENSION_ENEMY := "enemy"
 const PENSION_REWARD := "reward"
+# A boss's own Pension: a reward for the Bribed Clerk's options, and the Golden Handshake's on top.
+const PENSION_BOSS := "boss"
 
 var stats: PlayerStats
 var health: Health
@@ -236,4 +238,11 @@ func pension_amount(base: int, source := "") -> int:
 		mult = stats.enemy_pension_mult
 	elif source == PENSION_REWARD:
 		mult = stats.reward_pension_mult
+	elif source == PENSION_BOSS:
+		mult = stats.reward_pension_mult * stats.boss_pension_mult
 	return ceili(base * stats.pension_mult * mult)
+
+
+# What a charged swing's damage is multiplied by, before the cane's own damage_mult.
+func charge_damage_mult() -> float:
+	return stats.charge_damage_mult

@@ -195,3 +195,17 @@ func test_a_longer_warning_window_starts_filling_earlier() -> void:
 	telegraph.tick(0.4)
 	assert_near(telegraph.warning_progress(0.5), 0.0, "default window not open yet")
 	assert_true(telegraph.warning_progress(0.8) > 0.0, "hearing aid window is open")
+
+
+# The Golf Glove shortens the charge, and its ring fills in the shorter time.
+func test_a_shorter_charge_time_is_ready_sooner() -> void:
+	var charge := ChargeSwing.new()
+	charge.charge_time = ChargeSwing.CHARGE_TIME * 0.7
+	charge.start()
+	charge.tick(ChargeSwing.CHARGE_TIME * 0.7 + 0.01)
+	assert_near(charge.progress(), 1.0)
+	assert_true(charge.release())
+	var plain := ChargeSwing.new()
+	plain.start()
+	plain.tick(ChargeSwing.CHARGE_TIME * 0.7 + 0.01)
+	assert_false(plain.release(), "the usual charge is not ready yet")
