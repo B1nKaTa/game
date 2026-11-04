@@ -1,6 +1,8 @@
 extends Node
 
-const TIMEOUT := 1080.0
+# Two runs down all five depths take far longer than the old three. Raise it again as paths get their
+# real content, if a run's time comes near it.
+const TIMEOUT := 1800.0
 const MAX_STEPS := 150
 const VIEW := Vector2(640, 360)
 const AIM_TOLERANCE := 1.5
@@ -54,6 +56,8 @@ var _paths_cleared := 0
 var _boss_choice_count := -1
 var _boss_choices_checked := 0
 var _landings_reached := 0
+# The deepest depth, read from the floor scene on the first run, so the walk follows its PATHS_BY_DEPTH.
+var _last_depth := 0
 var _checked_chests := false
 var _mimics_beaten_in_loop := 0
 var _checked_arcade := false
@@ -83,24 +87,26 @@ func _run() -> void:
 	_take_first_bounty()
 	var pension_before: int = Progress.data.pension
 
-	# The open paths of every depth: the Records Basement, Sunset Shores, then the Funeral Parlour.
-	await _clear_three_floors(RECORDS_PATH, OPEN_DEEP_PATH, OPEN_DEEP_PATH)
+	# The open (west) path of every depth: the Records Basement, Sunset Shores, the Funeral Parlour and
+	# so on down to the last depth.
+	await _clear_every_depth(OPEN_DEEP_PATH)
 	_check(Progress.data.pension > pension_before, "Pension was earned during the run")
 	_check(_checked_chests, "every kind of chest was opened in the chest room")
 	_check(_checked_arcade, "every Arcade game was played through its overlay")
 	await _wait(2.5)
 	_expect_scene("WaitingRoom")
 	_check(Progress.data.floors_cleared == 1, "clearing the first floor is counted")
-	_check(Progress.data.clears_at(2) == 1, "clearing a second floor is counted apart")
-	_check(Progress.data.clears_at(3) == 1, "clearing a third floor is counted apart")
-	_check(Progress.data.has_cleared_path("floor_1") and Progress.data.has_cleared_path("sunset_shores") and Progress.data.has_cleared_path("funeral_parlour"), "every cleared path is remembered")
+	for depth in range(2, _last_depth + 1):
+		_check(Progress.data.clears_at(depth) == 1, "clearing a floor at depth %d is counted apart" % depth)
+	for depth: int in ProgressData.FIRST_PATH_BY_DEPTH:
+		_check(Progress.data.has_cleared_path(ProgressData.FIRST_PATH_BY_DEPTH[depth]), "every cleared path is remembered, depth %d" % depth)
 	_check(Progress.data.legacy_clears == 0, "a fresh save keeps no old clears")
 	var ids: Array = get_tree().current_scene.open_merchant_ids()
 	_check(ids.has("potion_merchant") and not ids.has("bomb_merchant"), "a second-floor clear brings the potion merchant, not the bomb merchant")
 	await _check_bounty_collected(get_tree().current_scene)
 	await _check_decor(get_tree().current_scene)
 	Progress.reload()
-	_check(Progress.data.floors_cleared == 1 and Progress.data.clears_at(2) == 1 and Progress.data.clears_at(3) == 1 and not Progress.data.has_cleared_path("furnace_works"), "clears come back from the save as it was written")
+	_check(Progress.data.floors_cleared == 1 and _deep_clears_all_are(1) and not Progress.data.has_cleared_path("furnace_works"), "clears come back from the save as it was written")
 	# A Furnace Works clear made up in memory only. Arriving saves the Boiler Room as seen, which writes
 	# the made-up clear too, so the save is put back as it was afterwards.
 	var save_text := FileAccess.get_file_as_string(Progress.SMOKE_PATH)
@@ -115,20 +121,23 @@ func _run() -> void:
 	Progress.reload()
 	_check(not Progress.data.has_cleared_path("furnace_works"), "the made-up clear is gone once the save is put back")
 
-	# The first clears opened the locked path of each depth: the Cemetery, the Furnace Works, the Mall.
+	# The first clears opened the locked (east) path of each depth: the Cemetery, the Furnace Works, the
+	# Mall and so on down.
 	var pension_before_second: int = Progress.data.pension
-	await _clear_three_floors(CEMETERY_PATH, LOCKED_DEEP_PATH, LOCKED_DEEP_PATH)
+	await _clear_every_depth(LOCKED_DEEP_PATH)
 	_check(Progress.data.pension > pension_before_second, "the locked paths earn Pension too")
 	await _wait(2.5)
 	_expect_scene("WaitingRoom")
 	_check(Progress.data.floors_cleared == 2, "clearing the second first-floor path is counted too")
-	_check(Progress.data.clears_at(2) == 2, "clearing the second second-floor path is counted too")
-	_check(Progress.data.clears_at(3) == 2, "clearing the second third-floor path is counted too")
-	_check(Progress.data.has_cleared_path("golden_years_mall"), "the Mall's clear is remembered")
-	_check(_paths_cleared == 6, "all six paths were cleared, got %d" % _paths_cleared)
+	for depth in range(2, _last_depth + 1):
+		_check(Progress.data.clears_at(depth) == 2, "clearing the second path at depth %d is counted too" % depth)
+	for depth: int in ProgressData.PATHS_AT_DEPTH:
+		for id: String in ProgressData.PATHS_AT_DEPTH[depth]:
+			_check(Progress.data.has_cleared_path(id), "%s's clear is remembered" % id)
+	_check(_paths_cleared == 2 * _last_depth, "every path of every depth was cleared, got %d" % _paths_cleared)
 	_check(_checked_care_home, "the care home fights were checked")
 	_check(_checked_furnace, "the boiler hall fights were checked")
-	_check(_landings_reached == 4, "both runs took both stairwells to their landings, got %d" % _landings_reached)
+	_check(_landings_reached == 2 * (_last_depth - 1), "both runs took every stairwell to its landing, got %d" % _landings_reached)
 	ids = get_tree().current_scene.open_merchant_ids()
 	_check(ids.has("potion_merchant") and ids.has("bomb_merchant"), "clearing both second-floor paths for real brings the bomb merchant")
 	await _walk_every_department(get_tree().current_scene)
@@ -190,42 +199,45 @@ func _run() -> void:
 		get_tree().quit(0)
 
 
-# One run down every depth: a first-floor path, its boss's items, the stairwell and the landing, a path
-# from the second Crossroads and its stairwell, then a path from the third, whose boss ends the run.
-func _clear_three_floors(first_index: int, second_index: int, third_index: int) -> void:
+# Whether every depth below the first has been cleared exactly count times.
+func _deep_clears_all_are(count: int) -> bool:
+	for depth in range(2, _last_depth + 1):
+		if Progress.data.clears_at(depth) != count:
+			return false
+	return true
+
+
+# One run down every depth the floor scene lists, taking the path at path_index (0 west, 1 east) from
+# each Crossroads: at each depth the Crossroads and its signs, the whole floor, the boss's items and the
+# stairwell to the next landing, which _take_the_stairwell checks for its name and its heal. The last
+# depth's floor boss ends the run. A new path is covered here as soon as PATHS_BY_DEPTH lists it.
+func _clear_every_depth(path_index: int) -> void:
 	Game.begin_run()
 	await _wait(0.5)
 	_expect_scene("FloorScene")
 	var scene := get_tree().current_scene
+	_last_depth = scene.LAST_DEPTH
+	_check(scene.PATHS_BY_DEPTH.size() == _last_depth, "every depth down to the last lists its paths")
 	var starting_pills: int = scene.player.run.stats.max_pills
 	_check(starting_pills >= 4, "run starts with pills")
 	_check(scene.player.run.potion == null, "a run starts with an empty slot when nothing was brewed")
 	if not _checked_potions:
 		await _check_potion_drinking(scene)
-	await _check_crossroads(scene)
-	await _walk_a_path(scene, first_index)
-	await _clear_whole_floor(scene, first_index)
-	if _failed:
-		return
-	_check(not scene.is_over, "a first-floor boss no longer ends the run")
-	await _take_the_stairwell(scene)
-	if _failed:
-		return
-	await _check_crossroads(scene)
-	await _walk_a_path(scene, second_index)
-	await _clear_whole_floor(scene, second_index)
-	if _failed:
-		return
-	_check(not scene.is_over, "a second-floor boss no longer ends the run")
-	await _take_the_stairwell(scene)
-	if _failed:
-		return
-	_check(scene.debug_depth() == 3, "the second stairwell leads to the third depth")
-	await _check_crossroads(scene)
-	await _walk_a_path(scene, third_index)
-	await _clear_whole_floor(scene, third_index)
+	for depth in range(1, _last_depth + 1):
+		_check(scene.debug_depth() == depth, "the run has reached depth %d, got %d" % [depth, scene.debug_depth()])
+		await _check_crossroads(scene)
+		await _walk_a_path(scene, path_index)
+		await _clear_whole_floor(scene, path_index)
+		if _failed:
+			return
+		if depth == _last_depth:
+			break
+		_check(not scene.is_over, "a floor boss at depth %d does not end the run" % depth)
+		await _take_the_stairwell(scene)
+		if _failed:
+			return
 	await _wait(0.1)
-	_check(scene.is_over, "a third-floor boss ends the run")
+	_check(scene.is_over, "a floor boss at the last depth, %d, ends the run" % _last_depth)
 	_check(_hud_message(scene) == "FLOOR CLEARED", "the run ends with FLOOR CLEARED, got '%s'" % _hud_message(scene))
 
 

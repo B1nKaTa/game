@@ -6,15 +6,19 @@ const PATHS_BY_DEPTH := {
 	1: ["res://data/floors/floor_1.tres", "res://data/floors/cemetery.tres"],
 	2: ["res://data/floors/sunset_shores.tres", "res://data/floors/furnace_works.tres"],
 	3: ["res://data/floors/funeral_parlour.tres", "res://data/floors/golden_years_mall.tres"],
+	4: ["res://data/floors/last_resort_cruise.tres", "res://data/floors/fairways_end.tres"],
+	5: ["res://data/floors/terminal_zero.tres", "res://data/floors/head_office.tres"],
 }
 # The deepest floor there is. A floor boss falling here ends the run.
-const LAST_DEPTH := 3
+const LAST_DEPTH := 5
 const CROSSROADS_FLOOR := "res://data/floors/crossroads.tres"
 const CROSSROADS_LAYOUT := "res://data/rooms/crossroads/crossroads.tres"
 # The landing each depth below the first starts on. Its FloorDef names the floor on the sign and maps.
 const LANDINGS_BY_DEPTH := {
 	2: "res://data/floors/landing.tres",
 	3: "res://data/floors/landing_3.tres",
+	4: "res://data/floors/landing_4.tres",
+	5: "res://data/floors/landing_5.tres",
 }
 const LANDING_LAYOUT := "res://data/rooms/landing/landing.tres"
 # Pills healed on reaching the landing, up to his maximum.

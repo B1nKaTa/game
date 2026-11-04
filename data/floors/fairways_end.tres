@@ -1,0 +1,89 @@
+[gd_resource type="Resource" script_class="FloorDef" load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/floor_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/content/room_palette.gd" id="2"]
+[ext_resource type="Resource" path="res://data/enemies/mall_walker.tres" id="3"]
+[ext_resource type="Resource" path="res://data/enemies/mall_cop.tres" id="4"]
+[ext_resource type="Resource" path="res://data/enemies/perfume_sprayer.tres" id="5"]
+[ext_resource type="Resource" path="res://data/enemies/mall_intern_reaper.tres" id="6"]
+[ext_resource type="Resource" path="res://data/enemies/mall_notary_public.tres" id="7"]
+[ext_resource type="Resource" path="res://data/enemies/gloria.tres" id="8"]
+[ext_resource type="Resource" path="res://data/enemies/mall_santa.tres" id="9"]
+[ext_resource type="Resource" path="res://data/enemies/mimic.tres" id="10"]
+
+[sub_resource type="Resource" id="palette"]
+script = ExtResource("2")
+floor_a = Color(0.74, 0.72, 0.66, 1)
+floor_b = Color(0.66, 0.68, 0.7, 1)
+floor_c = Color(0.7, 0.66, 0.6, 1)
+floor_jitter = 0.015
+grout = Color(0, 0, 0, 0.22)
+speckle = Color(1, 1, 1, 0.22)
+wall = Color(0.36, 0.4, 0.48, 1)
+wall_line = Color(0.75, 0.8, 0.86, 0.5)
+darkness = Color(0.03, 0.03, 0.05, 1)
+ambient = Color(0.44, 0.46, 0.52, 1)
+torch = Color(0.85, 0.93, 1, 1)
+fill_light = Color(0.82, 0.88, 0.95, 1)
+crate = Color(0.55, 0.5, 0.45, 1)
+crate_edge = Color(0.25, 0.22, 0.2, 1)
+rock = Color(0.62, 0.62, 0.66, 1)
+rock_edge = Color(0.25, 0.26, 0.3, 1)
+barrel = Color(0.55, 0.5, 0.45, 1)
+barrel_band = Color(0.25, 0.22, 0.2, 1)
+cobweb = Color(0.85, 0.88, 0.92, 0.3)
+floor_crack = Color(0, 0, 0, 0.3)
+wet = Color(0.22, 0.5, 0.95, 0.42)
+wet_shine = Color(0.88, 0.96, 1, 0.95)
+lantern = Color(0.9, 0.95, 1, 1)
+lantern_light = Color(0.85, 0.93, 1, 1)
+floor_pattern = 3
+carpet_motif = Color(1, 1, 1, 0.1)
+wall_pattern = 3
+brick_line = Color(0, 0, 0, 0.35)
+flicker = 0.12
+decor_density = 0.07
+decor_weights = {
+"bench": 2.0,
+"crack": 0.3,
+"fluorescent": 2.0,
+"food_table": 1.5,
+"lantern": 0.5,
+"plant": 1.5
+}
+scatter_lights = 4
+
+[resource]
+script = ExtResource("1")
+id = "fairways_end"
+display_name = "Fairway's End Golf Club"
+rooms_dir = "res://data/rooms/golden_years_mall/"
+enemies = [ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7")]
+enemy_weights = PackedInt32Array(3, 4, 3, 3, 2)
+extra_enemy_steps = PackedFloat32Array(0.5, 0.8)
+mini_boss = ExtResource("8")
+floor_boss = ExtResource("9")
+mimic = ExtResource("10")
+clear_pension = 1
+treasure_pension = 20
+prop_pension = 1
+palette = SubResource("palette")
+depth = 4
+open_after_depth = 4
+clears_to_open = 1
+danger = 6
+closed_hint = "Beat a fourth-floor boss first"
+health_mult = 2.2
+pension_mult = 2.5
+enemies_by_size = {
+"large": 14,
+"medium": 9,
+"small": 7
+}
+chest_weights = {
+"locked": 22,
+"lunchbox": 26,
+"mimic": 16,
+"safe": 20,
+"urn": 16
+}
