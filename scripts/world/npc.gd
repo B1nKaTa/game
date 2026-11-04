@@ -26,6 +26,8 @@ var _talk: NpcTalk
 var _player: Node2D
 var _near := false
 var _bubble: Node2D
+# How many letters of the bubble had typed out last frame, so each new one can blip.
+var _typed := 0
 
 
 # start is the run count, so each run he opens on his next line.
@@ -77,6 +79,7 @@ func say_moment(key: String) -> void:
 
 func _process(delta: float) -> void:
 	_talk.tick(delta)
+	_blip_new_letters()
 	queue_redraw()
 	if _bubble != null:
 		_bubble.queue_redraw()
@@ -85,6 +88,17 @@ func _process(delta: float) -> void:
 	_near = NpcTalk.answers(_feet().distance_to(global_position), TALK_RADIUS, _rival_distances())
 	if _near and Input.is_action_just_pressed("interact"):
 		talk()
+
+
+# A blip for each letter as the line types out. The pool's shared blip gap keeps it to about twelve
+# a second however fast the letters come.
+func _blip_new_letters() -> void:
+	var typed := _talk.revealed_count()
+	if typed > _typed and def != null:
+		var letter := _talk.showing().substr(typed - 1, 1)
+		if letter.strip_edges() != "":
+			Sfx.blip(def.id)
+	_typed = typed
 
 
 func _feet() -> Vector2:
@@ -155,7 +169,8 @@ func _draw_bubble(layer: Node2D) -> void:
 	layer.draw_colored_polygon(PackedVector2Array([Vector2(-4, tail_y), Vector2(4, tail_y), tail_tip]), BUBBLE_COLOR)
 	layer.draw_rect(box, BUBBLE_COLOR)
 	layer.draw_rect(box, Color.BLACK, false, 1.0)
-	layer.draw_string(font, box.position + Vector2(BUBBLE_PAD.x, BUBBLE_PAD.y + FONT_SIZE - 2.0), line, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE, BUBBLE_TEXT_COLOR)
+	# The bubble is sized for the whole line, and the words type into it.
+	layer.draw_string(font, box.position + Vector2(BUBBLE_PAD.x, BUBBLE_PAD.y + FONT_SIZE - 2.0), _talk.revealed(), HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE, BUBBLE_TEXT_COLOR)
 
 
 static func _draw_centered(canvas: CanvasItem, text: String, at: Vector2, color: Color) -> void:
