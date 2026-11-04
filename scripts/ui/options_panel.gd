@@ -19,6 +19,10 @@ const LABEL_WIDTH := 210.0
 const INPUT_LABEL_WIDTH := 170.0
 const KEY_WIDTH := 170.0
 const NOTICE_TIME := 2.5
+const HINT_WIDTH := 220.0
+# The Input tab lists every action, so its rows are tighter and its text a size smaller.
+const INPUT_ROW_HEIGHT := 14.0
+const INPUT_FONT := 10
 const WAITING_TEXT := "Press a key..."
 const TABS: Array[String] = [GameSettings.VIDEO, GameSettings.AUDIO, GameSettings.GAME, GameSettings.INPUT]
 const TAB_NAMES := {
@@ -101,8 +105,8 @@ func _ready() -> void:
 	title.position = AT + Vector2(12, 6)
 	add_child(title)
 	var hint := MenuStyle.label(tr("Q / E: switch tabs"), 9, MenuStyle.DIM)
-	hint.position = AT + Vector2(SIZE.x - 120, 12)
-	hint.size = Vector2(108, 12)
+	hint.position = AT + Vector2(SIZE.x - 12 - HINT_WIDTH, 12)
+	hint.size = Vector2(HINT_WIDTH, 12)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	add_child(hint)
 	var tabs := HBoxContainer.new()
@@ -138,8 +142,8 @@ func _ready() -> void:
 	ok.pressed.connect(_keep_and_close)
 	bottom.add_child(ok)
 	var esc := MenuStyle.label(tr("Esc: close without keeping"), 9, MenuStyle.DIM)
-	esc.position = AT + Vector2(SIZE.x - 180, SIZE.y - 22)
-	esc.size = Vector2(168, 12)
+	esc.position = AT + Vector2(SIZE.x - 12 - HINT_WIDTH, SIZE.y - 22)
+	esc.size = Vector2(HINT_WIDTH, 12)
 	esc.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	add_child(esc)
 	_notice = MenuStyle.label("", 10, MenuStyle.GOLD)
@@ -157,6 +161,7 @@ func _show_tab(tab: String) -> void:
 	for each: String in _tab_buttons:
 		var button: Button = _tab_buttons[each]
 		button.add_theme_color_override("font_color", MenuStyle.GOLD if each == tab else MenuStyle.TEXT)
+	_rows.add_theme_constant_override("separation", 2)
 	if tab == GameSettings.INPUT:
 		_build_input_rows()
 	else:
@@ -176,11 +181,11 @@ func _first_focus() -> Control:
 	return _tab_buttons[_tab]
 
 
-func _row(text: String, width := LABEL_WIDTH) -> HBoxContainer:
+func _row(text: String, width := LABEL_WIDTH, tight := false) -> HBoxContainer:
 	var row := HBoxContainer.new()
-	row.custom_minimum_size.y = ROW_HEIGHT
+	row.custom_minimum_size.y = INPUT_ROW_HEIGHT if tight else ROW_HEIGHT
 	row.add_theme_constant_override("separation", 8)
-	var name_label := MenuStyle.label(text)
+	var name_label := MenuStyle.label(text, INPUT_FONT if tight else MenuStyle.FONT)
 	name_label.custom_minimum_size.x = width
 	row.add_child(name_label)
 	_rows.add_child(row)
@@ -268,21 +273,22 @@ func _on_choice_input(event: InputEvent, section: String, key: String, choice: B
 
 
 func _build_input_rows() -> void:
-	var header := _row(tr("Action"), INPUT_LABEL_WIDTH)
+	_rows.add_theme_constant_override("separation", 1)
+	var header := _row(tr("Action"), INPUT_LABEL_WIDTH, true)
 	header.get_child(0).add_theme_color_override("font_color", MenuStyle.DIM)
-	var keyboard := MenuStyle.label(tr("Keyboard / Mouse"), MenuStyle.FONT, MenuStyle.DIM)
+	var keyboard := MenuStyle.label(tr("Keyboard / Mouse"), INPUT_FONT, MenuStyle.DIM)
 	keyboard.custom_minimum_size.x = KEY_WIDTH
 	header.add_child(keyboard)
-	header.add_child(MenuStyle.label(tr("Controller"), MenuStyle.FONT, MenuStyle.DIM))
+	header.add_child(MenuStyle.label(tr("Controller"), INPUT_FONT, MenuStyle.DIM))
 	for entry in KeyBindings.ACTIONS:
 		var action: String = entry["action"]
-		var row := _row(tr(entry["label"]), INPUT_LABEL_WIDTH)
+		var row := _row(tr(entry["label"]), INPUT_LABEL_WIDTH, true)
 		var bound := tr(WAITING_TEXT) if action == _waiting_action else KeyBindings.label_for(action)
-		var key_button := MenuStyle.button(bound)
+		var key_button := MenuStyle.button(bound, INPUT_FONT, true)
 		key_button.custom_minimum_size.x = KEY_WIDTH
 		key_button.pressed.connect(_start_waiting.bind(action))
 		row.add_child(key_button)
-		row.add_child(MenuStyle.label(tr("coming"), MenuStyle.FONT, MenuStyle.DIM))
+		row.add_child(MenuStyle.label(tr("coming"), INPUT_FONT, MenuStyle.DIM))
 
 
 func _start_waiting(action: String) -> void:

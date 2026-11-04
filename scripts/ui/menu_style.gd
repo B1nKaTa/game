@@ -54,15 +54,16 @@ static func label(text: String, font_size := FONT, color := TEXT) -> Label:
 	return node
 
 
-# A flat button whose selected look is the gold bar, with dark text on it.
-static func button(text: String, font_size := FONT) -> Button:
+# A flat button whose selected look is the gold bar, with dark text on it. A tight one has no margin
+# above or below its text, for long lists such as the Input tab's.
+static func button(text: String, font_size := FONT, tight := false) -> Button:
 	var node := Button.new()
 	node.text = text
 	node.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	node.add_theme_font_size_override("font_size", font_size)
 	var plain := StyleBoxFlat.new()
 	plain.bg_color = Color(0, 0, 0, 0)
-	plain.set_content_margin_all(2)
+	plain.set_content_margin_all(0 if tight else 2)
 	plain.content_margin_left = 6
 	plain.content_margin_right = 6
 	var bar := plain.duplicate() as StyleBoxFlat
