@@ -147,6 +147,15 @@ func test_ghosts_mounds_and_wall_fixtures_are_not_carried() -> void:
 	valve.free()
 
 
+func test_a_running_charge_is_not_carried_off_its_warned_lane() -> void:
+	var cop := Enemy.new()
+	cop.setup(_load("mall_cop"), null, 0.5)
+	assert_true(cop.rides_strips(), "walking, a strip carries him")
+	cop.hold_lane()
+	assert_false(cop.rides_strips(), "charging, it never does")
+	cop.free()
+
+
 func test_a_strip_never_costs_a_pill() -> void:
 	var empty: Array[UpgradeDef] = []
 	var run := RunState.new(empty, {})

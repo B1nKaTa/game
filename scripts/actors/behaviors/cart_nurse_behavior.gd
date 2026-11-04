@@ -77,6 +77,7 @@ func _charging(enemy: Enemy, delta: float) -> Vector2:
 			if BossDash.stops_at(collision.get_collider()) and collision.get_normal().dot(_direction) < -HEAD_ON:
 				_hit_wall(enemy)
 				return Vector2.ZERO
+	enemy.hold_lane()
 	_charge_left -= delta
 	_charged_for += delta
 	enemy.smash(enemy.global_position + _direction * SMASH_AHEAD, SMASH_RADIUS)

@@ -23,6 +23,7 @@ func tick(enemy: Enemy, delta: float) -> void:
 
 func _wanted(enemy: Enemy, delta: float) -> Vector2:
 	if _charge_left > 0.0:
+		enemy.hold_lane()
 		_charge_left -= delta
 		if not _has_hit and enemy.distance_to_target() <= HIT_RANGE:
 			_has_hit = true

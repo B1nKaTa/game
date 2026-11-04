@@ -71,6 +71,7 @@ func _charge(enemy: Enemy, delta: float) -> void:
 		_stop(enemy)
 		return
 	_charged_for += delta
+	enemy.hold_lane()
 	_charge_left -= CHARGE_SPEED * delta
 	enemy.desired_velocity = _way * CHARGE_SPEED
 	if not _has_hit and enemy.global_position.distance_to(enemy.target_ground()) <= HIT_RANGE:

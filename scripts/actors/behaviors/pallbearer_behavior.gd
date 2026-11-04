@@ -207,6 +207,7 @@ func _ram(enemy: Enemy, delta: float) -> void:
 				_ram_left = 0.0
 				return
 	_rammed_for += delta
+	enemy.hold_lane()
 	_ram_left -= RAM_SPEED * delta
 	enemy.desired_velocity = _ram_way * RAM_SPEED
 	enemy.smash(enemy.global_position + _ram_way * SMASH_AHEAD, SMASH_RADIUS)

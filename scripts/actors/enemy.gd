@@ -94,6 +94,8 @@ var _route_left := 0.0
 var _routing := false
 var _waypoint := Vector2.ZERO
 var _route_goal := Vector2.INF
+# Set again by a running dash or charge every frame, and cleared before each behavior tick.
+var _holding_lane := false
 # A shove that carries it along for a while, as an organ pipe's ring does. It adds to any knockback.
 var _push := Vector2.ZERO
 var _push_left := 0.0
@@ -257,6 +259,7 @@ func _physics_process(delta: float) -> void:
 		return
 	_route_left -= delta
 	desired_velocity = Vector2.ZERO
+	_holding_lane = false
 	_behavior.tick(self, delta)
 	# Called by a whistle, it hurries to Grandpa whenever it would walk anyway, so it never drops an attack.
 	if _rally_left > 0.0:
@@ -345,7 +348,12 @@ func is_pushed() -> bool:
 # An escalator strip carries whatever walks on the floor. Ghosts float over it, a mound is under it,
 # and something bolted to a wall never moves.
 func rides_strips() -> bool:
-	return def != null and not def.ignores_walls and not def.wall_mounted and not submerged
+	return def != null and not def.ignores_walls and not def.wall_mounted and not submerged and not _holding_lane
+
+
+# A dash or charge calls this each frame it runs, so a strip never carries it off the lane it warned.
+func hold_lane() -> void:
+	_holding_lane = true
 
 
 # Whether a Mall Cop's whistle can call it: anything that walks, but no boss.

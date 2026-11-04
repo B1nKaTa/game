@@ -40,6 +40,7 @@ func tick(enemy: Enemy, delta: float) -> void:
 		if stops_at(enemy.get_slide_collision(i).get_collider()):
 			stop()
 			return
+	enemy.hold_lane()
 	_left -= _speed * delta
 	enemy.desired_velocity = _direction * _speed
 	enemy.smash(enemy.global_position + _direction * SMASH_AHEAD, SMASH_RADIUS)

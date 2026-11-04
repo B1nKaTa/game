@@ -73,6 +73,7 @@ func _lunge(enemy: Enemy, delta: float) -> void:
 				_lunge_left = 0.0
 				return
 	_lunged_for += delta
+	enemy.hold_lane()
 	_lunge_left -= LUNGE_SPEED * delta
 	enemy.desired_velocity = _way * LUNGE_SPEED
 	if not _has_hit and enemy.global_position.distance_to(enemy.target_ground()) <= HIT_RANGE:
