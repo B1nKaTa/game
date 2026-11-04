@@ -452,11 +452,10 @@ func _open_card_table(table: ArcadeTable) -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
-# Shows the first line now and the rest one after another, in place of whatever was waiting.
+# Shows the first line now and the rest one after another, ahead of whatever was waiting. Arrival news
+# is already marked seen when it is queued, so it must still show after these.
 func _show_lines(lines: PackedStringArray) -> void:
-	_notices.clear()
-	for line in lines:
-		_notices.append(line)
+	_notices = Hud.lines_in_front(lines, _notices)
 	_notice_wait = 0.0
 
 

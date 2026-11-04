@@ -50,6 +50,18 @@ static func counter_text(amount: int) -> String:
 	return "x%d" % amount
 
 
+# Notices asked for now go in front of those already waiting, so news queued earlier still shows after
+# them. Lines asked for again replace their earlier copies instead of waiting twice.
+static func lines_in_front(lines: PackedStringArray, waiting: Array[String]) -> Array[String]:
+	var queue: Array[String] = []
+	for line in lines:
+		queue.append(line)
+	for line in waiting:
+		if not lines.has(line):
+			queue.append(line)
+	return queue
+
+
 func setup(run: RunState) -> void:
 	_run = run
 
