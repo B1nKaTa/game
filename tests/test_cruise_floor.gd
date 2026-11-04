@@ -175,7 +175,7 @@ func test_the_cruise_props_break_as_the_spec_says() -> void:
 	assert_true(davit.can_break_by(BreakableBlock.SOURCE_BOSS))
 	assert_false(davit.can_break_by(BreakableBlock.SOURCE_CANE))
 	davit.free()
-	var water := PoolWater.new()
+	var water: Node = PoolWater.new()
 	assert_true(water is Hole, "the pool is crossed by nobody who walks, and shots fly over")
 	assert_false(water is BreakableBlock, "and nothing breaks it")
 	water.free()
