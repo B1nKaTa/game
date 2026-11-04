@@ -373,9 +373,14 @@ func _go_down() -> void:
 	_enter_room(_map.start_id)
 	leaving.queue_free()
 	var missing := _run.health.max_pills - _run.health.pills
-	_run.health.heal(LANDING_HEAL)
-	var healed := mini(LANDING_HEAL, missing)
+	_run.health.heal(landing_heal())
+	var healed := mini(landing_heal(), missing)
 	_hud.show_notice("You catch your breath. +%d pills" % healed if healed > 0 else "You catch your breath.")
+
+
+# What a landing heals: LANDING_HEAL, and one more with the boarding pass.
+func landing_heal() -> int:
+	return LANDING_HEAL + (Mementos.LANDING_EXTRA if _run.has_perk(Mementos.LANDING_PERK) else 0)
 
 
 func _landing_map() -> FloorMap:

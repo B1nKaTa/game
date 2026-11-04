@@ -243,6 +243,17 @@ func pension_amount(base: int, source := "") -> int:
 	return ceili(base * stats.pension_mult * mult)
 
 
-# What a charged swing's damage is multiplied by, before the cane's own damage_mult.
+# What a charged swing's damage is multiplied by, before the cane's own damage_mult: the Golf Glove's
+# Follow Through and the golf trophy.
 func charge_damage_mult() -> float:
-	return stats.charge_damage_mult
+	return stats.charge_damage_mult + (Mementos.CHARGE_POWER_BONUS if has_perk(Mementos.CHARGE_PERK) else 0.0)
+
+
+# How far slides and pushes move him, as a share: half with the ship's anchor.
+func slide_mult() -> float:
+	return Mementos.SLIDE_MULT if has_perk(Mementos.SLIDE_PERK) else 1.0
+
+
+# What his hits on a boss are multiplied by: more with the gold gavel.
+func boss_damage_mult() -> float:
+	return Mementos.BOSS_DAMAGE_MULT if has_perk(Mementos.BOSS_DAMAGE_PERK) else 1.0

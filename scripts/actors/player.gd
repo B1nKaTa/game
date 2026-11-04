@@ -146,8 +146,9 @@ func slow(fraction: float, seconds: float) -> void:
 	queue_redraw()
 
 
+# Every push goes through here, so the ship's anchor halves them all: gusts, foghorns, rings and pulls.
 func push(shove: Vector2, seconds: float) -> void:
-	_push = shove
+	_push = shove * (run.slide_mult() if run != null else 1.0)
 	_push_left = seconds
 
 
@@ -286,6 +287,7 @@ func _throw_teeth() -> void:
 	_thrown_teeth = ThrownDentures.new()
 	_thrown_teeth.setup(_teeth, self, _aim, run.bite_damage_mult(), run.stats.bite_range, run.stats.bites_per_throw)
 	_thrown_teeth.wounded_mult = run.stats.wounded_damage_mult
+	_thrown_teeth.boss_mult = run.boss_damage_mult()
 	_thrown_teeth.hit_enemy.connect(teeth_bit.emit)
 	_thrown_teeth.caught.connect(teeth_caught.emit)
 	parent.add_child(_thrown_teeth)
@@ -336,6 +338,7 @@ func _strike_enemies() -> void:
 			continue
 		if swing.try_hit(global_position, enemy.get_instance_id(), enemy.body_rect()):
 			var damage := PlayerStats.strike_damage(swing.damage, enemy.hp / maxf(enemy.max_hp(), 1.0), run.stats.wounded_damage_mult)
+			damage = PlayerStats.boss_damage(damage, enemy.def.is_boss, run.boss_damage_mult())
 			if not enemy.take_strike(damage, swing.direction * swing.push, global_position - enemy.global_position):
 				swing.mark_blocked()
 	for block: BreakableBlock in get_tree().get_nodes_in_group("breakable"):
@@ -381,7 +384,7 @@ func _handle_movement() -> void:
 		if _feet != null and is_inside_tree():
 			velocity += ConveyorStrip.carry_at(get_tree(), _feet.global_position)
 			# A rolling deck slides him too. A dodge holds him where it is aimed instead.
-			velocity += ShipDeck.slide_at(get_tree(), _feet.global_position)
+			velocity += ShipDeck.slide_at(get_tree(), _feet.global_position) * run.slide_mult()
 		if taped:
 			velocity = Vector2.ZERO
 		if not _visual.is_playing_once():

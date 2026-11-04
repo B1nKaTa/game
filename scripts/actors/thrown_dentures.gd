@@ -34,6 +34,8 @@ var _player: Node2D
 var _direction := Vector2.RIGHT
 # What a bite is multiplied by against a wounded enemy, as the Bifocals option gives. Set after setup.
 var wounded_mult := 1.0
+# What a bite is multiplied by against a boss, as the gold gavel gives. Set after setup.
+var boss_mult := 1.0
 var _damage := DAMAGE
 var _range := DentureThrow.BASE_RANGE
 var _bites_allowed := 1
@@ -100,7 +102,8 @@ func _fly(delta: float) -> void:
 	var enemy := _enemy_in_reach()
 	if enemy != null:
 		_bitten[enemy.get_instance_id()] = true
-		enemy.take_damage(PlayerStats.strike_damage(_damage, enemy.hp / maxf(enemy.max_hp(), 1.0), wounded_mult), _direction * PUSH)
+		var bite := PlayerStats.strike_damage(_damage, enemy.hp / maxf(enemy.max_hp(), 1.0), wounded_mult)
+		enemy.take_damage(PlayerStats.boss_damage(bite, enemy.def.is_boss, boss_mult), _direction * PUSH)
 		hit_enemy.emit()
 		if not keeps_flying(_bitten.size(), _bites_allowed):
 			_state.drop()

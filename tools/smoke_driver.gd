@@ -2461,7 +2461,8 @@ func _take_the_stairwell(scene: Node) -> void:
 	_check(scene.debug_floor_def().display_name == floor_below, "the landing is %s, got %s" % [floor_below, scene.debug_floor_def().display_name])
 	_check(scene.debug_mini_map().floor_name() == floor_below and scene.debug_big_map().floor_name() == floor_below, "both maps name %s" % floor_below)
 	_check(get_tree().get_nodes_in_group("enemies").is_empty(), "nothing waits to fight on the landing")
-	_check(health.pills == pills_before + mini(scene.LANDING_HEAL + bonus, missing), "the landing heals him, %d to %d" % [pills_before, health.pills])
+	# With the boarding pass hung, landing_heal is one more than LANDING_HEAL.
+	_check(health.pills == pills_before + mini(scene.landing_heal() + bonus, missing), "the landing heals him, %d to %d" % [pills_before, health.pills])
 	_check(run.items.size() == items_before and run.keys == keys_before, "his items and Slips come down with him")
 	_check(not scene.is_cleared, "the new floor is not cleared yet")
 	_landings_reached += 1
