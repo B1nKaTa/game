@@ -25,7 +25,8 @@
 - Commits are imperative, one logical change each, and end with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
   - Write the message to a scratchpad file and use `git commit -F`.
 - Push with `env -u GIT_TERMINAL_PROMPT -u GCM_INTERACTIVE git push`. GitHub sometimes returns 500: retry.
-- Leave the project runnable after every commit. Testing is allowed.
+- Leave the project runnable after every commit.
+- **Testing is ON HOLD (user, 2026-11-04):** run no Godot in any form (no tests, smoke, import, check-only, probes) until the user says so. Write code and tests, tick nothing that needs Godot, and list owed checks in `docs/superpowers/plans/deep-floors-untested.md` (SKILL.md rule 11).
 - Full loops and probes run only in `git archive` copies on `D:\` with a renamed `config/name`. Keep C: free, because it is small.
 - Art stays code-drawn placeholder, and prop collision boxes stay unchanged.
 
