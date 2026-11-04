@@ -5,9 +5,10 @@ extends Node2D
 # The cane's colour is read by the Player for its placeholder cane line and swing arc. Placeholders,
 # drawn in code until the art pass. Nothing here touches a stat.
 
-# Relative to the Player's origin, for the 68 pixel frame. Check by screenshot.
-const HEAD := Vector2(0, -22)
-const CHEST := Vector2(0, -5)
+# Relative to the Player's origin, for the 68 pixel frame: his hair tops out near y = -24 and his
+# beard ends near y = -1, so a hat sits on the hair and the band on the cardigan below the beard.
+const HEAD := Vector2(0, -18)
+const CHEST := Vector2(0, 1)
 const BAND_SIZE := Vector2(16, 5)
 const OUTLINE := Color(0.08, 0.06, 0.05)
 const STRIPE_BAND := Color("d8323a")
