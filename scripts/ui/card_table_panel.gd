@@ -43,6 +43,18 @@ const NO_PLAYS := "That's all for this visit. Come back later."
 const CHOOSE_BET := "Choose a bet."
 const SLOT_RULES := "10 a pull. A pair returns the bet, three of a kind pays 5x,"
 const SLOT_RULES_2 := "three skulls give a free item and three pills a full heal."
+# The sounds of a hand, in real seconds: the bet's chips, then the shuffle, then a card dealt at each
+# step. Results sound once the last card is down.
+const SHUFFLE_AT := 0.1
+const FIRST_DEAL_AT := 0.72
+const DEAL_STEP := 0.12
+const RESULT_PAUSE := 0.15
+# The reels spin for show only (the result is settled at the pull): each stops in turn, then the
+# result shows and sounds.
+const SPIN_AT := 0.12
+const REEL_STOPS: Array[float] = [0.42, 0.6, 0.78]
+const SPIN_RESULT_AT := 0.86
+const SPIN_SYMBOL_RATE := 14.0
 const SYMBOL_NAMES := {
 	"cherry": "Cherry",
 	"bell": "Bell",
@@ -72,6 +84,8 @@ var _last_result := ""
 var _played := false
 var _message := ""
 var _opened_frame := -1
+# Real time since the last pull, while the reels still spin, or -1 once they have stopped.
+var _spin_time := -1.0
 var _card_box: StyleBoxFlat
 var _back_box: StyleBoxFlat
 var _title: Label
@@ -103,6 +117,14 @@ func use_rng(rng: RandomNumberGenerator) -> void:
 
 func game() -> String:
 	return _table.game if _table != null else ""
+
+
+func is_spinning() -> bool:
+	return _spin_time >= 0.0
+
+
+func reel_stopped(index: int) -> bool:
+	return not is_spinning() or _spin_time >= REEL_STOPS[clampi(index, 0, REEL_STOPS.size() - 1)]
 
 
 func state() -> String:
@@ -177,7 +199,14 @@ func _ready() -> void:
 	_refresh()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	if _spin_time >= 0.0:
+		_spin_time += delta
+		if _spin_time >= SPIN_RESULT_AT:
+			_spin_time = -1.0
+			_refresh()
+		elif _felt != null:
+			_felt.queue_redraw()
 	# The press that opened the overlay must not close it again.
 	if Engine.get_process_frames() != _opened_frame and Input.is_action_just_pressed("interact"):
 		leave()
@@ -222,10 +251,16 @@ func pull() -> bool:
 		_say(NO_PLAYS)
 		return false
 	if not _room.arcade_bet(SlotMachine.BET):
+		Sfx.play("ui_denied")
 		_say(SHORT)
 		return false
 	_table.use_play()
 	_reels = SlotMachine.spin(_rng)
+	_spin_time = 0.0
+	Sfx.play("slot_lever")
+	Sfx.play_later("slot_spin", SPIN_AT)
+	for stop in REEL_STOPS:
+		Sfx.play_later("slot_stop", stop)
 	var won := SlotMachine.payout(_reels, SlotMachine.BET)
 	_last_payout = won["pension"]
 	_room.arcade_pay(_last_payout)
@@ -234,15 +269,21 @@ func pull() -> bool:
 	if won["item"]:
 		_room.arcade_item_win(_table)
 		_message = "Three skulls! A free item waits by the table."
+		Sfx.play_later("slot_jackpot", SPIN_RESULT_AT)
 	elif won["full_heal"]:
 		_room.arcade_full_heal()
 		_message = "Three pills! Every pill back."
+		Sfx.play_later("slot_win", SPIN_RESULT_AT)
+		Sfx.play_later("pill_heal", SPIN_RESULT_AT + 0.3)
 	elif _last_payout > SlotMachine.BET:
 		_message = "Three of a kind! %d back." % _last_payout
+		Sfx.play_later("slot_win", SPIN_RESULT_AT)
 	elif _last_payout > 0:
 		_message = "A pair. Your %d back." % _last_payout
+		Sfx.play_later("coin", SPIN_RESULT_AT)
 	else:
 		_message = "Nothing. The reels are very sorry."
+		Sfx.play_later("bj_lose", SPIN_RESULT_AT)
 	_state = DONE
 	_refresh()
 	return true
@@ -257,19 +298,23 @@ func bet(amount: int) -> bool:
 		_say(NO_PLAYS)
 		return false
 	if not _room.arcade_bet(amount):
+		Sfx.play("ui_denied")
 		_say(SHORT)
 		return false
 	_table.use_play()
 	_bet = amount
 	_last_payout = 0
 	_deck.shuffle()
+	Sfx.play("chips_bet")
+	Sfx.play_later("card_shuffle", SHUFFLE_AT)
+	_sound_deals(FIRST_DEAL_AT, 4 if game() == ArcadeTable.BLACKJACK else HAND_CARDS)
 	_state = PLAYING
 	_message = ""
 	if game() == ArcadeTable.BLACKJACK:
 		_blackjack = Blackjack.new(_deck)
 		_blackjack.deal()
 		if _blackjack.is_over:
-			_settle()
+			_settle(FIRST_DEAL_AT + 4 * DEAL_STEP)
 	else:
 		_poker = DrawPoker.new(_deck)
 		_poker.deal()
@@ -284,16 +329,22 @@ func hit() -> void:
 	if game() != ArcadeTable.BLACKJACK or _state != PLAYING:
 		return
 	_blackjack.hit()
+	Sfx.play("card_deal")
 	if _blackjack.is_over:
-		_settle()
+		_settle(DEAL_STEP)
 	_refresh()
 
 
 func stand() -> void:
 	if game() != ArcadeTable.BLACKJACK or _state != PLAYING:
 		return
+	var dealt_before := _blackjack.dealer.size()
 	_blackjack.stand()
-	_settle()
+	# The hole card turns over, then each card the dealer draws.
+	Sfx.play("card_flip")
+	var drawn := _blackjack.dealer.size() - dealt_before
+	_sound_deals(DEAL_STEP * 2.0, drawn)
+	_settle(DEAL_STEP * (2.0 + drawn))
 	_refresh()
 
 
@@ -301,19 +352,38 @@ func toggle_hold(index: int) -> void:
 	if game() != ArcadeTable.POKER or _state != PLAYING or index < 0 or index >= HAND_CARDS:
 		return
 	_held[index] = not _held[index]
+	Sfx.play("card_flip")
 	_refresh()
 
 
 func draw_cards() -> void:
 	if game() != ArcadeTable.POKER or _state != PLAYING:
 		return
+	var replaced := _held.count(false)
 	_poker.draw(_held)
-	_settle()
+	_sound_deals(0.0, replaced)
+	_settle(DEAL_STEP * replaced)
 	_refresh()
 
 
-# Pays what the rules say for the finished hand.
-func _settle() -> void:
+# A card dealt every DEAL_STEP from `from` seconds on.
+func _sound_deals(from: float, count: int) -> void:
+	for i in count:
+		Sfx.play_later("card_deal", from + i * DEAL_STEP)
+
+
+# The sting for how a hand went: up for a win, level for money back, down for a loss.
+func _result_sound() -> String:
+	if _last_payout > _bet:
+		return "bj_win"
+	if _last_payout > 0:
+		return "bj_push"
+	return "bj_lose"
+
+
+# Pays what the rules say for the finished hand. Its sting sounds once the cards are down, `after`
+# seconds from now.
+func _settle(after := 0.0) -> void:
 	if game() == ArcadeTable.BLACKJACK:
 		var result := _blackjack.outcome()
 		_last_payout = Blackjack.payout(result, _bet)
@@ -339,6 +409,7 @@ func _settle() -> void:
 	_played = true
 	_last_result = result_of(_last_payout, _bet, false)
 	_state = DONE
+	Sfx.play_later(_result_sound(), after + RESULT_PAUSE)
 
 
 func _say(text: String) -> void:
@@ -352,7 +423,8 @@ func _refresh() -> void:
 	if _actions == null:
 		return
 	_info.text = _info_text()
-	_message_label.text = _message
+	# While the reels spin the result waits, so the message never gives it away.
+	_message_label.text = "" if is_spinning() else _message
 	for child in _holds.get_children():
 		child.queue_free()
 	for child in _actions.get_children():
@@ -375,7 +447,7 @@ func _refresh() -> void:
 				_add_button(_actions, "Draw", draw_cards)
 			else:
 				_add_bet_buttons(plays_left)
-	_add_button(_actions, KeyBindings.with_key("interact", "Leave"), leave)
+	_add_button(_actions, KeyBindings.with_key("interact", "Leave"), leave, "ui_back")
 	_holds.visible = game() == ArcadeTable.POKER and _state == PLAYING
 	_felt.queue_redraw()
 
@@ -386,11 +458,13 @@ func _add_bet_buttons(plays_left: bool) -> void:
 		button.disabled = not plays_left
 
 
-func _add_button(row: HBoxContainer, text: String, action: Callable) -> Button:
+# Each game button makes its own sounds as it plays, so a press adds none unless `sound` says.
+func _add_button(row: HBoxContainer, text: String, action: Callable, sound := "") -> Button:
 	var button := Button.new()
 	button.text = text
 	button.add_theme_font_size_override("font_size", BUTTON_FONT_SIZE)
 	button.focus_mode = Control.FOCUS_NONE
+	button.set_meta("sfx", sound)
 	button.pressed.connect(action)
 	row.add_child(button)
 	return button
@@ -432,7 +506,11 @@ func _draw_reels(canvas: Control) -> void:
 		var box := Rect2(center - REEL_SIZE / 2.0, REEL_SIZE)
 		canvas.draw_rect(box, REEL_FACE)
 		canvas.draw_rect(box, REEL_EDGE, false, 2.0)
-		if i < _reels.size():
+		if i < _reels.size() and not reel_stopped(i):
+			# Still spinning: the symbols run past, a different one each moment.
+			var passing := SlotMachine.SYMBOLS[(int(_spin_time * SPIN_SYMBOL_RATE) + i * 2) % SlotMachine.SYMBOLS.size()]
+			draw_symbol(canvas, passing, center + Vector2(0, -8))
+		elif i < _reels.size():
 			draw_symbol(canvas, _reels[i], center + Vector2(0, -8))
 			_text(canvas, SYMBOL_NAMES.get(_reels[i], _reels[i]), Vector2(box.position.x + 4.0, box.end.y - 6.0), 9, REEL_EDGE)
 	_text(canvas, SLOT_RULES, Vector2(10, canvas.size.y - 18.0), 9, FELT_TEXT)
