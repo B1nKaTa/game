@@ -76,6 +76,20 @@ func test_every_enemy_of_the_floor_can_be_told_apart() -> void:
 			assert_true(_difference(a, b) >= 0.25 or size_gap >= 12.0, "%s and %s look alike" % [defs[i].id, defs[j].id])
 
 
+# The string lights wash a pale body toward white on the planks, so two pale people read as one, as the
+# first Early Bird Diners did beside the white Orderly.
+func test_only_one_of_the_floors_people_is_pale() -> void:
+	var defs: Array[EnemyDef] = []
+	defs.assign(_def().enemies)
+	defs.append(_def().mini_boss)
+	defs.append(_def().floor_boss)
+	var pale: Array[String] = []
+	for enemy in defs:
+		if enemy.color.s < 0.4:
+			pale.append(enemy.id)
+	assert_true(pale.size() <= 1, "pale bodies: %s" % str(pale))
+
+
 # --- its look ---
 
 func test_it_looks_like_no_other_floor() -> void:
