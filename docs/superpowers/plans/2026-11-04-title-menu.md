@@ -399,3 +399,26 @@ cursor. Tests never name `PadWatch` (LESSONS 2026-11-04).
 
 - Spec 6 layout: Task 11. Aim: Task 14. Active device and cursor: Task 13. Prompts and names: Tasks 11, 12, 14. Menus: Task 15. Vibration: Task 13. Hot-plug: Tasks 13, 16. Input tab controller column: Task 16. Tests and full loop: every task, Task 17.
 - The trophy wall shows its lines as HUD notices and has no panel, so it needs no focus.
+
+## Stage 2 as built (2026-11-05)
+
+- `ActiveDevice` came before the two-slot `KeyBindings`, since `with_key` reads it.
+- Pad bindings use device -1, so any pad works, not only the first one plugged in. The screenshot probe
+  found this: a pad on device 7 could not switch tabs or back out.
+- The D-pad always walks and always moves menu focus, and is never bound to anything else. B (`ui_pad_back`)
+  and the shoulder buttons (`ui_tab_prev`/`ui_tab_next`) are fixed menu actions, so B is never a second Esc.
+  A was added to `ui_accept`, which in 4.7 holds no pad button.
+- `PadFocus` works out each panel's focus neighbours from where its controls are drawn and keeps them inside
+  the panel, so the D-pad never reaches a panel behind (the title menu under the slot picker). It focuses
+  a control on its own only while a pad plays or after a focus key, so Space on the keyboard never presses
+  a button nobody chose. Card-table buttons take focus only while a pad plays.
+- With a pad, Mouse aim on means the aim stays where the right stick left it. Mouse aim off means a resting
+  stick aims the way he walks.
+- A controller cell on the Input tab waits 5 s for a button. Esc, a key or a click cancel it, so a pad
+  alone can always back out.
+- The Options hints name the device in use ("Q / E", "LB / RB" or "L1 / R1"; "Esc", "B" or "Circle")
+  and follow a switch at every tab change.
+- The big map closes on Esc and B by itself, since the floor scene is paused while it is open.
+- Unplugging the pad being played with pauses a run (not the Waiting Room) and hands play to the keyboard.
+- The trophy wall shows HUD lines and has no panel, so it needs no focus.
+- A lighter rumble never cuts a stronger one short, and a row of boss strikes rumbles once per landing.
