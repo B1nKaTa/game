@@ -183,3 +183,30 @@ func test_the_arcade_palette_is_neon_and_leaves_the_floor_alone() -> void:
 func test_the_dealer_has_lines() -> void:
 	assert_true(RoomView.DEALER.lines.size() >= 3)
 	assert_eq(RoomView.DEALER.display_name, "Dealer")
+
+
+# --- the Dealer's back room in the Waiting Room ---
+
+func test_the_back_room_holds_two_card_tables_at_the_arcades_odds() -> void:
+	var back: RoomLayout = Departments.load_layouts()[Departments.BACK_ROOM]
+	assert_eq(back.cells_of(RoomLayout.SYMBOL_GAME).size(), Departments.BACK_ROOM_GAMES.size())
+	assert_false(Departments.BACK_ROOM_GAMES.has(ArcadeTable.SLOT))
+	assert_true(back.merchant_cell() != Vector2i(-1, -1), "room for the Dealer")
+
+
+func test_the_back_room_dealer_keeps_clear_of_the_tables_and_the_bench() -> void:
+	var back: RoomLayout = Departments.load_layouts()[Departments.BACK_ROOM]
+	var dealer := back.merchant_cell()
+	for table in back.cells_of(RoomLayout.SYMBOL_GAME):
+		assert_true(dealer != table, "the Dealer stands off the tables")
+	assert_false(Departments.LOADOUT_BENCH_CELLS.has(dealer), "the bench stays clear")
+	for table in back.cells_of(RoomLayout.SYMBOL_GAME):
+		assert_false(Departments.LOADOUT_BENCH_CELLS.has(table), "no table on the bench")
+
+
+func test_the_back_room_dealer_is_the_same_man_with_his_own_lines() -> void:
+	var def: NpcDef = load(Departments.BACK_ROOM_DEALER)
+	assert_eq(def.display_name, "The Dealer")
+	assert_eq(def.color, RoomView.DEALER.color)
+	assert_true(def.lines.size() >= 3)
+	assert_true(RoomView.DEALER.lines.size() >= 6, "the Arcade Dealer keeps his four lines and gains two")

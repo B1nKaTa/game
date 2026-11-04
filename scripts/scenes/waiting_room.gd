@@ -247,6 +247,8 @@ func _make_view(room: FloorRoom) -> RoomView:
 	view.setup(room, _map, _floor_def, _run, player, _rng, _progress, Progress)
 	view.door_entered.connect(func(id: int): _enter_department.call_deferred(id))
 	view.notice.connect(_hud.show_notice)
+	# Only the Back Room has card tables to ask for.
+	view.arcade_game_wanted.connect(_open_card_table)
 	return view
 
 
@@ -297,6 +299,9 @@ func _furnish(view: RoomView, room: FloorRoom) -> void:
 		numbers.position = dummy.position
 		view.add_child(numbers)
 		numbers.watch(dummy)
+	if department == Departments.BACK_ROOM:
+		# The Arcade's own tables and odds. The loadout bench's cells stay plain floor.
+		view.add_arcade_tables(Departments.BACK_ROOM_GAMES, load(Departments.BACK_ROOM_DEALER) as NpcDef)
 	if department == Departments.LOBBY:
 		_add_run_door(view)
 		var wall := TrophyWall.new()
@@ -423,6 +428,18 @@ func _open_station(opened: WaitingStation) -> void:
 			_show_panel(letters)
 
 
+# A Back Room table opens the Arcade's card-table overlay, as floor_scene does: never on the frame a
+# panel closed on, so the press that closes it never opens it again, and with the mouse shown for its
+# buttons. Bets come from Pension and wins go to it, through the room's bank, which is Progress.
+func _open_card_table(table: ArcadeTable) -> void:
+	if _panel != null or Engine.get_process_frames() == _panel_closed_frame or not is_instance_valid(table):
+		return
+	var cards := CardTablePanel.new()
+	cards.setup(table, _room_view, _rng)
+	_show_panel(cards)
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
 # Shows the first line now and the rest one after another, in place of whatever was waiting.
 func _show_lines(lines: PackedStringArray) -> void:
 	_notices.clear()
@@ -519,6 +536,18 @@ func open_panel() -> CanvasLayer:
 
 func debug_room_view() -> RoomView:
 	return _room_view
+
+
+func debug_card_panel() -> CardTablePanel:
+	return _panel as CardTablePanel
+
+
+func debug_map() -> FloorMap:
+	return _map
+
+
+func debug_current_id() -> int:
+	return _current_id
 
 
 func lobby_decor() -> LobbyDecor:

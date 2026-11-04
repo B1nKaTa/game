@@ -8,4 +8,4 @@ id = "dealer"
 display_name = "Dealer"
 color = Color(0.55, 0.16, 0.3, 1)
 body_size = Vector2(22, 30)
-lines = Array[String](["Place your bets.", "The house is very understanding.", "No refunds, even in the afterlife.", "Each game once a visit. House rules."])
+lines = Array[String](["Place your bets.", "The house is very understanding.", "No refunds, even in the afterlife.", "Each game once a visit. House rules.", "Sit down, sit down. Your luck's due. Statistically.", "Grief is a gamble. So is this, but with prizes."])

@@ -692,19 +692,26 @@ func _create_rewards() -> void:
 		_create_arcade()
 
 
-# The Dealer stands by his tables as the Shopkeeper does by his wares, and each game cell gets its
-# table, the slot machine first, then blackjack, then draw poker.
+# The slot machine first, then blackjack, then draw poker, with the Arcade's own Dealer.
 func _create_arcade() -> void:
+	add_arcade_tables(ArcadeTable.GAMES, DEALER)
+
+
+# The Dealer stands by his tables as the Shopkeeper does by his wares, and each game cell gets a table,
+# taking the games in turn. The Waiting Room's Back Room calls it too, with its own games and Dealer.
+func add_arcade_tables(games: Array[String], dealer_def: NpcDef) -> void:
 	var cell := _room.layout.merchant_cell()
-	if cell != Vector2i(-1, -1):
+	if cell != Vector2i(-1, -1) and dealer_def != null:
 		var dealer := Npc.new()
-		dealer.setup(DEALER, _player)
+		dealer.setup(dealer_def, _player)
 		dealer.position = RoomBackdrop.cell_center(cell)
 		add_child(dealer)
+	if games.is_empty():
+		return
 	var cells := _room.layout.cells_of(RoomLayout.SYMBOL_GAME)
 	for i in cells.size():
 		var table := ArcadeTable.new()
-		table.setup(ArcadeTable.GAMES[i % ArcadeTable.GAMES.size()], _player.feet())
+		table.setup(games[i % games.size()], _player.feet())
 		table.position = RoomBackdrop.cell_center(cells[i])
 		table.play_wanted.connect(_on_table_wanted.bind(table))
 		add_child(table)

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="NpcDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/npc_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "dealer_back_room"
+display_name = "The Dealer"
+color = Color(0.55, 0.16, 0.3, 1)
+body_size = Vector2(22, 30)
+lines = Array[String](["Members only. You're a member now. Congratulations, and condolences.", "Same odds as the Arcade. I'm a man of principle. Small principle.", "Cards, not slots. Slots are for amateurs and the living.", "Keep the bench clear. Something's coming for it."])

@@ -104,6 +104,11 @@ const RUN_DOOR_CELL := Vector2i(26, 8)
 const TRAINING_DUMMY := "res://data/enemies/training_dummy.tres"
 const DUMMY_CELL := Vector2i(10, 5)
 
+# The Dealer's back room: card tables only, at the Arcade's own odds, so the slot machine stays in the
+# Arcade. One table per G cell of the Back Room, and they refill on every visit.
+const BACK_ROOM_GAMES: Array[String] = [ArcadeTable.BLACKJACK, ArcadeTable.POKER]
+const BACK_ROOM_DEALER := "res://data/npcs/dealer_back_room.tres"
+
 # Reserved for the loadout bench, built once a second weapon exists. Plain floor, with nothing on it.
 const LOADOUT_BENCH_CELLS: Array[Vector2i] = [Vector2i(14, 7), Vector2i(15, 7), Vector2i(16, 7), Vector2i(14, 8), Vector2i(15, 8), Vector2i(16, 8)]
 
