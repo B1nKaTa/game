@@ -64,6 +64,7 @@ var _checked_arcade := false
 # Arcade Rooms the floors rolled whose games the loop played, by room view.
 var _arcades_played := {}
 var _checked_resume := false
+var _checked_controller := false
 
 
 func _ready() -> void:
@@ -191,13 +192,15 @@ func _run() -> void:
 	_check(Progress.data.level_of(upgrade.id) == 2, "the cane's two filed levels survive a reload")
 	_check(Progress.data.choice_of(upgrade) == UpgradeDef.OPTION_B, "the cane's refiled option survives a reload")
 
+	await _check_controller()
 	await _check_resume()
 	await _check_dev_start()
 
 	_check(_checked_departments and _checked_forms and _checked_bounty and _checked_decor, "the Waiting Room checks of the first visits ran")
 	_check(_walked_departments and _checked_back_room and _checked_yard and _checked_tickets, "the Waiting Room checks after every floor ran")
+	_check(_checked_controller, "the controller check ran")
 	if not _failed:
-		print("SMOKE PASS paths cleared: %d, landings reached: %d, boss choices checked: %d, rooms of sizes %s, big room view checked: %s, block memory checked: %s, props checked: %s, fight checked: %s, graveyard checked: %s, care home checked: %s, furnace checked: %s, vault opened: %s, potions checked: %s, fuel checked: %s, pickups off solids: %d, chests checked: %s, mimics beaten on the way: %d, arcade checked: %s, arcade rooms played on the way: %d, resume checked: %s" % [_paths_cleared, _landings_reached, _boss_choices_checked, str(_sizes_seen.keys()), str(_followed_a_big_room), str(_checked_block_memory), str(_checked_props), str(_checked_fight), str(_checked_graveyard), str(_checked_care_home), str(_checked_furnace), str(_opened_a_vault), str(_checked_potions), str(_checked_fuel), _pickups_off_solids, str(_checked_chests), _mimics_beaten_in_loop, str(_checked_arcade), _arcades_played.size(), str(_checked_resume)])
+		print("SMOKE PASS paths cleared: %d, landings reached: %d, boss choices checked: %d, rooms of sizes %s, big room view checked: %s, block memory checked: %s, props checked: %s, fight checked: %s, graveyard checked: %s, care home checked: %s, furnace checked: %s, vault opened: %s, potions checked: %s, fuel checked: %s, pickups off solids: %d, chests checked: %s, mimics beaten on the way: %d, arcade checked: %s, arcade rooms played on the way: %d, resume checked: %s, controller checked: %s" % [_paths_cleared, _landings_reached, _boss_choices_checked, str(_sizes_seen.keys()), str(_followed_a_big_room), str(_checked_block_memory), str(_checked_props), str(_checked_fight), str(_checked_graveyard), str(_checked_care_home), str(_checked_furnace), str(_opened_a_vault), str(_checked_potions), str(_checked_fuel), _pickups_off_solids, str(_checked_chests), _mimics_beaten_in_loop, str(_checked_arcade), _arcades_played.size(), str(_checked_resume), str(_checked_controller)])
 		print("SMOKE PASS waiting room: departments checked at start: %s, forms checked: %s, bounty collected: %s, decor checked: %s, departments walked: %s, back room played: %s, yard checked: %s, tickets and letters checked: %s, mini bosses beaten: %d, Condolences: %d" % [str(_checked_departments), str(_checked_forms), str(_checked_bounty), str(_checked_decor), str(_walked_departments), str(_checked_back_room), str(_checked_yard), str(_checked_tickets), _mini_bosses_beaten, Progress.data.condolences])
 		get_tree().quit(0)
 
@@ -721,6 +724,132 @@ func _check_resume() -> void:
 	await _wait(2.5)
 	_expect_scene("WaitingRoom")
 	_checked_resume = not _failed
+
+
+# The controller, with synthetic joypad events through Input.parse_input_event, as a real pad sends
+# them: a pad press makes it the active device and prompts name its buttons; X opens a merchant's
+# panel, focus lands inside it, the D-pad walks to Leave and A presses it, and B leaves too. Then a
+# few seconds of a run: the left stick walks, the right stick turns his aim and keeps it once let go,
+# the right trigger swings, a hit taken rumbles, and unplugging the pad pauses the run.
+func _check_controller() -> void:
+	var scene := get_tree().current_scene
+	_expect_scene("WaitingRoom")
+	ActiveDevice.reset()
+	PadRumble.reset()
+	await _pad_press(JOY_BUTTON_Y)
+	_check(ActiveDevice.using_pad and ActiveDevice.pad_id == 0, "a pad press makes the controller the active device")
+	_check(KeyBindings.with_key("interact", "Trade") == "X: Trade", "prompts name the pad's button, got '%s'" % KeyBindings.with_key("interact", "Trade"))
+	scene.debug_enter_department(Departments.LOBBY)
+	var station: WaitingStation = scene.station("black_market")
+	scene.player.global_position = station.global_position + Vector2(0, RoomBackdrop.TILE) - Player.FEET_OFFSET
+	await _wait(0.1)
+	_check(station.is_near(), "he stands beside the Black Market")
+	await _pad_press(JOY_BUTTON_X)
+	await _wait(0.1)
+	var panel: CanvasLayer = scene.open_panel()
+	_check(panel is MerchantPanel, "X beside a merchant opens the panel")
+	if not panel is MerchantPanel:
+		return
+	var focused := get_viewport().gui_get_focus_owner()
+	_check(focused != null and panel.is_ancestor_of(focused), "a control in the panel takes focus while a pad plays")
+	var pension: int = Progress.data.pension
+	var reached_leave := false
+	for i in 40:
+		focused = get_viewport().gui_get_focus_owner()
+		if focused is Button and focused.text == "Leave":
+			reached_leave = true
+			break
+		await _pad_press(JOY_BUTTON_DPAD_DOWN)
+		_check(get_viewport().gui_get_focus_owner() != null and panel.is_ancestor_of(get_viewport().gui_get_focus_owner()), "the D-pad keeps focus inside the panel")
+	_check(reached_leave, "the D-pad walks down to Leave")
+	await _pad_press(JOY_BUTTON_A)
+	await _wait(0.1)
+	_check(scene.open_panel() == null, "A presses Leave and the panel closes")
+	_check(Progress.data.pension == pension, "walking the panel bought nothing")
+	await _wait(0.1)
+	await _pad_press(JOY_BUTTON_X)
+	await _wait(0.1)
+	_check(scene.open_panel() is MerchantPanel, "X opens it again")
+	await _pad_press(JOY_BUTTON_B)
+	await _wait(0.1)
+	_check(scene.open_panel() == null, "B leaves the panel")
+	_check(scene.debug_pause_menu() == null, "B never opens the pause menu")
+	await _check_pad_play()
+	ActiveDevice.reset()
+
+
+func _check_pad_play() -> void:
+	Game.begin_run()
+	await _wait(0.5)
+	_expect_scene("FloorScene")
+	var scene := get_tree().current_scene
+	var player: Player = scene.player
+	player.aim_source = Callable()
+	await _pad_press(JOY_BUTTON_Y)
+	var start := player.global_position
+	await _pad_axis(JOY_AXIS_LEFT_Y, 1.0)
+	await _wait(0.4)
+	await _pad_axis(JOY_AXIS_LEFT_Y, 0.0)
+	_check(player.global_position.y > start.y + 4.0, "the left stick walks him, from %s to %s" % [str(start), str(player.global_position)])
+	await _pad_axis(JOY_AXIS_RIGHT_X, -1.0)
+	await _wait(0.1)
+	_check(player._aim.is_equal_approx(Vector2.LEFT), "the right stick turns his aim, got %s" % str(player._aim))
+	await _pad_axis(JOY_AXIS_RIGHT_X, 0.0)
+	await _wait(0.2)
+	_check(player._aim.is_equal_approx(Vector2.LEFT), "a resting stick keeps the aim, got %s" % str(player._aim))
+	await _pad_axis(JOY_AXIS_TRIGGER_RIGHT, 1.0)
+	_check(player._active_swing != null, "the right trigger swings")
+	await _pad_axis(JOY_AXIS_TRIGGER_RIGHT, 0.0)
+	await _wait(0.6)
+	var pills := player.run.health.pills
+	_check(player.take_hit(1), "a hit lands on him")
+	_check(PadRumble.last == PadRumble.HIT_TAKEN, "a hit taken rumbles the pad, got '%s'" % PadRumble.last)
+	player.run.health.heal(player.run.health.max_pills)
+	_check(player.run.health.pills >= pills, "he is healed after the rumble check")
+	Input.joy_connection_changed.emit(0, false)
+	await _wait(0.1)
+	_check(scene.debug_pause_menu() != null and get_tree().paused, "unplugging the pad pauses the run")
+	_check(not ActiveDevice.using_pad, "the keyboard and mouse take over when the pad goes")
+	var menu: PauseMenu = scene.debug_pause_menu()
+	if menu != null:
+		menu.resumed.emit()
+	await _wait(0.1)
+	_check(not get_tree().paused, "the run resumes from the pause menu")
+	# The rumble check's hit left him a moment of grace, which would shrug off this one.
+	await _wait_for(func() -> bool: return player.run.health.invulnerability_left() <= 0.0, 3.0)
+	player.run.health.lethal_saves = 0
+	player.run.health.hit(999)
+	await _wait(0.1)
+	_check(scene.is_over, "death ends the controller check's run")
+	await _wait(2.5)
+	_expect_scene("WaitingRoom")
+	_checked_controller = not _failed
+
+
+func _pad_press(button: int) -> void:
+	await get_tree().process_frame
+	var down := InputEventJoypadButton.new()
+	down.button_index = button as JoyButton
+	down.pressed = true
+	Input.parse_input_event(down)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var up := InputEventJoypadButton.new()
+	up.button_index = button as JoyButton
+	up.pressed = false
+	Input.parse_input_event(up)
+	await get_tree().physics_frame
+	await get_tree().process_frame
+
+
+func _pad_axis(axis: int, value: float) -> void:
+	await get_tree().process_frame
+	var motion := InputEventJoypadMotion.new()
+	motion.axis = axis as JoyAxis
+	motion.axis_value = value
+	Input.parse_input_event(motion)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
 
 
 # Each debug shortcut (F3, F5, F6) lands on its depth's landing with everything bought and both of
