@@ -236,6 +236,16 @@ func call_ticket(upgrade_defs: Array[UpgradeDef], roll: float) -> String:
 	return event
 
 
+# Whether this visit's number was called and something came of it. A clerk's deal with every form
+# filed in full calls nothing, and such a call leaves no deal behind, so an empty deal means not called.
+# A deal stays set for the whole visit, even once its form is filed, so the sign keeps saying so.
+func ticket_was_called() -> bool:
+	var event := TicketRules.event_for(run_count)
+	if event.is_empty() or ticket_called != run_count:
+		return false
+	return event != TicketRules.CLERK_DEAL or not clerk_deal.is_empty()
+
+
 # Opting in to the cursed ticket, only while one is on offer, makes the next run a cursed one.
 func accept_cursed_ticket() -> bool:
 	if not cursed_offer:

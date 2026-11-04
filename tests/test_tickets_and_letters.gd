@@ -67,6 +67,54 @@ func test_the_deal_never_picks_a_maxed_form() -> void:
 	assert_eq(data.call_ticket(Content.upgrades(), 0.5), "", "no deal to call with every form filed")
 
 
+# The sign on the lobby wall says "Called!" only when the number was called and something came of it.
+func test_a_deal_with_every_form_maxed_shows_no_called_on_the_sign() -> void:
+	var data := ProgressData.new()
+	for def in Content.upgrades():
+		data.upgrades[def.id] = def.max_level()
+	data.run_count = 5
+	data.ticket_called = 4
+	assert_eq(data.call_ticket(Content.upgrades(), 0.5), "")
+	assert_eq(data.ticket_called, 5, "the number is seen all the same")
+	assert_false(data.ticket_was_called(), "a deal with nothing to sell is not called")
+
+
+func test_a_real_deal_shows_called_on_the_sign_all_visit() -> void:
+	var data := ProgressData.new()
+	data.run_count = 5
+	data.ticket_called = 4
+	assert_eq(data.call_ticket(Content.upgrades(), 0.0), TicketRules.CLERK_DEAL)
+	assert_true(data.ticket_was_called())
+	# Filing the form on deal in full leaves the deal standing for the visit.
+	data.upgrades[data.clerk_deal] = 99
+	assert_true(data.ticket_was_called())
+
+
+func test_the_other_events_and_plain_numbers_on_the_sign() -> void:
+	var data := ProgressData.new()
+	data.run_count = 10
+	data.ticket_called = 9
+	assert_eq(data.call_ticket(Content.upgrades(), 0.0), TicketRules.NEW_ARRIVAL)
+	assert_true(data.ticket_was_called())
+	data.run_count = 15
+	data.ticket_called = 14
+	assert_eq(data.call_ticket(Content.upgrades(), 0.0), TicketRules.CURSED_OFFER)
+	assert_true(data.ticket_was_called())
+	data.run_count = 16
+	data.ticket_called = 15
+	data.call_ticket(Content.upgrades(), 0.0)
+	assert_false(data.ticket_was_called(), "16 is not a called number")
+	data.run_count = 20
+	assert_false(data.ticket_was_called(), "20 is not called until its return")
+
+
+# The scene names autoloads, so a test cannot load it. This pins that its sign reads the rule above.
+func test_the_lobby_sign_reads_whether_the_ticket_was_called() -> void:
+	var source := FileAccess.get_file_as_string("res://scripts/scenes/waiting_room.gd")
+	var sign_rule := source.substr(source.find("static func now_serving"), 200)
+	assert_true(sign_rule.contains("data.ticket_was_called()"))
+
+
 func test_the_deal_picks_among_the_forms_still_open() -> void:
 	var data := ProgressData.new()
 	var upgrades := Content.upgrades()

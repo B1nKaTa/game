@@ -114,10 +114,10 @@ func _refresh_noticeboard() -> void:
 		board.badge = NoticeboardPanel.NEW_MARK if not LetterBook.unread(Progress.data).is_empty() else ""
 
 
-# The number on the lobby's sign: this visit's, once its ticket has been called, or the old 666.
+# The number on the lobby's sign: this visit's, once its ticket has been called and something came of
+# it, or the old 666.
 static func now_serving(data: ProgressData) -> int:
-	var called := not TicketRules.event_for(data.run_count).is_empty() and data.ticket_called == data.run_count
-	return data.run_count if called else NOT_CALLED
+	return data.run_count if data.ticket_was_called() else NOT_CALLED
 
 
 func _announce_new_departments() -> void:
