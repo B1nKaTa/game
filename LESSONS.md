@@ -89,3 +89,4 @@
 - 2026-11-04: The crescendo's safe spot was hard to find among a dozen overlapping red reaches, and could even fall under Mortimer's body → when an attack leaves one safe spot, mark the spot itself, and keep it off anything solid that moves.
 - 2026-11-04: Two floor bosses started inside the pews and fountains either side of their B cell, because layout rules check cells while a boss's collision box (0.8 of its body) is wider and taller than one cell → check spawn cells with the real collision box of whatever spawns there, as test_boss_spawn_room does.
 - 2026-11-04: Walkers heading to a spot of their own (a loop, a partner's side) used direction_to and stuck on props, since only chase_direction routed → walk to any point with Enemy.walk_direction_to, never a bare direction_to, unless the way is known to be open.
+- 2026-11-04: PowerShell 5.1 Set-Content -Encoding utf8 added a BOM to a .tres file → edit Godot resources with sed or the Edit tool, never Set-Content.
