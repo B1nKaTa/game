@@ -24,6 +24,10 @@ prints each song's length, peak, loudness range, stereo width and loop seam, and
 clips, drops into a hole, sits in mono, or jumps at the loop point. Every melody's bars are counted
 while it renders, so a miscounted bar stops the render with its number.
 
+`py tools/music/harmony.py` renders nothing and takes seconds: it lists long melody notes that rub a
+semitone against the chords under them. A few are meant; many in one song usually mean a chord list
+written in the wrong order.
+
 ## The files
 
 - `synth.py`: the instruments, drums, reverb and the `Song` that mixes and writes a loop.
