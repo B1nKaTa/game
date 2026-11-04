@@ -59,7 +59,7 @@ func _process(delta: float) -> void:
 		return
 	if Engine.get_process_frames() == _opened_frame:
 		return
-	if Input.is_action_just_pressed("pause") or Input.is_action_just_pressed("ui_accept"):
+	if Input.is_action_just_pressed("pause") or Input.is_action_just_pressed("ui_accept") or Input.is_action_just_pressed(PadInput.BACK_ACTION):
 		_close()
 
 

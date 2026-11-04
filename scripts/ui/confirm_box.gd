@@ -52,10 +52,11 @@ func _ready() -> void:
 	holder.reset_size()
 	holder.position = ((Vector2(GameSettings.VIEW) - holder.get_combined_minimum_size()) / 2.0).floor()
 	_first.grab_focus.call_deferred()
+	add_child(PadFocus.new())
 
 
 func _process(_delta: float) -> void:
-	if Engine.get_process_frames() != _opened_frame and Input.is_action_just_pressed("pause"):
+	if Engine.get_process_frames() != _opened_frame and (Input.is_action_just_pressed("pause") or Input.is_action_just_pressed(PadInput.BACK_ACTION)):
 		_choose(_choices.size() - 1)
 
 

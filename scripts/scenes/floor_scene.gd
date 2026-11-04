@@ -461,8 +461,12 @@ func _process(delta: float) -> void:
 	_hud.set_run_time(_run_time)
 	var fighting := _room_view != null and _room_view.is_fighting()
 	_mini_map.visible = GameSettings.minimap_visible(Settings.game("hide_minimap_in_combat"), fighting, _big_map.is_open())
-	if Engine.get_process_frames() != _pause_closed_frame and Input.is_action_just_pressed("pause"):
+	var frame := Engine.get_process_frames()
+	if frame != _pause_closed_frame and frame != _big_map.closed_frame and Input.is_action_just_pressed("pause"):
 		_on_pause_key()
+	# B backs out of a card table, as its Leave does, but never opens the pause menu.
+	if _card_panel != null and Input.is_action_just_pressed(PadInput.BACK_ACTION):
+		_card_panel.leave()
 
 
 # Esc closes whatever is open first: an Arcade table, then the big map. Only then does it pause.

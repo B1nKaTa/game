@@ -52,6 +52,7 @@ func _ready() -> void:
 	_back.pressed.connect(_close)
 	add_child(_back)
 	_build_cards()
+	add_child(PadFocus.new())
 
 
 func _build_cards() -> void:
@@ -168,7 +169,7 @@ func _process(_delta: float) -> void:
 	var frame := Engine.get_process_frames()
 	if _confirm != null or frame == _opened_frame or frame == _ignore_frame:
 		return
-	if Input.is_action_just_pressed("pause"):
+	if Input.is_action_just_pressed("pause") or Input.is_action_just_pressed(PadInput.BACK_ACTION):
 		_close()
 
 

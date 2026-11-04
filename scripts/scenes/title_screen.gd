@@ -54,6 +54,7 @@ func _ready() -> void:
 	version.position = Vector2(MENU_AT.x, GameSettings.VIEW.y - 16)
 	_ui.add_child(version)
 	_build_menu()
+	_ui.add_child(PadFocus.new())
 
 
 func _build_menu() -> void:

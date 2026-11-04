@@ -50,6 +50,7 @@ func _ready() -> void:
 	holder.reset_size()
 	holder.position = ((Vector2(GameSettings.VIEW) - holder.get_combined_minimum_size()) / 2.0).floor()
 	_first.grab_focus.call_deferred()
+	add_child(PadFocus.new())
 
 
 func _add(column: VBoxContainer, text: String, action: Callable) -> Button:
@@ -63,7 +64,8 @@ func _process(_delta: float) -> void:
 	var frame := Engine.get_process_frames()
 	if _options != null or frame == _opened_frame or frame == _options_closed_frame:
 		return
-	if Input.is_action_just_pressed("pause"):
+	# Esc, Start or B resume.
+	if Input.is_action_just_pressed("pause") or Input.is_action_just_pressed(PadInput.BACK_ACTION):
 		_resume()
 
 

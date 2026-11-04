@@ -104,7 +104,7 @@ func _ready() -> void:
 	var title := MenuStyle.label(tr("Options"), MenuStyle.TITLE_FONT, MenuStyle.GOLD)
 	title.position = AT + Vector2(12, 6)
 	add_child(title)
-	var hint := MenuStyle.label(tr("Q / E: switch tabs"), 9, MenuStyle.DIM)
+	var hint := MenuStyle.label(tr("Q / E or shoulder buttons: switch tabs"), 9, MenuStyle.DIM)
 	hint.position = AT + Vector2(SIZE.x - 12 - HINT_WIDTH, 12)
 	hint.size = Vector2(HINT_WIDTH, 12)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -141,7 +141,7 @@ func _ready() -> void:
 	var ok := MenuStyle.button(tr("OK"))
 	ok.pressed.connect(_keep_and_close)
 	bottom.add_child(ok)
-	var esc := MenuStyle.label(tr("Esc: close without keeping"), 9, MenuStyle.DIM)
+	var esc := MenuStyle.label(tr("%s: close without keeping") % _back_name(), 9, MenuStyle.DIM)
 	esc.position = AT + Vector2(SIZE.x - 12 - HINT_WIDTH, SIZE.y - 22)
 	esc.size = Vector2(HINT_WIDTH, 12)
 	esc.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -150,6 +150,22 @@ func _ready() -> void:
 	_notice.position = AT + Vector2(200, SIZE.y - 22)
 	add_child(_notice)
 	_show_tab(_tab)
+	var focus := PadFocus.new()
+	focus.tabs = _step_tab
+	add_child(focus)
+
+
+# What closes the panel on the device in use: Esc, or the pad's B (Circle).
+func _back_name() -> String:
+	return PadInput.button_name(JOY_BUTTON_B, ActiveDevice.family) if ActiveDevice.using_pad else "Esc"
+
+
+# Q and E, or the shoulder buttons, step through the tabs, but never while a key is awaited or a
+# question is open.
+func _step_tab(step: int) -> void:
+	if _confirm != null or not _waiting_action.is_empty() or _done:
+		return
+	_show_tab(TABS[posmod(TABS.find(_tab) + step, TABS.size())])
 
 
 func _show_tab(tab: String) -> void:
@@ -349,7 +365,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		step = 1
 	if step != 0:
 		get_viewport().set_input_as_handled()
-		_show_tab(TABS[posmod(TABS.find(_tab) + step, TABS.size())])
+		_step_tab(step)
 
 
 func _show_notice(text: String) -> void:
@@ -365,7 +381,7 @@ func _process(delta: float) -> void:
 	var frame := Engine.get_process_frames()
 	if _confirm != null or not _waiting_action.is_empty() or frame == _opened_frame or frame == _ignore_frame:
 		return
-	if Input.is_action_just_pressed("pause"):
+	if Input.is_action_just_pressed("pause") or Input.is_action_just_pressed(PadInput.BACK_ACTION):
 		leave()
 
 

@@ -159,6 +159,9 @@ func _process(delta: float) -> void:
 	var frame := Engine.get_process_frames()
 	if frame != _pause_closed_frame and frame != _panel_closed_frame and Input.is_action_just_pressed("pause"):
 		_on_pause_key()
+	# B on a pad backs out of a panel as Esc does, but never opens the pause menu.
+	elif _pause == null and _panel != null and frame != _panel_closed_frame and Input.is_action_just_pressed(PadInput.BACK_ACTION):
+		_back_out_of_panel()
 
 
 # Esc closes an open panel first, as its Leave button does. Only with none open does it pause.
@@ -166,13 +169,7 @@ func _on_pause_key() -> void:
 	if _pause != null:
 		return
 	if _panel != null:
-		# Options answers Esc itself, asking before it throws changes away.
-		if _panel.has_method("handles_pause_key"):
-			return
-		if _panel.has_method("leave"):
-			_panel.leave()
-		else:
-			_close_panel()
+		_back_out_of_panel()
 		return
 	_pause = PauseMenu.new()
 	_pause.setup(false)
@@ -181,6 +178,17 @@ func _on_pause_key() -> void:
 	add_child(_pause)
 	player.cancel_charge()
 	get_tree().paused = true
+
+
+# Closes the open panel as its Leave button does. Options answers Esc and B itself, asking before it
+# throws changes away.
+func _back_out_of_panel() -> void:
+	if _panel.has_method("handles_pause_key"):
+		return
+	if _panel.has_method("leave"):
+		_panel.leave()
+	else:
+		_close_panel()
 
 
 func _close_pause() -> void:
