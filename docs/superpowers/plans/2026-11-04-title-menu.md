@@ -213,3 +213,17 @@ Real-window screenshots from a renamed `git archive` copy with an extra probe au
 
 - Spec 1 (title): Tasks 5, 7. Spec 2 (options): Tasks 1–4. Spec 3 (pause): Task 5. Spec 4 (slots): Tasks 6, 7. Spec 5 (checkpoint): Tasks 8, 9. Spec 6 (controller): stage 2; the Input tab shows "coming" and `keys.json` keeps a `pad` key.
 - Vibration is stored and shown but does nothing until stage 2 adds rumble.
+
+## As built (2026-11-05)
+
+- Task 6 (slots) was built before Task 5, since the title's menu reads slot state. `menu_items` takes
+  only the count of slots with progress, and `SaveSlots.continue_slot` picks the last used slot or the
+  newest with progress. The last used slot lives in `user://last_slot.txt`.
+- The old `KeysPanel` is gone; the Key Settings board opens Options on its Input tab.
+- Load Game on a slot with an interrupted run offers Resume run, Abandon run and Cancel, so a run in
+  another slot is never lost by one wrong press.
+- A pause-menu save mid-fight puts Grandpa back in the last cleared room, so the fight starts over when
+  he walks back in. Opened chests are gone on resume, unopened ones stay closed.
+- Esc discards every tab's unsaved changes, not only the open tab's, after the one confirm.
+- The run timer sits in the top row's gap before the Slip counter, since the small map's floor name
+  holds the row's right end. It fits with eleven pills and 9999 Pension; more pills would crowd it.
