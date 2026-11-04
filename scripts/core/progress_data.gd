@@ -5,6 +5,10 @@ const VERSION := 1
 const RETIREMENT_CAP := 1000
 const RETIREMENT_TIERS := [10, 50, 100, 250, 500, 750, 1000]
 const NO_DEPOSIT_RUN := -1
+# Switching a form's milestone option costs this, after each form's one free switch.
+const REFILE_FEE := 40
+# The share the clerk takes off the one form on deal for a visit.
+const CLERK_DEAL_CUT := 0.25
 
 var pension: int = 0
 var upgrades: Dictionary = {}
@@ -82,16 +86,60 @@ func spend(amount: int) -> bool:
 	return true
 
 
-func can_buy(def: UpgradeDef) -> bool:
+# The price of filing the next level, less the clerk's deal when this form is on it. -1 when maxed.
+func price_of(def: UpgradeDef) -> int:
 	var price := def.price_at(level_of(def.id))
+	if price < 0:
+		return -1
+	if not clerk_deal.is_empty() and clerk_deal == def.id:
+		return ceili(price * (1.0 - CLERK_DEAL_CUT))
+	return price
+
+
+func can_buy(def: UpgradeDef) -> bool:
+	var price := price_of(def)
 	return price >= 0 and pension >= price
 
 
-func buy(def: UpgradeDef) -> bool:
+# Filing the milestone level stores the option chosen, where an empty option means option A. Any
+# other option refuses the filing, so a typo never buys a level without a choice.
+func buy(def: UpgradeDef, option := "") -> bool:
 	if not can_buy(def):
 		return false
-	pension -= def.price_at(level_of(def.id))
-	upgrades[def.id] = level_of(def.id) + 1
+	var next := level_of(def.id) + 1
+	var at_milestone := def.has_choice() and next == def.milestone_level
+	var chosen := UpgradeDef.OPTION_A if option.is_empty() else option
+	if at_milestone and chosen != UpgradeDef.OPTION_A and chosen != UpgradeDef.OPTION_B:
+		return false
+	pension -= price_of(def)
+	upgrades[def.id] = next
+	if at_milestone:
+		form_choices[def.id] = chosen
+	return true
+
+
+# The option a form runs with: "" below its milestone, else the stored choice, or "a" when none is.
+func choice_of(def: UpgradeDef) -> String:
+	if not def.has_choice() or level_of(def.id) < def.milestone_level:
+		return ""
+	return str(form_choices.get(def.id, UpgradeDef.OPTION_A))
+
+
+# What switching the option costs: -1 with nothing to switch, 0 while the free switch is unused.
+func refile_price(def: UpgradeDef) -> int:
+	if choice_of(def).is_empty():
+		return -1
+	return REFILE_FEE if free_refile_used.has(def.id) else 0
+
+
+func refile(def: UpgradeDef) -> bool:
+	var price := refile_price(def)
+	if price < 0 or pension < price:
+		return false
+	var current := choice_of(def)
+	pension -= price
+	form_choices[def.id] = UpgradeDef.OPTION_B if current == UpgradeDef.OPTION_A else UpgradeDef.OPTION_A
+	free_refile_used[def.id] = true
 	return true
 
 

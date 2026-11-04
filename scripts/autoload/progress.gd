@@ -68,11 +68,19 @@ func add_pension(amount: int) -> void:
 	pension_changed.emit(data.pension)
 
 
-func buy(def: UpgradeDef) -> bool:
-	if not data.buy(def):
+func buy(def: UpgradeDef, option := "") -> bool:
+	if not data.buy(def, option):
 		return false
 	_store.save_progress(data)
 	pension_changed.emit(data.pension)
+	return true
+
+
+# Switches a filed form to its other option, free the first time and REFILE_FEE after.
+func refile(def: UpgradeDef) -> bool:
+	if not data.refile(def):
+		return false
+	_save_pension()
 	return true
 
 

@@ -119,3 +119,92 @@ func test_a_thermos_reaches_as_far_as_its_radius() -> void:
 	var body := Rect2(Thermos.BLAST_RADIUS + 5.0, -10, 20, 20)
 	assert_false(Thermos.in_blast(Vector2.ZERO, body))
 	assert_true(Thermos.in_blast(Vector2.ZERO, body, Thermos.BLAST_RADIUS * 1.3))
+
+
+func _data_with(pension: int, levels := {}) -> ProgressData:
+	var data := ProgressData.new()
+	data.pension = pension
+	data.upgrades = levels.duplicate()
+	return data
+
+
+func test_filing_the_milestone_stores_the_choice() -> void:
+	var cane := _shipped("reinforced_cane")
+	var data := _data_with(1000, {"reinforced_cane": 1})
+	assert_eq(data.choice_of(cane), "")
+	assert_false(data.buy(cane, "z"))
+	assert_true(data.buy(cane, "b"))
+	assert_eq(data.choice_of(cane), "b")
+	assert_eq(data.level_of("reinforced_cane"), 2)
+
+
+func test_filing_without_a_choice_takes_option_a() -> void:
+	var cane := _shipped("reinforced_cane")
+	var data := _data_with(1000, {"reinforced_cane": 1})
+	assert_true(data.buy(cane))
+	assert_eq(data.choice_of(cane), "a")
+
+
+func test_filing_past_the_milestone_keeps_the_choice() -> void:
+	var cane := _shipped("reinforced_cane")
+	var data := _data_with(1000, {"reinforced_cane": 2})
+	data.form_choices["reinforced_cane"] = "b"
+	assert_true(data.buy(cane, "a"), "an option off the milestone is ignored")
+	assert_eq(data.choice_of(cane), "b")
+
+
+func test_the_first_refile_is_free_and_the_next_costs_the_fee() -> void:
+	var cane := _shipped("reinforced_cane")
+	var data := _data_with(100, {"reinforced_cane": 2})
+	assert_eq(data.refile_price(cane), 0)
+	assert_true(data.refile(cane))
+	assert_eq(data.choice_of(cane), "b")
+	assert_eq(data.pension, 100)
+	assert_eq(data.refile_price(cane), ProgressData.REFILE_FEE)
+	assert_true(data.refile(cane))
+	assert_eq(data.choice_of(cane), "a")
+	assert_eq(data.pension, 100 - ProgressData.REFILE_FEE)
+
+
+func test_a_refile_waits_for_the_fee() -> void:
+	var cane := _shipped("reinforced_cane")
+	var data := _data_with(ProgressData.REFILE_FEE - 1, {"reinforced_cane": 2})
+	data.free_refile_used["reinforced_cane"] = true
+	assert_false(data.refile(cane))
+	assert_eq(data.choice_of(cane), "a")
+
+
+func test_nothing_to_refile_below_the_milestone() -> void:
+	var cane := _shipped("reinforced_cane")
+	var data := _data_with(100, {"reinforced_cane": 1})
+	assert_eq(data.refile_price(cane), -1)
+	assert_false(data.refile(cane))
+
+
+func test_the_clerk_deal_takes_a_quarter_off_one_form() -> void:
+	var cane := _shipped("reinforced_cane")
+	var data := _data_with(1000)
+	data.clerk_deal = "reinforced_cane"
+	assert_eq(data.price_of(cane), ceili(50 * 0.75))
+	assert_eq(data.price_of(_shipped("better_knees")), 30, "only the form on deal")
+	assert_true(data.buy(cane))
+	assert_eq(data.pension, 1000 - ceili(50 * 0.75))
+
+
+func test_a_form_row_shows_its_stamps() -> void:
+	assert_eq(FormText.stamps(_shipped("reinforced_cane"), 2), "[FILED] [FILED] [ ]")
+
+
+func test_a_form_row_names_its_option_and_price() -> void:
+	var cane := _shipped("reinforced_cane")
+	var text := FormText.row(cane, 2, 240, "b")
+	assert_true(text.contains("Reinforced Cane"), text)
+	assert_true(text.contains("Lightweight"), text)
+	assert_true(text.contains("240 Pension"), text)
+	assert_true(FormText.row(cane, 3, -1, "b").contains(FormText.FILED_IN_FULL))
+
+
+func test_a_refile_row_names_both_options_and_the_price() -> void:
+	var cane := _shipped("reinforced_cane")
+	assert_eq(FormText.refile_row(cane, "a", 0), "Reinforced Cane: Heavy Head -> Lightweight  Free")
+	assert_eq(FormText.refile_row(cane, "b", 40), "Reinforced Cane: Lightweight -> Heavy Head  40 Pension")

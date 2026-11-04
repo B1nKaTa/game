@@ -71,3 +71,19 @@ func test_old_saves_open_the_departments_of_their_cleared_floors() -> void:
 
 func test_old_saves_hang_the_mementos_of_floors_already_cleared() -> void:
 	assert_eq(Mementos.hung(_today()).size(), 5)
+
+
+func test_old_saves_read_option_a_with_one_free_switch() -> void:
+	var data := _today()
+	for def in Content.upgrades():
+		if data.level_of(def.id) >= def.milestone_level:
+			assert_eq(data.choice_of(def), UpgradeDef.OPTION_A, def.id)
+			assert_eq(data.refile_price(def), 0, def.id)
+	assert_eq(data.choice_of(_find("better_knees")), "", "level 1 is below its milestone")
+
+
+func _find(id: String) -> UpgradeDef:
+	for def in Content.upgrades():
+		if def.id == id:
+			return def
+	return null
