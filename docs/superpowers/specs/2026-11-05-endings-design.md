@@ -42,6 +42,30 @@ found**, in the table's order. If every one that holds is already found, pick th
 order. Briefly Alive is always eligible, so there is always an answer. Eternal Feud plays once, when it
 first becomes due. After that it counts as found and drops out of the choosing.
 
+**Ending 11: Repeat Customer** (`repeat_customer`, added 2026-11-05). Once `eternal_feud` has been
+found, Gerald is in the Waiting Room and Harold can still escape just for the sake of it. From then
+on ending 11 takes Briefly Alive's place as the fallback: endings 2 to 9 not yet found still win
+first, and Briefly Alive is no longer chosen. When no unfound ending 2 to 9 holds, it is ending 11,
+every time, with a new death.
+- **The scene** is a quick death of 5 to 8 seconds, with no story and no Gerald: Harold appears at
+  home, standing; one instant gag; the cause-of-death card; back to the Waiting Room.
+- **The five deaths**, picked at random each time but never the same as the time before (saved as
+  `last_repeat_death`, optional):
+
+  | n | Death | Card |
+  |---|---|---|
+  | 1 | Falls down the stairs. | "Cause of death: stairs." |
+  | 2 | Chokes on his sandwich at the kitchen table. | "Cause of death: a sandwich." |
+  | 3 | Slips in the bath. | "Cause of death: bath time." |
+  | 4 | Falls off the step-ladder changing a light bulb. | "Cause of death: a light bulb." |
+  | 5 | Dozes off in his armchair in front of the TV and doesn't wake up. | "Cause of death: daytime television." |
+
+- **The Archive** lists it; it is found the first time it plays, and "Endings found" counts N/11.
+  Its entry shows how many of the 5 deaths have been seen (saved as `repeat_deaths_seen`,
+  optional), and Replay plays a random one of those seen.
+- **Gerald** keeps only his normal Waiting Room lines; no line mocks these deaths.
+- **Tests:** the choice order with 11 added, the never-twice-in-a-row rule, and the found count.
+
 **`EndingRules`** is a pure `RefCounted` with static functions. It takes a small snapshot of the run
 and the found set, and returns an id. Test it headless for every condition, for the order, for the
 unfound-first rule and for Eternal Feud's count.
@@ -170,8 +194,8 @@ tear.
 
 ## 5. The Ending Archive
 
-- **Where:** a filing cabinet station in the Executive Suite: "Ending Archive. Files 27B-1 to 27B-10".
-- **The panel:** a list of the 10 endings.
+- **Where:** a filing cabinet station in the Executive Suite: "Ending Archive. Files 27B-1 to 27B-11".
+- **The panel:** a list of the 11 endings.
   - A found ending shows its number, title and cause of death, with a Replay button.
   - A missing one shows "???" and its hint.
   - The panel has an opaque backing, fits 640x360, and scrolls if needed.
@@ -190,7 +214,7 @@ tear.
   | 10 | "Find five other files." |
 
 - **Replay** plays the scene, then returns to the panel, not to the Waiting Room arrival.
-- **The Trophy Wall:** add a small "Endings found: N/10" line to the Trophy Wall's caption.
+- **The Trophy Wall:** add a small "Endings found: N/11" line to the Trophy Wall's caption.
 
 ## 6. Rewards
 
@@ -200,7 +224,7 @@ tear.
 
 ## 7. Save
 
-New optional fields in `ProgressData`: `endings_found: Dictionary` (id → true). Migration:
+New optional fields in `ProgressData`: `endings_found: Dictionary` (id → true), and for ending 11 `last_repeat_death: int` (0 for none) and `repeat_deaths_seen: Dictionary` (n → true). Migration:
 - `ending_seen` true and no `endings_found` means `endings_found = {"briefly_alive": true}`;
 - keep `ending_seen` readable for old builds.
 
