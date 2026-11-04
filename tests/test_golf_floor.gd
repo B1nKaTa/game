@@ -136,6 +136,7 @@ func test_sand_reads_against_the_palest_fairway() -> void:
 	assert_true(_difference(palette.sand, palette.sand_grain) > 0.25, "the grains show on the sand")
 
 
+
 # --- its rooms ---
 
 func test_every_layout_in_the_folder_is_valid() -> void:
@@ -250,6 +251,16 @@ func test_the_courses_props_break_as_the_spec_says() -> void:
 	for symbol in [RoomLayout.SYMBOL_SAND, RoomLayout.SYMBOL_FLAG, RoomLayout.SYMBOL_BALL_WASHER, RoomLayout.SYMBOL_HEDGE]:
 		assert_true(RoomLayout.ALLOWED.contains(symbol), symbol)
 	assert_eq(RoomLayout.SYMBOL_FLAG + RoomLayout.SYMBOL_BALL_WASHER + RoomLayout.SYMBOL_HEDGE, "345", "only the path's own symbols")
+
+
+# Debris is a few small dots, so it must stand well apart from the grass it falls on.
+func test_every_props_debris_shows_on_the_fairway() -> void:
+	var palette := _def().room_palette()
+	for prop: BreakableBlock in [FlagPin.new(), BallWasher.new(), Hedge.new(), ParkedCart.new()]:
+		prop.palette = palette
+		for tone: Color in [palette.floor_a, palette.floor_b, palette.floor_c]:
+			assert_true(_difference(prop.debris_color(), tone) > 0.4, "%s debris against %s" % [prop.art_id(), str(tone)])
+		prop.free()
 
 
 # --- whole floors ---
