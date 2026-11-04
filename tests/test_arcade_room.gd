@@ -8,6 +8,7 @@ const FLOORS: Array[String] = [
 	"res://data/floors/furnace_works.tres",
 	"res://data/floors/funeral_parlour.tres",
 	"res://data/floors/golden_years_mall.tres",
+	"res://data/floors/fairways_end.tres",
 ]
 
 

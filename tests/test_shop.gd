@@ -116,6 +116,10 @@ func _shops() -> Array[RoomLayout]:
 		for layout in RoomCatalog.load_valid("res://data/rooms/%s/" % folder):
 			if layout.room_type == RoomLayout.TYPE_SHOP:
 				shops.append(layout)
+	# Fairway's End.
+	for layout in RoomCatalog.load_valid("res://data/rooms/fairways_end/"):
+		if layout.room_type == RoomLayout.TYPE_SHOP:
+			shops.append(layout)
 	return shops
 
 
