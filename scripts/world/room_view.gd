@@ -173,7 +173,8 @@ static func is_passing_effect(child: Node) -> bool:
 		or child is Shockwave or child is FlameBurst or child is PipeRing or child is CollectionPlate
 		or child is ProcessionLane or child is SafeSpotMark or child is PerfumeCloud or child is WetSplash
 		or child is DroppedCoffin or child is PresentDrop or child is ClosingRing
-		or child is TapeSpread or child is PaperTrail or child is WriteUpMark)
+		or child is TapeSpread or child is PaperTrail or child is WriteUpMark or child is LaneDrop or child is HoldMusic
+		or child is TakeoverTether)
 
 
 func place_bomb(at: Vector2) -> void:
