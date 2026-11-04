@@ -95,10 +95,12 @@ func test_a_puck_bounces_once_off_the_first_wall_and_stops_at_the_next() -> void
 	assert_eq(path.size(), 3)
 	assert_eq(ShuffleboardPuck.bounces(path), 1)
 	assert_true(path[1].x < 300.0 and path[1].x > 290.0, "it turns just short of the wall, %s" % str(path[1]))
-	var out := path[0].direction_to(path[1])
+	assert_true(path[0].direction_to(path[1]).x > 0.0, "it heads for the wall first")
 	var back := path[1].direction_to(path[2])
 	assert_true(back.x < 0.0 and back.y > 0.0, "it comes back off the wall, %s" % str(back))
-	assert_near(back.y, out.y, "keeping its way along the wall")
+	# The turn is pulled back just short of the wall, which bends the first leg a little, so the way
+	# back is compared with the throw itself.
+	assert_near(back.y, Vector2(1, 1).normalized().y, "keeping its way along the wall")
 	var legs: Array[Vector2] = [path[1] - path[0], path[2] - path[0]]
 	assert_true(CollectionPlate.path_length(legs) <= 400.0 + 0.01, "never further than a puck slides")
 	var corner := ShuffleboardPuck.bounce_path(Vector2(250, 900), Vector2(1, 1).normalized(), 2000.0, walls)
