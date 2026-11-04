@@ -2381,10 +2381,12 @@ func _check_plot_holder(scene: Node, health: Health) -> void:
 	_check(holder._warning != null, "a rise shows a warning first")
 	_check(holder.submerged and health.pills == pills, "the warning comes before anything is up")
 	_check(holder.global_position.distance_to(center) <= 30.0, "the warning lies under him, off by %f" % holder.global_position.distance_to(center))
+	# Timed by the frames' own delta: a 0.02 s timer lasts a whole frame, so on a loaded machine
+	# counting timers would halve the warning.
 	waited = 0.0
 	while holder.submerged and waited < 2.0:
-		await _wait(0.02)
-		waited += 0.02
+		await get_tree().process_frame
+		waited += get_process_delta_time()
 	_check(not holder.submerged, "it rises when the warning ends")
 	_check(waited >= 0.7, "the warning shows long enough to step out, %f" % waited)
 	_check(health.pills == pills - holder.def.damage, "staying on the warning costs a hit")
