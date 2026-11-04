@@ -105,6 +105,21 @@ func test_the_beats_ring_pushes_grandpa_but_never_costs_a_pill() -> void:
 	player.free()
 
 
+# A ring that shoved him just before a door must not carry on in the next room, where it moved his
+# arrival 33 px off the door in the full loop.
+func test_a_push_ends_when_he_changes_rooms() -> void:
+	var player := Player.new()
+	player.setup(_run())
+	player.push(Vector2(0, PipeRing.PUSH_SPEED), PipeRing.PUSH_TIME)
+	player.end_push()
+	assert_false(player.is_pushed(), "the shove is gone")
+	player.free()
+	var source := FileAccess.get_file_as_string("res://scripts/scenes/floor_scene.gd")
+	var enter := source.substr(source.find("func _enter_room("))
+	enter = enter.substr(0, enter.find("\nfunc ", 1))
+	assert_true(enter.contains("player.end_push()"), "entering a room ends any push")
+
+
 func test_enemies_are_pushed_the_same_but_bosses_barely() -> void:
 	var def: EnemyDef = load("res://data/enemies/intern_reaper.tres")
 	var enemy := Enemy.new()

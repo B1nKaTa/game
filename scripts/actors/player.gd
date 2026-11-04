@@ -160,6 +160,11 @@ func is_pushed() -> bool:
 	return _push_left > 0.0
 
 
+# A gust from the room he just left stays there.
+func end_push() -> void:
+	_push_left = 0.0
+
+
 func slow_factor() -> float:
 	return _slow.speed_factor()
 

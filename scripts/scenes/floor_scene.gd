@@ -405,6 +405,7 @@ func _on_big_map_changed(is_open: bool) -> void:
 func _enter_room(target_id: int) -> void:
 	_hud.hide_boss_bar()
 	player.recall_teeth()
+	player.end_push()
 	var from_id := _current_id
 	if _room_view != null:
 		_room_view.clear_passing_effects()

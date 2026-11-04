@@ -76,8 +76,12 @@ $env:GODOT = $godot; powershell -File D:\grandpa-verify\smokeA\tools\smoke.ps1 *
   every flag in them true, and no `SCRIPT ERROR` anywhere in the log. Report the run time.
 - If a run goes far past its usual time, a parse error in `tools/smoke_driver.gd` can hang it: run
   Godot directly on the copy with output redirected and read the first error.
-- The Funeral Parlour's arrival check ("he arrives standing on the door") flaked once. Reproduce a
-  flake by forcing its layout and arrival side before relaxing anything.
+- The Funeral Parlour's arrival check ("he arrives standing on the door") flaked because an organ
+  ring's push followed him through the door (fixed 2026-11-05: `_enter_room` ends any push). A new
+  hazard that moves him must end on a room change too. Reproduce a flake by forcing its layout and
+  arrival side, or by dividing the odd distance by each mover's speed, before relaxing anything.
+- The log is UTF-16: `iconv -f UTF-16 -t UTF-8` it before searching. A loop alone can pass where
+  three in parallel fail, since load moves where a check lands in a hazard's cycle.
 - Afterwards delete the copies and their user folders:
 
 ```powershell
