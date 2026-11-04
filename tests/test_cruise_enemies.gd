@@ -7,7 +7,7 @@ func _load(id: String) -> EnemyDef:
 
 # A pretend room for the puck: a wall down the line x = wall_x, and another along y = floor_y.
 func _walls(wall_x: float, floor_y: float) -> Callable:
-	return func(from: Vector2, to: Vector2) -> Dictionary:
+	var cast := func(from: Vector2, to: Vector2) -> Dictionary:
 		var hits: Array = []
 		if (from.x < wall_x) != (to.x < wall_x) and not is_equal_approx(from.x, to.x):
 			var t := (wall_x - from.x) / (to.x - from.x)
@@ -19,6 +19,7 @@ func _walls(wall_x: float, floor_y: float) -> Callable:
 			return {}
 		hits.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
 		return {"position": hits[0][1], "normal": hits[0][2]}
+	return cast
 
 
 # --- the Early Bird Diners ---
