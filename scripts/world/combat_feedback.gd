@@ -65,6 +65,7 @@ func on_swing_landed(heavy: bool, finisher: bool) -> void:
 	_begin_hit_stop(HitStop.duration_for(heavy, finisher))
 	if heavy:
 		_shake.start(ScreenShake.CHARGED_HIT, ScreenShake.CHARGED_TIME)
+		PadRumble.play(PadRumble.HEAVY_LANDED)
 	_play("charged_hit" if heavy else "combo_hit")
 
 
@@ -87,6 +88,7 @@ func on_teeth_caught() -> void:
 
 func on_hurt() -> void:
 	_shake.start(ScreenShake.HURT, ScreenShake.HURT_TIME)
+	PadRumble.play(PadRumble.HIT_TAKEN)
 	_play("player_hurt")
 
 

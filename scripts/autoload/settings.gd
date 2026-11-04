@@ -31,6 +31,7 @@ func apply(settings: GameSettings) -> void:
 	GameSettings.apply_volumes(settings)
 	_adjust.set_levels(settings.value(GameSettings.VIDEO, "brightness"), settings.value(GameSettings.VIDEO, "contrast"), settings.value(GameSettings.VIDEO, "gamma"))
 	TranslationServer.set_locale(settings.value(GameSettings.GAME, "language"))
+	PadRumble.enabled = settings.value(GameSettings.GAME, "vibration")
 	if not is_quiet() and DisplayServer.get_name() != "headless":
 		_apply_video(settings)
 	changed.emit()

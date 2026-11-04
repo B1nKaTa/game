@@ -125,6 +125,7 @@ func _ready() -> void:
 	_big_map.opened_changed.connect(_on_big_map_changed)
 	_apply_game_settings()
 	Settings.changed.connect(_apply_game_settings)
+	PadWatch.pad_lost.connect(_on_pad_lost)
 	if _resumed:
 		_enter_resumed_room(resume)
 	else:
@@ -474,6 +475,19 @@ func _on_pause_key() -> void:
 	if _big_map.is_open():
 		_big_map.set_open(false)
 		return
+	_open_pause()
+
+
+# Unplugging the pad he plays with pauses the run, over the big map or a card table if one is open.
+func _on_pad_lost() -> void:
+	if is_over or _pause != null:
+		return
+	if _big_map.is_open():
+		_big_map.set_open(false)
+	_open_pause()
+
+
+func _open_pause() -> void:
 	_pause = PauseMenu.new()
 	_pause.setup(true)
 	_pause.resumed.connect(_close_pause)
