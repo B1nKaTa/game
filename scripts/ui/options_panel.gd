@@ -76,6 +76,9 @@ var _keys_before := {}
 var _rows: VBoxContainer
 var _tab_buttons := {}
 var _note: Label
+# The tab and close hints, which name the device in use and follow a switch at every tab change.
+var _tab_hint_label: Label
+var _esc_hint: Label
 var _notice: Label
 var _notice_left := 0.0
 var _waiting_action := ""
@@ -110,7 +113,8 @@ func _ready() -> void:
 	var title := MenuStyle.label(tr("Options"), MenuStyle.TITLE_FONT, MenuStyle.GOLD)
 	title.position = AT + Vector2(12, 6)
 	add_child(title)
-	var hint := MenuStyle.label(tr("Q / E or shoulder buttons: switch tabs"), 9, MenuStyle.DIM)
+	var hint := MenuStyle.label(_tab_hint(), 9, MenuStyle.DIM)
+	_tab_hint_label = hint
 	hint.position = AT + Vector2(SIZE.x - 12 - HINT_WIDTH, 12)
 	hint.size = Vector2(HINT_WIDTH, 12)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -148,6 +152,7 @@ func _ready() -> void:
 	ok.pressed.connect(_keep_and_close)
 	bottom.add_child(ok)
 	var esc := MenuStyle.label(tr("%s: close without keeping") % _back_name(), 9, MenuStyle.DIM)
+	_esc_hint = esc
 	esc.position = AT + Vector2(SIZE.x - 12 - HINT_WIDTH, SIZE.y - 22)
 	esc.size = Vector2(HINT_WIDTH, 12)
 	esc.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -159,6 +164,14 @@ func _ready() -> void:
 	var focus := PadFocus.new()
 	focus.tabs = _step_tab
 	add_child(focus)
+
+
+# What switches tabs on the device in use: Q and E, or the pad's shoulder buttons.
+func _tab_hint() -> String:
+	if not ActiveDevice.using_pad:
+		return tr("Q / E: switch tabs")
+	var family := ActiveDevice.family
+	return tr("%s / %s: switch tabs") % [PadInput.button_name(JOY_BUTTON_LEFT_SHOULDER, family), PadInput.button_name(JOY_BUTTON_RIGHT_SHOULDER, family)]
 
 
 # What closes the panel on the device in use: Esc, or the pad's B (Circle).
@@ -191,6 +204,8 @@ func _show_tab(tab: String) -> void:
 		for key: String in TAB_KEYS[tab]:
 			_build_row(tab, key)
 	_note.text = tr(TAB_NOTES.get(tab, ""))
+	_tab_hint_label.text = _tab_hint()
+	_esc_hint.text = tr("%s: close without keeping") % _back_name()
 	var first := _first_focus()
 	if first != null:
 		first.grab_focus.call_deferred()
