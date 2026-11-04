@@ -1106,10 +1106,28 @@ func _finish_room() -> void:
 		floor_cleared.emit()
 
 
-# Head Office: red tape strung across lanes, each cell running the way its strand runs.
-func _create_office_props(layout: RoomLayout, _palette: RoomPalette) -> void:
+# Head Office: red tape strung across lanes, each cell running the way its strand runs, water
+# coolers that break like barrels, cubicle walls that break like furniture and can hide a coin, and
+# in-trays that break to anything.
+func _create_office_props(layout: RoomLayout, palette: RoomPalette) -> void:
 	for cell in layout.cells_of(RoomLayout.SYMBOL_RED_TAPE):
 		var tape := RedTape.new()
 		tape.across = RedTape.runs_across(layout, cell)
 		tape.position = RoomBackdrop.cell_center(cell)
 		add_child(tape)
+	for cell in layout.cells_of(RoomLayout.SYMBOL_WATER_COOLER):
+		var cooler := WaterCooler.new()
+		cooler.palette = palette
+		_place_prop(cooler, cell)
+		cooler.broken.connect(_on_barrel_broken.bind(cell))
+	for cell in layout.cells_of(RoomLayout.SYMBOL_CUBICLE):
+		var partition := CubicleWall.new()
+		partition.palette = palette
+		partition.hides_coin = RoomRules.furniture_hides_coin(_prop_coin_roll())
+		_place_prop(partition, cell)
+		partition.broken.connect(_on_rock_broken.bind(partition.hides_coin, cell))
+	for cell in layout.cells_of(RoomLayout.SYMBOL_IN_TRAY):
+		var tray := InTray.new()
+		tray.palette = palette
+		_place_prop(tray, cell)
+		tray.broken.connect(_on_vase_broken.bind(cell))

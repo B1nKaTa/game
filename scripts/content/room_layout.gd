@@ -70,7 +70,7 @@ const SYMBOL_CRACK := "k"
 const SYMBOL_TORCH := "t"
 const SYMBOL_LANTERN := "l"
 const SYMBOL_STUMP := "m"
-const DECOR_SYMBOLS := "gnwuktlmfprce"
+const DECOR_SYMBOLS := "gnwuktlmfprcey"
 # A freshly mopped cell: everyone walks on it, Grandpa and chargers slide. Kept well clear of doors.
 const SYMBOL_WET := "W"
 const WET_DOOR_CLEARANCE := 2
@@ -108,13 +108,18 @@ const SYMBOL_SALE_SIGN := "e"
 # in a doorway.
 const SYMBOL_RED_TAPE := "x"
 const RED_TAPE_DOOR_CLEARANCE := 2
-const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc><^vazdqex"
+# Head Office stock. A water cooler breaks like a barrel, a cubicle wall like a rock, and an in-tray
+# blocks nothing and breaks to anything, like grass.
+const SYMBOL_WATER_COOLER := "9"
+const SYMBOL_CUBICLE := "N"
+const SYMBOL_IN_TRAY := "y"
+const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc><^vazdqex9Ny"
 # Nothing can walk through these, so nothing may be dropped or summoned on them.
-const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGojhazdq"
+const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGojhazdq9N"
 # Routes may not need a hole or a wall, and may not need a bomb for a crate or a rock.
 const WALL_LIKE := "#lo"
 const WALLS := "#lVo"
-const WALLS_AND_BOMB_ONLY := "#lVXOAYKDMohdq"
+const WALLS_AND_BOMB_ONLY := "#lVXOAYKDMohdqN"
 const MUST_REACH_WITHOUT_BREAKING := "EBIHSPG"
 # A vault lays this many labeled pickups out in the open, this many cells apart so names never overlap.
 const VAULT_EXTRAS := 3
