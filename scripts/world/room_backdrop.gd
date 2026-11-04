@@ -87,6 +87,12 @@ func _draw() -> void:
 					draw_rect(Rect2(tile.position + Vector2(0, TILE - 5), Vector2(TILE, 3)), _palette.wall_line)
 					if posmod(x, 3) == 1:
 						draw_rect(Rect2(tile.position + Vector2(TILE / 2.0 - 2, TILE - 6), Vector2(4, 4)), _palette.carpet_motif)
+				# Head Office walls: painted plaster over a darker dado, a chair rail between them and a
+				# skirting board at the foot. Nothing upright, so it never reads as wood panelling.
+				if _palette.wall_pattern == 4:
+					draw_rect(Rect2(tile.position + Vector2(0, TILE * 0.55), Vector2(TILE, TILE * 0.45)), _palette.brick_line)
+					draw_rect(Rect2(tile.position + Vector2(0, TILE * 0.5), Vector2(TILE, 2)), _palette.wall_line)
+					draw_rect(Rect2(tile.position + Vector2(0, TILE - 3), Vector2(TILE, 3)), _palette.wall_line)
 				continue
 			draw_rect(tile, _palette.floor_color(Vector2i(x, y), _seed))
 			# A patterned floor lays carpet on its middle tone, woven and seamless, and tiles the rest.
@@ -113,6 +119,14 @@ func _draw() -> void:
 				draw_rect(tile, _palette.grout, false, 1.0)
 				draw_rect(Rect2(tile.position + Vector2(3, 3), Vector2(9, 9)), _palette.carpet_motif)
 				draw_rect(Rect2(tile.position + Vector2(3, 3), Vector2(4, 4)), _palette.speckle)
+				continue
+			# Head Office carpet tiles: a seam round each tile and a scatter of dark flecks in the pile.
+			# Only dots and a square edge, never a stripe or a diagonal, so red tape always stands out.
+			if _palette.floor_pattern == 4:
+				draw_rect(tile.grow(-0.5), _palette.grout, false, 1.0)
+				for fleck in 6:
+					var fleck_at := Vector2(RoomDecor.noise(Vector2i(x * 7 + fleck, y), _seed + 11), RoomDecor.noise(Vector2i(x, y * 7 + fleck), _seed + 13))
+					draw_rect(Rect2(tile.position + Vector2(3, 3) + fleck_at * (TILE - 8.0), Vector2(2, 2)), _palette.carpet_motif)
 				continue
 			draw_line(tile.position, tile.position + Vector2(TILE, 0), _palette.grout, 1.0)
 			draw_line(tile.position, tile.position + Vector2(0, TILE), _palette.grout, 1.0)
