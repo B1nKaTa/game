@@ -187,3 +187,38 @@ func test_the_paid_notice_names_the_extra() -> void:
 
 func test_the_board_shows_what_the_fresh_save_can_reach() -> void:
 	assert_eq(BountyBoard.showing(ProgressData.new()).size(), 2)
+
+
+# A save's poster id is any string, and while one is taken no other can be, so an id that matches no
+# poster would lock the board for good.
+func test_a_taken_poster_with_no_def_is_dropped() -> void:
+	var data := ProgressData.new()
+	data.bounty_taken = "a_poster_that_is_gone"
+	data.bounty_won = true
+	assert_true(BountyBoard.drop_unknown_taken(BountyBoard.all(), data))
+	assert_eq(data.bounty_taken, "")
+	assert_false(data.bounty_won)
+	assert_true(BountyBoard.can_take(_poster("regional_reaper"), data), "the board takes posters again")
+	data.bounty_taken = "regional_reaper"
+	data.bounty_won = true
+	assert_false(BountyBoard.drop_unknown_taken(BountyBoard.all(), data), "a real poster stays taken")
+	assert_eq(data.bounty_taken, "regional_reaper")
+	assert_true(data.bounty_won)
+
+
+func test_progress_drops_an_unknown_poster_on_load() -> void:
+	var path := "user://test_unknown_poster_save.json"
+	var store := SaveStore.new(path)
+	store.delete_all()
+	var saved := ProgressData.new()
+	saved.opening_seen = true
+	saved.bounty_taken = "a_poster_that_is_gone"
+	saved.bounty_won = true
+	store.save_progress(saved)
+	var progress: Node = load("res://scripts/autoload/progress.gd").new()
+	progress._store = store
+	progress.reload()
+	assert_eq(progress.data.bounty_taken, "")
+	assert_false(progress.data.bounty_won)
+	progress.free()
+	store.delete_all()

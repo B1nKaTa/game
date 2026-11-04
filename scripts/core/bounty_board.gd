@@ -61,6 +61,19 @@ static func can_take(def: BountyDef, data: ProgressData) -> bool:
 	return data.bounty_taken.is_empty() and not data.bounties_retired.has(def.id)
 
 
+# A taken poster whose id matches no BountyDef would lock the board for good, since only one poster is
+# taken at a time. Progress drops such a poster, and its win, once a save is loaded.
+static func drop_unknown_taken(defs: Array[BountyDef], data: ProgressData) -> bool:
+	if data.bounty_taken.is_empty():
+		return false
+	for def in defs:
+		if def.id == data.bounty_taken:
+			return false
+	data.bounty_taken = ""
+	data.bounty_won = false
+	return true
+
+
 # Taking clears any win, so a boss beaten before the poster was taken never counts.
 static func take(def: BountyDef, data: ProgressData) -> bool:
 	if not can_take(def, data):

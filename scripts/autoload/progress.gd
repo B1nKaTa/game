@@ -70,6 +70,8 @@ func _exit_tree() -> void:
 
 func reload() -> void:
 	data = _store.load_progress()
+	# ProgressData loads no defs, so a poster id that matches none is dropped here.
+	BountyBoard.drop_unknown_taken(BountyBoard.all(), data)
 	notice = ""
 	if _store.last_status == SaveStore.STATUS_BACKUP:
 		notice = "Your save was damaged, so a backup was restored."
