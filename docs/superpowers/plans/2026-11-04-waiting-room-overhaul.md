@@ -241,7 +241,7 @@ The dev shortcut is being built on `third-floor` by another agent: debug builds 
 
 - [x] **Step 5: Implement.** In the seeding function, when the flag is present, call `data.record_floor_cleared(depth, id)` for each of the six paths at its depth (1, 1, 2, 2, 3, 3). Keep it inside the same `OS.is_debug_build()` gate and the same throwaway profile as the rest of the shortcut. Add one line on the flag to wherever the shortcut documents its launch.
 
-- [ ] **Step 6: When testing is allowed, run the tests.** Expected: `N tests, 0 failed`. Compare the real save's MD5 before and after.
+- [x] **Step 6: When testing is allowed, run the tests.** Expected: `N tests, 0 failed`. Compare the real save's MD5 before and after.
 
 - [x] **Step 7: Commit.**
 
@@ -395,7 +395,7 @@ Every new save field is added here at once, with its fallback, so each later tas
 
   Add `const PATHS_AT_DEPTH := {1: ["floor_1", "cemetery"], 2: ["sunset_shores", "furnace_works"], 3: ["funeral_parlour", "golden_years_mall"]}` with a comment that it mirrors `floor_scene.gd`'s `PATHS_BY_DEPTH` by id. `ProgressData` must not load FloorDefs.
 
-- [ ] **Step 5: When testing is allowed, run the tests.** Expected: `0 failed`, `test_save.gd` included.
+- [x] **Step 5: When testing is allowed, run the tests.** Expected: `0 failed`, `test_save.gd` included.
 
 - [x] **Step 6: Commit** ("Add the Waiting Room save fields with fallbacks for old saves").
 
@@ -551,7 +551,7 @@ Every new save field is added here at once, with its fallback, so each later tas
   - In `RoomRules.ICONS`, a department door shows `"<"`, the default. The name comes from `DepartmentSign` (Task 4).
   - Write the layouts with the Write tool, modelled on `data/rooms/landing/landing.tres`.
 
-- [ ] **Step 4: When testing is allowed, run the tests.** `test_room_layouts.gd` and `test_boss_spawn_room.gd` must still pass. The latter skips rooms without `B`.
+- [x] **Step 4: When testing is allowed, run the tests.** `test_room_layouts.gd` and `test_boss_spawn_room.gd` must still pass. The latter skips rooms without `B`.
 
 - [x] **Step 5: Commit** ("Describe the Waiting Room departments and lay them out on the room grid").
 
@@ -654,9 +654,9 @@ Later tasks add the trophy wall (15, 2), the forms counter (11, 3), the ticket m
 
 - [x] **Step 3: Implement** `WaitingStation`, `DepartmentSign`, `RoomView.chain_door`, `Progress.mark_departments_seen` and the new `waiting_room.gd`. Remove `ROWS`, `MERCHANTS`, `DOOR_CELL`, `KEY_BOARD_*` and `CRAFTER_*` from the scene. "NOW SERVING: 666" stays drawn in the lobby until Task 18 replaces it.
 
-- [ ] **Step 4: When testing is allowed, run the tests and one full loop.** The smoke driver's opening checks (`open_merchant_ids() == ["black_market", "optometrist"]`, both merchant checks after clears) must pass unchanged.
+- [x] **Step 4: When testing is allowed, run the tests and one full loop.** The smoke driver's opening checks (`open_merchant_ids() == ["black_market", "optometrist"]`, both merchant checks after clears) must pass unchanged.
 
-- [ ] **Step 5: When testing is allowed, screenshot** in a real window, in the dev Waiting Room (F4 in a debug build), whose throwaway profile has every department open:
+- [x] **Step 5: When testing is allowed, screenshot** in a real window, in the dev Waiting Room (F4 in a debug build), whose throwaway profile has every department open:
   - the lobby, with the camera scrolling across its 30 cells
   - a closed door's sign
   - every department
@@ -740,7 +740,7 @@ Later tasks add the trophy wall (15, 2), the forms counter (11, 3), the ticket m
 
 - [x] **Step 3: Implement** `Mementos`, `TrophyWall` and the lobby station.
 
-- [ ] **Step 4: When testing is allowed, run the tests, and screenshot the wall** with no frames filled and with all six (the dev Waiting Room, F4).
+- [x] **Step 4: When testing is allowed, run the tests, and screenshot the wall** with no frames filled and with all six (the dev Waiting Room, F4).
 
 - [x] **Step 5: Commit** ("Hang a memento on the trophy wall for each floor boss beaten").
 
@@ -818,7 +818,7 @@ Later tasks add the trophy wall (15, 2), the forms counter (11, 3), the ticket m
   - **Top hat:** in `floor_scene._enter_room`, on the first visit (check `_progress.is_visited` before `enter`) to a `TYPE_MINI_BOSS` or `TYPE_FLOOR_BOSS` room, `_run.health.heal(Mementos.BOSS_ROOM_HEAL)` with the notice "You tip your hat. +1 pill".
   - **Empty sack:** in `RoomView._create_rewards`, a `TYPE_TREASURE` room with the perk adds one more cell from `_room.layout.open_spots_near(cells, cells)` before `_create_item_choice`.
 
-- [ ] **Step 4: When testing is allowed, run the tests and one full loop.**
+- [x] **Step 4: When testing is allowed, run the tests and one full loop.**
 
 - [x] **Step 5: Commit** ("Give each memento its perk in runs").
 
@@ -972,7 +972,7 @@ Edit the `.tres` files with the Edit tool. Never use `Set-Content`, which adds a
   - Options are plain `StatEffect`s, never `UpgradeDef`s, so the `effect is UpgradeDef` special cases in `compute` (Thermos levels, the quick return) ignore them, as they should.
   - `prescription_glasses` has one level, so its milestone is 1. Buying it is the choice.
 
-- [ ] **Step 4: When testing is allowed, run the tests.**
+- [x] **Step 4: When testing is allowed, run the tests.**
 
 - [x] **Step 5: Commit** ("Give every form two options at its milestone").
 
@@ -1051,7 +1051,7 @@ Edit the `.tres` files with the Edit tool. Never use `Set-Content`, which adds a
     - Props and room-clear Pension pass nothing.
   - **Night Vision:** `floor_scene._add_map_view` and `_choose_path` set `view.show_secrets = _run.stats.reveals_secrets`. `_draw` draws `shown_ids` instead of `visited_ids`, and an unvisited secret room as an outline with "?".
 
-- [ ] **Step 4: When testing is allowed, run the tests and one full loop.**
+- [x] **Step 4: When testing is allowed, run the tests and one full loop.**
 
 - [x] **Step 5: Commit** ("Make each form option change play").
 
@@ -1166,7 +1166,7 @@ Edit the `.tres` files with the Edit tool. Never use `Set-Content`, which adds a
 
 - [x] **Step 3: Implement** `ProgressData`, `Progress`, `FormText`, `MerchantPanel`, `RefilePanel` and the station.
 
-- [ ] **Step 4: When testing is allowed, run the tests. Screenshot** the Black Market panel at its fullest, with a milestone row showing both options and the stamp mid-animation, and the refile panel with all seven forms.
+- [x] **Step 4: When testing is allowed, run the tests. Screenshot** the Black Market panel at its fullest, with a milestone row showing both options and the stamp mid-animation, and the refile panel with all seven forms.
 
 - [x] **Step 5: Commit**: one for filing and refiling in `ProgressData` with tests ("File forms with a milestone choice and refile them for a fee"), and one for the panels ("Show upgrades as stamped forms").
 
@@ -1250,7 +1250,7 @@ Edit the `.tres` files with the Edit tool. Never use `Set-Content`, which adds a
     - The Waiting Room calls `_hud.show_condolences = true` and `set_condolences(Progress.data.condolences)`, and connects `Progress.condolences_changed`.
     - Check that the top row fits with 9999 of each (lesson: keep HUD text on the fixed top row).
 
-- [ ] **Step 4: When testing is allowed, run the tests, and screenshot the HUD** in the Waiting Room with both counters at 9999, and during a run with a pop-up showing.
+- [x] **Step 4: When testing is allowed, run the tests, and screenshot the HUD** in the Waiting Room with both counters at 9999, and during a run with a pop-up showing.
 
 - [x] **Step 5: Commit** ("Add Condolences, earned from first boss beats and rare chests").
 
@@ -1404,7 +1404,7 @@ The four cosmetic ids are created in Task 15. Until then, `collect` stores the i
 
 - [x] **Step 3: Implement** the defs, the 12 posters, the four items and the rules. `take` clears `bounty_won`, so a win from before the taking never counts. Update every test that counts items or sums item prices.
 
-- [ ] **Step 4: When testing is allowed, run the tests.**
+- [x] **Step 4: When testing is allowed, run the tests.**
 
 - [x] **Step 5: Commit** ("Add a wanted poster for every boss, with its reward").
 
@@ -1451,7 +1451,7 @@ The four cosmetic ids are created in Task 15. Until then, `collect` stores the i
   - On collecting, show a HUD notice, for example "Paid: 40 Pension, 10 Condolences, and a recipe for Agnes".
   - The panel is opaque and fits 360 px with 12 rows. Use 9 px font rows, or a `ScrollContainer` when more than 8 show.
 
-- [ ] **Step 4: When testing is allowed, run the tests. Screenshot** the panel with every poster showing (the dev Waiting Room, F4), with one taken, and with one ready to collect.
+- [x] **Step 4: When testing is allowed, run the tests. Screenshot** the panel with every poster showing (the dev Waiting Room, F4), with one taken, and with one ready to collect.
 
 - [x] **Step 5: Commit** ("Open the Bounty Office with Deputy Dolores and her wanted posters").
 
@@ -1521,7 +1521,7 @@ The four cosmetic ids are created in Task 15. Until then, `collect` stores the i
   - Only the yard ever calls `spawn_fixture`, so the Waiting Room's FloorDef stays enemy-free.
   - Tests keep the dummy out of the tree and call `tick` by hand (lesson: nodes kept out of the tree never run `_ready`).
 
-- [ ] **Step 4: When testing is allowed, run the tests. Screenshot** a combo, a charged swing, the teeth and a Thermos on the dummy, each showing a number.
+- [x] **Step 4: When testing is allowed, run the tests. Screenshot** a combo, a charged swing, the teeth and a Thermos on the dummy, each showing a number.
 
 - [x] **Step 5: Commit** ("Put a dummy in the Training Yard that shows each hit").
 
@@ -1613,7 +1613,7 @@ The four cosmetic ids are created in Task 15. Until then, `collect` stores the i
   - The Waiting Room's own run must never carry yard items into a run. `Game.begin_run()` changes scene, and `floor_scene` makes a fresh run, so this holds already. Add a scene comment saying so.
   - `CoachTips.TIPS` is checked against `Content.recipes()` by the test, so a new recipe without a tip fails it.
 
-- [ ] **Step 4: When testing is allowed, run the tests. Screenshot** the rack panel with all six recipes, and the coach's bubble.
+- [x] **Step 4: When testing is allowed, run the tests. Screenshot** the rack panel with all six recipes, and the coach's bubble.
 
 - [x] **Step 5: Commit** ("Add the item rack and Coach Bertram to the Training Yard").
 
@@ -1754,7 +1754,7 @@ The four cosmetic ids are created in Task 15. Until then, `collect` stores the i
 
 - [x] **Step 3: Implement** the defs, the data, the rules, the panel, `LobbyDecor` and the station. The lobby rebuilds its `LobbyDecor` when the panel closes.
 
-- [ ] **Step 4: When testing is allowed, run the tests. Screenshot** the panel's two tabs, and the lobby bare and with all six decor items.
+- [x] **Step 4: When testing is allowed, run the tests. Screenshot** the panel's two tabs, and the lobby bare and with all six decor items.
 
 - [x] **Step 5: Commit** ("Open the Decor Office and furnish the lobby with Condolences").
 
@@ -1814,7 +1814,7 @@ Each is drawn relative to the sprite's head. The head offset is `Vector2(0, -22)
 
 - [x] **Step 3: Implement** `GrandpaLook`, `look_from` and the player hooks. The look is drawn both in the Waiting Room and in runs.
 
-- [ ] **Step 4: When testing is allowed, run the tests and one full loop. Screenshot** Grandpa in each hat, each cardigan and each cane, standing, walking and swinging, in the lobby and on the Mall's pale tile (lesson: check effects over each floor's palest tile).
+- [x] **Step 4: When testing is allowed, run the tests and one full loop. Screenshot** Grandpa in each hat, each cardigan and each cane, standing, walking and swinging, in the lobby and on the Mall's pale tile (lesson: check effects over each floor's palest tile).
 
 - [x] **Step 5: Commit** ("Draw Grandpa's hats, cardigans and cane skins as placeholders").
 
@@ -1912,7 +1912,7 @@ Each is drawn relative to the sprite's head. The head offset is `Vector2(0, -22)
   - **The start of a cursed run:** in `floor_scene._ready`, `_run.cursed = Progress.take_cursed_run()`. When it is cursed, show the notice "Cursed ticket: they hit harder, and pay better".
   - **Clears in a cursed run:** in `floor_scene._on_floor_cleared`, also call `Progress.add_condolences(ProgressData.CURSED_FLOOR_CONDOLENCES)` with a notice.
 
-- [ ] **Step 4: When testing is allowed, run the tests.**
+- [x] **Step 4: When testing is allowed, run the tests.**
 
 - [x] **Step 5: Commit** ("Call every fifth ticket for a deal, an arrival or a cursed run").
 
@@ -1994,7 +1994,7 @@ Each is drawn relative to the sprite's head. The head offset is `Vector2(0, -22)
 
 - [x] **Step 3: Implement** the book, the panels, the stations and the lobby text.
 
-- [ ] **Step 4: When testing is allowed, run the tests. Screenshot** the ticket panel with a cursed offer and a deal, and the noticeboard with six letters.
+- [x] **Step 4: When testing is allowed, run the tests. Screenshot** the ticket panel with a cursed offer and a deal, and the noticeboard with six letters.
 
 - [x] **Step 5: Commit** ("Add the ticket machine and letters on the noticeboard").
 
@@ -2039,7 +2039,7 @@ Each is drawn relative to the sprite's head. The head offset is `Vector2(0, -22)
 
 - [x] **Step 3: Implement** `add_arcade_tables`, the NPC data and the scene wiring.
 
-- [ ] **Step 4: When testing is allowed, run the tests and one full loop**, which still plays the Arcade through `_create_arcade`. **Screenshot** the Back Room and a hand of blackjack there.
+- [x] **Step 4: When testing is allowed, run the tests and one full loop**, which still plays the Arcade through `_create_arcade`. **Screenshot** the Back Room and a hand of blackjack there.
 
 - [x] **Step 5: Commit** ("Give the Dealer a private card room in the Waiting Room").
 
@@ -2123,13 +2123,13 @@ Each is drawn relative to the sprite's head. The head offset is `Vector2(0, -22)
 
   Add anything tricky to `LESSONS.md`.
 
-- [ ] **Step 5: When testing is allowed, run the tests and 3 full loops** from an exported copy (`git archive`, renamed `config/name`). Expected: `0 failed`, and `SMOKE PASS` three times with every new flag true. Compare the real save's MD5 before and after.
+- [x] **Step 5: When testing is allowed, run the tests and 3 full loops** from an exported copy (`git archive`, renamed `config/name`). Expected: `0 failed`, and `SMOKE PASS` three times with every new flag true. Compare the real save's MD5 before and after.
 
 - [x] **Step 6: Commit** ("Walk the departments, a bounty and the forms in the full loop"), then push.
 
 ### Task 21: Full verification and independent review
 
-- [ ] **Step 1: When testing is allowed**, check no game window is open and record the real save's MD5. Then run the whole suite:
+- [x] **Step 1: When testing is allowed**, check no game window is open and record the real save's MD5. Then run the whole suite:
 
   ```powershell
   powershell -File tools/test.ps1
@@ -2137,7 +2137,7 @@ Each is drawn relative to the sprite's head. The head offset is `Vector2(0, -22)
 
   Expected: `N tests, 0 failed`, with no `SCRIPT ERROR`.
 
-- [ ] **Step 2: Run 3 full loops** from an exported copy of the branch tip:
+- [x] **Step 2: Run 3 full loops** from an exported copy of the branch tip:
 
   ```powershell
   powershell -File tools/smoke.ps1
@@ -2145,7 +2145,7 @@ Each is drawn relative to the sprite's head. The head offset is `Vector2(0, -22)
 
   Expected: `SMOKE PASS ...` each time. Read the whole tail, not a filtered line. Check the real save's MD5 is unchanged.
 
-- [ ] **Step 3: Load the user's real save read-only.** Copy `%APPDATA%\Godot\app_userdata\Grandpa\save.json` into the scratchpad, never into the game's user folder. Run a one-off headless probe that calls `ProgressData.from_dict` on the copy and prints:
+- [x] **Step 3: Load the user's real save read-only.** Copy `%APPDATA%\Godot\app_userdata\Grandpa\save.json` into the scratchpad, never into the game's user folder. Run a one-off headless probe that calls `ProgressData.from_dict` on the copy and prints:
   - levels
   - `choice_of` for each form
   - `Departments.open_ids`
