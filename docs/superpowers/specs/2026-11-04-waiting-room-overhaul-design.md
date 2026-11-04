@@ -47,7 +47,7 @@ The trophy wall is in the lobby with an empty frame for every floor boss, so the
 | Boss | Memento | Perk |
 |---|---|---|
 | Regional Reaper | Name badge | Start each run with 10 Pension |
-| Mortimer, Tired Undertaker | Bent shovel | Breakables drop Pension a little more often |
+| Digby, Tired Undertaker | Bent shovel | Breakables drop Pension a little more often |
 | Matron Mercy | Bedpan | The first pill of each run heals one extra |
 | Old Smokey | Coal shovel | Fire hazards hurt Grandpa less |
 | Mortimer Grimsby | Top hat | +1 pill when entering a boss room |
@@ -57,7 +57,7 @@ Mini bosses give no memento. They are the bounty board's job (section 4).
 
 ## 4. The Bounty Office: wanted posters
 
-A new NPC, the bounty clerk (name to be decided), keeps a board of wanted posters.
+A new NPC, **Deputy Dolores, Overdue Accounts** (proposed name), keeps a board of wanted posters.
 
 - **Which posters show up:** there is one poster for every mini boss and every floor boss, 12 today. A floor's posters appear once that floor is unlocked, meaning Grandpa can reach it.
 - **One quest at a time:** Grandpa takes one poster at a time, and it **stays taken through death and new runs** until he beats that boss in any run.
@@ -75,7 +75,7 @@ A new NPC, the bounty clerk (name to be decided), keeps a board of wanted poster
 - **The item rack:** it lists **every recipe Grandpa has earned**, including ones not yet crafted, so he can try an item before spending Pension on it. New recipes appear on the rack automatically.
   - Taking an item from the rack equips it for the yard only, and charges and consumables are unlimited there.
   - Everything taken is gone when Grandpa leaves the yard.
-- **The coach:** a tutorial NPC. He gives a short tip for the item Grandpa is holding, and basic controls on the first visit. His lines will be written with the NPC dialogue.
+- **The coach:** **Coach Bertram, Retired PE Teacher** (proposed name), a tutorial NPC. He gives a short tip for the item Grandpa is holding, and basic controls on the first visit. His lines will be written with the NPC dialogue.
 
 ## 6. Ticket number and letters
 
@@ -89,7 +89,7 @@ A new NPC, the bounty clerk (name to be decided), keeps a board of wanted poster
 
 ## 7. Second currency: Condolences (cosmetic only)
 
-There is a second currency, working name **Condolences**. It buys **only cosmetics and visual things, never gameplay power**.
+There is a second currency called **Condolences** (name confirmed). It buys **only cosmetics and visual things, never gameplay power**.
 
 **How Grandpa earns it:**
 - from bounty rewards
@@ -101,7 +101,7 @@ It is never earned from regular enemies, so it stays special. Condolences carry 
 
 **Where he spends it:** at the Decor Office.
 - **Waiting Room decor:** plants, posters, a better chair in the lobby, lighting, a fish tank, a different carpet. Each item visibly changes the department it is placed in.
-- **Grandpa cosmetics:** hats, cardigan colours and cane skins. *To confirm:* whether cosmetics for Grandpa himself are in, or only decor for the Waiting Room.
+- **Grandpa cosmetics (confirmed):** hats, cardigan colours and cane skins. They are worn during runs too, and are only for looks. Their art comes with the art pass.
 
 The HUD in the Waiting Room shows both currencies. During runs it shows Pension only, plus a short pop-up when Condolences are earned.
 
@@ -126,8 +126,10 @@ Every step leaves the game playable and the save compatible. Upgrades already bo
 
 ## Open questions
 
-- Are cosmetics for Grandpa himself included, or only decor for the Waiting Room?
-- Names: the bounty clerk, the coach, and the currency (working name "Condolences").
+- Names for the bounty clerk and the coach are proposals: Deputy Dolores and Coach Bertram. Either can be changed.
 - Which posters pay a unique item, which a recipe and which a cosmetic.
-- Two floor bosses are named Mortimer: the Tired Undertaker in the Cemetery and Mortimer Grimsby in the Funeral Parlour. Same man promoted, or a clash to rename?
+- Settled 2026-11-04:
+  - Grandpa cosmetics are in.
+  - The currency is called Condolences.
+  - The Cemetery boss is renamed to Digby, Tired Undertaker, so only one boss is called Mortimer.
 - This should be built after floor 3 has been played and merged.
