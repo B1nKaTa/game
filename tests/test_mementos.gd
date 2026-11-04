@@ -33,6 +33,21 @@ func test_looking_at_the_wall_lists_each_memento_or_says_it_is_empty() -> void:
 	assert_true(lines[1].begins_with("Coal shovel"), lines[1])
 
 
+# Empty frames side by side name their bosses, so no two neighbouring captions may overlap.
+func test_neighbouring_captions_never_run_together() -> void:
+	var font := ThemeDB.fallback_font
+	var boxes: Array[Rect2] = []
+	for i in Mementos.ALL.size():
+		var caption: String = Mementos.ALL[i]["short_name"]
+		var width := font.get_string_size(caption, HORIZONTAL_ALIGNMENT_LEFT, -1, TrophyWall.CAPTION_SIZE).x
+		var ascent := font.get_ascent(TrophyWall.CAPTION_SIZE)
+		var height := ascent + font.get_descent(TrophyWall.CAPTION_SIZE)
+		var at := TrophyWall.frame_center(i) + Vector2(-width / 2.0, TrophyWall.caption_y(i) - ascent)
+		boxes.append(Rect2(at, Vector2(width, height)).grow_individual(1.0, 0.0, 1.0, 0.0))
+	for i in boxes.size() - 1:
+		assert_false(boxes[i].intersects(boxes[i + 1]), "%s and %s" % [Mementos.ALL[i]["short_name"], Mementos.ALL[i + 1]["short_name"]])
+
+
 # The frames hang on the lobby's top wall, so none may cover the north door or a lantern.
 func test_the_frames_keep_clear_of_the_north_door_and_the_lanterns() -> void:
 	var lobby: RoomLayout = Departments.load_layouts()[Departments.LOBBY]

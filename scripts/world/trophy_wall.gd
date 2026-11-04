@@ -15,6 +15,9 @@ const QUESTION := Color(0.3, 0.27, 0.22, 0.45)
 const CAPTION := Color("ece9e0")
 const CAPTION_SIZE := 7
 const CAPTION_Y := 21.0
+# Every second caption hangs lower, since a long name like "Mortimer" is as wide as a frame step and
+# two empty frames side by side would run their names together.
+const CAPTION_STAGGER := 10.0
 
 var _hung := {}
 
@@ -29,6 +32,11 @@ func setup(data: ProgressData) -> void:
 # The middle of each frame, from left to right.
 static func frame_center(index: int) -> Vector2:
 	return Vector2((index - (Mementos.ALL.size() - 1) / 2.0) * FRAME_STEP, 0.0)
+
+
+# How far below a frame's middle its caption's baseline sits.
+static func caption_y(index: int) -> float:
+	return CAPTION_Y + (CAPTION_STAGGER if index % 2 == 1 else 0.0)
 
 
 func _draw() -> void:
@@ -46,8 +54,8 @@ func _draw() -> void:
 			draw_string(font, at + Vector2(-3, 4), "?", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, QUESTION)
 			var caption: String = entry["short_name"]
 			var width := font.get_string_size(caption, HORIZONTAL_ALIGNMENT_LEFT, -1, CAPTION_SIZE).x
-			draw_string_outline(font, at + Vector2(-width / 2.0, CAPTION_Y), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, CAPTION_SIZE, 2, Color.BLACK)
-			draw_string(font, at + Vector2(-width / 2.0, CAPTION_Y), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, CAPTION_SIZE, CAPTION)
+			draw_string_outline(font, at + Vector2(-width / 2.0, caption_y(i)), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, CAPTION_SIZE, 2, Color.BLACK)
+			draw_string(font, at + Vector2(-width / 2.0, caption_y(i)), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, CAPTION_SIZE, CAPTION)
 
 
 func _draw_memento(perk: String, at: Vector2) -> void:
