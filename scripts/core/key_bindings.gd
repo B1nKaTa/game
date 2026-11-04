@@ -1,6 +1,11 @@
 class_name KeyBindings
 extends RefCounted
 
+# Every action has two bindings, one per column of the Input tab: a key or mouse button, and a
+# controller input. The D-pad walks beside the stick and is never rebound (PadInput.extras). Both
+# columns live in keys.json, the controller one under PAD_KEY, so an older file without it loads
+# unchanged and keeps the controller defaults.
+
 const SAVE_PATH := "user://keys.json"
 const ACTIONS := [
 	{"action": "move_up", "label": "Move up"},
@@ -17,8 +22,7 @@ const ACTIONS := [
 	{"action": "pause", "label": "Pause / back"},
 ]
 const TYPE_KEY := "key"
-# The controller column's bindings, under their own key in keys.json. Stage 2 fills it; until then a
-# save keeps whatever is there, so an old file and a newer one both load unchanged.
+# The controller column's bindings, under their own key in keys.json.
 const PAD_KEY := "pad"
 const TYPE_MOUSE := "mouse"
 
@@ -34,37 +38,66 @@ static func describe(event: InputEvent) -> String:
 				return "Right Click"
 			_:
 				return "Mouse %d" % event.button_index
+	if PadInput.is_pad(event):
+		return PadInput.describe(event, ActiveDevice.family)
 	return "?"
 
 
+# The action's key or mouse button.
+static func key_event(action: String) -> InputEvent:
+	return _slot(action, false)
+
+
+# The action's rebindable controller input, never the D-pad that walks beside it.
+static func pad_event(action: String) -> InputEvent:
+	return _slot(action, true)
+
+
+# The keyboard column's label.
 static func label_for(action: String) -> String:
 	if not InputMap.has_action(action):
 		return "?"
-	var events := InputMap.action_get_events(action)
-	return describe(events[0]) if not events.is_empty() else "?"
+	var event := key_event(action)
+	return describe(event) if event != null else "?"
 
 
+# The controller column's label, in the named family's button names.
+static func pad_label_for(action: String, family: String) -> String:
+	if not InputMap.has_action(action):
+		return "?"
+	return PadInput.describe(pad_event(action), family)
+
+
+# The label a prompt shows: the active device's binding for the action.
+static func prompt_label(action: String) -> String:
+	return pad_label_for(action, ActiveDevice.family) if ActiveDevice.using_pad else label_for(action)
+
+
+# "E: Talk" on the keyboard, "X: Talk" or "Square: Talk" on a pad. Every prompt goes through here.
 static func with_key(action: String, text: String) -> String:
-	return "%s: %s" % [label_for(action), text]
+	return with_device(action, text, ActiveDevice.using_pad, ActiveDevice.family)
 
 
-# If another action already uses this input, the two swap, so no action ever ends up without one.
-# Returns the action it swapped with, or "" when the input was free.
+static func with_device(action: String, text: String, pad: bool, family: String) -> String:
+	var label := pad_label_for(action, family) if pad else label_for(action)
+	return "%s: %s" % [label, text]
+
+
+# Binds the input in its own column. If another action already uses it there, the two swap, so no
+# action ever ends up without one. Returns the action it swapped with, or "" when the input was free.
 static func rebind(action: String, event: InputEvent) -> String:
+	var pad := PadInput.is_pad(event)
 	var swapped := ""
-	var previous: InputEvent = null
-	var current := InputMap.action_get_events(action)
-	if not current.is_empty():
-		previous = current[0]
+	var previous := _slot(action, pad)
 	for entry in ACTIONS:
 		var other: String = entry["action"]
 		if other == action or not InputMap.has_action(other):
 			continue
-		for other_event in InputMap.action_get_events(other):
-			if _same(other_event, event) and previous != null:
-				_set_event(other, previous)
-				swapped = other
-	_set_event(action, event)
+		var other_event := _slot(other, pad)
+		if other_event != null and previous != null and _same(other_event, event):
+			_set_slot(other, pad, previous)
+			swapped = other
+	_set_slot(action, pad, event)
 	return swapped
 
 
@@ -76,27 +109,39 @@ static func action_label(action: String) -> String:
 	return action
 
 
-# Every action's binding as it would be saved, to put back with restore.
+# Every action's bindings as they would be saved, to put back with restore.
 static func snapshot() -> Dictionary:
 	var raw := {}
+	var pads := {}
 	for entry in ACTIONS:
 		var action: String = entry["action"]
 		if not InputMap.has_action(action):
 			continue
-		var events := InputMap.action_get_events(action)
-		if not events.is_empty():
-			raw[action] = _to_raw(events[0])
+		var key := key_event(action)
+		if key != null:
+			raw[action] = _to_raw(key)
+		var pad := pad_event(action)
+		if pad != null:
+			pads[action] = PadInput.to_raw(pad)
+	raw[PAD_KEY] = pads
 	return raw
 
 
 # Puts back bindings from snapshot exactly, without swapping.
 static func restore(raw: Dictionary) -> void:
+	var pads: Variant = raw.get(PAD_KEY, {})
 	for entry in ACTIONS:
 		var action: String = entry["action"]
-		if raw.has(action) and InputMap.has_action(action):
+		if not InputMap.has_action(action):
+			continue
+		if raw.has(action):
 			var event := _from_raw(raw[action])
 			if event != null:
-				_set_event(action, event)
+				_set_slot(action, false, event)
+		if pads is Dictionary and pads.has(action):
+			var pad := PadInput.from_raw(pads[action])
+			if pad != null:
+				_set_slot(action, true, pad)
 
 
 static func reset_to_defaults() -> void:
@@ -107,38 +152,61 @@ static func reset_to_defaults() -> void:
 
 
 static func save_to(path := SAVE_PATH) -> bool:
-	var raw := snapshot()
-	if FileAccess.file_exists(path):
-		var old: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
-		if old is Dictionary and old.has(PAD_KEY):
-			raw[PAD_KEY] = old[PAD_KEY]
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
 		return false
-	file.store_string(JSON.stringify(raw))
+	file.store_string(JSON.stringify(snapshot()))
 	file.close()
 	return true
 
 
 # Anything missing or damaged in the file just keeps its default. Loading swaps like a rebind,
-# so a file older than a new action can't leave that action's default key on two actions.
+# so a file older than a new action can't leave that action's default on two actions.
 static func load_from(path := SAVE_PATH) -> void:
 	if not FileAccess.file_exists(path):
 		return
 	var raw: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
 	if not raw is Dictionary:
 		return
+	var pads: Variant = raw.get(PAD_KEY, {})
 	for entry in ACTIONS:
 		var action: String = entry["action"]
-		if raw.has(action) and InputMap.has_action(action):
+		if not InputMap.has_action(action):
+			continue
+		if raw.has(action):
 			var event := _from_raw(raw[action])
 			if event != null:
 				rebind(action, event)
+		if pads is Dictionary and pads.has(action):
+			var pad := PadInput.from_raw(pads[action])
+			if pad != null:
+				rebind(action, pad)
 
 
-static func _set_event(action: String, event: InputEvent) -> void:
+static func _slot(action: String, pad: bool) -> InputEvent:
+	if not InputMap.has_action(action):
+		return null
+	var extras := PadInput.extras(action)
+	for event in InputMap.action_get_events(action):
+		if PadInput.is_pad(event) != pad:
+			continue
+		if pad and extras.any(func(extra: InputEvent) -> bool: return PadInput.same(extra, event)):
+			continue
+		return event
+	return null
+
+
+# Rewrites the action as its key, its pad input and its fixed extras, in that order.
+static func _set_slot(action: String, pad: bool, event: InputEvent) -> void:
+	var key := event if not pad else key_event(action)
+	var pad_input := event if pad else pad_event(action)
 	InputMap.action_erase_events(action)
-	InputMap.action_add_event(action, event)
+	if key != null:
+		InputMap.action_add_event(action, key)
+	if pad_input != null:
+		InputMap.action_add_event(action, pad_input)
+	for extra in PadInput.extras(action):
+		InputMap.action_add_event(action, extra)
 
 
 static func _same(a: InputEvent, b: InputEvent) -> bool:
@@ -146,7 +214,7 @@ static func _same(a: InputEvent, b: InputEvent) -> bool:
 		return a.physical_keycode == b.physical_keycode
 	if a is InputEventMouseButton and b is InputEventMouseButton:
 		return a.button_index == b.button_index
-	return false
+	return PadInput.same(a, b)
 
 
 static func _to_raw(event: InputEvent) -> Dictionary:
