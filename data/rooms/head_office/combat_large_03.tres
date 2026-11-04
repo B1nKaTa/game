@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="RoomLayout" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/room_layout.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+room_type = "combat"
+rows = PackedStringArray(
+"##############################",
+"#.E....E...E..........E....E.#",
+"#............................#",
+"#..N..N..N..........N..N..N..#",
+"#..N..N..N..x....x..N..N..N..#",
+"#..N.EN..N..x....x..N.EN..N..#",
+"#..N..N.9N..x....x..N..N9.N..#",
+"#............................#",
+"#.....E.......yy.............#",
+"#............................#",
+"#..N..N..N..x....x..N..N..N..#",
+"#..N..NE.N..x....x..N..NE.N..#",
+"#..N..N..N..x....x..N..N..N..#",
+"#..N..N..N..........N..N..N..#",
+"#............................#",
+"#.E.....E...E..........E...E.#",
+"##############################"
+)
