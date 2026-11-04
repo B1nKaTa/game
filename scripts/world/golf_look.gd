@@ -8,8 +8,8 @@ extends RefCounted
 #
 # The numbers stand well past the shared patterns' 1 to 3, so paths built at the same time never pick
 # the same one.
-const FAIRWAY := 12
-const HEDGE_WALL := 12
+const FAIRWAY := 13
+const HEDGE_WALL := 13
 const STRIPE_CELLS := 2
 
 
