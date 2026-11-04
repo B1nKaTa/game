@@ -658,18 +658,31 @@ func _die_in_a_run() -> void:
 	_check(scene.is_over, "death ends the run")
 
 
-# The debug shortcut lands on the Floor 3 landing with everything bought, both third-floor paths open,
-# and leaves the save exactly as it was however the run ends.
+# Each debug shortcut (F3, F5, F6) lands on its depth's landing with everything bought and both of
+# that depth's paths open, and leaves the save exactly as it was however the run ends.
 func _check_dev_start() -> void:
+	var depths: Array = DevStart.START_KEYS.values()
+	depths.sort()
+	_check(depths == [3, 4, 5], "the dev runs start at floors 3, 4 and 5, got %s" % str(depths))
+	for start_depth: int in depths:
+		await _check_dev_start_at(start_depth)
+		if _failed:
+			return
+
+
+func _check_dev_start_at(start_depth: int) -> void:
 	var save_text := FileAccess.get_file_as_string(Progress.SMOKE_PATH)
 	var pension_before: int = Progress.data.pension
-	Game.begin_dev_run()
+	Game.begin_dev_run(start_depth)
 	await _wait(0.5)
 	_expect_scene("FloorScene")
 	var scene := get_tree().current_scene
 	_check(Progress.is_dev_run(), "the shortcut starts a dev run")
-	_check(scene.debug_depth() == DevStart.START_DEPTH, "the dev run starts at depth 3, got %d" % scene.debug_depth())
-	_check(scene.debug_floor_def().id == "landing_3", "the dev run starts on the Floor 3 landing")
+	_check(Progress.dev_start_depth == start_depth, "the dev run carries its start depth %d" % start_depth)
+	_check(scene.debug_depth() == start_depth, "the dev run starts at depth %d, got %d" % [start_depth, scene.debug_depth()])
+	_check(scene.debug_floor_def().id == "landing_%d" % start_depth, "the dev run starts on the Floor %d landing" % start_depth)
+	_check(scene.debug_floor_def().display_name == "Floor %d" % start_depth, "the landing says Floor %d" % start_depth)
+	_check(Progress.data.clears_at(start_depth) == 1, "the dev profile counts one clear at depth %d" % start_depth)
 	for def: UpgradeDef in Content.upgrades():
 		_check(Progress.data.level_of(def.id) == def.max_level(), "%s is at its top level" % def.id)
 	var run: RunState = scene.player.run
@@ -679,18 +692,20 @@ func _check_dev_start() -> void:
 	var landing: FloorRoom = map.room(scene.debug_current_id())
 	_check(landing.room_type == RoomLayout.TYPE_LANDING, "he stands on the landing")
 	await _walk_through_door(scene, landing.doors.values()[0])
-	_check(map.room(scene.debug_current_id()).room_type == RoomLayout.TYPE_CROSSROADS, "the landing leads to the third Crossroads")
+	_check(map.room(scene.debug_current_id()).room_type == RoomLayout.TYPE_CROSSROADS, "the landing leads to its depth's Crossroads")
 	Progress.add_pension(123)
-	# The locked east path, the Mall, opens as after a third-floor clear.
+	# The locked east path opens as after a clear at its depth.
+	var east: String = ProgressData.PATHS_AT_DEPTH[start_depth][LOCKED_DEEP_PATH]
 	scene.debug_choose_path(LOCKED_DEEP_PATH)
 	await _wait(0.3)
-	_check(scene.debug_floor_def().id == "golden_years_mall", "the Mall can be entered from the dev run")
+	_check(scene.debug_floor_def().id == east, "%s can be entered from the dev run, got %s" % [east, scene.debug_floor_def().id])
 	run.health.hit(999)
 	await _wait(0.1)
 	_check(scene.is_over, "death ends the dev run")
 	await _wait(2.5)
 	_expect_scene("WaitingRoom")
 	_check(not Progress.is_dev_run(), "the dev run is over in the Waiting Room")
+	_check(Progress.dev_start_depth == DevStart.START_DEPTH, "the start depth falls back to floor 3")
 	_check(Progress.data.pension == pension_before, "Pension from the dev run is not kept")
 	_check(FileAccess.get_file_as_string(Progress.SMOKE_PATH) == save_text, "the save file is untouched by the dev run")
 	_check(not FileAccess.file_exists(Progress.DEV_PATH), "the dev run's file is thrown away")

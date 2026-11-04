@@ -16,6 +16,9 @@ var _store: SaveStore
 # the dev file instead.
 var _real_data: ProgressData
 var _real_store: SaveStore
+# The depth whose landing a run under the dev profile starts on: 3 for F3, 4 for F5, 5 for F6. A run
+# started through the dev Waiting Room's run door starts on the Floor 3 landing.
+var dev_start_depth := DevStart.START_DEPTH
 
 
 func _ready() -> void:
@@ -32,9 +35,10 @@ func is_dev_run() -> bool:
 
 # Swaps in progress made up for a dev run. Nothing it earns or spends can reach the real save, since
 # the real store is set aside until end_dev_run.
-func begin_dev_run(dev_data: ProgressData, dev_path := DEV_PATH) -> void:
+func begin_dev_run(dev_data: ProgressData, dev_path := DEV_PATH, start_depth := DevStart.START_DEPTH) -> void:
 	if is_dev_run():
 		end_dev_run()
+	dev_start_depth = start_depth
 	_real_data = data
 	_real_store = _store
 	_store = SaveStore.new(dev_path)
@@ -53,6 +57,7 @@ func end_dev_run(announce := true) -> void:
 	_store.delete_all()
 	_store = _real_store
 	data = _real_data
+	dev_start_depth = DevStart.START_DEPTH
 	_real_store = null
 	_real_data = null
 	if announce:

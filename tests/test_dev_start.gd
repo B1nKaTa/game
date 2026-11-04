@@ -72,6 +72,71 @@ func test_earlier_floors_count_as_cleared_and_both_third_floor_paths_open() -> v
 		assert_true(data.is_unlocked(item.id), item.id)
 
 
+# F3, F5 and F6 start at floors 3, 4 and 5. F4 stays the dev Waiting Room's.
+func test_each_start_key_names_its_depth() -> void:
+	assert_eq(DevStart.depth_for_key(KEY_F3), 3)
+	assert_eq(DevStart.depth_for_key(KEY_F5), 4)
+	assert_eq(DevStart.depth_for_key(KEY_F6), 5)
+	assert_eq(DevStart.depth_for_key(KEY_F4), 0, "F4 starts no run")
+	assert_eq(DevStart.depth_for_key(KEY_F7), 0)
+	assert_eq(DevStart.START_DEPTH, 3, "F3 and the dev Waiting Room's run door still start at floor 3")
+	assert_eq(DevStart.depth_for_key(KEY_F3), DevStart.START_DEPTH)
+
+
+# A deeper start counts every path above it cleared and its own open path once, so both its paths
+# are open, and nothing below it is counted.
+func test_a_deeper_start_opens_both_paths_of_its_depth_with_every_upgrade_bought() -> void:
+	for start_depth in [4, 5]:
+		var data := DevStart.progress(Content.upgrades(), Content.recipes(), false, start_depth)
+		for def in Content.upgrades():
+			assert_eq(data.level_of(def.id), def.max_level(), "%s at depth %d" % [def.id, start_depth])
+		assert_eq(data.clears_at(1), 2)
+		for depth in range(2, start_depth):
+			assert_eq(data.clears_at(depth), 2, "both paths of depth %d" % depth)
+			for id: String in ProgressData.PATHS_AT_DEPTH[depth]:
+				assert_true(data.has_cleared_path(id), id)
+		assert_eq(data.clears_at(start_depth), 1)
+		assert_true(data.has_cleared_path(ProgressData.FIRST_PATH_BY_DEPTH[start_depth]))
+		assert_false(data.has_cleared_path(ProgressData.PATHS_AT_DEPTH[start_depth][1]), "the locked path is open, not cleared")
+		for depth in range(start_depth + 1, 6):
+			assert_eq(data.clears_at(depth), 0, "nothing below the start, depth %d" % depth)
+		for id: String in ProgressData.PATHS_AT_DEPTH[start_depth]:
+			var def: FloorDef = load("res://data/floors/%s.tres" % id)
+			assert_eq(def.depth, start_depth)
+			assert_true(def.is_open_for(data), id)
+
+
+func test_the_floor_3_profile_is_as_it_was() -> void:
+	assert_eq(DevStart.clears_by_depth(), {1: 2, 2: 2, 3: 1})
+	assert_eq(", ".join(DevStart.paths_cleared()), "floor_1, cemetery, sunset_shores, furnace_works, funeral_parlour")
+
+
+# The start depth rides on Progress for the run's scene and falls back to floor 3 when the run ends.
+func test_progress_carries_the_start_depth_only_while_the_dev_run_lasts() -> void:
+	var progress := _progress_with_real_save(ProgressData.new())
+	assert_eq(progress.dev_start_depth, DevStart.START_DEPTH)
+	progress.begin_dev_run(DevStart.progress(Content.upgrades(), Content.recipes(), false, 5), DEV_PATH, 5)
+	assert_eq(progress.dev_start_depth, 5)
+	progress.end_dev_run()
+	assert_eq(progress.dev_start_depth, DevStart.START_DEPTH)
+	progress.begin_dev_run(_waiting_data(), DEV_PATH)
+	assert_eq(progress.dev_start_depth, DevStart.START_DEPTH, "the dev Waiting Room's run door starts at floor 3")
+	progress.end_dev_run()
+	progress.free()
+	SaveStore.new(REAL_PATH).delete_all()
+
+
+# The scene starts a dev run at the depth Progress carries, and the Waiting Room reads every start key.
+func test_the_scene_and_the_waiting_room_use_the_chosen_depth() -> void:
+	var scene := FileAccess.get_file_as_string("res://scripts/scenes/floor_scene.gd")
+	assert_true(scene.contains("_depth = Progress.dev_start_depth"))
+	var room := FileAccess.get_file_as_string("res://scripts/scenes/waiting_room.gd")
+	assert_true(room.contains("DevStart.depth_for_key(key.physical_keycode)"))
+	var game := FileAccess.get_file_as_string("res://scripts/autoload/game.gd")
+	var begin := game.substr(game.find("func begin_dev_run"), 120)
+	assert_true(begin.contains("if not DevStart.is_available():"), "Game checks the gate first")
+
+
 func _waiting_data() -> ProgressData:
 	return DevStart.progress(Content.upgrades(), Content.recipes(), true)
 
@@ -88,7 +153,7 @@ func test_the_dev_waiting_room_profile_opens_every_department() -> void:
 
 
 func test_the_dev_waiting_room_has_its_own_key_and_hint() -> void:
-	assert_true(DevStart.WAITING_KEY != DevStart.KEY, "F3 still starts the Floor 3 run")
+	assert_false(DevStart.START_KEYS.has(DevStart.WAITING_KEY), "F3, F5 and F6 still start their runs")
 	assert_false(DevStart.WAITING_HINT.is_empty())
 	assert_false(DevStart.WAITING_HINT_ON.is_empty())
 	assert_eq(DevStart.PROFILE_LABEL, "DEV PROFILE")

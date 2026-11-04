@@ -29,11 +29,12 @@ func begin_run() -> void:
 	get_tree().change_scene_to_file(FLOOR_SCENE)
 
 
-# Debug builds only: a fresh run on the Floor 3 landing with everything bought. See DevStart.
-func begin_dev_run() -> void:
+# Debug builds only: a fresh run on the landing of start_depth (3 for F3, 4 for F5, 5 for F6) with
+# everything bought and every floor above it cleared. See DevStart.
+func begin_dev_run(start_depth := DevStart.START_DEPTH) -> void:
 	if not DevStart.is_available():
 		return
-	Progress.begin_dev_run(DevStart.progress(Content.upgrades(), Content.recipes()))
+	Progress.begin_dev_run(DevStart.progress(Content.upgrades(), Content.recipes(), false, start_depth), Progress.DEV_PATH, start_depth)
 	begin_run()
 
 

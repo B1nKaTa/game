@@ -78,7 +78,7 @@ func _ready() -> void:
 		_hud.show_notice(CURSED_NOTICE)
 	if Progress.is_dev_run():
 		# A dev run skips straight to its landing, with that depth's Crossroads beyond it.
-		_depth = DevStart.START_DEPTH
+		_depth = Progress.dev_start_depth
 		_floor_def = load(LANDINGS_BY_DEPTH[_depth])
 		_map = _landing_map()
 	else:

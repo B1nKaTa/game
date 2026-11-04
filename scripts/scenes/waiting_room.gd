@@ -170,9 +170,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	var key := event as InputEventKey
 	if key == null or not key.pressed or key.echo:
 		return
-	if key.physical_keycode == DevStart.KEY:
+	var start_depth := DevStart.depth_for_key(key.physical_keycode)
+	if start_depth > 0:
 		get_viewport().set_input_as_handled()
-		Game.begin_dev_run()
+		Game.begin_dev_run(start_depth)
 	elif key.physical_keycode == DevStart.WAITING_KEY:
 		get_viewport().set_input_as_handled()
 		Game.toggle_dev_waiting_room()
