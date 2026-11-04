@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="NpcDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/npc_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "gerald"
+display_name = "Gerald, Your Neighbour"
+color = Color(0.784313738, 0.643137276, 0.415686280, 1)
+body_size = Vector2(16, 48)
+lines = Array[String](["Oh, look who's back. The queue starts behind me, Harold.", "Forty years next door, and now I queue behind you. Purgatory, they call it.", "I filled in Form 27B in triplicate. They lost two. Naturally.", "Your last run? I've seen better footwork at a church raffle.", "That Chairman? I softened him up for you. You're welcome.", "If you win, it's because I'm rooting against you. Spite is a powerful thing.", "You call that a swing? I've seen better from a garden gnome.", "They gave me ticket number one. One, Harold. You'll never beat that.", "I'd go up there myself, but my knee. And my principles. Mostly my knee.", "Wear my hat all you like. It still looks better on me.", "The forms here have forms. I've filed a complaint. On a form.", "Every time you go out that door, I get five minutes' peace. Go on.", "I still haven't forgiven you for 1974. Or 1975. Or the hedge.", "Nice cardigan. Did a hedge lend it to you?"])
+moments = {
+"died": "Died again? Amateur. I did it once, and I did it properly.",
+"boss_win": "Saw that. I was coaching you from here. With my mind."
+}
+look = "gerald"

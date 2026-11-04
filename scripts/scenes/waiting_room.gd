@@ -16,6 +16,7 @@ const DECOR_COUNTER := "decor_counter"
 const TICKET_MACHINE := "ticket_machine"
 const NOTICEBOARD := "noticeboard"
 const EMPLOYEE_PLAQUE := "employee_plaque"
+const ENDING_ARCHIVE := "ending_archive"
 const MERCHANT_PROMPT := "Trade"
 const RUN_DOOR_ICON := ">"
 # A number that is not called shows the old 666 on the lobby's ticket line.
@@ -323,7 +324,7 @@ func _furnish(view: RoomView, room: FloorRoom) -> void:
 		if entry["department"] == department:
 			_add_station(view, entry)
 	for entry: Dictionary in Departments.NPCS:
-		if entry["department"] == department:
+		if entry["department"] == department and Departments.npc_stands(entry, Progress.data):
 			_add_npc(view, entry)
 	if department == Departments.BOUNTY_OFFICE:
 		_poster_board = PosterBoard.new()
@@ -473,6 +474,10 @@ func _open_station(opened: WaitingStation) -> void:
 			var letters := NoticeboardPanel.new()
 			letters.setup(opened.title)
 			_show_panel(letters)
+		ENDING_ARCHIVE:
+			var archive := EndingArchivePanel.new()
+			archive.setup(opened.title)
+			_show_panel(archive)
 
 
 # A Back Room table opens the Arcade's card-table overlay, as floor_scene does: never on the frame a

@@ -26,6 +26,8 @@ var _talk: NpcTalk
 var _player: Node2D
 var _near := false
 var _bubble: Node2D
+# Someone with a look of his own, as Gerald, is drawn by an ActorLook standing on his feet.
+var _actor_look: ActorLook
 
 
 # start is the run count, so each run he opens on his next line.
@@ -37,6 +39,11 @@ func setup(npc_def: NpcDef, player: Node2D, start := 0) -> void:
 
 func _ready() -> void:
 	add_to_group("npcs")
+	if def != null and not def.look.is_empty():
+		_actor_look = ActorLook.new()
+		_actor_look.id = def.look
+		_actor_look.position = Vector2(0, def.body_size.y / 2.0)
+		add_child(_actor_look)
 	_bubble = BubbleLayer.new()
 	_bubble.npc = self
 	_bubble.z_index = BUBBLE_Z
@@ -82,6 +89,11 @@ func _process(delta: float) -> void:
 		_bubble.queue_redraw()
 	if not is_instance_valid(_player):
 		return
+	if _actor_look != null:
+		var facing := -1 if _player.global_position.x < global_position.x else 1
+		if facing != _actor_look.facing:
+			_actor_look.facing = facing
+			_actor_look.queue_redraw()
 	_near = NpcTalk.answers(_feet().distance_to(global_position), TALK_RADIUS, _rival_distances())
 	if _near and Input.is_action_just_pressed("interact"):
 		talk()
@@ -119,6 +131,11 @@ func _draw() -> void:
 		return
 	var size := def.body_size
 	var top := -size.y / 2.0
+	if _actor_look != null:
+		_draw_centered(self, def.display_name, Vector2(0, top - 4.0), NAME_COLOR)
+		if _near:
+			_draw_centered(self, KeyBindings.with_key("interact", PROMPT), Vector2(0, size.y / 2.0 + 12.0), PROMPT_COLOR)
+		return
 	# A shopkeeper's look: a flat cap, a pale apron over his coat, and a moustache.
 	draw_set_transform(Vector2(0, size.y / 2.0), 0.0, Vector2(1.0, 0.35))
 	draw_circle(Vector2.ZERO, size.x * 0.6, SHADOW_COLOR)
