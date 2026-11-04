@@ -26,9 +26,10 @@ const KEYS := 3
 const BOMBS := 5
 const ITEMS := ["pill_organizer", "slippers", "hearing_aid"]
 const BREWED_POTION := "healing_tonic"
-# For the dev Waiting Room, the profile also counts the Mall's path cleared, so every department is
-# open at once. It only ever touches the throwaway profile.
-const ALL_PATHS := ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "golden_years_mall"]
+# For the dev Waiting Room, the profile also counts every path cleared, so every department is open at
+# once, and the depths deeper than the start get their clears, so every wanted poster shows. It only ever
+# touches the throwaway profile.
+const ALL_PATHS := ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "golden_years_mall", "last_resort_cruise", "fairways_end", "terminal_zero", "head_office"]
 
 
 static func is_available() -> bool:
@@ -79,10 +80,15 @@ static func progress(upgrades: Array[UpgradeDef], recipes: Array[ItemDef], all_d
 			data.record_floor_cleared(depth)
 	for id: String in paths_cleared(start_depth):
 		data.paths_cleared[id] = true
-	# Only the path ids are added, not more clears, so the third floor's locks stay as they were.
+	# At the start depth only the path ids are added, so the third floor's locks stay as they were.
+	# Deeper depths are counted cleared on both paths, so their posters can be reached.
 	if all_departments:
 		for id: String in ALL_PATHS:
 			data.paths_cleared[id] = true
+		for depth: int in ProgressData.PATHS_AT_DEPTH:
+			if depth > start_depth:
+				for i in ProgressData.PATHS_AT_DEPTH[depth].size():
+					data.record_floor_cleared(depth)
 	for item in recipes:
 		data.recipes_found[item.id] = true
 		data.items_unlocked[item.id] = true
