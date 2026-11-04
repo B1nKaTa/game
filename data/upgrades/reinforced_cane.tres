@@ -1,6 +1,17 @@
-[gd_resource type="Resource" script_class="UpgradeDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="UpgradeDef" load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/content/upgrade_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/content/stat_effect.gd" id="2"]
+
+[sub_resource type="Resource" id="Resource_a"]
+script = ExtResource("2")
+damage_bonus = 0.15
+swing_speed_bonus = -0.1
+
+[sub_resource type="Resource" id="Resource_b"]
+script = ExtResource("2")
+damage_bonus = -0.05
+swing_speed_bonus = 0.2
 
 [resource]
 script = ExtResource("1")
@@ -9,3 +20,10 @@ display_name = "Reinforced Cane"
 description = "More cane damage."
 prices = PackedInt32Array(50, 120, 240)
 damage_bonus = 0.1
+milestone_level = 2
+option_a_name = "Heavy Head"
+option_a_text = "Much harder swings, a little slower."
+option_a = SubResource("Resource_a")
+option_b_name = "Lightweight"
+option_b_text = "Faster combo, a little less damage."
+option_b = SubResource("Resource_b")

@@ -164,7 +164,7 @@ func take_brewed_potion() -> PotionDef:
 
 
 func make_run() -> RunState:
-	var run := RunState.new(Content.upgrades(), data.upgrades)
+	var run := RunState.new(Content.upgrades(), data.upgrades, data.form_choices)
 	run.unlocked_items = data.items_unlocked
 	run.perks = Mementos.perks(data)
 	run.apply_perks()

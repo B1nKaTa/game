@@ -1,6 +1,15 @@
-[gd_resource type="Resource" script_class="UpgradeDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="UpgradeDef" load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/content/upgrade_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/content/stat_effect.gd" id="2"]
+
+[sub_resource type="Resource" id="Resource_a"]
+script = ExtResource("2")
+blast_radius_bonus = 0.3
+
+[sub_resource type="Resource" id="Resource_b"]
+script = ExtResource("2")
+bonus_bombs = 1
 
 [resource]
 script = ExtResource("1")
@@ -10,3 +19,10 @@ description = "Thermos blasts hurt enemies more. The last level cracks reinforce
 prices = PackedInt32Array(50, 110, 220)
 merchant = "bomb_merchant"
 thermos_damage_bonus = 0.3
+milestone_level = 2
+option_a_name = "Big Bang"
+option_a_text = "Thermos blasts reach 30% further."
+option_a = SubResource("Resource_a")
+option_b_name = "Spare Can"
+option_b_text = "One more Thermos at the start of each run."
+option_b = SubResource("Resource_b")

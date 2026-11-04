@@ -109,3 +109,17 @@ func test_glasses_reveal_enemy_health_only_when_owned() -> void:
 	var upgrades: Array[UpgradeDef] = [glasses]
 	assert_false(PlayerStats.compute(upgrades, {"glasses": 0}, _no_items()).reveals_enemy_health)
 	assert_true(PlayerStats.compute(upgrades, {"glasses": 1}, _no_items()).reveals_enemy_health)
+
+
+func test_a_form_below_its_milestone_adds_only_its_levels() -> void:
+	var cane := UpgradeDef.new()
+	cane.id = "cane"
+	cane.damage_bonus = 0.1
+	cane.milestone_level = 2
+	cane.option_a = StatEffect.new()
+	cane.option_a.damage_bonus = 0.5
+	cane.option_b = StatEffect.new()
+	var upgrades: Array[UpgradeDef] = [cane]
+	assert_near(PlayerStats.compute(upgrades, {"cane": 1}, _no_items()).damage_mult, 1.1)
+	assert_near(PlayerStats.compute(upgrades, {"cane": 2}, _no_items()).damage_mult, 1.7, "option A from the milestone on")
+	assert_near(PlayerStats.compute(upgrades, {"cane": 2}, _no_items(), {"cane": "b"}).damage_mult, 1.2)

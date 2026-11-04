@@ -1,6 +1,15 @@
-[gd_resource type="Resource" script_class="UpgradeDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="UpgradeDef" load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/content/upgrade_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/content/stat_effect.gd" id="2"]
+
+[sub_resource type="Resource" id="Resource_a"]
+script = ExtResource("2")
+bite_damage_bonus = 0.25
+
+[sub_resource type="Resource" id="Resource_b"]
+script = ExtResource("2")
+teeth_return_cut = 1.0
 
 [resource]
 script = ExtResource("1")
@@ -10,3 +19,10 @@ description = "Thrown dentures bite harder and fly further. The last level bring
 prices = PackedInt32Array(50, 120, 240)
 bite_damage_bonus = 0.15
 bite_range_bonus = 40.0
+milestone_level = 2
+option_a_name = "Bite"
+option_a_text = "The dentures bite 25% harder."
+option_a = SubResource("Resource_a")
+option_b_name = "Boomerang"
+option_b_text = "The dentures come back a second sooner."
+option_b = SubResource("Resource_b")

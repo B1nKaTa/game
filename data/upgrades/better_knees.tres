@@ -1,6 +1,15 @@
-[gd_resource type="Resource" script_class="UpgradeDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="UpgradeDef" load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/content/upgrade_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/content/stat_effect.gd" id="2"]
+
+[sub_resource type="Resource" id="Resource_a"]
+script = ExtResource("2")
+dodge_length_bonus = 0.3
+
+[sub_resource type="Resource" id="Resource_b"]
+script = ExtResource("2")
+dodge_cooldown_cut = 0.15
 
 [resource]
 script = ExtResource("1")
@@ -10,3 +19,10 @@ description = "Faster movement and a shorter dodge cooldown."
 prices = PackedInt32Array(30, 75, 150)
 move_speed_bonus = 0.05
 dodge_cooldown_cut = 0.1
+milestone_level = 2
+option_a_name = "Long Stride"
+option_a_text = "Each dodge lasts 30% longer."
+option_a = SubResource("Resource_a")
+option_b_name = "Quick Recovery"
+option_b_text = "The dodge comes back 15% sooner still."
+option_b = SubResource("Resource_b")

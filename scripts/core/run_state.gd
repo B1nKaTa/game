@@ -22,14 +22,17 @@ var _promised := {}
 var _offered_recipes := {}
 var _upgrades: Array[UpgradeDef]
 var _levels: Dictionary
+var _choices: Dictionary
 
 
-func _init(upgrades: Array[UpgradeDef], levels: Dictionary) -> void:
+func _init(upgrades: Array[UpgradeDef], levels: Dictionary, choices: Dictionary = {}) -> void:
 	_upgrades = upgrades
 	_levels = levels
-	stats = PlayerStats.compute(_upgrades, _levels, items)
+	_choices = choices
+	stats = PlayerStats.compute(_upgrades, _levels, items, _choices)
 	health = Health.new(stats.max_pills)
 	health.changed.connect(changed.emit)
+	bombs = STARTING_BOMBS + stats.bonus_bombs
 
 
 func has_perk(id: String) -> bool:
@@ -61,7 +64,7 @@ func was_recipe_offered(id: String) -> bool:
 
 func add_item(item: ItemDef) -> void:
 	items.append(item)
-	stats = PlayerStats.compute(_upgrades, _levels, items)
+	stats = PlayerStats.compute(_upgrades, _levels, items, _choices)
 	if stats.max_pills != health.max_pills:
 		health.raise_max(stats.max_pills)
 	else:

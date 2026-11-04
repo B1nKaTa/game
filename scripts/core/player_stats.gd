@@ -6,6 +6,10 @@ const BASE_SPEED := 120.0
 const BASE_DODGE_COOLDOWN := 1.0
 const BASE_WARNING := 0.5
 const MAX_DODGE_CUT := 0.5
+const MIN_SWING_SPEED := 0.5
+const MAX_SWING_SPEED := 2.0
+# A form option never brings the dentures back sooner than this.
+const MIN_TEETH_RETURN := 1.0
 
 var max_pills: int = BASE_PILLS
 var move_speed: float = BASE_SPEED
@@ -24,9 +28,26 @@ var bite_damage_mult := 1.0
 var bite_range := DentureThrow.BASE_RANGE
 var bites_per_throw := 1
 var teeth_return_delay := DentureThrow.RETURN_DELAY
+# The form options' stats. How fast the cane combo swings, as a multiple of its usual pace.
+var swing_speed := 1.0
+# How long a dodge lasts, as a multiple of its usual length.
+var dodge_length := 1.0
+# Pills added to every heal that restores anything.
+var heal_bonus := 0
+# Multipliers on Pension by source, applied on top of pension_mult.
+var enemy_pension_mult := 1.0
+var reward_pension_mult := 1.0
+# What the cane multiplies its damage by against an enemy below half health.
+var wounded_damage_mult := 1.0
+var reveals_secrets := false
+var blast_radius := Thermos.BLAST_RADIUS
+# Thermoses added at the start of each run.
+var bonus_bombs := 0
 
 
-static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Array[ItemDef]) -> PlayerStats:
+# choices maps a form id to its milestone option. A form at or past its milestone with no entry
+# reads as option A, and the chosen option's effect counts once, whatever the level.
+static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Array[ItemDef], choices: Dictionary = {}) -> PlayerStats:
 	var pills := 0
 	var speed := 0.0
 	var cut := 0.0
@@ -41,9 +62,22 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 	var thermos := 0.0
 	var thermos_levels := 0
 	var thermos_all := false
+	var swing := 0.0
+	var lasting := 0.0
+	var heal := 0
+	var enemy_pension := 0.0
+	var reward_pension := 0.0
+	var wounded := 0.0
+	var secrets := false
+	var radius := 0.0
+	var bombs := 0
+	var return_cut := 0.0
 	var effects: Array = []
 	for upgrade in upgrades:
-		effects.append([upgrade, int(levels.get(upgrade.id, 0))])
+		var level := int(levels.get(upgrade.id, 0))
+		effects.append([upgrade, level])
+		if upgrade.has_choice() and level >= upgrade.milestone_level:
+			effects.append([upgrade.option(str(choices.get(upgrade.id, UpgradeDef.OPTION_A))), 1])
 	for item in items:
 		effects.append([item, 1])
 	for entry in effects:
@@ -58,6 +92,15 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 		thermos += effect.thermos_damage_bonus * count
 		bite += effect.bite_damage_bonus * count
 		reach += effect.bite_range_bonus * count
+		swing += effect.swing_speed_bonus * count
+		lasting += effect.dodge_length_bonus * count
+		heal += effect.heal_bonus * count
+		enemy_pension += effect.enemy_pension_bonus * count
+		reward_pension += effect.reward_pension_bonus * count
+		wounded += effect.wounded_damage_bonus * count
+		radius += effect.blast_radius_bonus * count
+		bombs += effect.bonus_bombs * count
+		return_cut += effect.teeth_return_cut * count
 		if count > 0:
 			bites = maxi(bites, effect.bites_through)
 		if effect is UpgradeDef and effect.thermos_damage_bonus > 0.0:
@@ -68,6 +111,8 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 			quick_return = true
 		if count > 0 and effect.reveals_enemy_health:
 			reveals = true
+		if count > 0 and effect.reveals_secrets:
+			secrets = true
 	var stats := PlayerStats.new()
 	stats.max_pills = BASE_PILLS + pills
 	stats.move_speed = BASE_SPEED * (1.0 + speed)
@@ -82,5 +127,17 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 	stats.bite_damage_mult = 1.0 + bite
 	stats.bite_range = DentureThrow.BASE_RANGE + reach
 	stats.bites_per_throw = bites
-	stats.teeth_return_delay = DentureThrow.QUICK_RETURN_DELAY if quick_return else DentureThrow.RETURN_DELAY
+	var return_delay := DentureThrow.QUICK_RETURN_DELAY if quick_return else DentureThrow.RETURN_DELAY
+	if return_cut > 0.0:
+		return_delay = maxf(return_delay - return_cut, MIN_TEETH_RETURN)
+	stats.teeth_return_delay = return_delay
+	stats.swing_speed = clampf(1.0 + swing, MIN_SWING_SPEED, MAX_SWING_SPEED)
+	stats.dodge_length = 1.0 + lasting
+	stats.heal_bonus = heal
+	stats.enemy_pension_mult = 1.0 + enemy_pension
+	stats.reward_pension_mult = 1.0 + reward_pension
+	stats.wounded_damage_mult = 1.0 + wounded
+	stats.reveals_secrets = secrets
+	stats.blast_radius = Thermos.BLAST_RADIUS * (1.0 + radius)
+	stats.bonus_bombs = bombs
 	return stats

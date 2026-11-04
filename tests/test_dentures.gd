@@ -219,7 +219,8 @@ func test_adhesive_levels_raise_bite_range_and_return() -> void:
 	assert_eq(adhesive.merchant, "black_market", "sold beside Reinforced Cane")
 	assert_eq(adhesive.prices, PackedInt32Array([50, 120, 240]))
 	var upgrades: Array[UpgradeDef] = [adhesive]
-	var bites := [1.0, 1.15, 1.30, 1.45]
+	# From level 2, the milestone, the default option A (Bite) adds 0.25 once.
+	var bites := [1.0, 1.15, 1.55, 1.70]
 	var ranges := [170.0, 210.0, 250.0, 290.0]
 	var delays := [3.0, 3.0, 3.0, 2.0]
 	for level in 4:
@@ -252,7 +253,7 @@ func test_the_item_and_adhesive_add_up() -> void:
 	var upgrades: Array[UpgradeDef] = [adhesive]
 	var items: Array[ItemDef] = [item]
 	var stats := PlayerStats.compute(upgrades, {adhesive.id: 3}, items)
-	assert_near(stats.bite_damage_mult, 1.95)
+	assert_near(stats.bite_damage_mult, 2.20, "1.45 from the levels, 0.25 from option A and 0.5 from the item")
 	assert_near(stats.bite_range, 290.0)
 	assert_eq(stats.bites_per_throw, 2)
 

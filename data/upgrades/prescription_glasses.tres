@@ -1,6 +1,15 @@
-[gd_resource type="Resource" script_class="UpgradeDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="UpgradeDef" load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/content/upgrade_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/content/stat_effect.gd" id="2"]
+
+[sub_resource type="Resource" id="Resource_a"]
+script = ExtResource("2")
+wounded_damage_bonus = 0.2
+
+[sub_resource type="Resource" id="Resource_b"]
+script = ExtResource("2")
+reveals_secrets = true
 
 [resource]
 script = ExtResource("1")
@@ -10,3 +19,10 @@ description = "Finally, you can see how close they are to dying."
 prices = PackedInt32Array(40)
 merchant = "optometrist"
 reveals_enemy_health = true
+milestone_level = 1
+option_a_name = "Bifocals"
+option_a_text = "20% more cane damage to enemies below half health."
+option_a = SubResource("Resource_a")
+option_b_name = "Night Vision"
+option_b_text = "Secret rooms show on the map."
+option_b = SubResource("Resource_b")

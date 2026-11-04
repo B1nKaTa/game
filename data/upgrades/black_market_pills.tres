@@ -1,6 +1,15 @@
-[gd_resource type="Resource" script_class="UpgradeDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="UpgradeDef" load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/content/upgrade_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/content/stat_effect.gd" id="2"]
+
+[sub_resource type="Resource" id="Resource_a"]
+script = ExtResource("2")
+bonus_pills = 1
+
+[sub_resource type="Resource" id="Resource_b"]
+script = ExtResource("2")
+heal_bonus = 1
 
 [resource]
 script = ExtResource("1")
@@ -9,3 +18,10 @@ display_name = "Black Market Pills"
 description = "One more starting pill."
 prices = PackedInt32Array(40, 100, 200)
 bonus_pills = 1
+milestone_level = 2
+option_a_name = "Bigger Bottle"
+option_a_text = "One more pill."
+option_a = SubResource("Resource_a")
+option_b_name = "Stronger Dose"
+option_b_text = "Every heal restores one extra pill."
+option_b = SubResource("Resource_b")
