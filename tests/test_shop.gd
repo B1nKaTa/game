@@ -116,6 +116,10 @@ func _shops() -> Array[RoomLayout]:
 		for layout in RoomCatalog.load_valid("res://data/rooms/%s/" % folder):
 			if layout.room_type == RoomLayout.TYPE_SHOP:
 				shops.append(layout)
+	# The Last Resort Cruise
+	for layout in RoomCatalog.load_valid("res://data/rooms/last_resort_cruise/"):
+		if layout.room_type == RoomLayout.TYPE_SHOP:
+			shops.append(layout)
 	return shops
 
 
