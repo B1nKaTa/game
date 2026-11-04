@@ -59,6 +59,9 @@ var departments_seen: Dictionary = {}
 var coach_met: bool = false
 # The last queue ticket whose event has been called. An old save starts at its run_count.
 var ticket_called: int = 0
+# Whether calling ticket_called set off its event. An old save starts false, since no event fired for
+# the tickets it counts as called.
+var ticket_fired: bool = false
 # The form id the clerk is selling at a discount this visit, or "".
 var clerk_deal: String = ""
 # Whether a cursed ticket is on offer this visit.
@@ -226,6 +229,7 @@ func call_ticket(upgrade_defs: Array[UpgradeDef], roll: float) -> String:
 	if ticket_called >= run_count:
 		return ""
 	ticket_called = run_count
+	ticket_fired = false
 	var event := TicketRules.event_for(run_count)
 	if event == TicketRules.CLERK_DEAL:
 		clerk_deal = TicketRules.deal_form(upgrade_defs, self, roll)
@@ -233,17 +237,15 @@ func call_ticket(upgrade_defs: Array[UpgradeDef], roll: float) -> String:
 			return ""
 	elif event == TicketRules.CURSED_OFFER:
 		cursed_offer = true
+	ticket_fired = not event.is_empty()
 	return event
 
 
-# Whether this visit's number was called and something came of it. A clerk's deal with every form
-# filed in full calls nothing, and such a call leaves no deal behind, so an empty deal means not called.
-# A deal stays set for the whole visit, even once its form is filed, so the sign keeps saying so.
+# Whether this visit's number was called and something came of it, as call_ticket recorded. A clerk's
+# deal with every form filed in full calls nothing, and an old save's back-dated tickets fired nothing.
+# A deal once called stays called for the whole visit, even once its form is filed.
 func ticket_was_called() -> bool:
-	var event := TicketRules.event_for(run_count)
-	if event.is_empty() or ticket_called != run_count:
-		return false
-	return event != TicketRules.CLERK_DEAL or not clerk_deal.is_empty()
+	return ticket_called == run_count and ticket_fired
 
 
 # Opting in to the cursed ticket, only while one is on offer, makes the next run a cursed one.
@@ -409,6 +411,7 @@ func to_dict() -> Dictionary:
 		"departments_seen": departments_seen,
 		"coach_met": coach_met,
 		"ticket_called": ticket_called,
+		"ticket_fired": ticket_fired,
 		"clerk_deal": clerk_deal,
 		"cursed_offer": cursed_offer,
 		"cursed_next_run": cursed_next_run,
@@ -473,6 +476,7 @@ static func from_dict(raw: Variant) -> ProgressData:
 	data.coach_met = _bool_or_false(raw.get("coach_met", false))
 	# Every ticket an old save has already had counts as called, so no event fires back-dated.
 	data.ticket_called = maxi(int(raw.get("ticket_called", data.run_count)), 0)
+	data.ticket_fired = _bool_or_false(raw.get("ticket_fired", false))
 	data.clerk_deal = _string_or_empty(raw.get("clerk_deal", ""))
 	data.cursed_offer = _bool_or_false(raw.get("cursed_offer", false))
 	data.cursed_next_run = _bool_or_false(raw.get("cursed_next_run", false))

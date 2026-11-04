@@ -232,3 +232,23 @@ func test_the_ticket_machine_and_noticeboard_stand_in_the_lobby() -> void:
 func test_the_arrival_speakers_stand_in_real_departments() -> void:
 	for id in TicketRules.ARRIVAL_DEPARTMENTS:
 		assert_true(Departments.index_of(id) >= 0, id)
+
+
+# An old save counts its past tickets as called, but none of them fired, so a run_count on a called
+# number must not show "Called!" for a ticket that set off nothing.
+func test_an_old_save_on_a_called_number_shows_no_called_on_the_sign() -> void:
+	var data := ProgressData.from_dict({"version": 1, "pension": 0, "upgrades": {}, "opening_seen": true, "run_count": 15})
+	assert_eq(TicketRules.event_for(15), TicketRules.CURSED_OFFER, "15 is a called number")
+	assert_false(data.ticket_was_called())
+	assert_false(data.cursed_offer)
+
+
+func test_a_fired_ticket_stays_called_through_a_save() -> void:
+	var data := ProgressData.new()
+	data.run_count = 15
+	data.ticket_called = 14
+	assert_eq(data.call_ticket(Content.upgrades(), 0.0), TicketRules.CURSED_OFFER)
+	var again := ProgressData.from_dict(JSON.parse_string(JSON.stringify(data.to_dict())))
+	assert_true(again.ticket_was_called(), "the sign still says so after a reload")
+	again.start_run()
+	assert_false(again.ticket_was_called(), "the next number is not called until its return")
