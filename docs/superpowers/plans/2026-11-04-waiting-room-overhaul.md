@@ -1688,7 +1688,7 @@ The four cosmetic ids are created in Task 15. Until then, `collect` stores the i
 - The status line shows Condolences.
 - Opaque, and fits 360 px with 10 rows.
 
-- [ ] **Step 1: Write the failing tests** in `tests/test_cosmetics.gd`:
+- [x] **Step 1: Write the failing tests** in `tests/test_cosmetics.gd`:
 
   ```gdscript
   extends TestCase
@@ -1752,11 +1752,11 @@ The four cosmetic ids are created in Task 15. Until then, `collect` stores the i
 
 - [ ] **Step 2: When testing is allowed, run them to make sure they fail.**
 
-- [ ] **Step 3: Implement** the defs, the data, the rules, the panel, `LobbyDecor` and the station. The lobby rebuilds its `LobbyDecor` when the panel closes.
+- [x] **Step 3: Implement** the defs, the data, the rules, the panel, `LobbyDecor` and the station. The lobby rebuilds its `LobbyDecor` when the panel closes.
 
 - [ ] **Step 4: When testing is allowed, run the tests. Screenshot** the panel's two tabs, and the lobby bare and with all six decor items.
 
-- [ ] **Step 5: Commit** ("Open the Decor Office and furnish the lobby with Condolences").
+- [x] **Step 5: Commit** ("Open the Decor Office and furnish the lobby with Condolences").
 
 ### Task 16: Grandpa's cosmetics on screen
 
@@ -1783,7 +1783,7 @@ The four cosmetic ids are created in Task 15. Until then, `collect` stores the i
 
 Each is drawn relative to the sprite's head. The head offset is `Vector2(0, -22)` for the 68 px frame. Check it by screenshot.
 
-- [ ] **Step 1: Write the failing tests:**
+- [x] **Step 1: Write the failing tests:**
 
   ```gdscript
   func test_make_run_carries_what_is_worn() -> void:
@@ -1812,11 +1812,11 @@ Each is drawn relative to the sprite's head. The head offset is `Vector2(0, -22)
 
 - [ ] **Step 2: When testing is allowed, run them to make sure they fail.**
 
-- [ ] **Step 3: Implement** `GrandpaLook`, `look_from` and the player hooks. The look is drawn both in the Waiting Room and in runs.
+- [x] **Step 3: Implement** `GrandpaLook`, `look_from` and the player hooks. The look is drawn both in the Waiting Room and in runs.
 
 - [ ] **Step 4: When testing is allowed, run the tests and one full loop. Screenshot** Grandpa in each hat, each cardigan and each cane, standing, walking and swinging, in the lobby and on the Mall's pale tile (lesson: check effects over each floor's palest tile).
 
-- [ ] **Step 5: Commit** ("Draw Grandpa's hats, cardigans and cane skins as placeholders").
+- [x] **Step 5: Commit** ("Draw Grandpa's hats, cardigans and cane skins as placeholders").
 
 ---
 
@@ -1851,7 +1851,7 @@ Each is drawn relative to the sprite's head. The head offset is `Vector2(0, -22)
 
 `arrival_line` only picks a speaker whose department is open. Black Market, Dr. Squint and Agnes are in the lobby.
 
-- [ ] **Step 1: Write the failing tests** in `tests/test_tickets_and_letters.gd`:
+- [x] **Step 1: Write the failing tests** in `tests/test_tickets_and_letters.gd`:
 
   ```gdscript
   extends TestCase
@@ -1907,14 +1907,14 @@ Each is drawn relative to the sprite's head. The head offset is `Vector2(0, -22)
 
 - [ ] **Step 2: When testing is allowed, run them to make sure they fail.**
 
-- [ ] **Step 3: Implement.**
+- [x] **Step 3: Implement.**
   - **`RoomView._spawn_enemy`:** `enemy.apply_floor(_floor_def.health_mult * _run.enemy_health_mult(), _floor_def.pension_mult * _run.enemy_pension_mult())`.
   - **The start of a cursed run:** in `floor_scene._ready`, `_run.cursed = Progress.take_cursed_run()`. When it is cursed, show the notice "Cursed ticket: they hit harder, and pay better".
   - **Clears in a cursed run:** in `floor_scene._on_floor_cleared`, also call `Progress.add_condolences(ProgressData.CURSED_FLOOR_CONDOLENCES)` with a notice.
 
 - [ ] **Step 4: When testing is allowed, run the tests.**
 
-- [ ] **Step 5: Commit** ("Call every fifth ticket for a deal, an arrival or a cursed run").
+- [x] **Step 5: Commit** ("Call every fifth ticket for a deal, an arrival or a cursed run").
 
 ### Task 18: The ticket machine, letters and the noticeboard
 
@@ -1957,7 +1957,7 @@ Each is drawn relative to the sprite's head. The head offset is `Vector2(0, -22)
 | `funeral_parlour` | Your son | "Dad, the service was lovely. Mum said you'd have hated it." |
 | `golden_years_mall` | Your granddaughter | "Grandpa, I walked your dog at the mall. He waited by the bench." |
 
-- [ ] **Step 1: Write the failing tests:**
+- [x] **Step 1: Write the failing tests:**
 
   ```gdscript
   func test_a_letter_arrives_with_each_floors_first_clear() -> void:
@@ -1992,11 +1992,11 @@ Each is drawn relative to the sprite's head. The head offset is `Vector2(0, -22)
 
 - [ ] **Step 2: When testing is allowed, run them to make sure they fail.**
 
-- [ ] **Step 3: Implement** the book, the panels, the stations and the lobby text.
+- [x] **Step 3: Implement** the book, the panels, the stations and the lobby text.
 
 - [ ] **Step 4: When testing is allowed, run the tests. Screenshot** the ticket panel with a cursed offer and a deal, and the noticeboard with six letters.
 
-- [ ] **Step 5: Commit** ("Add the ticket machine and letters on the noticeboard").
+- [x] **Step 5: Commit** ("Add the ticket machine and letters on the noticeboard").
 
 ### Task 19: The Dealer's back room
 
@@ -2023,7 +2023,7 @@ Each is drawn relative to the sprite's head. The head offset is `Vector2(0, -22)
   - "Cards, not slots. Slots are for amateurs and the living."
   - "Keep the bench clear. Something's coming for it."
 
-- [ ] **Step 1: Write the failing test** in `tests/test_arcade_room.gd`:
+- [x] **Step 1: Write the failing test** in `tests/test_arcade_room.gd`:
 
   ```gdscript
   func test_the_back_room_holds_two_card_tables_at_the_arcades_odds() -> void:
@@ -2037,11 +2037,11 @@ Each is drawn relative to the sprite's head. The head offset is `Vector2(0, -22)
 
 - [ ] **Step 2: When testing is allowed, run it to make sure it fails.**
 
-- [ ] **Step 3: Implement** `add_arcade_tables`, the NPC data and the scene wiring.
+- [x] **Step 3: Implement** `add_arcade_tables`, the NPC data and the scene wiring.
 
 - [ ] **Step 4: When testing is allowed, run the tests and one full loop**, which still plays the Arcade through `_create_arcade`. **Screenshot** the Back Room and a hand of blackjack there.
 
-- [ ] **Step 5: Commit** ("Give the Dealer a private card room in the Waiting Room").
+- [x] **Step 5: Commit** ("Give the Dealer a private card room in the Waiting Room").
 
 ---
 
@@ -2066,7 +2066,7 @@ Each is drawn relative to the sprite's head. The head offset is `Vector2(0, -22)
 
   It also adds the flags `_checked_departments`, `_checked_forms`, `_checked_bounty`, `_checked_yard` and `_checked_decor`.
 
-- [ ] **Step 1: At the start of `_run`**, after the opening:
+- [x] **Step 1: At the start of `_run`**, after the opening:
   - **`_check_departments_at_start`:**
     - `open_department_ids() == ["lobby", "hallway"]`.
     - Walk Grandpa onto the lobby's west door and check `current_department() == "hallway"`.
@@ -2083,7 +2083,7 @@ Each is drawn relative to the sprite's head. The head offset is `Vector2(0, -22)
     - Check the Bounty Office is closed, then `Progress.take_bounty` of the `senior_adjuster` poster. The rule allows a reachable poster before its office opens, since the board's rules don't need the room. This checks only the rules.
     - Check `bounty_taken` survives `Progress.reload()`.
 
-- [ ] **Step 2: After the first `_clear_three_floors`:**
+- [x] **Step 2: After the first `_clear_three_floors`:**
   - **`_check_bounty_collected`:**
     - The first run cleared `floor_1`, `sunset_shores` and `funeral_parlour`. Check exactly the Bounty Office, the Apothecary Wing and the Decor Office opened, beside the lobby and hallway.
     - Check `bounty_won`.
@@ -2095,7 +2095,7 @@ Each is drawn relative to the sprite's head. The head offset is `Vector2(0, -22)
     - Check the lobby's `LobbyDecor` has it.
     - Buy and wear the flat cap, and check `Progress.make_run().look` has it.
 
-- [ ] **Step 3: After the second `_clear_three_floors`:**
+- [x] **Step 3: After the second `_clear_three_floors`:**
   - **`_walk_every_department`:**
     - Every department is open. Walk to each through its doors with the driver's `_walk_through_door`, and check `current_department()`.
     - In each, check the stations expected from `Departments.STATIONS` and `MERCHANTS` stand there.
@@ -2111,7 +2111,7 @@ Each is drawn relative to the sprite's head. The head offset is `Vector2(0, -22)
   - **Condolences:** check `Progress.data.condolences > 0` and `bosses_beaten.size() == 12`, if the loop beat every mini boss. Otherwise assert at least the six floor bosses.
   - **The pass line** adds: departments walked, forms checked, bounty collected, yard checked, decor checked.
 
-- [ ] **Step 4: Update `docs/playtest-notes.md`** with what to try:
+- [x] **Step 4: Update `docs/playtest-notes.md`** with what to try:
   - each department's opening
   - filing a milestone and refiling
   - a poster from take to collect
@@ -2125,7 +2125,7 @@ Each is drawn relative to the sprite's head. The head offset is `Vector2(0, -22)
 
 - [ ] **Step 5: When testing is allowed, run the tests and 3 full loops** from an exported copy (`git archive`, renamed `config/name`). Expected: `0 failed`, and `SMOKE PASS` three times with every new flag true. Compare the real save's MD5 before and after.
 
-- [ ] **Step 6: Commit** ("Walk the departments, a bounty and the forms in the full loop"), then push.
+- [x] **Step 6: Commit** ("Walk the departments, a bounty and the forms in the full loop"), then push.
 
 ### Task 21: Full verification and independent review
 
