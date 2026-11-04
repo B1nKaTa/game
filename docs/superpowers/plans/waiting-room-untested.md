@@ -48,3 +48,33 @@ Written on 2026-11-04, from 149fec2 to e716e52. None of it has been parsed or ru
 ### Things to look at in play
 - Heavy Head (0.9 swing speed) only stretches the lock between swings. The attack animation still plays for `CaneCombo.LOCK_TIME`.
 - The Long Stride dodge lasts 0.26 s instead of 0.2 s, and the dodge ghosts follow it.
+
+## Chunk 3 (Tasks 11–14)
+
+Written on 2026-11-04, from 5bac79e to d2873e1. None of it has been parsed or run.
+
+### Test files to run
+- new: `tests/test_bounties.gd` (Tasks 11 and 12) and `tests/test_training_yard.gd` (Tasks 13 and 14)
+- changed: `tests/test_departments.gd` (a placement test for `Departments.NPCS`), `tests/test_stats.gd` (16 items), `tests/test_recipes.gd` and `tests/test_shop.gd` (the base item counts leave out bounty items)
+
+### Watch for on the first run
+- **New class names:** `BountyDef`, `BountyBoard`, `BountyPanel`, `PosterBoard`, `DummyBehavior`, `TrainingDummy`, `CoachTips` and `ItemRackPanel` have no `.uid` and are not in the class cache yet. The `.tres` headers name `script_class="BountyDef"`. Run `--headless --import` first.
+- **The item pool:** four `from_bounty` items join `Content.items()`. Shops, vaults and boss choices go through `can_offer`, so they stay out until won, but any full-loop check that counts items left to offer should be reread.
+- **The poster match:** `ProgressData.bounty_matches_boss` compares the poster id with the boss's EnemyDef id. `test_there_is_a_poster_for_every_mini_and_floor_boss` pins that they are equal.
+- **The Thermos in the yard:** `Player` only spends a Thermos when `bomb_requested` has a connection. The scene connects it on entering the yard and disconnects it on leaving. Check that a Thermos thrown in the yard is not spent elsewhere, and that leaving with a fuse burning gives no extra Thermos after the reset.
+- **The dummy:** it is an `Enemy` with `wall_mounted`, spawned through `RoomView.spawn_fixture`, so `_alive` counts it. It never dies, so `_finish_room` is never called twice. `TrainingDummy` skips non-finite health, so a dismiss (an `INF` hit) would still remove the dummy. Nothing in the yard dismisses enemies today. Check that this stays true.
+- **Healing in the yard:** a hit while in the yard heals Grandpa in full. The bedpan memento's first-heal bonus is spent on the Waiting Room's own run, which is thrown away.
+- **`npc.talk()` with Dolores:** she says her line and opens the panel when a poster is ready. A press with the panel open is ignored.
+- **The scroll list:** `BountyPanel` sizes its `ScrollContainer` from a guessed `ROW_HEIGHT` of 20 px at a 9 px font. If the rows are taller, the list scrolls sooner. If they are shorter, a gap shows under them.
+
+### Screenshots still owed (the plan asks for them)
+- The Bounty panel with every poster showing (`--dev-all-departments`), with one taken, and with one ready to collect. Check that the twelve rows and the Leave button fit in 360 px.
+- The poster board at (6, 2) with the TAKEN mark, and the station prompt above it.
+- The dummy hit by a combo, a charged swing, the teeth and a Thermos, each showing a number.
+- The item rack panel with all six recipes, and the coach's bubble.
+
+### Things to look at in play
+- **Deviation:** the poster board stands at (6, 2), not (10, 2), since (10, 2) is one cell from the north door cell, which the station test forbids.
+- Dolores's NPC look is the shopkeeper placeholder (cap, apron and moustache), and so is the coach's.
+- The coach's first-visit lines stay until Grandpa re-enters the yard or takes an item, even after the first talk marks him met.
+- The tips name mouse buttons and Space as placeholders. Check them against the real bindings.

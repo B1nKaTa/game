@@ -1299,7 +1299,7 @@ Edit the `.tres` files with the Edit tool. Never use `Set-Content`, which adds a
 
 The four cosmetic ids are created in Task 15. Until then, `collect` stores the id in `cosmetics_owned` all the same.
 
-- [ ] **Step 1: Write the failing tests** in `tests/test_bounties.gd`:
+- [x] **Step 1: Write the failing tests** in `tests/test_bounties.gd`:
 
   ```gdscript
   extends TestCase
@@ -1402,11 +1402,11 @@ The four cosmetic ids are created in Task 15. Until then, `collect` stores the i
 
 - [ ] **Step 2: When testing is allowed, run them to make sure they fail.**
 
-- [ ] **Step 3: Implement** the defs, the 12 posters, the four items and the rules. `take` clears `bounty_won`, so a win from before the taking never counts. Update every test that counts items or sums item prices.
+- [x] **Step 3: Implement** the defs, the 12 posters, the four items and the rules. `take` clears `bounty_won`, so a win from before the taking never counts. Update every test that counts items or sums item prices.
 
 - [ ] **Step 4: When testing is allowed, run the tests.**
 
-- [ ] **Step 5: Commit** ("Add a wanted poster for every boss, with its reward").
+- [x] **Step 5: Commit** ("Add a wanted poster for every boss, with its reward").
 
 ### Task 12: Deputy Dolores and the Bounty Office
 
@@ -1436,7 +1436,7 @@ The four cosmetic ids are created in Task 15. Until then, `collect` stores the i
   - "One account at a time, dear. I'm not made of ink."
   - "Paid in full. Lovely. Next!"
 
-- [ ] **Step 1: Write the failing test:**
+- [x] **Step 1: Write the failing test:**
 
   ```gdscript
   func test_the_extra_text_names_what_the_poster_pays() -> void:
@@ -1447,13 +1447,13 @@ The four cosmetic ids are created in Task 15. Until then, `collect` stores the i
 
 - [ ] **Step 2: When testing is allowed, run it to make sure it fails.**
 
-- [ ] **Step 3: Implement** the panel, the NPC data, the stations and the `Progress` calls.
+- [x] **Step 3: Implement** the panel, the NPC data, the stations and the `Progress` calls.
   - On collecting, show a HUD notice, for example "Paid: 40 Pension, 10 Condolences, and a recipe for Agnes".
   - The panel is opaque and fits 360 px with 12 rows. Use 9 px font rows, or a `ScrollContainer` when more than 8 show.
 
 - [ ] **Step 4: When testing is allowed, run the tests. Screenshot** the panel with every poster showing (`--dev-all-departments`), with one taken, and with one ready to collect.
 
-- [ ] **Step 5: Commit** ("Open the Bounty Office with Deputy Dolores and her wanted posters").
+- [x] **Step 5: Commit** ("Open the Bounty Office with Deputy Dolores and her wanted posters").
 
 ---
 
@@ -1480,7 +1480,7 @@ The four cosmetic ids are created in Task 15. Until then, `collect` stores the i
     - Numbers draw on z 50, above the bubble layer.
   - The yard's `RoomView` connects `Player.bomb_requested` to `place_bomb`, so Thermoses work there.
 
-- [ ] **Step 1: Write the failing tests** in `tests/test_training_yard.gd`:
+- [x] **Step 1: Write the failing tests** in `tests/test_training_yard.gd`:
 
   ```gdscript
   extends TestCase
@@ -1516,14 +1516,14 @@ The four cosmetic ids are created in Task 15. Until then, `collect` stores the i
 
 - [ ] **Step 2: When testing is allowed, run them to make sure they fail.**
 
-- [ ] **Step 3: Implement.**
+- [x] **Step 3: Implement.**
   - The yard spawns the dummy at (10, 5) on first entry.
   - Only the yard ever calls `spawn_fixture`, so the Waiting Room's FloorDef stays enemy-free.
   - Tests keep the dummy out of the tree and call `tick` by hand (lesson: nodes kept out of the tree never run `_ready`).
 
 - [ ] **Step 4: When testing is allowed, run the tests. Screenshot** a combo, a charged swing, the teeth and a Thermos on the dummy, each showing a number.
 
-- [ ] **Step 5: Commit** ("Put a dummy in the Training Yard that shows each hit").
+- [x] **Step 5: Commit** ("Put a dummy in the Training Yard that shows each hit").
 
 ### Task 14: The item rack and Coach Bertram
 
@@ -1569,7 +1569,7 @@ The four cosmetic ids are created in Task 15. Until then, `collect` stores the i
 - `DEFAULT_TIP`: "Pick something off the rack and I'll tell you what it's good for."
 - `lines_for` returns `FIRST_VISIT` on a first visit, else one tip per held rack item in held order, else `[DEFAULT_TIP]`.
 
-- [ ] **Step 1: Write the failing tests:**
+- [x] **Step 1: Write the failing tests:**
 
   ```gdscript
   func test_the_rack_lists_every_found_recipe_crafted_or_not() -> void:
@@ -1609,13 +1609,13 @@ The four cosmetic ids are created in Task 15. Until then, `collect` stores the i
 
 - [ ] **Step 2: When testing is allowed, run them to make sure they fail.**
 
-- [ ] **Step 3: Implement.**
+- [x] **Step 3: Implement.**
   - The Waiting Room's own run must never carry yard items into a run. `Game.begin_run()` changes scene, and `floor_scene` makes a fresh run, so this holds already. Add a scene comment saying so.
   - `CoachTips.TIPS` is checked against `Content.recipes()` by the test, so a new recipe without a tip fails it.
 
 - [ ] **Step 4: When testing is allowed, run the tests. Screenshot** the rack panel with all six recipes, and the coach's bubble.
 
-- [ ] **Step 5: Commit** ("Add the item rack and Coach Bertram to the Training Yard").
+- [x] **Step 5: Commit** ("Add the item rack and Coach Bertram to the Training Yard").
 
 ---
 
