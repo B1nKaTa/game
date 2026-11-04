@@ -98,3 +98,4 @@
 - 2026-11-04: Hex colours written into .tres files with 4 significant digits would not equal Color("hex") in a test → write colours with 9 significant digits, and compare colours with is_equal_approx.
 - 2026-11-04: `grep -c $'\r'` in Git Bash reported 0 on a CRLF file, since grep drops the CR → count line endings with `tr -cd '\r' < file | wc -c` against `wc -l`.
 - 2026-11-04: Once the bedpan memento hangs, the full loop's landing heal could gain an extra pill from a first heal not yet spent → in a heal check, add health.first_heal_bonus and health.heal_bonus to the expected amount.
+- 2026-11-04: The --dev-all-departments flag seeded only the Floor 3 dev run's profile, and Game.return_to_waiting ends that profile before the Waiting Room loads, so the departments could never show → follow a debug switch to the scene that reads it, through every scene change on the way, before calling it done.
