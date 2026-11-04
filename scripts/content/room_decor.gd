@@ -28,6 +28,8 @@ const COFFIN_STAND := "coffin_stand"
 const BENCH := "bench"
 const FOOD_TABLE := "food_table"
 const FLUORESCENT := "fluorescent"
+# Departures, Terminal Zero: a departures board on its stand, with rows of amber flight times.
+const DEPARTURE_BOARD := "departure_board"
 const SYMBOL_KINDS := {
 	RoomLayout.SYMBOL_GRASS: GRASS,
 	RoomLayout.SYMBOL_BONES: BONES,

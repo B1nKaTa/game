@@ -161,3 +161,5 @@ func _draw_placeholder(kind: String, variant: int, at: Vector2) -> void:
 			draw_rect(Rect2(-12, -4, 24, 8), Color(p.fluorescent, 0.16))
 			draw_rect(Rect2(-9, -2, 18, 4), Color(p.fluorescent, 0.22))
 			draw_line(Vector2(-10, 0), Vector2(10, 0), Color(1, 1, 1, 0.3), 1.0)
+	# Departures, Terminal Zero draws its own decor.
+	TerminalDecor.draw_placeholder(self, kind, variant, p)
