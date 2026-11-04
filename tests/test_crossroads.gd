@@ -212,6 +212,19 @@ func test_skulls_match_the_danger_of_the_path() -> void:
 	assert_eq(PathSign.skulls_for(none), 1, "a sign always shows at least one")
 
 
+# Four skulls still count at a glance. Past that a sign shows one skull and the number beside it.
+func test_a_deadly_path_shows_one_skull_and_its_number() -> void:
+	var def := FloorDef.new()
+	for danger in range(1, PathSign.MAX_SKULL_ROW + 1):
+		def.danger = danger
+		assert_eq(PathSign.skull_row_for(def), danger)
+		assert_eq(PathSign.skull_number_for(def), "", "%d skulls are all drawn" % danger)
+	for danger in [5, 6, 7, 8]:
+		def.danger = danger
+		assert_eq(PathSign.skull_row_for(def), 1)
+		assert_eq(PathSign.skull_number_for(def), "x%d" % danger)
+
+
 # --- the landing below a first floor ---
 
 func _landing() -> RoomLayout:

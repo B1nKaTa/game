@@ -16,6 +16,10 @@ const SKULL_EYES := Color("15131a")
 const NAME_FONT := 11
 const HINT_FONT := 9
 const SKULL_GAP := 14.0
+# Up to this many skulls stand in a row, which can still be counted at a glance. A deadlier path shows
+# one skull with its number beside it, as "x5".
+const MAX_SKULL_ROW := 4
+const SKULL_NUMBER_FONT := 11
 const TEXT_TOP := -58.0
 
 var _def: FloorDef
@@ -39,6 +43,18 @@ static func detail_for(def: FloorDef, open: bool) -> String:
 
 static func skulls_for(def: FloorDef) -> int:
 	return maxi(def.danger, 1)
+
+
+# How many skulls the sign draws: every one up to MAX_SKULL_ROW, and past that one beside a number.
+static func skull_row_for(def: FloorDef) -> int:
+	var skulls := skulls_for(def)
+	return skulls if skulls <= MAX_SKULL_ROW else 1
+
+
+# The number beside the lone skull of a deadly path, or "" when the skulls are all drawn.
+static func skull_number_for(def: FloorDef) -> String:
+	var skulls := skulls_for(def)
+	return "" if skulls <= MAX_SKULL_ROW else "x%d" % skulls
 
 
 func setup(def: FloorDef, is_open: bool, player: Node2D, side: Vector2i) -> void:
@@ -106,10 +122,20 @@ func _draw_details() -> void:
 	var at := Vector2(-width / 2.0, TEXT_TOP)
 	draw_string_outline(font, at, title, HORIZONTAL_ALIGNMENT_LEFT, -1, NAME_FONT, 3, Color.BLACK)
 	draw_string(font, at, title, HORIZONTAL_ALIGNMENT_LEFT, -1, NAME_FONT, TEXT_COLOR)
-	var skulls := skulls_for(_def)
-	var start := -(skulls - 1) * SKULL_GAP / 2.0
-	for i in skulls:
-		_draw_skull(Vector2(start + i * SKULL_GAP, TEXT_TOP + 11.0))
+	var number := skull_number_for(_def)
+	if number.is_empty():
+		var skulls := skull_row_for(_def)
+		var start := -(skulls - 1) * SKULL_GAP / 2.0
+		for i in skulls:
+			_draw_skull(Vector2(start + i * SKULL_GAP, TEXT_TOP + 11.0))
+	else:
+		# One skull and its number, centred together under the name.
+		var number_width := font.get_string_size(number, HORIZONTAL_ALIGNMENT_LEFT, -1, SKULL_NUMBER_FONT).x
+		var left := -(10.0 + 3.0 + number_width) / 2.0
+		_draw_skull(Vector2(left + 5.0, TEXT_TOP + 11.0))
+		var number_at := Vector2(left + 13.0, TEXT_TOP + 15.0)
+		draw_string_outline(font, number_at, number, HORIZONTAL_ALIGNMENT_LEFT, -1, SKULL_NUMBER_FONT, 3, Color.BLACK)
+		draw_string(font, number_at, number, HORIZONTAL_ALIGNMENT_LEFT, -1, SKULL_NUMBER_FONT, TEXT_COLOR)
 	var hint := detail_for(_def, _is_open)
 	if not hint.is_empty():
 		var hint_width := font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, HINT_FONT).x
