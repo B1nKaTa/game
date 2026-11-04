@@ -28,10 +28,11 @@ var _near := false
 var _bubble: Node2D
 
 
-func setup(npc_def: NpcDef, player: Node2D) -> void:
+# start is the run count, so each run he opens on his next line.
+func setup(npc_def: NpcDef, player: Node2D, start := 0) -> void:
 	def = npc_def
 	_player = player
-	_talk = NpcTalk.new(npc_def.lines)
+	_talk = NpcTalk.new(npc_def.lines, start)
 
 
 func _ready() -> void:
@@ -66,6 +67,12 @@ func talk() -> String:
 # Replaces what he says, starting again at the first line.
 func set_lines(lines: Array[String]) -> void:
 	_talk = NpcTalk.new(lines)
+
+
+# Says his line for a moment, if he has one, without a press.
+func say_moment(key: String) -> void:
+	if def != null and _talk != null:
+		_talk.say(def.moment(key))
 
 
 func _process(delta: float) -> void:

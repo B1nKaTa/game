@@ -8,4 +8,8 @@ id = "coach_bertram"
 display_name = "Coach Bertram, Retired PE Teacher"
 color = Color(0.25, 0.5, 0.3, 1)
 body_size = Vector2(22, 30)
-lines = Array[String](["Pick something off the rack and I'll tell you what it's good for."])
+lines = Array[String](["Knees up, Grandpa! Well. Knee up.", "Hit the dummy. It's a dummy. It won't sue.", "Warm up first. At your age, that's the whole workout.", "Twenty laps! Of the bench. Sitting counts.", "No pain, no gain. You've got plenty of pain, so...", "Lift with your legs. Dodge with your legs. Busy legs, Grandpa.", "That dummy's been hit four thousand times. Never complained. Be the dummy.", "Good form! Terrible everything else. But good form.", "Thirty-eight years with this whistle. Now I blow it at straw. Living the dream.", "Hydrate! Prune juice counts. Prune juice always counts.", "Dodgeball taught me everything. Mostly ducking.", "Don't call it a nap. Call it recovery."])
+moments = {
+"died": "Shake it off! Literally, you've got some floor on you.",
+"boss_win": "THAT'S what I'm talking about! Now sit down before you pull something."
+}

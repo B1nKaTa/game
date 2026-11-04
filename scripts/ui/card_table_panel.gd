@@ -63,6 +63,13 @@ var _reels: Array[String] = []
 var _state := READY
 var _bet := 0
 var _last_payout := 0
+# How the last game this sitting went, for the Dealer: RESULT_WIN, RESULT_LOSS or "" for even, and
+# whether anything was played at all. RESULT_OUT is the room's, once every table is played out.
+const RESULT_WIN := "win"
+const RESULT_LOSS := "loss"
+const RESULT_OUT := "out"
+var _last_result := ""
+var _played := false
 var _message := ""
 var _opened_frame := -1
 var _card_box: StyleBoxFlat
@@ -179,7 +186,22 @@ func _process(_delta: float) -> void:
 # Finishes any hand in play, then asks to close.
 func leave() -> void:
 	finish_hand()
+	if _room != null and _played:
+		_room.arcade_closed(_last_result)
 	closed.emit()
+
+
+# A win pays back more than the bet, or a prize; a loss pays nothing; anything else is even.
+static func result_of(payout: int, bet_amount: int, prize: bool) -> String:
+	if prize or payout > bet_amount:
+		return RESULT_WIN
+	if payout <= 0:
+		return RESULT_LOSS
+	return ""
+
+
+func last_result() -> String:
+	return _last_result
 
 
 func finish_hand() -> void:
@@ -207,6 +229,8 @@ func pull() -> bool:
 	var won := SlotMachine.payout(_reels, SlotMachine.BET)
 	_last_payout = won["pension"]
 	_room.arcade_pay(_last_payout)
+	_played = true
+	_last_result = result_of(_last_payout, SlotMachine.BET, won["item"] or won["full_heal"])
 	if won["item"]:
 		_room.arcade_item_win(_table)
 		_message = "Three skulls! A free item waits by the table."
@@ -312,6 +336,8 @@ func _settle() -> void:
 		else:
 			_message = "Nothing this time."
 	_room.arcade_pay(_last_payout)
+	_played = true
+	_last_result = result_of(_last_payout, _bet, false)
 	_state = DONE
 
 

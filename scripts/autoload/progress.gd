@@ -9,6 +9,8 @@ const DEV_PATH := "user://save_dev.json"
 
 var data: ProgressData
 var notice := ""
+# How the run just played went, for the Coach on return: died, and bosses beaten. Not saved.
+var last_run := {}
 var _store: SaveStore
 # While a dev run is on, the real progress and its store wait here untouched, and every save goes to
 # the dev file instead.
@@ -183,6 +185,7 @@ func _save_both_currencies() -> void:
 
 
 func start_run() -> void:
+	last_run = {"died": false, "bosses": 0}
 	data.start_run()
 	_store.save_progress(data)
 

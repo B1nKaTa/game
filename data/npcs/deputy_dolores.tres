@@ -8,4 +8,19 @@ id = "deputy_dolores"
 display_name = "Deputy Dolores, Overdue Accounts"
 color = Color(0.36, 0.42, 0.62, 1)
 body_size = Vector2(22, 30)
-lines = Array[String](["Every soul has a balance. Some are overdue.", "Take a poster. Bring me proof. Paperwork is proof.", "One account at a time, dear. I'm not made of ink.", "Paid in full. Lovely. Next!"])
+lines = Array[String](["Wanted dead. Which is rather the point down here.", "Bring them in alive, dead, or in triplicate.", "Sign here, here and here. The last one's your soul. Joking. Mostly.", "I don't do violence, dear. I do paperwork. Violence is for paperwork.", "No, you can't take two. I've seen what happens to people who take two.", "Interest accrues. So does my disappointment.", "Proof of defeat, please. A receipt will do.", "Lovely weather today. Beige. Same as always.", "Twenty years in Accounts, forty dead. The commute's better.", "Don't die with an open account, dear. Oh. Well. Don't do it again.", "The debt collectors? Oh, they're on a poster too.", "Every soul has a balance. Some are overdue.", "Take a poster. Bring me proof. Paperwork is proof.", "One account at a time, dear. I'm not made of ink."])
+moments = {
+"paid": "Paid in full. I'll frame it. I won't, but I'll think about it.",
+"take:tired_undertaker": "Digby's slept through his shift for eleven years. Wake him. Firmly.",
+"take:mortimer_grimsby": "Mortimer billed us for four thousand funerals. And the flowers.",
+"take:reverend": "The Reverend's sermons run long. End one.",
+"take:old_smokey": "Old Smokey has never once filed a smoke permit.",
+"take:gloria": "Gloria sings at the fountain. Unlicensed. Make it stop.",
+"take:mall_santa": "The Santa's on a naughty list. Ours. It's longer.",
+"take:activities_coordinator": "Barbara's bingo has run nine years. Nobody's won. Look into it.",
+"take:foreman_klaus": "Foreman Klaus clocks everyone out. Permanently. Clock him.",
+"take:head_groundskeeper": "Gus buried the complaints box. With the complaints in it.",
+"take:matron_mercy": "Matron Mercy tucks people in. Far too tightly.",
+"take:regional_reaper": "The Regional Reaper hasn't filed expenses since the plague.",
+"take:senior_adjuster": "The Senior Adjuster denies every claim. Deny him."
+}

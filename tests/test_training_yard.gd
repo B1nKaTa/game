@@ -189,3 +189,31 @@ func test_the_waiting_room_refreshes_stats_on_entering_the_yard_and_closing_a_pa
 	assert_true(yard_rules.contains("_run.refresh_stats()"), "entering the yard")
 	var close_panel := source.substr(source.find("func _close_panel"), 700)
 	assert_true(close_panel.contains("\n\t_refresh_run_stats()"), "closing a panel calls it, not only declares it")
+
+
+# --- the coach's opener ---
+
+func test_the_coach_opens_on_a_new_line_each_run() -> void:
+	var coach: NpcDef = load("res://data/npcs/coach_bertram.tres")
+	var calm := {"died": false, "bosses": 0}
+	assert_eq(CoachTips.opener(coach, calm, 0), coach.lines[0])
+	assert_eq(CoachTips.opener(coach, calm, 1), coach.lines[1])
+	assert_eq(CoachTips.opener(coach, {}, coach.lines.size()), coach.lines[0], "round again, and an empty last run is calm")
+
+
+func test_the_coach_has_a_word_after_a_death_or_a_boss() -> void:
+	var coach: NpcDef = load("res://data/npcs/coach_bertram.tres")
+	assert_eq(CoachTips.opener(coach, {"died": true, "bosses": 2}, 3), coach.moment("died"), "a death comes first")
+	assert_eq(CoachTips.opener(coach, {"died": false, "bosses": 1}, 3), coach.moment("boss_win"))
+	assert_false(coach.moment("died").is_empty())
+	assert_false(coach.moment("boss_win").is_empty())
+
+
+func test_the_opener_comes_before_the_tips_but_not_the_basics() -> void:
+	var none: Array[ItemDef] = []
+	assert_eq(CoachTips.lines_for(none, true, "Hi."), CoachTips.FIRST_VISIT, "the first visit is the basics only")
+	var fallback: Array[String] = ["Hi.", CoachTips.DEFAULT_TIP]
+	assert_eq(CoachTips.lines_for(none, false, "Hi."), fallback)
+	var held: Array[ItemDef] = [load("res://data/items/bifocals.tres")]
+	var expected: Array[String] = ["Hi.", CoachTips.TIPS["bifocals"]]
+	assert_eq(CoachTips.lines_for(held, false, "Hi."), expected)

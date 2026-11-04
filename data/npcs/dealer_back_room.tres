@@ -8,4 +8,9 @@ id = "dealer_back_room"
 display_name = "The Dealer"
 color = Color(0.55, 0.16, 0.3, 1)
 body_size = Vector2(22, 30)
-lines = Array[String](["Members only. You're a member now. Congratulations, and condolences.", "Same odds as the Arcade. I'm a man of principle. Small principle.", "Cards, not slots. Slots are for amateurs and the living.", "Keep the bench clear. Something's coming for it."])
+lines = Array[String](["Members only. You're a member now. Congratulations, and condolences.", "Back room rules: no crying on the felt.", "Same odds as the Arcade. I'm a man of principle. Small principle.", "The real money's back here. So is the real dust.", "Cards, not slots. Slots are for amateurs and the living.", "Shuffle, deal, repent. Mostly the first two.", "Keep the bench clear. Something's coming for it."])
+moments = {
+"win": "A winner! Tell your friends. Your friends with pensions.",
+"loss": "Unlucky. Same seat next visit? I'll keep it warm.",
+"out": "That's your lot. Come back soon. Alive or otherwise."
+}

@@ -41,6 +41,8 @@ var _open_merchants: Array = []
 var _npcs := {}
 # The Bounty Office's cork board, once that department has been entered.
 var _poster_board: PosterBoard
+# The moment Deputy Dolores speaks to once the bounty panel closes, or "".
+var _dolores_next := ""
 # The lobby's decor, rebuilt whenever a panel closes, since the Decor Office may have sold some.
 var _lobby_decor: LobbyDecor
 var _panel: CanvasLayer
@@ -243,7 +245,9 @@ func _on_rack_taken(item: ItemDef) -> void:
 func _refresh_coach() -> void:
 	var coach: Variant = _npcs.get(COACH_BERTRAM)
 	if is_instance_valid(coach):
-		(coach as Npc).set_lines(CoachTips.lines_for(_run.items, not Progress.data.coach_met))
+		var npc := coach as Npc
+		var opener := CoachTips.opener(npc.def, Progress.last_run, Progress.data.run_count)
+		npc.set_lines(CoachTips.lines_for(_run.items, not Progress.data.coach_met, opener))
 
 
 func _on_coach_talked(_line: String) -> void:
@@ -332,7 +336,7 @@ func _add_station(view: RoomView, entry: Dictionary) -> void:
 
 func _add_npc(view: RoomView, entry: Dictionary) -> void:
 	var npc := Npc.new()
-	npc.setup(load(entry["def"]) as NpcDef, player)
+	npc.setup(load(entry["def"]) as NpcDef, player, Progress.data.run_count)
 	npc.position = RoomBackdrop.cell_center(entry["cell"])
 	view.add_child(npc)
 	_npcs[entry["id"]] = npc
@@ -356,6 +360,8 @@ func _open_bounty_panel(title: String) -> void:
 	var bounties := BountyPanel.new()
 	bounties.setup(title)
 	bounties.paid.connect(_hud.show_notice)
+	bounties.paid.connect(func(_text: String) -> void: _dolores_next = "paid")
+	bounties.taken.connect(func(def: BountyDef) -> void: _dolores_next = "take:" + def.id)
 	_show_panel(bounties)
 
 
@@ -476,6 +482,7 @@ func _close_panel() -> void:
 	_panel = null
 	_panel_closed_frame = Engine.get_process_frames()
 	player.set_physics_process(true)
+	_dolores_has_her_word()
 	_refresh_poster_board()
 	_refresh_noticeboard()
 	if is_instance_valid(_lobby_decor):
@@ -484,6 +491,13 @@ func _close_panel() -> void:
 	_run.look = RunState.look_from(Progress.data.cosmetics_worn, CosmeticDef.all())
 	player.refresh_look()
 	_refresh_run_stats()
+
+
+# A poster taken or paid while the bounty panel was up gets Deputy Dolores's word once it is down.
+func _dolores_has_her_word() -> void:
+	if not _dolores_next.is_empty() and is_instance_valid(_npcs.get(DEPUTY_DOLORES)):
+		(_npcs[DEPUTY_DOLORES] as Npc).say_moment(_dolores_next)
+	_dolores_next = ""
 
 
 # A panel may have filed or refiled a form, so his stats are worked out again, keeping any yard items.

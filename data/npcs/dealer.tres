@@ -8,4 +8,9 @@ id = "dealer"
 display_name = "Dealer"
 color = Color(0.55, 0.16, 0.3, 1)
 body_size = Vector2(22, 30)
-lines = Array[String](["Place your bets.", "The house is very understanding.", "No refunds, even in the afterlife.", "Each game once a visit. House rules.", "Sit down, sit down. Your luck's due. Statistically.", "Grief is a gamble. So is this, but with prizes."])
+lines = Array[String](["Step right up. Your heart can take it. Probably.", "First spin's on the house. The house regrets nothing.", "You can't take it with you, Grandpa. So leave it with me.", "Odds are good today. I say that every day. It's policy.", "Your pension's just sitting there. Getting lonely.", "Doctor said no excitement? Doctor's not here. I'm here.", "Pull the lever. It's good for the arthritis.", "Think of it as investing. In me.", "The machines missed you. Look, they're blinking.", "One more. What's the worst that happens? You're already dead.", "I don't cheat. I just never lose. Different thing.", "Every jackpot starts with a small donation.", "I saw a man win here once. Lovely fella. Never saw him again.", "Place your bets.", "The house is very understanding.", "No refunds, even in the afterlife.", "Each game once a visit. House rules.", "Sit down, sit down. Your luck's due. Statistically.", "Grief is a gamble. So is this, but with prizes."])
+moments = {
+"win": "A winner! Tell your friends. Your friends with pensions.",
+"loss": "Unlucky. Same seat next visit? I'll keep it warm.",
+"out": "That's your lot. Come back soon. Alive or otherwise."
+}

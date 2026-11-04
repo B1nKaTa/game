@@ -80,6 +80,7 @@ var _choice_group: ChoiceGroup
 # Each opened Gilded Urn's pair of items. Kept here, since a signal alone would not keep a group alive.
 var _urn_groups: Array[ChoiceGroup] = []
 var _tables: Array[ArcadeTable] = []
+var _dealer: Npc
 
 
 # The floor's palette, for anything a boss lays down in the room later, such as a wet patch.
@@ -703,9 +704,10 @@ func add_arcade_tables(games: Array[String], dealer_def: NpcDef) -> void:
 	var cell := _room.layout.merchant_cell()
 	if cell != Vector2i(-1, -1) and dealer_def != null:
 		var dealer := Npc.new()
-		dealer.setup(dealer_def, _player)
+		dealer.setup(dealer_def, _player, _run_number())
 		dealer.position = RoomBackdrop.cell_center(cell)
 		add_child(dealer)
+		_dealer = dealer
 	if games.is_empty():
 		return
 	var cells := _room.layout.cells_of(RoomLayout.SYMBOL_GAME)
@@ -720,6 +722,27 @@ func add_arcade_tables(games: Array[String], dealer_def: NpcDef) -> void:
 
 func _on_table_wanted(_game: String, table: ArcadeTable) -> void:
 	arcade_game_wanted.emit(table)
+
+
+# The run count, which picks the line people here open with.
+func _run_number() -> int:
+	return int(_bank.data.run_count) if _bank != null and _bank.data != null else 0
+
+
+# The card-table overlay has closed after a game: the Dealer has a word about how the last one went,
+# and once every table is played out for this visit, he says so instead of commiserating.
+func arcade_closed(last_result: String) -> void:
+	if not is_instance_valid(_dealer) or last_result.is_empty():
+		return
+	var key := last_result
+	if key != CardTablePanel.RESULT_WIN and not _tables.is_empty():
+		var played_out := true
+		for table in _tables:
+			if table.plays_left > 0:
+				played_out = false
+		if played_out:
+			key = CardTablePanel.RESULT_OUT
+	_dealer.say_moment(key)
 
 
 # --- what the card-table overlay asks of the room ---
@@ -795,7 +818,7 @@ func _add_merchant() -> Array[Vector2i]:
 	if cell == Vector2i(-1, -1):
 		return cells
 	var merchant := Npc.new()
-	merchant.setup(MERCHANT, _player)
+	merchant.setup(MERCHANT, _player, _run_number())
 	merchant.position = RoomBackdrop.cell_center(cell)
 	add_child(merchant)
 	cells.append(cell)

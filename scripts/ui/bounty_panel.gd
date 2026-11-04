@@ -7,6 +7,8 @@ extends CanvasLayer
 signal closed
 # The notice to show once a poster is collected.
 signal paid(text: String)
+# A poster just taken.
+signal taken(def: BountyDef)
 
 const PANEL_POSITION := Vector2(20, 16)
 const PANEL_SIZE := Vector2(600, 0)
@@ -138,6 +140,6 @@ func _press(def: BountyDef) -> void:
 		var paid_out := Progress.collect_bounty(def)
 		if not paid_out.is_empty():
 			paid.emit(paid_text(def, paid_out))
-	else:
-		Progress.take_bounty(def)
+	elif Progress.take_bounty(def):
+		taken.emit(def)
 	_rebuild()

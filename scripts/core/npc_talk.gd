@@ -11,8 +11,11 @@ var _shown := ""
 var _left := 0.0
 
 
-func _init(lines: Array[String]) -> void:
+# start picks the first line, round the list: callers pass the run count, so each run opens on the next.
+func _init(lines: Array[String], start := 0) -> void:
 	_lines = lines
+	if not _lines.is_empty():
+		_next = posmod(start, _lines.size())
 
 
 # Talking answers the interact key only in reach, and only when nothing else that answers it, such
@@ -33,6 +36,14 @@ func talk() -> String:
 	_next = (_next + 1) % _lines.size()
 	_left = SHOW_TIME
 	return _shown
+
+
+# Shows one line now for something that just happened, without moving the order on.
+func say(line: String) -> void:
+	if line.is_empty():
+		return
+	_shown = line
+	_left = SHOW_TIME
 
 
 func tick(delta: float) -> void:

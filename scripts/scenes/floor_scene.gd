@@ -308,6 +308,7 @@ func _close_card_table() -> void:
 
 
 func _on_player_died() -> void:
+	Progress.last_run["died"] = true
 	_end_run("You died again. Please take a number.")
 
 
@@ -394,6 +395,7 @@ func _on_boss_defeated(boss: Enemy) -> void:
 	# Only a real mini boss or floor boss counts, never something one of them summoned.
 	if boss.is_summon or not boss.def.is_boss:
 		return
+	Progress.last_run["bosses"] = int(Progress.last_run.get("bosses", 0)) + 1
 	var paid := Progress.record_boss_beaten(boss.def.id, boss.def == _floor_def.floor_boss)
 	if paid > 0:
 		_hud.show_notice("+%d Condolences" % paid)

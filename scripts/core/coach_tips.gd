@@ -23,15 +23,32 @@ const TIPS := {
 const DEFAULT_TIP := "Pick something off the rack and I'll tell you what it's good for."
 
 
-# The basics on a first visit, else one tip per held item in the order held, else the default.
-static func lines_for(held: Array[ItemDef], first_visit: bool) -> Array[String]:
+# The basics on a first visit, else the opener and one tip per held item in the order held, else the
+# opener and the default.
+static func lines_for(held: Array[ItemDef], first_visit: bool, opener := "") -> Array[String]:
 	var lines: Array[String] = []
 	if first_visit:
 		lines.append_array(FIRST_VISIT)
 		return lines
+	if not opener.is_empty():
+		lines.append(opener)
 	for item in held:
 		if TIPS.has(item.id):
 			lines.append(TIPS[item.id])
-	if lines.is_empty():
+	if lines.size() == (0 if opener.is_empty() else 1):
 		lines.append(DEFAULT_TIP)
 	return lines
+
+
+# What he opens with: a word on a death or a boss beaten in the run just played, else the next of his
+# lines, one per run.
+static func opener(coach: NpcDef, last_run: Dictionary, run_number: int) -> String:
+	if coach == null:
+		return ""
+	if last_run.get("died", false) and not coach.moment("died").is_empty():
+		return coach.moment("died")
+	if int(last_run.get("bosses", 0)) > 0 and not coach.moment("boss_win").is_empty():
+		return coach.moment("boss_win")
+	if coach.lines.is_empty():
+		return ""
+	return coach.lines[posmod(run_number, coach.lines.size())]

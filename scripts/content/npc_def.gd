@@ -6,5 +6,12 @@ extends Resource
 @export var display_name: String = ""
 @export var color := Color("8a6a4a")
 @export var body_size := Vector2(20, 28)
-# Said one at a time, in order, starting over after the last.
+# Said one at a time, in order, starting over after the last. Each run opens on the next one.
 @export var lines: Array[String] = []
+# A line for a moment, by key, said once when it comes. The Dealer has win, loss and out; Deputy
+# Dolores has paid and take:<bounty id>; Coach Bertram has died and boss_win.
+@export var moments: Dictionary = {}
+
+
+func moment(key: String) -> String:
+	return str(moments.get(key, ""))

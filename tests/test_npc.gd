@@ -154,3 +154,68 @@ func test_the_merchant_stands_near_the_middle_of_his_wares() -> void:
 		"################"])
 	var cell := layout.merchant_cell()
 	assert_true(cell.x >= 5 and cell.x <= 9, str(cell))
+
+
+# --- a new line each run, and lines for moments ---
+
+const TALKERS := [
+	"res://data/npcs/dealer.tres",
+	"res://data/npcs/dealer_back_room.tres",
+	"res://data/npcs/deputy_dolores.tres",
+	"res://data/npcs/coach_bertram.tres",
+	"res://data/npcs/shop_merchant.tres",
+]
+# The bubble is one line of 10 pixel text, centred on him, on a 640 pixel wide screen.
+const LONGEST_LINE := 80
+
+
+func test_each_run_opens_on_the_next_line_and_goes_round() -> void:
+	var lines := _lines(["One.", "Two.", "Three."])
+	assert_eq(NpcTalk.new(lines, 0).talk(), "One.")
+	assert_eq(NpcTalk.new(lines, 1).talk(), "Two.")
+	assert_eq(NpcTalk.new(lines, 5).talk(), "Three.", "round the list")
+	var talk := NpcTalk.new(lines, 2)
+	talk.talk()
+	assert_eq(talk.talk(), "One.", "a second press carries on in order")
+	assert_eq(NpcTalk.new(_lines([]), 7).talk(), "", "no lines, no trouble")
+
+
+func test_a_moment_line_shows_without_moving_the_order_on() -> void:
+	var talk := NpcTalk.new(_lines(["One.", "Two."]))
+	talk.say("Well done.")
+	assert_eq(talk.showing(), "Well done.")
+	assert_eq(talk.talk(), "One.", "the order is where it was")
+	talk.say("")
+	assert_eq(talk.showing(), "One.", "an empty moment says nothing")
+
+
+func test_every_line_fits_its_bubble() -> void:
+	for path in TALKERS:
+		var def: NpcDef = load(path)
+		assert_false(def.lines.is_empty(), path)
+		for line in def.lines:
+			assert_true(line.length() <= LONGEST_LINE, "%s: %s" % [path, line])
+		for key in def.moments:
+			assert_true(def.moment(key).length() <= LONGEST_LINE, "%s: %s" % [path, key])
+
+
+func test_both_dealers_have_a_word_for_each_result() -> void:
+	for path in ["res://data/npcs/dealer.tres", "res://data/npcs/dealer_back_room.tres"]:
+		var def: NpcDef = load(path)
+		for key in [CardTablePanel.RESULT_WIN, CardTablePanel.RESULT_LOSS, CardTablePanel.RESULT_OUT]:
+			assert_false(def.moment(key).is_empty(), "%s %s" % [path, key])
+
+
+func test_a_game_is_a_win_a_loss_or_even() -> void:
+	assert_eq(CardTablePanel.result_of(20, 10, false), CardTablePanel.RESULT_WIN)
+	assert_eq(CardTablePanel.result_of(0, 10, true), CardTablePanel.RESULT_WIN, "a prize is a win")
+	assert_eq(CardTablePanel.result_of(0, 10, false), CardTablePanel.RESULT_LOSS)
+	assert_eq(CardTablePanel.result_of(10, 10, false), "", "money back is even")
+
+
+func test_dolores_has_a_word_for_every_poster_and_for_paying() -> void:
+	var dolores: NpcDef = load("res://data/npcs/deputy_dolores.tres")
+	assert_false(dolores.moment("paid").is_empty())
+	for def in BountyBoard.all():
+		assert_false(dolores.moment("take:" + def.id).is_empty(), def.id)
+	assert_eq(dolores.moment("take:nobody"), "")
