@@ -69,7 +69,14 @@ const MERCHANTS := [
 const STATIONS: Array[Dictionary] = [
 	{"id": "key_board", "department": LOBBY, "cell": Vector2i(20, 7), "title": "Key Settings", "prompt": "Key Settings", "label": "Keys", "size": Vector2(28, 36), "color": Color("6b4a2a")},
 	{"id": "crafter", "department": LOBBY, "cell": Vector2i(11, 7), "title": "Agnes, Afterlife Arts and Crafts", "prompt": "Craft", "art": "crafter", "color": Color("c98a3c")},
+	# The TrophyWall draws the frames on the top wall above it, so the station itself draws no board.
+	{"id": "trophy_wall", "department": LOBBY, "cell": Vector2i(20, 3), "title": "Trophy Wall", "prompt": "Look", "board": false},
 ]
+
+# The trophy wall's frames hang centred over this lobby column, on the line between the top wall and
+# the first floor row, clear of the north door at column 15.
+const TROPHY_WALL_COLUMN := 20
+const TROPHY_WALL_Y := 34.0
 
 # The door out to a run stands inside the lobby, since all four lobby walls lead to departments. It is
 # off the row the east and west doors share, so walking across the lobby never starts a run.

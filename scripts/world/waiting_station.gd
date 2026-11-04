@@ -52,7 +52,8 @@ func _process(_delta: float) -> void:
 
 
 func _draw() -> void:
-	if not entry.has("art"):
+	# A station whose look is drawn by something else, such as the trophy wall, says "board": false.
+	if not entry.has("art") and entry.get("board", true):
 		var size: Vector2 = entry.get("size", DEFAULT_BOARD_SIZE)
 		var box := Rect2(-size / 2.0, size)
 		draw_rect(box, entry.get("color", Color.GRAY))

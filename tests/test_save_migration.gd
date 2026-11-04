@@ -67,3 +67,7 @@ func test_old_saves_open_the_departments_of_their_cleared_floors() -> void:
 	for id in [Departments.BOUNTY_OFFICE, Departments.TRAINING_YARD, Departments.APOTHECARY_WING, Departments.BOILER_ROOM, Departments.DECOR_OFFICE]:
 		assert_true(open.has(id), id)
 	assert_false(open.has(Departments.BACK_ROOM), "the Mall was never cleared")
+
+
+func test_old_saves_hang_the_mementos_of_floors_already_cleared() -> void:
+	assert_eq(Mementos.hung(_today()).size(), 5)

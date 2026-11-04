@@ -6,6 +6,7 @@ extends Node2D
 const FLOOR_DEF_PATH := "res://data/floors/waiting_room.tres"
 const KEY_BOARD := "key_board"
 const CRAFTER := "crafter"
+const TROPHY_WALL := "trophy_wall"
 const MERCHANT_PROMPT := "Trade"
 const RUN_DOOR_ICON := ">"
 const NOW_SERVING_AT := Vector2(360, 24)
@@ -176,6 +177,10 @@ func _furnish(view: RoomView, room: FloorRoom) -> void:
 			_add_station(view, entry)
 	if department == Departments.LOBBY:
 		_add_run_door(view)
+		var wall := TrophyWall.new()
+		wall.position = Vector2(RoomBackdrop.cell_center(Vector2i(Departments.TROPHY_WALL_COLUMN, 0)).x, Departments.TROPHY_WALL_Y)
+		wall.setup(Progress.data)
+		view.add_child(wall)
 
 
 func _add_station(view: RoomView, entry: Dictionary) -> void:
@@ -228,6 +233,16 @@ func _open_station(opened: WaitingStation) -> void:
 			var craft := CraftPanel.new()
 			craft.setup(opened.title)
 			_show_panel(craft)
+		TROPHY_WALL:
+			_show_lines(Mementos.wall_lines(Progress.data))
+
+
+# Shows the first line now and the rest one after another, in place of whatever was waiting.
+func _show_lines(lines: PackedStringArray) -> void:
+	_notices.clear()
+	for line in lines:
+		_notices.append(line)
+	_notice_wait = 0.0
 
 
 func _show_panel(panel: CanvasLayer) -> void:

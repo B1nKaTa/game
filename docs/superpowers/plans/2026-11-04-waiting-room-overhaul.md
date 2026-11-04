@@ -702,7 +702,7 @@ Later tasks add the trophy wall (15, 2), the forms counter (11, 3), the ticket m
   - Empty sack: a red sack outline.
 - Interact ("Look") shows a HUD notice listing each hung memento with its perk text, or "Empty frames. Beat a floor boss to hang one." when none.
 
-- [ ] **Step 1: Write the failing tests** in `tests/test_mementos.gd`:
+- [x] **Step 1: Write the failing tests** in `tests/test_mementos.gd`:
 
   ```gdscript
   extends TestCase
@@ -738,11 +738,11 @@ Later tasks add the trophy wall (15, 2), the forms counter (11, 3), the ticket m
 
 - [ ] **Step 2: When testing is allowed, run them to make sure they fail.**
 
-- [ ] **Step 3: Implement** `Mementos`, `TrophyWall` and the lobby station.
+- [x] **Step 3: Implement** `Mementos`, `TrophyWall` and the lobby station.
 
 - [ ] **Step 4: When testing is allowed, run the tests, and screenshot the wall** with no frames filled and with all six (`--dev-all-departments`).
 
-- [ ] **Step 5: Commit** ("Hang a memento on the trophy wall for each floor boss beaten").
+- [x] **Step 5: Commit** ("Hang a memento on the trophy wall for each floor boss beaten").
 
 ### Task 6: Memento perks in runs
 
