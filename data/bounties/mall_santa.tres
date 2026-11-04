@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BountyDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/bounty_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "mall_santa"
+boss_name = "The Mall Santa"
+floor_id = "golden_years_mall"
+depth = 3
+floor_boss = true
+pension = 300
+condolences = 20
+extra_kind = "item"
+extra_id = "naughty_list"

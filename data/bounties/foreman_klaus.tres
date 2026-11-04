@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BountyDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/bounty_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "foreman_klaus"
+boss_name = "Foreman Klaus"
+floor_id = "furnace_works"
+depth = 2
+floor_boss = false
+pension = 80
+condolences = 10
+extra_kind = "recipe"
+extra_id = "nitro_tablets"

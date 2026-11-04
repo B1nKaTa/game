@@ -159,13 +159,25 @@ func spend_condolences(amount: int) -> bool:
 
 
 # Pays the first-beat Condolences once per boss, and returns what was paid, which is 0 after the first.
+# It also marks a taken poster for this boss as won, on every beat, so a poster for a boss beaten
+# before is still winnable.
 func record_boss_beaten(boss_id: String, is_floor_boss: bool) -> int:
-	if boss_id.is_empty() or bosses_beaten.has(boss_id):
+	if boss_id.is_empty():
+		return 0
+	if bounty_matches_boss(bounty_taken, boss_id):
+		bounty_won = true
+	if bosses_beaten.has(boss_id):
 		return 0
 	bosses_beaten[boss_id] = true
 	var paid := FIRST_FLOOR_BOSS_CONDOLENCES if is_floor_boss else FIRST_MINI_BOSS_CONDOLENCES
 	add_condolences(paid)
 	return paid
+
+
+# Whether a taken poster is the one for this boss. A poster's BountyDef id is its boss's EnemyDef id,
+# which test_bounties pins for every poster, so ProgressData never has to load a BountyDef.
+static func bounty_matches_boss(poster_id: String, boss_id: String) -> bool:
+	return not poster_id.is_empty() and poster_id == boss_id
 
 
 func start_run() -> void:

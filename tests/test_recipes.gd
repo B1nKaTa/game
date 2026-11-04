@@ -31,7 +31,7 @@ func test_shipped_recipe_items_have_prices_and_base_items_do_not() -> void:
 		assert_true(item.needs_recipe(), item.id)
 	var base := 0
 	for item in Content.items():
-		if not item.needs_recipe():
+		if not item.needs_recipe() and not item.from_bounty:
 			base += 1
 	assert_eq(base, 6)
 

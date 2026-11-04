@@ -53,8 +53,10 @@ func prop_coin_mult() -> float:
 	return Mementos.PROP_COIN_MULT if has_perk(Mementos.PROP_COINS_PERK) else 1.0
 
 
-# Recipe items only join the rotation once they have been crafted.
+# Recipe items only join the rotation once they have been crafted, and bounty items once won.
 func can_offer(item: ItemDef) -> bool:
+	if item.from_bounty:
+		return unlocked_items.has(item.id)
 	return not item.needs_recipe() or unlocked_items.has(item.id)
 
 

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BountyDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/bounty_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "regional_reaper"
+boss_name = "Regional Reaper"
+floor_id = "floor_1"
+depth = 1
+floor_boss = true
+pension = 100
+condolences = 20
+extra_kind = "cosmetic"
+extra_id = "reaper_hood"

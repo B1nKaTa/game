@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "comfort_care_lanyard"
+display_name = "Comfort Care Lanyard"
+description = "One more pill and earlier warnings. Visiting hours are over."
+from_bounty = true
+bonus_pills = 1
+warning_bonus = 0.1

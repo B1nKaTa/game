@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BountyDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/bounty_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "mortimer_grimsby"
+boss_name = "Mortimer Grimsby"
+floor_id = "funeral_parlour"
+depth = 3
+floor_boss = true
+pension = 300
+condolences = 20
+extra_kind = "item"
+extra_id = "pocket_watch"
