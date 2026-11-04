@@ -3,11 +3,13 @@ config_version=5
 [application]
 
 config/name="Grandpa"
+config/version="0.5.0"
 config/features=PackedStringArray("4.7")
 run/main_scene="res://scenes/boot.tscn"
 
 [autoload]
 
+Settings="*res://scripts/autoload/settings.gd"
 Progress="*res://scripts/autoload/progress.gd"
 Game="*res://scripts/autoload/game.gd"
 

@@ -5,6 +5,12 @@ const POOL_SIZE := 8
 const VOLUME_DB := -8.0
 const MIN_REPEAT_GAP := 0.04
 const MAX_REAL_DELTA := 0.1
+# Every sound here plays on the Effects bus, which the Audio tab's Effects slider sets.
+const BUS := "Effects"
+
+# The Game tab's Screen shake and Hit-stop. The floor scene sets them from Settings.
+var shake_enabled := true
+var hit_stop_enabled := true
 
 var _hit_stop := HitStop.new()
 var _shake := ScreenShake.new()
@@ -27,9 +33,11 @@ func _ready() -> void:
 	_last_ticks = Time.get_ticks_usec()
 	for sound_name in SoundBank.names():
 		_streams[sound_name] = SoundBank.make_stream(sound_name)
+	GameSettings.ensure_buses()
 	for i in POOL_SIZE:
 		var player := AudioStreamPlayer.new()
 		player.volume_db = VOLUME_DB
+		player.bus = BUS
 		add_child(player)
 		_players.append(player)
 
@@ -115,15 +123,15 @@ func on_consumable_taken() -> void:
 
 
 func is_shaking() -> bool:
-	return _shake.is_active()
+	return shake_enabled and _shake.is_active()
 
 
 func shake_magnitude() -> float:
-	return _shake.current_magnitude()
+	return _shake.current_magnitude() if shake_enabled else 0.0
 
 
 func _begin_hit_stop(seconds: float) -> void:
-	if seconds <= 0.0:
+	if seconds <= 0.0 or not hit_stop_enabled:
 		return
 	_hit_stop.request(seconds)
 	_last_ticks = Time.get_ticks_usec()
@@ -147,7 +155,7 @@ func tick_real(real_delta: float) -> void:
 	_shake.tick(real_delta)
 	_apply_time_scale()
 	if is_instance_valid(_camera):
-		_camera.offset = _shake.offset(_rng)
+		_camera.offset = _shake.offset(_rng) if shake_enabled else Vector2.ZERO
 
 
 func _exit_tree() -> void:

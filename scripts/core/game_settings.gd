@@ -208,3 +208,25 @@ static func minimap_visible(hide_in_combat: bool, fighting: bool, big_map_open: 
 	if big_map_open:
 		return false
 	return not (hide_in_combat and fighting)
+
+
+# The buses every sound plays through, each sending to Master. Music and Ambience have nothing to play yet.
+const BUSES: Array[String] = ["Effects", "Music", "Ambience"]
+
+
+static func ensure_buses() -> void:
+	for bus in BUSES:
+		if AudioServer.get_bus_index(bus) != -1:
+			continue
+		AudioServer.add_bus()
+		var index := AudioServer.bus_count - 1
+		AudioServer.set_bus_name(index, bus)
+		AudioServer.set_bus_send(index, "Master")
+
+
+# Sets every bus's volume from the Audio tab.
+static func apply_volumes(settings: GameSettings) -> void:
+	ensure_buses()
+	AudioServer.set_bus_volume_db(0, bus_db(settings.value(AUDIO, "master")))
+	for bus in BUSES:
+		AudioServer.set_bus_volume_db(AudioServer.get_bus_index(bus), bus_db(settings.value(AUDIO, bus.to_lower())))
