@@ -25,6 +25,7 @@ const LANDING_LAYOUT := "res://data/rooms/landing/landing.tres"
 const LANDING_HEAL := 2
 const MESSAGE_TIME := 2.0
 const CURSED_NOTICE := "Cursed ticket: tougher enemies, better pay"
+const LIFE_JACKET_NOTICE := "Your life jacket keeps you afloat. One pill left."
 
 var player: Player
 var is_cleared := false
@@ -51,6 +52,8 @@ var _card_panel: CardTablePanel
 var _card_panel_closed_frame := -1
 # What the Purser's Bon Voyage Bag put in this run: a potion's id, BonVoyage.THERMOS, or "" for none.
 var _bon_voyage := ""
+# Pension the rooms of this run have paid, for the Golden Parachute on a death.
+var _run_earned := 0
 
 
 func _ready() -> void:
@@ -102,6 +105,7 @@ func _ready() -> void:
 	player = Player.new()
 	player.setup(_run)
 	player.died.connect(_on_player_died)
+	_run.health.rescued.connect(_on_rescued)
 	player.bomb_requested.connect(_on_bomb_requested)
 	player.show_crosshair = true
 	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
@@ -204,6 +208,8 @@ func _choose_path(index: int) -> void:
 	_map = map
 	_progress = FloorProgress.new(map)
 	_progress.enter(crossroads.id)
+	# Each floor fills the Life Jacket again.
+	_run.start_floor()
 	_mini_map.setup(map, _progress, false, def.display_name)
 	_big_map.setup(map, _progress, true, def.display_name)
 	_current_id = crossroads.id
@@ -276,7 +282,7 @@ func _make_room_view(room: FloorRoom) -> RoomView:
 		view.arcade_game_wanted.connect(_open_card_table)
 	view.setup(room, _map, _floor_def, _run, player, _rng, _progress, Progress)
 	view.notice.connect(_hud.show_notice)
-	view.pension_earned.connect(func(amount: int): Progress.add_pension(amount))
+	view.pension_earned.connect(_on_pension_earned)
 	view.floor_cleared.connect(_on_floor_cleared)
 	view.boss_spawned.connect(_on_boss_spawned)
 	_feedback.watch_room(view)
@@ -325,10 +331,22 @@ func _close_card_table() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
 
 
+func _on_pension_earned(amount: int) -> void:
+	_run_earned += amount
+	Progress.add_pension(amount)
+
+
+func _on_rescued() -> void:
+	_hud.show_notice(LIFE_JACKET_NOTICE)
+
+
 func _on_player_died() -> void:
 	Progress.last_run["died"] = true
+	var parachute := _run.parachute_pay(_run_earned)
+	if parachute > 0 and not is_over:
+		Progress.add_pension(parachute)
+		_hud.show_notice("Golden Parachute: +%d Pension" % parachute)
 	_end_run("You died again. Please take a number.")
-
 
 func _on_floor_cleared() -> void:
 	if is_cleared:

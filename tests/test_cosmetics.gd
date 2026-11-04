@@ -9,7 +9,7 @@ func _cosmetic(id: String) -> CosmeticDef:
 
 
 func test_the_set_is_complete_and_every_bounty_cosmetic_exists() -> void:
-	assert_eq(CosmeticDef.all().size(), 16)
+	assert_eq(CosmeticDef.all().size(), 20)
 	for poster in BountyBoard.all():
 		if poster.extra_kind == BountyDef.EXTRA_COSMETIC:
 			var def := _cosmetic(poster.extra_id)
@@ -25,7 +25,7 @@ func test_only_the_bounty_cosmetics_are_never_sold() -> void:
 		if not def.is_sold():
 			never_sold.append(def.id)
 	never_sold.sort()
-	assert_eq(never_sold, ["bingo_teal", "fountain_tiara", "reaper_hood", "sooty_cane"])
+	assert_eq(never_sold, ["aviator_sunglasses", "bingo_teal", "captains_hat", "fountain_tiara", "golf_visor", "power_tie", "reaper_hood", "sooty_cane"])
 
 
 func test_condolences_buy_and_bounty_ones_are_never_for_sale() -> void:
@@ -107,7 +107,7 @@ func test_the_two_tabs_split_decor_from_looks() -> void:
 	var defs := CosmeticDef.all()
 	assert_eq(DecorPanel.rows_for(defs, true).size(), 6)
 	var looks := DecorPanel.rows_for(defs, false)
-	assert_eq(looks.size(), 10)
+	assert_eq(looks.size(), 14)
 	assert_eq(looks[0].slot, CosmeticDef.SLOT_HAT)
 	assert_eq(looks[looks.size() - 1].slot, CosmeticDef.SLOT_CANE)
 
@@ -147,3 +147,23 @@ func test_a_worn_look_changes_no_stat() -> void:
 	assert_near(dressed.damage_mult(), plain.damage_mult())
 	assert_near(dressed.move_speed(), plain.move_speed())
 	assert_eq(dressed.health.max_pills, plain.health.max_pills)
+
+
+# The deep floors' looks: three worn in the hat slot, sunglasses included, and a tie in the cardigan's.
+func test_the_deep_floors_looks_have_their_slots_and_drawings() -> void:
+	var slots := {"captains_hat": CosmeticDef.SLOT_HAT, "golf_visor": CosmeticDef.SLOT_HAT, "aviator_sunglasses": CosmeticDef.SLOT_HAT, "power_tie": CosmeticDef.SLOT_CARDIGAN}
+	var source := FileAccess.get_file_as_string("res://scripts/world/grandpa_look.gd")
+	for id in slots:
+		var def := _cosmetic(id)
+		assert_true(def != null, id)
+		if def == null:
+			continue
+		assert_eq(def.slot, slots[id], id)
+		assert_true(source.contains("\"%s\"" % def.shape), "%s's %s is drawn" % [id, def.shape])
+
+
+func test_every_hat_shape_is_drawn() -> void:
+	var source := FileAccess.get_file_as_string("res://scripts/world/grandpa_look.gd")
+	for def in CosmeticDef.all():
+		if def.slot == CosmeticDef.SLOT_HAT:
+			assert_true(source.contains("\"%s\":" % def.shape), def.id)

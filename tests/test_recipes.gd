@@ -26,7 +26,7 @@ func _data(pension := 1000) -> ProgressData:
 
 
 func test_shipped_recipe_items_have_prices_and_base_items_do_not() -> void:
-	assert_eq(Content.recipes().size(), 6)
+	assert_eq(Content.recipes().size(), 8)
 	for item in Content.recipes():
 		assert_true(item.needs_recipe(), item.id)
 	var base := 0

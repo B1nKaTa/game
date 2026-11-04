@@ -315,7 +315,11 @@ func _exit_tree() -> void:
 
 func _swing(damage: float, reach: float, angle: float, push: float, heavy: bool, finisher: bool) -> void:
 	_finish_swing()
-	_active_swing = SwingAttack.new(_aim, reach, angle, damage * run.damage_mult(), push, heavy, finisher)
+	var swing_damage := damage * run.damage_mult()
+	# The Lucky Tee: now and then a swing does double.
+	if run.stats.lucky_swing_chance > 0.0:
+		swing_damage = PlayerStats.lucky_damage(swing_damage, run.stats.lucky_swing_chance, randf())
+	_active_swing = SwingAttack.new(_aim, reach, angle, swing_damage, push, heavy, finisher)
 	_visual.play_once("attack", CaneCombo.LOCK_TIME)
 	_strike_enemies()
 

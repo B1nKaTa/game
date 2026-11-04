@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BountyDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/bounty_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "thaddeus_fairweather"
+boss_name = "Thaddeus Fairweather"
+floor_id = "fairways_end"
+depth = 4
+floor_boss = true
+pension = 400
+condolences = 20
+extra_kind = "recipe"
+extra_id = "lucky_tee"

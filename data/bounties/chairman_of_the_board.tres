@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BountyDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/bounty_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "chairman_of_the_board"
+boss_name = "The Chairman of the Board"
+floor_id = "head_office"
+depth = 5
+floor_boss = true
+pension = 500
+condolences = 20
+extra_kind = "recipe"
+extra_id = "golden_parachute"

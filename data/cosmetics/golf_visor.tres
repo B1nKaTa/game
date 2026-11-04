@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CosmeticDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/cosmetic_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "golf_visor"
+display_name = "Golf Visor"
+description = "Chip's own. Keeps the sun off a head that won't see it again."
+slot = "hat"
+price = 0
+color = Color(0.207843137, 0.560784314, 0.352941176, 1)
+shape = "visor"

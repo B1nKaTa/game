@@ -1,14 +1,15 @@
 class_name PosterBoard
 extends Node2D
 
-# The Bounty Office's cork board: one small paper per poster showing, up to twelve in two rows, with a
-# red TAKEN across the taken one. Placeholder art, drawn in code.
+# The Bounty Office's cork board: one small paper per poster showing, up to twenty in two rows, with a
+# red TAKEN across the taken one. Placeholder art, drawn in code. It is wider than the station's cell,
+# from about column 5 to 8, still clear of the north door at column 10.
 
-const BOARD_SIZE := Vector2(64, 30)
+const BOARD_SIZE := Vector2(104, 30)
 const PAPER_SIZE := Vector2(8, 11)
 const GAP := 2.0
-const COLUMNS := 6
-const MAX_PAPERS := 12
+const COLUMNS := 10
+const MAX_PAPERS := 20
 const CORK := Color("9a6b3f")
 const FRAME := Color("4a3220")
 const PAPER := Color("efe6c8")

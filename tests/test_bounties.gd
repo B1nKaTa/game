@@ -3,7 +3,7 @@ extends TestCase
 
 func _floors() -> Dictionary:
 	var floors := {}
-	for id in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "golden_years_mall"]:
+	for id in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "golden_years_mall", "last_resort_cruise", "fairways_end", "terminal_zero", "head_office"]:
 		floors[id] = load("res://data/floors/%s.tres" % id)
 	return floors
 
@@ -27,7 +27,7 @@ func test_there_is_a_poster_for_every_mini_and_floor_boss() -> void:
 	for id in floors:
 		wanted[(floors[id] as FloorDef).mini_boss.id] = id
 		wanted[(floors[id] as FloorDef).floor_boss.id] = id
-	assert_eq(BountyBoard.all().size(), 12)
+	assert_eq(BountyBoard.all().size(), 20)
 	for def in BountyBoard.all():
 		assert_eq(wanted.get(def.id, ""), def.floor_id, def.id)
 		var floor_def: FloorDef = floors[def.floor_id]
@@ -41,7 +41,7 @@ func test_the_rewards_follow_the_depth() -> void:
 		assert_eq(def.condolences, 20 if def.floor_boss else 10, def.id)
 
 
-func test_the_extras_are_four_of_each_kind_and_all_real() -> void:
+func test_the_extras_are_six_items_six_recipes_and_eight_cosmetics_and_all_real() -> void:
 	var counts := {}
 	for def in BountyBoard.all():
 		counts[def.extra_kind] = counts.get(def.extra_kind, 0) + 1
@@ -49,7 +49,9 @@ func test_the_extras_are_four_of_each_kind_and_all_real() -> void:
 			assert_true(Content.recipes().any(func(i): return i.id == def.extra_id), def.id)
 		if def.extra_kind == BountyDef.EXTRA_ITEM:
 			assert_true(Content.items().any(func(i): return i.id == def.extra_id and i.from_bounty), def.id)
-	assert_eq(counts, {BountyDef.EXTRA_ITEM: 4, BountyDef.EXTRA_RECIPE: 4, BountyDef.EXTRA_COSMETIC: 4})
+		if def.extra_kind == BountyDef.EXTRA_COSMETIC:
+			assert_true(CosmeticDef.find(def.extra_id, CosmeticDef.all()) != null, def.id)
+	assert_eq(counts, {BountyDef.EXTRA_ITEM: 6, BountyDef.EXTRA_RECIPE: 6, BountyDef.EXTRA_COSMETIC: 8})
 
 
 func test_a_fresh_save_sees_only_the_first_floors_posters() -> void:
@@ -222,3 +224,28 @@ func test_progress_drops_an_unknown_poster_on_load() -> void:
 	assert_false(progress.data.bounty_won)
 	progress.free()
 	store.delete_all()
+
+
+# Mini bosses' posters pay a look and floor bosses' an item or a recipe, on the deep floors as above.
+func test_the_deep_floors_posters_pay_what_the_spec_says() -> void:
+	var wanted := {
+		"lorraine": "captains_hat", "commodore_wellington": "life_jacket",
+		"chip": "golf_visor", "thaddeus_fairweather": "lucky_tee",
+		"sergeant_wanda": "aviator_sunglasses", "augustine": "neck_pillow",
+		"doreen": "power_tie", "chairman_of_the_board": "golden_parachute",
+	}
+	for id in wanted:
+		var def := _poster(id)
+		assert_true(def != null, id)
+		if def == null:
+			continue
+		assert_eq(def.extra_id, wanted[id], id)
+		assert_eq(def.extra_kind == BountyDef.EXTRA_COSMETIC, not def.floor_boss, id)
+
+
+# The board holds every poster at once, so twenty papers fit it with the taken one marked.
+func test_the_cork_board_fits_every_poster() -> void:
+	assert_true(PosterBoard.MAX_PAPERS >= BountyBoard.all().size())
+	var last := PosterBoard.paper_rect(PosterBoard.MAX_PAPERS - 1)
+	var box := Rect2(-PosterBoard.BOARD_SIZE / 2.0, PosterBoard.BOARD_SIZE)
+	assert_true(box.encloses(last), str(last))

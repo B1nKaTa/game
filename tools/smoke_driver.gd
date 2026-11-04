@@ -660,6 +660,8 @@ func _die_in_a_run() -> void:
 		_check(scene.player.run.has_item(_crafted_id), "the crafted item starts the next run")
 	var carried: PotionDef = scene.player.run.potion
 	_check(carried != null and carried.id == "swift_tea", "the brewed potion starts the next run in the slot")
+	# A Life Jacket would leave him a pill, so its saves are spent first.
+	scene.player.run.health.lethal_saves = 0
 	scene.player.run.health.hit(999)
 	await _wait(0.1)
 	_check(scene.is_over, "death ends the run")
@@ -706,6 +708,7 @@ func _check_dev_start_at(start_depth: int) -> void:
 	scene.debug_choose_path(LOCKED_DEEP_PATH)
 	await _wait(0.3)
 	_check(scene.debug_floor_def().id == east, "%s can be entered from the dev run, got %s" % [east, scene.debug_floor_def().id])
+	run.health.lethal_saves = 0
 	run.health.hit(999)
 	await _wait(0.1)
 	_check(scene.is_over, "death ends the dev run")

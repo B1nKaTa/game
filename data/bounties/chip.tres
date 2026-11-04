@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BountyDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/bounty_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "chip"
+boss_name = "Chip, Club Pro"
+floor_id = "fairways_end"
+depth = 4
+floor_boss = false
+pension = 160
+condolences = 10
+extra_kind = "cosmetic"
+extra_id = "golf_visor"

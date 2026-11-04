@@ -18,6 +18,11 @@ const TIPS := {
 	"senior_discount": "More Pension. Doesn't help you hit. Hit anyway.",
 	"support_stockings": "Quicker dodge. Dodge through, not away.",
 	"titanium_hip": "Faster on your feet. Circle them.",
+	"lucky_tee": "Lucky swings come when they come. Keep swinging, that's the trick.",
+	"golden_parachute": "A soft landing for your Pension. Not for you. Don't test it.",
+	# Poster items never hang on the rack, but the coach knows them all the same.
+	"life_jacket": "It saves you once a floor. Twice is asking a lot of a jacket.",
+	"neck_pillow": "One more pill. Use it to be brave, not to be daft.",
 }
 
 const DEFAULT_TIP := "Pick something off the rack and I'll tell you what it's good for."
