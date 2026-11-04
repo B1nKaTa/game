@@ -3,6 +3,7 @@ extends Node
 const OPENING_SCENE := "res://scenes/opening.tscn"
 const WAITING_SCENE := "res://scenes/waiting_room.tscn"
 const FLOOR_SCENE := "res://scenes/floor.tscn"
+const TITLE_SCENE := "res://scenes/title.tscn"
 
 
 func _ready() -> void:
@@ -13,11 +14,82 @@ func _ready() -> void:
 		add_child(driver)
 
 
+# After the boot scene: the title screen, except in the full loop, which goes straight in.
 func start() -> void:
+	if OS.get_cmdline_user_args().has("--smoke"):
+		enter_slot()
+	else:
+		get_tree().change_scene_to_file(TITLE_SCENE)
+
+
+# Into the selected slot: the opening for a slot that has never seen it, otherwise the Waiting Room.
+func enter_slot() -> void:
 	if Progress.data.opening_seen:
 		return_to_waiting()
 	else:
 		get_tree().change_scene_to_file(OPENING_SCENE)
+
+
+# The title's Continue: the last used slot, resuming its run if one was interrupted.
+func continue_game() -> void:
+	var slot := SaveSlots.continue_slot(Progress.ROOT)
+	if slot == 0:
+		return
+	resume_slot(slot)
+
+
+# A slot's interrupted run if it has one, otherwise the slot itself.
+func resume_slot(slot: int) -> void:
+	Progress.select_slot(slot)
+	if not Progress.read_checkpoint().is_empty():
+		resume_run()
+	else:
+		enter_slot()
+
+
+# New Game on a slot: whatever it held is gone, and the opening plays.
+func new_game(slot: int) -> void:
+	Progress.clear_slot(slot)
+	Progress.select_slot(slot)
+	enter_slot()
+
+
+func load_game(slot: int) -> void:
+	Progress.select_slot(slot)
+	enter_slot()
+
+
+# Load Game on a slot with an interrupted run, choosing to give it up: it ends as a death would, for
+# income and the ticket, and the Waiting Room follows.
+func abandon_and_load(slot: int) -> void:
+	Progress.select_slot(slot)
+	var checkpoint := Progress.read_checkpoint()
+	if not checkpoint.is_empty():
+		var run := Progress.make_run()
+		RunCheckpoint.apply_run(run, checkpoint.get("run", {}), Content.items())
+		var parachute := run.parachute_pay(int(checkpoint.get("run_earned", 0)))
+		if parachute > 0:
+			Progress.add_pension(parachute)
+		Progress.last_run = {"died": true, "bosses": int(checkpoint.get("bosses", 0))}
+		Progress.clear_checkpoint()
+	enter_slot()
+
+
+# The floor scene reads Progress.resume and rebuilds the run from it instead of starting one.
+func resume_run() -> void:
+	var checkpoint := Progress.read_checkpoint()
+	if checkpoint.is_empty():
+		enter_slot()
+		return
+	Progress.resume = checkpoint
+	get_tree().change_scene_to_file(FLOOR_SCENE)
+
+
+# From the pause menu. Any dev profile ends, so the title always shows the real slots.
+func quit_to_title() -> void:
+	get_tree().paused = false
+	Progress.end_dev_run()
+	get_tree().change_scene_to_file(TITLE_SCENE)
 
 
 func finish_opening() -> void:
