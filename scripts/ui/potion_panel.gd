@@ -30,6 +30,13 @@ func _ready() -> void:
 	var panel := PanelContainer.new()
 	panel.position = Vector2(100, 40)
 	panel.custom_minimum_size = Vector2(440, 260)
+	# Opaque, like the Waiting Room's other panels, so the room's signs and Grandpa never show through.
+	var back := StyleBoxFlat.new()
+	back.bg_color = MerchantPanel.PANEL_BACK
+	back.border_color = MerchantPanel.PANEL_EDGE
+	back.set_border_width_all(1)
+	back.set_content_margin_all(6)
+	panel.add_theme_stylebox_override("panel", back)
 	add_child(panel)
 	var column := VBoxContainer.new()
 	panel.add_child(column)
