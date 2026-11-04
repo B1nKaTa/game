@@ -13,8 +13,24 @@ const LOCKED_DEEP_PATH := 1
 const MIMIC_PAY_AT_LEAST := 5
 # Pension lent to the Arcade checks so every bet is covered, and taken back after.
 const ARCADE_SPARE := 200
+# The Waiting Room checks: Pension lent to file the forms, the poster taken at the start, and
+# Condolences lent to the Decor Office, enough for the fern and the flat cap.
+const FORMS_SPARE := 1000
+const FIRST_POSTER := "senior_adjuster"
+const DECOR_SPARE := 50
 
 var _failed := false
+var _walked_departments := false
+var _checked_departments := false
+var _checked_forms := false
+var _checked_bounty := false
+var _checked_yard := false
+var _checked_decor := false
+var _checked_back_room := false
+var _checked_tickets := false
+# Set once the cursed ticket is taken, so the next run checks it is cursed.
+var _expect_cursed_run := false
+var _mini_bosses_beaten := 0
 var _boss_rooms_seen := 0
 var _crafted_id := ""
 var _cleared_rooms := {}
@@ -60,10 +76,11 @@ func _run() -> void:
 	_check(Progress.data.floors_cleared == 0, "a fresh save has cleared nothing")
 	_check(get_tree().current_scene.open_merchant_ids() == ["black_market", "optometrist"], "only the first two merchants wait at the start")
 
-	Progress.add_pension(500)
-	var upgrade: UpgradeDef = Content.upgrades()[0]
-	var spent_ok: bool = Progress.buy(upgrade)
-	_check(spent_ok, "can buy an upgrade")
+	await _check_departments_at_start()
+	# The Reinforced Cane, filed to its milestone through the Black Market's own buttons.
+	var upgrade := _upgrade("reinforced_cane")
+	await _check_forms(upgrade)
+	_take_first_bounty()
 	var pension_before: int = Progress.data.pension
 
 	# The open paths of every depth: the Records Basement, Sunset Shores, then the Funeral Parlour.
@@ -80,6 +97,8 @@ func _run() -> void:
 	_check(Progress.data.legacy_clears == 0, "a fresh save keeps no old clears")
 	var ids: Array = get_tree().current_scene.open_merchant_ids()
 	_check(ids.has("potion_merchant") and not ids.has("bomb_merchant"), "a second-floor clear brings the potion merchant, not the bomb merchant")
+	await _check_bounty_collected(get_tree().current_scene)
+	await _check_decor(get_tree().current_scene)
 	Progress.data.record_floor_cleared(2, "furnace_works")
 	Game.return_to_waiting()
 	await _wait(0.5)
@@ -104,6 +123,10 @@ func _run() -> void:
 	_check(_landings_reached == 4, "both runs took both stairwells to their landings, got %d" % _landings_reached)
 	ids = get_tree().current_scene.open_merchant_ids()
 	_check(ids.has("potion_merchant") and ids.has("bomb_merchant"), "clearing both second-floor paths for real brings the bomb merchant")
+	await _walk_every_department(get_tree().current_scene)
+	await _check_training_yard(get_tree().current_scene)
+	_check_condolences_earned()
+	await _check_ticket_and_letters()
 
 	Progress.add_pension(60)
 	var reached: int = Progress.retirement_deposit(60)
@@ -146,12 +169,16 @@ func _run() -> void:
 	var pension_saved: int = Progress.data.pension
 	Progress.reload()
 	_check(Progress.data.pension == pension_saved, "Pension survives a reload")
-	_check(Progress.data.level_of(upgrade.id) == 1, "upgrade survives a reload")
+	_check(Progress.data.level_of(upgrade.id) == 2, "the cane's two filed levels survive a reload")
+	_check(Progress.data.choice_of(upgrade) == UpgradeDef.OPTION_B, "the cane's refiled option survives a reload")
 
 	await _check_dev_start()
 
+	_check(_checked_departments and _checked_forms and _checked_bounty and _checked_decor, "the Waiting Room checks of the first visits ran")
+	_check(_walked_departments and _checked_back_room and _checked_yard and _checked_tickets, "the Waiting Room checks after every floor ran")
 	if not _failed:
 		print("SMOKE PASS paths cleared: %d, landings reached: %d, boss choices checked: %d, rooms of sizes %s, big room view checked: %s, block memory checked: %s, props checked: %s, fight checked: %s, graveyard checked: %s, care home checked: %s, furnace checked: %s, vault opened: %s, potions checked: %s, fuel checked: %s, pickups off solids: %d, chests checked: %s, mimics beaten on the way: %d, arcade checked: %s, arcade rooms played on the way: %d" % [_paths_cleared, _landings_reached, _boss_choices_checked, str(_sizes_seen.keys()), str(_followed_a_big_room), str(_checked_block_memory), str(_checked_props), str(_checked_fight), str(_checked_graveyard), str(_checked_care_home), str(_checked_furnace), str(_opened_a_vault), str(_checked_potions), str(_checked_fuel), _pickups_off_solids, str(_checked_chests), _mimics_beaten_in_loop, str(_checked_arcade), _arcades_played.size()])
+		print("SMOKE PASS waiting room: departments checked at start: %s, forms checked: %s, bounty collected: %s, decor checked: %s, departments walked: %s, back room played: %s, yard checked: %s, tickets and letters checked: %s, mini bosses beaten: %d, Condolences: %d" % [str(_checked_departments), str(_checked_forms), str(_checked_bounty), str(_checked_decor), str(_walked_departments), str(_checked_back_room), str(_checked_yard), str(_checked_tickets), _mini_bosses_beaten, Progress.data.condolences])
 		get_tree().quit(0)
 
 
@@ -596,6 +623,11 @@ func _die_in_a_run() -> void:
 	await _wait(0.5)
 	_expect_scene("FloorScene")
 	var scene := get_tree().current_scene
+	if _expect_cursed_run:
+		_expect_cursed_run = false
+		_check(scene.player.run.cursed, "the run after taking the cursed ticket is cursed")
+		_check(not Progress.data.cursed_next_run, "a cursed ticket lasts one run")
+		_check(is_equal_approx(scene.player.run.enemy_health_mult(), TicketRules.CURSED_HEALTH_MULT), "a cursed run's enemies are tougher")
 	await _walk_a_path(scene, RECORDS_PATH)
 	if not _crafted_id.is_empty():
 		_check(scene.player.run.has_item(_crafted_id), "the crafted item starts the next run")
@@ -642,6 +674,414 @@ func _check_dev_start() -> void:
 	_check(Progress.data.pension == pension_before, "Pension from the dev run is not kept")
 	_check(FileAccess.get_file_as_string(Progress.SMOKE_PATH) == save_text, "the save file is untouched by the dev run")
 	_check(not FileAccess.file_exists(Progress.DEV_PATH), "the dev run's file is thrown away")
+
+
+# --- The Waiting Room: departments, forms, the bounty, decor, the yard, tickets and letters ---
+
+func _upgrade(id: String) -> UpgradeDef:
+	for def: UpgradeDef in Content.upgrades():
+		if def.id == id:
+			return def
+	return null
+
+
+func _poster(id: String) -> BountyDef:
+	for def: BountyDef in BountyBoard.all():
+		if def.id == id:
+			return def
+	return null
+
+
+# Every Control under a node, leaving out rows a panel has already thrown away on a rebuild.
+func _controls_in(node: Node) -> Array:
+	var found := []
+	for child in node.get_children():
+		if child.is_queued_for_deletion():
+			continue
+		if child is Control:
+			found.append(child)
+		found.append_array(_controls_in(child))
+	return found
+
+
+func _button_named(panel: Node, text: String) -> Button:
+	for control in _controls_in(panel):
+		if control is Button and control.text == text:
+			return control
+	return null
+
+
+func _button_starting(panel: Node, prefix: String) -> Button:
+	for control in _controls_in(panel):
+		if control is Button and control.text.begins_with(prefix):
+			return control
+	return null
+
+
+# The button on the same row as the label that starts with prefix, as a form or a decor row has.
+func _row_button(panel: Node, prefix: String) -> Button:
+	for control in _controls_in(panel):
+		if control is Label and control.text.begins_with(prefix):
+			for sibling in control.get_parent().get_children():
+				if sibling is Button and not sibling.is_queued_for_deletion():
+					return sibling
+	return null
+
+
+# Opens a station's panel as pressing interact beside it would, in the department he stands in.
+func _open_station(scene: Node, id: String) -> CanvasLayer:
+	scene.use_station(id)
+	await _wait(0.1)
+	var panel: CanvasLayer = scene.open_panel()
+	_check(panel != null, "the %s opens its panel" % id)
+	return panel
+
+
+# Closes the open panel by its Leave button, the way a player does.
+func _leave_panel(scene: Node) -> void:
+	var panel: CanvasLayer = scene.open_panel()
+	if panel == null:
+		return
+	var leave := _button_named(panel, "Leave")
+	_check(leave != null, "the panel has a Leave button")
+	if leave != null:
+		leave.pressed.emit()
+	await _wait(0.1)
+	_check(scene.open_panel() == null, "Leave closes the panel")
+
+
+func _walk_to_department(scene: Node, id: String) -> void:
+	var map: FloorMap = scene.debug_map()
+	var target := Departments.index_of(id)
+	var guard := 0
+	while scene.debug_current_id() != target and not _failed and guard < map.rooms.size():
+		guard += 1
+		await _walk_through_door(scene, map.next_step(scene.debug_current_id(), target))
+	_check(scene.current_department() == id, "walked to the %s, stands in the %s" % [id, scene.current_department()])
+
+
+# A fresh save opens the lobby and the hallway only. The hallway's door walks him there, and the
+# Bounty Office's chained door keeps him in the lobby.
+func _check_departments_at_start() -> void:
+	var scene := get_tree().current_scene
+	_check(str(scene.open_department_ids()) == str([Departments.LOBBY, Departments.HALLWAY]), "only the lobby and the hallway are open at the start, got %s" % str(scene.open_department_ids()))
+	_check(scene.current_department() == Departments.LOBBY, "he starts in the lobby")
+	await _walk_to_department(scene, Departments.HALLWAY)
+	await _walk_to_department(scene, Departments.LOBBY)
+	var door: Door = scene.debug_room_view().door_to(Departments.index_of(Departments.BOUNTY_OFFICE))
+	_check(door != null and door.chained, "the Bounty Office's door is chained")
+	if door != null:
+		await _step_away_from(scene, door, scene.debug_map().room(scene.debug_current_id()))
+		_stand_on(scene, door)
+		await _wait(0.3)
+		_check(scene.current_department() == Departments.LOBBY, "a chained door keeps him in the lobby")
+		await _step_away_from(scene, door, scene.debug_map().room(scene.debug_current_id()))
+	_checked_departments = true
+
+
+# Files the cane's first level and its milestone with Lightweight through the Black Market's buttons,
+# then refiles at the forms counter: free once, then the fee.
+func _check_forms(cane: UpgradeDef) -> void:
+	var scene := get_tree().current_scene
+	_check(cane != null, "the Reinforced Cane form exists")
+	if cane == null:
+		return
+	Progress.add_pension(FORMS_SPARE)
+	var panel := await _open_station(scene, "black_market")
+	_check(panel is MerchantPanel, "the Black Market opens its forms")
+	if not panel is MerchantPanel:
+		return
+	var first_level := _row_button(panel, cane.display_name)
+	_check(first_level != null and first_level.text == "File" and not first_level.disabled, "the cane's first level can be filed")
+	if first_level == null:
+		return
+	first_level.pressed.emit()
+	await _wait(MerchantPanel.STAMP_TIME + 0.3)
+	_check(Progress.data.level_of(cane.id) == 1, "filing stamps the cane's first level")
+	var lightweight := _button_named(panel, "File: %s" % cane.option_name(UpgradeDef.OPTION_B))
+	_check(lightweight != null and not lightweight.disabled, "the milestone offers %s to file" % cane.option_name(UpgradeDef.OPTION_B))
+	if lightweight == null:
+		return
+	lightweight.pressed.emit()
+	await _wait(MerchantPanel.STAMP_TIME + 0.3)
+	_check(Progress.data.level_of(cane.id) == 2 and Progress.data.choice_of(cane) == UpgradeDef.OPTION_B, "filing the milestone stores option b")
+	_check(Progress.make_run().stats.swing_speed > 1.0, "Lightweight swings faster")
+	await _leave_panel(scene)
+	_check(Progress.data.refile_price(cane) == 0, "the first refile is free")
+	var pension: int = Progress.data.pension
+	panel = await _open_station(scene, "forms_counter")
+	_check(panel is RefilePanel, "the forms counter opens the refile panel")
+	if not panel is RefilePanel:
+		return
+	var refile := _button_starting(panel, cane.display_name + ":")
+	_check(refile != null and not refile.disabled, "the cane can be refiled")
+	if refile == null:
+		return
+	refile.pressed.emit()
+	await _wait(0.1)
+	_check(Progress.data.choice_of(cane) == UpgradeDef.OPTION_A and Progress.data.pension == pension, "the free refile switches to option a and costs nothing")
+	refile = _button_starting(panel, cane.display_name + ":")
+	_check(refile != null and not refile.disabled, "the cane can be refiled again")
+	if refile == null:
+		return
+	refile.pressed.emit()
+	await _wait(0.1)
+	_check(Progress.data.choice_of(cane) == UpgradeDef.OPTION_B and Progress.data.pension == pension - ProgressData.REFILE_FEE, "the second refile costs %d" % ProgressData.REFILE_FEE)
+	await _leave_panel(scene)
+	_checked_forms = true
+
+
+# The rules let a reachable poster be taken before its office opens, so this checks only the rules.
+func _take_first_bounty() -> void:
+	_check(not Departments.is_open(Departments.BOUNTY_OFFICE, Progress.data), "the Bounty Office is closed at the start")
+	var poster := _poster(FIRST_POSTER)
+	_check(poster != null and Progress.take_bounty(poster), "a reachable poster can be taken")
+	Progress.reload()
+	_check(Progress.data.bounty_taken == FIRST_POSTER, "the taken poster survives a reload")
+
+
+# The first run cleared the Records Basement, Sunset Shores and the Funeral Parlour, which open the
+# Bounty Office, the Apothecary Wing and the Decor Office. The poster is collected at the board.
+func _check_bounty_collected(scene: Node) -> void:
+	var wanted := [Departments.LOBBY, Departments.HALLWAY, Departments.BOUNTY_OFFICE, Departments.APOTHECARY_WING, Departments.DECOR_OFFICE]
+	_check(str(scene.open_department_ids()) == str(wanted), "the first clears open exactly their departments, got %s" % str(scene.open_department_ids()))
+	_check(Progress.data.bounty_won, "beating the %s won the taken poster" % FIRST_POSTER)
+	var poster := _poster(FIRST_POSTER)
+	if poster == null:
+		return
+	scene.debug_enter_department(Departments.BOUNTY_OFFICE)
+	await _wait(0.2)
+	_check(scene.current_department() == Departments.BOUNTY_OFFICE, "the Bounty Office can be entered")
+	var had_recipe: bool = Progress.data.has_recipe(poster.extra_id)
+	var pension: int = Progress.data.pension
+	var condolences: int = Progress.data.condolences
+	var panel := await _open_station(scene, "bounty_board")
+	_check(panel is BountyPanel, "the board opens the wanted posters")
+	if panel is BountyPanel:
+		var collect := _button_named(panel, BountyPanel.COLLECT)
+		_check(collect != null and not collect.disabled, "the won poster can be collected")
+		if collect != null:
+			collect.pressed.emit()
+			await _wait(0.1)
+		var again := roundi(poster.pension * BountyBoard.FOUND_RECIPE_SHARE) if had_recipe else 0
+		_check(Progress.data.pension == pension + poster.pension + again, "the poster pays its Pension, %d to %d" % [pension, Progress.data.pension])
+		_check(Progress.data.condolences == condolences + poster.condolences, "the poster pays its Condolences")
+		_check(Progress.data.has_recipe(poster.extra_id), "Agnes has the poster's recipe")
+		_check(Progress.data.bounty_taken.is_empty() and Progress.data.bounties_retired.has(poster.id), "the collected poster is retired")
+		await _leave_panel(scene)
+	scene.debug_enter_department(Departments.LOBBY)
+	await _wait(0.2)
+	_checked_bounty = true
+
+
+# Only the purchases are under test, so the Condolences are lent rather than earned.
+func _check_decor(scene: Node) -> void:
+	scene.debug_enter_department(Departments.DECOR_OFFICE)
+	await _wait(0.2)
+	_check(scene.current_department() == Departments.DECOR_OFFICE, "the Decor Office can be entered")
+	Progress.add_condolences(DECOR_SPARE)
+	var condolences: int = Progress.data.condolences
+	var fern := CosmeticDef.find("potted_fern", CosmeticDef.all())
+	var cap := CosmeticDef.find("flat_cap", CosmeticDef.all())
+	var panel := await _open_station(scene, "decor_counter")
+	_check(panel is DecorPanel, "the counter opens the Decor Office's panel")
+	if not panel is DecorPanel or fern == null or cap == null:
+		return
+	var buy_fern := _row_button(panel, fern.display_name)
+	_check(buy_fern != null and not buy_fern.disabled, "the fern is for sale")
+	if buy_fern != null:
+		buy_fern.pressed.emit()
+		await _wait(0.1)
+	_check(Progress.data.owns_cosmetic(fern.id) and Progress.data.condolences == condolences - fern.price, "the fern costs its Condolences")
+	var tab := _button_named(panel, DecorPanel.TAB_GRANDPA)
+	_check(tab != null, "the panel has a tab for Grandpa")
+	if tab != null:
+		tab.pressed.emit()
+		await _wait(0.1)
+	var buy_cap := _row_button(panel, cap.display_name)
+	_check(buy_cap != null and not buy_cap.disabled, "the flat cap is for sale")
+	if buy_cap != null:
+		buy_cap.pressed.emit()
+		await _wait(0.1)
+	var wear := _row_button(panel, cap.display_name)
+	_check(wear != null and wear.text == DecorPanel.WEAR, "a bought cap can be worn")
+	if wear != null:
+		wear.pressed.emit()
+		await _wait(0.1)
+	_check(Progress.data.cosmetics_worn.get(CosmeticDef.SLOT_HAT, "") == cap.id, "the flat cap is worn")
+	await _leave_panel(scene)
+	var decor: LobbyDecor = scene.lobby_decor()
+	_check(decor != null and decor.has_decor(fern.id), "the lobby has the fern once the panel closes")
+	var look: Dictionary = Progress.make_run().look
+	_check(look.has(CosmeticDef.SLOT_HAT) and (look[CosmeticDef.SLOT_HAT] as CosmeticDef).id == cap.id, "a new run wears the flat cap")
+	_check(scene.player.run.look.has(CosmeticDef.SLOT_HAT), "he wears it in the Waiting Room too")
+	scene.debug_enter_department(Departments.LOBBY)
+	await _wait(0.2)
+	_checked_decor = true
+
+
+# With every floor cleared, every department is open. He walks to each through its doors, and each has
+# what Departments says stands there.
+func _walk_every_department(scene: Node) -> void:
+	_check(scene.open_department_ids().size() == Departments.ALL.size(), "every department is open after every floor, got %s" % str(scene.open_department_ids()))
+	for each: Dictionary in Departments.ALL:
+		var id: String = each["id"]
+		await _walk_to_department(scene, id)
+		if _failed:
+			return
+		_check_stations_in(scene, id)
+		if id == Departments.BACK_ROOM:
+			await _check_back_room(scene)
+	_check(Mementos.hung(Progress.data).size() == Mementos.ALL.size(), "the trophy wall shows every memento")
+	await _walk_to_department(scene, Departments.LOBBY)
+	_walked_departments = true
+
+
+func _check_stations_in(scene: Node, id: String) -> void:
+	var view: RoomView = scene.debug_room_view()
+	var expected: Array = Departments.MERCHANTS.duplicate()
+	expected.append_array(Departments.STATIONS)
+	for entry: Dictionary in expected:
+		if entry["department"] != id:
+			continue
+		var found: WaitingStation = scene.station(entry["id"])
+		_check(found != null and found.get_parent() == view, "%s stands in the %s" % [entry["id"], id])
+	for entry: Dictionary in Departments.NPCS:
+		if entry["department"] != id:
+			continue
+		var met := false
+		for child in view.get_children():
+			met = met or (child is Npc and child.def.id == entry["id"])
+		_check(met, "%s stands in the %s" % [entry["id"], id])
+
+
+# The Back Room: the Dealer and two card tables, each played once through the Arcade's overlay for
+# exactly its rule's payout, and both full again on the next visit.
+func _check_back_room(scene: Node) -> void:
+	var view: RoomView = scene.debug_room_view()
+	var tables: Array[ArcadeTable] = view.arcade_tables()
+	_check(tables.size() == Departments.BACK_ROOM_GAMES.size(), "the Back Room holds a table per game, got %d" % tables.size())
+	for i in mini(tables.size(), Departments.BACK_ROOM_GAMES.size()):
+		_check(tables[i].game == Departments.BACK_ROOM_GAMES[i], "Back Room table %d is the %s" % [i, Departments.BACK_ROOM_GAMES[i]])
+	var dealers := 0
+	for child in view.get_children():
+		if child is Npc and child.def.display_name == "The Dealer":
+			dealers += 1
+	_check(dealers == 1, "the Dealer keeps the Back Room")
+	var seeded := RandomNumberGenerator.new()
+	seeded.seed = 47
+	await _play_each_table(scene, view, seeded)
+	scene.debug_enter_department(Departments.LOBBY)
+	await _wait(0.1)
+	scene.debug_enter_department(Departments.BACK_ROOM)
+	await _wait(0.1)
+	for table in tables:
+		_check(table.plays_left == ArcadeTable.plays_per_visit(table.game), "a new visit fills the Back Room's %s again" % table.game)
+	_checked_back_room = true
+
+
+# A found recipe from the rack, a swing and a Thermos at the dummy, and nothing kept on leaving.
+func _check_training_yard(scene: Node) -> void:
+	await _walk_to_department(scene, Departments.TRAINING_YARD)
+	var run: RunState = scene.player.run
+	var rack := ItemRackPanel.rack_items(Progress.data)
+	_check(not rack.is_empty(), "the rack holds at least the poster's recipe")
+	if rack.is_empty():
+		return
+	var item: ItemDef = rack[0]
+	var panel := await _open_station(scene, "item_rack")
+	_check(panel is ItemRackPanel, "the rack opens its panel")
+	if panel is ItemRackPanel:
+		var take := _button_named(panel, "Try %s" % item.display_name)
+		_check(take != null and not take.disabled, "the rack offers %s" % item.display_name)
+		if take != null:
+			take.pressed.emit()
+			await _wait(0.1)
+		_check(run.has_item(item.id), "taking from the rack equips the item in the yard")
+		await _leave_panel(scene)
+	var view: RoomView = scene.debug_room_view()
+	var dummy: Enemy = null
+	var numbers: TrainingDummy = null
+	for child in view.get_children():
+		if child is Enemy and child.def.id == "training_dummy":
+			dummy = child
+		if child is TrainingDummy:
+			numbers = child
+	_check(dummy != null and numbers != null, "the yard has its dummy and its hit numbers")
+	if dummy == null or numbers == null:
+		return
+	scene.player.global_position = dummy.global_position + Vector2(-RoomBackdrop.TILE + 4.0, 0)
+	await _wait(0.1)
+	await _swing_at(scene, dummy)
+	# Cleared before he leaves, so nothing aims at a dummy out of the tree.
+	scene.player.aim_source = Callable()
+	_check(is_instance_valid(dummy) and not dummy.is_queued_for_deletion() and dummy.hp > 0.0, "the dummy never falls")
+	_check(numbers.numbers_showing() > 0, "a hit on the dummy shows its damage")
+	await _press("bomb")
+	await _wait(0.1)
+	_check(run.bombs == RunState.YARD_SUPPLY, "a Thermos thrown in the yard leaves %d, got %d" % [RunState.YARD_SUPPLY, run.bombs])
+	await _wait(Thermos.FUSE_TIME + 0.3)
+	_check(is_instance_valid(dummy) and dummy.hp > 0.0, "the dummy outlasts a Thermos")
+	await _walk_to_department(scene, Departments.LOBBY)
+	_check(run.items.is_empty(), "leaving the yard drops the items tried there")
+	_check(run.bombs == RunState.STARTING_BOMBS + run.stats.bonus_bombs, "leaving the yard puts his Thermoses back")
+	_checked_yard = true
+
+
+# Every floor's first beat pays Condolences once. The loop fights every mini boss on its way, but only
+# the floor bosses are certain, so the mini bosses are counted rather than demanded.
+func _check_condolences_earned() -> void:
+	_check(Progress.data.condolences > 0, "Condolences were earned")
+	_mini_bosses_beaten = 0
+	for depth: int in ProgressData.PATHS_AT_DEPTH:
+		for path: String in ProgressData.PATHS_AT_DEPTH[depth]:
+			var def: FloorDef = load("res://data/floors/%s.tres" % path)
+			_check(Progress.data.bosses_beaten.has(def.floor_boss.id), "%s's first beat is recorded" % def.floor_boss.id)
+			if Progress.data.bosses_beaten.has(def.mini_boss.id):
+				_mini_bosses_beaten += 1
+
+
+# A ticket that calls a cursed offer, taken at the machine, then the noticeboard's six letters.
+func _check_ticket_and_letters() -> void:
+	var called := maxi(TicketRules.CALL_EVERY * TicketRules.EVENTS.size(), ceili(Progress.data.run_count / 15.0) * 15)
+	Progress.data.run_count = called
+	Progress.data.ticket_called = called - 1
+	Game.return_to_waiting()
+	await _wait(0.5)
+	_expect_scene("WaitingRoom")
+	var scene := get_tree().current_scene
+	_check(TicketRules.event_for(called) == TicketRules.CURSED_OFFER, "ticket %d is a cursed offer's number" % called)
+	_check(Progress.data.cursed_offer, "ticket %d puts a cursed ticket on offer" % called)
+	_check(scene.now_serving(Progress.data) == called, "the lobby's sign calls number %d" % called)
+	var panel := await _open_station(scene, "ticket_machine")
+	_check(panel is TicketPanel, "the ticket machine opens its panel")
+	if panel is TicketPanel:
+		var take := _button_named(panel, TicketPanel.TAKE_CURSED)
+		_check(take != null, "the machine offers the cursed ticket")
+		if take != null:
+			take.pressed.emit()
+			await _wait(0.1)
+		_check(Progress.data.cursed_next_run and not Progress.data.cursed_offer, "taking the cursed ticket curses the next run")
+		await _leave_panel(scene)
+	_expect_cursed_run = Progress.data.cursed_next_run
+	var arrived := LetterBook.arrived(Progress.data).size()
+	_check(arrived == LetterBook.LETTERS.size(), "a letter arrived for every path, got %d" % arrived)
+	var board: WaitingStation = scene.station("noticeboard")
+	_check(board != null and board.badge == NoticeboardPanel.NEW_MARK, "the noticeboard marks unread letters")
+	panel = await _open_station(scene, "noticeboard")
+	_check(panel is NoticeboardPanel, "the noticeboard opens its letters")
+	if panel is NoticeboardPanel:
+		var listed := (panel as NoticeboardPanel).letters_listed()
+		_check(listed == arrived, "the noticeboard lists every letter, got %d" % listed)
+		var unread := LetterBook.unread(Progress.data).size()
+		var letter := _button_starting(panel, NoticeboardPanel.NEW_MARK)
+		_check(letter != null, "an unread letter is marked NEW")
+		if letter != null:
+			letter.pressed.emit()
+			await _wait(0.1)
+		_check(LetterBook.unread(Progress.data).size() == unread - 1, "reading a letter marks it read")
+		await _leave_panel(scene)
+	_checked_tickets = true
 
 
 func _wait(seconds: float) -> void:
@@ -1956,6 +2396,8 @@ func _take_the_stairwell(scene: Node) -> void:
 	health.pills = maxi(1, health.max_pills - 3)
 	var pills_before := health.pills
 	var missing := health.max_pills - pills_before
+	# Once the bedpan hangs, the first heal of a run restores one more, and it may not be spent yet.
+	var bonus := health.first_heal_bonus + health.heal_bonus
 	var items_before := run.items.size()
 	var keys_before := run.keys
 	var layout: RoomLayout = scene.debug_map().room(scene.debug_current_id()).layout
@@ -1975,7 +2417,7 @@ func _take_the_stairwell(scene: Node) -> void:
 	_check(scene.debug_floor_def().display_name == floor_below, "the landing is %s, got %s" % [floor_below, scene.debug_floor_def().display_name])
 	_check(scene.debug_mini_map().floor_name() == floor_below and scene.debug_big_map().floor_name() == floor_below, "both maps name %s" % floor_below)
 	_check(get_tree().get_nodes_in_group("enemies").is_empty(), "nothing waits to fight on the landing")
-	_check(health.pills == pills_before + mini(scene.LANDING_HEAL, missing), "the landing heals him, %d to %d" % [pills_before, health.pills])
+	_check(health.pills == pills_before + mini(scene.LANDING_HEAL + bonus, missing), "the landing heals him, %d to %d" % [pills_before, health.pills])
 	_check(run.items.size() == items_before and run.keys == keys_before, "his items and Slips come down with him")
 	_check(not scene.is_cleared, "the new floor is not cleared yet")
 	_landings_reached += 1
