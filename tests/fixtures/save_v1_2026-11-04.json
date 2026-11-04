@@ -1,0 +1,5 @@
+{"version": 1, "pension": 312, "upgrades": {"reinforced_cane": 3, "better_knees": 1, "black_market_pills": 2, "bribed_clerk": 2, "prescription_glasses": 1, "thermos_fuel": 2},
+ "opening_seen": true, "retirement_balance": 60, "retirement_peak": 100, "run_count": 23, "retirement_deposit_run": 21,
+ "recipes_found": {"titanium_hip": true, "bifocals": true}, "items_unlocked": {"titanium_hip": true}, "crafted_for_next_run": "",
+ "floors_cleared": 4, "deep_clears": {"2": 2, "3": 1}, "paths_cleared": {"floor_1": true, "cemetery": true, "sunset_shores": true, "furnace_works": true, "funeral_parlour": true},
+ "legacy_clears": 0, "brewed_potion": "swift_tea"}

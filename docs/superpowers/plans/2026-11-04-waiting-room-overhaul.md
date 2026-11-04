@@ -285,7 +285,7 @@ Every new save field is added here at once, with its fallback, so each later tas
 
 - Produces `ProgressData.FIRST_PATH_BY_DEPTH := {1: "floor_1", 2: "sunset_shores", 3: "funeral_parlour"}` and the private `_infer_first_paths()`.
 
-- [ ] **Step 1: Write the fixture.** `tests/fixtures/save_v1_2026-11-04.json` is what `to_dict()` writes today, filled in as a mid-game save:
+- [x] **Step 1: Write the fixture.** `tests/fixtures/save_v1_2026-11-04.json` is what `to_dict()` writes today, filled in as a mid-game save:
 
   ```json
   {"version": 1, "pension": 312, "upgrades": {"reinforced_cane": 3, "better_knees": 1, "black_market_pills": 2, "bribed_clerk": 2, "prescription_glasses": 1, "thermos_fuel": 2},
@@ -295,7 +295,7 @@ Every new save field is added here at once, with its fallback, so each later tas
    "legacy_clears": 0, "brewed_potion": "swift_tea"}
   ```
 
-- [ ] **Step 2: Write the failing tests** in `tests/test_save_migration.gd`:
+- [x] **Step 2: Write the failing tests** in `tests/test_save_migration.gd`:
 
   ```gdscript
   extends TestCase
@@ -366,7 +366,7 @@ Every new save field is added here at once, with its fallback, so each later tas
 
 - [ ] **Step 3: When testing is allowed, run them to make sure they fail.** Expected: unknown members `condolences`, `form_choices`, `ticket_called`, and the first-path test fails.
 
-- [ ] **Step 4: Implement.**
+- [x] **Step 4: Implement.**
   - Declare each field with a one-line comment.
   - Write each to `to_dict()`.
   - Read each in `from_dict()` with type checks, as the existing fields are read:
@@ -397,7 +397,7 @@ Every new save field is added here at once, with its fallback, so each later tas
 
 - [ ] **Step 5: When testing is allowed, run the tests.** Expected: `0 failed`, `test_save.gd` included.
 
-- [ ] **Step 6: Commit** ("Add the Waiting Room save fields with fallbacks for old saves").
+- [x] **Step 6: Commit** ("Add the Waiting Room save fields with fallbacks for old saves").
 
 ---
 

@@ -26,6 +26,45 @@ var paths_cleared: Dictionary = {}
 var legacy_clears: int = 0
 # The one brew waiting in the potion slot for the next run.
 var brewed_potion: String = ""
+# The Waiting Room overhaul's fields. Each is optional in a save and falls back as noted.
+# Form id -> "a" or "b", the option chosen at each form's milestone. A missing entry reads as "a".
+var form_choices: Dictionary = {}
+# Form id -> true once that form's one free switch of option is spent.
+var free_refile_used: Dictionary = {}
+# The cosmetic currency. It buys only looks, never power.
+var condolences: int = 0
+# EnemyDef id -> true for every boss beaten since first-beat Condolences began.
+var bosses_beaten: Dictionary = {}
+# The BountyDef id of the wanted poster Grandpa has taken, or "" for none.
+var bounty_taken: String = ""
+# Whether the taken poster's boss has been beaten, so the poster waits to be collected.
+var bounty_won: bool = false
+# BountyDef id -> true for every poster collected for good.
+var bounties_retired: Dictionary = {}
+# Cosmetic id -> true for every cosmetic or decor owned.
+var cosmetics_owned: Dictionary = {}
+# Slot -> cosmetic id for each look Grandpa wears.
+var cosmetics_worn: Dictionary = {}
+# Department id -> true once its opening has been announced.
+var departments_seen: Dictionary = {}
+# Whether Coach Bertram has said his first hello.
+var coach_met: bool = false
+# The last queue ticket whose event has been called. An old save starts at its run_count.
+var ticket_called: int = 0
+# The form id the clerk is selling at a discount this visit, or "".
+var clerk_deal: String = ""
+# Whether a cursed ticket is on offer this visit.
+var cursed_offer: bool = false
+# Whether the next run is a cursed one.
+var cursed_next_run: bool = false
+# Letter id -> true for every letter read.
+var letters_read: Dictionary = {}
+
+# The first path at each depth, the only one open before that depth's first clear.
+const FIRST_PATH_BY_DEPTH := {1: "floor_1", 2: "sunset_shores", 3: "funeral_parlour"}
+# Every path id at each depth. Mirrors floor_scene.gd's PATHS_BY_DEPTH by id, since ProgressData
+# must not load FloorDefs.
+const PATHS_AT_DEPTH := {1: ["floor_1", "cemetery"], 2: ["sunset_shores", "furnace_works"], 3: ["funeral_parlour", "golden_years_mall"]}
 
 
 func level_of(id: String) -> int:
@@ -186,6 +225,22 @@ func to_dict() -> Dictionary:
 		"paths_cleared": paths_cleared,
 		"legacy_clears": legacy_clears,
 		"brewed_potion": brewed_potion,
+		"form_choices": form_choices,
+		"free_refile_used": free_refile_used,
+		"condolences": condolences,
+		"bosses_beaten": bosses_beaten,
+		"bounty_taken": bounty_taken,
+		"bounty_won": bounty_won,
+		"bounties_retired": bounties_retired,
+		"cosmetics_owned": cosmetics_owned,
+		"cosmetics_worn": cosmetics_worn,
+		"departments_seen": departments_seen,
+		"coach_met": coach_met,
+		"ticket_called": ticket_called,
+		"clerk_deal": clerk_deal,
+		"cursed_offer": cursed_offer,
+		"cursed_next_run": cursed_next_run,
+		"letters_read": letters_read,
 	}
 
 
@@ -224,7 +279,50 @@ static func from_dict(raw: Variant) -> ProgressData:
 	data.legacy_clears = maxi(int(raw.get("legacy_clears", data.floors_cleared)), 0)
 	var brewed: Variant = raw.get("brewed_potion", "")
 	data.brewed_potion = brewed if brewed is String else ""
+	# The Waiting Room overhaul's fields: an older save lacks them all.
+	var choices: Variant = raw.get("form_choices", {})
+	if choices is Dictionary:
+		for id in choices:
+			if choices[id] is String and (choices[id] == "a" or choices[id] == "b"):
+				data.form_choices[str(id)] = choices[id]
+	data.free_refile_used = _id_set(raw.get("free_refile_used"))
+	data.condolences = maxi(int(raw.get("condolences", 0)), 0)
+	data.bosses_beaten = _id_set(raw.get("bosses_beaten"))
+	data.bounty_taken = _string_or_empty(raw.get("bounty_taken", ""))
+	data.bounty_won = _bool_or_false(raw.get("bounty_won", false))
+	data.bounties_retired = _id_set(raw.get("bounties_retired"))
+	data.cosmetics_owned = _id_set(raw.get("cosmetics_owned"))
+	var worn: Variant = raw.get("cosmetics_worn", {})
+	if worn is Dictionary:
+		for slot in worn:
+			if worn[slot] is String:
+				data.cosmetics_worn[str(slot)] = worn[slot]
+	data.departments_seen = _id_set(raw.get("departments_seen"))
+	data.coach_met = _bool_or_false(raw.get("coach_met", false))
+	# Every ticket an old save has already had counts as called, so no event fires back-dated.
+	data.ticket_called = maxi(int(raw.get("ticket_called", data.run_count)), 0)
+	data.clerk_deal = _string_or_empty(raw.get("clerk_deal", ""))
+	data.cursed_offer = _bool_or_false(raw.get("cursed_offer", false))
+	data.cursed_next_run = _bool_or_false(raw.get("cursed_next_run", false))
+	data.letters_read = _id_set(raw.get("letters_read"))
+	data._infer_first_paths()
 	return data
+
+
+# A save from before paths were kept has its clears but no path ids. At each depth only one path is
+# open before that depth's first clear, so that one must have been it.
+func _infer_first_paths() -> void:
+	for depth: int in FIRST_PATH_BY_DEPTH:
+		var id: String = FIRST_PATH_BY_DEPTH[depth]
+		if clears_at(depth) > 0 and not _has_path_at_depth(depth):
+			paths_cleared[id] = true
+
+
+func _has_path_at_depth(depth: int) -> bool:
+	for id in PATHS_AT_DEPTH[depth]:
+		if paths_cleared.has(id):
+			return true
+	return false
 
 
 static func _id_set(raw: Variant) -> Dictionary:
@@ -233,3 +331,11 @@ static func _id_set(raw: Variant) -> Dictionary:
 		for id in raw:
 			ids[str(id)] = true
 	return ids
+
+
+static func _string_or_empty(raw: Variant) -> String:
+	return raw if raw is String else ""
+
+
+static func _bool_or_false(raw: Variant) -> bool:
+	return raw if raw is bool else false
