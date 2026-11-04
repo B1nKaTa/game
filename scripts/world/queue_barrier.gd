@@ -25,7 +25,8 @@ const POST := Color("c9cdd6")
 const POST_EDGE := Color("3c4048")
 const ROPE := Color("c4161c")
 const ROPE_EDGE := Color("4a0a0e")
-const GLOW := Color(1.0, 0.95, 0.6, 0.35)
+# How strongly the coming rope shows on each flash of the chime.
+const CHIME_GHOST := 0.5
 
 enum { RISE, DROP }
 
@@ -167,21 +168,12 @@ func _draw() -> void:
 	var way := Vector2.RIGHT if _across else Vector2.DOWN
 	var flashing := is_chiming() and posmod(floori(_time / FLASH_EVERY), 2) == 0
 	if is_up():
-		# Two chrome posts and a sagging red rope between them.
-		var sag := Vector2(0.0, 3.0) if _across else Vector2(2.0, 0.0)
-		draw_polyline(PackedVector2Array([-way * (half - 3.0), sag, way * (half - 3.0)]), ROPE_EDGE, 5.0)
-		draw_polyline(PackedVector2Array([-way * (half - 3.0), sag, way * (half - 3.0)]), ROPE, 3.0)
-		for end in [-1.0, 1.0]:
-			var at: Vector2 = way * (half - 3.0) * end
-			draw_circle(at, 4.0, POST_EDGE)
-			draw_circle(at, 3.0, POST)
-			draw_line(at, at + Vector2(0.0, -6.0), POST, 2.0)
-			draw_circle(at + Vector2(0.0, -7.0), 2.0, POST)
+		_draw_rope(half, way, 1.0)
 		return
-	# Down: a taped line between two post bases, flashing while it chimes.
+	# Down: a taped line between two post bases. While it chimes the tape flashes and the rope it will
+	# raise shows faintly on every flash, so the warning looks like what is coming. A pale glowing band
+	# would look like a lit runway lane, which hurts, while a rising rope never does.
 	var tape := TAPE_FLASH if flashing else TAPE
-	if flashing:
-		draw_rect(rope_rect(Vector2.ZERO, _across).grow(3.0), GLOW)
 	for dash in 3:
 		var from := -way * half + way * (2.0 + dash * 10.0)
 		draw_line(from, from + way * 6.0, tape, 3.0)
@@ -189,3 +181,19 @@ func _draw() -> void:
 		var at: Vector2 = way * (half - 3.0) * end
 		draw_circle(at, 3.0, POST_EDGE)
 		draw_arc(at, 3.0, 0.0, TAU, 10, tape if flashing else POST, 1.0)
+	if flashing:
+		_draw_rope(half, way, CHIME_GHOST)
+
+
+# Two chrome posts and a sagging red rope between them, at a share of their full strength.
+func _draw_rope(half: float, way: Vector2, strength: float) -> void:
+	var sag := Vector2(0.0, 3.0) if _across else Vector2(2.0, 0.0)
+	var line := PackedVector2Array([-way * (half - 3.0), sag, way * (half - 3.0)])
+	draw_polyline(line, Color(ROPE_EDGE, strength), 5.0)
+	draw_polyline(line, Color(ROPE, strength), 3.0)
+	for end in [-1.0, 1.0]:
+		var at: Vector2 = way * (half - 3.0) * end
+		draw_circle(at, 4.0, Color(POST_EDGE, strength))
+		draw_circle(at, 3.0, Color(POST, strength))
+		draw_line(at, at + Vector2(0.0, -6.0), Color(POST, strength), 2.0)
+		draw_circle(at + Vector2(0.0, -7.0), 2.0, Color(POST, strength))
