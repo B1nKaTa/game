@@ -23,6 +23,8 @@ var _paid := false
 var _flying := false
 var _fly_time := 0.0
 var _prompt_shown := false
+# The button the prompt was drawn with, so it is drawn again when the device changes.
+var _prompt_label := ""
 
 
 static func should_collect(needs_interact: bool, in_range: bool, interact_pressed: bool) -> bool:
@@ -81,8 +83,9 @@ func _process(delta: float) -> void:
 	if can_take.is_valid() and not can_take.call():
 		in_range = false
 	var show_prompt := requires_interact and in_range
-	if show_prompt != _prompt_shown:
+	if show_prompt != _prompt_shown or (show_prompt and KeyBindings.prompt_label("interact") != _prompt_label):
 		_prompt_shown = show_prompt
+		_prompt_label = KeyBindings.prompt_label("interact")
 		queue_redraw()
 	if should_collect(requires_interact, in_range, Input.is_action_just_pressed("interact")):
 		collect()

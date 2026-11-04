@@ -25,6 +25,7 @@ var _items: Label
 var _slips: Label
 var _thermoses: Label
 var _potion_slot: PotionSlot
+var _potion_label := ""
 var _message: Label
 var _notice: Label
 var _notice_left := 0.0
@@ -143,6 +144,9 @@ func show_notice(text: String) -> void:
 
 
 func _process(delta: float) -> void:
+	# The potion slot names the active device's button, so it follows a switch of device.
+	if _run != null and _potion_slot != null and KeyBindings.prompt_label("potion") != _potion_label:
+		_refresh()
 	if _potion_slot != null:
 		_potion_slot.show_buff(_run.buff, _run.buff_left)
 	if _notice_left <= 0.0:
@@ -210,7 +214,8 @@ func _refresh() -> void:
 		text = "Pills: %s   %s" % [pills, text]
 		_slips.text = counter_text(_run.keys)
 		_thermoses.text = counter_text(_run.bombs)
-		_potion_slot.show_potion(_run.potion, KeyBindings.label_for("potion"))
+		_potion_label = KeyBindings.prompt_label("potion")
+		_potion_slot.show_potion(_run.potion, _potion_label)
 		var names: PackedStringArray = []
 		for item in _run.items:
 			names.append(item.display_name)

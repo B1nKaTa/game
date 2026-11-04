@@ -52,3 +52,37 @@ func test_the_timer_is_hidden_by_default() -> void:
 	var hud := Hud.new()
 	assert_false(hud.show_timer)
 	hud.free()
+
+
+func test_the_right_stick_aims_while_it_is_held() -> void:
+	var at := Vector2(100, 50)
+	var aimed := Player.pad_aim_point(at, Vector2(0.0, 0.9), Vector2.RIGHT, true, Vector2.LEFT)
+	assert_true(aimed.is_equal_approx(at + Vector2.DOWN * PadInput.AIM_REACH))
+	aimed = Player.pad_aim_point(at, Vector2(-0.7, 0.0), Vector2.RIGHT, false, Vector2.UP)
+	assert_true(aimed.is_equal_approx(at + Vector2.LEFT * PadInput.AIM_REACH), "the stick aims even with Mouse aim off")
+
+
+func test_a_resting_stick_keeps_the_aim_where_it_was() -> void:
+	var at := Vector2(100, 50)
+	var aimed := Player.pad_aim_point(at, Vector2(0.05, 0.1), Vector2.UP, true, Vector2.LEFT)
+	assert_true(aimed.is_equal_approx(at + Vector2.UP * PadInput.AIM_REACH))
+
+
+func test_with_mouse_aim_off_a_resting_stick_aims_the_way_he_walks() -> void:
+	var at := Vector2(100, 50)
+	assert_eq(Player.pad_aim_point(at, Vector2.ZERO, Vector2.UP, false, Vector2.LEFT), Player.move_aim_point(at, Vector2.LEFT))
+
+
+func test_the_player_aims_with_the_pad_while_a_pad_plays() -> void:
+	var source := FileAccess.get_file_as_string("res://scripts/actors/player.gd")
+	assert_true(source.contains("if ActiveDevice.using_pad:"), "the pad comes before the mouse")
+	assert_true(source.contains("Input.get_joy_axis(ActiveDevice.pad_id, JOY_AXIS_RIGHT_X)"))
+
+
+func test_every_prompt_names_the_active_device() -> void:
+	# Prompts go through KeyBindings.with_key or prompt_label, which follow the active device, never
+	# through the keyboard-only label_for.
+	for path in ["res://scripts/ui/hud.gd", "res://scripts/world/npc.gd", "res://scripts/world/pickup.gd", "res://scripts/world/door.gd", "res://scripts/world/waiting_station.gd", "res://scripts/world/arcade_table.gd", "res://scripts/world/retirement_station.gd", "res://scripts/ui/floor_map_view.gd", "res://scripts/ui/ending_card.gd", "res://scripts/ui/card_table_panel.gd"]:
+		var source := FileAccess.get_file_as_string(path)
+		assert_false(source.contains("KeyBindings.label_for("), path)
+		assert_true(source.contains("KeyBindings.with_key(") or source.contains("KeyBindings.prompt_label("), path)
