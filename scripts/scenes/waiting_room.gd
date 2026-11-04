@@ -54,6 +54,9 @@ var _notices: Array[String] = []
 var _notice_wait := 0.0
 # The lobby's ticket line and DEV hint, on the HUD's layer so the camera never scrolls them away.
 var _lobby_text: LobbyText
+# Whether a game has been won on this visit to the Back Room, so each visit counts once as a table
+# visit won for the next run's ending (Progress.table_wins_before_run).
+var _back_room_visit_won := false
 
 
 func _ready() -> void:
@@ -195,6 +198,7 @@ func _enter_department(target_id: int) -> void:
 		remove_child(_room_view)
 	_progress.enter(target_id)
 	_current_id = target_id
+	_back_room_visit_won = false
 	_room_view = _views.get(target_id)
 	var is_new := _room_view == null
 	if is_new:
@@ -237,6 +241,12 @@ func _on_yard_bomb(at: Vector2) -> void:
 	_run.changed.emit()
 
 
+func _on_back_room_won() -> void:
+	if not _back_room_visit_won:
+		_back_room_visit_won = true
+		Progress.table_wins_before_run += 1
+
+
 func _on_rack_taken(item: ItemDef) -> void:
 	if not _run.has_item(item.id):
 		_run.add_item(item)
@@ -267,6 +277,7 @@ func _make_view(room: FloorRoom) -> RoomView:
 	view.notice.connect(_hud.show_notice)
 	# Only the Back Room has card tables to ask for.
 	view.arcade_game_wanted.connect(_open_card_table)
+	view.arcade_won.connect(_on_back_room_won)
 	return view
 
 

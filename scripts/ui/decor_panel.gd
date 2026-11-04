@@ -21,6 +21,8 @@ const PLACED := "Placed"
 const WEAR := "Wear"
 const TAKE_OFF := "Take off"
 const BOUNTY_REWARD := "Bounty reward"
+# Gerald's Hat comes only from the true ending.
+const ENDING_REWARD := "Ending reward"
 const SLOT_NAMES := {CosmeticDef.SLOT_HAT: "Hat", CosmeticDef.SLOT_CARDIGAN: "Cardigan", CosmeticDef.SLOT_CANE: "Cane", CosmeticDef.SLOT_DECOR: "Lobby"}
 
 var _title := ""
@@ -46,7 +48,7 @@ static func look_button_text(def: CosmeticDef, data: ProgressData) -> String:
 	if data.owns_cosmetic(def.id):
 		return TAKE_OFF if data.is_worn(def) else WEAR
 	if not def.is_sold():
-		return BOUNTY_REWARD
+		return ENDING_REWARD if def.id == ProgressData.GERALDS_HAT else BOUNTY_REWARD
 	return "Buy (%d)" % def.price
 
 

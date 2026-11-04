@@ -29,6 +29,18 @@ var perks: Dictionary = {}
 var look: Dictionary = {}
 # A run taken on a cursed ticket: tougher enemies that pay more Pension.
 var cursed := false
+# What the ending is chosen from (EndingRules), kept for this run only and never saved. Play time
+# counts only while the run is unpaused and on a floor; Pension is what the rooms paid.
+var play_time := 0.0
+var pension_earned := 0
+# Whether a pill was lost in a floor boss's room; FloorScene resets it on entering one, so at the
+# Chairman's fall it tells of his room alone.
+var boss_room_pill_lost := false
+# Depth -> the path id taken there.
+var paths_taken := {}
+# Back Room visits won in the Waiting Room just before the run, which count as table visits too.
+var extra_table_visits := 0
+var _won_visits := {}
 var _promised := {}
 var _offered_recipes := {}
 var _upgrades: Array[UpgradeDef]
@@ -57,6 +69,29 @@ static func look_from(worn: Dictionary, defs: Array[CosmeticDef]) -> Dictionary:
 			if def.id == str(worn[slot]) and def.slot == str(slot) and not def.is_decor():
 				found[def.slot] = def
 	return found
+
+
+# A game won on an Arcade visit, numbered by the scene. Each visit counts once however many it wins.
+func note_arcade_win(visit: int) -> void:
+	_won_visits[visit] = true
+
+
+func arcade_visits_won() -> int:
+	return _won_visits.size() + extra_table_visits
+
+
+# What EndingRules.choose reads, taken the moment the Chairman falls.
+func ending_snapshot() -> Dictionary:
+	return {
+		"pills": health.pills,
+		"lost_pill_in_boss_room": boss_room_pill_lost,
+		"play_time": play_time,
+		"pension_earned": pension_earned,
+		"items": items.size(),
+		"arcade_visits_won": arcade_visits_won(),
+		"cursed": cursed,
+		"paths": paths_taken.duplicate(),
+	}
 
 
 func enemy_health_mult() -> float:

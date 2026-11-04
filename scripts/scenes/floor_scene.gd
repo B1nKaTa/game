@@ -52,8 +52,8 @@ var _card_panel: CardTablePanel
 var _card_panel_closed_frame := -1
 # What the Purser's Bon Voyage Bag put in this run: a potion's id, BonVoyage.THERMOS, or "" for none.
 var _bon_voyage := ""
-# Pension the rooms of this run have paid, for the Golden Parachute on a death.
-var _run_earned := 0
+# Counts every room entry, so a won Arcade game knows which visit it was on (RunState.note_arcade_win).
+var _visit := 0
 # Whether this run beat the Chairman for the first time, so the ending card shows before the Waiting
 # Room, and the card while it shows.
 var _ending_due := false
@@ -66,6 +66,8 @@ func _ready() -> void:
 	_run = Progress.make_run()
 	# Before the first room is built, so every enemy of a cursed run is spawned tougher.
 	_run.cursed = Progress.take_cursed_run()
+	_run.extra_table_visits = Progress.table_wins_before_run
+	Progress.table_wins_before_run = 0
 	var crafted := Progress.take_crafted_item()
 	if crafted != null:
 		_run.add_item(crafted)
@@ -109,6 +111,7 @@ func _ready() -> void:
 	player = Player.new()
 	player.setup(_run)
 	player.died.connect(_on_player_died)
+	player.hurt.connect(_on_player_hurt)
 	_run.health.rescued.connect(_on_rescued)
 	player.bomb_requested.connect(_on_bomb_requested)
 	player.show_crosshair = true
@@ -210,6 +213,9 @@ func _choose_path(index: int) -> void:
 	_room_views.clear()
 	_floor_def = def
 	_map = map
+	_run.paths_taken[_depth] = def.id
+	# A new floor, a new boss room: only the pills lost in this floor's boss room count.
+	_run.boss_room_pill_lost = false
 	_progress = FloorProgress.new(map)
 	_progress.enter(crossroads.id)
 	# Each floor fills the Life Jacket again.
@@ -235,6 +241,7 @@ func _enter_room(target_id: int) -> void:
 		_room_view.clear_passing_effects()
 		remove_child(_room_view)
 	var first_visit := not _progress.is_visited(target_id)
+	_visit += 1
 	_progress.enter(target_id)
 	_current_id = target_id
 	_room_view = _room_views.get(target_id)
@@ -262,7 +269,10 @@ func _tip_hat(room: FloorRoom) -> void:
 	_hud.show_notice("You tip your hat. +%d pill" % Mementos.BOSS_ROOM_HEAL)
 
 
-func _process(_delta: float) -> void:
+# The scene pauses with the tree, so a paused big map adds no play time.
+func _process(delta: float) -> void:
+	if not is_over:
+		_run.play_time += delta
 	_follow_player()
 
 
@@ -285,6 +295,7 @@ func _make_room_view(room: FloorRoom) -> RoomView:
 		view.door_entered.connect(func(id: int): _enter_room.call_deferred(id))
 		view.stairwell_entered.connect(func(): _go_down.call_deferred())
 		view.arcade_game_wanted.connect(_open_card_table)
+		view.arcade_won.connect(_on_arcade_won)
 	view.setup(room, _map, _floor_def, _run, player, _rng, _progress, Progress)
 	view.notice.connect(_hud.show_notice)
 	view.pension_earned.connect(_on_pension_earned)
@@ -337,8 +348,18 @@ func _close_card_table() -> void:
 
 
 func _on_pension_earned(amount: int) -> void:
-	_run_earned += amount
+	_run.pension_earned += amount
 	Progress.add_pension(amount)
+
+
+func _on_arcade_won() -> void:
+	_run.note_arcade_win(_visit)
+
+
+# Whether the Chairman's room cost him a pill, for Under New Management.
+func _on_player_hurt() -> void:
+	if _current_id != -1 and _map.room(_current_id).room_type == RoomLayout.TYPE_FLOOR_BOSS:
+		_run.boss_room_pill_lost = true
 
 
 func _on_rescued() -> void:
@@ -347,7 +368,7 @@ func _on_rescued() -> void:
 
 func _on_player_died() -> void:
 	Progress.last_run["died"] = true
-	var parachute := _run.parachute_pay(_run_earned)
+	var parachute := _run.parachute_pay(_run.pension_earned)
 	if parachute > 0 and not is_over:
 		Progress.add_pension(parachute)
 		_hud.show_notice("Golden Parachute: +%d Pension" % parachute)

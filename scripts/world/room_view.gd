@@ -16,6 +16,8 @@ signal boss_choice_dropped(count: int)
 signal stairwell_entered
 # Grandpa asked to play at one of the Arcade Room's tables.
 signal arcade_game_wanted(table: ArcadeTable)
+# A game at one of its tables paid back more than its bet, for the endings' table visits.
+signal arcade_won
 
 const HEAL_AMOUNT := 2
 const SHOP_PROMPT := "Buy"
@@ -770,6 +772,12 @@ func arcade_balance() -> int:
 # Bets come out of his Pension, and one he cannot cover is refused.
 func arcade_bet(amount: int) -> bool:
 	return amount > 0 and _bank.spend(amount)
+
+
+# A finished game: a win is one that paid back more than its bet.
+func arcade_settled(payout: int, bet_amount: int) -> void:
+	if payout > bet_amount:
+		arcade_won.emit()
 
 
 # Winnings go straight into his Pension, exactly as the game's rules pay them.

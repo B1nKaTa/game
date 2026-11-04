@@ -11,6 +11,9 @@ var data: ProgressData
 var notice := ""
 # How the run just played went, for the Coach on return: died, and bosses beaten. Not saved.
 var last_run := {}
+# Back Room visits with a game won since the last run, handed to the next run as table visits for the
+# endings (RunState.extra_table_visits). Not saved.
+var table_wins_before_run := 0
 var _store: SaveStore
 # While a dev run is on, the real progress and its store wait here untouched, and every save goes to
 # the dev file instead.
@@ -219,10 +222,16 @@ func decline_cursed_ticket() -> void:
 	_store.save_progress(data)
 
 
-func mark_ending_seen() -> void:
-	if data.ending_seen:
-		return
-	data.ending_seen = true
+# Saved the moment an ending is chosen, before its scene plays, so quitting during the scene never
+# plays it as new again. Returns the Condolences paid.
+func record_ending(id: String) -> int:
+	var paid := data.record_ending(id)
+	_save_condolences()
+	return paid
+
+
+func record_repeat_death(n: int) -> void:
+	data.record_repeat_death(n)
 	_store.save_progress(data)
 
 

@@ -231,6 +231,7 @@ func pull() -> bool:
 	_room.arcade_pay(_last_payout)
 	_played = true
 	_last_result = result_of(_last_payout, SlotMachine.BET, won["item"] or won["full_heal"])
+	_room.arcade_settled(_last_payout, SlotMachine.BET)
 	if won["item"]:
 		_room.arcade_item_win(_table)
 		_message = "Three skulls! A free item waits by the table."
@@ -338,6 +339,7 @@ func _settle() -> void:
 	_room.arcade_pay(_last_payout)
 	_played = true
 	_last_result = result_of(_last_payout, _bet, false)
+	_room.arcade_settled(_last_payout, _bet)
 	_state = DONE
 
 
