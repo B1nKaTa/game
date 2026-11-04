@@ -101,6 +101,23 @@ func test_a_sweep_waits_out_its_warning_then_moves_at_its_speed() -> void:
 	sweep.free()
 
 
+# In a room wider than the view the beam starts off screen, so its warning is the whole stretch it
+# has still to cross: all the room during the warning, then what lies ahead of the beam.
+func test_the_sweep_warns_over_all_the_room_it_has_still_to_cross() -> void:
+	for room in _rooms():
+		for along_x in [true, false]:
+			var feet := room.position + Vector2(40, 40)
+			var ends := XRaySweep.sweep_ends(room, along_x, feet)
+			var whole := XRaySweep.ahead_rect(room, along_x, ends.x, ends.y)
+			assert_true(whole.is_equal_approx(room), "the warning covers the room: %s" % str(whole))
+			var middle := (ends.x + ends.y) / 2.0
+			var half := XRaySweep.ahead_rect(room, along_x, middle, ends.y)
+			assert_true(half.has_point(feet), "feet the beam has not reached are inside it")
+			var behind := room.end - Vector2(10, 10)
+			assert_false(half.has_point(behind), "what it has passed is not")
+	assert_true(XRaySweep.AHEAD_ALPHA_FROM > 0.0 and XRaySweep.AHEAD_ALPHA_TO > XRaySweep.AHEAD_ALPHA_FROM, "it shows from the start and clears up")
+
+
 func test_the_mat_stays_marked_until_the_beam_has_crossed() -> void:
 	for room in _rooms():
 		for along_x in [true, false]:
@@ -212,6 +229,18 @@ func test_the_stamp_mark_fills_over_its_whole_windup_and_lands_for_three() -> vo
 	assert_false(strike.advance(0.6))
 	assert_near(strike.fill(), 0.5, "half filled at half the windup")
 	assert_true(strike.advance(0.61))
+	strike.free()
+
+
+# A landing's dust lasts a fifth of a second, too short to read a word, so the stamp's ink stays.
+func test_the_departed_ink_stays_long_enough_to_read() -> void:
+	assert_true(TerminalStrike.shown_after_landing(TerminalStrike.LOOK_STAMP) >= 0.8)
+	assert_near(TerminalStrike.shown_after_landing(TerminalStrike.LOOK_TRAY), GroundStrike.SHOW_TIME, "a tray lands as any strike does")
+	assert_true(TerminalStrike.INK_FADE < TerminalStrike.INK_TIME, "it fades only at the end")
+	var strike := TerminalStrike.new()
+	strike.kind = TerminalStrike.LOOK_STAMP
+	assert_false(strike.ink_fades(GroundStrike.SHOW_TIME + 0.1), "still there after the dust")
+	assert_true(strike.ink_fades(TerminalStrike.INK_TIME), "then gone")
 	strike.free()
 
 
