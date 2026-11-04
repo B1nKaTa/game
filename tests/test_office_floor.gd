@@ -138,6 +138,14 @@ func test_no_enemy_of_the_floor_washes_out_to_white_in_the_light() -> void:
 		assert_true(minf(lit.r, minf(lit.g, lit.b)) < 0.85, "%s turns white in the office light" % def.id)
 
 
+func test_the_bar_charts_gap_mark_stays_green_however_brightly_it_is_lit() -> void:
+	for light: float in [1.0, 1.5, 2.0]:
+		var lit := _lit(GapMark.GAP_COLOR, light)
+		assert_true(lit.g - maxf(lit.r, lit.b) > 0.25, "green at %.1f" % light)
+	var source := FileAccess.get_file_as_string("res://scripts/actors/behaviors/chairman_behavior.gd")
+	assert_true(source.contains("GapMark.new()"), "the projections mark their gap with it")
+
+
 # --- its rooms ---
 
 func test_every_layout_in_the_folder_is_valid() -> void:
