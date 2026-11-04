@@ -87,11 +87,11 @@ func setup(source: Enemy, to_target_angle: float, turn: int, warning: float, dam
 	z_index = Projectile.SHOT_Z
 
 
-func start() -> float:
+func sweep_start() -> float:
 	return _start
 
 
-func turn() -> int:
+func sweep_turn() -> int:
 	return _turn
 
 
