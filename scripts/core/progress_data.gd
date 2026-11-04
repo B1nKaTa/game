@@ -227,13 +227,12 @@ func call_ticket(upgrade_defs: Array[UpgradeDef], roll: float) -> String:
 		return ""
 	ticket_called = run_count
 	var event := TicketRules.event_for(run_count)
-	match event:
-		TicketRules.CLERK_DEAL:
-			clerk_deal = TicketRules.deal_form(upgrade_defs, self, roll)
-			if clerk_deal.is_empty():
-				return ""
-		TicketRules.CURSED_OFFER:
-			cursed_offer = true
+	if event == TicketRules.CLERK_DEAL:
+		clerk_deal = TicketRules.deal_form(upgrade_defs, self, roll)
+		if clerk_deal.is_empty():
+			return ""
+	elif event == TicketRules.CURSED_OFFER:
+		cursed_offer = true
 	return event
 
 

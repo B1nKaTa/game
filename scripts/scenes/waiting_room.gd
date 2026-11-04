@@ -95,15 +95,14 @@ func _ready() -> void:
 func _call_ticket() -> void:
 	var event := Progress.call_ticket()
 	var number := Progress.data.run_count
-	match event:
-		TicketRules.CLERK_DEAL:
-			_notices.append("Number %d! The clerk slips you a deal on %s." % [number, TicketPanel.form_name(Progress.data.clerk_deal, Content.upgrades())])
-		TicketRules.NEW_ARRIVAL:
-			var line := TicketRules.arrival_line(Departments.open_ids(Progress.data), _rng.randf())
-			if not line.is_empty():
-				_notices.append(line)
-		TicketRules.CURSED_OFFER:
-			_notices.append("Number %d! A cursed ticket is on offer at the machine." % number)
+	if event == TicketRules.CLERK_DEAL:
+		_notices.append("Number %d! The clerk slips you a deal on %s." % [number, TicketPanel.form_name(Progress.data.clerk_deal, Content.upgrades())])
+	elif event == TicketRules.NEW_ARRIVAL:
+		var line := TicketRules.arrival_line(Departments.open_ids(Progress.data), _rng.randf())
+		if not line.is_empty():
+			_notices.append(line)
+	elif event == TicketRules.CURSED_OFFER:
+		_notices.append("Number %d! A cursed ticket is on offer at the machine." % number)
 	if not LetterBook.unread(Progress.data).is_empty():
 		_notices.append("A letter has arrived on the noticeboard.")
 

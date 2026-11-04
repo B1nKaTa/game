@@ -179,3 +179,8 @@ func test_the_machine_shows_the_next_number_and_the_deal() -> void:
 func test_the_ticket_machine_and_noticeboard_stand_in_the_lobby() -> void:
 	for id in ["ticket_machine", "noticeboard"]:
 		assert_eq(Departments.station_entry(id).get("department", ""), Departments.LOBBY, id)
+
+
+func test_the_arrival_speakers_stand_in_real_departments() -> void:
+	for id in TicketRules.ARRIVAL_DEPARTMENTS:
+		assert_true(Departments.index_of(id) >= 0, id)

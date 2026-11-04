@@ -23,12 +23,13 @@ const ARRIVAL_LINES: Array[String] = [
 	"Deputy Dolores: Your file has grown a second file.",
 	"Coach Bertram: Drop and give me twenty. Pills, I mean.",
 ]
+# Departments ids, written out so these rules load nothing else. test_tickets_and_letters pins them.
 const ARRIVAL_DEPARTMENTS: Array[String] = [
-	Departments.LOBBY,
-	Departments.LOBBY,
-	Departments.LOBBY,
-	Departments.BOUNTY_OFFICE,
-	Departments.TRAINING_YARD,
+	"lobby",
+	"lobby",
+	"lobby",
+	"bounty_office",
+	"training_yard",
 ]
 
 
