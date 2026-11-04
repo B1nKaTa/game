@@ -13,6 +13,11 @@ const NOTICE_TIME := 3.5
 # A faint band behind the top row, so full pills never read as empty over a pale floor.
 const TOP_BAND_SIZE := Vector2(640, 22)
 const TOP_BAND := Color(0.0, 0.0, 0.0, 0.4)
+# The banner a combo shows as it forms, under the notice line.
+const BANNER_TOP := 60.0
+const BANNER_TIME := 2.5
+const BANNER_TEXT := "COMBO: %s"
+const BANNER_COLOR := Color("ffd24a")
 
 var _run: RunState
 var _status: Label
@@ -23,6 +28,8 @@ var _potion_slot: PotionSlot
 var _message: Label
 var _notice: Label
 var _notice_left := 0.0
+var _banner: Label
+var _banner_left := 0.0
 var _boss_name: Label
 var _boss_back: ColorRect
 var _boss_fill: ColorRect
@@ -44,6 +51,10 @@ static func bar_fraction(hp: float, max_hp: float) -> float:
 	if max_hp <= 0.0:
 		return 0.0
 	return clampf(hp / max_hp, 0.0, 1.0)
+
+
+static func banner_text(combo_name: String) -> String:
+	return BANNER_TEXT % combo_name
 
 
 static func counter_text(amount: int) -> String:
@@ -76,6 +87,11 @@ func _ready() -> void:
 	_notice = _add_label(Vector2(0, NOTICE_TOP), 12)
 	_notice.size = Vector2(640, 20)
 	_notice.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_banner = _add_label(Vector2(0, BANNER_TOP), 16)
+	_banner.size = Vector2(640, 24)
+	_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_banner.add_theme_color_override("font_color", BANNER_COLOR)
+	_banner.add_theme_constant_override("outline_size", 5)
 	_boss_name = _add_label(Vector2(0, BOSS_NAME_TOP), 16)
 	_boss_name.size = Vector2(640, 20)
 	_boss_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -90,6 +106,10 @@ func _ready() -> void:
 		_potion_slot.position = POTION_SLOT_AT
 		add_child(_potion_slot)
 		_run.changed.connect(_refresh)
+		# The Hearing Aid's arrows, drawn only while his stats ask for them.
+		var arrows := ItemFx.OffscreenArrows.new()
+		arrows.setup(_run)
+		add_child(arrows)
 	_refresh()
 
 
@@ -114,9 +134,24 @@ func show_notice(text: String) -> void:
 	_notice_left = NOTICE_TIME
 
 
+# "COMBO: <name>" for a moment, as a combo forms.
+func show_combo(combo_name: String) -> void:
+	_banner.text = banner_text(combo_name)
+	_banner_left = BANNER_TIME
+
+
+func banner() -> String:
+	return _banner.text if _banner != null else ""
+
+
 func _process(delta: float) -> void:
 	if _potion_slot != null:
 		_potion_slot.show_buff(_run.buff, _run.buff_left)
+	if _banner_left > 0.0:
+		_banner_left -= delta
+		if _banner_left <= 0.0:
+			_banner.text = ""
+
 	if _notice_left <= 0.0:
 		return
 	_notice_left -= delta

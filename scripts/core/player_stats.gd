@@ -66,11 +66,17 @@ var lucky_swing_chance := 0.0
 var floor_lethal_saves := 0
 # The share of a run's Pension paid again on dying in it.
 var death_pension_bonus := 0.0
+# The hundred items' rules. See StatEffect.
+var wet_grip := false
+var min_slow_factor := 0.0
+var clean_kills := false
+var shows_offscreen_enemies := false
 
 
 # choices maps a form id to its milestone option. A form at or past its milestone with no entry
 # reads as option A, and the chosen option's effect counts once, whatever the level.
-static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Array[ItemDef], choices: Dictionary = {}) -> PlayerStats:
+# combos are the ComboDefs the run has formed. Their numbers count once each, as an item's do.
+static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Array[ItemDef], choices: Dictionary = {}, combos: Array[ComboDef] = []) -> PlayerStats:
 	var pills := 0
 	var speed := 0.0
 	var cut := 0.0
@@ -102,6 +108,10 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 	var lucky := 0.0
 	var lethal_saves := 0
 	var death_pension := 0.0
+	var grip := false
+	var slow_floor := 0.0
+	var clean := false
+	var arrows := false
 	var effects: Array = []
 	for upgrade in upgrades:
 		var level := int(levels.get(upgrade.id, 0))
@@ -110,6 +120,8 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 			effects.append([upgrade.option(str(choices.get(upgrade.id, UpgradeDef.OPTION_A))), 1])
 	for item in items:
 		effects.append([item, 1])
+	for combo in combos:
+		effects.append([combo, 1])
 	for entry in effects:
 		var effect: StatEffect = entry[0]
 		var count: int = entry[1]
@@ -150,6 +162,11 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 			reveals = true
 		if count > 0 and effect.reveals_secrets:
 			secrets = true
+		if count > 0:
+			grip = grip or effect.wet_grip
+			slow_floor = maxf(slow_floor, effect.min_slow_factor)
+			clean = clean or effect.clean_kills
+			arrows = arrows or effect.shows_offscreen_enemies
 	var stats := PlayerStats.new()
 	stats.max_pills = BASE_PILLS + pills
 	stats.move_speed = BASE_SPEED * (1.0 + speed)
@@ -184,7 +201,12 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 	stats.lucky_swing_chance = clampf(lucky, 0.0, 1.0)
 	stats.floor_lethal_saves = lethal_saves
 	stats.death_pension_bonus = death_pension
+	stats.wet_grip = grip
+	stats.min_slow_factor = clampf(slow_floor, 0.0, 1.0)
+	stats.clean_kills = clean
+	stats.shows_offscreen_enemies = arrows
 	return stats
+
 
 
 # What a hit does once the weak spot is counted: wounded_mult applies only below WOUNDED_BELOW health.

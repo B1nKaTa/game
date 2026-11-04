@@ -15,6 +15,9 @@ var requires_interact := false
 var can_take := Callable()
 var flies := false
 var prompt := PROMPT_TEXT
+# What the name is drawn in, and whether a skull sits before it, as a cursed item's does.
+var label_color := Color.WHITE
+var skull := false
 var _label := ""
 var _color := Color.WHITE
 var _player: Node2D
@@ -50,6 +53,12 @@ func setup(label: String, color: Color, player: Node2D, needs_interact := false)
 	_color = color
 	_player = player
 	requires_interact = needs_interact
+
+
+# New words only, keeping the colours.
+func set_text(label: String) -> void:
+	_label = label
+	queue_redraw()
 
 
 func set_label(label: String, color: Color) -> void:
@@ -126,12 +135,26 @@ func _draw() -> void:
 		return
 	# Centred and outlined, as people's names are, so they read on the palest floors and long names
 	# never run into the next ware.
-	Npc._draw_centered(self, _label, Vector2(0, -12), Color.WHITE)
+	Npc._draw_centered(self, _label, Vector2(0, -12), label_color)
+	if skull:
+		var width := ThemeDB.fallback_font.get_string_size(_label, HORIZONTAL_ALIGNMENT_LEFT, -1, Npc.FONT_SIZE).x
+		draw_skull(self, Vector2(-width / 2.0 - 7.0, -16.0), label_color)
 	if _prompt_shown:
 		Npc._draw_centered(self, KeyBindings.with_key("interact", prompt), Vector2(0, 22), Color("ffd24a"))
 
 
+# A small skull, drawn in code: a round head, a jaw, two dark eyes. It marks a cursed item's name.
+static func draw_skull(canvas: CanvasItem, at: Vector2, color: Color) -> void:
+	canvas.draw_circle(at, 4.5, Color.BLACK)
+	canvas.draw_circle(at, 3.5, color)
+	canvas.draw_rect(Rect2(at + Vector2(-2.5, 2.0), Vector2(5, 3)), color)
+	canvas.draw_rect(Rect2(at + Vector2(-2.5, 2.0), Vector2(5, 3)), Color.BLACK, false, 1.0)
+	canvas.draw_circle(at + Vector2(-1.4, -0.3), 1.0, Color.BLACK)
+	canvas.draw_circle(at + Vector2(1.4, -0.3), 1.0, Color.BLACK)
+
+
 # A plain coloured disc. Pickups with a shape of their own, such as chests, draw that instead.
+
 func _draw_body() -> void:
 	draw_circle(Vector2.ZERO, 8.0, _color)
 	draw_arc(Vector2.ZERO, 8.0, 0.0, TAU, 16, Color.BLACK, 1.0)

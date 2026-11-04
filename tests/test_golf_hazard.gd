@@ -46,7 +46,7 @@ func test_grandpa_cannot_dodge_in_sand() -> void:
 
 func test_the_player_and_enemies_read_the_sand() -> void:
 	var player := FileAccess.get_file_as_string("res://scripts/actors/player.gd")
-	assert_true(player.contains("SandRule.can_dodge(sunk) and _dodge.try_start("), "a dodge is refused before it spends its cooldown")
+	assert_true(player.contains("SandRule.can_dodge(sunk):") and player.contains("if not _dodge.try_start(run.stats.dodge_cooldown"), "a dodge is refused before it spends its cooldown")
 	assert_true(player.contains("SandRule.slowed(_slow.speed_factor(), sunk)"), "his walk is slowed")
 	var enemy := FileAccess.get_file_as_string("res://scripts/actors/enemy.gd")
 	assert_true(enemy.contains("if SandTrap.slows(self):"), "enemies wade too")

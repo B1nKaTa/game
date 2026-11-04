@@ -47,7 +47,7 @@ static func go(parent: Node2D, center: Vector2, radius: float, enemy_damage: flo
 	if is_instance_valid(player) and player.has_method("feet"):
 		var feet: Vector2 = player.feet().global_position
 		if center.distance_to(feet) <= radius and line_is_clear(space, center, feet):
-			player.take_hit(player_damage)
+			player.take_hit(player_damage, RunEffects.HURT_BLAST)
 
 
 func _ready() -> void:

@@ -36,6 +36,8 @@ var _direction := Vector2.RIGHT
 var wounded_mult := 1.0
 # What a bite is multiplied by against a boss, as the gold gavel gives. Set after setup.
 var boss_mult := 1.0
+# The run's items, which hear every bite. Set after setup. Without it a bite is plain damage.
+var effects: RunEffects
 var _damage := DAMAGE
 var _range := DentureThrow.BASE_RANGE
 var _bites_allowed := 1
@@ -103,8 +105,14 @@ func _fly(delta: float) -> void:
 	if enemy != null:
 		_bitten[enemy.get_instance_id()] = true
 		var bite := PlayerStats.strike_damage(_damage, enemy.hp / maxf(enemy.max_hp(), 1.0), wounded_mult)
-		enemy.take_damage(PlayerStats.boss_damage(bite, enemy.def.is_boss, boss_mult), _direction * PUSH)
+		var amount := PlayerStats.boss_damage(bite, enemy.def.is_boss, boss_mult)
+		if effects != null:
+			effects.land(enemy, amount, RunEffects.BITE, _direction * PUSH)
+			effects.bite(enemy)
+		else:
+			enemy.take_damage(amount, _direction * PUSH)
 		hit_enemy.emit()
+
 		if not keeps_flying(_bitten.size(), _bites_allowed):
 			_state.drop()
 			return

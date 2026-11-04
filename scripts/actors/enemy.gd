@@ -103,6 +103,10 @@ var _rally_left := 0.0
 # More warned lanes beside the main one, each [direction, length, width].
 var _extra_lanes: Array = []
 var _lane_heaviest := false
+# Set while one of Grandpa's hits lands with the Undertaker's Work Gloves: dying to it, it leaves
+# nothing harmful behind. Behaviors read it in on_killed.
+var harmless_death := false
+
 
 
 func setup(enemy_def: EnemyDef, chase_target: Node2D, warning_fraction: float, show_health_bar := false) -> void:

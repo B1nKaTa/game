@@ -71,14 +71,19 @@ func _explode() -> void:
 	_blast_left = BLAST_SHOW_TIME
 	for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
 		if not enemy.is_queued_for_deletion() and in_blast(global_position, enemy.body_rect(), radius):
-			enemy.take_damage(blast_damage(), global_position.direction_to(enemy.global_position) * PUSH)
+			var push := global_position.direction_to(enemy.global_position) * PUSH
+			if is_instance_valid(_player) and _player.run != null:
+				_player.run.effects.land(enemy, blast_damage(), RunEffects.THERMOS, push)
+			else:
+				enemy.take_damage(blast_damage(), push)
 	BreakableBlock.smash(get_tree(), global_position, radius, BreakableBlock.SOURCE_BLAST)
 	ReinforcedRock.blast(get_tree(), global_position, radius, level)
 	SecretWall.blast(get_tree(), global_position, radius)
 	Chest.blast(get_tree(), global_position, radius)
 	if is_instance_valid(_player) and global_position.distance_to(_player.feet().global_position) <= radius:
-		_player.take_hit(PLAYER_DAMAGE)
+		_player.take_hit(PLAYER_DAMAGE, RunEffects.HURT_OWN_BLAST)
 	exploded.emit()
+
 
 
 func _draw() -> void:

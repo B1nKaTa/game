@@ -60,6 +60,9 @@ var _push_left := 0.0
 var _fire_shrug_next := false
 # Red tape holds him a moment when he walks into it. See RedTapeRule.
 var _tape := RedTapeRule.new()
+# Whether this dodge has had its close call yet, and whether he was dodging last frame, for the items.
+var _close_call_spent := false
+var _was_dodging := false
 
 
 static func arrival_position(cell: Vector2i) -> Vector2:
@@ -113,9 +116,23 @@ func refresh_look() -> void:
 	_look.setup(run.look)
 
 
-func take_hit(amount: int) -> bool:
+# Every hit on him comes through here. source is one of RunEffects' HURT_ ids, for the items that care
+# what hurt him. Items may lower the amount (0 shrugs it off), and may save him from a finishing hit
+# once any Life Jacket is spent, leaving one pill.
+func take_hit(amount: int, source := RunEffects.HURT_ENEMY) -> bool:
 	if _dodge.is_active():
+		if not _close_call_spent and amount > 0 and not run.health.is_dead():
+			_close_call_spent = true
+			run.effects.close_call()
 		return false
+	if run.health.is_dead() or run.health.is_invulnerable():
+		return false
+	amount = run.effects.hurt(amount, source)
+	if amount <= 0:
+		run.health.shrug_off()
+		return false
+	if amount >= run.health.pills and run.health.lethal_saves <= 0 and run.effects.lethal():
+		amount = run.health.pills - 1
 	var landed := run.health.hit(amount)
 	if landed:
 		if _visual != null:
@@ -128,13 +145,13 @@ func take_hit(amount: int) -> bool:
 # would land is shrugged off instead, and a shrugged hit returns false like any other that misses.
 func take_fire_hit(amount: int) -> bool:
 	if not run.has_perk(Mementos.FIRE_PERK):
-		return take_hit(amount)
+		return take_hit(amount, RunEffects.HURT_FIRE)
 	var would_land := not _dodge.is_active() and not run.health.is_dead() and not run.health.is_invulnerable()
 	if would_land and _fire_shrug_next:
 		_fire_shrug_next = false
 		run.health.shrug_off()
 		return false
-	var landed := take_hit(amount)
+	var landed := take_hit(amount, RunEffects.HURT_FIRE)
 	if landed:
 		_fire_shrug_next = true
 	return landed
@@ -184,11 +201,15 @@ func _physics_process(delta: float) -> void:
 	_combo.tick(delta)
 	_charge.tick(delta)
 	_dodge.tick(delta)
+	if _was_dodging and not _dodge.is_active():
+		run.effects.dodge_end()
+	_was_dodging = _dodge.is_active()
 	_slow.tick(delta)
 	_push_left = maxf(_push_left - delta, 0.0)
 	run.health.tick(delta)
 	run.tick_buff(delta)
 	_advance_swing(delta)
+	run.effects.tick(delta)
 	var to_mouse := _aim_point() - global_position
 	if not to_mouse.is_zero_approx():
 		_aim = to_mouse.normalized()
@@ -270,6 +291,7 @@ func _handle_attacks() -> void:
 	if Input.is_action_just_released("attack"):
 		if _charge.release():
 			_swing(ChargeSwing.DAMAGE * run.charge_damage_mult(), CHARGE_REACH, CHARGE_ANGLE, ChargeSwing.KNOCKBACK, true, false)
+			run.effects.charge_release(true)
 
 
 func _throw_teeth() -> void:
@@ -293,11 +315,13 @@ func _throw_teeth() -> void:
 	_thrown_teeth.setup(_teeth, self, _aim, run.bite_damage_mult(), run.stats.bite_range, run.stats.bites_per_throw)
 	_thrown_teeth.wounded_mult = run.stats.wounded_damage_mult
 	_thrown_teeth.boss_mult = run.boss_damage_mult()
+	_thrown_teeth.effects = run.effects
 	_thrown_teeth.hit_enemy.connect(teeth_bit.emit)
 	_thrown_teeth.caught.connect(teeth_caught.emit)
 	parent.add_child(_thrown_teeth)
 	_thrown_teeth.global_position = spawn
 	teeth_thrown.emit()
+	run.effects.throw()
 	if not wall.is_empty():
 		_teeth.drop()
 
@@ -348,7 +372,7 @@ func _strike_enemies() -> void:
 		if swing.try_hit(global_position, enemy.get_instance_id(), enemy.body_rect()):
 			var damage := PlayerStats.strike_damage(swing.damage, enemy.hp / maxf(enemy.max_hp(), 1.0), run.stats.wounded_damage_mult)
 			damage = PlayerStats.boss_damage(damage, enemy.def.is_boss, run.boss_damage_mult())
-			if not enemy.take_strike(damage, swing.direction * swing.push, global_position - enemy.global_position):
+			if not run.effects.land(enemy, damage, swing_source(swing.heavy, swing.finisher), swing.direction * swing.push, global_position - enemy.global_position):
 				swing.mark_blocked()
 	for block: BreakableBlock in get_tree().get_nodes_in_group("breakable"):
 		if block.is_queued_for_deletion() or not block.can_break_by(BreakableBlock.SOURCE_CANE):
@@ -357,6 +381,13 @@ func _strike_enemies() -> void:
 			block.hit_by(BreakableBlock.SOURCE_CANE)
 	if swing.has_landed() and not had_landed:
 		swing_landed.emit(swing.heavy, swing.finisher)
+
+
+# The hit source the items hear for a swing: a charged one, the combo's third, or a plain swing.
+static func swing_source(heavy: bool, finisher: bool) -> String:
+	if heavy:
+		return RunEffects.CHARGE
+	return RunEffects.COMBO_3 if finisher else RunEffects.SWING
 
 
 func _finish_swing() -> void:
@@ -371,9 +402,11 @@ func _handle_movement() -> void:
 	var input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	# Feet sunk in a sand bunker cannot dodge, and wade slower (Fairway's End).
 	var sunk := is_in_sand()
-	if Input.is_action_just_pressed("dodge") and SandRule.can_dodge(sunk) and _dodge.try_start(run.stats.dodge_cooldown, DodgeTimer.DURATION * run.stats.dodge_length):
-		_dodge_direction = input.normalized() if input != Vector2.ZERO else _aim
+	if Input.is_action_just_pressed("dodge") and SandRule.can_dodge(sunk):
+		start_dodge(input.normalized() if input != Vector2.ZERO else _aim)
 	on_wet = _feet != null and WetFloor.is_wet_at(get_tree() if is_inside_tree() else null, _feet.global_position)
+	# Orthopedic Slippers keep his feet on a wet floor.
+	var slides := on_wet and not run.stats.wet_grip
 	# Walking into red tape holds him a moment, and a dodge cuts through it instead.
 	var on_tape := _feet != null and RedTape.touch(get_tree() if is_inside_tree() else null, _feet.global_position, _dodge.is_active())
 	var taped := _tape.step(on_tape, _dodge.is_active(), get_physics_process_delta_time())
@@ -382,12 +415,13 @@ func _handle_movement() -> void:
 		_push_left = 0.0
 		velocity = _dodge_direction * DODGE_SPEED
 	else:
-		var speed := run.move_speed() * SandRule.slowed(_slow.speed_factor(), sunk)
+		# Support Stockings: no slow takes him below their share of his speed.
+		var speed := run.move_speed() * maxf(SandRule.slowed(_slow.speed_factor(), sunk), run.stats.min_slow_factor)
 		if _charge.is_charging():
 			speed *= CHARGE_SLOWDOWN
 		# What he carries onto the wet is never more than a walk, so a dodge does not fling him.
-		velocity = SlideRule.velocity(velocity.limit_length(speed), input * speed, on_wet, get_physics_process_delta_time())
-		if not on_wet:
+		velocity = SlideRule.velocity(velocity.limit_length(speed), input * speed, slides, get_physics_process_delta_time())
+		if not slides:
 			velocity = _round_corners(velocity, input, speed)
 		# An escalator strip carries him on top of his walk. A dodge goes where it is aimed instead.
 		if _feet != null and is_inside_tree():
@@ -403,7 +437,18 @@ func _handle_movement() -> void:
 	move_and_slide()
 
 
+# Starts a dodge that way if the cooldown allows, and tells the items. Returns whether it started.
+func start_dodge(direction: Vector2) -> bool:
+	if not _dodge.try_start(run.stats.dodge_cooldown, DodgeTimer.DURATION * run.stats.dodge_length):
+		return false
+	_dodge_direction = direction
+	_close_call_spent = false
+	run.effects.dodge(direction)
+	return true
+
+
 # Walking straight into a corner by a pixel or two steps him round it, sideways only, and only when
+
 # both the step and the walk on from there are clear, so he never slips into a wall or through one.
 func _round_corners(wanted: Vector2, input: Vector2, speed: float) -> Vector2:
 	if not is_inside_tree() or input.is_zero_approx() or (absf(input.x) > 0.01 and absf(input.y) > 0.01):

@@ -53,3 +53,11 @@ extends Resource
 @export var floor_lethal_saves: int = 0
 # The share of a run's Pension paid again when he dies in it.
 @export var death_pension_bonus: float = 0.0
+# The hundred items' always-on rules. Whether a wet floor never slides him.
+@export var wet_grip: bool = false
+# The least share of his speed any slow leaves him (wet, sand, sedatives, quoits, paper). Zero for none.
+@export var min_slow_factor: float = 0.0
+# Whether enemies he finishes skip their harmful last acts, such as a death blast.
+@export var clean_kills: bool = false
+# Whether arrows at the screen's edge point to enemies off screen.
+@export var shows_offscreen_enemies: bool = false

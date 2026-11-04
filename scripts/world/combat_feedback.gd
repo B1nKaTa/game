@@ -15,6 +15,9 @@ var _players: Array[AudioStreamPlayer] = []
 var _next_player := 0
 var _last_played := {}
 var _last_ticks := 0
+# An item's slow motion: game time runs at _slow_share for _slow_left more real seconds.
+var _slow_share := 1.0
+var _slow_left := 0.0
 
 
 func setup(camera: Camera2D) -> void:
@@ -84,6 +87,8 @@ func on_hurt() -> void:
 
 func on_player_died() -> void:
 	_hit_stop.cancel()
+	_slow_left = 0.0
+
 	_apply_time_scale()
 
 
@@ -131,7 +136,24 @@ func _begin_hit_stop(seconds: float) -> void:
 
 
 func _apply_time_scale() -> void:
-	Engine.time_scale = _hit_stop.time_scale()
+	Engine.time_scale = _hit_stop.time_scale() * (_slow_share if _slow_left > 0.0 else 1.0)
+
+
+# Game time runs at this share for so many real seconds, as the Pocket Watch's close call does. The
+# slower of two running slows counts, and the longer of their times.
+func slow_time(share: float, real_seconds: float) -> void:
+	_slow_share = clampf(share, 0.05, 1.0) if _slow_left <= 0.0 else minf(_slow_share, share)
+	_slow_left = maxf(_slow_left, real_seconds)
+	_apply_time_scale()
+
+
+func is_slowed() -> bool:
+	return _slow_left > 0.0
+
+
+# A sound by its SoundBank name, for anything outside the fight's own moments, as an item's.
+func play(sound_name: String) -> void:
+	_play(sound_name)
 
 
 # Hit stop and shake run on real time, since game time stands still during a freeze.
@@ -145,6 +167,7 @@ func _process(_delta: float) -> void:
 func tick_real(real_delta: float) -> void:
 	_hit_stop.tick(real_delta)
 	_shake.tick(real_delta)
+	_slow_left = maxf(_slow_left - real_delta, 0.0)
 	_apply_time_scale()
 	if is_instance_valid(_camera):
 		_camera.offset = _shake.offset(_rng)

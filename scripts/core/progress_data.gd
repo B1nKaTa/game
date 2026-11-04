@@ -76,6 +76,9 @@ var letters_read: Dictionary = {}
 # Whether the ending card has been shown, the first time the Chairman of the Board fell. An older save
 # starts false.
 var ending_seen: bool = false
+# Path id -> true for every path whose first-clear items the Waiting Room has announced. An older save
+# starts empty, so its cleared paths announce their items once.
+var item_paths_seen: Dictionary = {}
 
 # The first path at each depth, the only one open before that depth's first clear.
 const FIRST_PATH_BY_DEPTH := {1: "floor_1", 2: "sunset_shores", 3: "funeral_parlour", 4: "last_resort_cruise", 5: "terminal_zero"}
@@ -434,6 +437,7 @@ func to_dict() -> Dictionary:
 		"cursed_next_run": cursed_next_run,
 		"letters_read": letters_read,
 		"ending_seen": ending_seen,
+		"item_paths_seen": item_paths_seen,
 	}
 
 
@@ -504,6 +508,8 @@ static func from_dict(raw: Variant) -> ProgressData:
 	data.cursed_next_run = _bool_or_false(raw.get("cursed_next_run", false))
 	data.letters_read = _id_set(raw.get("letters_read"))
 	data.ending_seen = _bool_or_false(raw.get("ending_seen", false))
+	data.item_paths_seen = _id_set(raw.get("item_paths_seen"))
+
 	data._infer_first_paths()
 	return data
 

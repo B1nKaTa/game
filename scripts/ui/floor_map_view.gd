@@ -49,6 +49,11 @@ var _progress: FloorProgress
 var _current_id := -1
 var _is_big := false
 var _floor_name := ""
+# The run's combos, listed on the paused big map as its run summary.
+var combo_names := PackedStringArray():
+	set(value):
+		combo_names = value
+		queue_redraw()
 
 
 # The rooms the map shows: every visited room, and with show_secrets every secret room as well.
@@ -163,12 +168,19 @@ func _draw() -> void:
 		_draw_floor_name()
 	else:
 		_draw_text(panel.position + Vector2(12, 22), _floor_name, 16, Color.WHITE)
+		if not combo_names.is_empty():
+			_draw_text(panel.position + Vector2(12, 36), combos_line(combo_names), 10, Hud.BANNER_COLOR)
 		_draw_text(panel.end - Vector2(62, 257), KeyBindings.with_key("map", CLOSE_HINT), 11, Color("ffd24a"))
 		_draw_text(panel.position + Vector2(12, panel.size.y - 26), LEGEND_TOP, 11, Color("ece9e0"))
 		_draw_text(panel.position + Vector2(12, panel.size.y - 12), LEGEND_BOTTOM, 11, Color("ece9e0"))
 
 
+static func combos_line(names: PackedStringArray) -> String:
+	return "Combos: %s" % ", ".join(names)
+
+
 func _draw_floor_name() -> void:
+
 	var font := ThemeDB.fallback_font
 	var width := font.get_string_size(_floor_name, HORIZONTAL_ALIGNMENT_LEFT, -1, NAME_FONT).x
 	var at := Vector2(MINI_RECT.end.x - width, NAME_BASELINE)

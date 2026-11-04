@@ -292,7 +292,17 @@ func record_floor_cleared(depth: int, path_id: String) -> void:
 	_store.save_progress(data)
 
 
+# Paths whose first-clear items have been announced, so each path's news plays once.
+func mark_item_paths_seen(ids: Array) -> void:
+	if ids.is_empty():
+		return
+	for id in ids:
+		data.item_paths_seen[str(id)] = true
+	_store.save_progress(data)
+
+
 # Departments whose opening has been announced, so each arrival line plays once.
+
 func mark_departments_seen(ids: Array) -> void:
 	if ids.is_empty():
 		return
@@ -319,6 +329,9 @@ func take_brewed_potion() -> PotionDef:
 func make_run() -> RunState:
 	var run := RunState.new(Content.upgrades(), data.upgrades, data.form_choices)
 	run.unlocked_items = data.items_unlocked
+	run.paths_cleared = data.paths_cleared
+	run.effects.set_combos(Content.combos())
+
 	run.perks = Mementos.perks(data)
 	run.apply_perks()
 	run.look = RunState.look_from(data.cosmetics_worn, CosmeticDef.all())

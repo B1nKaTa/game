@@ -66,6 +66,9 @@ func _ready() -> void:
 	_run = Progress.make_run()
 	# Before the first room is built, so every enemy of a cursed run is spawned tougher.
 	_run.cursed = Progress.take_cursed_run()
+	# Items pay and spend through here, so their Pension counts as the run's, as a coin's does.
+	_run.effects.ctx.pay_pension = _on_pension_earned
+	_run.effects.ctx.spend_pension = Progress.spend
 	var crafted := Progress.take_crafted_item()
 	if crafted != null:
 		_run.add_item(crafted)
@@ -112,6 +115,11 @@ func _ready() -> void:
 	_run.health.rescued.connect(_on_rescued)
 	player.bomb_requested.connect(_on_bomb_requested)
 	player.show_crosshair = true
+	var ctx := _run.effects.ctx
+	ctx.player = player
+	ctx.hud = _hud
+	ctx.feedback = _feedback
+	_run.effects.combo_formed.connect(_on_combo_formed)
 	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
 	add_child(player)
 	_feedback.watch_player(player)
@@ -121,6 +129,7 @@ func _ready() -> void:
 	_mini_map = _add_map_view(false)
 	_big_map = _add_map_view(true)
 	_big_map.opened_changed.connect(_on_big_map_changed)
+	_big_map.combo_names = _run.effects.combo_names()
 	_enter_room(_map.start_id)
 
 
@@ -219,6 +228,7 @@ func _choose_path(index: int) -> void:
 	_current_id = crossroads.id
 	_enter_room(map.start_id)
 	leaving.queue_free()
+	_run.effects.floor_start()
 
 
 func _on_big_map_changed(is_open: bool) -> void:
@@ -250,6 +260,8 @@ func _enter_room(target_id: int) -> void:
 	_follow_player()
 	if first_visit:
 		_tip_hat(_map.room(target_id))
+	_run.effects.ctx.room = _room_view
+	_run.effects.room_enter(_room_view)
 
 
 # The top hat memento: a pill on first walking into a boss room.
@@ -399,6 +411,15 @@ func _go_down() -> void:
 	_run.health.heal(landing_heal())
 	var healed := mini(landing_heal(), missing)
 	_hud.show_notice("You catch your breath. +%d pills" % healed if healed > 0 else "You catch your breath.")
+	# After the landing's own heal, so an item's landing rule has the last word.
+	_run.effects.floor_start()
+
+
+# A combo forms: its banner shows, and the paused map lists it from now on.
+func _on_combo_formed(combo: ComboDef) -> void:
+	_hud.show_combo(combo.display_name)
+	_big_map.combo_names = _run.effects.combo_names()
+
 
 
 # What a landing heals: LANDING_HEAL, and one more with the boarding pass.

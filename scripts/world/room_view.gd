@@ -83,7 +83,21 @@ var _tables: Array[ArcadeTable] = []
 var _dealer: Npc
 
 
+func room_type() -> String:
+	return _room.room_type if _room != null else ""
+
+
+# A small pickup an item lays in the room: a Slip, a Thermos, a small potion or a coin of amount.
+func drop_for_item(kind: String, at: Vector2, amount := 1) -> void:
+	var spot := clear_spot(at)
+	if kind == RoomRules.DROP_COIN:
+		_drop_coin(spot, amount)
+	else:
+		_drop_consumable(spot, kind)
+
+
 # The floor's palette, for anything a boss lays down in the room later, such as a wet patch.
+
 func room_palette() -> RoomPalette:
 	return _floor_def.room_palette() if _floor_def != null else null
 
@@ -172,6 +186,10 @@ static func is_passing_effect(child: Node) -> bool:
 	# The Last Resort Cruise
 	if CruiseProps.is_passing_effect(child):
 		return true
+	# The items' shared visuals
+	if ItemFx.is_passing_effect(child):
+		return true
+
 	return (child is Projectile or child is DeathBurst or child is Thermos or child is EnemyBlast
 		or child is SummonMark or child is GroundStrike or child is LightsOut or child is SteamJet
 		or child is Shockwave or child is FlameBurst or child is PipeRing or child is CollectionPlate
@@ -192,6 +210,7 @@ func place_bomb(at: Vector2) -> void:
 	thermos.radius = _run.stats.blast_radius
 	thermos.position = at
 	thermos.exploded.connect(bomb_exploded.emit)
+	thermos.exploded.connect(_run.effects.bomb.bind(at))
 	add_child(thermos)
 
 
@@ -645,7 +664,7 @@ func _on_enemy_defeated(enemy: Enemy) -> void:
 # source is a RunState.PENSION_* id, or "" for Pension that only the general rate touches.
 func _drop_coin(at: Vector2, base_amount: int, source := "") -> void:
 	var amount := _run.pension_amount(base_amount, source)
-	var coin := _add_pickup(at + Vector2(_rng.randf_range(-COIN_SCATTER, COIN_SCATTER), _rng.randf_range(-COIN_SCATTER, COIN_SCATTER)), "+%d" % amount, PENSION_COLOR, func(): pension_earned.emit(amount))
+	var coin := _add_pickup(at + Vector2(_rng.randf_range(-COIN_SCATTER, COIN_SCATTER), _rng.randf_range(-COIN_SCATTER, COIN_SCATTER)), "+%d" % amount, PENSION_COLOR, func(): _collect_pension(amount))
 	# A coin lying in a pocket only a bomb opens would fly out through the stones.
 	if not _room.layout.coin_can_fly_from(_cell_of(at)):
 		return
@@ -658,10 +677,10 @@ func _drop_coin(at: Vector2, base_amount: int, source := "") -> void:
 func _drop_consumable(at: Vector2, kind: String) -> void:
 	match kind:
 		RoomRules.DROP_KEY:
-			var slip := _add_pickup(at, RoomRules.KEY_NAME, KEY_COLOR, func(): _take_consumable(_run.add_key))
+			var slip := _add_pickup(at, RoomRules.KEY_NAME, KEY_COLOR, func(): _take_consumable(_run.add_key, RunEffects.SLIP))
 			slip.can_take = _run.can_add_key
 		RoomRules.DROP_BOMB:
-			var thermos := _add_pickup(at, RoomRules.BOMB_NAME, BOMB_COLOR, func(): _take_consumable(_run.add_bomb))
+			var thermos := _add_pickup(at, RoomRules.BOMB_NAME, BOMB_COLOR, func(): _take_consumable(_run.add_bomb, RunEffects.BOMB))
 			thermos.can_take = _run.can_add_bomb
 		RoomRules.DROP_POTION:
 			# It fills the potion slot, and waits on the floor while the slot is full.
@@ -670,9 +689,27 @@ func _drop_consumable(at: Vector2, kind: String) -> void:
 			potion.can_take = _run.can_take_potion
 
 
-func _take_consumable(add: Callable) -> void:
+# kind is the RunEffects pickup kind the items hear, or "" for one they do not.
+func _take_consumable(add: Callable, kind := "") -> void:
 	add.call()
+	if not kind.is_empty():
+		_run.effects.pickup(kind, 1)
 	consumable_taken.emit()
+
+
+# A coin's Pension, as the items change it (the Lucky Bingo Card's fifth coin pays five times).
+func _collect_pension(amount: int) -> void:
+	pension_earned.emit(_run.effects.pickup(RunEffects.PENSION, amount))
+
+
+# A heal of so many pills. The items hear it first, so a Pill Organizer can store one taken at full.
+func _take_heal(amount: int) -> void:
+	_run.health.heal(_run.effects.pickup(RunEffects.HEAL, amount))
+
+
+# Heals wait on the floor while he is at full health, unless an item wants them then.
+func _can_take_heal() -> bool:
+	return _run.health.pills < _run.health.max_pills or _run.effects.accepts_pickup(RunEffects.HEAL)
 
 
 func _add_pickup(at: Vector2, label: String, color: Color, on_take: Callable, needs_interact := false) -> Pickup:
@@ -694,8 +731,8 @@ func _create_rewards() -> void:
 	if not cells.is_empty():
 		_create_item_choice(cells)
 	for cell in _room.layout.cells_of("H"):
-		var heal := _add_pickup(RoomBackdrop.cell_center(cell), "Heal", HEAL_COLOR, func(): _run.health.heal(HEAL_AMOUNT))
-		heal.can_take = func(): return _run.health.pills < _run.health.max_pills
+		var heal := _add_pickup(RoomBackdrop.cell_center(cell), "Heal", HEAL_COLOR, func(): _take_heal(HEAL_AMOUNT))
+		heal.can_take = _can_take_heal
 	for cell in _room.layout.cells_of("T"):
 		_create_treasure(cell)
 		_pay_chest_condolences()
@@ -781,7 +818,7 @@ func arcade_pay(amount: int) -> void:
 # Three skulls: a free item from the run's usual pool, lying by the table. With nothing left to offer,
 # it pays what a shop would ask for one instead.
 func arcade_item_win(table: ArcadeTable) -> void:
-	var picked := RoomRules.pick_items(Content.items(), _run, 1, _rng)
+	var picked := RoomRules.pick_items(Content.items(), _run, 1, _rng, ItemRarity.ARCADE)
 	if picked.is_empty():
 		arcade_pay(ArcadeOdds.ITEM_VALUE)
 		return
@@ -812,7 +849,8 @@ func _create_vault_extras() -> void:
 
 
 func _create_shop() -> void:
-	var stock := ShopRules.stock(Content.items(), _run, _rng)
+	var stock := ShopRules.stock(Content.items(), _run, _rng, _floor_def.pension_mult)
+	_run.effects.shop_open(stock)
 	var cells := _room.layout.cells_of("S")
 	for i in stock.size():
 		_add_shop_entry(RoomBackdrop.cell_center(cells[i]), stock[i])
@@ -851,25 +889,28 @@ func _add_shop_entry(at: Vector2, entry: Dictionary) -> void:
 		ShopRules.KIND_ITEM:
 			var item: ItemDef = entry["item"]
 			label = item.display_name
+			color = ItemRarity.color_of(item.rarity)
 			give = func(): _run.add_item(item)
 			allowed = func(): return not _run.has_item(item.id)
 		ShopRules.KIND_HEAL:
 			label = "Heal"
 			color = HEAL_COLOR
-			give = func(): _run.health.heal(HEAL_AMOUNT)
-			allowed = func(): return _run.health.pills < _run.health.max_pills
+			give = func(): _take_heal(HEAL_AMOUNT)
+			allowed = _can_take_heal
 		ShopRules.KIND_KEY:
 			label = RoomRules.KEY_NAME
 			color = KEY_COLOR
-			give = func(): _take_consumable(_run.add_key)
+			give = func(): _take_consumable(_run.add_key, RunEffects.SLIP)
 			allowed = _run.can_add_key
 		ShopRules.KIND_BOMB:
 			label = RoomRules.BOMB_NAME
 			color = BOMB_COLOR
-			give = func(): _take_consumable(_run.add_bomb)
+			give = func(): _take_consumable(_run.add_bomb, RunEffects.BOMB)
 			allowed = _run.can_add_bomb
 	var pickup := _add_pickup(at, "%s: %d" % [label, price], color, func(): _buy(price, give), true)
 	pickup.prompt = SHOP_PROMPT
+	if entry["kind"] == ShopRules.KIND_ITEM:
+		_mark_item(pickup, entry["item"])
 	pickup.can_take = func(): return _bank.data.pension >= price and allowed.call()
 
 
@@ -886,7 +927,7 @@ func _on_deposit_wanted(amount: int) -> void:
 
 # Rewards last for this run only. Each tier's item lies on its own spot beside the station.
 func _award_plan_reward() -> void:
-	var picked := RoomRules.pick_items(Content.items(), _run, 1, _rng)
+	var picked := RoomRules.pick_items(Content.items(), _run, 1, _rng, ItemRarity.ITEM_ROOM)
 	if picked.is_empty():
 		_run.add_bomb()
 		notice.emit("Retirement Plan bonus: a free %s" % RoomRules.BOMB_NAME)
@@ -916,7 +957,7 @@ func _on_plan_blasted() -> void:
 
 func _add_free_item(at: Vector2, item: ItemDef) -> Pickup:
 	var pickup := _add_item_pickup(at, item)
-	pickup.set_label("Free: %s" % item.display_name, FREE_COLOR)
+	pickup.set_text("Free: %s" % item.display_name)
 	return pickup
 
 
@@ -925,7 +966,7 @@ func _add_free_item(at: Vector2, item: ItemDef) -> Pickup:
 func _drop_boss_choice(at: Vector2) -> void:
 	if not _choice_cells.is_empty():
 		return
-	var picked := RoomRules.pick_items(Content.items(), _run, BOSS_CHOICE_COUNT, _rng)
+	var picked := RoomRules.pick_items(Content.items(), _run, BOSS_CHOICE_COUNT, _rng, ItemRarity.BOSS)
 	var fell_at := _cell_of(at)
 	var wanted: Array[Vector2i] = []
 	for i in picked.size():
@@ -996,7 +1037,7 @@ func _open_locked(cell: Vector2i) -> void:
 func _open_urn(cell: Vector2i) -> void:
 	if not _spend_slips(ChestRules.slips_needed(ChestRules.URN)):
 		return
-	var picked := RoomRules.pick_items(Content.items(), _run, ChestRules.URN_CHOICES, _rng)
+	var picked := RoomRules.pick_items(Content.items(), _run, ChestRules.URN_CHOICES, _rng, ItemRarity.URN)
 	var wanted: Array[Vector2i] = []
 	for i in picked.size():
 		wanted.append(cell + URN_CHOICE_OFFSETS[i])
@@ -1047,7 +1088,7 @@ func _wake_mimic(at: Vector2) -> void:
 
 
 func _create_item_choice(cells: Array[Vector2i]) -> void:
-	var picked := RoomRules.pick_items(Content.items(), _run, cells.size(), _rng)
+	var picked := RoomRules.pick_items(Content.items(), _run, cells.size(), _rng, _item_source())
 	var choices: Array[Pickup] = []
 	for i in picked.size():
 		var item := picked[i]
@@ -1086,18 +1127,37 @@ func _take_recipe(item: ItemDef) -> void:
 func _create_treasure(cell: Vector2i) -> void:
 	if _rng.randf() < RoomRules.TREASURE_RECIPE_CHANCE and _drop_recipe(RoomBackdrop.cell_center(cell)):
 		return
-	var picked := RoomRules.pick_items(Content.items(), _run, 1, _rng)
+	var picked := RoomRules.pick_items(Content.items(), _run, 1, _rng, _item_source(true))
 	if picked.is_empty() or _rng.randf() < 0.5:
+
 		_drop_coin(RoomBackdrop.cell_center(cell), _floor_def.treasure_pension, RunState.PENSION_REWARD)
 		return
 	_add_item_pickup(RoomBackdrop.cell_center(cell), picked[0])
 
 
 # A left-behind item may be found again elsewhere before the player returns for it.
+# Its pedestal shows its rarity's colour, and its name that colour too, or purple with a skull when it
+# is cursed.
 func _add_item_pickup(at: Vector2, item: ItemDef) -> Pickup:
-	var pickup := _add_pickup(at, item.display_name, ITEM_COLOR, func(): _run.add_item(item), true)
+	var pickup := _add_pickup(at, item.display_name, ItemRarity.color_of(item.rarity), func(): _run.add_item(item), true)
 	pickup.can_take = func(): return not _run.has_item(item.id)
+	_mark_item(pickup, item)
 	return pickup
+
+
+func _mark_item(pickup: Pickup, item: ItemDef) -> void:
+	pickup.label_color = ItemRarity.name_color(item)
+	pickup.skull = item.cursed
+
+
+# Which rarity table this room's item rewards roll on: a vault's, a treasure room's, else an item
+# room's. A treasure chest anywhere rolls at least as a treasure room does.
+func _item_source(treasure := false) -> String:
+	if _room.room_type == RoomLayout.TYPE_VAULT:
+		return ItemRarity.VAULT
+	if treasure or _room.room_type == RoomLayout.TYPE_TREASURE:
+		return ItemRarity.TREASURE
+	return ItemRarity.ITEM_ROOM
 
 
 func _finish_room() -> void:
@@ -1111,6 +1171,8 @@ func _finish_room() -> void:
 	for coin in _coins:
 		if is_instance_valid(coin):
 			coin.fly()
+	if _had_enemies:
+		_run.effects.room_clear(self)
 	if _room.room_type in [RoomLayout.TYPE_COMBAT, RoomLayout.TYPE_MINI_BOSS, RoomLayout.TYPE_SIDE]:
 		pension_earned.emit(_run.pension_amount(_floor_def.clear_pension))
 	if _had_enemies and _room.room_type in [RoomLayout.TYPE_COMBAT, RoomLayout.TYPE_SIDE]:
