@@ -219,6 +219,13 @@ func decline_cursed_ticket() -> void:
 	_store.save_progress(data)
 
 
+func mark_ending_seen() -> void:
+	if data.ending_seen:
+		return
+	data.ending_seen = true
+	_store.save_progress(data)
+
+
 func read_letter(path_id: String) -> void:
 	if data.letters_read.has(path_id):
 		return

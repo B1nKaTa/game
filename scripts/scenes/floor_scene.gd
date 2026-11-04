@@ -54,6 +54,10 @@ var _card_panel_closed_frame := -1
 var _bon_voyage := ""
 # Pension the rooms of this run have paid, for the Golden Parachute on a death.
 var _run_earned := 0
+# Whether this run beat the Chairman for the first time, so the ending card shows before the Waiting
+# Room, and the card while it shows.
+var _ending_due := false
+var _ending_card: EndingCard
 
 
 func _ready() -> void:
@@ -422,7 +426,21 @@ func _end_run(message: String) -> void:
 	if _room_view != null:
 		_room_view.process_mode = Node.PROCESS_MODE_DISABLED
 	await get_tree().create_timer(MESSAGE_TIME).timeout
+	if _ending_due:
+		await _show_ending_card()
 	Game.return_to_waiting()
+
+
+# Saved as seen once it shows, so quitting on the card never shows it twice.
+func _show_ending_card() -> void:
+	_ending_card = EndingCard.new()
+	add_child(_ending_card)
+	Progress.mark_ending_seen()
+	await _ending_card.finished
+
+
+func debug_ending_card() -> EndingCard:
+	return _ending_card if is_instance_valid(_ending_card) else null
 
 
 func _on_boss_spawned(boss: Enemy) -> void:
@@ -437,6 +455,8 @@ func _on_boss_defeated(boss: Enemy) -> void:
 	if boss.is_summon or not boss.def.is_boss:
 		return
 	Progress.last_run["bosses"] = int(Progress.last_run.get("bosses", 0)) + 1
+	if EndingCard.is_due(boss.def.id, Progress.data.ending_seen):
+		_ending_due = true
 	var paid := Progress.record_boss_beaten(boss.def.id, boss.def == _floor_def.floor_boss)
 	if paid > 0:
 		_hud.show_notice("+%d Condolences" % paid)

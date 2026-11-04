@@ -126,6 +126,7 @@ func _run() -> void:
 	var pension_before_second: int = Progress.data.pension
 	await _clear_every_depth(LOCKED_DEEP_PATH)
 	_check(Progress.data.pension > pension_before_second, "the locked paths earn Pension too")
+	await _check_ending_card()
 	await _wait(2.5)
 	_expect_scene("WaitingRoom")
 	_check(Progress.data.floors_cleared == 2, "clearing the second first-floor path is counted too")
@@ -3018,3 +3019,20 @@ func _check_corner_slide(scene: Node) -> void:
 			_check(passed, "clipping a corner by %d px slides him round it" % overlap)
 		else:
 			_check(not passed, "a %d px overlap still blocks him" % overlap)
+
+
+# The second run ended on Head Office, whose Chairman fell for the first time, so the ending card
+# shows after the run's last message and before the Waiting Room, and a press closes it.
+func _check_ending_card() -> void:
+	var scene := get_tree().current_scene
+	await _wait(scene.MESSAGE_TIME + 0.4)
+	var card: EndingCard = scene.debug_ending_card() if scene.has_method("debug_ending_card") else null
+	_check(card != null, "beating the Chairman the first time shows the ending card")
+	_check(Progress.data.ending_seen, "the ending card is saved as seen")
+	if card == null:
+		return
+	_check(card.text() == EndingCard.TEXT, "the card says its words")
+	await _wait(EndingCard.MIN_TIME)
+	await _press("interact")
+	await _wait(0.3)
+	_check(not is_instance_valid(card), "a press closes the card and goes on to the Waiting Room")
