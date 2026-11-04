@@ -69,6 +69,7 @@ const MERCHANTS := [
 const STATIONS: Array[Dictionary] = [
 	{"id": "key_board", "department": LOBBY, "cell": Vector2i(20, 7), "title": "Key Settings", "prompt": "Key Settings", "label": "Keys", "size": Vector2(28, 36), "color": Color("6b4a2a")},
 	{"id": "crafter", "department": LOBBY, "cell": Vector2i(11, 7), "title": "Agnes, Afterlife Arts and Crafts", "prompt": "Craft", "art": "crafter", "color": Color("c98a3c")},
+	{"id": "forms_counter", "department": LOBBY, "cell": Vector2i(11, 3), "title": "Forms Counter. Refiling, Window 2", "prompt": "Refile", "label": "Forms", "size": Vector2(28, 36), "color": Color("7a6f5a")},
 	# The TrophyWall draws the frames on the top wall above it, so the station itself draws no board.
 	{"id": "trophy_wall", "department": LOBBY, "cell": Vector2i(20, 3), "title": "Trophy Wall", "prompt": "Look", "board": false},
 ]

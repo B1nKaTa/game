@@ -7,6 +7,7 @@ const FLOOR_DEF_PATH := "res://data/floors/waiting_room.tres"
 const KEY_BOARD := "key_board"
 const CRAFTER := "crafter"
 const TROPHY_WALL := "trophy_wall"
+const FORMS_COUNTER := "forms_counter"
 const MERCHANT_PROMPT := "Trade"
 const RUN_DOOR_ICON := ">"
 const NOW_SERVING_AT := Vector2(360, 24)
@@ -233,6 +234,10 @@ func _open_station(opened: WaitingStation) -> void:
 			var craft := CraftPanel.new()
 			craft.setup(opened.title)
 			_show_panel(craft)
+		FORMS_COUNTER:
+			var refile := RefilePanel.new()
+			refile.setup(opened.title)
+			_show_panel(refile)
 		TROPHY_WALL:
 			_show_lines(Mementos.wall_lines(Progress.data))
 
