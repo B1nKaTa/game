@@ -52,6 +52,18 @@ func test_a_conga_row_hits_only_where_it_has_danced() -> void:
 	lane.free()
 
 
+# The first screenshots showed one file of small dancers down the middle of a 40 px lane that hurts
+# across its whole width.
+func test_the_dancers_fill_the_width_of_the_lane_they_hurt() -> void:
+	for width: float in [FuneralDirectorBehavior.LANE_WIDTH, 30.0, 60.0]:
+		var across := DeckLane.dancer_offsets(width)
+		assert_true(across.size() >= 1, str(width))
+		assert_true(across[0] - DeckLane.DANCER_RADIUS <= -width / 2.0 + 6.0, "the near edge at %s" % width)
+		assert_true(across[-1] + DeckLane.DANCER_RADIUS >= width / 2.0 - 6.0, "the far edge at %s" % width)
+		for x in across:
+			assert_true(absf(x) + DeckLane.DANCER_RADIUS <= width / 2.0 + 0.01, "inside the lane at %s" % width)
+
+
 func test_the_conga_leaves_time_to_reach_the_gap() -> void:
 	var walk := PlayerStats.BASE_SPEED * (Director.CONGA_WINDUP + Director.CONGA_WARNING - 0.3)
 	assert_true(walk > FuneralDirectorBehavior.LANE_WIDTH * 2.0, "%f" % walk)
