@@ -168,6 +168,9 @@ func clear_passing_effects() -> void:
 # Anything an attack or a blast leaves in the room for a while. A new one must be added here, or it
 # freezes mid-way in a stored room and goes on when Grandpa comes back.
 static func is_passing_effect(child: Node) -> bool:
+	# The Last Resort Cruise
+	if CruiseProps.is_passing_effect(child):
+		return true
 	return (child is Projectile or child is DeathBurst or child is Thermos or child is EnemyBlast
 		or child is SummonMark or child is GroundStrike or child is LightsOut or child is SteamJet
 		or child is Shockwave or child is FlameBurst or child is PipeRing or child is CollectionPlate
@@ -453,6 +456,8 @@ func _create_props(palette: RoomPalette) -> void:
 			strip.setup(Vector2(RoomLayout.strip_direction(symbol)), layout.strips_reverse)
 			strip.position = RoomBackdrop.cell_center(cell)
 			add_child(strip)
+	# The Last Resort Cruise: its deck props and, in a room that rolls, the rolling deck.
+	CruiseProps.build(self, layout, palette)
 
 
 func _place_prop(prop: BreakableBlock, cell: Vector2i) -> void:

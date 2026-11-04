@@ -276,6 +276,8 @@ func _physics_process(delta: float) -> void:
 		velocity += _push
 	if rides_strips() and is_inside_tree():
 		velocity += ConveyorStrip.carry_at(get_tree(), global_position)
+	if slides_with_roll() and is_inside_tree():
+		velocity += ShipDeck.slide_at(get_tree(), global_position)
 	_knockback = _knockback.lerp(Vector2.ZERO, minf(KNOCKBACK_DECAY * delta, 1.0))
 	move_and_slide()
 	if def.ignores_walls or submerged:
@@ -349,6 +351,11 @@ func is_pushed() -> bool:
 # and something bolted to a wall never moves.
 func rides_strips() -> bool:
 	return def != null and not def.ignores_walls and not def.wall_mounted and not submerged and not _holding_lane
+
+
+# A rolling deck slides whatever walks on it, as a strip carries it, but a boss keeps its footing.
+func slides_with_roll() -> bool:
+	return rides_strips() and not def.is_boss
 
 
 # A dash or charge calls this each frame it runs, so a strip never carries it off the lane it warned.

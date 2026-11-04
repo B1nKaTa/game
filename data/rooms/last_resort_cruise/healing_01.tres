@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="RoomLayout" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/room_layout.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+room_type = "healing"
+rows = PackedStringArray(
+"####################",
+"#..................#",
+"#...b.b......b.b...#",
+"#..................#",
+"#....111111111.....#",
+"#.........H........#",
+"#....111111111.....#",
+"#..................#",
+"#...b.b......b.b...#",
+"#..................#",
+"####################"
+)
+ship_rolls = true

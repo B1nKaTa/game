@@ -70,7 +70,8 @@ const SYMBOL_CRACK := "k"
 const SYMBOL_TORCH := "t"
 const SYMBOL_LANTERN := "l"
 const SYMBOL_STUMP := "m"
-const DECOR_SYMBOLS := "gnwuktlmfprce"
+# The Last Resort Cruise adds its buffet tray, which blocks nothing.
+const DECOR_SYMBOLS := "gnwuktlmfprce" + "0"
 # A freshly mopped cell: everyone walks on it, Grandpa and chargers slide. Kept well clear of doors.
 const SYMBOL_WET := "W"
 const WET_DOOR_CLEARANCE := 2
@@ -103,13 +104,20 @@ const SYMBOL_GUMBALL := "z"
 const SYMBOL_PLANTER := "d"
 const SYMBOL_FOUNTAIN := "q"
 const SYMBOL_SALE_SIGN := "e"
-const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc><^vazdqe"
+# The Last Resort Cruise. A deck chair breaks like a barrel and a lifeboat davit like a rock, a buffet
+# tray blocks nothing and breaks to anything, like grass, and the pool is never broken, like a hole.
+const SYMBOL_DECK_CHAIR := "b"
+const SYMBOL_BUFFET_TRAY := "0"
+const SYMBOL_POOL := "1"
+const SYMBOL_DAVIT := "2"
+# The Last Resort Cruise adds its four props at the end of each list below.
+const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc><^vazdqe" + "b012"
 # Nothing can walk through these, so nothing may be dropped or summoned on them.
-const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGojhazdq"
+const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGojhazdq" + "b12"
 # Routes may not need a hole or a wall, and may not need a bomb for a crate or a rock.
 const WALL_LIKE := "#lo"
-const WALLS := "#lVo"
-const WALLS_AND_BOMB_ONLY := "#lVXOAYKDMohdq"
+const WALLS := "#lVo" + "1"
+const WALLS_AND_BOMB_ONLY := "#lVXOAYKDMohdq" + "12"
 const MUST_REACH_WITHOUT_BREAKING := "EBIHSPG"
 # A vault lays this many labeled pickups out in the open, this many cells apart so names never overlap.
 const VAULT_EXTRAS := 3
@@ -148,6 +156,9 @@ const REQUIRED := {
 @export var rows: PackedStringArray = []
 # The room's escalator strips reverse every few seconds, after a chime. Old layouts have none.
 @export var strips_reverse: bool = false
+# The Last Resort Cruise: the room's deck rolls every few seconds, after a horn. It lays no tile, so it
+# has no symbol. Old layouts never roll.
+@export var ship_rolls: bool = false
 
 
 # The way a strip symbol runs, or zero for anything else.

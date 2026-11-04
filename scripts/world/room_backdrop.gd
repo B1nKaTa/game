@@ -5,6 +5,9 @@ const TILE := 32
 
 const VIEW_SIZE := Vector2(640, 360)
 const OVERDRAW_MARGIN := 16.0
+# The Last Resort Cruise's floor and wall patterns, numbered well clear of the others.
+const FLOOR_TEAK_DECK := 10
+const WALL_SHIP_RAIL := 10
 
 var _rows: PackedStringArray = []
 var _palette: RoomPalette
@@ -87,6 +90,13 @@ func _draw() -> void:
 					draw_rect(Rect2(tile.position + Vector2(0, TILE - 5), Vector2(TILE, 3)), _palette.wall_line)
 					if posmod(x, 3) == 1:
 						draw_rect(Rect2(tile.position + Vector2(TILE / 2.0 - 2, TILE - 6), Vector2(4, 4)), _palette.carpet_motif)
+				# The Last Resort Cruise: a ship's white rail, a top rail and a mid rail on posts.
+				if _palette.wall_pattern == WALL_SHIP_RAIL:
+					draw_rect(Rect2(tile.position + Vector2(0, 7), Vector2(TILE, 3)), _palette.wall_line)
+					draw_rect(Rect2(tile.position + Vector2(0, 18), Vector2(TILE, 2)), _palette.wall_line)
+					draw_line(tile.position + Vector2(0, 11), tile.position + Vector2(TILE, 11), _palette.brick_line, 1.0)
+					if posmod(x + y, 2) == 0:
+						draw_rect(Rect2(tile.position + Vector2(TILE / 2.0 - 1.5, 7), Vector2(3, 18)), _palette.wall_line)
 				continue
 			draw_rect(tile, _palette.floor_color(Vector2i(x, y), _seed))
 			# A patterned floor lays carpet on its middle tone, woven and seamless, and tiles the rest.
@@ -113,6 +123,17 @@ func _draw() -> void:
 				draw_rect(tile, _palette.grout, false, 1.0)
 				draw_rect(Rect2(tile.position + Vector2(3, 3), Vector2(9, 9)), _palette.carpet_motif)
 				draw_rect(Rect2(tile.position + Vector2(3, 3), Vector2(4, 4)), _palette.speckle)
+				continue
+			# The Last Resort Cruise: teak deck planks running across, with dark caulked seams and staggered
+			# butt joints. Only straight dark lines, so it never reads as a wet floor's bright streaks.
+			if _palette.floor_pattern == FLOOR_TEAK_DECK:
+				for plank in 4:
+					var seam_y := tile.position.y + plank * TILE / 4.0
+					draw_line(Vector2(tile.position.x, seam_y), Vector2(tile.end.x, seam_y), _palette.grout, 1.0)
+					var joint_x := tile.position.x + posmod(x * 3 + y + plank * 2, 4) * TILE / 4.0
+					if posmod(x + plank, 3) == 0:
+						draw_line(Vector2(joint_x, seam_y), Vector2(joint_x, seam_y + TILE / 4.0), _palette.grout, 1.0)
+					draw_line(Vector2(tile.position.x, seam_y + 1.0), Vector2(tile.end.x, seam_y + 1.0), _palette.carpet_motif, 1.0)
 				continue
 			draw_line(tile.position, tile.position + Vector2(TILE, 0), _palette.grout, 1.0)
 			draw_line(tile.position, tile.position + Vector2(0, TILE), _palette.grout, 1.0)
