@@ -108,7 +108,11 @@ func test_a_deeper_start_opens_both_paths_of_its_depth_with_every_upgrade_bought
 
 func test_the_floor_3_profile_is_as_it_was() -> void:
 	assert_eq(DevStart.clears_by_depth(), {1: 2, 2: 2, 3: 1})
-	assert_eq(", ".join(DevStart.paths_cleared()), "floor_1, cemetery, sunset_shores, furnace_works, funeral_parlour")
+	var expected := ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour"]
+	var cleared := DevStart.paths_cleared()
+	assert_eq(cleared.size(), expected.size())
+	for i in mini(cleared.size(), expected.size()):
+		assert_eq(cleared[i], expected[i])
 
 
 # The start depth rides on Progress for the run's scene and falls back to floor 3 when the run ends.
