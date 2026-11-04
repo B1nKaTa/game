@@ -13,6 +13,10 @@ const LETTERS: Array[Dictionary] = [
 	{"path": "furnace_works", "from": "The crematorium", "text": "Re: your booking. Postponed until further notice."},
 	{"path": "funeral_parlour", "from": "Your son", "text": "Dad, the service was lovely. Mum said you'd have hated it."},
 	{"path": "golden_years_mall", "from": "Your granddaughter", "text": "Grandpa, I walked your dog at the mall. He waited by the bench."},
+	{"path": "last_resort_cruise", "from": "Your travel agent", "text": "Your cruise deposit is non-refundable. So, it turns out, are you."},
+	{"path": "fairways_end", "from": "The golf club", "text": "Your locker has been cleared. Eleven years of tees and one sandwich."},
+	{"path": "terminal_zero", "from": "Your airline", "text": "We regret your flight was cancelled. Please accept 500 miles for your trouble."},
+	{"path": "head_office", "from": "Your old firm", "text": "Your retirement papers are finally filed. Effective last Tuesday. Well done."},
 ]
 
 
