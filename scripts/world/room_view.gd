@@ -175,7 +175,9 @@ static func is_passing_effect(child: Node) -> bool:
 		or child is SummonMark or child is GroundStrike or child is LightsOut or child is SteamJet
 		or child is Shockwave or child is FlameBurst or child is PipeRing or child is CollectionPlate
 		or child is ProcessionLane or child is SafeSpotMark or child is PerfumeCloud or child is WetSplash
-		or child is DroppedCoffin or child is PresentDrop or child is ClosingRing)
+		or child is DroppedCoffin or child is PresentDrop or child is ClosingRing
+		or child is TapeSpread or child is PaperTrail or child is WriteUpMark or child is LaneDrop or child is HoldMusic
+		or child is TakeoverTether)
 
 
 func place_bomb(at: Vector2) -> void:
@@ -458,6 +460,7 @@ func _create_props(palette: RoomPalette) -> void:
 			add_child(strip)
 	# The Last Resort Cruise: its deck props and, in a room that rolls, the rolling deck.
 	CruiseProps.build(self, layout, palette)
+	_create_office_props(layout, palette)
 
 
 func _place_prop(prop: BreakableBlock, cell: Vector2i) -> void:
@@ -1106,3 +1109,30 @@ func _finish_room() -> void:
 		_drop_consumable(_last_death_at, RoomRules.clear_drop(_rng.randf()))
 	if _room.room_type == RoomLayout.TYPE_FLOOR_BOSS:
 		floor_cleared.emit()
+
+
+# Head Office: red tape strung across lanes, each cell running the way its strand runs, water
+# coolers that break like barrels, cubicle walls that break like furniture and can hide a coin, and
+# in-trays that break to anything.
+func _create_office_props(layout: RoomLayout, palette: RoomPalette) -> void:
+	for cell in layout.cells_of(RoomLayout.SYMBOL_RED_TAPE):
+		var tape := RedTape.new()
+		tape.across = RedTape.runs_across(layout, cell)
+		tape.position = RoomBackdrop.cell_center(cell)
+		add_child(tape)
+	for cell in layout.cells_of(RoomLayout.SYMBOL_WATER_COOLER):
+		var cooler := WaterCooler.new()
+		cooler.palette = palette
+		_place_prop(cooler, cell)
+		cooler.broken.connect(_on_barrel_broken.bind(cell))
+	for cell in layout.cells_of(RoomLayout.SYMBOL_CUBICLE):
+		var partition := CubicleWall.new()
+		partition.palette = palette
+		partition.hides_coin = RoomRules.furniture_hides_coin(_prop_coin_roll())
+		_place_prop(partition, cell)
+		partition.broken.connect(_on_rock_broken.bind(partition.hides_coin, cell))
+	for cell in layout.cells_of(RoomLayout.SYMBOL_IN_TRAY):
+		var tray := InTray.new()
+		tray.palette = palette
+		_place_prop(tray, cell)
+		tray.broken.connect(_on_vase_broken.bind(cell))

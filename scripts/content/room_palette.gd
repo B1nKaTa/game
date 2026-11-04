@@ -111,10 +111,12 @@ extends Resource
 @export var fluorescent := Color(0.85, 0.95, 1.0)
 # 1 draws a small woven motif on the carpet patches of the floor, 2 lays iron grating on them, 3
 # polishes big shiny tiles with a glint across each, and 0 leaves the floor plain.
+# 4 lays Head Office carpet tiles, a seam round each and flecks in the pile.
 @export var floor_pattern := 0
 @export var carpet_motif := Color(1.0, 1.0, 1.0, 0.12)
 # 1 draws courses of brick on the walls, 2 upright wooden panels under a rail, 3 the slats of closed
 # shop shutters, 0 a single line.
+# 4 paints Head Office plaster over a darker dado, with a chair rail and a skirting board.
 @export var wall_pattern := 0
 @export var brick_line := Color(0.0, 0.0, 0.0, 0.3)
 # How much every torch and lantern's light wobbles, as a share of its strength. 0 keeps it steady.

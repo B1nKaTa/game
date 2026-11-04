@@ -58,6 +58,8 @@ var _push_left := 0.0
 # Whether the next fire hit that would land is shrugged off, with the coal shovel. Only a fire hit
 # that lands sets it, and only a shrugged one clears it.
 var _fire_shrug_next := false
+# Red tape holds him a moment when he walks into it. See RedTapeRule.
+var _tape := RedTapeRule.new()
 
 
 static func arrival_position(cell: Vector2i) -> Vector2:
@@ -158,6 +160,14 @@ func slow_factor() -> float:
 
 func is_slowed() -> bool:
 	return _slow.is_active()
+
+
+func is_dodging() -> bool:
+	return _dodge.is_active()
+
+
+func is_taped() -> bool:
+	return _tape.is_holding()
 
 
 func _physics_process(delta: float) -> void:
@@ -344,6 +354,9 @@ func _handle_movement() -> void:
 	if Input.is_action_just_pressed("dodge") and _dodge.try_start(run.stats.dodge_cooldown, DodgeTimer.DURATION * run.stats.dodge_length):
 		_dodge_direction = input.normalized() if input != Vector2.ZERO else _aim
 	on_wet = _feet != null and WetFloor.is_wet_at(get_tree() if is_inside_tree() else null, _feet.global_position)
+	# Walking into red tape holds him a moment, and a dodge cuts through it instead.
+	var on_tape := _feet != null and RedTape.touch(get_tree() if is_inside_tree() else null, _feet.global_position, _dodge.is_active())
+	var taped := _tape.step(on_tape, _dodge.is_active(), get_physics_process_delta_time())
 	if _dodge.is_active():
 		# A dodge goes where it is aimed, wet floor or not, and breaks free of any gust.
 		_push_left = 0.0
@@ -361,6 +374,8 @@ func _handle_movement() -> void:
 			velocity += ConveyorStrip.carry_at(get_tree(), _feet.global_position)
 			# A rolling deck slides him too. A dodge holds him where it is aimed instead.
 			velocity += ShipDeck.slide_at(get_tree(), _feet.global_position)
+		if taped:
+			velocity = Vector2.ZERO
 		if not _visual.is_playing_once():
 			_visual.play("walk" if input != Vector2.ZERO else "idle")
 	if _push_left > 0.0:
@@ -426,6 +441,8 @@ func _draw() -> void:
 		draw_arc(Vector2.ZERO, 22.0, -PI / 2.0, -PI / 2.0 + TAU * _charge.progress(), 24, Color("f4c542"), 2.0)
 	if _slow.is_active():
 		_draw_slowed()
+	if _tape.is_holding():
+		RedTape.draw_hold(self, FEET_OFFSET)
 
 
 # A pale blue ring at his feet and drowsy bubbles over his head while a sedative holds him.

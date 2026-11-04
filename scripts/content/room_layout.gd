@@ -70,8 +70,8 @@ const SYMBOL_CRACK := "k"
 const SYMBOL_TORCH := "t"
 const SYMBOL_LANTERN := "l"
 const SYMBOL_STUMP := "m"
-# The Last Resort Cruise adds its buffet tray, which blocks nothing.
-const DECOR_SYMBOLS := "gnwuktlmfprce" + "0"
+# The Last Resort Cruise adds its buffet tray and Head Office its in-tray, which block nothing.
+const DECOR_SYMBOLS := "gnwuktlmfprce" + "0" + "y"
 # A freshly mopped cell: everyone walks on it, Grandpa and chargers slide. Kept well clear of doors.
 const SYMBOL_WET := "W"
 const WET_DOOR_CLEARANCE := 2
@@ -110,14 +110,24 @@ const SYMBOL_DECK_CHAIR := "b"
 const SYMBOL_BUFFET_TRAY := "0"
 const SYMBOL_POOL := "1"
 const SYMBOL_DAVIT := "2"
-# The Last Resort Cruise adds its four props at the end of each list below.
-const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc><^vazdqe" + "b012"
+# Head Office: red tape strung across a lane. Walkable and never harmful, but walking into it holds
+# Grandpa a moment and a dodge cuts it (RedTapeRule). Kept well clear of doors, so nobody is held
+# in a doorway.
+const SYMBOL_RED_TAPE := "x"
+const RED_TAPE_DOOR_CLEARANCE := 2
+# Head Office stock. A water cooler breaks like a barrel, a cubicle wall like a rock, and an in-tray
+# blocks nothing and breaks to anything, like grass.
+const SYMBOL_WATER_COOLER := "9"
+const SYMBOL_CUBICLE := "N"
+const SYMBOL_IN_TRAY := "y"
+# The Last Resort Cruise and Head Office add their props at the end of each list below.
+const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc><^vazdqe" + "b012" + "x9Ny"
 # Nothing can walk through these, so nothing may be dropped or summoned on them.
-const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGojhazdq" + "b12"
+const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGojhazdq" + "b12" + "9N"
 # Routes may not need a hole or a wall, and may not need a bomb for a crate or a rock.
 const WALL_LIKE := "#lo"
 const WALLS := "#lVo" + "1"
-const WALLS_AND_BOMB_ONLY := "#lVXOAYKDMohdq" + "12"
+const WALLS_AND_BOMB_ONLY := "#lVXOAYKDMohdq" + "12" + "N"
 const MUST_REACH_WITHOUT_BREAKING := "EBIHSPG"
 # A vault lays this many labeled pickups out in the open, this many cells apart so names never overlap.
 const VAULT_EXTRAS := 3
@@ -229,6 +239,8 @@ func validate() -> PackedStringArray:
 				errors.append("vent at %s is within %d cells of a door" % [str(cell), VENT_DOOR_CLEARANCE])
 			if STRIP_SYMBOLS.contains(symbol) and _within_of_a_door(cell, STRIP_DOOR_CLEARANCE):
 				errors.append("strip at %s is within %d cells of a door" % [str(cell), STRIP_DOOR_CLEARANCE])
+			if symbol == SYMBOL_RED_TAPE and _within_of_a_door(cell, RED_TAPE_DOOR_CLEARANCE):
+				errors.append("red tape at %s is within %d cells of a door" % [str(cell), RED_TAPE_DOOR_CLEARANCE])
 	for side in SIDES:
 		if not open.has(door_cell(side)):
 			errors.append("needs a bomb to reach the door at %s" % str(door_cell(side)))

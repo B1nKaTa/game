@@ -10,6 +10,8 @@ const FLOORS: Array[String] = [
 	"res://data/floors/golden_years_mall.tres",
 	# The Last Resort Cruise
 	"res://data/floors/last_resort_cruise.tres",
+	# Head Office
+	"res://data/floors/head_office.tres",
 ]
 
 

@@ -8,6 +8,9 @@ const OVERDRAW_MARGIN := 16.0
 # The Last Resort Cruise's floor and wall patterns, numbered well clear of the others.
 const FLOOR_TEAK_DECK := 10
 const WALL_SHIP_RAIL := 10
+# Head Office: carpet tiles and plaster over a dado.
+const FLOOR_OFFICE_CARPET := 12
+const WALL_OFFICE_PLASTER := 12
 
 var _rows: PackedStringArray = []
 var _palette: RoomPalette
@@ -97,6 +100,12 @@ func _draw() -> void:
 					draw_line(tile.position + Vector2(0, 11), tile.position + Vector2(TILE, 11), _palette.brick_line, 1.0)
 					if posmod(x + y, 2) == 0:
 						draw_rect(Rect2(tile.position + Vector2(TILE / 2.0 - 1.5, 7), Vector2(3, 18)), _palette.wall_line)
+				# Head Office walls: painted plaster over a darker dado, a chair rail between them and a
+				# skirting board at the foot. Nothing upright, so it never reads as wood panelling.
+				if _palette.wall_pattern == WALL_OFFICE_PLASTER:
+					draw_rect(Rect2(tile.position + Vector2(0, TILE * 0.55), Vector2(TILE, TILE * 0.45)), _palette.brick_line)
+					draw_rect(Rect2(tile.position + Vector2(0, TILE * 0.5), Vector2(TILE, 2)), _palette.wall_line)
+					draw_rect(Rect2(tile.position + Vector2(0, TILE - 3), Vector2(TILE, 3)), _palette.wall_line)
 				continue
 			draw_rect(tile, _palette.floor_color(Vector2i(x, y), _seed))
 			# A patterned floor lays carpet on its middle tone, woven and seamless, and tiles the rest.
@@ -134,6 +143,13 @@ func _draw() -> void:
 					if posmod(x + plank, 3) == 0:
 						draw_line(Vector2(joint_x, seam_y), Vector2(joint_x, seam_y + TILE / 4.0), _palette.grout, 1.0)
 					draw_line(Vector2(tile.position.x, seam_y + 1.0), Vector2(tile.end.x, seam_y + 1.0), _palette.carpet_motif, 1.0)
+			# Head Office carpet tiles: a seam round each tile and a scatter of dark flecks in the pile.
+			# Only dots and a square edge, never a stripe or a diagonal, so red tape always stands out.
+			if _palette.floor_pattern == FLOOR_OFFICE_CARPET:
+				draw_rect(tile.grow(-0.5), _palette.grout, false, 1.0)
+				for fleck in 6:
+					var fleck_at := Vector2(RoomDecor.noise(Vector2i(x * 7 + fleck, y), _seed + 11), RoomDecor.noise(Vector2i(x, y * 7 + fleck), _seed + 13))
+					draw_rect(Rect2(tile.position + Vector2(3, 3) + fleck_at * (TILE - 8.0), Vector2(2, 2)), _palette.carpet_motif)
 				continue
 			draw_line(tile.position, tile.position + Vector2(TILE, 0), _palette.grout, 1.0)
 			draw_line(tile.position, tile.position + Vector2(0, TILE), _palette.grout, 1.0)

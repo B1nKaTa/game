@@ -278,7 +278,7 @@ func test_a_lunchbox_opens_for_free() -> void:
 
 func test_shipped_rooms_still_hold_chest_cells() -> void:
 	var chests := 0
-	for dir in ["res://data/rooms/floor_1/", "res://data/rooms/cemetery/", "res://data/rooms/sunset_shores/", "res://data/rooms/furnace_works/", "res://data/rooms/funeral_parlour/", "res://data/rooms/golden_years_mall/"]:
+	for dir in ["res://data/rooms/floor_1/", "res://data/rooms/cemetery/", "res://data/rooms/sunset_shores/", "res://data/rooms/furnace_works/", "res://data/rooms/funeral_parlour/", "res://data/rooms/golden_years_mall/", "res://data/rooms/head_office/"]:
 		for layout in RoomCatalog.load_valid(dir):
 			chests += layout.cells_of("C").size()
 	# The Last Resort Cruise

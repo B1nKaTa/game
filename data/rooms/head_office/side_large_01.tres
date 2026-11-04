@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="RoomLayout" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/room_layout.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+room_type = "side"
+rows = PackedStringArray(
+"##############################",
+"#............................#",
+"#...NNNNNNN........NNNNNNN...#",
+"#...N.....N........N.....N...#",
+"#...N..E..N........N..y..N...#",
+"#...N.....N........N.....N...#",
+"#...NNN.NNN........NNN.NNN...#",
+"#............................#",
+"#..............T.............#",
+"#............................#",
+"#...NNN.NNN........NNN.NNN...#",
+"#...N.....N........N.....N...#",
+"#...N..y..N........N..E..N...#",
+"#...N.....N........N.....N...#",
+"#...NNNNNNN........NNNNNNN...#",
+"#............................#",
+"##############################"
+)

@@ -66,6 +66,17 @@ const SANTA_RED := Color("c4161c")
 const SANTA_WHITE := Color("fbfbff")
 const SANTA_BELT := Color("15131a")
 const ELF_HAT := Color("1f7a34")
+# Head Office: ties, a shredder's feed slot, a clipboard, a headset, and a chairman's chain of office.
+const OFFICE_TIE := Color("c8202c")
+const OFFICE_COLLAR := Color("f4f1e6")
+const SHREDDER_SLOT := Color("15131a")
+const SHREDDER_TEETH := Color("c9cdd6")
+const CLIPBOARD := Color("a8692f")
+const CLIPBOARD_PAPER := Color("fbf7ef")
+const HEADSET := Color("2a2426")
+const HEADSET_MIC := Color("6fd6ff")
+const CHAIN_GOLD := Color("e8c04a")
+const PINSTRIPE := Color(1.0, 1.0, 1.0, 0.35)
 
 var _def: EnemyDef
 var _facing := Vector2.RIGHT
@@ -230,6 +241,43 @@ func _draw() -> void:
 		# The Last Resort Cruise, drawn by CruiseMarks.
 		"tray", "cue", "sunhat", "megaphone", "captain_hat":
 			CruiseMarks.draw_mark(self, _def.mark, half)
+		"tie":
+			# A white collar and a red tie, the same on all three.
+			draw_rect(Rect2(-4.0, -half.y + 5.0, 8.0, 3.0), OFFICE_COLLAR)
+			draw_colored_polygon(PackedVector2Array([Vector2(-1.5, -half.y + 7.0), Vector2(1.5, -half.y + 7.0), Vector2(2.5, 3.0), Vector2(0.0, 6.0), Vector2(-2.5, 3.0)]), OFFICE_TIE)
+		"shredder":
+			# A feed slot across the top with a row of cutting teeth under it.
+			draw_rect(Rect2(-half.x + 2.0, -half.y + 3.0, half.x * 2.0 - 4.0, 4.0), SHREDDER_SLOT)
+			for i in 5:
+				var tooth_x := -half.x + 4.0 + i * (half.x * 2.0 - 8.0) / 4.0
+				draw_line(Vector2(tooth_x, -half.y + 7.0), Vector2(tooth_x, -half.y + 10.0), SHREDDER_TEETH, 1.0)
+		"clipboard":
+			# A clipboard held out to one side, and a lanyard.
+			draw_rect(Rect2(half.x - 2.0, -5.0, 8.0, 11.0), CLIPBOARD)
+			draw_rect(Rect2(half.x - 1.0, -3.0, 6.0, 8.0), CLIPBOARD_PAPER)
+			draw_rect(Rect2(half.x, -6.0, 4.0, 2.0), Color.BLACK)
+			draw_line(Vector2(-3.0, -half.y + 8.0), Vector2(0.0, 2.0), LANYARD_COLOR, 1.0)
+			draw_line(Vector2(3.0, -half.y + 8.0), Vector2(0.0, 2.0), LANYARD_COLOR, 1.0)
+		"headset":
+			# A headset over the hair with a microphone at the cheek, and pearls.
+			draw_arc(Vector2(0.0, -half.y + 6.0), half.x * 0.7, PI, TAU, 12, HEADSET, 2.0)
+			draw_circle(Vector2(-half.x * 0.7, -half.y + 6.0), 3.0, HEADSET)
+			draw_line(Vector2(-half.x * 0.7, -half.y + 6.0), Vector2(-half.x * 0.2, -half.y * 0.4), HEADSET, 1.0)
+			draw_circle(Vector2(-half.x * 0.2, -half.y * 0.4), 1.5, HEADSET_MIC)
+			for i in 5:
+				draw_circle(Vector2(-half.x * 0.4 + i * half.x * 0.2, -half.y * 0.2 + absf(i - 2.0) * -1.5), 1.5, PEARL)
+		"chairman":
+			# Pinstripes down the suit and a gold chain of office across the chest.
+			for i in 5:
+				var stripe_x := -half.x * 0.8 + i * half.x * 0.4
+				draw_line(Vector2(stripe_x, -half.y * 0.3), Vector2(stripe_x, half.y - 2.0), PINSTRIPE, 1.0)
+			var chain := PackedVector2Array()
+			for i in 9:
+				var along := i / 8.0
+				chain.append(Vector2(-half.x * 0.6 + along * half.x * 1.2, -half.y * 0.35 + sin(along * PI) * 9.0))
+			draw_polyline(chain, CHAIN_GOLD, 2.0)
+			draw_circle(Vector2(0.0, -half.y * 0.35 + 10.0), 3.5, CHAIN_GOLD)
+			draw_rect(Rect2(-3.0, -half.y + 4.0, 6.0, 3.0), OFFICE_COLLAR)
 	if _def.shield_half_angle > 0.0:
 		var reach := maxf(half.x, half.y) + SHIELD_GAP
 		var half_arc := deg_to_rad(_def.shield_half_angle)

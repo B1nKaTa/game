@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/enemy_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/actors/behaviors/hr_rep_behavior.gd" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "hr_representative"
+display_name = "HR Representative"
+max_hp = 30.0
+speed = 66.0
+pension_drop = 1
+body_size = Vector2(18, 24)
+color = Color(0.92, 0.72, 0.3, 1)
+behavior_script = ExtResource("2")
+max_per_room = 3
+mark = "clipboard"

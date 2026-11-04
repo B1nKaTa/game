@@ -161,3 +161,18 @@ func _draw_placeholder(kind: String, variant: int, at: Vector2) -> void:
 			draw_rect(Rect2(-12, -4, 24, 8), Color(p.fluorescent, 0.16))
 			draw_rect(Rect2(-9, -2, 18, 4), Color(p.fluorescent, 0.22))
 			draw_line(Vector2(-10, 0), Vector2(10, 0), Color(1, 1, 1, 0.3), 1.0)
+		RoomDecor.FICUS:
+			# A round pot and a bushy crown of small leaves, seen from above.
+			draw_circle(Vector2(0, 6), 6.0, p.plant_pot)
+			draw_arc(Vector2(0, 6), 6.0, 0.0, TAU, 16, Color.BLACK, 1.0)
+			for leaf in 7:
+				var leaf_at := Vector2.from_angle(TAU * leaf / 7.0 + variant) * 6.0 + Vector2(0, -2)
+				draw_circle(leaf_at, 4.0, p.plant_leaf.darkened(0.1 * (leaf % 3)))
+			draw_circle(Vector2(0, -2), 4.0, p.plant_leaf.lightened(0.15))
+		RoomDecor.OFFICE_CHAIR:
+			# A swivel chair from above: five feet round a seat with a back.
+			draw_set_transform(at, variant * PI / 2.0)
+			for foot in 5:
+				draw_line(Vector2.ZERO, Vector2.from_angle(TAU * foot / 5.0) * 9.0, Color("3a3d45"), 2.0)
+			draw_circle(Vector2.ZERO, 6.0, Color("2a2c33"))
+			draw_rect(Rect2(-6, -9, 12, 3), Color("2a2c33"))
