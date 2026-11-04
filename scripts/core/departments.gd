@@ -79,8 +79,9 @@ const STATIONS: Array[Dictionary] = [
 	{"id": "ticket_machine", "department": LOBBY, "cell": Vector2i(23, 3), "title": "Take a Number", "prompt": "Ticket", "size": Vector2(20, 28), "color": Color("c8323a"), "look": "ticket_machine"},
 	{"id": "noticeboard", "department": LOBBY, "cell": Vector2i(23, 7), "title": "Noticeboard. Letters from the Living", "prompt": "Read", "size": Vector2(34, 24), "color": Color("a8794a"), "look": "noticeboard"},
 	# A PosterBoard draws the cork board and its posters, so the station draws none. It stands off the
-	# middle column, since (10, 2) would be beside the cell a north door would use.
-	{"id": "bounty_board", "department": BOUNTY_OFFICE, "cell": Vector2i(6, 2), "title": "Bounty Office. Overdue Accounts", "prompt": "Wanted posters", "board": false},
+	# middle column, since (10, 2) would be beside the cell a north door would use. Its prompt sits
+	# higher than a station's, over the board's WANTED title ("prompt_offset").
+	{"id": "bounty_board", "department": BOUNTY_OFFICE, "cell": Vector2i(6, 2), "title": "Bounty Office. Overdue Accounts", "prompt": "Wanted posters", "board": false, "prompt_offset": Vector2(-30, -32)},
 	{"id": "item_rack", "department": TRAINING_YARD, "cell": Vector2i(15, 3), "title": "Item Rack", "prompt": "Try items", "label": "Rack", "size": Vector2(36, 28), "color": Color("6a5a48")},
 	# No named clerk keeps the Decor Office. Looks are bought and worn at this one counter.
 	{"id": "decor_counter", "department": DECOR_OFFICE, "cell": Vector2i(10, 4), "title": "Decor Office. Sympathy in Every Shade", "prompt": "Browse", "label": "Decor", "size": Vector2(44, 24), "color": Color("8a6a8a")},

@@ -73,7 +73,7 @@ func _draw() -> void:
 			draw_string_outline(ThemeDB.fallback_font, at, badge, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, 3, Color.BLACK)
 			draw_string(ThemeDB.fallback_font, at, badge, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, BADGE_COLOR)
 	if highlighted:
-		draw_string(ThemeDB.fallback_font, PROMPT_OFFSET, KeyBindings.with_key("interact", prompt), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, PROMPT_COLOR)
+		draw_string(ThemeDB.fallback_font, entry.get("prompt_offset", PROMPT_OFFSET), KeyBindings.with_key("interact", prompt), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, PROMPT_COLOR)
 
 
 # The few boards with more to them than a coloured box. Placeholders, drawn in code.
