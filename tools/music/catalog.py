@@ -1,0 +1,61 @@
+"""Every song the game plays, by the id the game asks for, with what the checks need to know.
+
+The ids match the WAV names the game loads from res://audio/music/<id>.wav (see MusicRules).
+`quiet` lists bar ranges that are meant to be hushed, so the loudness check skips them.
+"""
+import songs, places, fights, endings
+
+SONG_INFO = {
+    "take_a_number": dict(fn=places.take_a_number, key="Bb major", bpm=116, meter=4, bars=24,
+                          about="Title: a queue-shuffle march, tuba and snare, chip lead on the hold theme's opening, ticket-machine dings."),
+    "please_hold": dict(fn=songs.please_hold, key="F major", bpm=104, meter=4, bars=24,
+                        about="Waiting Room and opening: the main theme, swinging bossa hold music with a trumpet answering."),
+    "landing": dict(fn=places.landing, key="Ab major", bpm=72, meter=4, bars=16,
+                    about="Landing and Crossroads: a music box and vibes over soft strings, a breather."),
+    "the_arcade": dict(fn=places.the_arcade, key="C major", bpm=144, meter=4, bars=32,
+                       about="Arcade and Back Room: bouncy casino chiptune with tumbling coins."),
+    "records_basement": dict(fn=places.records_basement, key="Eb major", bpm=132, meter=4, bars=32,
+                             about="Dusty office swing: clarinet, muted trumpet, Charleston piano, crackle and a typewriter."),
+    "unkempt_cemetery": dict(fn=places.unkempt_cemetery, key="D minor", bpm=156, meter=3, bars=48,
+                             about="Spooky waltz: theremin over bones, a music box answering, the wind."),
+    "sunset_shores": dict(fn=places.sunset_shores, key="G major", bpm=96, meter=4, bars=24,
+                          about="Easy-listening organ foxtrot with guitar and flute, and the bingo cage."),
+    "furnace_works": dict(fn=places.furnace_works, key="C minor", bpm=120, meter=4, bars=28,
+                          about="Industrial brass over a machine riff, clanks, anvils and steam."),
+    "funeral_parlour": dict(fn=places.funeral_parlour, key="Bb minor", bpm=104, meter=4, bars=28,
+                            about="Pipe organ funeral march that slides into a swinging minor blues and back."),
+    "golden_years_mall": dict(fn=places.golden_years_mall, key="D major (last A in Eb)", bpm=100, meter=4, bars=24,
+                              about="Muzak: flute and electric piano, vibes, and the half-step lift."),
+    "last_resort_cruise": dict(fn=places.last_resort_cruise, key="A major", bpm=120, meter=4, bars=28,
+                               about="Lounge band cha-cha: muted trumpet, vibes, nylon guitar, congas, the ship's horn."),
+    "fairways_end": dict(fn=places.fairways_end, key="Db major", bpm=80, meter=4, bars=20,
+                         about="Polite dusk piano with crickets and a small round of applause."),
+    "terminal_zero": dict(fn=places.terminal_zero, key="E major", bpm=116, meter=4, bars=32,
+                          about="Airport-lounge synth, arpeggio and pad, PA chimes on the hold theme, the departures board."),
+    "head_office": dict(fn=places.head_office, key="C major / C minor", bpm=100, meter=4, bars=28, quiet=[(24, 26)],
+                        about="Corporate hold music (the hold theme in C) that turns minor, then choir and pipe organ, then snaps back."),
+    "mini_boss": dict(fn=fights.mini_boss, key="E minor", bpm=152, meter=4, bars=32,
+                      about="Shared mini boss: chip lead, galloping saw bass, a soft hold-theme break."),
+    "boss_depth_1": dict(fn=fights.boss_depth_1, key="D minor", bpm=160, meter=4, bars=32,
+                         about="Depth 1 boss: the hold theme straight in minor, 8-bit, octave-jumping triangle bass."),
+    "boss_depth_2": dict(fn=fights.boss_depth_2, key="G minor", bpm=150, meter=4, bars=32,
+                         about="Depth 2 boss: machine riff, organ, the hold theme stretched long on brass."),
+    "final_arrangements": dict(fn=songs.final_arrangements, key="F minor", bpm=168, meter=4, bars=32, mono=True,
+                               about="Depth 3 boss (Mortimer): the hold theme in minor with church organ (first take, restored)."),
+    "final_arrangements_alt": dict(fn=songs.final_arrangements_alt, key="F minor", bpm=164, meter=4, bars=36, quiet=[(20, 24)],
+                                   about="The second take of Final Arrangements, kept but not played."),
+    "boss_depth_4": dict(fn=fights.boss_depth_4, key="A minor", bpm=168, meter=4, bars=36,
+                         about="Depth 4 boss: a triplet tarantella, brass and marimba, the hold theme in triplets."),
+    "boss_depth_5": dict(fn=fights.boss_depth_5, key="E minor", bpm=148, meter=4, bars=36,
+                         about="Depth 5 boss (Augustine): the hold theme upside down, in canon, with choir and chimes."),
+    "the_chairman": dict(fn=fights.the_chairman, key="F major, F minor, F# minor", bpm=168, meter=4, bars=48, quiet=[(44, 48)],
+                         about="Final boss: the hold music itself, broken; minor theme, choir and pipe organ, collapse, restart."),
+    "ending": dict(fn=endings.ending, key="F major", bpm=84, meter=4, bars=20,
+                   about="Ending: the hold theme on piano, strings turning bittersweet, a grumbling bassoon, a music box."),
+    "eternal_feud": dict(fn=endings.eternal_feud, key="F major", bpm=120, meter=4, bars=28,
+                         about="True ending: Harold's hold theme against Gerald's grumpy bassoon, together and arguing."),
+    "game_over": dict(fn=endings.game_over, key="F major", bpm=96, meter=6, bars=1, loop=False,
+                      about="Death sting: the hold theme deflating, a tuba sigh and a bell. Plays once."),
+}
+
+SONGS = {name: info["fn"] for name, info in SONG_INFO.items()}
