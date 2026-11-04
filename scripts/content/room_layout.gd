@@ -103,7 +103,11 @@ const SYMBOL_GUMBALL := "z"
 const SYMBOL_PLANTER := "d"
 const SYMBOL_FOUNTAIN := "q"
 const SYMBOL_SALE_SIGN := "e"
-const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc><^vazdqe"
+# Fairway's End. Sand bunkers lie in the fairway: walkable, never harmful, slow to wade through, and kept
+# well clear of doors. See SandRule.
+const SYMBOL_SAND := "s"
+const SAND_DOOR_CLEARANCE := 2
+const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc><^vazdqes"
 # Nothing can walk through these, so nothing may be dropped or summoned on them.
 const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGojhazdq"
 # Routes may not need a hole or a wall, and may not need a bomb for a crate or a rock.
@@ -218,6 +222,8 @@ func validate() -> PackedStringArray:
 				errors.append("vent at %s is within %d cells of a door" % [str(cell), VENT_DOOR_CLEARANCE])
 			if STRIP_SYMBOLS.contains(symbol) and _within_of_a_door(cell, STRIP_DOOR_CLEARANCE):
 				errors.append("strip at %s is within %d cells of a door" % [str(cell), STRIP_DOOR_CLEARANCE])
+			if symbol == SYMBOL_SAND and _within_of_a_door(cell, SAND_DOOR_CLEARANCE):
+				errors.append("sand at %s is within %d cells of a door" % [str(cell), SAND_DOOR_CLEARANCE])
 	for side in SIDES:
 		if not open.has(door_cell(side)):
 			errors.append("needs a bomb to reach the door at %s" % str(door_cell(side)))

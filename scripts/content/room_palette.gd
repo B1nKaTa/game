@@ -138,6 +138,11 @@ extends Resource
 }
 # The most lanterns and torches the scatter adds to a room. Ones the layout places don't count.
 @export var scatter_lights := 3
+# Fairway's End. Sand bunkers are a pale bed of grains, dark ones and a few bright ones.
+@export_group("Fairway's End")
+@export var sand := Color("d9c48c")
+@export var sand_grain := Color("8a7344")
+@export var sand_shine := Color("fff4d2")
 
 
 func weight_of(kind: String) -> float:

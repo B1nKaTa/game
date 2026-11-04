@@ -172,7 +172,8 @@ static func is_passing_effect(child: Node) -> bool:
 		or child is SummonMark or child is GroundStrike or child is LightsOut or child is SteamJet
 		or child is Shockwave or child is FlameBurst or child is PipeRing or child is CollectionPlate
 		or child is ProcessionLane or child is SafeSpotMark or child is PerfumeCloud or child is WetSplash
-		or child is DroppedCoffin or child is PresentDrop or child is ClosingRing)
+		or child is DroppedCoffin or child is PresentDrop or child is ClosingRing
+		or GolfProps.is_passing_effect(child))
 
 
 func place_bomb(at: Vector2) -> void:
@@ -453,6 +454,8 @@ func _create_props(palette: RoomPalette) -> void:
 			strip.setup(Vector2(RoomLayout.strip_direction(symbol)), layout.strips_reverse)
 			strip.position = RoomBackdrop.cell_center(cell)
 			add_child(strip)
+	# Fairway's End: sand bunkers and the course's props.
+	GolfProps.build(self, layout, palette)
 
 
 func _place_prop(prop: BreakableBlock, cell: Vector2i) -> void:
