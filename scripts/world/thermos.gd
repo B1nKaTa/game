@@ -4,7 +4,8 @@ extends Node2D
 signal exploded
 
 const FUSE_TIME := 1.2
-const BLAST_RADIUS := 56.0
+# Kept in PlayerStats, which must not name this class. See PlayerStats.BASE_BLAST_RADIUS.
+const BLAST_RADIUS := PlayerStats.BASE_BLAST_RADIUS
 const BLAST_SHOW_TIME := 0.18
 const DAMAGE := 30.0
 const PUSH := 140.0

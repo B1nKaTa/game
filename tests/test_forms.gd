@@ -208,3 +208,15 @@ func test_a_refile_row_names_both_options_and_the_price() -> void:
 	var cane := _shipped("reinforced_cane")
 	assert_eq(FormText.refile_row(cane, "a", 0), "Reinforced Cane: Heavy Head -> Lightweight  Free")
 	assert_eq(FormText.refile_row(cane, "b", 40), "Reinforced Cane: Lightweight -> Heavy Head  40 Pension")
+
+
+# PlayerStats is loaded by RunState, which Player loads, which Thermos loads, so PlayerStats must not
+# name Thermos back. The radius lives in PlayerStats and Thermos reads it from there.
+func test_the_blast_radius_lives_in_player_stats() -> void:
+	var none: Array[UpgradeDef] = []
+	var no_items: Array[ItemDef] = []
+	assert_near(Thermos.BLAST_RADIUS, PlayerStats.BASE_BLAST_RADIUS)
+	assert_near(PlayerStats.new().blast_radius, PlayerStats.BASE_BLAST_RADIUS)
+	assert_near(PlayerStats.compute(none, {}, no_items).blast_radius, PlayerStats.BASE_BLAST_RADIUS)
+	var source := FileAccess.get_file_as_string("res://scripts/core/player_stats.gd")
+	assert_false(source.contains("Thermos."), "PlayerStats never reads a Thermos constant")

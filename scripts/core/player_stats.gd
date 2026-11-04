@@ -12,6 +12,10 @@ const MAX_SWING_SPEED := 2.0
 const MIN_TEETH_RETURN := 1.0
 # Below this share of its health an enemy shows its weak spot, which the Bifocals option hits harder.
 const WOUNDED_BELOW := 0.5
+# How far a Thermos blast reaches before the Big Bang option widens it. Thermos reads it from here, so
+# this core script never names a world node class: Thermos -> Player -> RunState -> PlayerStats would
+# otherwise close a load cycle.
+const BASE_BLAST_RADIUS := 56.0
 
 var max_pills: int = BASE_PILLS
 var move_speed: float = BASE_SPEED
@@ -42,7 +46,7 @@ var reward_pension_mult := 1.0
 # What the cane multiplies its damage by against an enemy below half health.
 var wounded_damage_mult := 1.0
 var reveals_secrets := false
-var blast_radius := Thermos.BLAST_RADIUS
+var blast_radius := BASE_BLAST_RADIUS
 # Thermoses added at the start of each run.
 var bonus_bombs := 0
 
@@ -140,7 +144,7 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 	stats.reward_pension_mult = 1.0 + reward_pension
 	stats.wounded_damage_mult = 1.0 + wounded
 	stats.reveals_secrets = secrets
-	stats.blast_radius = Thermos.BLAST_RADIUS * (1.0 + radius)
+	stats.blast_radius = BASE_BLAST_RADIUS * (1.0 + radius)
 	stats.bonus_bombs = bombs
 	return stats
 
