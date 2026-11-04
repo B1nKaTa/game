@@ -5,7 +5,8 @@ extends RefCounted
 # barrels, buffet trays that break like grass, lifeboat davits that break like rocks and can hide a coin
 # as furniture does, the pool's water, and the rolling deck in a room whose layout rolls. RoomView calls
 # build once, from _create_props, and hands each break back to its own handlers, so a broken cruise prop
-# frees its cell and drops what the same kind of prop drops anywhere else.
+# frees its cell. The deck holds far more chairs than any floor holds barrels, so a chair drops only what
+# a pile of bones does, now and then a coin, or the floor would pour out Slips and Thermoses.
 
 
 static func build(view: RoomView, layout: RoomLayout, palette: RoomPalette) -> void:
@@ -13,7 +14,7 @@ static func build(view: RoomView, layout: RoomLayout, palette: RoomPalette) -> v
 		var chair := DeckChair.new()
 		chair.palette = palette
 		view._place_prop(chair, cell)
-		chair.broken.connect(view._on_barrel_broken.bind(cell))
+		chair.broken.connect(view._on_pile_broken.bind(cell))
 	for cell in layout.cells_of(RoomLayout.SYMBOL_BUFFET_TRAY):
 		var tray := BuffetTray.new()
 		tray.palette = palette

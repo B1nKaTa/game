@@ -1,8 +1,9 @@
 class_name DeckChair
 extends Barrel
 
-# A folding deck chair of striped canvas on a wooden frame. Breaks to anything, like a barrel, and holds
-# what a barrel holds. A Sunburnt Sunbather lies looking just like one, so both are drawn by draw_chair.
+# A folding deck chair of striped canvas on a wooden frame. Breaks to anything, like a barrel, but now
+# and then hides only a coin, as a pile of bones does (see CruiseProps). A Sunburnt Sunbather lies
+# looking just like one, so both are drawn by draw_chair.
 const FRAME := Color("8a5a32")
 const FRAME_EDGE := Color("3a2414")
 const CANVAS := Color("f2ecd8")
