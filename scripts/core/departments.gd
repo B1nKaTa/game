@@ -66,7 +66,14 @@ const MERCHANTS := [
 # Every counter, board and NPC that is not a merchant: {"id", "department", "cell", "title",
 # "prompt", "art" or "size", "color"}. An entry with "art" is drawn as that sprite, one without as a
 # board of its size and colour.
-const STATIONS: Array[Dictionary] = []
+const STATIONS: Array[Dictionary] = [
+	{"id": "key_board", "department": LOBBY, "cell": Vector2i(20, 7), "title": "Key Settings", "prompt": "Key Settings", "label": "Keys", "size": Vector2(28, 36), "color": Color("6b4a2a")},
+	{"id": "crafter", "department": LOBBY, "cell": Vector2i(11, 7), "title": "Agnes, Afterlife Arts and Crafts", "prompt": "Craft", "art": "crafter", "color": Color("c98a3c")},
+]
+
+# The door out to a run stands inside the lobby, since all four lobby walls lead to departments. It is
+# off the row the east and west doors share, so walking across the lobby never starts a run.
+const RUN_DOOR_CELL := Vector2i(26, 8)
 
 # Reserved for the loadout bench, built once a second weapon exists. Plain floor, with nothing on it.
 const LOADOUT_BENCH_CELLS: Array[Vector2i] = [Vector2i(14, 7), Vector2i(15, 7), Vector2i(16, 7), Vector2i(14, 8), Vector2i(15, 8), Vector2i(16, 8)]

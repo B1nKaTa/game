@@ -191,6 +191,13 @@ func door_to(target_id: int) -> Door:
 	return null
 
 
+# Keeps the door to that room shut for good, as a closed Waiting Room department's door is.
+func chain_door(target_id: int) -> void:
+	var door := door_to(target_id)
+	if door != null:
+		door.chained = true
+
+
 func _create_doors() -> void:
 	for side in RoomLayout.SIDES:
 		if not _room.doors.has(side):

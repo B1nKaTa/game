@@ -66,3 +66,38 @@ func test_the_loadout_bench_space_is_plain_floor() -> void:
 	var back: RoomLayout = Departments.load_layouts()[Departments.BACK_ROOM]
 	for cell in Departments.LOADOUT_BENCH_CELLS:
 		assert_eq(back.symbol_at(cell), RoomLayout.SYMBOL_FLOOR, str(cell))
+
+
+func test_stations_stand_on_open_floor_clear_of_doors_and_each_other() -> void:
+	var layouts := Departments.load_layouts()
+	var all: Array = Departments.MERCHANTS.duplicate()
+	all.append_array(Departments.STATIONS)
+	var taken := {}
+	for entry: Dictionary in all:
+		var layout: RoomLayout = layouts[entry["department"]]
+		var cell: Vector2i = entry["cell"]
+		assert_eq(layout.symbol_at(cell), RoomLayout.SYMBOL_FLOOR, "%s on floor" % entry["id"])
+		for side in RoomLayout.SIDES:
+			assert_true(Vector2(cell).distance_to(Vector2(layout.door_cell(side))) >= 3.0, "%s clear of doors" % entry["id"])
+		var key := "%s %s" % [entry["department"], str(cell)]
+		assert_false(taken.has(key), "%s shares a cell" % entry["id"])
+		taken[key] = true
+		assert_true(cell.y >= RoomLayout.UNDER_THE_HUD + 1, "%s clear of the HUD row" % entry["id"])
+
+
+func test_a_closed_department_says_what_opens_it() -> void:
+	assert_eq(Departments.closed_hint(Departments.BOUNTY_OFFICE), "Opens when The Records Basement is cleared")
+
+
+func test_the_run_door_stands_on_lobby_floor_off_the_way_across() -> void:
+	var lobby: RoomLayout = Departments.load_layouts()[Departments.LOBBY]
+	assert_eq(lobby.symbol_at(Departments.RUN_DOOR_CELL), RoomLayout.SYMBOL_FLOOR)
+	for side in RoomLayout.SIDES:
+		assert_true(Vector2(Departments.RUN_DOOR_CELL).distance_to(Vector2(lobby.door_cell(side))) >= 3.0, str(side))
+	assert_true(Departments.RUN_DOOR_CELL.y != lobby.door_cell(RoomLayout.EAST).y, "not on the row between the east and west doors")
+
+
+func test_a_sign_keeps_its_text_inside_the_room() -> void:
+	assert_near(DepartmentSign.text_left(100.0, 40.0, 32.0, 600.0), 80.0)
+	assert_near(DepartmentSign.text_left(48.0, 200.0, 32.0, 600.0), 32.0)
+	assert_near(DepartmentSign.text_left(590.0, 100.0, 32.0, 608.0), 508.0)

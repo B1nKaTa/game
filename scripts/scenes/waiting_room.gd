@@ -1,95 +1,109 @@
 extends Node2D
 
-const ROWS := [
-	"####################",
-	"#..................#",
-	"#..................#",
-	"#..................#",
-	"#..................#",
-	"#..................#",
-	"#..................#",
-	"#..................#",
-	"#..................#",
-	"#..................#",
-	"####################",
-]
-# When a merchant appears is read by MerchantRules: "depth" and "clears" count clears at a depth,
-# "paths" names the paths that must all have been cleared, and "legacy_clears" keeps a merchant open
-# for a save made before clears were kept by depth. No rule means always there. "kind" picks the
-# panel: upgrades by default, or "potions" for brews.
-const MERCHANTS := [
-	{"id": "black_market", "title": "Black Market. You didn't see me.", "cell": Vector2i(5, 3), "color": Color("8a4fbf"), "art": "merchant"},
-	{"id": "optometrist", "title": "Dr. Squint, Unlicensed Optometrist", "cell": Vector2i(5, 7), "color": Color("4fbfa8"), "art": "optometrist"},
-	{"id": "potion_merchant", "kind": "potions", "depth": 2, "clears": 1, "legacy_clears": 1, "title": "Madame Murk, Discount Apothecary", "cell": Vector2i(8, 3), "color": Color("c0508f"), "art": "apothecary"},
-	{"id": "bomb_merchant", "paths": ["sunset_shores", "furnace_works"], "legacy_clears": 3, "title": "Boom Bernard, Fuel Dealer", "cell": Vector2i(14, 7), "color": Color("d9822b"), "art": "fuel_dealer"},
-]
-const DOOR_CELL := Vector2i(18, 5)
-const INTERACT_RANGE := 48.0
-const KEY_BOARD_CELL := Vector2i(14, 3)
-const KEY_BOARD_COLOR := Color("6b4a2a")
-const CRAFTER_CELL := Vector2i(10, 7)
-const CRAFTER_COLOR := Color("c98a3c")
-const CRAFTER_ART := "crafter"
-const CRAFTER_TITLE := "Agnes, Afterlife Arts and Crafts"
-# On the bottom wall, below the floor and clear of the merchants.
+# The Waiting Room is a small floor of departments, built from the same rooms, doors and camera as the
+# run floors, with nothing to fight. What stands in each department comes from Departments.
+
+const FLOOR_DEF_PATH := "res://data/floors/waiting_room.tres"
+const KEY_BOARD := "key_board"
+const CRAFTER := "crafter"
+const MERCHANT_PROMPT := "Trade"
+const RUN_DOOR_ICON := ">"
+const NOW_SERVING_AT := Vector2(360, 24)
+const NOW_SERVING_COLOR := Color("e4524f")
+# On the lobby's bottom wall, below the floor and clear of the merchants.
 const DEV_HINT_AT := Vector2(12, 340)
+const DEV_HINT_COLOR := Color("ffd34f")
 
 var player: Player
 var _hud: Hud
+var _camera: Camera2D
+var _map: FloorMap
+var _progress: FloorProgress
+var _floor_def: FloorDef
+var _run: RunState
+var _rng := RandomNumberGenerator.new()
+var _room_view: RoomView
+var _current_id := -1
+# Each department's RoomView, kept while the scene lives, made on first entry.
+var _views := {}
+# Every station made so far, by id.
+var _stations := {}
 var _open_merchants: Array = []
 var _panel: CanvasLayer
-var _keys_panel: KeysPanel
-var _craft_panel: CraftPanel
+# The frame a panel last closed on, so the press that closed it never opens it again at once.
+var _panel_closed_frame := -1
+# Arrival lines still to show, one every Hud.NOTICE_TIME.
+var _notices: Array[String] = []
+var _notice_wait := 0.0
 
 
 func _ready() -> void:
-	var backdrop := RoomBackdrop.new()
-	backdrop.setup(PackedStringArray(ROWS))
-	add_child(backdrop)
-	_open_merchants = MerchantRules.open_ones(MERCHANTS, Progress.data)
-	for entry in _open_merchants:
-		var merchant := SpriteVisual.new()
-		merchant.position = RoomBackdrop.cell_center(entry["cell"])
-		add_child(merchant)
-		merchant.setup(entry["art"], Vector2(22, 30), entry["color"], 32)
-	var crafter := SpriteVisual.new()
-	crafter.position = RoomBackdrop.cell_center(CRAFTER_CELL)
-	add_child(crafter)
-	crafter.setup(CRAFTER_ART, Vector2(22, 30), CRAFTER_COLOR, 32)
+	_rng.randomize()
+	_floor_def = load(FLOOR_DEF_PATH)
+	_open_merchants = MerchantRules.open_ones(Departments.MERCHANTS, Progress.data)
+	_run = Progress.make_run()
 	player = Player.new()
-	player.setup(Progress.make_run())
-	player.position = RoomBackdrop.cell_center(Vector2i(3, 5))
+	player.setup(_run)
 	add_child(player)
-	var door := Door.new()
-	door.setup(0, ">", player)
-	door.locked = false
-	door.position = RoomBackdrop.cell_center(DOOR_CELL)
-	door.entered.connect(func(_id: int): Game.begin_run())
-	add_child(door)
+	player.add_child(Lighting.make_light(Color(1.0, 0.85, 0.6), 0.7, 0.8))
+	_map = Departments.build_map(Departments.load_layouts())
+	_progress = FloorProgress.new(_map)
+	_camera = Camera2D.new()
+	add_child(_camera)
 	_hud = Hud.new()
 	_hud.setup(null)
 	add_child(_hud)
 	_hud.set_pension(Progress.data.pension)
 	Progress.pension_changed.connect(_hud.set_pension)
+	_enter_department(_map.start_id)
+	player.global_position = Player.arrival_position(Departments.RUN_DOOR_CELL + Vector2i.LEFT)
+	_follow_player()
 	_hud.show_message(Progress.notice)
+	# A save-damage notice shows first, and the news of new departments waits its turn.
+	_notice_wait = Hud.NOTICE_TIME if not Progress.notice.is_empty() else 0.0
 	Progress.notice = ""
+	_announce_new_departments()
 
 
-func _process(_delta: float) -> void:
+func _announce_new_departments() -> void:
+	var opened := Departments.newly_opened(Progress.data)
+	if opened.is_empty():
+		return
+	var names: Array[String] = []
+	for id in opened:
+		names.append(Departments.entry(id)["name"])
+	_notices.append("New departments open: %s." % ", ".join(names))
+	for id in opened:
+		var line: String = Departments.entry(id)["arrival"]
+		if not line.is_empty():
+			_notices.append(line)
+	Progress.mark_departments_seen(opened)
+
+
+func _process(delta: float) -> void:
 	queue_redraw()
-	if not _any_panel_open() and Input.is_action_just_pressed("interact"):
-		var entry := _merchant_in_range()
-		if not entry.is_empty():
-			_open_panel(entry)
-		elif _near_key_board():
-			_open_keys_panel()
-		elif _near_crafter():
-			_open_craft_panel()
+	_follow_player()
+	_show_queued_notices(delta)
+	var nearest := _station_in_range()
+	for each: WaitingStation in _stations.values():
+		if is_instance_valid(each):
+			each.highlighted = each == nearest and _panel == null
+	if _panel == null and Engine.get_process_frames() != _panel_closed_frame and Input.is_action_just_pressed("interact"):
+		if nearest != null:
+			_open_station(nearest)
+
+
+func _show_queued_notices(delta: float) -> void:
+	_notice_wait -= delta
+	if _notice_wait > 0.0 or _notices.is_empty():
+		return
+	_hud.show_notice(_notices.pop_front())
+	_notice_wait = Hud.NOTICE_TIME
 
 
 # Debug builds only, and never while a panel is open, since the key settings panel listens for keys.
 func _unhandled_input(event: InputEvent) -> void:
-	if not DevStart.is_available() or _any_panel_open():
+	if not DevStart.is_available() or _panel != null:
 		return
 	var key := event as InputEventKey
 	if key != null and key.pressed and not key.echo and key.physical_keycode == DevStart.KEY:
@@ -97,72 +111,129 @@ func _unhandled_input(event: InputEvent) -> void:
 		Game.begin_dev_run()
 
 
-func _any_panel_open() -> bool:
-	return _panel != null or _keys_panel != null or _craft_panel != null
+func _follow_player() -> void:
+	if _camera == null or _current_id == -1:
+		return
+	var room_size := Vector2(_map.room(_current_id).layout.size_in_cells()) * RoomBackdrop.TILE
+	_camera.position = RoomCamera.center_for(room_size, player.feet().global_position, RoomBackdrop.VIEW_SIZE)
 
 
-func _near_key_board() -> bool:
-	return player.global_position.distance_to(RoomBackdrop.cell_center(KEY_BOARD_CELL)) <= INTERACT_RANGE
+func _enter_department(target_id: int) -> void:
+	player.recall_teeth()
+	var from_id := _current_id
+	if _room_view != null:
+		_room_view.clear_passing_effects()
+		remove_child(_room_view)
+	_progress.enter(target_id)
+	_current_id = target_id
+	_room_view = _views.get(target_id)
+	var is_new := _room_view == null
+	if is_new:
+		_room_view = _make_view(_map.room(target_id))
+		_views[target_id] = _room_view
+	add_child(_room_view)
+	move_child(_room_view, 0)
+	if is_new:
+		_furnish(_room_view, _map.room(target_id))
+	_room_view.refresh_doors()
+	player.global_position = Player.arrival_position(_progress.arrival_cell(target_id, from_id))
+	_follow_player()
 
 
-func _near_crafter() -> bool:
-	return player.global_position.distance_to(RoomBackdrop.cell_center(CRAFTER_CELL)) <= INTERACT_RANGE
+func _make_view(room: FloorRoom) -> RoomView:
+	var view := RoomView.new()
+	view.setup(room, _map, _floor_def, _run, player, _rng, _progress, Progress)
+	view.door_entered.connect(func(id: int): _enter_department.call_deferred(id))
+	view.notice.connect(_hud.show_notice)
+	return view
 
 
-func _open_craft_panel() -> void:
-	_craft_panel = CraftPanel.new()
-	_craft_panel.setup(CRAFTER_TITLE)
-	_craft_panel.closed.connect(_close_craft_panel)
-	add_child(_craft_panel)
-	player.cancel_charge()
-	player.set_physics_process(false)
-	_hud.show_message("")
+# Run once a department's view is in the tree, so its doors exist: chains the doors to closed
+# departments, names every door, and puts up the department's stations.
+func _furnish(view: RoomView, room: FloorRoom) -> void:
+	var layout := room.layout
+	var room_width := float(layout.size_in_cells().x * RoomBackdrop.TILE)
+	for side: Vector2i in room.doors:
+		var target_id: int = room.doors[side]
+		var target := Departments.id_of(target_id)
+		var is_open := Departments.is_open(target, Progress.data)
+		if not is_open:
+			view.chain_door(target_id)
+		var sign_node := DepartmentSign.new()
+		# One cell in from the door, towards the middle, so the sign never leaves the room.
+		sign_node.position = RoomBackdrop.cell_center(layout.door_cell(side) - side)
+		sign_node.setup(Departments.entry(target)["name"], not is_open, Departments.closed_hint(target), room_width)
+		view.add_child(sign_node)
+	var department := Departments.id_of(room.id)
+	for merchant: Dictionary in _open_merchants:
+		if merchant["department"] == department:
+			var entry := merchant.duplicate()
+			entry["prompt"] = MERCHANT_PROMPT
+			entry["is_merchant"] = true
+			_add_station(view, entry)
+	for entry: Dictionary in Departments.STATIONS:
+		if entry["department"] == department:
+			_add_station(view, entry)
+	if department == Departments.LOBBY:
+		_add_run_door(view)
 
 
-func _close_craft_panel() -> void:
-	_craft_panel.queue_free()
-	_craft_panel = null
-	player.set_physics_process(true)
+func _add_station(view: RoomView, entry: Dictionary) -> void:
+	var made := WaitingStation.new()
+	made.setup(entry, player.feet())
+	made.position = RoomBackdrop.cell_center(entry["cell"])
+	view.add_child(made)
+	_stations[made.id] = made
 
 
-func _open_keys_panel() -> void:
-	_keys_panel = KeysPanel.new()
-	_keys_panel.closed.connect(_close_keys_panel)
-	add_child(_keys_panel)
-	player.cancel_charge()
-	player.set_physics_process(false)
-	_hud.show_message("")
+func _add_run_door(view: RoomView) -> void:
+	var door := Door.new()
+	door.setup(0, RUN_DOOR_ICON, player.feet())
+	door.locked = false
+	door.position = RoomBackdrop.cell_center(Departments.RUN_DOOR_CELL)
+	door.entered.connect(func(_id: int): Game.begin_run())
+	view.add_child(door)
 
 
-func _close_keys_panel() -> void:
-	_keys_panel.queue_free()
-	_keys_panel = null
-	player.set_physics_process(true)
-
-
-func open_merchant_ids() -> Array:
-	return _open_merchants.map(func(entry: Dictionary): return entry["id"])
-
-
-func _merchant_in_range() -> Dictionary:
-	var best := {}
-	var best_distance := INTERACT_RANGE
-	for entry in _open_merchants:
-		var distance := player.global_position.distance_to(RoomBackdrop.cell_center(entry["cell"]))
-		if distance <= best_distance:
-			best = entry
+# The nearest station in reach in the department Grandpa stands in, or null.
+func _station_in_range() -> WaitingStation:
+	var best: WaitingStation = null
+	var best_distance := INF
+	for each: WaitingStation in _stations.values():
+		if not is_instance_valid(each) or each.get_parent() != _room_view or not each.is_near():
+			continue
+		var distance := each.distance_to_feet()
+		if distance < best_distance:
+			best = each
 			best_distance = distance
 	return best
 
 
-func _open_panel(entry: Dictionary) -> void:
-	if entry.get("kind", "") == "potions":
-		_panel = PotionPanel.new()
-		_panel.setup(entry["title"])
-	else:
-		_panel = MerchantPanel.new()
-		_panel.setup(entry["title"], entry["id"])
-	_panel.closed.connect(_close_panel)
+func _open_station(opened: WaitingStation) -> void:
+	var entry := opened.entry
+	if entry.get("is_merchant", false):
+		if entry.get("kind", "") == "potions":
+			var potions := PotionPanel.new()
+			potions.setup(entry["title"])
+			_show_panel(potions)
+		else:
+			var wares := MerchantPanel.new()
+			wares.setup(entry["title"], entry["id"])
+			_show_panel(wares)
+		return
+	match opened.id:
+		KEY_BOARD:
+			_show_panel(KeysPanel.new())
+		CRAFTER:
+			var craft := CraftPanel.new()
+			craft.setup(opened.title)
+			_show_panel(craft)
+
+
+func _show_panel(panel: CanvasLayer) -> void:
+	_panel = panel
+	# Every Waiting Room panel has a closed signal, though CanvasLayer itself does not.
+	_panel.connect("closed", _close_panel)
 	add_child(_panel)
 	player.cancel_charge()
 	player.set_physics_process(false)
@@ -170,25 +241,63 @@ func _open_panel(entry: Dictionary) -> void:
 
 
 func _close_panel() -> void:
+	if _panel == null:
+		return
 	_panel.queue_free()
 	_panel = null
+	_panel_closed_frame = Engine.get_process_frames()
 	player.set_physics_process(true)
 
 
+func _exit_tree() -> void:
+	# Departments Grandpa has left are out of the tree, so nothing else frees them.
+	for view: RoomView in _views.values():
+		if is_instance_valid(view) and not view.is_inside_tree():
+			view.free()
+
+
 func _draw() -> void:
-	var board_at := RoomBackdrop.cell_center(KEY_BOARD_CELL)
-	draw_rect(Rect2(board_at - Vector2(14, 18), Vector2(28, 36)), KEY_BOARD_COLOR)
-	draw_rect(Rect2(board_at - Vector2(14, 18), Vector2(28, 36)), Color.BLACK, false, 2.0)
-	draw_string(ThemeDB.fallback_font, board_at + Vector2(-7, 5), "Keys", HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color.WHITE)
-	if not _any_panel_open() and player != null:
-		var entry := _merchant_in_range()
-		if not entry.is_empty():
-			var at: Vector2 = RoomBackdrop.cell_center(entry["cell"])
-			draw_string(ThemeDB.fallback_font, at + Vector2(-30, -24), KeyBindings.with_key("interact", "Trade"), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color.WHITE)
-		elif _near_key_board():
-			draw_string(ThemeDB.fallback_font, board_at + Vector2(-30, -24), KeyBindings.with_key("interact", "Key Settings"), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color.WHITE)
-		elif _near_crafter():
-			draw_string(ThemeDB.fallback_font, RoomBackdrop.cell_center(CRAFTER_CELL) + Vector2(-30, -24), KeyBindings.with_key("interact", "Craft"), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color.WHITE)
-	draw_string(ThemeDB.fallback_font, Vector2(240, 24), "NOW SERVING: 666", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("e4524f"))
+	if Departments.id_of(_current_id) != Departments.LOBBY:
+		return
+	draw_string(ThemeDB.fallback_font, NOW_SERVING_AT, "NOW SERVING: 666", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, NOW_SERVING_COLOR)
 	if DevStart.is_available():
-		draw_string(ThemeDB.fallback_font, DEV_HINT_AT, DevStart.HINT, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("ffd34f"))
+		draw_string(ThemeDB.fallback_font, DEV_HINT_AT, DevStart.HINT, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, DEV_HINT_COLOR)
+
+
+# What the full-loop check reads and drives.
+func open_merchant_ids() -> Array:
+	return _open_merchants.map(func(entry: Dictionary): return entry["id"])
+
+
+func open_department_ids() -> Array[String]:
+	return Departments.open_ids(Progress.data)
+
+
+func current_department() -> String:
+	return Departments.id_of(_current_id)
+
+
+func debug_enter_department(id: String) -> void:
+	var target := Departments.index_of(id)
+	if target >= 0:
+		_enter_department(target)
+
+
+func station(id: String) -> WaitingStation:
+	var found: Variant = _stations.get(id)
+	return found if is_instance_valid(found) else null
+
+
+# Opens what pressing interact beside that station would, if it stands in the department he is in.
+func use_station(id: String) -> void:
+	var found := station(id)
+	if found != null and _panel == null and found.get_parent() == _room_view:
+		_open_station(found)
+
+
+func open_panel() -> CanvasLayer:
+	return _panel
+
+
+func debug_room_view() -> RoomView:
+	return _room_view

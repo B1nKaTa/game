@@ -1,0 +1,65 @@
+class_name WaitingStation
+extends Node2D
+
+# A counter, board or merchant in a Waiting Room department. The scene opens its panel when Grandpa
+# presses interact beside the nearest one. A station with "art" shows that sprite, one without is a
+# board drawn in its colour, with its "label" written on it.
+
+const USE_RADIUS := 48.0
+const BODY_SIZE := Vector2(22, 30)
+const FRAME_WIDTH := 32
+const DEFAULT_BOARD_SIZE := Vector2(28, 36)
+const DEFAULT_PROMPT := "Use"
+const PROMPT_OFFSET := Vector2(-30, -24)
+const PROMPT_COLOR := Color.WHITE
+const BOARD_EDGE := Color.BLACK
+const LABEL_COLOR := Color.WHITE
+
+var id := ""
+var title := ""
+var prompt := ""
+var entry: Dictionary = {}
+# Set by the scene on the one station that answers interact, so only its prompt shows.
+var highlighted := false
+var _feet: Node2D
+
+
+func setup(station_entry: Dictionary, feet: Node2D) -> void:
+	entry = station_entry
+	id = entry.get("id", "")
+	title = entry.get("title", "")
+	prompt = entry.get("prompt", DEFAULT_PROMPT)
+	_feet = feet
+
+
+func _ready() -> void:
+	if entry.has("art"):
+		var art := SpriteVisual.new()
+		add_child(art)
+		art.setup(entry["art"], BODY_SIZE, entry.get("color", Color.WHITE), FRAME_WIDTH)
+
+
+func is_near() -> bool:
+	return is_instance_valid(_feet) and _feet.global_position.distance_to(global_position) <= USE_RADIUS
+
+
+func distance_to_feet() -> float:
+	return _feet.global_position.distance_to(global_position) if is_instance_valid(_feet) else INF
+
+
+func _process(_delta: float) -> void:
+	queue_redraw()
+
+
+func _draw() -> void:
+	if not entry.has("art"):
+		var size: Vector2 = entry.get("size", DEFAULT_BOARD_SIZE)
+		var box := Rect2(-size / 2.0, size)
+		draw_rect(box, entry.get("color", Color.GRAY))
+		draw_rect(box, BOARD_EDGE, false, 2.0)
+		var label: String = entry.get("label", "")
+		if not label.is_empty():
+			var width := ThemeDB.fallback_font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x
+			draw_string(ThemeDB.fallback_font, Vector2(-width / 2.0, 5), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, LABEL_COLOR)
+	if highlighted:
+		draw_string(ThemeDB.fallback_font, PROMPT_OFFSET, KeyBindings.with_key("interact", prompt), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, PROMPT_COLOR)

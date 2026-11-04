@@ -139,6 +139,15 @@ func record_floor_cleared(depth: int, path_id: String) -> void:
 	_store.save_progress(data)
 
 
+# Departments whose opening has been announced, so each arrival line plays once.
+func mark_departments_seen(ids: Array) -> void:
+	if ids.is_empty():
+		return
+	for id in ids:
+		data.departments_seen[str(id)] = true
+	_store.save_progress(data)
+
+
 func brew(def: PotionDef) -> bool:
 	if not data.brew(def.id, def.price):
 		return false

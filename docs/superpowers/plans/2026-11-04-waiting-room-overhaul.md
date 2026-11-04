@@ -624,7 +624,7 @@ Lobby stations from this task:
 
 Later tasks add the trophy wall (15, 2), the forms counter (11, 3), the ticket machine (23, 3) and the noticeboard (23, 7).
 
-- [ ] **Step 1: Write the failing tests** (pure parts) in `tests/test_departments.gd`:
+- [x] **Step 1: Write the failing tests** (pure parts) in `tests/test_departments.gd`:
 
   ```gdscript
   func test_stations_stand_on_open_floor_clear_of_doors_and_each_other() -> void:
@@ -652,7 +652,7 @@ Later tasks add the trophy wall (15, 2), the forms counter (11, 3), the ticket m
 
 - [ ] **Step 2: When testing is allowed, run them to make sure they fail.**
 
-- [ ] **Step 3: Implement** `WaitingStation`, `DepartmentSign`, `RoomView.chain_door`, `Progress.mark_departments_seen` and the new `waiting_room.gd`. Remove `ROWS`, `MERCHANTS`, `DOOR_CELL`, `KEY_BOARD_*` and `CRAFTER_*` from the scene. "NOW SERVING: 666" stays drawn in the lobby until Task 18 replaces it.
+- [x] **Step 3: Implement** `WaitingStation`, `DepartmentSign`, `RoomView.chain_door`, `Progress.mark_departments_seen` and the new `waiting_room.gd`. Remove `ROWS`, `MERCHANTS`, `DOOR_CELL`, `KEY_BOARD_*` and `CRAFTER_*` from the scene. "NOW SERVING: 666" stays drawn in the lobby until Task 18 replaces it.
 
 - [ ] **Step 4: When testing is allowed, run the tests and one full loop.** The smoke driver's opening checks (`open_merchant_ids() == ["black_market", "optometrist"]`, both merchant checks after clears) must pass unchanged.
 
@@ -662,7 +662,7 @@ Later tasks add the trophy wall (15, 2), the forms counter (11, 3), the ticket m
   - every department
   - each moved merchant's panel
 
-- [ ] **Step 6: Commit** ("Rebuild the Waiting Room as departments on the room grid").
+- [x] **Step 6: Commit** ("Rebuild the Waiting Room as departments on the room grid").
 
 ### Task 5: The trophy wall and the memento rules
 
