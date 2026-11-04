@@ -66,3 +66,96 @@ func test_delete() -> void:
 	RunCheckpoint.write(_path(), {"depth": 1})
 	RunCheckpoint.delete(_path())
 	assert_false(FileAccess.file_exists(_path()))
+
+
+func _item(id: String) -> ItemDef:
+	for item in Content.items():
+		if item.id == id:
+			return item
+	return null
+
+
+func _fresh_run() -> RunState:
+	return RunState.new(Content.upgrades(), {}, {})
+
+
+func test_a_run_round_trips() -> void:
+	var run := _fresh_run()
+	run.add_item(_item("bifocals"))
+	run.add_item(_item("alert_bracelet"))
+	run.keys = 4
+	run.bombs = 7
+	run.give_potion(Content.potion("swift_tea"))
+	run.cursed = true
+	run.health.hit(1)
+	run.promise(_item("dentures"))
+	run.offer_recipe("bifocals")
+	run.perks = {"some_perk": true}
+	var raw := RunCheckpoint.run_to_dict(run)
+	# Through the file's JSON, as a real resume reads it.
+	raw = JSON.parse_string(JSON.stringify(raw))
+	var back := _fresh_run()
+	RunCheckpoint.apply_run(back, raw, Content.items())
+	assert_eq(RunCheckpoint.run_to_dict(back), RunCheckpoint.run_to_dict(run))
+	assert_eq(back.items.size(), 2)
+	assert_eq(back.items[0].id, "bifocals", "items keep their order")
+	assert_eq(back.items[1].id, "alert_bracelet")
+	assert_eq(back.health.pills, run.health.pills)
+	assert_eq(back.health.max_pills, run.health.max_pills)
+	assert_eq(back.keys, 4)
+	assert_eq(back.bombs, 7)
+	assert_eq(back.potion.id, "swift_tea")
+	assert_true(back.cursed)
+	assert_true(back.is_promised("dentures"))
+	assert_true(back.was_recipe_offered("bifocals"))
+	assert_true(back.has_perk("some_perk"))
+	assert_eq(back.stats.max_pills, run.stats.max_pills, "stats are worked out from the items again")
+
+
+func test_a_run_with_an_unknown_item_skips_it() -> void:
+	var run := _fresh_run()
+	RunCheckpoint.apply_run(run, {"items": ["no_such_item"], "pills": 3, "max_pills": 4, "potion": "nope"}, Content.items())
+	assert_eq(run.items.size(), 0)
+	assert_true(run.potion == null)
+	assert_eq(run.health.pills, 3)
+
+
+func test_the_rng_state_round_trips() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 12345
+	rng.randi()
+	var raw: Dictionary = JSON.parse_string(JSON.stringify(RunCheckpoint.rng_to_dict(rng)))
+	var expected := rng.randi()
+	var back := RandomNumberGenerator.new()
+	RunCheckpoint.apply_rng(back, raw)
+	assert_eq(back.randi(), expected, "big numbers survive JSON as text")
+
+
+func test_every_path_rebuilds_the_same_map_from_its_seed() -> void:
+	var defs: Array[FloorDef] = []
+	for path in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "golden_years_mall", "last_resort_cruise", "fairways_end", "terminal_zero", "head_office"]:
+		defs.append(load("res://data/floors/%s.tres" % path))
+	var seeds := RandomNumberGenerator.new()
+	seeds.seed = 77
+	for def in defs:
+		var pool := FloorBuilder.pool_for(def)
+		for i in 100:
+			var seed_text := RunCheckpoint.new_seed(seeds)
+			var first := RunCheckpoint.build_floor(def, seed_text, pool)
+			var again := RunCheckpoint.build_floor(def, seed_text, pool)
+			assert_true(first != null, "%s builds from seed %s" % [def.id, seed_text])
+			if first == null or again == null:
+				continue
+			var a := RunCheckpoint.map_signature(first)
+			var b := RunCheckpoint.map_signature(again)
+			if a != b:
+				assert_eq(b, a, "%s seed %s rebuilds the same" % [def.id, seed_text])
+				break
+
+
+func test_different_seeds_make_different_floors() -> void:
+	var def: FloorDef = load("res://data/floors/floor_1.tres")
+	var pool := FloorBuilder.pool_for(def)
+	var a := RunCheckpoint.map_signature(RunCheckpoint.build_floor(def, "1", pool))
+	var b := RunCheckpoint.map_signature(RunCheckpoint.build_floor(def, "2", pool))
+	assert_true(a != b, "the signature can tell floors apart")
