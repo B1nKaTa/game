@@ -141,20 +141,20 @@ BOSS_CHORDS = (["Fm", "Db", "Bbm", "C7"] + BOSS_A_CHORDS + BOSS_B_CHORDS + BREAK
 
 
 def _drums(s, b, fill=False):
-    for k in (0, 1.5, 2, 3.5) if not fill else (0, 1.5, 2):
-        s.hit("kick", b + k, vel=1.0, gain=1.0, wet=0.04)
+    for k in (0, 1.5, 2):
+        s.hit("kick", b + k, vel=0.95, gain=0.9, wet=0.04)
     for k in (1, 3):
         s.hit("snare", b + k, vel=0.85, gain=0.6, pan=0.05)
-        s.hit("clap", b + k, vel=0.8, gain=0.55, pan=-0.05)
+        s.hit("clap", b + k, vel=0.6, gain=0.25, pan=-0.05)
     for e in range(8):
-        s.hit("openhat" if e == 7 else "hat", b + e * 0.5, vel=0.75 if e % 2 else 0.5, gain=0.5, pan=0.35)
+        s.hit("openhat" if e == 7 else "hat", b + e * 0.5, vel=0.65 if e % 2 else 0.45, gain=0.4, pan=0.35)
     if fill:
         for q in range(8):
             s.hit("snare", b + 2 + q * 0.25, vel=0.5 + q * 0.06, gain=0.55)
 
 
 def final_arrangements():
-    s = Song(172, 36 * 4, reverb=0.24)
+    s = Song(164, 36 * 4, reverb=0.26)
     for bar, sym in enumerate(BOSS_CHORDS):
         b = bar * 4
         intro, breakdown = bar < 4, 20 <= bar < 24
@@ -165,14 +165,14 @@ def final_arrangements():
             if intro or breakdown:
                 s.note("organ", m, b, 4, vel=0.7, gain=0.45 if intro else 0.38, pan=pan)
             else:
-                s.note("organ", m, b, 0.75, vel=0.7, gain=0.4, pan=pan)
-                s.note("organ", m, b + 1.5, 0.5, vel=0.6, gain=0.38, pan=pan)
+                s.note("organ", m, b, 0.75, vel=0.7, gain=0.32, pan=pan)
+                s.note("organ", m, b + 1.5, 0.5, vel=0.6, gain=0.28, pan=pan)
         # Fast arpeggios across the chord, left and right in turn.
-        if not breakdown:
+        if 12 <= bar < 20:
             arp = notes + [notes[0] + 12]
             for q in range(16):
-                s.note("thin", arp[q % len(arp)] + 12, b + q * 0.25, 0.2, vel=0.55, gain=0.2,
-                       pan=-0.6 if q % 2 else 0.6, wet=0.6)
+                s.note("thin", arp[q % len(arp)] + 12, b + q * 0.25, 0.2, vel=0.5, gain=0.12,
+                       pan=-0.5 if q % 2 else 0.5, wet=0.6)
         # Bass: driving eighths with an octave jump, or a heartbeat in the breakdown.
         root = bass_note(sym, 29)
         if breakdown:
@@ -182,8 +182,10 @@ def final_arrangements():
             s.hit("kick", b + 0.75, vel=0.5, gain=0.6, wet=0.05)
         else:
             for e in range(8):
-                m = root + (12 if e in (3, 7) else 0)
-                s.note("synthbass", m, b + e * 0.5, 0.42, vel=0.9, gain=0.75, wet=0.03)
+                m = (root if root >= 36 else root + 12) + (12 if e in (3, 7) else 0)
+                s.note("bass", m, b + e * 0.5, 0.42, vel=0.85, gain=0.8, wet=0.03)
+                if e % 2 == 0:
+                    s.note("synthbass", m, b + e * 0.5, 0.3, vel=0.6, gain=0.25, wet=0.03)
         # Drums.
         if intro:
             for q in range(4):
@@ -193,15 +195,14 @@ def final_arrangements():
                     s.hit("snare", b + 2 + q * 0.25, vel=0.4 + q * 0.07, gain=0.55)
         elif not breakdown:
             _drums(s, b, fill=bar in (11, 19, 31))
-        if bar in (4, 12, 24, 32):
-            s.hit("crash", b, vel=0.8, gain=0.6, pan=-0.2)
+        if bar in (4, 24):
+            s.hit("crash", b, vel=0.7, gain=0.4, pan=-0.2)
     # The tune: the hold theme in minor, the new hook, the theme hushed on vibes, then a half step up.
     s.line("pulse", 4 * 4, BOSS_A, vel=0.9, gain=0.62, wide=True)
     s.line("pulse", 12 * 4, BOSS_B, vel=0.9, gain=0.58, wide=True)
-    s.line("brass", 12 * 4, BOSS_B, vel=0.7, gain=0.28, transpose=-12, pan=0.2)
     s.line("vibes", 20 * 4, BREAK_TUNE, vel=0.75, gain=0.7)
     s.line("pulse", 24 * 4, BOSS_A, vel=0.9, gain=0.55, transpose=1, wide=True)
-    s.line("brass", 24 * 4, BOSS_A, vel=0.75, gain=0.35, transpose=-11, pan=-0.2)
+    s.line("organ", 24 * 4, BOSS_A, vel=0.55, gain=0.2, transpose=-11)
     s.line("pulse", 32 * 4, TAG, vel=0.9, gain=0.62, wide=True)
     s.line("organ", 32 * 4, TAG, vel=0.6, gain=0.3, transpose=-12)
     return s
