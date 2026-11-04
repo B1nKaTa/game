@@ -33,10 +33,25 @@ func test_the_panel_fits_the_view() -> void:
 
 func test_menu_strings_go_through_tr() -> void:
 	var source := _source()
-	for text in ["\"Options\"", "\"Defaults\"", "\"OK\"", "\"Discard changes?\"", "\"coming\""]:
+	for text in ["\"Options\"", "\"Defaults\"", "\"OK\"", "\"Discard changes?\""]:
 		assert_true(source.contains("tr(%s)" % text), text)
 
 
-func test_the_controller_column_waits_for_stage_two() -> void:
-	assert_true(_source().contains("tr(\"Controller\")"))
+func test_the_controller_column_rebinds() -> void:
+	var source := _source()
+	assert_true(source.contains("tr(\"Controller\")"))
 	assert_eq(KeyBindings.PAD_KEY, "pad")
+	assert_false(source.contains("tr(\"coming\")"), "the column is no longer a placeholder")
+	assert_true(source.contains("KeyBindings.pad_label_for(action, ActiveDevice.family)"), "it names the pad's buttons")
+	assert_true(source.contains("PadInput.capture(event)"), "it takes the next pad input as the binding")
+	assert_true(source.contains("tr(PAD_WAITING_TEXT)"))
+
+
+func test_a_pad_can_always_back_out_of_waiting() -> void:
+	var source := _source()
+	assert_true(source.contains("const WAIT_TIME := 5.0"))
+	assert_true(source.contains("_stop_waiting()"))
+
+
+func test_vibration_has_no_placeholder_note() -> void:
+	assert_false(_source().contains("Vibration works once controllers are supported."))

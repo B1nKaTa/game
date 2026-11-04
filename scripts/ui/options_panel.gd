@@ -6,8 +6,9 @@ extends CanvasLayer
 # OK; Esc closes without keeping them, after asking when anything changed. Defaults resets the open
 # tab. Q and E switch tabs. It runs while the game is paused, as the pause menu opens it.
 #
-# The Input tab has two columns. The controller one says "coming" until controller support adds it;
-# its bindings will live in keys.json under KeyBindings.PAD_KEY, beside the keyboard ones.
+# The Input tab has two columns, keyboard and mouse, and controller. Pressing a cell waits for the new
+# key or button; one already in use swaps with it. Both columns live in keys.json, the controller one
+# under KeyBindings.PAD_KEY. Esc, a click, or WAIT_TIME without a press gives up waiting.
 
 signal closed
 
@@ -24,6 +25,9 @@ const HINT_WIDTH := 220.0
 const INPUT_ROW_HEIGHT := 14.0
 const INPUT_FONT := 10
 const WAITING_TEXT := "Press a key..."
+const PAD_WAITING_TEXT := "Press a button..."
+# How long a cell waits for its new binding before giving up, so a pad alone can always back out.
+const WAIT_TIME := 5.0
 const TABS: Array[String] = [GameSettings.VIDEO, GameSettings.AUDIO, GameSettings.GAME, GameSettings.INPUT]
 const TAB_NAMES := {
 	GameSettings.VIDEO: "Video",
@@ -63,8 +67,7 @@ const TAB_KEYS := {
 # A line under a tab's rows, where something on it does not do anything yet.
 const TAB_NOTES := {
 	GameSettings.AUDIO: "Music and Ambience have nothing to play yet.",
-	GameSettings.GAME: "Vibration works once controllers are supported.",
-	GameSettings.INPUT: "Select a key and press the new one. A key in use swaps with it.",
+	GameSettings.INPUT: "Select a cell and press the new key or button; one in use swaps. The right stick aims, the D-pad walks.",
 }
 
 var _tab: String = GameSettings.VIDEO
@@ -76,6 +79,9 @@ var _note: Label
 var _notice: Label
 var _notice_left := 0.0
 var _waiting_action := ""
+# The action whose controller cell waits for a button, and how long it still waits.
+var _waiting_pad := ""
+var _wait_left := 0.0
 var _opened_frame := -1
 # The frame an Esc cancelled a key change on, so the same press never also closes the panel.
 var _ignore_frame := -1
@@ -163,7 +169,7 @@ func _back_name() -> String:
 # Q and E, or the shoulder buttons, step through the tabs, but never while a key is awaited or a
 # question is open.
 func _step_tab(step: int) -> void:
-	if _confirm != null or not _waiting_action.is_empty() or _done:
+	if _confirm != null or _is_waiting() or _done:
 		return
 	_show_tab(TABS[posmod(TABS.find(_tab) + step, TABS.size())])
 
@@ -171,6 +177,7 @@ func _step_tab(step: int) -> void:
 func _show_tab(tab: String) -> void:
 	_tab = tab
 	_waiting_action = ""
+	_waiting_pad = ""
 	for child in _rows.get_children():
 		_rows.remove_child(child)
 		child.free()
@@ -304,25 +311,54 @@ func _build_input_rows() -> void:
 		key_button.custom_minimum_size.x = KEY_WIDTH
 		key_button.pressed.connect(_start_waiting.bind(action))
 		row.add_child(key_button)
-		row.add_child(MenuStyle.label(tr("coming"), INPUT_FONT, MenuStyle.DIM))
+		var pad_button := MenuStyle.button(KeyBindings.pad_label_for(action, ActiveDevice.family), INPUT_FONT, true)
+		pad_button.custom_minimum_size.x = KEY_WIDTH
+		pad_button.pressed.connect(_start_pad_waiting.bind(action))
+		row.add_child(pad_button)
+
+
+func _is_waiting() -> bool:
+	return not _waiting_action.is_empty() or not _waiting_pad.is_empty()
 
 
 func _start_waiting(action: String) -> void:
+	_waiting_pad = ""
 	_waiting_action = action
-	_refresh_input_rows(action)
+	_wait_left = WAIT_TIME
+	_refresh_input_rows()
 
 
-# Rewrites the key column in place, so the selected row keeps its highlight.
-func _refresh_input_rows(waiting := "") -> void:
+func _start_pad_waiting(action: String) -> void:
+	_waiting_action = ""
+	_waiting_pad = action
+	_wait_left = WAIT_TIME
+	_refresh_input_rows()
+
+
+func _stop_waiting() -> void:
+	_waiting_action = ""
+	_waiting_pad = ""
+	_refresh_input_rows()
+
+
+# Rewrites both columns in place, so the selected cell keeps its highlight.
+func _refresh_input_rows() -> void:
+	if _tab != GameSettings.INPUT:
+		return
 	var rows := _rows.get_children()
 	for i in KeyBindings.ACTIONS.size():
 		var action: String = KeyBindings.ACTIONS[i]["action"]
-		var button: Button = rows[i + 1].get_child(1)
-		button.text = tr(WAITING_TEXT) if action == waiting else KeyBindings.label_for(action)
+		var key_button: Button = rows[i + 1].get_child(1)
+		key_button.text = tr(WAITING_TEXT) if action == _waiting_action else KeyBindings.label_for(action)
+		var pad_button: Button = rows[i + 1].get_child(2)
+		pad_button.text = tr(PAD_WAITING_TEXT) if action == _waiting_pad else KeyBindings.pad_label_for(action, ActiveDevice.family)
 
 
 # This runs before the buttons see the input, so the next press is taken as the new binding.
 func _input(event: InputEvent) -> void:
+	if not _waiting_pad.is_empty():
+		_take_pad_input(event)
+		return
 	if _waiting_action.is_empty() or not event.is_pressed() or event.is_echo():
 		return
 	if not (event is InputEventKey or event is InputEventMouseButton):
@@ -336,7 +372,29 @@ func _input(event: InputEvent) -> void:
 		_ignore_frame = Engine.get_process_frames()
 		_refresh_input_rows()
 		return
-	var swapped := KeyBindings.rebind(action, _clean_copy(event))
+	_bind(action, _clean_copy(event))
+
+
+# A controller cell takes the next pad button, trigger or stick push. The D-pad never binds, and a key
+# or a click gives up, Esc without closing the panel.
+func _take_pad_input(event: InputEvent) -> void:
+	if PadInput.is_pad(event):
+		get_viewport().set_input_as_handled()
+		var taken := PadInput.capture(event)
+		if taken == null:
+			return
+		var action := _waiting_pad
+		_waiting_pad = ""
+		_bind(action, taken)
+		return
+	if (event is InputEventKey or event is InputEventMouseButton) and event.is_pressed() and not event.is_echo():
+		get_viewport().set_input_as_handled()
+		_ignore_frame = Engine.get_process_frames()
+		_stop_waiting()
+
+
+func _bind(action: String, event: InputEvent) -> void:
+	var swapped := KeyBindings.rebind(action, event)
 	if not swapped.is_empty():
 		_show_notice(tr("Swapped with %s") % tr(KeyBindings.action_label(swapped)))
 	_refresh_input_rows()
@@ -353,7 +411,7 @@ func _clean_copy(event: InputEvent) -> InputEvent:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _confirm != null or not _waiting_action.is_empty():
+	if _confirm != null or _is_waiting():
 		return
 	var key := event as InputEventKey
 	if key == null or not key.pressed or key.echo:
@@ -378,8 +436,13 @@ func _process(delta: float) -> void:
 		_notice_left -= delta
 		if _notice_left <= 0.0:
 			_notice.text = ""
+	if _is_waiting():
+		_wait_left -= delta
+		if _wait_left <= 0.0:
+			_stop_waiting()
+		return
 	var frame := Engine.get_process_frames()
-	if _confirm != null or not _waiting_action.is_empty() or frame == _opened_frame or frame == _ignore_frame:
+	if _confirm != null or frame == _opened_frame or frame == _ignore_frame:
 		return
 	if Input.is_action_just_pressed("pause") or Input.is_action_just_pressed(PadInput.BACK_ACTION):
 		leave()
