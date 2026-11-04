@@ -92,6 +92,11 @@ const TROPHY_WALL_Y := 34.0
 # off the row the east and west doors share, so walking across the lobby never starts a run.
 const RUN_DOOR_CELL := Vector2i(26, 8)
 
+# The Training Yard's dummy, spawned on the yard's first entry. It is the only enemy anywhere in the
+# Waiting Room, so its FloorDef stays enemy-free.
+const TRAINING_DUMMY := "res://data/enemies/training_dummy.tres"
+const DUMMY_CELL := Vector2i(10, 5)
+
 # Reserved for the loadout bench, built once a second weapon exists. Plain floor, with nothing on it.
 const LOADOUT_BENCH_CELLS: Array[Vector2i] = [Vector2i(14, 7), Vector2i(15, 7), Vector2i(16, 7), Vector2i(14, 8), Vector2i(15, 8), Vector2i(16, 8)]
 

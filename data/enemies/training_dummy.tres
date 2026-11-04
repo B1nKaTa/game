@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/enemy_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/actors/behaviors/dummy_behavior.gd" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "training_dummy"
+display_name = "Intern on a Stand"
+max_hp = 100000.0
+speed = 0.0
+damage = 0
+pension_drop = 0
+body_size = Vector2(22, 32)
+color = Color(0.55, 0.55, 0.6, 1)
+behavior_script = ExtResource("2")
+wall_mounted = true

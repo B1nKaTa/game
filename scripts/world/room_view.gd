@@ -580,6 +580,12 @@ func _spawn_enemy(def: EnemyDef, at: Vector2, summoned := false) -> Enemy:
 	return enemy
 
 
+# An enemy added after the room has finished, so its doors stay open. Only the Training Yard calls it,
+# for its dummy, which keeps the Waiting Room's FloorDef free of enemies.
+func spawn_fixture(def: EnemyDef, cell: Vector2i) -> Enemy:
+	return _spawn_enemy(def, RoomBackdrop.cell_center(cell))
+
+
 # Summons land on open floor, wherever the boss wanted them.
 func summon_spot(at: Vector2) -> Vector2:
 	return RoomBackdrop.cell_center(_room.layout.nearest_floor_cell(_cell_of(at)))

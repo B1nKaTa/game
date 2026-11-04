@@ -147,8 +147,28 @@ func _enter_department(target_id: int) -> void:
 	if is_new:
 		_furnish(_room_view, _map.room(target_id))
 	_room_view.refresh_doors()
+	_set_yard_rules(Departments.id_of(target_id) == Departments.TRAINING_YARD)
 	player.global_position = Player.arrival_position(_progress.arrival_cell(target_id, from_id))
 	_follow_player()
+
+
+# In the Training Yard a Thermos can be thrown, and a hit from one costs Grandpa nothing, since he
+# heals in full at once. Anywhere else neither holds.
+func _set_yard_rules(in_yard: bool) -> void:
+	if in_yard and not player.bomb_requested.is_connected(_on_yard_bomb):
+		player.bomb_requested.connect(_on_yard_bomb)
+		player.hurt.connect(_on_yard_hurt)
+	elif not in_yard and player.bomb_requested.is_connected(_on_yard_bomb):
+		player.bomb_requested.disconnect(_on_yard_bomb)
+		player.hurt.disconnect(_on_yard_hurt)
+
+
+func _on_yard_bomb(at: Vector2) -> void:
+	_room_view.place_bomb(at)
+
+
+func _on_yard_hurt() -> void:
+	_run.health.heal(_run.health.max_pills)
 
 
 func _make_view(room: FloorRoom) -> RoomView:
@@ -195,6 +215,12 @@ func _furnish(view: RoomView, room: FloorRoom) -> void:
 		# Under the station, so the station's prompt draws over the board.
 		view.move_child(_poster_board, (_stations[BOUNTY_BOARD] as Node).get_index())
 		_refresh_poster_board()
+	if department == Departments.TRAINING_YARD:
+		var dummy := view.spawn_fixture(load(Departments.TRAINING_DUMMY) as EnemyDef, Departments.DUMMY_CELL)
+		var numbers := TrainingDummy.new()
+		numbers.position = dummy.position
+		view.add_child(numbers)
+		numbers.watch(dummy)
 	if department == Departments.LOBBY:
 		_add_run_door(view)
 		var wall := TrophyWall.new()
