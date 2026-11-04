@@ -26,6 +26,9 @@ const LANDING_HEAL := 2
 const MESSAGE_TIME := 2.0
 const CURSED_NOTICE := "Cursed ticket: tougher enemies, better pay"
 const LIFE_JACKET_NOTICE := "Your life jacket keeps you afloat. One pill left."
+const FLOOR_CLEARED := "FLOOR CLEARED"
+# Shown on arriving back in the Waiting Room after an ending.
+const ARRIVAL_NOTICE := "Welcome back. Please take a number."
 
 var player: Player
 var is_cleared := false
@@ -54,15 +57,23 @@ var _card_panel_closed_frame := -1
 var _bon_voyage := ""
 # Counts every room entry, so a won Arcade game knows which visit it was on (RunState.note_arcade_win).
 var _visit := 0
-# Whether this run beat the Chairman for the first time, so the ending card shows before the Waiting
-# Room, and the card while it shows.
-var _ending_due := false
-var _ending_card: EndingCard
+# The run as it stood when the Chairman fell, for EndingRules, or empty when he has not. The ending
+# plays after the run's last message, before the Waiting Room.
+var _ending_snapshot := {}
+# A scene to play before the last message: Augustine's, on a win over him.
+var _scene_before_message: Array = []
+var _scene_first_time := false
+# Whether Augustine had been beaten before this run, so his whole scene shows only the first time.
+var _augustine_seen_before := false
+# The scene playing, if any, and the ending it is.
+var _cutscene: CutscenePlayer
+var _ending_id := ""
 
 
 func _ready() -> void:
 	_rng.randomize()
 	Progress.start_run()
+	_augustine_seen_before = Progress.data.bosses_beaten.has(EndingRules.AUGUSTINE)
 	_run = Progress.make_run()
 	# Before the first room is built, so every enemy of a cursed run is spawned tougher.
 	_run.cursed = Progress.take_cursed_run()
@@ -393,7 +404,14 @@ func _continue_after_floor() -> void:
 	if _floor_def.depth < LAST_DEPTH:
 		_room_view.add_stairwell()
 		return
-	_end_run("FLOOR CLEARED")
+	# Read here rather than when the boss falls, since the room hears the fall first and clears.
+	var boss_id := _floor_def.floor_boss.id if _floor_def.floor_boss != null else ""
+	if boss_id == EndingRules.CHAIRMAN:
+		_ending_snapshot = _run.ending_snapshot()
+	elif boss_id == EndingRules.AUGUSTINE:
+		_scene_first_time = not _augustine_seen_before
+		_scene_before_message = CutsceneSteps.for_ending(EndingRules.AUGUSTINE, 0 if _scene_first_time else 1)
+	_end_run(FLOOR_CLEARED)
 
 
 # Takes the stairwell: a safe landing that heals him, with the next Crossroads beyond it. Everything he
@@ -441,28 +459,51 @@ func _end_run(message: String) -> void:
 		_big_map.enabled = false
 		_big_map.set_open(false)
 	_hud.hide_boss_bar()
-	_hud.show_message(message)
 	if player != null:
 		player.recall_teeth()
 		player.process_mode = Node.PROCESS_MODE_DISABLED
 	if _room_view != null:
 		_room_view.process_mode = Node.PROCESS_MODE_DISABLED
+	if not _scene_before_message.is_empty():
+		await _play_cutscene(_scene_before_message, _scene_first_time)
+		_cutscene.queue_free()
+		_cutscene = null
+	_hud.show_message(message)
 	await get_tree().create_timer(MESSAGE_TIME).timeout
-	if _ending_due:
-		await _show_ending_card()
+	if message == FLOOR_CLEARED and not _ending_snapshot.is_empty():
+		await _play_ending()
 	Game.return_to_waiting()
 
 
-# Saved as seen once it shows, so quitting on the card never shows it twice.
-func _show_ending_card() -> void:
-	_ending_card = EndingCard.new()
-	add_child(_ending_card)
-	Progress.mark_ending_seen()
-	await _ending_card.finished
+# Chooses the ending and saves it found before the scene plays, so quitting during the scene never
+# plays it as new again. The scene stays on its black last frame until the Waiting Room loads.
+func _play_ending() -> void:
+	var found_before := Progress.data.endings_found.duplicate()
+	_ending_id = EndingRules.choose(_ending_snapshot, found_before)
+	var variant := 0
+	if _ending_id == EndingRules.REPEAT_CUSTOMER:
+		variant = EndingRules.pick_repeat_death(Progress.data.last_repeat_death, _rng.randf())
+		Progress.record_repeat_death(variant)
+	var paid := Progress.record_ending(_ending_id)
+	Progress.last_run["ending"] = _ending_id
+	Progress.last_run["ending_paid"] = paid
+	Progress.notice = ARRIVAL_NOTICE
+	await _play_cutscene(CutsceneSteps.for_ending(_ending_id, variant), not found_before.has(_ending_id))
 
 
-func debug_ending_card() -> EndingCard:
-	return _ending_card if is_instance_valid(_ending_card) else null
+func _play_cutscene(steps: Array, first_time: bool) -> void:
+	_cutscene = CutscenePlayer.new()
+	_cutscene.setup(steps, first_time)
+	add_child(_cutscene)
+	await _cutscene.finished
+
+
+func debug_cutscene() -> CutscenePlayer:
+	return _cutscene if is_instance_valid(_cutscene) else null
+
+
+func debug_ending_id() -> String:
+	return _ending_id
 
 
 func _on_boss_spawned(boss: Enemy) -> void:
@@ -477,8 +518,6 @@ func _on_boss_defeated(boss: Enemy) -> void:
 	if boss.is_summon or not boss.def.is_boss:
 		return
 	Progress.last_run["bosses"] = int(Progress.last_run.get("bosses", 0)) + 1
-	if EndingCard.is_due(boss.def.id, Progress.data.ending_seen):
-		_ending_due = true
 	var paid := Progress.record_boss_beaten(boss.def.id, boss.def == _floor_def.floor_boss)
 	if paid > 0:
 		_hud.show_notice("+%d Condolences" % paid)

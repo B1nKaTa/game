@@ -90,6 +90,7 @@ func _ready() -> void:
 	# A save-damage notice shows first, and the news of new departments waits its turn.
 	_notice_wait = Hud.NOTICE_TIME if not Progress.notice.is_empty() else 0.0
 	Progress.notice = ""
+	_announce_ending()
 	_announce_new_departments()
 	_call_ticket()
 	_refresh_lobby_text()
@@ -123,6 +124,15 @@ func _refresh_noticeboard() -> void:
 # it, or the old 666.
 static func now_serving(data: ProgressData) -> int:
 	return data.run_count if data.ticket_was_called() else NOT_CALLED
+
+
+# After an ending: a new one says which file it was and what it paid, and the true ending's hat.
+func _announce_ending() -> void:
+	var id := str(Progress.last_run.get("ending", ""))
+	var paid := int(Progress.last_run.get("ending_paid", 0))
+	if id.is_empty() or paid <= 0:
+		return
+	_notices.append_array(EndingRules.found_notices(id, paid))
 
 
 func _announce_new_departments() -> void:

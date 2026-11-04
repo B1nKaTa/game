@@ -118,12 +118,13 @@ func test_the_ending_card_is_optional_and_remembered() -> void:
 	assert_true(ProgressData.from_dict(JSON.parse_string(JSON.stringify(data.to_dict()))).ending_seen)
 
 
-func test_the_ending_card_shows_for_the_chairman_once() -> void:
-	assert_true(EndingCard.is_due("chairman_of_the_board", false))
-	assert_false(EndingCard.is_due("chairman_of_the_board", true), "only the first time")
-	assert_false(EndingCard.is_due("augustine", false))
+func test_the_chairman_ends_a_run_with_an_ending_and_augustine_with_his_scene() -> void:
 	var head_office: FloorDef = load("res://data/floors/head_office.tres")
-	assert_eq(head_office.floor_boss.id, EndingCard.BOSS_ID)
+	assert_eq(head_office.floor_boss.id, EndingRules.CHAIRMAN)
+	var terminal: FloorDef = load("res://data/floors/terminal_zero.tres")
+	assert_eq(terminal.floor_boss.id, EndingRules.AUGUSTINE)
 	var source := FileAccess.get_file_as_string("res://scripts/scenes/floor_scene.gd")
-	var ending := source.substr(source.find("func _end_run"), 900)
-	assert_true(ending.find("_show_ending_card()") < ending.find("Game.return_to_waiting()"), "before the Waiting Room")
+	var ending := source.substr(source.find("func _end_run"), 1400)
+	assert_true(ending.find("_play_cutscene(_scene_before_message") < ending.find("_hud.show_message(message)"), "Augustine's scene before FLOOR CLEARED")
+	assert_true(ending.find("_play_ending()") < ending.find("Game.return_to_waiting()"), "the ending before the Waiting Room")
+	assert_false(source.contains("EndingCard"), "the old card is gone")

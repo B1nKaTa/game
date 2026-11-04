@@ -177,3 +177,15 @@ func test_a_quick_death_has_its_own_card() -> void:
 		cards[card] = true
 	assert_eq(cards.size(), EndingRules.REPEAT_DEATHS)
 	assert_eq(EndingRules.repeat_cause(5), "Cause of death: daytime television.")
+
+
+func test_a_new_ending_is_announced_on_arrival_and_the_feud_brings_the_hat() -> void:
+	assert_eq(EndingRules.found_notices(EndingRules.LITERALLY, 15), ["New file for the Ending Archive: 27B-7, Back from the Dead (Literally). +15 Condolences"] as Array[String])
+	var feud := EndingRules.found_notices(EndingRules.ETERNAL_FEUD, 15)
+	assert_eq(feud.size(), 2)
+	assert_eq(feud[1], EndingRules.HAT_NOTICE)
+	assert_eq(EndingRules.found_notices("nonsense", 15).size(), 0)
+	var font := ThemeDB.fallback_font
+	for entry: Dictionary in EndingRules.ALL:
+		for line in EndingRules.found_notices(entry["id"], 15):
+			assert_true(font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x < 600.0, line)

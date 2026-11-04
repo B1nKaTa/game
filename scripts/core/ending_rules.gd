@@ -9,6 +9,9 @@ extends RefCounted
 # from then on Repeat Customer takes its place, and when no ending 2 to 9 is left to find it is
 # Repeat Customer every time, with a different quick death.
 
+# The bosses whose fall ends a run with a scene: the Chairman's with an ending, Augustine's with his.
+const CHAIRMAN := "chairman_of_the_board"
+const AUGUSTINE := "augustine"
 const ETERNAL_FEUD := "eternal_feud"
 const NEW_MANAGEMENT := "new_management"
 const CRASHING_THE_FUNERAL := "crashing_the_funeral"
@@ -32,6 +35,7 @@ const FEUD_NEEDS := 5
 # The east path of every depth.
 const SCENIC_PATHS := {1: "cemetery", 2: "furnace_works", 3: "golden_years_mall", 4: "fairways_end", 5: "head_office"}
 const REPEAT_DEATHS := 5
+const HAT_NOTICE := "Gerald left you his hat. You can wear it from the Decor Office."
 const TOTAL := 11
 
 # The order endings are chosen in.
@@ -149,6 +153,18 @@ static func pick_repeat_death(last: int, roll: float) -> int:
 		if n != last:
 			choices.append(n)
 	return choices[clampi(int(roll * choices.size()), 0, choices.size() - 1)]
+
+
+# What the Waiting Room says on arrival after an ending found for the first time.
+static func found_notices(id: String, paid: int) -> Array[String]:
+	var each := entry(id)
+	var lines: Array[String] = []
+	if each.is_empty():
+		return lines
+	lines.append("New file for the Ending Archive: 27B-%d, %s. +%d Condolences" % [each["number"], each["title"], paid])
+	if id == ETERNAL_FEUD:
+		lines.append(HAT_NOTICE)
+	return lines
 
 
 static func repeat_cause(n: int) -> String:
