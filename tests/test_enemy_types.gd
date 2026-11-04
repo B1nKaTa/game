@@ -10,6 +10,9 @@ const BEHAVIORS := [
 	"cruise_director_behavior", "commodore_behavior",
 	# Head Office
 	"yes_man_behavior", "paper_shredder_behavior", "hr_rep_behavior", "doreen_behavior", "chairman_behavior",
+	# Fairway's End
+	"caddie_behavior", "club_golfer_behavior", "gopher_behavior", "club_pro_behavior",
+	"club_president_behavior",
 ]
 const ExploderBehavior := preload("res://scripts/actors/behaviors/exploder_behavior.gd")
 const PackBehavior := preload("res://scripts/actors/behaviors/pack_behavior.gd")

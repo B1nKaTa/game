@@ -168,6 +168,9 @@ func is_dodging() -> bool:
 
 func is_taped() -> bool:
 	return _tape.is_holding()
+# Whether his feet stand in a sand bunker, where he wades slower and cannot dodge.
+func is_in_sand() -> bool:
+	return _feet != null and is_inside_tree() and SandTrap.is_sand_at(get_tree(), _feet.global_position)
 
 
 func _physics_process(delta: float) -> void:
@@ -351,7 +354,9 @@ func _finish_swing() -> void:
 
 func _handle_movement() -> void:
 	var input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
-	if Input.is_action_just_pressed("dodge") and _dodge.try_start(run.stats.dodge_cooldown, DodgeTimer.DURATION * run.stats.dodge_length):
+	# Feet sunk in a sand bunker cannot dodge, and wade slower (Fairway's End).
+	var sunk := is_in_sand()
+	if Input.is_action_just_pressed("dodge") and SandRule.can_dodge(sunk) and _dodge.try_start(run.stats.dodge_cooldown, DodgeTimer.DURATION * run.stats.dodge_length):
 		_dodge_direction = input.normalized() if input != Vector2.ZERO else _aim
 	on_wet = _feet != null and WetFloor.is_wet_at(get_tree() if is_inside_tree() else null, _feet.global_position)
 	# Walking into red tape holds him a moment, and a dodge cuts through it instead.
@@ -362,7 +367,7 @@ func _handle_movement() -> void:
 		_push_left = 0.0
 		velocity = _dodge_direction * DODGE_SPEED
 	else:
-		var speed := run.move_speed() * _slow.speed_factor()
+		var speed := run.move_speed() * SandRule.slowed(_slow.speed_factor(), sunk)
 		if _charge.is_charging():
 			speed *= CHARGE_SLOWDOWN
 		# What he carries onto the wet is never more than a walk, so a dodge does not fling him.

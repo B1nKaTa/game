@@ -106,6 +106,9 @@ func _draw() -> void:
 					draw_rect(Rect2(tile.position + Vector2(0, TILE * 0.55), Vector2(TILE, TILE * 0.45)), _palette.brick_line)
 					draw_rect(Rect2(tile.position + Vector2(0, TILE * 0.5), Vector2(TILE, 2)), _palette.wall_line)
 					draw_rect(Rect2(tile.position + Vector2(0, TILE - 3), Vector2(TILE, 3)), _palette.wall_line)
+				# Fairway's End: clipped hedges.
+				if _palette.wall_pattern == GolfLook.HEDGE_WALL:
+					GolfLook.draw_wall_tile(self, tile, Vector2i(x, y), _palette)
 				continue
 			draw_rect(tile, _palette.floor_color(Vector2i(x, y), _seed))
 			# A patterned floor lays carpet on its middle tone, woven and seamless, and tiles the rest.
@@ -150,6 +153,9 @@ func _draw() -> void:
 				for fleck in 6:
 					var fleck_at := Vector2(RoomDecor.noise(Vector2i(x * 7 + fleck, y), _seed + 11), RoomDecor.noise(Vector2i(x, y * 7 + fleck), _seed + 13))
 					draw_rect(Rect2(tile.position + Vector2(3, 3) + fleck_at * (TILE - 8.0), Vector2(2, 2)), _palette.carpet_motif)
+			# Fairway's End: mown stripes and nothing else, since dots are the sand's look.
+			if _palette.floor_pattern == GolfLook.FAIRWAY:
+				GolfLook.draw_floor_tile(self, tile, Vector2i(x, y), _palette)
 				continue
 			draw_line(tile.position, tile.position + Vector2(TILE, 0), _palette.grout, 1.0)
 			draw_line(tile.position, tile.position + Vector2(0, TILE), _palette.grout, 1.0)

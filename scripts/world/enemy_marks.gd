@@ -278,6 +278,9 @@ func _draw() -> void:
 			draw_polyline(chain, CHAIN_GOLD, 2.0)
 			draw_circle(Vector2(0.0, -half.y * 0.35 + 10.0), 3.5, CHAIN_GOLD)
 			draw_rect(Rect2(-3.0, -half.y + 4.0, 6.0, 3.0), OFFICE_COLLAR)
+		# Fairway's End's marks, drawn in their own file.
+		"caddie_bib", "golf_cap", "gopher_teeth", "pro_visor", "boater":
+			GolfMarks.draw_mark(self, _def.mark, half)
 	if _def.shield_half_angle > 0.0:
 		var reach := maxf(half.x, half.y) + SHIELD_GAP
 		var half_arc := deg_to_rad(_def.shield_half_angle)

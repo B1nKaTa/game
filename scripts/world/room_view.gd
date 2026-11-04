@@ -177,7 +177,8 @@ static func is_passing_effect(child: Node) -> bool:
 		or child is ProcessionLane or child is SafeSpotMark or child is PerfumeCloud or child is WetSplash
 		or child is DroppedCoffin or child is PresentDrop or child is ClosingRing
 		or child is TapeSpread or child is PaperTrail or child is WriteUpMark or child is LaneDrop or child is HoldMusic
-		or child is TakeoverTether)
+		or child is TakeoverTether
+		or GolfProps.is_passing_effect(child))
 
 
 func place_bomb(at: Vector2) -> void:
@@ -461,6 +462,8 @@ func _create_props(palette: RoomPalette) -> void:
 	# The Last Resort Cruise: its deck props and, in a room that rolls, the rolling deck.
 	CruiseProps.build(self, layout, palette)
 	_create_office_props(layout, palette)
+	# Fairway's End: sand bunkers and the course's props.
+	GolfProps.build(self, layout, palette)
 
 
 func _place_prop(prop: BreakableBlock, cell: Vector2i) -> void:

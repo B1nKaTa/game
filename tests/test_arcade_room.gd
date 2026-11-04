@@ -12,6 +12,7 @@ const FLOORS: Array[String] = [
 	"res://data/floors/last_resort_cruise.tres",
 	# Head Office
 	"res://data/floors/head_office.tres",
+	"res://data/floors/fairways_end.tres",
 ]
 
 
