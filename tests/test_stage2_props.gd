@@ -212,6 +212,16 @@ func test_a_drop_lands_on_open_floor_whatever_died_over() -> void:
 	view.free()
 
 
+func test_the_third_floors_effects_are_cleared_from_a_stored_room() -> void:
+	var effects: Array[Node] = [PerfumeCloud.new(), WetSplash.new(), DroppedCoffin.new(), PresentDrop.new(), ClosingRing.new()]
+	for effect in effects:
+		assert_true(RoomView.is_passing_effect(effect), "%s is cleared" % effect.get_script().get_global_name())
+		effect.free()
+	var pickup := Pickup.new()
+	assert_false(RoomView.is_passing_effect(pickup), "a lying pickup is remembered")
+	pickup.free()
+
+
 # --- decor ---
 
 func test_the_same_seed_gives_the_same_decor() -> void:

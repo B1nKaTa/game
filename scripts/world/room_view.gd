@@ -160,8 +160,18 @@ func clear_passing_effects() -> void:
 		var is_flying_coin: bool = child is Pickup and child.is_flying()
 		if child is Thermos and child.is_fuse_burning():
 			_run.add_bomb()
-		if child is Projectile or child is DeathBurst or child is Thermos or child is EnemyBlast or child is SummonMark or child is GroundStrike or child is LightsOut or child is SteamJet or child is Shockwave or child is FlameBurst or child is PipeRing or child is CollectionPlate or child is ProcessionLane or child is SafeSpotMark or is_flying_coin:
+		if is_passing_effect(child) or is_flying_coin:
 			child.queue_free()
+
+
+# Anything an attack or a blast leaves in the room for a while. A new one must be added here, or it
+# freezes mid-way in a stored room and goes on when Grandpa comes back.
+static func is_passing_effect(child: Node) -> bool:
+	return (child is Projectile or child is DeathBurst or child is Thermos or child is EnemyBlast
+		or child is SummonMark or child is GroundStrike or child is LightsOut or child is SteamJet
+		or child is Shockwave or child is FlameBurst or child is PipeRing or child is CollectionPlate
+		or child is ProcessionLane or child is SafeSpotMark or child is PerfumeCloud or child is WetSplash
+		or child is DroppedCoffin or child is PresentDrop or child is ClosingRing)
 
 
 func place_bomb(at: Vector2) -> void:
