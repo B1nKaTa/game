@@ -404,6 +404,9 @@ func _draw() -> void:
 	var pointing := _active_swing.direction if swinging else _aim
 	# A cane skin draws the placeholder cane even over the sprite, so the skin shows until the art pass.
 	if not has_art or run.look.has(CosmeticDef.SLOT_CANE):
+		# A dark edge under a skin, so a pale cane still reads on the Mall's white tile.
+		if run.look.has(CosmeticDef.SLOT_CANE):
+			draw_line(-pointing, pointing * 21.0, GrandpaLook.OUTLINE, 5.0)
 		draw_line(Vector2.ZERO, pointing * 20.0, GrandpaLook.cane_color(run.look, CANE_COLOR), 3.0)
 		if GrandpaLook.has_stripes(run.look):
 			for i in 3:

@@ -89,6 +89,11 @@ static func draw_hat(canvas: CanvasItem, shape: String, head: Vector2, color: Co
 			canvas.draw_line(head + Vector2(10, 2), head + Vector2(9, 14), color, 5.0)
 			canvas.draw_arc(head + Vector2(0, 2), 12.5, PI, TAU, 16, OUTLINE, 1.0)
 		"tiara":
+			# Outlined first, since a gold tiara on white hair vanishes on the Mall's pale tile.
+			canvas.draw_line(head + Vector2(-7, -7), head + Vector2(7, -7), OUTLINE, 4.0)
+			for x: float in [-4.0, 0.0, 4.0]:
+				var edge := PackedVector2Array([head + Vector2(x - 3, -6), head + Vector2(x + 3, -6), head + Vector2(x, -13 if x == 0.0 else -11)])
+				canvas.draw_colored_polygon(edge, OUTLINE)
 			canvas.draw_line(head + Vector2(-6, -7), head + Vector2(6, -7), color, 2.0)
 			for x: float in [-4.0, 0.0, 4.0]:
 				var point := PackedVector2Array([head + Vector2(x - 2, -7), head + Vector2(x + 2, -7), head + Vector2(x, -12 if x == 0.0 else -10)])
