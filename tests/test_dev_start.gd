@@ -147,8 +147,10 @@ func _waiting_data() -> ProgressData:
 
 func test_the_dev_waiting_room_profile_opens_every_department() -> void:
 	var data := _waiting_data()
-	for id in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "golden_years_mall"]:
+	for id in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "golden_years_mall", "last_resort_cruise", "fairways_end", "terminal_zero", "head_office"]:
 		assert_true(data.has_cleared_path(id), id)
+	assert_eq(DevStart.ALL_PATHS.size(), 10)
+	assert_eq(BountyBoard.showing(data).size(), BountyBoard.all().size(), "every poster shows")
 	for each: Dictionary in Departments.ALL:
 		assert_true(Departments.is_open(each["id"], data), each["id"])
 	assert_eq(data.clears_at(3), _dev_data().clears_at(3), "only path ids are added, not clears")

@@ -11,6 +11,10 @@ const FIRST_HEAL_PERK := "first_heal"
 const FIRE_PERK := "fire_shrug"
 const BOSS_ROOM_PILL_PERK := "boss_room_pill"
 const TREASURE_CHOICE_PERK := "treasure_choice"
+const SLIDE_PERK := "slide_half"
+const CHARGE_PERK := "charge_power"
+const LANDING_PERK := "landing_pill"
+const BOSS_DAMAGE_PERK := "boss_damage"
 
 # The name badge's Pension at the start of each run.
 const START_PENSION := 10
@@ -22,6 +26,15 @@ const FIRST_HEAL_EXTRA := 1
 const BOSS_ROOM_HEAL := 1
 # The empty sack's extra item in treasure rooms.
 const TREASURE_EXTRA := 1
+# The ship's anchor: slides and pushes move Grandpa this share as far (RunState.slide_mult). A queue
+# barrier's push-out is left whole, since it moves him only just clear of the rope.
+const SLIDE_MULT := 0.5
+# The golf trophy's share more damage from a charged swing.
+const CHARGE_POWER_BONUS := 0.15
+# The boarding pass's extra pill on every landing.
+const LANDING_EXTRA := 1
+# The gold gavel's damage mult on hits against bosses, from the cane and the dentures.
+const BOSS_DAMAGE_MULT := 1.1
 
 # In floor order, the same order as the frames on the wall.
 const ALL: Array[Dictionary] = [
@@ -37,6 +50,14 @@ const ALL: Array[Dictionary] = [
 		"memento": "Top hat", "perk": BOSS_ROOM_PILL_PERK, "perk_text": "+1 pill on entering a boss room"},
 	{"boss": "mall_santa", "boss_name": "The Mall Santa", "short_name": "Santa", "path": "golden_years_mall",
 		"memento": "Empty sack", "perk": TREASURE_CHOICE_PERK, "perk_text": "One more item to choose from in treasure rooms"},
+	{"boss": "commodore_wellington", "boss_name": "Commodore Wellington", "short_name": "Commodore", "path": "last_resort_cruise",
+		"memento": "Ship's anchor", "perk": SLIDE_PERK, "perk_text": "Slides and pushes move Grandpa half as far"},
+	{"boss": "thaddeus_fairweather", "boss_name": "Club President Thaddeus Fairweather", "short_name": "Thaddeus", "path": "fairways_end",
+		"memento": "Golf trophy", "perk": CHARGE_PERK, "perk_text": "Charged swings hit 15% harder"},
+	{"boss": "augustine", "boss_name": "Augustine, Head of Departures", "short_name": "Augustine", "path": "terminal_zero",
+		"memento": "Boarding pass", "perk": LANDING_PERK, "perk_text": "Every landing heals one extra pill"},
+	{"boss": "chairman_of_the_board", "boss_name": "The Chairman of the Board", "short_name": "Chairman", "path": "head_office",
+		"memento": "Gold gavel", "perk": BOSS_DAMAGE_PERK, "perk_text": "Hits on bosses do 10% more damage"},
 ]
 
 const EMPTY_WALL_TEXT := "Empty frames. Beat a floor boss to hang one."

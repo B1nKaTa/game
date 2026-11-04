@@ -126,6 +126,7 @@ func _run() -> void:
 	var pension_before_second: int = Progress.data.pension
 	await _clear_every_depth(LOCKED_DEEP_PATH)
 	_check(Progress.data.pension > pension_before_second, "the locked paths earn Pension too")
+	await _check_ending_card()
 	await _wait(2.5)
 	_expect_scene("WaitingRoom")
 	_check(Progress.data.floors_cleared == 2, "clearing the second first-floor path is counted too")
@@ -220,7 +221,14 @@ func _clear_every_depth(path_index: int) -> void:
 	_check(scene.PATHS_BY_DEPTH.size() == _last_depth, "every depth down to the last lists its paths")
 	var starting_pills: int = scene.player.run.stats.max_pills
 	_check(starting_pills >= 4, "run starts with pills")
-	_check(scene.player.run.potion == null, "a run starts with an empty slot when nothing was brewed")
+	# Once the Purser's Office is open, the Bon Voyage Bag may put a potion in the slot.
+	var bag: String = scene.debug_bon_voyage()
+	_check(bag.is_empty() != BonVoyage.is_packed(Progress.data), "the Bon Voyage Bag is packed only while the Purser's Office is open, got '%s'" % bag)
+	var bag_potion := not bag.is_empty() and bag != BonVoyage.THERMOS
+	if bag_potion:
+		_check(scene.player.run.potion != null and scene.player.run.potion.id == bag, "the bag's potion is in the slot")
+	else:
+		_check(scene.player.run.potion == null, "a run starts with an empty slot when nothing was brewed")
 	if not _checked_potions:
 		await _check_potion_drinking(scene)
 	for depth in range(1, _last_depth + 1):
@@ -653,6 +661,8 @@ func _die_in_a_run() -> void:
 		_check(scene.player.run.has_item(_crafted_id), "the crafted item starts the next run")
 	var carried: PotionDef = scene.player.run.potion
 	_check(carried != null and carried.id == "swift_tea", "the brewed potion starts the next run in the slot")
+	# A Life Jacket would leave him a pill, so its saves are spent first.
+	scene.player.run.health.lethal_saves = 0
 	scene.player.run.health.hit(999)
 	await _wait(0.1)
 	_check(scene.is_over, "death ends the run")
@@ -699,6 +709,7 @@ func _check_dev_start_at(start_depth: int) -> void:
 	scene.debug_choose_path(LOCKED_DEEP_PATH)
 	await _wait(0.3)
 	_check(scene.debug_floor_def().id == east, "%s can be entered from the dev run, got %s" % [east, scene.debug_floor_def().id])
+	run.health.lethal_saves = 0
 	run.health.hit(999)
 	await _wait(0.1)
 	_check(scene.is_over, "death ends the dev run")
@@ -2454,7 +2465,8 @@ func _take_the_stairwell(scene: Node) -> void:
 	_check(scene.debug_floor_def().display_name == floor_below, "the landing is %s, got %s" % [floor_below, scene.debug_floor_def().display_name])
 	_check(scene.debug_mini_map().floor_name() == floor_below and scene.debug_big_map().floor_name() == floor_below, "both maps name %s" % floor_below)
 	_check(get_tree().get_nodes_in_group("enemies").is_empty(), "nothing waits to fight on the landing")
-	_check(health.pills == pills_before + mini(scene.LANDING_HEAL + bonus, missing), "the landing heals him, %d to %d" % [pills_before, health.pills])
+	# With the boarding pass hung, landing_heal is one more than LANDING_HEAL.
+	_check(health.pills == pills_before + mini(scene.landing_heal() + bonus, missing), "the landing heals him, %d to %d" % [pills_before, health.pills])
 	_check(run.items.size() == items_before and run.keys == keys_before, "his items and Slips come down with him")
 	_check(not scene.is_cleared, "the new floor is not cleared yet")
 	_landings_reached += 1
@@ -3007,3 +3019,20 @@ func _check_corner_slide(scene: Node) -> void:
 			_check(passed, "clipping a corner by %d px slides him round it" % overlap)
 		else:
 			_check(not passed, "a %d px overlap still blocks him" % overlap)
+
+
+# The second run ended on Head Office, whose Chairman fell for the first time, so the ending card
+# shows after the run's last message and before the Waiting Room, and a press closes it.
+func _check_ending_card() -> void:
+	var scene := get_tree().current_scene
+	await _wait(scene.MESSAGE_TIME + 0.4)
+	var card: EndingCard = scene.debug_ending_card() if scene.has_method("debug_ending_card") else null
+	_check(card != null, "beating the Chairman the first time shows the ending card")
+	_check(Progress.data.ending_seen, "the ending card is saved as seen")
+	if card == null:
+		return
+	_check(card.text() == EndingCard.TEXT, "the card says its words")
+	await _wait(EndingCard.MIN_TIME)
+	await _press("interact")
+	await _wait(0.3)
+	_check(not is_instance_valid(card), "a press closes the card and goes on to the Waiting Room")

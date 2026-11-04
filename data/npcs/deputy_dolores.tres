@@ -22,5 +22,13 @@ moments = {
 "take:head_groundskeeper": "Gus buried the complaints box. With the complaints in it.",
 "take:matron_mercy": "Matron Mercy tucks people in. Far too tightly.",
 "take:regional_reaper": "The Regional Reaper hasn't filed expenses since the plague.",
-"take:senior_adjuster": "The Senior Adjuster denies every claim. Deny him."
+"take:senior_adjuster": "The Senior Adjuster denies every claim. Deny him.",
+"take:lorraine": "Lorraine keeps a conga line going round the deck. Nobody may leave it. Do, dear.",
+"take:commodore_wellington": "The Commodore hasn't docked in forty years. His paperwork has. Sink him.",
+"take:chip": "Chip bills for lessons he never gives. Give him one, dear.",
+"take:thaddeus_fairweather": "Fairweather fiddles the club's accounts. And the handicaps. Both, dear.",
+"take:sergeant_wanda": "Sergeant Wanda confiscated my knitting. Twice. Bring her in.",
+"take:augustine": "Augustine has cancelled every departure since records began. Cancel him.",
+"take:doreen": "Doreen holds the Chairman's calls. All of them. Since 1952.",
+"take:chairman_of_the_board": "The Chairman signs my wages, dear. Do try not to enjoy this."
 }

@@ -16,8 +16,12 @@ const NEW_MARK := "NEW"
 const LETTER_COLOR := Color("f4efe2")
 const NO_LETTERS := "No letters yet. The living write when a floor is cleared."
 const PICK_ONE := "Pick a letter to read it."
+# Past this the letters scroll, so ten of them still leave the letter and Leave on the 360 px screen.
+const LIST_MAX_HEIGHT := 150.0
+const ROW_HEIGHT := 24.0
 
 var _title := ""
+var _scroll: ScrollContainer
 var _list: VBoxContainer
 var _letter: Label
 
@@ -49,9 +53,13 @@ func _ready() -> void:
 	var title := Label.new()
 	title.text = _title
 	column.add_child(title)
+	_scroll = ScrollContainer.new()
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	column.add_child(_scroll)
 	_list = VBoxContainer.new()
+	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list.add_theme_constant_override("separation", 2)
-	column.add_child(_list)
+	_scroll.add_child(_list)
 	_letter = Label.new()
 	_letter.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_letter.custom_minimum_size = Vector2(PANEL_SIZE.x - 12.0, 30.0)
@@ -77,6 +85,7 @@ func _rebuild() -> void:
 		button.add_theme_font_size_override("font_size", ROW_FONT)
 		button.pressed.connect(read.bind(letter["path"]))
 		_list.add_child(button)
+	_scroll.custom_minimum_size.y = minf(maxi(letters.size(), 1) * ROW_HEIGHT, LIST_MAX_HEIGHT)
 	if letters.is_empty():
 		_letter.text = NO_LETTERS
 	elif _letter.text.is_empty():

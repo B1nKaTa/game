@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "life_jacket"
+display_name = "Life Jacket"
+description = "Once per floor, a hit that would finish you leaves one pill. Whistle included."
+from_bounty = true
+floor_lethal_saves = 1

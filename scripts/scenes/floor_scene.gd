@@ -25,6 +25,7 @@ const LANDING_LAYOUT := "res://data/rooms/landing/landing.tres"
 const LANDING_HEAL := 2
 const MESSAGE_TIME := 2.0
 const CURSED_NOTICE := "Cursed ticket: tougher enemies, better pay"
+const LIFE_JACKET_NOTICE := "Your life jacket keeps you afloat. One pill left."
 
 var player: Player
 var is_cleared := false
@@ -49,6 +50,14 @@ var _camera: Camera2D
 # never opens it again at once.
 var _card_panel: CardTablePanel
 var _card_panel_closed_frame := -1
+# What the Purser's Bon Voyage Bag put in this run: a potion's id, BonVoyage.THERMOS, or "" for none.
+var _bon_voyage := ""
+# Pension the rooms of this run have paid, for the Golden Parachute on a death.
+var _run_earned := 0
+# Whether this run beat the Chairman for the first time, so the ending card shows before the Waiting
+# Room, and the card while it shows.
+var _ending_due := false
+var _ending_card: EndingCard
 
 
 func _ready() -> void:
@@ -63,6 +72,9 @@ func _ready() -> void:
 	var brewed := Progress.take_brewed_potion()
 	if brewed != null:
 		_run.give_potion(brewed)
+	# After the brew, so a brew always keeps its slot, and before a dev run's kit, which sets its own.
+	if BonVoyage.is_packed(Progress.data):
+		_bon_voyage = BonVoyage.pack(_run, Content.potions_for_sale(), _rng.randf(), _rng.randf())
 	if Progress.is_dev_run():
 		DevStart.apply_kit(_run, Content.items())
 	_hud = Hud.new()
@@ -70,9 +82,14 @@ func _ready() -> void:
 	add_child(_hud)
 	_hud.set_pension(Progress.data.pension)
 	Progress.pension_changed.connect(_hud.set_pension)
+	var start_notes := PackedStringArray()
 	if _run.has_perk(Mementos.START_PENSION_PERK):
 		Progress.add_pension(Mementos.START_PENSION)
-		_hud.show_notice("Your name badge still works: +%d Pension" % Mementos.START_PENSION)
+		start_notes.append("Your name badge still works: +%d Pension" % Mementos.START_PENSION)
+	if not _bon_voyage.is_empty():
+		start_notes.append(BonVoyage.notice(_bon_voyage, Content.potions_for_sale()))
+	if not start_notes.is_empty():
+		_hud.show_notice(".  ".join(start_notes))
 	# Shown after the badge's notice, in its place, since it matters more.
 	if _run.cursed:
 		_hud.show_notice(CURSED_NOTICE)
@@ -92,6 +109,7 @@ func _ready() -> void:
 	player = Player.new()
 	player.setup(_run)
 	player.died.connect(_on_player_died)
+	_run.health.rescued.connect(_on_rescued)
 	player.bomb_requested.connect(_on_bomb_requested)
 	player.show_crosshair = true
 	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
@@ -146,6 +164,10 @@ func debug_depth() -> int:
 	return _depth
 
 
+func debug_bon_voyage() -> String:
+	return _bon_voyage
+
+
 func debug_card_panel() -> CardTablePanel:
 	return _card_panel
 
@@ -190,6 +212,8 @@ func _choose_path(index: int) -> void:
 	_map = map
 	_progress = FloorProgress.new(map)
 	_progress.enter(crossroads.id)
+	# Each floor fills the Life Jacket again.
+	_run.start_floor()
 	_mini_map.setup(map, _progress, false, def.display_name)
 	_big_map.setup(map, _progress, true, def.display_name)
 	_current_id = crossroads.id
@@ -262,7 +286,7 @@ func _make_room_view(room: FloorRoom) -> RoomView:
 		view.arcade_game_wanted.connect(_open_card_table)
 	view.setup(room, _map, _floor_def, _run, player, _rng, _progress, Progress)
 	view.notice.connect(_hud.show_notice)
-	view.pension_earned.connect(func(amount: int): Progress.add_pension(amount))
+	view.pension_earned.connect(_on_pension_earned)
 	view.floor_cleared.connect(_on_floor_cleared)
 	view.boss_spawned.connect(_on_boss_spawned)
 	_feedback.watch_room(view)
@@ -311,10 +335,22 @@ func _close_card_table() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
 
 
+func _on_pension_earned(amount: int) -> void:
+	_run_earned += amount
+	Progress.add_pension(amount)
+
+
+func _on_rescued() -> void:
+	_hud.show_notice(LIFE_JACKET_NOTICE)
+
+
 func _on_player_died() -> void:
 	Progress.last_run["died"] = true
+	var parachute := _run.parachute_pay(_run_earned)
+	if parachute > 0 and not is_over:
+		Progress.add_pension(parachute)
+		_hud.show_notice("Golden Parachute: +%d Pension" % parachute)
 	_end_run("You died again. Please take a number.")
-
 
 func _on_floor_cleared() -> void:
 	if is_cleared:
@@ -359,9 +395,14 @@ func _go_down() -> void:
 	_enter_room(_map.start_id)
 	leaving.queue_free()
 	var missing := _run.health.max_pills - _run.health.pills
-	_run.health.heal(LANDING_HEAL)
-	var healed := mini(LANDING_HEAL, missing)
+	_run.health.heal(landing_heal())
+	var healed := mini(landing_heal(), missing)
 	_hud.show_notice("You catch your breath. +%d pills" % healed if healed > 0 else "You catch your breath.")
+
+
+# What a landing heals: LANDING_HEAL, and one more with the boarding pass.
+func landing_heal() -> int:
+	return LANDING_HEAL + (Mementos.LANDING_EXTRA if _run.has_perk(Mementos.LANDING_PERK) else 0)
 
 
 func _landing_map() -> FloorMap:
@@ -385,7 +426,21 @@ func _end_run(message: String) -> void:
 	if _room_view != null:
 		_room_view.process_mode = Node.PROCESS_MODE_DISABLED
 	await get_tree().create_timer(MESSAGE_TIME).timeout
+	if _ending_due:
+		await _show_ending_card()
 	Game.return_to_waiting()
+
+
+# Saved as seen once it shows, so quitting on the card never shows it twice.
+func _show_ending_card() -> void:
+	_ending_card = EndingCard.new()
+	add_child(_ending_card)
+	Progress.mark_ending_seen()
+	await _ending_card.finished
+
+
+func debug_ending_card() -> EndingCard:
+	return _ending_card if is_instance_valid(_ending_card) else null
 
 
 func _on_boss_spawned(boss: Enemy) -> void:
@@ -400,6 +455,8 @@ func _on_boss_defeated(boss: Enemy) -> void:
 	if boss.is_summon or not boss.def.is_boss:
 		return
 	Progress.last_run["bosses"] = int(Progress.last_run.get("bosses", 0)) + 1
+	if EndingCard.is_due(boss.def.id, Progress.data.ending_seen):
+		_ending_due = true
 	var paid := Progress.record_boss_beaten(boss.def.id, boss.def == _floor_def.floor_boss)
 	if paid > 0:
 		_hud.show_notice("+%d Condolences" % paid)

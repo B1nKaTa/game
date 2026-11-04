@@ -3,6 +3,8 @@ extends RefCounted
 
 signal changed
 signal died
+# A hit that would have finished him left one pill instead, as the Life Jacket does.
+signal rescued
 
 const INVULN_TIME := 0.8
 
@@ -14,6 +16,8 @@ var _invuln := 0.0
 var first_heal_bonus := 0
 # Extra pills every heal restores, as the Stronger Dose option gives. Never past the maximum.
 var heal_bonus := 0
+# How many more hits that would finish him leave one pill instead. RunState fills it on every floor.
+var lethal_saves := 0
 
 
 func _init(start_pills: int) -> void:
@@ -24,6 +28,13 @@ func _init(start_pills: int) -> void:
 func hit(amount: int) -> bool:
 	if is_dead() or is_invulnerable():
 		return false
+	if amount > 0 and amount >= pills and lethal_saves > 0:
+		lethal_saves -= 1
+		pills = 1
+		_invuln = INVULN_TIME
+		changed.emit()
+		rescued.emit()
+		return true
 	pills = maxi(pills - amount, 0)
 	_invuln = INVULN_TIME
 	changed.emit()

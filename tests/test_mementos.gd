@@ -2,7 +2,7 @@ extends TestCase
 
 
 func test_every_floor_boss_has_a_frame_and_its_floor_names_it() -> void:
-	assert_eq(Mementos.ALL.size(), 6)
+	assert_eq(Mementos.ALL.size(), 10)
 	for entry: Dictionary in Mementos.ALL:
 		var floor_path := "res://data/floors/%s.tres" % entry["path"]
 		var def: FloorDef = load(floor_path)
@@ -46,6 +46,9 @@ func test_neighbouring_captions_never_run_together() -> void:
 		boxes.append(Rect2(at, Vector2(width, height)).grow_individual(1.0, 0.0, 1.0, 0.0))
 	for i in boxes.size() - 1:
 		assert_false(boxes[i].intersects(boxes[i + 1]), "%s and %s" % [Mementos.ALL[i]["short_name"], Mementos.ALL[i + 1]["short_name"]])
+	# Every second caption shares a row, two frame steps apart.
+	for i in boxes.size() - 2:
+		assert_false(boxes[i].intersects(boxes[i + 2]), "%s and %s" % [Mementos.ALL[i]["short_name"], Mementos.ALL[i + 2]["short_name"]])
 
 
 # The frames hang on the lobby's top wall, so none may cover the north door or a lantern.
@@ -134,3 +137,67 @@ func test_without_the_coal_shovel_every_fire_hit_lands() -> void:
 func test_the_bent_shovel_raises_prop_coin_odds() -> void:
 	assert_near(_run_with(Mementos.PROP_COINS_PERK).prop_coin_mult(), 1.25)
 	assert_near(_plain_run().prop_coin_mult(), 1.0)
+
+
+# --- the deep floors' mementos ---
+
+func test_frames_never_overlap_and_every_memento_has_a_drawing() -> void:
+	assert_true(TrophyWall.FRAME_STEP > TrophyWall.FRAME_SIZE.x, "a gap between frames")
+	var source := FileAccess.get_file_as_string("res://scripts/world/trophy_wall.gd")
+	for perk in ["START_PENSION_PERK", "PROP_COINS_PERK", "FIRST_HEAL_PERK", "FIRE_PERK", "BOSS_ROOM_PILL_PERK", "TREASURE_CHOICE_PERK", "SLIDE_PERK", "CHARGE_PERK", "LANDING_PERK", "BOSS_DAMAGE_PERK"]:
+		assert_true(source.contains("Mementos.%s:" % perk), perk)
+	var perks := {}
+	for entry: Dictionary in Mementos.ALL:
+		assert_false(perks.has(entry["perk"]), "one memento per perk")
+		perks[entry["perk"]] = true
+
+
+func test_the_deep_floors_perks_have_their_ids() -> void:
+	assert_eq(Mementos.SLIDE_PERK, "slide_half")
+	assert_eq(Mementos.CHARGE_PERK, "charge_power")
+	assert_eq(Mementos.LANDING_PERK, "landing_pill")
+	assert_eq(Mementos.BOSS_DAMAGE_PERK, "boss_damage")
+	var data := ProgressData.new()
+	data.record_floor_cleared(5, "head_office")
+	assert_true(Mementos.perks(data).has(Mementos.BOSS_DAMAGE_PERK))
+
+
+func test_the_anchor_halves_slides_and_pushes() -> void:
+	assert_near(_plain_run().slide_mult(), 1.0)
+	assert_near(_run_with(Mementos.SLIDE_PERK).slide_mult(), 0.5)
+	var player := Player.new()
+	player.setup(_run_with(Mementos.SLIDE_PERK))
+	player.push(Vector2(200, 0), 0.5)
+	assert_eq(player._push, Vector2(100, 0))
+	player.free()
+	var plain := Player.new()
+	plain.setup(_plain_run())
+	plain.push(Vector2(200, 0), 0.5)
+	assert_eq(plain._push, Vector2(200, 0))
+	plain.free()
+	var source := FileAccess.get_file_as_string("res://scripts/actors/player.gd")
+	assert_true(source.contains("ShipDeck.slide_at(get_tree(), _feet.global_position) * run.slide_mult()"), "the roll slides him half as far too")
+
+
+func test_the_golf_trophy_adds_to_a_charged_swing() -> void:
+	assert_near(_plain_run().charge_damage_mult(), 1.0)
+	assert_near(_run_with(Mementos.CHARGE_PERK).charge_damage_mult(), 1.15)
+	var source := FileAccess.get_file_as_string("res://scripts/actors/player.gd")
+	assert_true(source.contains("ChargeSwing.DAMAGE * run.charge_damage_mult()"))
+
+
+func test_the_gold_gavel_hits_bosses_harder_and_nothing_else() -> void:
+	var run := _run_with(Mementos.BOSS_DAMAGE_PERK)
+	assert_near(run.boss_damage_mult(), 1.1)
+	assert_near(_plain_run().boss_damage_mult(), 1.0)
+	assert_near(PlayerStats.boss_damage(30.0, true, run.boss_damage_mult()), 33.0)
+	assert_near(PlayerStats.boss_damage(30.0, false, run.boss_damage_mult()), 30.0)
+	var dentures := FileAccess.get_file_as_string("res://scripts/actors/thrown_dentures.gd")
+	assert_true(dentures.contains("PlayerStats.boss_damage(bite, enemy.def.is_boss, boss_mult)"), "the dentures too")
+
+
+func test_the_boarding_pass_adds_a_pill_to_every_landing() -> void:
+	var source := FileAccess.get_file_as_string("res://scripts/scenes/floor_scene.gd")
+	assert_true(source.contains("LANDING_HEAL + (Mementos.LANDING_EXTRA if _run.has_perk(Mementos.LANDING_PERK) else 0)"))
+	assert_true(source.contains("_run.health.heal(landing_heal())"))
+	assert_eq(Mementos.LANDING_EXTRA, 1)

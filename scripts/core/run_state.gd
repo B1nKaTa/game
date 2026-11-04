@@ -44,6 +44,7 @@ func _init(upgrades: Array[UpgradeDef], levels: Dictionary, choices: Dictionary 
 	health = Health.new(stats.max_pills)
 	health.changed.connect(changed.emit)
 	health.heal_bonus = stats.heal_bonus
+	health.lethal_saves = stats.floor_lethal_saves
 	bombs = STARTING_BOMBS + stats.bonus_bombs
 
 
@@ -98,6 +99,20 @@ func was_recipe_offered(id: String) -> bool:
 func add_item(item: ItemDef) -> void:
 	items.append(item)
 	refresh_stats()
+	# A Life Jacket picked up mid-floor works on this floor already.
+	health.lethal_saves += item.floor_lethal_saves
+
+
+# A new floor fills the Life Jacket's saves again.
+func start_floor() -> void:
+	health.lethal_saves = stats.floor_lethal_saves
+
+
+# What the Golden Parachute pays on a death in a run that earned this much: its share, rounded up.
+func parachute_pay(earned: int) -> int:
+	if stats.death_pension_bonus <= 0.0:
+		return 0
+	return ceili(maxi(earned, 0) * stats.death_pension_bonus)
 
 
 # Drops every item, as leaving the Training Yard does, and puts his stats and pills back. A lower
@@ -105,6 +120,7 @@ func add_item(item: ItemDef) -> void:
 func clear_items() -> void:
 	items.clear()
 	refresh_stats()
+	health.lethal_saves = mini(health.lethal_saves, stats.floor_lethal_saves)
 
 
 # Works his stats out again from the forms and the items he holds, keeping the items. The levels and
@@ -243,6 +259,17 @@ func pension_amount(base: int, source := "") -> int:
 	return ceili(base * stats.pension_mult * mult)
 
 
-# What a charged swing's damage is multiplied by, before the cane's own damage_mult.
+# What a charged swing's damage is multiplied by, before the cane's own damage_mult: the Golf Glove's
+# Follow Through and the golf trophy.
 func charge_damage_mult() -> float:
-	return stats.charge_damage_mult
+	return stats.charge_damage_mult + (Mementos.CHARGE_POWER_BONUS if has_perk(Mementos.CHARGE_PERK) else 0.0)
+
+
+# How far slides and pushes move him, as a share: half with the ship's anchor.
+func slide_mult() -> float:
+	return Mementos.SLIDE_MULT if has_perk(Mementos.SLIDE_PERK) else 1.0
+
+
+# What his hits on a boss are multiplied by: more with the gold gavel.
+func boss_damage_mult() -> float:
+	return Mementos.BOSS_DAMAGE_MULT if has_perk(Mementos.BOSS_DAMAGE_PERK) else 1.0

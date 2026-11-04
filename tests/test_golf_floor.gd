@@ -129,7 +129,7 @@ func test_the_fairway_is_striped_and_never_dotted_as_sand_is() -> void:
 
 func test_sand_reads_against_the_palest_fairway() -> void:
 	var palette := _def().room_palette()
-	for tone in [palette.floor_a, palette.floor_b, palette.floor_c]:
+	for tone: Color in [palette.floor_a, palette.floor_b, palette.floor_c]:
 		var stripe := tone.lerp(Color(palette.fairway_stripe, 1.0), palette.fairway_stripe.a)
 		assert_true(_difference(palette.sand, stripe) > 0.3, "sand against %s" % str(stripe))
 		assert_true(_difference(palette.sand, tone) > 0.3, "sand against %s" % str(tone))

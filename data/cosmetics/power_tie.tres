@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CosmeticDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/cosmetic_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "power_tie"
+display_name = "Power Tie"
+description = "The Chairman's spare. Doreen kept it ironed for forty years."
+slot = "cardigan"
+price = 0
+color = Color(0.749019608, 0.152941176, 0.180392157, 1)
+shape = "tie"

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "neck_pillow"
+display_name = "Neck Pillow"
+description = "One more pill. Finally, a good night's death."
+from_bounty = true
+bonus_pills = 1

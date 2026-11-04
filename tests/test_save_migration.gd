@@ -106,3 +106,24 @@ func test_path_clears_fall_back_to_one_per_cleared_path_and_survive_a_save() -> 
 	var fresh := ProgressData.new()
 	fresh.record_floor_cleared(5, "head_office")
 	assert_eq(fresh.clears_of_path("head_office"), 1, "a first clear counts once")
+
+
+func test_the_ending_card_is_optional_and_remembered() -> void:
+	var raw := {"version": 1, "pension": 0, "upgrades": {}, "opening_seen": true}
+	assert_false(ProgressData.from_dict(raw).ending_seen, "an older save has not seen it")
+	raw["ending_seen"] = "yes"
+	assert_false(ProgressData.from_dict(raw).ending_seen, "a bad value falls back")
+	var data := ProgressData.new()
+	data.ending_seen = true
+	assert_true(ProgressData.from_dict(JSON.parse_string(JSON.stringify(data.to_dict()))).ending_seen)
+
+
+func test_the_ending_card_shows_for_the_chairman_once() -> void:
+	assert_true(EndingCard.is_due("chairman_of_the_board", false))
+	assert_false(EndingCard.is_due("chairman_of_the_board", true), "only the first time")
+	assert_false(EndingCard.is_due("augustine", false))
+	var head_office: FloorDef = load("res://data/floors/head_office.tres")
+	assert_eq(head_office.floor_boss.id, EndingCard.BOSS_ID)
+	var source := FileAccess.get_file_as_string("res://scripts/scenes/floor_scene.gd")
+	var ending := source.substr(source.find("func _end_run"), 900)
+	assert_true(ending.find("_show_ending_card()") < ending.find("Game.return_to_waiting()"), "before the Waiting Room")

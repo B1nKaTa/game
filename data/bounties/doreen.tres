@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BountyDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/bounty_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "doreen"
+boss_name = "Doreen, Executive Assistant"
+floor_id = "head_office"
+depth = 5
+floor_boss = false
+pension = 200
+condolences = 10
+extra_kind = "cosmetic"
+extra_id = "power_tie"
