@@ -141,6 +141,18 @@ func test_the_chair_he_lies_as_is_the_one_the_deck_has() -> void:
 	look.free()
 
 
+# Enemies wait a moment when a room starts, before their first tick, and the first screenshots showed
+# him as a red box with a straw hat for all of it.
+func test_he_lies_as_a_chair_from_the_moment_he_enters_the_room() -> void:
+	var sunbather := Enemy.new()
+	sunbather.setup(_load("sunburnt_sunbather"), null, 0.5)
+	sunbather.wait_for_room_start()
+	sunbather._ready()
+	var chairs := sunbather.get_children().filter(func(child: Node) -> bool: return child is SunbatherBehavior.ChairLook)
+	assert_eq(chairs.size(), 1, "the chair shows before his first tick")
+	sunbather.free()
+
+
 # --- the returning enemies ---
 
 func test_returning_enemies_keep_their_numbers_and_take_the_floors_colors() -> void:

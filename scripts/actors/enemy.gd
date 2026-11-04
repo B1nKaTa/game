@@ -151,6 +151,7 @@ func _ready() -> void:
 	_warning_layer.enemy = self
 	_warning_layer.z_index = WARNING_Z
 	add_child(_warning_layer)
+	_behavior.on_ready(self)
 
 
 # Draws the enemy's warnings and call-outs on their own layer, high above the room.

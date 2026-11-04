@@ -76,6 +76,19 @@ func test_a_caddie_warns_then_runs_holding_his_lane() -> void:
 	grandpa.free()
 
 
+# The cart is drawn behind his body, so it must be longer than him to show at all, and it stays inside
+# the lane it warns, for him and for the Club President alike.
+func test_a_cart_shows_past_its_driver_and_fits_its_lane() -> void:
+	var caddie := CaddieBehavior.Cart.reach(CaddieBehavior.CART_STRETCH)
+	var body := _load("caddie").body_size
+	assert_true(caddie.x >= maxf(body.x, body.y) + 16.0, "the caddie's cart shows past him, got %s" % str(caddie))
+	assert_true(caddie.y <= CaddieBehavior.LANE_WIDTH, "and fits his lane, got %s" % str(caddie))
+	var president := CaddieBehavior.Cart.reach(ClubPresidentBehavior.CART_STRETCH)
+	var boss := _load("thaddeus_fairweather").body_size
+	assert_true(president.x >= maxf(boss.x, boss.y) + 16.0, "the President's cart shows past him, got %s" % str(president))
+	assert_true(president.y <= ClubPresidentBehavior.CART_LANE_WIDTH, "and fits his lane, got %s" % str(president))
+
+
 # --- the Club Golfer ---
 
 func test_the_golfer_keeps_a_driving_distance() -> void:

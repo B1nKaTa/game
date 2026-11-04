@@ -354,7 +354,7 @@ func _raise_projections(enemy: Enemy) -> void:
 		enemy.get_parent().add_child(drop)
 	var spot := safe_gap_point(projection_gaps(room, bars), enemy.target_ground(), enemy.body_rect())
 	if spot != Vector2.INF:
-		var mark := SafeSpotMark.new()
+		var mark := GapMark.new()
 		mark.setup(projection_time(bars.size()))
 		enemy.get_parent().add_child(mark)
 		mark.global_position = spot

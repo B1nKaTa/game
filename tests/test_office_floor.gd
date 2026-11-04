@@ -110,6 +110,42 @@ func test_new_decor_is_scatter_and_never_a_light_but_the_panels() -> void:
 	assert_true(RoomDecor.is_light(RoomDecor.FLUORESCENT))
 
 
+# --- how it reads under its own bright light ---
+
+# A colour as a strong light leaves it: brightened, and clipped at white.
+func _lit(color: Color, light: float) -> Color:
+	return Color(minf(color.r * light, 1.0), minf(color.g * light, 1.0), minf(color.b * light, 1.0))
+
+
+func test_the_palest_carpet_under_a_wall_light_and_the_fill_stays_below_white() -> void:
+	var palette := _def().room_palette()
+	var light := Color(palette.ambient.r + palette.torch.r + palette.fill_light.r * Lighting.FILL_ENERGY,
+		palette.ambient.g + palette.torch.g + palette.fill_light.g * Lighting.FILL_ENERGY,
+		palette.ambient.b + palette.torch.b + palette.fill_light.b * Lighting.FILL_ENERGY)
+	for tile: Color in [palette.floor_a, palette.floor_b, palette.floor_c]:
+		var peak := maxf(tile.r * light.r, maxf(tile.g * light.g, tile.b * light.b))
+		assert_true(peak < 1.0, "the carpet near a wall light burns to white (%.2f)" % peak)
+
+
+func test_no_enemy_of_the_floor_washes_out_to_white_in_the_light() -> void:
+	var defs: Array[EnemyDef] = []
+	defs.assign(_def().enemies)
+	defs.append(_def().mini_boss)
+	defs.append(_def().floor_boss)
+	defs.append(_def().mini_boss.summon)
+	for def in defs:
+		var lit := _lit(SpriteVisual.readable(def.color), 1.5)
+		assert_true(minf(lit.r, minf(lit.g, lit.b)) < 0.85, "%s turns white in the office light" % def.id)
+
+
+func test_the_bar_charts_gap_mark_stays_green_however_brightly_it_is_lit() -> void:
+	for light: float in [1.0, 1.5, 2.0]:
+		var lit := _lit(GapMark.GAP_COLOR, light)
+		assert_true(lit.g - maxf(lit.r, lit.b) > 0.25, "green at %.1f" % light)
+	var source := FileAccess.get_file_as_string("res://scripts/actors/behaviors/chairman_behavior.gd")
+	assert_true(source.contains("GapMark.new()"), "the projections mark their gap with it")
+
+
 # --- its rooms ---
 
 func test_every_layout_in_the_folder_is_valid() -> void:
