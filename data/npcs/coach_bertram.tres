@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="NpcDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/npc_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "coach_bertram"
+display_name = "Coach Bertram, Retired PE Teacher"
+color = Color(0.25, 0.5, 0.3, 1)
+body_size = Vector2(22, 30)
+lines = Array[String](["Pick something off the rack and I'll tell you what it's good for."])

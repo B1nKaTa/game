@@ -63,6 +63,11 @@ func talk() -> String:
 	return line
 
 
+# Replaces what he says, starting again at the first line.
+func set_lines(lines: Array[String]) -> void:
+	_talk = NpcTalk.new(lines)
+
+
 func _process(delta: float) -> void:
 	_talk.tick(delta)
 	queue_redraw()

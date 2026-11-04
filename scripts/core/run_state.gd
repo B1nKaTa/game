@@ -5,6 +5,8 @@ signal changed
 
 const STARTING_BOMBS := 1
 const MAX_CONSUMABLE := 99
+# Thermoses in the Training Yard, topped up after every throw.
+const YARD_SUPPLY := MAX_CONSUMABLE
 # Where Pension comes from, for the Bribed Clerk's options. Anything else gets the general rate only.
 const PENSION_ENEMY := "enemy"
 const PENSION_REWARD := "reward"
@@ -70,6 +72,18 @@ func was_recipe_offered(id: String) -> bool:
 
 func add_item(item: ItemDef) -> void:
 	items.append(item)
+	stats = PlayerStats.compute(_upgrades, _levels, items, _choices)
+	health.heal_bonus = stats.heal_bonus
+	if stats.max_pills != health.max_pills:
+		health.raise_max(stats.max_pills)
+	else:
+		changed.emit()
+
+
+# Drops every item, as leaving the Training Yard does, and puts his stats and pills back. A lower
+# maximum never leaves him holding more pills than it allows.
+func clear_items() -> void:
+	items.clear()
 	stats = PlayerStats.compute(_upgrades, _levels, items, _choices)
 	health.heal_bonus = stats.heal_bonus
 	if stats.max_pills != health.max_pills:

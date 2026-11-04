@@ -75,12 +75,14 @@ const STATIONS: Array[Dictionary] = [
 	# A PosterBoard draws the cork board and its posters, so the station draws none. It stands off the
 	# middle column, since (10, 2) would be beside the cell a north door would use.
 	{"id": "bounty_board", "department": BOUNTY_OFFICE, "cell": Vector2i(6, 2), "title": "Bounty Office. Overdue Accounts", "prompt": "Wanted posters", "board": false},
+	{"id": "item_rack", "department": TRAINING_YARD, "cell": Vector2i(15, 3), "title": "Item Rack", "prompt": "Try items", "label": "Rack", "size": Vector2(36, 28), "color": Color("6a5a48")},
 ]
 
 # People who stand in a department, each made from its NpcDef on the department's first entry. They
 # talk on their own, and the scene listens to what they say where it needs to.
 const NPCS: Array[Dictionary] = [
 	{"id": "deputy_dolores", "department": BOUNTY_OFFICE, "cell": Vector2i(10, 6), "def": "res://data/npcs/deputy_dolores.tres"},
+	{"id": "coach_bertram", "department": TRAINING_YARD, "cell": Vector2i(5, 5), "def": "res://data/npcs/coach_bertram.tres"},
 ]
 
 # The trophy wall's frames hang centred over this lobby column, on the line between the top wall and

@@ -116,6 +116,13 @@ func _save_condolences() -> void:
 	condolences_changed.emit(data.condolences)
 
 
+func mark_coach_met() -> void:
+	if data.coach_met:
+		return
+	data.coach_met = true
+	_store.save_progress(data)
+
+
 func take_bounty(def: BountyDef) -> bool:
 	if not BountyBoard.take(def, data):
 		return false

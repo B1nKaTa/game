@@ -10,6 +10,8 @@ const TROPHY_WALL := "trophy_wall"
 const FORMS_COUNTER := "forms_counter"
 const BOUNTY_BOARD := "bounty_board"
 const DEPUTY_DOLORES := "deputy_dolores"
+const ITEM_RACK := "item_rack"
+const COACH_BERTRAM := "coach_bertram"
 const MERCHANT_PROMPT := "Trade"
 const RUN_DOOR_ICON := ">"
 const NOW_SERVING_AT := Vector2(360, 24)
@@ -24,6 +26,8 @@ var _camera: Camera2D
 var _map: FloorMap
 var _progress: FloorProgress
 var _floor_def: FloorDef
+# The Waiting Room's own run, which only Grandpa's stats here and the Training Yard use. Items tried in
+# the yard can never reach a real run: Game.begin_run() changes scene, and floor_scene makes a fresh run.
 var _run: RunState
 var _rng := RandomNumberGenerator.new()
 var _room_view: RoomView
@@ -152,19 +156,45 @@ func _enter_department(target_id: int) -> void:
 	_follow_player()
 
 
-# In the Training Yard a Thermos can be thrown, and a hit from one costs Grandpa nothing, since he
-# heals in full at once. Anywhere else neither holds.
+# In the Training Yard a Thermos can be thrown, from a supply topped up after every throw, and a hit from
+# one costs Grandpa nothing, since he heals in full at once. Leaving by any door drops the items tried
+# there and puts his Thermoses back to a run's start.
 func _set_yard_rules(in_yard: bool) -> void:
 	if in_yard and not player.bomb_requested.is_connected(_on_yard_bomb):
 		player.bomb_requested.connect(_on_yard_bomb)
 		player.hurt.connect(_on_yard_hurt)
+		_run.bombs = RunState.YARD_SUPPLY
+		_run.changed.emit()
+		_refresh_coach()
 	elif not in_yard and player.bomb_requested.is_connected(_on_yard_bomb):
 		player.bomb_requested.disconnect(_on_yard_bomb)
 		player.hurt.disconnect(_on_yard_hurt)
+		_run.clear_items()
+		_run.bombs = RunState.STARTING_BOMBS + _run.stats.bonus_bombs
+		_run.changed.emit()
 
 
 func _on_yard_bomb(at: Vector2) -> void:
 	_room_view.place_bomb(at)
+	_run.bombs = RunState.YARD_SUPPLY
+	_run.changed.emit()
+
+
+func _on_rack_taken(item: ItemDef) -> void:
+	if not _run.has_item(item.id):
+		_run.add_item(item)
+	_refresh_coach()
+
+
+# The coach's lines follow what Grandpa holds, or the basics until he has been met.
+func _refresh_coach() -> void:
+	var coach: Variant = _npcs.get(COACH_BERTRAM)
+	if is_instance_valid(coach):
+		(coach as Npc).set_lines(CoachTips.lines_for(_run.items, not Progress.data.coach_met))
+
+
+func _on_coach_talked(_line: String) -> void:
+	Progress.mark_coach_met()
 
 
 func _on_yard_hurt() -> void:
@@ -245,6 +275,8 @@ func _add_npc(view: RoomView, entry: Dictionary) -> void:
 	_npcs[entry["id"]] = npc
 	if entry["id"] == DEPUTY_DOLORES:
 		npc.talked.connect(_on_dolores_talked)
+	elif entry["id"] == COACH_BERTRAM:
+		npc.talked.connect(_on_coach_talked)
 
 
 # She says her line either way, and with a poster ready to collect she opens the board's panel too.
@@ -325,6 +357,11 @@ func _open_station(opened: WaitingStation) -> void:
 			_show_lines(Mementos.wall_lines(Progress.data))
 		BOUNTY_BOARD:
 			_open_bounty_panel(opened.title)
+		ITEM_RACK:
+			var rack := ItemRackPanel.new()
+			rack.setup(opened.title, _run)
+			rack.taken.connect(_on_rack_taken)
+			_show_panel(rack)
 
 
 # Shows the first line now and the rest one after another, in place of whatever was waiting.
