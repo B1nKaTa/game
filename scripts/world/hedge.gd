@@ -10,7 +10,8 @@ func art_id() -> String:
 
 
 func debris_color() -> Color:
-	return look().hedge
+	# The dark of its own outline: its leaf green vanished on the grass.
+	return look().hedge.darkened(0.45)
 
 
 func _draw_placeholder() -> void:

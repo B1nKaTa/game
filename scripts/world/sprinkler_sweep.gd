@@ -17,6 +17,10 @@ const SAFE := Color("7fe0a0")
 const WATER := Color(0.6, 0.85, 1.0)
 const SPRAY := Color(0.88, 0.96, 1.0)
 const SECTOR_STEPS := 36
+# The dry quarter is filled faintly green, as the edge alone was lost on the grass, and the arc still to
+# be swept stays faintly red while the jet turns.
+const DRY_FILL := 0.18
+const AHEAD_FILL := 0.12
 
 var _source: Enemy
 var _start := 0.0
@@ -134,7 +138,8 @@ func _draw() -> void:
 		draw_polyline(sector + PackedVector2Array([Vector2.ZERO]), COLOR, 2.0)
 		# The dry quarter, edged in green, so the one way out of the sweep is plain to see.
 		var dry := _sector(end, _start + _turn * TAU, REACH)
-		draw_polyline(dry + PackedVector2Array([Vector2.ZERO]), Color(SAFE, 0.9), 2.0)
+		draw_colored_polygon(dry, Color(SAFE, DRY_FILL))
+		draw_polyline(dry + PackedVector2Array([Vector2.ZERO]), Color(SAFE, 0.9), 3.0)
 		# An arrow along the rim, pointing the way the jet will turn.
 		var tip_angle := _start + _turn * 0.5
 		var tip := Vector2.from_angle(tip_angle) * (REACH - 12.0)
@@ -146,7 +151,10 @@ func _draw() -> void:
 		return
 	var angle := arm_angle(_start, _turn, _swept_for)
 	var way := Vector2.from_angle(angle)
-	draw_polyline(_sector(angle, end, REACH), Color(COLOR, 0.5), 1.0)
+	# What the jet has still to sweep stays faintly red, so the way it is heading reads.
+	var ahead := _sector(angle, end, REACH)
+	draw_colored_polygon(ahead, Color(COLOR, AHEAD_FILL))
+	draw_polyline(ahead, Color(COLOR, 0.6), 1.5)
 	draw_line(Vector2.ZERO, way * REACH, Color(WATER, 0.75), ARM_WIDTH * 0.6)
 	draw_line(Vector2.ZERO, way * REACH, SPRAY, 2.0)
 	for i in 6:

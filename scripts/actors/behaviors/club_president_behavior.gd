@@ -18,7 +18,8 @@ const CART_LENGTH := 360.0
 const CART_SPEED := 400.0
 const CART_HIT_RANGE := 28.0
 const CART_LANE_WIDTH := 52.0
-const CART_SCALE := 1.7
+# His cart, drawn long enough to show past his body at both ends and no wider than his lane.
+const CART_STRETCH := Vector2(2.8, 1.5)
 const SPRINKLER_WINDUP := 0.8
 const BUNKER_WINDUP := 0.6
 const BUNKERS := 3
@@ -280,7 +281,7 @@ func _show_cart(enemy: Enemy) -> void:
 	if _cart == null:
 		_cart = CaddieBehavior.Cart.new()
 		_cart.z_index = -1
-		_cart.scale = Vector2(CART_SCALE, CART_SCALE)
+		_cart.stretch = CART_STRETCH
 		enemy.add_child(_cart)
 	_cart.way = _aim
 	_cart.visible = true

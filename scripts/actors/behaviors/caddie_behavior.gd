@@ -20,6 +20,9 @@ const FIRST_CHARGE := 1.2
 const WALL_GRACE := 0.05
 const HONK := "Beep beep!"
 const SAY_TIME := 0.9
+# How far the cart is drawn stretched, along the lane and across it, so it shows past his body at both
+# ends while staying inside the lane.
+const CART_STRETCH := Vector2(1.7, 1.15)
 
 
 # The cart drawn round him while he lines it up and while it runs.
@@ -30,9 +33,14 @@ class Cart extends Node2D:
 	const BAR := Color("9aa0a8")
 
 	var way := Vector2.RIGHT
+	var stretch := CART_STRETCH
+
+	# Its length along the lane and its width across it, wheels included, at its stretch.
+	static func reach(at_stretch: Vector2) -> Vector2:
+		return Vector2(30.0 * at_stretch.x, 23.0 * at_stretch.y)
 
 	func _draw() -> void:
-		draw_set_transform(Vector2.ZERO, way.angle())
+		draw_set_transform(Vector2.ZERO, way.angle(), stretch)
 		for corner in [Vector2(-10, -11), Vector2(8, -11), Vector2(-10, 9), Vector2(8, 9)]:
 			draw_rect(Rect2(corner, Vector2(6, 3)), WHEEL)
 		draw_rect(Rect2(-14, -9, 30, 18), BODY)
