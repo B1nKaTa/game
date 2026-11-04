@@ -456,6 +456,10 @@ func _check_big_room_view(scene: Node) -> void:
 		await _check_camera(scene)
 		positions_seen[scene.debug_camera().position] = true
 	_check(positions_seen.size() >= 4, "the camera follows him around a big room")
+	# He is held still while the screen shakes, since a rolling deck, a ring or an escalator would
+	# carry him and the camera with him.
+	scene.player.set_physics_process(false)
+	await get_tree().process_frame
 	var rest: Vector2 = scene.debug_camera().position
 	scene.debug_feedback().on_hurt()
 	var shook := false
@@ -463,6 +467,7 @@ func _check_big_room_view(scene: Node) -> void:
 		await get_tree().process_frame
 		shook = shook or not scene.debug_camera().offset.is_zero_approx()
 		await _check_camera(scene)
+	scene.player.set_physics_process(true)
 	_check(shook, "the screen still shakes in a big room")
 	_check(scene.debug_camera().position == rest, "shaking does not move where the camera rests")
 	var hud := _find_hud(scene)
