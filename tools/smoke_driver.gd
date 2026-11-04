@@ -148,6 +148,8 @@ func _run() -> void:
 	_check(Progress.data.pension == pension_saved, "Pension survives a reload")
 	_check(Progress.data.level_of(upgrade.id) == 1, "upgrade survives a reload")
 
+	await _check_dev_start()
+
 	if not _failed:
 		print("SMOKE PASS paths cleared: %d, landings reached: %d, boss choices checked: %d, rooms of sizes %s, big room view checked: %s, block memory checked: %s, props checked: %s, fight checked: %s, graveyard checked: %s, care home checked: %s, furnace checked: %s, vault opened: %s, potions checked: %s, fuel checked: %s, pickups off solids: %d, chests checked: %s, mimics beaten on the way: %d, arcade checked: %s, arcade rooms played on the way: %d" % [_paths_cleared, _landings_reached, _boss_choices_checked, str(_sizes_seen.keys()), str(_followed_a_big_room), str(_checked_block_memory), str(_checked_props), str(_checked_fight), str(_checked_graveyard), str(_checked_care_home), str(_checked_furnace), str(_opened_a_vault), str(_checked_potions), str(_checked_fuel), _pickups_off_solids, str(_checked_chests), _mimics_beaten_in_loop, str(_checked_arcade), _arcades_played.size()])
 		get_tree().quit(0)
@@ -602,6 +604,44 @@ func _die_in_a_run() -> void:
 	scene.player.run.health.hit(999)
 	await _wait(0.1)
 	_check(scene.is_over, "death ends the run")
+
+
+# The debug shortcut lands on the Floor 3 landing with everything bought, both third-floor paths open,
+# and leaves the save exactly as it was however the run ends.
+func _check_dev_start() -> void:
+	var save_text := FileAccess.get_file_as_string(Progress.SMOKE_PATH)
+	var pension_before: int = Progress.data.pension
+	Game.begin_dev_run()
+	await _wait(0.5)
+	_expect_scene("FloorScene")
+	var scene := get_tree().current_scene
+	_check(Progress.is_dev_run(), "the shortcut starts a dev run")
+	_check(scene.debug_depth() == DevStart.START_DEPTH, "the dev run starts at depth 3, got %d" % scene.debug_depth())
+	_check(scene.debug_floor_def().id == "landing_3", "the dev run starts on the Floor 3 landing")
+	for def: UpgradeDef in Content.upgrades():
+		_check(Progress.data.level_of(def.id) == def.max_level(), "%s is at its top level" % def.id)
+	var run: RunState = scene.player.run
+	_check(run.keys == DevStart.KEYS and run.bombs == DevStart.BOMBS and run.items.size() >= DevStart.ITEMS.size(), "the dev kit is carried")
+	_check(run.potion != null and run.potion.id == DevStart.BREWED_POTION, "the dev brew is in the slot")
+	var map: FloorMap = scene.debug_map()
+	var landing: FloorRoom = map.room(scene.debug_current_id())
+	_check(landing.room_type == RoomLayout.TYPE_LANDING, "he stands on the landing")
+	await _walk_through_door(scene, landing.doors.values()[0])
+	_check(map.room(scene.debug_current_id()).room_type == RoomLayout.TYPE_CROSSROADS, "the landing leads to the third Crossroads")
+	Progress.add_pension(123)
+	# The locked east path, the Mall, opens as after a third-floor clear.
+	scene.debug_choose_path(LOCKED_DEEP_PATH)
+	await _wait(0.3)
+	_check(scene.debug_floor_def().id == "golden_years_mall", "the Mall can be entered from the dev run")
+	run.health.hit(999)
+	await _wait(0.1)
+	_check(scene.is_over, "death ends the dev run")
+	await _wait(2.5)
+	_expect_scene("WaitingRoom")
+	_check(not Progress.is_dev_run(), "the dev run is over in the Waiting Room")
+	_check(Progress.data.pension == pension_before, "Pension from the dev run is not kept")
+	_check(FileAccess.get_file_as_string(Progress.SMOKE_PATH) == save_text, "the save file is untouched by the dev run")
+	_check(not FileAccess.file_exists(Progress.DEV_PATH), "the dev run's file is thrown away")
 
 
 func _wait(seconds: float) -> void:
