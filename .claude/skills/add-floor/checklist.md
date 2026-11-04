@@ -90,11 +90,11 @@ If a safety check blocks a delete, say so in the report and ask the user to dele
 
 ## 3. Screenshots of every new attack, in a real window
 
-- Write a screenshot probe (`extends SceneTree`) in the scratchpad. The floor-3 one was
-  `floor3_look.gd` in a session scratchpad; it is not in the repo, so rebuild it if it is gone:
-  load the new `EnemyDef` and `FloorDef` files directly (a probe made before the floor is wired shows
-  the old bosses otherwise), build the room, keep Grandpa alive by setting run fields directly, and
-  save `get_viewport().get_texture().get_image()` to PNGs.
+- Write a screenshot probe (`extends SceneTree`), starting from a copy of the floor-3 probe in
+  `tools/probes/floor3_look.gd`, which writes its PNGs to `D:/grandpa-verify/shots/floor3/`. Load the
+  new `EnemyDef` and `FloorDef` files directly (a probe made before the floor is wired shows the old
+  bosses otherwise), build the room, keep Grandpa alive by setting run fields directly, and save
+  `get_viewport().get_texture().get_image()` to PNGs.
 - Run it **without** `--headless`, from an exported copy with a renamed `config/name`, after the
   window check: `& <windowed godot> --path D:\grandpa-verify\look --script <probe> -- <args>`.
 - Wait with `Time.get_ticks_msec`, never by counting frames (a real window runs far above 60 fps).
@@ -109,11 +109,13 @@ If a safety check blocks a delete, say so in the report and ask the user to dele
 
 ## 4. Balance bot, compared with earlier floors
 
-- The simulated player and the income probe are scratchpad scripts, not in the repo. The last
-  versions were `bot_probe4.gd` and `income_probe4.gd` in
-  `C:\Users\PC\AppData\Local\Temp\claude\C--Users-PC\5df3bd71-deda-4c2b-b0a3-333826050d73\scratchpad\`,
-  run through `run_probe.ps1` there (which backs up and restores the save files and stops only its
-  own process on a timeout). If they are gone, rebuild from `docs/playtest-notes.md`'s description.
+- The simulated player and the income probe are in `tools/probes/`: `bot_probe.gd` and
+  `income_probe.gd` (the floor-3 versions). Run the bot with
+  `powershell -File tools/probes/run_bot.ps1 -Cases "max good 20 0 3 bosses;some good 20 0 3 bosses" -Tag <tag>`.
+  That exports a renamed copy with `export_copy.ps1` to `D:\grandpa-verify\botroot` and writes its
+  results to `D:\grandpa-verify\bot\`. For a single probe, `tools/probes/run_probe.ps1 -Probe <path>`
+  backs up and restores the save files and stops only its own process on a timeout. Delete
+  `D:\grandpa-verify` when you are done.
 - Bot arguments after `--`: `<fresh|some|max> <average|good> <runs> <path index> <depth> [bosses|haul]`.
   It writes its own `user://probe_*.json`, never the real save.
 - First teach it every new warning, hazard and safe spot, as v4 was taught the floor-3 ones.
