@@ -63,6 +63,11 @@ var _mimics_beaten_in_loop := 0
 var _checked_arcade := false
 # Arcade Rooms the floors rolled whose games the loop played, by room view.
 var _arcades_played := {}
+# Set for the run that beats the Chairman, so it is a fast run that lost a pill in his room, which
+# makes Crashing the Funeral the ending.
+var _force_fast_run := false
+var _checked_augustine := false
+var _checked_ending := false
 
 
 func _ready() -> void:
@@ -124,10 +129,13 @@ func _run() -> void:
 	# The first clears opened the locked (east) path of each depth: the Cemetery, the Furnace Works, the
 	# Mall and so on down.
 	var pension_before_second: int = Progress.data.pension
+	var found_before: int = Progress.data.endings_found.size()
+	_force_fast_run = true
 	await _clear_every_depth(LOCKED_DEEP_PATH)
+	_force_fast_run = false
 	_check(Progress.data.pension > pension_before_second, "the locked paths earn Pension too")
-	await _check_ending_card()
-	await _wait(2.5)
+	await _check_ending_scene(found_before)
+	await _wait(0.5)
 	_expect_scene("WaitingRoom")
 	_check(Progress.data.floors_cleared == 2, "clearing the second first-floor path is counted too")
 	for depth in range(2, _last_depth + 1):
@@ -194,6 +202,7 @@ func _run() -> void:
 
 	_check(_checked_departments and _checked_forms and _checked_bounty and _checked_decor, "the Waiting Room checks of the first visits ran")
 	_check(_walked_departments and _checked_back_room and _checked_yard and _checked_tickets, "the Waiting Room checks after every floor ran")
+	_check(_checked_augustine and _checked_ending, "Augustine's scene and the ending scene were checked")
 	if not _failed:
 		print("SMOKE PASS paths cleared: %d, landings reached: %d, boss choices checked: %d, rooms of sizes %s, big room view checked: %s, block memory checked: %s, props checked: %s, fight checked: %s, graveyard checked: %s, care home checked: %s, furnace checked: %s, vault opened: %s, potions checked: %s, fuel checked: %s, pickups off solids: %d, chests checked: %s, mimics beaten on the way: %d, arcade checked: %s, arcade rooms played on the way: %d" % [_paths_cleared, _landings_reached, _boss_choices_checked, str(_sizes_seen.keys()), str(_followed_a_big_room), str(_checked_block_memory), str(_checked_props), str(_checked_fight), str(_checked_graveyard), str(_checked_care_home), str(_checked_furnace), str(_opened_a_vault), str(_checked_potions), str(_checked_fuel), _pickups_off_solids, str(_checked_chests), _mimics_beaten_in_loop, str(_checked_arcade), _arcades_played.size()])
 		print("SMOKE PASS waiting room: departments checked at start: %s, forms checked: %s, bounty collected: %s, decor checked: %s, departments walked: %s, back room played: %s, yard checked: %s, tickets and letters checked: %s, mini bosses beaten: %d, Condolences: %d" % [str(_checked_departments), str(_checked_forms), str(_checked_bounty), str(_checked_decor), str(_walked_departments), str(_checked_back_room), str(_checked_yard), str(_checked_tickets), _mini_bosses_beaten, Progress.data.condolences])
@@ -235,6 +244,9 @@ func _clear_every_depth(path_index: int) -> void:
 		_check(scene.debug_depth() == depth, "the run has reached depth %d, got %d" % [depth, scene.debug_depth()])
 		await _check_crossroads(scene)
 		await _walk_a_path(scene, path_index)
+		if _force_fast_run and depth == _last_depth:
+			scene.player.run.play_time = 0.0
+			scene.player.run.boss_room_pill_lost = true
 		await _clear_whole_floor(scene, path_index)
 		if _failed:
 			return
@@ -246,6 +258,8 @@ func _clear_every_depth(path_index: int) -> void:
 			return
 	await _wait(0.1)
 	_check(scene.is_over, "a floor boss at the last depth, %d, ends the run" % _last_depth)
+	if scene.debug_floor_def().floor_boss.id == EndingRules.AUGUSTINE:
+		await _check_augustine_scene(scene)
 	_check(_hud_message(scene) == "FLOOR CLEARED", "the run ends with FLOOR CLEARED, got '%s'" % _hud_message(scene))
 
 
@@ -3028,16 +3042,58 @@ func _check_corner_slide(scene: Node) -> void:
 
 # The second run ended on Head Office, whose Chairman fell for the first time, so the ending card
 # shows after the run's last message and before the Waiting Room, and a press closes it.
-func _check_ending_card() -> void:
+# Beating Augustine plays his scene before FLOOR CLEARED, the whole of it the first time, and the loop
+# skips it as a player would.
+func _check_augustine_scene(scene: Node) -> void:
+	var cut: CutscenePlayer = scene.debug_cutscene()
+	_check(cut != null, "beating Augustine plays his scene")
+	if cut == null:
+		return
+	_check(_hud_message(scene) != "FLOOR CLEARED", "his scene comes before FLOOR CLEARED")
+	await _wait(0.5)
+	_check(not cut.can_skip(), "the first time, the skip waits for the first text box")
+	await _skip_cutscene(cut)
+	await _wait(0.3)
+	_check(not is_instance_valid(cut), "holding interact skips his scene")
+	_checked_augustine = true
+
+
+# Beating the Chairman in a forced fast run plays Crashing the Funeral, saves it found with its
+# Condolences, and the loop skips it; the same run again would now be Briefly Alive, as Crashing the
+# Funeral is found; and the Waiting Room welcomes him back.
+func _check_ending_scene(found_before: int) -> void:
 	var scene := get_tree().current_scene
 	await _wait(scene.MESSAGE_TIME + 0.4)
-	var card: EndingCard = scene.debug_ending_card() if scene.has_method("debug_ending_card") else null
-	_check(card != null, "beating the Chairman the first time shows the ending card")
-	_check(Progress.data.ending_seen, "the ending card is saved as seen")
-	if card == null:
+	var cut: CutscenePlayer = scene.debug_cutscene() if scene.has_method("debug_cutscene") else null
+	_check(cut != null, "beating the Chairman plays an ending scene")
+	_check(scene.debug_ending_id() == EndingRules.CRASHING_THE_FUNERAL, "a fast run plays Crashing the Funeral, got %s" % scene.debug_ending_id())
+	_check(Progress.data.endings_found.size() == found_before + 1, "the found set grows by one")
+	_check(Progress.data.endings_found.has(EndingRules.CRASHING_THE_FUNERAL), "the ending is saved found")
+	_check(int(Progress.last_run.get("ending_paid", 0)) == ProgressData.ENDING_CONDOLENCES, "a new ending pays its Condolences")
+	var snapshot: Dictionary = scene.debug_ending_snapshot()
+	_check(EndingRules.choose(snapshot, Progress.data.endings_found) == EndingRules.BRIEFLY_ALIVE, "a second identical run picks Briefly Alive, as Crashing the Funeral is found")
+	if cut == null:
 		return
-	_check(card.text() == EndingCard.TEXT, "the card says its words")
-	await _wait(EndingCard.MIN_TIME)
-	await _press("interact")
-	await _wait(0.3)
-	_check(not is_instance_valid(card), "a press closes the card and goes on to the Waiting Room")
+	await _skip_cutscene(cut)
+	await _wait(0.6)
+	_expect_scene("WaitingRoom")
+	var room := get_tree().current_scene
+	_check(_hud_message(room) == "Welcome back. Please take a number.", "the Waiting Room welcomes him back, got '%s'" % _hud_message(room))
+	_checked_ending = true
+
+
+# Skips a scene as a player would: the first time the skip waits for the first text box, so that box is
+# pressed on once it has shown, then interact is held.
+func _skip_cutscene(cut: CutscenePlayer) -> void:
+	var guard := 0
+	while is_instance_valid(cut) and not cut.can_skip() and guard < 300:
+		guard += 1
+		if not cut.current_text().is_empty():
+			await _wait(CutscenePlayer.MIN_SHOW_TIME + 0.1)
+			await _press("interact")
+		else:
+			await _wait(0.1)
+	_check(is_instance_valid(cut) and cut.can_skip(), "the skip is offered once the first text box has gone")
+	Input.action_press("interact")
+	await _wait(CutscenePlayer.SKIP_HOLD + 0.4)
+	Input.action_release("interact")
