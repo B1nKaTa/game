@@ -2,3 +2,6 @@
 export/
 .superpowers/
 __pycache__/
+# Rendered music is made by tools/music, never committed (see tools/music/README.md).
+audio/music/*.wav
+audio/music/*.wav.import
