@@ -110,6 +110,23 @@ func test_new_decor_is_scatter_and_never_a_light_but_the_panels() -> void:
 	assert_true(RoomDecor.is_light(RoomDecor.FLUORESCENT))
 
 
+# --- how it reads under its own bright light ---
+
+# A colour as a strong light leaves it: brightened, and clipped at white.
+func _lit(color: Color, light: float) -> Color:
+	return Color(minf(color.r * light, 1.0), minf(color.g * light, 1.0), minf(color.b * light, 1.0))
+
+
+func test_the_palest_carpet_under_a_wall_light_and_the_fill_stays_below_white() -> void:
+	var palette := _def().room_palette()
+	var light := Color(palette.ambient.r + palette.torch.r + palette.fill_light.r * Lighting.FILL_ENERGY,
+		palette.ambient.g + palette.torch.g + palette.fill_light.g * Lighting.FILL_ENERGY,
+		palette.ambient.b + palette.torch.b + palette.fill_light.b * Lighting.FILL_ENERGY)
+	for tile: Color in [palette.floor_a, palette.floor_b, palette.floor_c]:
+		var peak := maxf(tile.r * light.r, maxf(tile.g * light.g, tile.b * light.b))
+		assert_true(peak < 1.0, "the carpet near a wall light burns to white (%.2f)" % peak)
+
+
 # --- its rooms ---
 
 func test_every_layout_in_the_folder_is_valid() -> void:
