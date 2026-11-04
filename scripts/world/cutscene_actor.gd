@@ -148,6 +148,7 @@ func tick(delta: float) -> void:
 		_sprite.play("walk" if _walking else "idle")
 	if _look != null:
 		_look.walking = _walking
+		_look.action = _anim
 		_look.clock = _clock
 		_look.queue_redraw()
 	_tick_anim(delta)
