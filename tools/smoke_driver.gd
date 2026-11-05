@@ -3070,8 +3070,21 @@ func _check_ending_scene(found_before: int) -> void:
 	_check(Progress.data.endings_found.size() == found_before + 1, "the found set grows by one")
 	_check(Progress.data.endings_found.has(EndingRules.CRASHING_THE_FUNERAL), "the ending is saved found")
 	_check(int(Progress.last_run.get("ending_paid", 0)) == ProgressData.ENDING_CONDOLENCES, "a new ending pays its Condolences")
+	# The loop's run also carries many items and much Pension, so another ending may hold as well: the
+	# same run again never repeats the one now found, and is Briefly Alive when nothing else holds.
 	var snapshot: Dictionary = scene.debug_ending_snapshot()
-	_check(EndingRules.choose(snapshot, Progress.data.endings_found) == EndingRules.BRIEFLY_ALIVE, "a second identical run picks Briefly Alive, as Crashing the Funeral is found")
+	var found: Dictionary = Progress.data.endings_found
+	var again := EndingRules.choose(snapshot, found)
+	var others_hold := false
+	for id in EndingRules.FEUD_COUNTS:
+		if id != EndingRules.CRASHING_THE_FUNERAL and EndingRules.holds(id, snapshot, found) and not found.has(id):
+			others_hold = true
+	_check(again != EndingRules.CRASHING_THE_FUNERAL, "a second identical run does not repeat a found ending")
+	_check(others_hold or again == EndingRules.BRIEFLY_ALIVE, "a second identical run picks Briefly Alive when nothing else holds, got %s" % again)
+	var fast_only := snapshot.duplicate()
+	fast_only.merge({"pills": 3, "pension_earned": 0, "items": 0, "arcade_visits_won": 0, "cursed": false, "paths": {}}, true)
+	_check(EndingRules.choose(fast_only, found) == EndingRules.BRIEFLY_ALIVE, "the same fast run, with nothing else, is now Briefly Alive")
+	print("SMOKE NOTE the same run again would be %s (pills %d, items %d, Pension %d, table visits %d)" % [again, snapshot["pills"], snapshot["items"], snapshot["pension_earned"], snapshot["arcade_visits_won"]])
 	if cut == null:
 		return
 	await _skip_cutscene(cut)
