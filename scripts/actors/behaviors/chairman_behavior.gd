@@ -84,7 +84,7 @@ const ROW_TRIES := 12
 # The share of charts he restructures during, before and below half health. Never twice in one chart.
 const RESTRUCTURE_SHARE := 0.42
 const PHASE_TWO_RESTRUCTURE_SHARE := 0.7
-const RESTRUCTURE_WINDUP := 0.35
+const RESTRUCTURE_WINDUP := 0.4
 
 enum Attack { NONE, GAVEL, PROJECTIONS, TAKEOVER, CHARGE, TAPE, SLAM, RESTRUCTURE }
 
