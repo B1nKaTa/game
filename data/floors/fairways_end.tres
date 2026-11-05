@@ -60,7 +60,7 @@ fog = Color(0.75, 0.82, 0.95, 0.14)
 [resource]
 script = ExtResource("1")
 id = "fairways_end"
-display_name = "Fairway's End Golf Club"
+display_name = "Fairway's End Golf Club at Midnight"
 rooms_dir = "res://data/rooms/fairways_end/"
 enemies = [ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7")]
 enemy_weights = PackedInt32Array(3, 4, 3, 3, 2)

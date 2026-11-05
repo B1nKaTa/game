@@ -12,7 +12,7 @@ const PATHS := {
 }
 const NAMES := {
 	"last_resort_cruise": "The Last Resort Cruise",
-	"fairways_end": "Fairway's End Golf Club",
+	"fairways_end": "Fairway's End Golf Club at Midnight",
 	"terminal_zero": "Departures, Terminal Zero",
 	"head_office": "Head Office, Eternity Incorporated",
 }

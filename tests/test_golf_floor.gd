@@ -31,7 +31,7 @@ func _difference(a: Color, b: Color) -> float:
 func test_fairways_end_is_the_locked_fourth_floor_path_with_its_own_rooms() -> void:
 	var def := _def()
 	assert_eq(def.id, "fairways_end")
-	assert_eq(def.display_name, "Fairway's End Golf Club")
+	assert_eq(def.display_name, "Fairway's End Golf Club at Midnight")
 	assert_eq(def.depth, 4)
 	assert_eq(def.open_after_depth, 4)
 	assert_eq(def.clears_to_open, 1, "it opens after a fourth-floor clear")
