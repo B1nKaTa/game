@@ -230,9 +230,19 @@ func _draw() -> void:
 		_draw_text(panel.position + Vector2(12, 22), _floor_name, 16, Color.WHITE)
 		if not combo_names.is_empty():
 			_draw_text(panel.position + Vector2(12, 36), combos_line(combo_names), 10, Hud.BANNER_COLOR)
-		_draw_text(panel.end - Vector2(62, 257), KeyBindings.with_key("map", CLOSE_HINT), 11, Color("ffd24a"))
+		var hint := close_hint(ActiveDevice.using_pad, ActiveDevice.family)
+		var hint_width := ThemeDB.fallback_font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x
+		_draw_text(Vector2(panel.end.x - 10.0 - hint_width, panel.position.y + 23.0), hint, 11, Color("ffd24a"))
 		_draw_text(panel.position + Vector2(12, panel.size.y - 26), LEGEND_TOP, 11, Color("ece9e0"))
 		_draw_text(panel.position + Vector2(12, panel.size.y - 12), LEGEND_BOTTOM, 11, Color("ece9e0"))
+
+
+# The close prompt in the top right. On a pad it names the back button (B, or Circle), which closes
+# every panel, rather than the map's own View or Create button, whose name reads as an action.
+static func close_hint(pad: bool, family: String) -> String:
+	if pad:
+		return "%s: %s" % [PadInput.button_name(JOY_BUTTON_B, family), CLOSE_HINT]
+	return KeyBindings.with_device("map", CLOSE_HINT, false, family)
 
 
 static func combos_line(names: PackedStringArray) -> String:

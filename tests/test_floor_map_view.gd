@@ -69,3 +69,17 @@ func test_night_vision_shows_secret_rooms_before_they_are_found() -> void:
 	progress.enter(secret.id)
 	assert_true(FloorMapView.shown_ids(map, progress, false).has(secret.id), "found rooms always show")
 	assert_eq(FloorMapView.shown_ids(map, progress, true).size(), 2, "never listed twice")
+
+
+# The DualSense showed "Create: Close", which reads as an action. A pad names its back button, which
+# closes the map as every panel, and the prompt fits inside the panel's top right for every family.
+func test_the_big_maps_close_prompt_names_the_back_button_on_a_pad() -> void:
+	KeyBindings.reset_to_defaults()
+	assert_eq(FloorMapView.close_hint(true, PadInput.PLAYSTATION), "Circle: Close")
+	assert_eq(FloorMapView.close_hint(true, PadInput.PLAYSTATION_4), "Circle: Close")
+	assert_eq(FloorMapView.close_hint(true, PadInput.XBOX), "B: Close")
+	assert_eq(FloorMapView.close_hint(false, PadInput.XBOX), "M: Close")
+	var font := ThemeDB.fallback_font
+	for family in [PadInput.PLAYSTATION, PadInput.XBOX]:
+		var width := font.get_string_size(FloorMapView.close_hint(true, family), HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x
+		assert_true(width < 120.0, "the prompt stays a short tag in the corner")
