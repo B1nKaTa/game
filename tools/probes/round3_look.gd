@@ -307,24 +307,43 @@ func _ring() -> void:
 # --- a speech bubble near the top wall ---
 
 func _bubble() -> void:
-	change_scene_to_file("res://scenes/waiting_room.tscn")
-	await _wait(0.6)
-	scene = current_scene
-	player = scene.player
-	var npcs := get_nodes_in_group("npcs")
-	if npcs.is_empty():
+	# Someone stood right under the top wall of a large room, talking, with the camera scrolled.
+	await _new_run(1, 0)
+	var rows := PackedStringArray(["#".repeat(30)])
+	for y in range(1, 16):
+		rows.append("#" + ".".repeat(28) + "#")
+	rows.append("#".repeat(30))
+	var layout := RoomLayout.new()
+	layout.room_type = RoomLayout.TYPE_HEALING
+	layout.rows = rows
+	await _enter_layout(layout)
+	var defs := DirAccess.get_files_at("res://data/npcs/")
+	var def: NpcDef = null
+	for file in defs:
+		var loaded = load("res://data/npcs/" + file.trim_suffix(".remap"))
+		if loaded is NpcDef and not loaded.lines.is_empty():
+			def = loaded
+			break
+	if def == null:
 		print("no npcs")
 		return
-	var npc: Npc = npcs[0]
-	var room: RoomView = scene.debug_room_view()
-	var top := Vector2(npc.global_position.x, RoomBackdrop.TILE * 1.6)
-	npc.global_position = top
-	_stand(top + Vector2(0, 40))
+	var npc := Npc.new()
+	npc.setup(def, player)
+	view.add_child(npc)
+	npc.global_position = _cell(15, 1) + Vector2(0, 6)
+	_stand(_cell(15, 3))
 	await _wait(0.5)
 	npc.talk()
-	await _wait(1.2)
+	await _wait(1.5)
 	await _shot("u1_bubble_near_top_wall")
-	print("npc at %s room %s" % [str(npc.global_position), str(room != null)])
+	var boss: Enemy = _spawn("chairman_of_the_board", _cell(8, 2))
+	_held = boss._behavior
+	await _wait(0.2)
+	boss.say("Restructuring!", 3.0)
+	await _wait(0.3)
+	await _shot("u2_boss_words_near_top_wall")
+	_held = null
+	await _clear()
 
 
 # --- the Chairman's new attack (filled in with the attack) ---
