@@ -367,6 +367,14 @@ func find_recipe(id: String) -> void:
 	_store.save_progress(data)
 
 
+# A Flashback Cinema lobby card's line, picked for this run and saved as seen the moment it shows.
+func take_life_sign(seed_text: String, shown: Array[String]) -> String:
+	var id := LifeSigns.take(seed_text, data, shown)
+	if not id.is_empty():
+		_store.save_progress(data)
+	return id
+
+
 func craft(item: ItemDef) -> bool:
 	if not data.craft(item.id, item.craft_price):
 		return false

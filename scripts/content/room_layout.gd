@@ -72,7 +72,8 @@ const SYMBOL_LANTERN := "l"
 const SYMBOL_STUMP := "m"
 # The Last Resort Cruise adds its buffet tray, Head Office its in-tray, Fairway's End its flag
 # pin and Departures, Terminal Zero its suitcase stack, which block nothing.
-const DECOR_SYMBOLS := "gnwuktlmfprce" + "0" + "y" + "3" + "7"
+# The Flashback Cinema adds its lobby cards.
+const DECOR_SYMBOLS := "gnwuktlmfprce" + "0" + "y" + "3" + "7" + "i"
 # A freshly mopped cell: everyone walks on it, Grandpa and chargers slide. Kept well clear of doors.
 const SYMBOL_WET := "W"
 const WET_DOOR_CLEARANCE := 2
@@ -146,9 +147,12 @@ const SYMBOL_SEATS := "8"
 # need to pass one.
 const SYMBOL_SEAT := "-"
 const SYMBOL_PILLAR := "|"
+# A lobby card on its easel (LifeSign): it blocks nothing, breaks to nothing, and shows a line of
+# Harold's life while he stands near. Kept off the cells touching a door, so no line greets him there.
+const SYMBOL_LIFE_SIGN := "i"
 # Each new path adds its props at the end of each list: the Last Resort Cruise, Head Office,
 # Fairway's End, Departures, Terminal Zero and the Flashback Cinema, in that order.
-const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc><^vazdqe" + "b012" + "x9Ny" + "s345" + "=678" + "-|"
+const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc><^vazdqe" + "b012" + "x9Ny" + "s345" + "=678" + "-|i"
 # Nothing can walk through these, so nothing may be dropped or summoned on them.
 const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGojhazdq" + "b12" + "9N" + "45" + "68" + "-|"
 # Routes may not need a hole or a wall, and may not need a bomb for a crate or a rock.
@@ -273,6 +277,9 @@ func validate() -> PackedStringArray:
 			# Departures, Terminal Zero.
 			if symbol == SYMBOL_BARRIER and _within_of_a_door(cell, BARRIER_DOOR_CLEARANCE):
 				errors.append("barrier at %s is within %d cells of a door" % [str(cell), BARRIER_DOOR_CLEARANCE])
+			# The Flashback Cinema.
+			if symbol == SYMBOL_LIFE_SIGN and _touches_a_door(cell):
+				errors.append("a lobby card at %s touches a door" % str(cell))
 	for side in SIDES:
 		if not open.has(door_cell(side)):
 			errors.append("needs a bomb to reach the door at %s" % str(door_cell(side)))

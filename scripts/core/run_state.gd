@@ -57,6 +57,9 @@ var met := {}
 var found: Array[String] = []
 var hits_taken := 0
 var seeds: Array[String] = []
+# The Flashback Cinema's lobby card lines shown this run (LifeSigns), so none shows twice. The
+# checkpoint keeps them with the tally.
+var life_signs_shown: Array[String] = []
 var _won_visits := {}
 var _promised := {}
 var _offered_recipes := {}

@@ -151,6 +151,7 @@ static func tally_to_dict(run: RunState) -> Dictionary:
 		"found": Array(run.found),
 		"hits": run.hits_taken,
 		"seeds": Array(run.seeds),
+		"life_signs": Array(run.life_signs_shown),
 	}
 
 
@@ -163,7 +164,7 @@ static func apply_tally(run: RunState, raw: Variant) -> void:
 			if (kills[id] is int or kills[id] is float) and int(kills[id]) > 0:
 				run.kills[str(id)] = int(kills[id])
 				run.met[str(id)] = true
-	for key in ["met", "found", "seeds"]:
+	for key in ["met", "found", "seeds", "life_signs"]:
 		var list: Variant = raw.get(key, [])
 		if not list is Array:
 			continue
@@ -177,6 +178,9 @@ static func apply_tally(run: RunState, raw: Variant) -> void:
 					run.found.append(value)
 				"seeds":
 					run.seeds.append(value)
+				"life_signs":
+					if not run.life_signs_shown.has(value):
+						run.life_signs_shown.append(value)
 	var hits: Variant = raw.get("hits", 0)
 	if hits is int or hits is float:
 		run.hits_taken = maxi(int(hits), 0)

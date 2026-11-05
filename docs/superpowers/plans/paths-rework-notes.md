@@ -132,3 +132,23 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
 - **The Projectionist's API** (Task 4): `CinemaScreen.in_room(room_view)` finds the screen;
   `cut_to_black(seconds)`, `flash(strength = 1.0)`, `set_burning(progress 0..1)`, `burning()`,
   `is_dark()`, `darkness()` and `picture_rect()` (global) drive and read it.
+- **Life signs as a layout symbol:** `i` is a lobby card on an easel (`LifeSign`), a decor symbol that
+  blocks nothing and breaks to nothing, kept off the cells touching a door (`validate()`). A symbol
+  rather than a placement rule, so each card stands where the layout leaves it room, and the floor
+  test checks every one of the 33 rooms holds exactly one.
+- **Showing a line:** within 46 px of his feet the card shows its line in a speech-bubble card (the
+  NPC bubble's colours and `Npc.bubble_box`, so it hangs below the card instead of reaching into the
+  HUD band and stays inside the screen's sides), wrapped to 220 px; it hides past 62 px. Nothing
+  pauses. The card picks its line the first time it shows and keeps it while the room lasts.
+- **The run's seed:** a run has no single seed, so the lines are ordered by the seed the Cinema floor
+  was built from (`RunState.seeds[-1]`, kept by the checkpoint). The order is a per-line hash of that
+  seed, so a line keeps its place however many others are seen meanwhile.
+- **Saved lines:** `ProgressData.life_signs_seen` maps a line id to a stamp, one more than the latest
+  so far, written the moment a line first shows (`Progress.take_life_sign` saves at once). Lines not
+  in the save come first, then seen ones oldest stamp first, so when all 40 are seen a run starts with
+  those seen longest ago; within a run no line repeats, and the 41st card would stay blank. An older
+  save without the key loads with none seen.
+- **Checkpoint:** cheap, so the run's shown lines ride in the checkpoint's tally (`life_signs`), and a
+  resumed run never repeats one. An older checkpoint starts with none shown.
+- **The 40 lines:** the spec's three word for word, ten about Gerald, eight about Biscuit, nine about
+  the depot and ten small wins and failures; none mention an ending or his house.

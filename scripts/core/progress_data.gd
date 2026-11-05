@@ -100,6 +100,9 @@ var lifetime: Dictionary = {}
 var best_run: Dictionary = {}
 # The last RunLog.CAP runs, newest first.
 var run_log: Array = []
+# The Flashback Cinema's lobby card lines shown so far (LifeSigns), each id stamped with the order it
+# was last seen in. Optional in a save.
+var life_signs_seen: Dictionary = {}
 
 # The first path at each depth, the only one open before that depth's first clear.
 const FIRST_PATH_BY_DEPTH := {1: "floor_1", 2: "sunset_shores", 3: "funeral_parlour", 4: "last_resort_cruise", 5: "terminal_zero"}
@@ -489,6 +492,7 @@ func to_dict() -> Dictionary:
 		"lifetime": lifetime,
 		"best_run": best_run,
 		"run_log": run_log,
+		"life_signs_seen": life_signs_seen,
 	}
 
 
@@ -597,9 +601,22 @@ static func from_dict(raw: Variant) -> ProgressData:
 		for each in log_raw:
 			if each is Dictionary and data.run_log.size() < RunLog.CAP:
 				data.run_log.append(RunLog.clean(each))
+	# The Flashback Cinema's lobby cards. An older save has seen none of them.
+	data.life_signs_seen = _count_map(raw.get("life_signs_seen"))
 
 	data._infer_first_paths()
 	return data
+
+
+# A lobby card's line was shown: it is stamped one later than every line seen before, so the next run
+# can offer the ones seen longest ago first once all have been seen (LifeSigns.order).
+func see_life_sign(id: String) -> void:
+	if id.is_empty():
+		return
+	var latest := 0
+	for each in life_signs_seen:
+		latest = maxi(latest, int(life_signs_seen[each]))
+	life_signs_seen[id] = latest + 1
 
 
 # A run that ended goes to the top of the Log, the oldest past RunLog.CAP drops off, and its kills,

@@ -31,8 +31,33 @@ static func build(view: RoomView, layout: RoomLayout, palette: RoomPalette) -> v
 		light.palette = palette
 		light.position = spot
 		view.add_child(light)
+	for cell in layout.cells_of(RoomLayout.SYMBOL_LIFE_SIGN):
+		var card := LifeSign.new()
+		card.position = RoomBackdrop.cell_center(cell)
+		card.setup(view._player, func() -> String: return take_life_sign(view))
+		view.add_child(card)
 	if palette.screen and view._room != null and CinemaScenes.shows_screen(view._room.room_type):
 		add_screen(view, layout, palette, scene_for(view._map, view._room), view._room.decor_seed)
+
+
+# A lobby card's line, the first time it shows: picked by the floor's seed, never one this run has
+# shown, and saved as seen at once (Progress.take_life_sign).
+static func take_life_sign(view: RoomView) -> String:
+	var shown: Array[String] = []
+	if view._run != null:
+		shown = view._run.life_signs_shown
+	var seed_text := life_sign_seed(view._run, view._room)
+	if view._bank != null and view._bank.has_method("take_life_sign"):
+		return view._bank.take_life_sign(seed_text, shown)
+	return LifeSigns.take(seed_text, null, shown)
+
+
+# The run's seed for its lobby cards: the seed the floor was built from, which the run keeps for its
+# checkpoint, so a resumed run picks its lines in the same order.
+static func life_sign_seed(run: RunState, room: FloorRoom) -> String:
+	if run != null and not run.seeds.is_empty():
+		return run.seeds[-1]
+	return str(room.decor_seed) if room != null else ""
 
 
 # The film a room shows: its own pick, kept apart from the rooms next door on its floor.
