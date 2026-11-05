@@ -82,6 +82,35 @@ static func run_to_dict(run: RunState) -> Dictionary:
 	}
 
 
+# What the run did so far for EndingRules (RunState's run-only tracking), kept apart from run_to_dict
+# since play time goes on counting after a save. Won Arcade visits come back as a count, since visit
+# numbers start again in the resumed scene.
+static func ending_to_dict(run: RunState) -> Dictionary:
+	var paths := {}
+	for depth in run.paths_taken:
+		paths[str(depth)] = str(run.paths_taken[depth])
+	return {
+		"play_time": snappedf(run.play_time, 0.1),
+		"pension_earned": run.pension_earned,
+		"boss_room_pill_lost": run.boss_room_pill_lost,
+		"paths": paths,
+		"table_visits_won": run.arcade_visits_won(),
+	}
+
+
+static func apply_ending(run: RunState, raw: Dictionary) -> void:
+	run.play_time = maxf(float(raw.get("play_time", 0.0)), 0.0)
+	run.pension_earned = maxi(int(raw.get("pension_earned", 0)), 0)
+	run.boss_room_pill_lost = bool(raw.get("boss_room_pill_lost", false))
+	run.paths_taken = {}
+	var paths: Variant = raw.get("paths", {})
+	if paths is Dictionary:
+		for key in paths:
+			if str(key).is_valid_int():
+				run.paths_taken[int(key)] = str(paths[key])
+	run.extra_table_visits = maxi(int(raw.get("table_visits_won", 0)), 0)
+
+
 # Puts a saved run back on a run made fresh by Progress.make_run. Ids that match nothing are skipped.
 static func apply_run(run: RunState, raw: Dictionary, items: Array[ItemDef]) -> void:
 	var perks := {}

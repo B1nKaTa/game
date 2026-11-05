@@ -112,6 +112,40 @@ func test_a_run_round_trips() -> void:
 	assert_eq(back.stats.max_pills, run.stats.max_pills, "stats are worked out from the items again")
 
 
+func test_the_ending_tracking_round_trips_through_the_checkpoint() -> void:
+	var run := _fresh_run()
+	run.play_time = 812.34
+	run.pension_earned = 1460
+	run.boss_room_pill_lost = true
+	run.paths_taken = {1: "cemetery", 2: "furnace_works"}
+	run.extra_table_visits = 1
+	run.note_arcade_win(3)
+	run.note_arcade_win(3)
+	run.note_arcade_win(7)
+	var raw: Dictionary = JSON.parse_string(JSON.stringify(RunCheckpoint.ending_to_dict(run)))
+	var back := _fresh_run()
+	RunCheckpoint.apply_ending(back, raw)
+	assert_true(absf(back.play_time - 812.3) < 0.01, str(back.play_time))
+	assert_eq(back.pension_earned, 1460)
+	assert_true(back.boss_room_pill_lost)
+	assert_eq(back.paths_taken, {1: "cemetery", 2: "furnace_works"})
+	assert_eq(back.arcade_visits_won(), 3)
+	# A visit won after the resume adds to them, whatever its number.
+	back.note_arcade_win(1)
+	assert_eq(back.arcade_visits_won(), 4)
+	var snap := back.ending_snapshot()
+	assert_eq(snap["pension_earned"], 1460)
+	assert_eq(snap["paths"], {1: "cemetery", 2: "furnace_works"})
+
+
+func test_a_checkpoint_without_ending_tracking_starts_it_empty() -> void:
+	var back := _fresh_run()
+	RunCheckpoint.apply_ending(back, {"paths": "garbage", "play_time": -5})
+	assert_eq(back.play_time, 0.0)
+	assert_eq(back.paths_taken, {})
+	assert_eq(back.arcade_visits_won(), 0)
+
+
 func test_a_run_with_an_unknown_item_skips_it() -> void:
 	var run := _fresh_run()
 	RunCheckpoint.apply_run(run, {"items": ["no_such_item"], "pills": 3, "max_pills": 4, "potion": "nope"}, Content.items())

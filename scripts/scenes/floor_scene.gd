@@ -223,6 +223,7 @@ func write_checkpoint() -> bool:
 		"from": from,
 		"rooms": rooms,
 		"run": RunCheckpoint.run_to_dict(_run),
+		"ending": RunCheckpoint.ending_to_dict(_run),
 		"rng": RunCheckpoint.rng_to_dict(_rng),
 		"run_earned": _run.pension_earned,
 		"bon_voyage": _bon_voyage,
@@ -287,7 +288,9 @@ func _resume_run(resume: Dictionary) -> void:
 	_run = Progress.make_run()
 	RunCheckpoint.apply_run(_run, resume.get("run", {}), Content.items())
 	RunCheckpoint.apply_rng(_rng, resume.get("rng", {}))
-	_run.pension_earned = int(resume.get("run_earned", 0))
+	# The ending's tracking, with the Pension the rooms paid from run_earned for older files.
+	RunCheckpoint.apply_ending(_run, resume.get("ending", {"pension_earned": resume.get("run_earned", 0)}))
+	_augustine_seen_before = Progress.data.bosses_beaten.has(EndingRules.AUGUSTINE)
 	_bon_voyage = str(resume.get("bon_voyage", ""))
 	_run_time = float(resume.get("run_time", 0.0))
 	Progress.last_run = {"died": false, "bosses": int(resume.get("bosses", 0))}
