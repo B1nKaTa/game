@@ -12,6 +12,7 @@ speed = 72.0
 pension_drop = 1
 body_size = Vector2(20, 26)
 color = Color(0.95, 0.62, 0.15, 1)
+art_id = "stoker"
 behavior_script = ExtResource("2")
 max_per_room = 3
 mark = "shovel"
