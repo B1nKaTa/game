@@ -83,6 +83,11 @@ static func ending(true_ending := false) -> String:
 	return TRUE_ENDING if true_ending else ENDING
 
 
+# The song under an ending's scene: Eternal Feud, the true ending, has its own.
+static func ending_scene(ending_id: String) -> String:
+	return ending(ending_id == EndingRules.ETERNAL_FEUD)
+
+
 static func game_over() -> String:
 	return GAME_OVER
 

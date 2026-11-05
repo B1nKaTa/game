@@ -133,7 +133,11 @@ func replay(id: String) -> void:
 	_cutscene.setup(CutsceneSteps.for_ending(id, variant), false)
 	add_child(_cutscene)
 	_panel.visible = false
+	# The ending's own music plays under it, and the room's comes back after.
+	var room_song := MusicPlayer.current()
+	MusicPlayer.play(MusicRules.ending_scene(id))
 	await _cutscene.finished
+	MusicPlayer.play(room_song)
 	_cutscene.queue_free()
 	_cutscene = null
 	_panel.visible = true

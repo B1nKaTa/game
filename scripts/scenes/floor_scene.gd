@@ -771,6 +771,7 @@ func _play_ending() -> void:
 	Progress.last_run["ending"] = _ending_id
 	Progress.last_run["ending_paid"] = paid
 	Progress.notice = ARRIVAL_NOTICE
+	MusicPlayer.play(MusicRules.ending_scene(_ending_id))
 	await _play_cutscene(CutsceneSteps.for_ending(_ending_id, variant), not found_before.has(_ending_id))
 
 

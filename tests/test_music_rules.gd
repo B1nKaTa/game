@@ -86,7 +86,7 @@ func test_mortimer_gets_final_arrangements() -> void:
 func test_the_chairman_id_is_the_head_office_boss() -> void:
 	var office := load(FLOOR_DIR + "head_office.tres") as FloorDef
 	assert_eq(office.floor_boss.id, MusicRules.CHAIRMAN_ID)
-	assert_eq(MusicRules.CHAIRMAN_ID, EndingCard.BOSS_ID)
+	assert_eq(MusicRules.CHAIRMAN_ID, EndingRules.CHAIRMAN)
 
 
 func test_every_mini_boss_shares_the_mini_boss_theme() -> void:
@@ -103,6 +103,13 @@ func test_a_depth_past_the_list_still_gets_a_boss_theme() -> void:
 func test_the_endings_and_game_over() -> void:
 	assert_eq(MusicRules.ending(), "ending")
 	assert_eq(MusicRules.ending(true), "eternal_feud")
+
+
+func test_every_ending_plays_the_ending_song_and_the_true_ending_its_own() -> void:
+	for each: Dictionary in EndingRules.ALL:
+		var expected := "eternal_feud" if each["id"] == EndingRules.ETERNAL_FEUD else "ending"
+		assert_eq(MusicRules.ending_scene(each["id"]), expected, each["id"])
+		assert_true(MusicRules.all_ids().has(MusicRules.ending_scene(each["id"])), each["id"])
 	assert_eq(MusicRules.game_over(), "game_over")
 
 
@@ -143,7 +150,7 @@ func test_the_scenes_ask_for_music_where_they_change() -> void:
 	var floor_scene := _source("res://scripts/scenes/floor_scene.gd")
 	for call in ["MusicRules.room(_floor_def.id, _map.room(_current_id).room_type)",
 			"MusicRules.boss(boss.def.id, boss.def == _floor_def.floor_boss, _floor_def.depth)",
-			"MusicRules.game_over()", "MusicRules.ending()"]:
+			"MusicRules.game_over()", "MusicRules.ending_scene(_ending_id)"]:
 		assert_true(floor_scene.contains(call), call)
 	# The room's music comes back after a boss falls.
 	var defeated := floor_scene.substr(floor_scene.find("func _on_boss_defeated"))
@@ -151,3 +158,4 @@ func test_the_scenes_ask_for_music_where_they_change() -> void:
 	assert_true(_source("res://scripts/scenes/waiting_room.gd").contains("MusicRules.waiting_room(Departments.id_of(target_id))"))
 	assert_true(_source("res://scripts/scenes/opening.gd").contains("MusicRules.opening()"))
 	assert_true(_source("res://scripts/scenes/title_screen.gd").contains("MusicPlayer.play(MusicRules.title())"))
+	assert_true(_source("res://scripts/ui/ending_archive_panel.gd").contains("MusicPlayer.play(MusicRules.ending_scene(id))"), "a replay plays its ending's song")
