@@ -594,9 +594,11 @@ func _draw_swing(swing: SwingAttack) -> void:
 		color = PIN_FLOUR
 		width = 5.0
 	var sides := [center, center + PI] if swing.both_ways else [center]
+	# A swing an item has widened gets a dark edge, so its pale arc still reads on the Mall's white tile.
+	var edged := swing.style == SwingAttack.STYLE_PIN or swing.both_ways or swing.half_angle_deg >= 90.0
 	for side: float in sides:
-		if swing.style == SwingAttack.STYLE_PIN:
-			draw_arc(Vector2.ZERO, swing.reach, side - half_angle, side + half_angle, points, Color(Color.BLACK, 0.55), width + 3.0)
+		if edged:
+			draw_arc(Vector2.ZERO, swing.reach, side - half_angle, side + half_angle, points, Color(Color.BLACK, 0.8), width + 3.0)
 		draw_arc(Vector2.ZERO, swing.reach, side - half_angle, side + half_angle, points, color, width)
 
 

@@ -24,7 +24,7 @@ const PUDDLE_COLOR := Color(0.95, 0.5, 0.2, 0.5)
 # The Bingo Dabber's ink, the Shark Tooth's blood and the Fizzy Cleaning Tablet's fizz.
 const DAB_COLOR := Color("e0307a")
 const BLOOD_COLOR := Color("ff3347")
-const PIN_WOOD := Color("d9a066")
+const PIN_WOOD := Color("b8743a")
 const FLOUR_COLOR := Color(0.97, 0.94, 0.86, 0.8)
 const FIZZ_COLOR := Color("8fe6f2")
 const STEEL_COLOR := Color("dfe6ee")
