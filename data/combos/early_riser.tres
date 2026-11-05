@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ComboDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/combo_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "early_riser"
+display_name = "Early Riser"
+description = "The Early Bird Special's rush lasts 20 seconds."
+item_a = "early_bird_special"
+item_b = "alarm_clock"

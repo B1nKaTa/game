@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ComboDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/combo_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "paper_trail"
+display_name = "Paper Trail"
+description = "The Bureaucrat's Stamp recharges in 20 seconds."
+item_a = "bureaucrats_stamp"
+item_b = "rubber_stamps"

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ComboDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/combo_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/family_visit.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "family_visit"
+display_name = "Family Visit"
+description = "On your last pill, a kill heals a whole pill, once a room."
+item_a = "photo_of_grandkids"
+item_b = "casserole_dish"
+effect = SubResource("Effect")
