@@ -1,6 +1,6 @@
 # Round 3 polish: verified 2026-11-05
 
-Built and checked on `round-2` with Godot 4.7.2, not yet played by a person. `tools/test.ps1`: 2005 tests, 0 failed, with exit-time leak lines identical to round 2 (3 Body2D RIDs, 3 CanvasItem RIDs, 6 ObjectDB instances, 2 resources). Two full loops in `git archive` copies D:\grandpa-verify-r3-1 and -2 (config/name GrandpaR31 and GrandpaR32): see the run times in the report. The save guard held: slot_1/save.json stayed 510284fa2ead4647c94fee44f99ca787. Screenshots are in D:\grandpa-shots-r3\ (tools/probes/round3_look.gd, args hud, case, chairman, sand, ring, bubble or all).
+Built and checked on `round-2` with Godot 4.7.2, not yet played by a person. `tools/test.ps1`: 2005 tests, 0 failed, with exit-time leak lines identical to round 2 (3 Body2D RIDs, 3 CanvasItem RIDs, 6 ObjectDB instances, 2 resources). Two full loops in `git archive` copies D:\grandpa-verify-r3-1 and -2 (config/name GrandpaR31 and GrandpaR32): both passed (exit 0, both SMOKE PASS lines, no SCRIPT ERROR) in about 10 minutes each on 1378c0e; since then only the case file's label wrapping and these notes changed. The save guard held: slot_1/save.json stayed 510284fa2ead4647c94fee44f99ca787. Screenshots are in D:\grandpa-shots-r3\ (tools/probes/round3_look.gd, args hud, case, chairman, sand, ring, bubble or all).
 
 ## What changed
 
