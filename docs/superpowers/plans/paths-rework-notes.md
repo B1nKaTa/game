@@ -59,3 +59,7 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
 - **Deputy Dolores** gets a new take line for each of the four new posters, in her usual voice.
 - **Poster looks** fountain_tiara and golf_visor (now sold at the Decor Office) keep their names;
   the item audit or Tasks 4 and 5 may retheme them.
+- **Retired enemies in the case file:** `enemies_seen` keeps the old ids as history. Any id with no
+  EnemyDef (the old bosses once Tasks 4 and 5 delete them) shows after the real cells as a known
+  history cell: its count, a name made from its id ("Mall Santa"), a grey placeholder chip, no
+  floor, and the detail "No longer found on any floor.". The Log already names kills from ids.

@@ -128,6 +128,31 @@ func test_the_bestiary_names_a_floor_for_every_enemy_and_leaves_out_the_dummy() 
 	assert_eq(CaseFileData.enemy_detail(by_id["mall_santa"])[0], CaseFileData.UNKNOWN_NAME)
 
 
+# An enemy the save met that no EnemyDef answers any more (a retired path's boss) stays as history:
+# a known cell with its count and a placeholder look, whose detail needs no def.
+func test_an_enemy_with_no_def_stays_in_the_bestiary_as_history() -> void:
+	var defs := CaseFileData.enemy_defs()
+	var floors := CaseFileData.enemy_floors()
+	var seen := {"regional_reaper": 1, "a_boss_long_retired": 3, "training_dummy": 9}
+	var cells := CaseFileData.bestiary(defs, seen, null, floors)
+	assert_eq(cells.size(), defs.size() + 1, "one history cell, and never the dummy")
+	var last: Dictionary = cells[cells.size() - 1]
+	assert_eq(last["id"], "a_boss_long_retired")
+	assert_true(last["known"])
+	assert_eq(int(last["count"]), 3)
+	assert_true(last["def"] == null)
+	assert_eq(last["color"], CaseFileData.HISTORY_COLOR)
+	assert_false(ResourceLoader.exists(last["icon"]), "no art, so the cell draws its placeholder")
+	var detail := CaseFileData.enemy_detail(last)
+	assert_eq(detail[0], "A Boss Long Retired")
+	assert_true(detail.has(CaseFileData.HISTORY_LINE))
+	assert_true(CaseFileData.met_line(cells).begins_with("2/"), CaseFileData.met_line(cells))
+	var no_items: Array[ItemDef] = []
+	var names := CaseFileData.names_by_id(no_items, defs)
+	var log_lines := CaseFileData.log_detail({"n": 1, "kills": {"a_boss_long_retired": 1}}, names)
+	assert_true(" ".join(PackedStringArray(log_lines)).contains("A Boss Long Retired x1"), "the Log names it from its id")
+
+
 func test_the_harold_page_shows_his_stats_and_the_run() -> void:
 	var run := _plain_run()
 	run.keys = 4
