@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/fortune_card.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "fortune_card"
+display_name = "Fortune Teller's Card"
+description = "Boss rooms show on the map with their boss's name, and each boss's first attack comes slowed. She saw you coming, for a small fee."
+rarity = "rare"
+tags = PackedStringArray("vision", "boss")
+from_bounty = true
+names_bosses = true
+effect = SubResource("Effect")

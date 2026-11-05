@@ -92,6 +92,11 @@ const TIPS := {
 	"inheritance_letter": "Cash up front. Spend it at the next shop, it's no use to you dead.",
 	"tax_refund": "Walk out of a shop with nothing and get paid. Sometimes the best buy is none.",
 	"night_light": "When the lights go out, you see twice as far. Keep moving.",
+	"magnifying_glass": "See a wall sparkle? That's a secret. Bring a Thermos.",
+	"floor_plan": "You know where every room is before you start. Plan your route, like a proper fire drill.",
+	"mothball_pockets": "Take a hit and the ghosts back off. Use the two seconds. Don't sniff them.",
+	"telescope_cane": "The view runs ahead of you. Aim where you're going, see what's coming.",
+	"fortune_card": "Check the map: you'll know who's waiting. And watch his first move, it comes slow.",
 }
 
 const DEFAULT_TIP := "Pick something off the rack and I'll tell you what it's good for."

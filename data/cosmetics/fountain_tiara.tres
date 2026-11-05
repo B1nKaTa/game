@@ -8,6 +8,6 @@ id = "fountain_tiara"
 display_name = "Fountain Coin Tiara"
 description = "Every wish anyone threw in the fountain, on your head."
 slot = "hat"
-price = 0
+price = 35
 color = Color(1, 0.823529412, 0.290196078, 1)
 shape = "tiara"

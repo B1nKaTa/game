@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "floor_plan"
+display_name = "Floor Plan"
+description = "The map shows every room of a floor when you arrive, but not what's in them. Fire exits marked, for once."
+rarity = "common"
+tags = PackedStringArray("vision")
+first_clear_path = "floor_1"
+shows_floor_plan = true

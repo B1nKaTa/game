@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "telescope_cane"
+display_name = "Telescope Cane"
+description = "The view looks a little further ahead the way you aim. He's seen worse coming."
+rarity = "common"
+tags = PackedStringArray("vision", "cane")
+look_ahead_bonus = 40.0
