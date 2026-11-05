@@ -2,7 +2,7 @@ class_name CoachTips
 extends RefCounted
 
 # What Coach Bertram, Retired PE Teacher, says in the Training Yard: the basics on a first visit, then
-# a tip for each rack item Grandpa holds. test_training_yard checks every recipe has a tip.
+# a tip for each rack item Grandpa holds. test_training_yard checks every item has a tip.
 
 const FIRST_VISIT: Array[String] = [
 	"Right! Click to swing, hold to charge. Three swings make a combo.",
@@ -12,17 +12,26 @@ const FIRST_VISIT: Array[String] = [
 ]
 
 const TIPS := {
-	"alert_bracelet": "Two extra pills. Don't let it make you careless.",
-	"bifocals": "You'll see it coming earlier. Move before the red, not after.",
-	"nitro_tablets": "Big hits. Land the third swing of the combo.",
-	"senior_discount": "More Pension. Doesn't help you hit. Hit anyway.",
-	"support_stockings": "Quicker dodge. Dodge through, not away.",
-	"titanium_hip": "Faster on your feet. Circle them.",
-	"lucky_tee": "Lucky swings come when they come. Keep swinging, that's the trick.",
+	"alert_bracelet": "One more pill, and an alarm when you're down to your last. Use the stun to get out, not in.",
+	"bifocals": "See their health? Good. Finish the weak ones first, that's where it hits hardest.",
+	"bingo_card": "Every fifth coin's a big one. Pick them all up. Every one counts.",
+	"comfort_care_lanyard": "Every heal gives a bit extra. Take hits early, heal late.",
+	"dentures": "Line them up and throw through the lot. Teeth first, questions later.",
 	"golden_parachute": "A soft landing for your Pension. Not for you. Don't test it.",
-	# Poster items never hang on the rack, but the coach knows them all the same.
+	"hearing_aid": "Watch the edge of the screen. The arrows tell you who's waiting round the corner.",
 	"life_jacket": "It saves you once a floor. Twice is asking a lot of a jacket.",
-	"neck_pillow": "One more pill. Use it to be brave, not to be daft.",
+	"lucky_tee": "Lucky swings come when they come. Keep swinging, that's the trick.",
+	"naughty_list": "Bosses who call friends bring presents. Clear the friends.",
+	"neck_pillow": "One more pill, and a full rest on every landing. Get to the stairs.",
+	"nitro_tablets": "Big hits. But big hits on you go bang too. Stand where the bang helps.",
+	"pill_organizer": "Full up? Take the heal anyway. It waits in the box for the next knock.",
+	"pocket_watch": "Dodge late, through the swing. Time slows and you get a free look.",
+	"prune_juice": "Dodge all you like. Just know every one costs you. Mind the purse.",
+	"senior_discount": "A quarter off in every shop. Spend it, that's what it's for.",
+	"slippers": "Wet floor? Not for you. Fight on the wet, let them slide.",
+	"support_stockings": "Sand and sedatives can't stop you now. Walk right through.",
+	"titanium_hip": "Dodge through them, not around them. The hip does the rest.",
+	"undertakers_gloves": "What you finish stays finished. No bangs, no boxes. Go in close.",
 }
 
 const DEFAULT_TIP := "Pick something off the rack and I'll tell you what it's good for."
