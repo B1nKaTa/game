@@ -22,6 +22,10 @@ var on_drop := Callable()
 var on_slow_time := Callable()
 # Where enemies come from when there is no room in the tree, as in tests: returns an Array of Enemy.
 var enemy_source := Callable()
+# Set by the full-loop check, whose fight checks count every pill a hit costs and every pill a heal
+# gives: while it is set, items neither block, soften, nor soak a hit, heal, nor drop a heal. Each of
+# those rules has its own unit test.
+var counting_pills := false
 var _run_ref: WeakRef
 
 
@@ -50,14 +54,14 @@ func notice(text: String) -> void:
 
 func heal(pills: int) -> void:
 	var state := run()
-	if state != null and pills > 0:
+	if state != null and pills > 0 and not counting_pills:
 		state.health.heal(pills)
 
 
 # Half a pill. Two halves make a pill; a half left over waits for the next.
 func heal_half() -> void:
 	var state := run()
-	if state != null:
+	if state != null and not counting_pills:
 		state.health.heal_half()
 
 
@@ -120,8 +124,11 @@ func stun(enemy: Enemy, seconds: float) -> void:
 		enemy.stun(seconds)
 
 
-# A small pickup lying in the room: one of RoomRules.DROP_KEY, DROP_BOMB, DROP_POTION or DROP_COIN.
+# A small pickup lying in the room: one of RoomRules.DROP_KEY, DROP_BOMB, DROP_POTION, DROP_COIN or
+# DROP_HEAL. For a coin, amount is its Pension; for a heal, its pills.
 func drop(kind: String, at: Vector2, amount := 1) -> void:
+	if counting_pills and kind == RoomRules.DROP_HEAL:
+		return
 	if on_drop.is_valid():
 		on_drop.call(kind, at)
 	if has_room():

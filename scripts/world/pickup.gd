@@ -14,6 +14,8 @@ const PROMPT_TEXT := "Take"
 const SKULL_COLOR := Color("ece9e0")
 
 var requires_interact := false
+# How near his feet must come to take it. A heal under the Pill Crusher wants him nearer.
+var collect_radius := COLLECT_RADIUS
 var can_take := Callable()
 var flies := false
 var prompt := PROMPT_TEXT
@@ -88,7 +90,7 @@ func _process(delta: float) -> void:
 	if should_magnet(flies, distance):
 		fly()
 		return
-	var in_range := distance <= COLLECT_RADIUS
+	var in_range := distance <= collect_radius
 	if can_take.is_valid() and not can_take.call():
 		in_range = false
 	var show_prompt := requires_interact and in_range

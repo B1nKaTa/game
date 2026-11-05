@@ -25,6 +25,8 @@ const DROP_KEY := "key"
 const DROP_BOMB := "bomb"
 const DROP_COIN := "coin"
 const DROP_POTION := "potion"
+# Only items drop a heal this way (the Sympathy Card). Rooms lay theirs out as H cells.
+const DROP_HEAL := "heal"
 const CLEAR_KEY_CHANCE := 0.15
 const CLEAR_BOMB_CHANCE := 0.2
 const BLOCK_COIN_CHANCE := 0.3

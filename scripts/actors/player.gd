@@ -18,6 +18,10 @@ const CHARGE_ANGLE := 75.0
 const ATTACK_PUSH := 60.0
 const DODGE_SPEED := 300.0
 const CHARGE_SLOWDOWN := 0.4
+# Bunion Pads: how far across a prop's corner a dodge may step, and how near an axis a dodge must run
+# to count as straight at it.
+const DODGE_CORNER_REACH := 8.0
+const DODGE_STRAIGHT_DOT := 0.96
 const HURT_COLOR := Color("e4524f")
 const SPRITE_FRAME_WIDTH := 68
 const SPRITE_FEET_Y := 23.0
@@ -175,7 +179,11 @@ func slow(fraction: float, seconds: float) -> void:
 
 # Every push goes through here, so the ship's anchor halves them all: gusts, foghorns, rings and pulls.
 func push(shove: Vector2, seconds: float) -> void:
-	_push = shove * (run.slide_mult() if run != null else 1.0)
+	var share := run.slide_mult() if run != null else 1.0
+	# Gravity Boots: nothing shoves him at all.
+	if share <= 0.0:
+		return
+	_push = shove * share
 	_push_left = seconds
 
 
@@ -288,9 +296,14 @@ func aim_direction() -> Vector2:
 	return _aim
 
 
-# The dodge is ready again at once (Reading Glasses on a Chain).
+# The dodge is ready again at once (Reading Glasses on a Chain, the Pogo Cane).
 func refund_dodge() -> void:
 	_dodge.clear_cooldown()
+
+
+# A still copy of how he looks this frame, for the Afterimage. Null before the art is loaded.
+func afterimage_sprite() -> Sprite2D:
+	return _visual.copy_frame() if _visual != null else null
 
 
 func dodge_cooldown_left() -> float:
@@ -485,10 +498,14 @@ func _handle_movement() -> void:
 		# A dodge goes where it is aimed, wet floor or not, and breaks free of any gust.
 		_push_left = 0.0
 		velocity = _dodge_direction * DODGE_SPEED
+		# Bunion Pads: a dodge straight at a prop's corner steps round it, as a walk does.
+		if run.stats.dodge_rounds_corners:
+			velocity = _round_corners(velocity, straightened(_dodge_direction), DODGE_SPEED, DODGE_CORNER_REACH)
 	else:
 		# Support Stockings: no slow takes him below their share of his speed.
 		var speed := run.move_speed() * maxf(SandRule.slowed(_slow.speed_factor(), sunk), run.stats.min_slow_factor)
-		if _charge.is_charging():
+		# The Hover Round keeps his full walk while he charges.
+		if _charge.is_charging() and not run.stats.charge_full_speed:
 			speed *= CHARGE_SLOWDOWN
 		# What he carries onto the wet is never more than a walk, so a dodge does not fling him.
 		velocity = SlideRule.velocity(velocity.limit_length(speed), input * speed, slides, get_physics_process_delta_time())
@@ -510,6 +527,8 @@ func _handle_movement() -> void:
 
 # Starts a dodge that way if the cooldown allows, and tells the items. Returns whether it started.
 func start_dodge(direction: Vector2) -> bool:
+	# Velcro Shoes give a second dodge, so the count is read at every start.
+	_dodge.charges = run.stats.dodge_charges
 	if not _dodge.try_start(run.stats.dodge_cooldown, DodgeTimer.DURATION * run.stats.dodge_length):
 		return false
 	_dodge_direction = direction
@@ -521,7 +540,7 @@ func start_dodge(direction: Vector2) -> bool:
 # Walking straight into a corner by a pixel or two steps him round it, sideways only, and only when
 
 # both the step and the walk on from there are clear, so he never slips into a wall or through one.
-func _round_corners(wanted: Vector2, input: Vector2, speed: float) -> Vector2:
+func _round_corners(wanted: Vector2, input: Vector2, speed: float, reach := CornerSlide.REACH) -> Vector2:
 	if not is_inside_tree() or input.is_zero_approx() or (absf(input.x) > 0.01 and absf(input.y) > 0.01):
 		return wanted
 	var delta := get_physics_process_delta_time()
@@ -532,13 +551,22 @@ func _round_corners(wanted: Vector2, input: Vector2, speed: float) -> Vector2:
 	var obstacle := _rect_of(hit.get_collider_shape())
 	if not obstacle.has_area():
 		return wanted
-	var step := CornerSlide.nudge(Rect2(_feet.global_position - FEET_BOX_SIZE / 2.0, FEET_BOX_SIZE), obstacle, input)
+	var step := CornerSlide.nudge(Rect2(_feet.global_position - FEET_BOX_SIZE / 2.0, FEET_BOX_SIZE), obstacle, input, reach)
 	if step == Vector2.ZERO:
 		return wanted
 	var clear := step + step.normalized() * 0.5
 	if test_move(global_transform, clear) or test_move(global_transform.translated(clear), ahead):
 		return wanted
 	return step.normalized() * minf(speed, clear.length() / delta)
+
+
+# A way that runs nearly along an axis, snapped onto it, so a dodge aimed a hair off straight still counts
+# as straight at a corner. Any other way is left as it is.
+static func straightened(way: Vector2) -> Vector2:
+	for axis: Vector2 in [Vector2.RIGHT, Vector2.LEFT, Vector2.DOWN, Vector2.UP]:
+		if way.normalized().dot(axis) >= DODGE_STRAIGHT_DOT:
+			return axis
+	return way
 
 
 func _rect_of(shape_owner: Object) -> Rect2:

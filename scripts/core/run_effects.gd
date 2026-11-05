@@ -204,6 +204,9 @@ func close_call() -> void:
 
 # Each effect may lower what the last one left. The result is what he loses, never below zero.
 func hurt(pills: int, source: String) -> int:
+	if ctx.counting_pills:
+		_damage_this_room += pills
+		return pills
 	for effect in _all():
 		pills = maxi(effect.on_hurt(ctx, pills, source), 0)
 	_damage_this_room += pills
@@ -266,6 +269,8 @@ func accepts_pickup(kind: String) -> bool:
 
 
 func pickup(kind: String, amount: int) -> int:
+	if kind == HEAL and ctx.counting_pills:
+		return amount
 	for effect in _all():
 		amount = effect.on_pickup(ctx, kind, amount)
 	return amount

@@ -71,3 +71,16 @@ extends Resource
 @export var teeth_floor_bite: bool = false
 # Sets of dentures thrown at once. Zero leaves the usual one.
 @export var teeth_sets: int = 0
+# Dodges he can make back to back, on top of the usual one (Velcro Shoes).
+@export var bonus_dodge_charges: int = 0
+# Whether charging a swing leaves his walk at full speed (Hover Round).
+@export var charge_full_speed: bool = false
+# How much further sleeping enemies notice him, and how much sooner a room's enemies stop waiting, as a
+# fraction (Squeaky Shoes).
+@export var notice_bonus: float = 0.0
+# Whether a dodge steps round a prop's corner as a walk does (Bunion Pads).
+@export var dodge_rounds_corners: bool = false
+# Whether slides and pushes leave him where he stands (Gravity Boots).
+@export var steady_feet: bool = false
+# How much nearer he must stand to a heal on the floor to take it, as a fraction (Pill Crusher).
+@export var heal_reach_cut: float = 0.0

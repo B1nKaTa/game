@@ -92,8 +92,15 @@ func drop_for_item(kind: String, at: Vector2, amount := 1) -> void:
 	var spot := clear_spot(at)
 	if kind == RoomRules.DROP_COIN:
 		_drop_coin(spot, amount)
+	elif kind == RoomRules.DROP_HEAL:
+		_add_heal(spot, amount)
 	else:
 		_drop_consumable(spot, kind)
+
+
+# Where the room's last enemy fell, for what an item leaves after a clear.
+func last_death_spot() -> Vector2:
+	return _last_death_at
 
 
 # The floor's palette, for anything a boss lays down in the room later, such as a wet patch.
@@ -595,6 +602,7 @@ func _spawn_enemies() -> void:
 func _spawn_enemy(def: EnemyDef, at: Vector2, summoned := false) -> Enemy:
 	var enemy := Enemy.new()
 	enemy.setup(def, _player, _run.stats.warning_fraction, _run.stats.reveals_enemy_health)
+	enemy.notice_mult = _run.stats.notice_mult
 	# A cursed run's tougher, better-paying enemies come on top of the floor's own numbers.
 	enemy.apply_floor(_floor_def.health_mult * _run.enemy_health_mult(), _floor_def.pension_mult * _run.enemy_pension_mult())
 	enemy.is_summon = summoned
@@ -712,6 +720,14 @@ func _can_take_heal() -> bool:
 	return _run.health.pills < _run.health.max_pills or _run.effects.accepts_pickup(RunEffects.HEAL)
 
 
+# A heal of so many pills lying on the floor. The Pill Crusher's crumbs must be stood nearer to take.
+func _add_heal(at: Vector2, pills: int) -> Pickup:
+	var heal := _add_pickup(at, "Heal", HEAL_COLOR, func(): _take_heal(pills))
+	heal.can_take = _can_take_heal
+	heal.collect_radius = Pickup.COLLECT_RADIUS * _run.stats.heal_reach_mult
+	return heal
+
+
 func _add_pickup(at: Vector2, label: String, color: Color, on_take: Callable, needs_interact := false) -> Pickup:
 	var pickup := Pickup.new()
 	pickup.setup(label, color, _player.feet(), needs_interact)
@@ -731,8 +747,7 @@ func _create_rewards() -> void:
 	if not cells.is_empty():
 		_create_item_choice(cells)
 	for cell in _room.layout.cells_of("H"):
-		var heal := _add_pickup(RoomBackdrop.cell_center(cell), "Heal", HEAL_COLOR, func(): _take_heal(HEAL_AMOUNT))
-		heal.can_take = _can_take_heal
+		_add_heal(RoomBackdrop.cell_center(cell), HEAL_AMOUNT)
 	for cell in _room.layout.cells_of("T"):
 		_create_treasure(cell)
 		_pay_chest_condolences()

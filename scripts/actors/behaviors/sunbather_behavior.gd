@@ -66,7 +66,7 @@ func _sleep(enemy: Enemy) -> void:
 	# A chair stays put on a rolling deck, so he does too.
 	enemy.hold_lane()
 	_lie_down(enemy)
-	if should_wake(enemy.distance_to_target(), enemy.hp < enemy.max_hp()):
+	if should_wake(enemy.distance_to_target() / enemy.notice_mult, enemy.hp < enemy.max_hp()):
 		_state = State.SNAP
 		_telegraph.start(SNAP_WINDUP)
 		enemy.set_warning(_telegraph, SNAP_RADIUS, true)

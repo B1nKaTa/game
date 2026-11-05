@@ -72,13 +72,20 @@ func _ready() -> void:
 
 # The loop's fight checks count every pill a hit costs, so a Spare Pill Organizer it picked up is kept
 # empty: a stored heal would soak the hit a check measures. tests/test_reworked_items.gd checks the store.
+# For the same reason the items that block, soften or soak a hit, heal, or drop a heal are held off
+# (EffectContext.counting_pills), and Gravity Boots and Squeaky Shoes are set aside, so the push checks
+# and the room's wait see the rooms' own rules. tests/test_items_batch2.gd checks each of those.
 func _physics_process(_delta: float) -> void:
 	var scene := get_tree().current_scene
 	if scene == null or not "player" in scene or not is_instance_valid(scene.player):
 		return
-	var organizer = scene.player.run.effects.effect_of("pill_organizer")
+	var run: RunState = scene.player.run
+	var organizer = run.effects.effect_of("pill_organizer")
 	if organizer != null:
 		organizer.stored = 0
+	run.effects.ctx.counting_pills = true
+	run.stats.steady_feet = false
+	run.stats.notice_mult = 1.0
 
 
 

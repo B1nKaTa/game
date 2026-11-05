@@ -28,6 +28,13 @@ const PIN_WOOD := Color("b8743a")
 const FLOUR_COLOR := Color(0.97, 0.94, 0.86, 0.8)
 const FIZZ_COLOR := Color("8fe6f2")
 const STEEL_COLOR := Color("dfe6ee")
+# The second batch: Bad Hip's cough, the Afterimage's pale copy, the wheels' steel, the Banana Peel's
+# yellow and the Mobility Scooter's flames.
+const COUGH_COLOR := Color("aebb6e")
+const GHOST_TINT := Color("9fdcff")
+const WHEEL_STEEL := Color("c9ced8")
+const PEEL_YELLOW := Color("ffd84a")
+const FLAME_COLOR := Color("ff8a2a")
 # Marks that ride on an enemy last until it dies or the room is left, unless told otherwise.
 const RIDE_TIME := 3600.0
 
@@ -106,6 +113,46 @@ static func make_needle(ctx: EffectContext, direction: Vector2, damage: float, d
 	var needle := FxNeedle.new(0.0, Color("c9ccd6"), 2.0)
 	needle.aim(ctx, direction, damage, distance, FxNeedle.SPEED)
 	return needle
+
+
+# Bad Hip's cough: a sickly cloud that slows every enemy whose body it touches, while it lasts.
+static func make_cough(radius: float, seconds: float, slow_share: float) -> FxFizz:
+	var cough := FxCough.new(radius, COUGH_COLOR, seconds)
+	cough.slow_share = slow_share
+	return cough
+
+
+# The Afterimage: a pale copy of Grandpa that enemies go for instead of him. sprite is his look this
+# frame (Player.afterimage_sprite), or null for a plain outline. player is who they turn back to.
+static func make_afterimage(player: Node2D, sprite: Sprite2D, seconds: float) -> FxAfterimage:
+	var ghost := FxAfterimage.new(0.0, GHOST_TINT, seconds)
+	ghost.setup(player, sprite)
+	return ghost
+
+
+# Wheelchair Wheels: two wheels spinning at his sides for as long as the roll lasts. A look only.
+static func make_wheels(follow: Node2D, direction: Vector2, seconds: float) -> Fx:
+	var wheels := FxWheels.new(0.0, WHEEL_STEEL, seconds)
+	wheels.direction = direction
+	if follow != null:
+		wheels.ride(follow)
+	return wheels
+
+
+# The Banana Peel: it lies where it is dropped until the first enemy walks onto it, which trips.
+static func make_peel(ctx: EffectContext, trip_seconds: float) -> FxPeel:
+	var peel := FxPeel.new(8.0, PEEL_YELLOW, RIDE_TIME)
+	peel.ctx = ctx
+	peel.trip_time = trip_seconds
+	return peel
+
+
+# The Mobility Scooter's trail: a small fire on the floor that burns what stands in it now and then.
+static func make_burn(ctx: EffectContext, radius: float, seconds: float, damage: float) -> FxBurn:
+	var burn := FxBurn.new(radius, FLAME_COLOR, seconds)
+	burn.ctx = ctx
+	burn.damage = damage
+	return burn
 
 
 # The base of every room effect: a radius, a colour and a life, after which it frees itself.
@@ -494,6 +541,299 @@ class FxNeedle:
 		draw_line(Vector2(-LENGTH, 0), Vector2(0, 0), color, 2.0)
 		draw_circle(Vector2(-LENGTH, 0), 2.6, Color.BLACK)
 		draw_circle(Vector2(-LENGTH, 0), 1.8, Color("e06a3a"))
+
+
+# Bad Hip's cough: puffs of a sickly cloud, each with a dark rim so it reads on the palest floors.
+class FxCough:
+	extends FxFizz
+
+	func _init(at_radius: float, at_color: Color, seconds: float) -> void:
+		super(at_radius, at_color, seconds)
+		z_index = Z
+
+	func _draw() -> void:
+		var t := progress()
+		var fade := 1.0 - maxf(t - 0.7, 0.0) / 0.3
+		var swell := 0.6 + 0.4 * minf(t * 4.0, 1.0)
+		var puffs := [Vector2(0, 0), Vector2(-0.5, -0.25), Vector2(0.5, -0.2), Vector2(-0.3, 0.3), Vector2(0.35, 0.3)]
+		for pass_index in 2:
+			for i in puffs.size():
+				var drift := Vector2(sin(age * 1.7 + i), -age * 4.0 * (i % 2))
+				var at: Vector2 = puffs[i] * radius * swell + drift
+				var size := radius * (0.5 if i == 0 else 0.38) * swell
+				if pass_index == 0:
+					draw_circle(at, size + 1.5, Color(Color.BLACK, 0.45 * fade))
+				else:
+					draw_circle(at, size, Color(color, 0.8 * fade))
+		for i in 3:
+			var at := Vector2(-radius * 0.35 + i * radius * 0.35, -2.0 + sin(age * 3.0 + i) * 2.0)
+			draw_circle(at, 1.6, Color(color.darkened(0.45), fade))
+
+
+# The Afterimage: a pale copy of Grandpa where a dodge began. Every enemy it lures walks and strikes at
+# it instead of him while it stands, and it takes every blow for nothing. When it goes, whether it fades,
+# the room is left or it is freed, each enemy still after it turns back to him. Bosses are never fooled.
+class FxAfterimage:
+	extends Fx
+
+	const BODY := Vector2(20, 28)
+	const FEET := Vector2(0, 17)
+
+	var absorbed := 0
+	var _player_ref: WeakRef
+	var _lured: Array[WeakRef] = []
+	var _feet: Marker2D
+	var _sprite: Sprite2D
+
+	func _init(at_radius: float, at_color: Color, seconds: float) -> void:
+		super(at_radius, at_color, seconds)
+		# Among the bodies, as he would be, and it pauses with the game since enemies follow it.
+		z_index = 0
+		process_mode = Node.PROCESS_MODE_INHERIT
+		_feet = Marker2D.new()
+		_feet.position = FEET
+		add_child(_feet)
+
+	func setup(player: Node2D, sprite: Sprite2D) -> void:
+		_player_ref = weakref(player) if player != null else null
+		_sprite = sprite
+		if _sprite != null:
+			_sprite.modulate = Color(color, 0.7)
+			add_child(_sprite)
+
+	# Where enemies aim ground attacks, as Player.feet.
+	func feet() -> Node2D:
+		return _feet
+
+	# Turns an enemy after it. Returns whether it was fooled: a boss, or one already dead, is not.
+	func lure(enemy: Enemy) -> bool:
+		if enemy == null or not is_instance_valid(enemy) or enemy.is_dead() or enemy.def == null or enemy.def.is_boss:
+			return false
+		enemy.target = self
+		_lured.append(weakref(enemy))
+		return true
+
+	func lure_all(enemies: Array) -> int:
+		var count := 0
+		for node in enemies:
+			if node is Enemy and lure(node):
+				count += 1
+		return count
+
+	func lured_count() -> int:
+		var count := 0
+		for ref in _lured:
+			var enemy := ref.get_ref() as Enemy
+			if enemy != null and enemy.target == self:
+				count += 1
+		return count
+
+	# Every enemy still after it goes back to Grandpa.
+	func release() -> void:
+		var player: Node2D = _player_ref.get_ref() if _player_ref != null else null
+		for ref in _lured:
+			var enemy := ref.get_ref() as Enemy
+			if enemy != null and is_instance_valid(enemy) and enemy.target == self:
+				enemy.target = player
+		_lured.clear()
+
+	# What hits it does nothing: it is not there.
+	func take_hit(_amount: int, _source := "") -> bool:
+		absorbed += 1
+		return false
+
+	func take_fire_hit(_amount: int) -> bool:
+		return take_hit(_amount)
+
+	func push(_shove: Vector2, _seconds: float) -> void:
+		pass
+
+	func slow(_fraction: float, _seconds: float) -> void:
+		pass
+
+	func is_dodging() -> bool:
+		return false
+
+	func _exit_tree() -> void:
+		release()
+
+	func _notification(what: int) -> void:
+		if what == NOTIFICATION_PREDELETE:
+			release()
+
+	func _process(delta: float) -> void:
+		super(delta)
+		if _sprite != null:
+			var t := progress()
+			_sprite.modulate = Color(color, (0.75 - 0.15 * sin(age * 18.0)) * (1.0 - maxf(t - 0.75, 0.0) / 0.25))
+
+	func _draw() -> void:
+		var t := progress()
+		var fade := 1.0 - maxf(t - 0.75, 0.0) / 0.25
+		# A ring at his feet with a dark rim, so the copy reads on pale floors too.
+		draw_set_transform(FEET, 0.0, Vector2(1.0, 0.45))
+		draw_arc(Vector2.ZERO, 14.0, 0.0, TAU, 24, Color(Color.BLACK, 0.7 * fade), 4.0)
+		draw_arc(Vector2.ZERO, 14.0, 0.0, TAU, 24, Color(color, fade), 2.0)
+		draw_set_transform(Vector2.ZERO)
+		if _sprite == null:
+			var body := Rect2(-BODY / 2.0, BODY)
+			draw_rect(body.grow(1.0), Color(Color.BLACK, 0.6 * fade), false, 2.0)
+			draw_rect(body, Color(color, 0.45 * fade))
+
+
+# Wheelchair Wheels: a wheel at each side of him, spokes turning, and a dark rim on each.
+class FxWheels:
+	extends Fx
+
+	const SIDE := 12.0
+	const HEIGHT := 11.0
+	const WIDTH := 4.0
+
+	var direction := Vector2.RIGHT
+
+	func _init(at_radius: float, at_color: Color, seconds: float) -> void:
+		super(at_radius, at_color, seconds)
+		z_index = Z
+
+	func _draw() -> void:
+		var fade := 1.0 - maxf(progress() - 0.8, 0.0) / 0.2
+		var across := Vector2(-direction.y, direction.x)
+		if absf(direction.x) >= absf(direction.y):
+			across = Vector2(0, 1)
+		var center := Vector2(0, 8)
+		for side: float in [-1.0, 1.0]:
+			var hub := center + Vector2(SIDE * side, 0.0)
+			var rim := PackedVector2Array()
+			for i in 17:
+				var a := TAU * i / 16.0
+				rim.append(hub + Vector2(cos(a) * WIDTH, sin(a) * HEIGHT))
+			draw_polyline(rim, Color(Color.BLACK, 0.9 * fade), 5.0)
+			draw_polyline(rim, Color(color, fade), 2.5)
+			for k in 3:
+				var turn := age * 22.0 + k * TAU / 3.0
+				var y := sin(turn) * HEIGHT
+				if cos(turn) < 0.0:
+					continue
+				draw_line(hub + Vector2(-WIDTH, y * 0.9), hub + Vector2(WIDTH, y * 0.9), Color(Color.BLACK, fade), 2.0)
+			draw_circle(hub, 2.0, Color(Color.BLACK, fade))
+			draw_circle(hub, 1.2, Color(color, fade))
+		# Dust kicked up behind the roll.
+		for i in 3:
+			var back := -direction * (14.0 + i * 7.0) + across * (i - 1) * 4.0 + Vector2(0, 14)
+			draw_circle(back, 3.0 - i * 0.6, Color(0.55, 0.5, 0.42, 0.55 * fade))
+
+
+# The Banana Peel: a yellow peel flat on the floor, flaps out, with a dark rim. The first enemy whose
+# body walks onto it trips: it is stunned for trip_time and slides on a little. Then the peel is gone.
+class FxPeel:
+	extends Fx
+
+	const SLIDE := 140.0
+	const SLIDE_TIME := 0.25
+
+	var ctx: EffectContext
+	var trip_time := 1.2
+	var tripped: Enemy
+
+	func _init(at_radius: float, at_color: Color, seconds: float) -> void:
+		super(at_radius, at_color, seconds)
+		z_index = 0
+		process_mode = Node.PROCESS_MODE_INHERIT
+
+	func _physics_process(_delta: float) -> void:
+		if is_inside_tree() and tripped == null:
+			trip_first(get_tree().get_nodes_in_group("enemies"))
+
+	# The first of these enemies standing on it trips. Returns it, or null when none is on it.
+	func trip_first(enemies: Array) -> Enemy:
+		if tripped != null:
+			return null
+		for node in enemies:
+			var enemy := node as Enemy
+			if enemy == null or not is_instance_valid(enemy) or enemy.is_dead() or enemy.submerged or enemy.def.ignores_walls:
+				continue
+			var at := global_position if is_inside_tree() else position
+			if at.distance_to(MeleeArc.closest_point(enemy.body_rect(), at)) > radius:
+				continue
+			tripped = enemy
+			var way := enemy.velocity.normalized() if not enemy.velocity.is_zero_approx() else Vector2.RIGHT
+			if ctx != null:
+				ctx.stun(enemy, trip_time)
+				ctx.add_fx(ItemFx.make_pop("Whoops!", color), enemy.global_position)
+			else:
+				enemy.stun(trip_time)
+			if enemy.is_inside_tree():
+				enemy.apply_push(way * SLIDE, SLIDE_TIME)
+			if is_inside_tree():
+				queue_free()
+			return enemy
+		return null
+
+	func _draw() -> void:
+		var flaps := [Vector2(-1.0, -0.35), Vector2(1.0, -0.25), Vector2(-0.25, 0.9), Vector2(0.6, 0.75)]
+		for flap: Vector2 in flaps:
+			draw_line(Vector2.ZERO, flap * radius, Color.BLACK, 6.0)
+		for flap: Vector2 in flaps:
+			draw_line(Vector2.ZERO, flap * radius, color, 3.5)
+			draw_circle(flap * radius, 1.6, color.darkened(0.25))
+		draw_circle(Vector2.ZERO, 3.6, Color.BLACK)
+		draw_circle(Vector2.ZERO, 2.6, color)
+		draw_circle(Vector2(0.5, -2.5), 1.4, Color("5b3a1a"))
+
+
+# The Mobility Scooter's flames: a small fire on the floor that burns each enemy touching it, at most
+# once every BURN_EVERY seconds each, through ctx so its hits run the hooks.
+class FxBurn:
+	extends Fx
+
+	const BURN_EVERY := 0.4
+
+	var ctx: EffectContext
+	var damage := 3.0
+	var _next := {}
+
+	func _init(at_radius: float, at_color: Color, seconds: float) -> void:
+		super(at_radius, at_color, seconds)
+		z_index = 0
+		process_mode = Node.PROCESS_MODE_INHERIT
+
+	func _physics_process(_delta: float) -> void:
+		if is_inside_tree():
+			burn_touching(get_tree().get_nodes_in_group("enemies"))
+
+	# Burns each of these enemies touching it that is due. Returns how many it burned.
+	func burn_touching(enemies: Array) -> int:
+		if ctx == null:
+			return 0
+		var count := 0
+		var at := global_position if is_inside_tree() else position
+		for node in enemies:
+			var enemy := node as Enemy
+			if enemy == null or not is_instance_valid(enemy) or enemy.is_dead() or enemy.submerged:
+				continue
+			if at.distance_to(MeleeArc.closest_point(enemy.body_rect(), at)) > radius:
+				continue
+			var key := enemy.get_instance_id()
+			if float(_next.get(key, -1.0)) > age:
+				continue
+			_next[key] = age + BURN_EVERY
+			ctx.hit_enemy(enemy, damage)
+			count += 1
+		return count
+
+	func _draw() -> void:
+		var fade := 1.0 - maxf(progress() - 0.7, 0.0) / 0.3
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.55))
+		draw_circle(Vector2.ZERO, radius, Color(0.25, 0.08, 0.02, 0.55 * fade))
+		draw_set_transform(Vector2.ZERO)
+		for i in 3:
+			var flick := sin(age * 14.0 + i * 2.1) * 1.5
+			var base := Vector2((i - 1) * radius * 0.5, 1.0)
+			var tip := base + Vector2(flick, -radius * (1.1 - 0.25 * absf(i - 1)))
+			var flame := PackedVector2Array([base + Vector2(-3.0, 0), tip, base + Vector2(3.0, 0)])
+			draw_polyline(flame, Color(Color.BLACK, 0.8 * fade), 4.0)
+			draw_colored_polygon(flame, Color(color, fade))
+			draw_line(base, base.lerp(tip, 0.55), Color(1.0, 0.92, 0.5, fade), 1.5)
 
 
 # Arrows at the screen's edge pointing to enemies off screen, while the run's stats ask for them. It

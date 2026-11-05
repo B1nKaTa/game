@@ -108,6 +108,18 @@ func has_art() -> bool:
 
 
 # A copy of the current frame, for leaving behind during a dodge. Null without art.
+# A still copy of the frame shown now, for a look that stays, such as the Afterimage. Null without art.
+func copy_frame() -> Sprite2D:
+	if not has_art():
+		return null
+	var still := Sprite2D.new()
+	still.texture = _sprite.texture
+	still.hframes = _sprite.hframes
+	still.frame = _sprite.frame
+	still.flip_h = _sprite.flip_h
+	return still
+
+
 func make_ghost() -> DodgeGhost:
 	if not has_art():
 		return null

@@ -271,8 +271,11 @@ func charge_damage_mult() -> float:
 	return stats.charge_damage_mult + (Mementos.CHARGE_POWER_BONUS if has_perk(Mementos.CHARGE_PERK) else 0.0)
 
 
-# How far slides and pushes move him, as a share: half with the ship's anchor.
+# How far slides and pushes move him, as a share: half with the ship's anchor, and not at all in
+# Gravity Boots.
 func slide_mult() -> float:
+	if stats.steady_feet:
+		return 0.0
 	return Mementos.SLIDE_MULT if has_perk(Mementos.SLIDE_PERK) else 1.0
 
 

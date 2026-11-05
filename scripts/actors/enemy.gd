@@ -110,6 +110,9 @@ var _lane_heaviest := false
 # Set while one of Grandpa's hits lands with the Undertaker's Work Gloves: dying to it, it leaves
 # nothing harmful behind. Behaviors read it in on_killed.
 var harmless_death := false
+# How much sooner it notices Grandpa: sleepers wake this many times as far, and a room's wait as he
+# walks in is cut by it (Squeaky Shoes). Set by the room from his stats when it spawns.
+var notice_mult := 1.0
 
 
 
@@ -424,7 +427,7 @@ func is_rallied() -> bool:
 
 
 func wait_for_room_start() -> void:
-	_wake_left = ROOM_WAKE_TIME
+	_wake_left = ROOM_WAKE_TIME / maxf(notice_mult, 1.0)
 
 
 func self_destruct() -> void:

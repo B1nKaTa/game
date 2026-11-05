@@ -48,7 +48,7 @@ func is_lying() -> bool:
 func tick(enemy: Enemy, delta: float) -> void:
 	match _state:
 		State.LYING:
-			if wakes(enemy.global_position.distance_to(enemy.target_ground())):
+			if wakes(enemy.global_position.distance_to(enemy.target_ground()) / enemy.notice_mult):
 				enemy.say(WAKE_TEXT, SAY_TIME)
 				_begin_bite(enemy)
 		State.BITING:
