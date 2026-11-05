@@ -91,6 +91,18 @@ func walk_to(to: Vector2, speed: float) -> void:
 
 
 func play_anim(anim_name: String) -> void:
+	# A group, such as the mourners, falls one by one in its own drawing rather than as one block.
+	if _look != null and ActorLook.GROUPS.has(id) and anim_name in ["fall", "faint", "lie"]:
+		_look.down = true
+		_look.queue_redraw()
+		_anim = anim_name
+		_anim_time = 0.0
+		_anim_length = float(CutsceneSteps.ANIM_TIME.get(anim_name, 0.0))
+		_start_rotation = rotation
+		_end_rotation = rotation
+		if _anim_length <= 0.0:
+			_anim = ""
+		return
 	_anim = anim_name
 	_anim_time = 0.0
 	_anim_length = float(CutsceneSteps.ANIM_TIME.get(anim_name, 0.0))
@@ -125,8 +137,18 @@ func is_animating() -> bool:
 	return not _anim.is_empty()
 
 
+# Harold's sprite draws through its own shader, which modulate never reaches, so he is tinted there.
 func set_tint(color: Color) -> void:
-	_body.modulate = Color(color.r, color.g, color.b, _body.modulate.a)
+	if _sprite != null:
+		_sprite.set_tint(color)
+	else:
+		_body.modulate = Color(color.r, color.g, color.b, _body.modulate.a)
+
+
+func set_look_state(state: String) -> void:
+	if _look != null:
+		_look.state = state
+		_look.queue_redraw()
 
 
 func set_hat(shape: String, color: Color) -> void:
@@ -155,6 +177,8 @@ func tick(delta: float) -> void:
 	if _floating:
 		_body.position.y = -FLOAT_RISE * minf(_clock_since_float(), 1.0) + sin(_clock * 3.0) * 1.5
 		_body.modulate.a = GHOST_ALPHA
+		if _sprite != null:
+			_sprite.set_alpha(GHOST_ALPHA)
 
 
 func _clock_since_float() -> float:

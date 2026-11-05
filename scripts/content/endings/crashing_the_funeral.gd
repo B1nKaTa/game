@@ -15,7 +15,7 @@ static func steps(_variant := 0) -> Array:
 		S.anim("harold", "lie"),
 		S.actor("mourners", Vector2(46, G)),
 		S.actor("wreath", Vector2(104, G)),
-		S.actor("gerald", Vector2(280, G), -1),
+		S.actor("gerald", Vector2(266, G), -1),
 		S.fade_in(1.0),
 		S.say("gerald", "We are gathered here to remember Harold."),
 		S.say("gerald", "Harold was... adequate."),

@@ -236,13 +236,16 @@ func _draw_office() -> void:
 	_room(Color("4a3a2a"), Color("6a1a1a"))
 	draw_rect(Rect2(20, 14, 280, 64), Color("e8d8b8"))
 	for x: float in [40.0, 90.0, 150.0, 220.0, 270.0]:
-		draw_circle(Vector2(x, 66), 18, Color("fff6e8"))
+		draw_circle(Vector2(x, 62), 14, Color("fff6e8"))
 	draw_rect(Rect2(20, 14, 280, 64), Color("2a1a10"), false, 2.0)
 	draw_rect(Rect2(150, 14, 2, 64), Color("2a1a10"))
-	# The chair behind the desk, high-backed, on a swivel.
-	draw_rect(Rect2(196, 70, 30, 34), Color("2a1a1a"))
-	draw_rect(Rect2(196, 70, 30, 34), Color("d4a62a"), false, 1.0)
-	draw_rect(Rect2(208, 104, 6, 10), Color("3a3a40"))
+	# The big chair beside the desk, high-backed, on a swivel, with its seat at the height Harold
+	# stands on to sit in it (new_management.gd's CHAIR).
+	draw_rect(Rect2(270, 62, 26, 42), Color("2a1a1a"))
+	draw_rect(Rect2(270, 62, 26, 42), Color("d4a62a"), false, 1.0)
+	draw_rect(Rect2(264, 104, 38, 5), Color("3a2222"))
+	draw_rect(Rect2(280, 109, 6, 14), Color("3a3a40"))
+	draw_rect(Rect2(272, 123, 22, 3), Color("3a3a40"))
 	draw_rect(Rect2(150, 104, 110, 24), Color("5a3a22"))
 	draw_rect(Rect2(150, 104, 110, 4), Color("7a5a3a"))
 	_sign("CHAIRMAN", Vector2(205, 118), Color("d4a62a"), Color("2a1a10"), 6)
@@ -257,14 +260,14 @@ func _draw_waiting_room() -> void:
 	_sign("RETURN", Vector2(62, 48), Color("2a1a10"), Color("ffd24a"), 7)
 	draw_rect(Rect2(196, 92, 14, 30), Color("c8323a"))
 	draw_rect(Rect2(199, 98, 8, 3), Color("eeeeee"))
-	_sign("NOW SERVING 666", Vector2(240, 30), Color("1a1418"), Color("ff6a4a"), 8)
+	_sign("PLEASE TAKE A NUMBER", Vector2(240, 30), Color("1a1418"), Color("ff6a4a"), 8)
 	for x: float in [250.0, 266.0, 282.0]:
 		draw_rect(Rect2(x, 106, 12, 6), Color("6a5a7a"))
 		draw_rect(Rect2(x, 112, 2, 10), Color("3a3a40"))
 
 
 func _draw_departures() -> void:
-	_room(Color("2a3a5a"), Color("4a4a56"))
+	_room(Color("5a6a8a"), Color("4a4a56"))
 	_sign("DEPARTURES   GATE 0   ONE WAY", Vector2(160, 24), Color("1a1a20"), Color("ffd24a"), 8)
 	_window(Rect2(20, 40, 100, 40), Color("e8e0f0"))
 	draw_rect(Rect2(180, 98, 80, 30), Color("6a6a78"))

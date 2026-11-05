@@ -127,7 +127,7 @@ func _scenes() -> void:
 		var id: String = entry["id"]
 		if id == EndingRules.REPEAT_CUSTOMER:
 			for n in range(1, EndingRules.REPEAT_DEATHS + 1):
-				await _scene_sheet(S.for_ending(id, n), "%02d_repeat_death_%d" % [entry["number"], n], [0.15, 0.3, 0.45])
+				await _scene_sheet(S.for_ending(id, n), "%02d_repeat_death_%d" % [entry["number"], n], [0.08, 0.2, 0.32])
 		else:
 			await _scene_sheet(S.for_ending(id), "%02d_%s" % [entry["number"], id], MOMENTS)
 		number += 1

@@ -24,7 +24,7 @@ const ANIM_TIME := {
 }
 const OPS: Array[String] = [
 	"stage", "actor", "walk", "face", "anim", "say", "card", "wait", "shake", "zoom", "fade_out",
-	"fade_in", "sound", "hide", "tint", "hat",
+	"fade_in", "sound", "hide", "tint", "hat", "look",
 ]
 const ENDINGS_DIR := "res://scripts/content/endings/"
 
@@ -97,6 +97,11 @@ static func tint(id: String, color: Color) -> Dictionary:
 # Puts a hat on an actor's head: any GrandpaLook hat shape, or "" to take it off.
 static func hat(id: String, shape: String, color := Color.WHITE) -> Dictionary:
 	return {"op": "hat", "id": id, "shape": shape, "color": color}
+
+
+# Changes how a drawn actor looks, as Gerald down to his vest. "" puts him back.
+static func look(id: String, state: String) -> Dictionary:
+	return {"op": "look", "id": id, "state": state}
 
 
 static func say_time(text: String) -> float:

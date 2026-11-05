@@ -334,6 +334,10 @@ func _start(step: Dictionary) -> void:
 			var tinted := actor(step["id"])
 			if tinted != null:
 				tinted.set_tint(step["color"])
+		"look":
+			var changed := actor(step["id"])
+			if changed != null:
+				changed.set_look_state(step["state"])
 		"hat":
 			var hatted := actor(step["id"])
 			if hatted != null:

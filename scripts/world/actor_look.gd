@@ -27,6 +27,8 @@ const PROPS: Array[String] = [
 	"sandwich", "ladder", "zzz", "baggage", "ticket", "spray",
 ]
 const OUTLINE := Color(0.08, 0.06, 0.05)
+# Actors drawn as several people, who fall each on his own (down).
+const GROUPS: Array[String] = ["mourners"]
 const SKIN := Color("e8b48a")
 const GERALD_SKIN := Color("e0b090")
 const GERALD_CARDIGAN := Color("c8a46a")
@@ -39,6 +41,10 @@ var walking := false
 var clock := 0.0
 # The one-shot playing, so an exterminator's spray shows while he swings.
 var action := ""
+# A group lying on the floor.
+var down := false
+# A change of look a scene asks for: "vest" has Gerald lose his cardigan at the tables.
+var state := ""
 
 
 static func display_name(actor_id: String) -> String:
@@ -61,6 +67,8 @@ static func head_of(actor_id: String) -> Vector2:
 # A hat on any head: a sun hat for the holiday, or any of Harold's own.
 static func draw_hat(canvas: CanvasItem, shape: String, head: Vector2, color: Color, facing_dir: float) -> void:
 	if shape == "straw":
+		# It sits lower than Harold's own hats, as a brim this wide rests on the ears.
+		head += Vector2(0, 4)
 		canvas.draw_colored_polygon(PackedVector2Array([head + Vector2(-14, -4), head + Vector2(14, -4), head + Vector2(10, -7), head + Vector2(-10, -7)]), Color("e8c86a"))
 		canvas.draw_rect(Rect2(head + Vector2(-6, -13), Vector2(12, 7)), Color("e8c86a"))
 		canvas.draw_rect(Rect2(head + Vector2(-6, -8), Vector2(12, 2)), Color("c8323a"))
@@ -94,7 +102,7 @@ func _draw() -> void:
 				_cloud(Vector2(facing * 18.0, -24), Color(0.75, 0.95, 0.6, 0.75))
 		"mourners":
 			for i in 3:
-				_mourner(Vector2(-16 + i * 16, 0), i)
+				_mourner(Vector2((-16.0 + i * 16.0) * (2.0 if down else 1.0), 0), i)
 		"clerk":
 			_person(Color("6a6a72"), Color("4a4a52"), SKIN, Color("3a2a1a"))
 			draw_rect(Rect2(-7, -36, 5, 3), Color(0.8, 0.9, 1.0, 0.7), false, 1.0)
@@ -141,12 +149,19 @@ func _draw_gerald() -> void:
 	draw_rect(Rect2(1 - step, -1, 4, 2), Color("4a2a1a"))
 	# A narrow tan cardigan with buttons, a little stooped the way he faces.
 	var body := PackedVector2Array([Vector2(-5, -13), Vector2(5, -13), Vector2(5 + facing, -29), Vector2(-5 + facing, -29)])
-	draw_colored_polygon(body, GERALD_CARDIGAN)
-	draw_polyline(PackedVector2Array([body[0], body[1], body[2], body[3], body[0]]), OUTLINE, 1.0)
-	for y: float in [-26.0, -22.0, -18.0]:
-		draw_circle(Vector2(facing * 0.5, y), 0.7, Color("5a3a1a"))
-	draw_line(Vector2(-5 + facing, -28), Vector2(-7 + facing, -16), GERALD_CARDIGAN.darkened(0.15), 2.0)
-	draw_line(Vector2(5 + facing, -28), Vector2(7 + facing, -16), GERALD_CARDIGAN.darkened(0.15), 2.0)
+	if state == "vest":
+		# Down to a string vest and bare, bony arms.
+		draw_colored_polygon(body, Color("f0ece0"))
+		draw_polyline(PackedVector2Array([body[0], body[1], body[2], body[3], body[0]]), OUTLINE, 1.0)
+		draw_line(Vector2(-5 + facing, -28), Vector2(-7 + facing, -16), GERALD_SKIN, 2.0)
+		draw_line(Vector2(5 + facing, -28), Vector2(7 + facing, -16), GERALD_SKIN, 2.0)
+	else:
+		draw_colored_polygon(body, GERALD_CARDIGAN)
+		draw_polyline(PackedVector2Array([body[0], body[1], body[2], body[3], body[0]]), OUTLINE, 1.0)
+		for y: float in [-26.0, -22.0, -18.0]:
+			draw_circle(Vector2(facing * 0.5, y), 0.7, Color("5a3a1a"))
+		draw_line(Vector2(-5 + facing, -28), Vector2(-7 + facing, -16), GERALD_CARDIGAN.darkened(0.15), 2.0)
+		draw_line(Vector2(5 + facing, -28), Vector2(7 + facing, -16), GERALD_CARDIGAN.darkened(0.15), 2.0)
 	# A long thin neck and an egg-shaped bald head, with three comb-over strands across the top.
 	var head := Vector2(facing * 1.5, -38)
 	draw_line(Vector2(facing, -29), head + Vector2(0, 5), GERALD_SKIN, 2.0)
@@ -164,6 +179,12 @@ func _draw_gerald() -> void:
 
 func _mourner(at: Vector2, index: int) -> void:
 	var height := 28.0 + index * 2.0
+	if down:
+		# Fainted flat, spread out, each with his head to the left.
+		var dir := -1.0
+		draw_rect(Rect2(at + Vector2(minf(0.0, dir * (height - 10.0)), -6), Vector2(height - 10.0, 6)), Color("1a1a1e"))
+		draw_circle(at + Vector2(dir * (height - 5.0), -4), 4, SKIN)
+		return
 	draw_rect(Rect2(at + Vector2(-5, -height + 10), Vector2(10, height - 10)), Color("1a1a1e"))
 	draw_circle(at + Vector2(0, -height + 6), 5, SKIN)
 	draw_rect(Rect2(at + Vector2(-6, -height), Vector2(12, 4)), Color("1a1a1e"))
@@ -254,7 +275,14 @@ func _draw_prop() -> void:
 				draw_line(Vector2(-34, -98 + i * 12.25), Vector2(34, -98 + i * 12.25), Color("5a5a60"), 1.0)
 			draw_rect(Rect2(-34, -98, 68, 98), OUTLINE, false, 1.0)
 		"shirt":
-			draw_colored_polygon(PackedVector2Array([Vector2(-8, -12), Vector2(8, -12), Vector2(10, -8), Vector2(6, -8), Vector2(6, 0), Vector2(-6, 0), Vector2(-6, -8), Vector2(-10, -8)]), GERALD_CARDIGAN)
+			# Gerald's cardigan, laid on the table with its sleeves out and its buttons up.
+			var cardigan := PackedVector2Array([Vector2(-6, -12), Vector2(6, -12), Vector2(13, -7), Vector2(11, -4), Vector2(6, -7), Vector2(6, 0), Vector2(-6, 0), Vector2(-6, -7), Vector2(-11, -4), Vector2(-13, -7)])
+			draw_colored_polygon(cardigan, GERALD_CARDIGAN)
+			cardigan.append(cardigan[0])
+			draw_polyline(cardigan, OUTLINE, 1.0)
+			draw_line(Vector2(0, -12), Vector2(0, 0), GERALD_CARDIGAN.darkened(0.3), 1.0)
+			for y: float in [-9.0, -5.0, -2.0]:
+				draw_circle(Vector2(1.5, y), 0.7, Color("5a3a1a"))
 		"boarding_pass":
 			draw_rect(Rect2(-10, -6, 20, 8), Color("eef2f8"))
 			draw_rect(Rect2(-10, -6, 20, 2), Color("2a3a6a"))
