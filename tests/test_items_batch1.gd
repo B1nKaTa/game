@@ -13,6 +13,7 @@ const Scythe := preload("res://scripts/items/reapers_scythe.gd")
 const Gold := preload("res://scripts/items/gold_fillings.gd")
 const Fizzy := preload("res://scripts/items/fizzy_tablet.gd")
 const Shark := preload("res://scripts/items/shark_tooth.gd")
+const Nightmare := preload("res://scripts/items/dentists_nightmare.gd")
 
 # id: [rarity, source, first-clear path or ""]
 const BATCH := {
@@ -463,3 +464,76 @@ func test_shark_tooth_bleeds_stack_three_hits_each() -> void:
 	assert_near(enemy.hp, 1000.0 - 6.0 * Shark.DAMAGE)
 	assert_eq(kit.fx_of(ItemFx.FxBleed).size(), 2)
 	kit.free_enemies()
+
+
+func test_full_set_makes_both_sets_bite_through_three() -> void:
+	var kit := ItemKit.new()
+	var both := _with_combos(kit, ["dentures", "spare_set"])
+	assert_true(both.effects.has_combo("full_set"))
+	assert_eq(both.stats.bites_per_throw, 3)
+	assert_eq(both.stats.teeth_sets, 2)
+	assert_eq(_with_combos(kit, ["dentures"]).stats.bites_per_throw, 2)
+	assert_eq(_with_combos(kit, ["spare_set"]).stats.bites_per_throw, 1)
+
+
+func test_dentists_nightmare_knocks_a_coin_out_each_glued_second() -> void:
+	var kit := ItemKit.new()
+	var run := _with_combos(kit, ["gold_fillings", "glue_gun"])
+	assert_true(run.effects.has_combo("dentists_nightmare"))
+	run.effects.effect_of("gold_fillings").rng.seed = 1
+	var enemy := kit.enemy("intern_reaper", 1000.0)
+	var teeth := _flying(run)
+	teeth.try_glue(enemy)
+	var bites_drops := 0
+	for i in 4:
+		var before := kit.drops.size()
+		teeth.hold_glue(0.5)
+		bites_drops += kit.drops.size() - before
+	var nightmare := 0
+	for drop in kit.drops:
+		nightmare += 1
+	assert_true(nightmare >= 2, "two glued seconds, two coins at least")
+	kit.drops.clear()
+	run.effects.room_enter(null)
+	for i in 20:
+		run.effects.glue_tick(enemy)
+	assert_eq(kit.drops.size(), Nightmare.ROOM_LIMIT)
+	var summon := kit.enemy()
+	summon.is_summon = true
+	run.effects.room_enter(null)
+	kit.drops.clear()
+	run.effects.glue_tick(summon)
+	assert_eq(kit.drops.size(), 0, "a summon pays nothing")
+	teeth.free()
+	kit.free_enemies()
+
+
+func test_bingo_night_heals_half_a_pill_on_every_bingo() -> void:
+	var kit := ItemKit.new()
+	var run := _with_combos(kit, ["bingo_card", "bingo_dabber"])
+	assert_true(run.effects.has_combo("bingo_night"))
+	run.health.pills = 1
+	for i in 5:
+		run.effects.pickup(RunEffects.PENSION, 1)
+	assert_eq(run.health.pills, 1, "half a pill waits for its other half")
+	assert_eq(run.health.half_pills, 1)
+	var enemy := kit.enemy("intern_reaper", 1000.0)
+	for i in 5:
+		run.effects.land(enemy, 1.0, RunEffects.SWING)
+	assert_eq(run.health.pills, 2, "the dabber's BINGO makes it whole")
+	var alone := kit.run_with(["bingo_card"])
+	alone.health.pills = 1
+	for i in 10:
+		alone.effects.pickup(RunEffects.PENSION, 1)
+	assert_eq(alone.health.pills, 1, "no combo, no heal")
+	kit.free_enemies()
+
+
+func test_the_batchs_combos_ship_with_both_items() -> void:
+	var by_id := {}
+	for combo in Content.combos():
+		by_id[combo.id] = combo
+	for entry: Array in [["full_set", "dentures", "spare_set"], ["dentists_nightmare", "gold_fillings", "glue_gun"], ["bingo_night", "bingo_card", "bingo_dabber"]]:
+		assert_true(by_id.has(entry[0]), entry[0])
+		if by_id.has(entry[0]):
+			assert_true(by_id[entry[0]].needs(entry[1]) and by_id[entry[0]].needs(entry[2]), entry[0])

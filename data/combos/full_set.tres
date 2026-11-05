@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ComboDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/combo_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "full_set"
+display_name = "Full Set"
+description = "Both sets of dentures bite through three enemies."
+item_a = "dentures"
+item_b = "spare_set"
+bites_through = 3

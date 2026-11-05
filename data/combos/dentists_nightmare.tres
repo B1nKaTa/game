@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ComboDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/combo_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/dentists_nightmare.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "dentists_nightmare"
+display_name = "Dentist's Nightmare"
+description = "Every glued second knocks a coin loose."
+item_a = "gold_fillings"
+item_b = "glue_gun"
+effect = SubResource("Effect")
