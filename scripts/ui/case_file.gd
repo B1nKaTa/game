@@ -53,6 +53,8 @@ var _tab_buttons: Array[Button] = []
 var _detail: VBoxContainer
 var _hint: Label
 var _focus: PadFocus
+# The grid's cells on the page shown, so the selected one keeps its mark when focus moves away.
+var _cells: Array = []
 # The content, loaded once per opening.
 var _items: Array[ItemDef] = []
 var _enemies: Array[EnemyDef] = []
@@ -226,6 +228,7 @@ func _rebuild() -> void:
 		_body.remove_child(child)
 		child.queue_free()
 	_detail = null
+	_cells.clear()
 	match current_tab():
 		CaseFileData.TAB_HAROLD:
 			_build_harold()
@@ -353,8 +356,9 @@ func _build_stats() -> void:
 		y += 15.0
 	var note := _label("Counted since this file was opened. Older runs count toward Runs, Endings and Floors only.", 8, INK_DIM)
 	note.position = right.position + Vector2(0, y + 10.0)
-	note.size = Vector2(right.size.x, 30)
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	note.custom_minimum_size = Vector2(right.size.x, 0)
+	note.size = Vector2(right.size.x, 30)
 	_body.add_child(note)
 
 
@@ -409,6 +413,7 @@ func _add_grid(cells: Array[Dictionary], per_page: int, at: Vector2, _items_grid
 		button.focus_entered.connect(_on_cell_focused.bind(cell, i))
 		button.mouse_entered.connect(button.grab_focus)
 		_body.add_child(button)
+		_cells.append(button)
 	if not shown.is_empty():
 		var chosen := clampi(int(_selected.get(_tab, 0)), 0, shown.size() - 1)
 		_on_cell_focused.call_deferred(shown[chosen], chosen)
@@ -416,6 +421,10 @@ func _add_grid(cells: Array[Dictionary], per_page: int, at: Vector2, _items_grid
 
 func _on_cell_focused(cell: Dictionary, index: int) -> void:
 	_selected[_tab] = index
+	for i in _cells.size():
+		if is_instance_valid(_cells[i]):
+			_cells[i].selected = i == index
+			_cells[i].queue_redraw()
 	if cell.has("def"):
 		_show_detail(CaseFileData.enemy_detail(cell))
 	elif current_tab() == CaseFileData.TAB_HAROLD:
@@ -500,6 +509,7 @@ func _wrapped_row(row: Array, width: float, label_width: float) -> HBoxContainer
 	line.add_theme_constant_override("separation", 4)
 	var name_label := _label(str(row[0]), FONT, INK_DIM)
 	name_label.custom_minimum_size.x = label_width
+	name_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	line.add_child(name_label)
 	var value := _label(str(row[1]), FONT, INK)
 	value.custom_minimum_size.x = width - label_width - 4.0
@@ -587,6 +597,8 @@ static func _box(color: Color, edge: Color, width: int) -> StyleBoxFlat:
 # chip with initials; a dark "?" for anything not yet found; a count badge for more than one.
 class CaseCell extends Button:
 	var cell: Dictionary
+	# The cell whose details show, marked even while focus is elsewhere (on a tab, or with the mouse away).
+	var selected := false
 
 	func _ready() -> void:
 		focus_mode = Control.FOCUS_ALL
@@ -624,6 +636,8 @@ class CaseCell extends Button:
 			draw_string(font, tag.position + Vector2(2, 8), badge, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color.WHITE)
 		if has_focus():
 			draw_rect(rect.grow(1), MenuStyle.GOLD, false, 2.0)
+		elif selected:
+			draw_rect(rect.grow(1), CaseFile.INK, false, 2.0)
 
 	func _notification(what: int) -> void:
 		if what == NOTIFICATION_FOCUS_ENTER or what == NOTIFICATION_FOCUS_EXIT:
