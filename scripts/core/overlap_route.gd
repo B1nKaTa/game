@@ -17,6 +17,8 @@ const REACT := 0.3
 const STEP_TIME := STEP / PlayerStats.BASE_SPEED
 
 var area := Rect2()
+# How long he stands before he walks; REACT unless a check asks how much later he could start.
+var react := REACT
 var _nx := 0
 var _ny := 0
 var _rects: Array[Rect2] = []
@@ -151,7 +153,7 @@ func escape(feet: Vector2, keep_off := Callable()) -> Dictionary:
 					next.append(q)
 		for p in current:
 			var moves := PackedInt32Array([p])
-			if t > REACT:
+			if t > react:
 				var i := p % _nx
 				if i > 0:
 					moves.append(p - 1)
