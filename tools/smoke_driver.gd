@@ -720,9 +720,23 @@ func _check_resume() -> void:
 	await _wait(0.5)
 	_expect_scene("FloorScene")
 	var scene := get_tree().current_scene
+	# The first Crossroads writes a start checkpoint, and resuming it stands him there with the run kept.
+	var start := RunCheckpoint.read(Progress.SMOKE_RUN_PATH)
+	_check(str(start.get("kind", "")) == "start", "the first Crossroads writes a start checkpoint, got '%s'" % str(start.get("kind", "")))
+	var start_run := RunCheckpoint.run_to_dict(scene.player.run)
+	var start_runs: int = Progress.data.run_count
+	Game.resume_run()
+	await _wait(0.5)
+	_expect_scene("FloorScene")
+	scene = get_tree().current_scene
+	_check(scene.debug_resumed(), "the start checkpoint resumes")
+	_check(scene.debug_floor_def().id == "crossroads" and scene.debug_room_view() is CrossroadsView, "the start checkpoint resumes at the first Crossroads")
+	_check(RunCheckpoint.run_to_dict(scene.player.run) == start_run, "the start checkpoint keeps the run")
+	_check(Progress.data.run_count == start_runs, "resuming the start checkpoint never starts a new run")
 	await _walk_a_path(scene, RECORDS_PATH)
 	await _wait(0.2)
 	_check(FileAccess.file_exists(path), "entering a floor writes the checkpoint")
+	_check(str(RunCheckpoint.read(Progress.SMOKE_RUN_PATH).get("kind", "")) == "floor", "entering a floor replaces the start checkpoint")
 	_cleared_rooms = {}
 	await _clear_room(scene)
 	await _wait(0.3)

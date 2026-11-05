@@ -250,3 +250,22 @@ func test_different_seeds_make_different_floors() -> void:
 	var a := RunCheckpoint.map_signature(RunCheckpoint.build_floor(def, "1", pool))
 	var b := RunCheckpoint.map_signature(RunCheckpoint.build_floor(def, "2", pool))
 	assert_true(a != b, "the signature can tell floors apart")
+
+
+# start_run has already used up the brew, the crafted item, a cursed ticket and the Bon Voyage pack when
+# he stands at the first Crossroads, so Save and Quit there must keep the run: a start checkpoint is
+# written on arrival, and resuming rebuilds the lone Crossroads.
+func test_the_first_crossroads_writes_and_resumes_a_start_checkpoint() -> void:
+	var source := FileAccess.get_file_as_string("res://scripts/scenes/floor_scene.gd")
+	var write := source.substr(source.find("func write_checkpoint"), 300)
+	assert_false(write.contains("MAP_START"), "the first Crossroads is no longer refused")
+	var ready := source.substr(source.find("func _ready"), 3000)
+	var start := ready.find("_enter_room(_map.start_id)")
+	assert_true(start > 0)
+	assert_true(ready.find("_write_checkpoint_soon()", start) > start, "written on arriving at the first Crossroads")
+	var resume := source.substr(source.find("func _resume_map"), 1600)
+	assert_true(resume.contains("kind == MAP_START"), "a start checkpoint is rebuilt")
+	assert_true(resume.contains("FloorMap.with_only_crossroads(load(CROSSROADS_LAYOUT))"))
+	var map := FloorMap.with_only_crossroads(load("res://data/rooms/crossroads/crossroads.tres"))
+	assert_eq(map.rooms.size(), 1, "the first Crossroads is a map of one room")
+	assert_eq(map.start_id, 0)

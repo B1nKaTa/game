@@ -150,6 +150,8 @@ func _ready() -> void:
 		_enter_resumed_room(resume)
 	else:
 		_enter_room(_map.start_id)
+		# The run's start checkpoint, so quitting at the first Crossroads keeps what start_run used up.
+		_write_checkpoint_soon()
 
 
 func _start_run() -> void:
@@ -210,10 +212,11 @@ func _start_map() -> void:
 
 # --- The run checkpoint: written as rooms are cleared, on landings and on entering a floor ---
 
-# Writes the run as it stands into the slot's run.json. A dev run, a run that is over and the first
-# Crossroads (nothing to come back to yet) write nothing.
+# Writes the run as it stands into the slot's run.json. A dev run and a run that is over write nothing.
+# The first Crossroads writes one too, since start_run has already used up the brew, the crafted item,
+# a cursed ticket and the Bon Voyage pack by then.
 func write_checkpoint() -> bool:
-	if is_over or Progress.is_dev_run() or _run == null or _map_kind == MAP_START or _current_id < 0:
+	if is_over or Progress.is_dev_run() or _run == null or _current_id < 0:
 		return false
 	# He comes back in the last room he cleared, so a fight going on now starts over when he walks back in.
 	var room := _current_id
@@ -275,7 +278,12 @@ func _resume_map(resume: Dictionary) -> bool:
 		return false
 	var kind := str(resume.get("kind", ""))
 	var map: FloorMap
-	if kind == MAP_LANDING:
+	if kind == MAP_START:
+		# The run's first Crossroads, alone, as _start_map builds it.
+		if depth != 1 or floor_path != CROSSROADS_FLOOR:
+			return false
+		map = FloorMap.with_only_crossroads(load(CROSSROADS_LAYOUT))
+	elif kind == MAP_LANDING:
 		map = _landing_map()
 	elif kind == MAP_FLOOR:
 		map = RunCheckpoint.build_floor(def, str(resume.get("seed", "")))
