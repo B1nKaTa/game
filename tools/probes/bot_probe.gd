@@ -595,8 +595,10 @@ class Bot extends Node:
 					escape += aside.normalized() if aside.length() > 1.0 else way.orthogonal()
 					_want_dodge(id)
 			var radius: float = enemy._warning_radius
-			if me.distance_to(from) < radius + 10.0:
-				escape += from.direction_to(me)
+			# Bites hit his feet, 17 px below his middle, and swings his middle, so he clears both (v4 read only his middle).
+			var ring_feet: Vector2 = _player.feet().global_position
+			if ring_feet.distance_to(from) < radius + 10.0 or me.distance_to(from) < radius + 10.0:
+				escape += from.direction_to(me) if me != from else Vector2.RIGHT
 				_want_dodge(id)
 		for child in scene.debug_room_view().get_children():
 			if child is Projectile:
@@ -943,7 +945,7 @@ class Bot extends Node:
 				var aside := off2 - way * ahead
 				if ahead > -30.0 and ahead < float(lane[1]) + 30.0 and aside.length() < float(lane[2]) / 2.0 + 14.0:
 					return true
-			if enemy._warning_radius > 0.0 and body.distance_to(from) < enemy._warning_radius + 10.0:
+			if enemy._warning_radius > 0.0 and (p.distance_to(from) < enemy._warning_radius + 10.0 or body.distance_to(from) < enemy._warning_radius + 10.0):
 				return true
 			if enemy.warning_cone_length() > 0.0 and ChiefStokerBehavior.in_cone(from, enemy.warning_cone_direction(), enemy.warning_cone_angle() + 20.0, enemy.warning_cone_length() + 20.0, p):
 				return true
