@@ -29,8 +29,8 @@ const BAR_STAND := 0.35
 const BAR_MIN := 12.0
 # How long after one chart has sunk the next one rises, and below half health.
 const FIRST_CHART := 1.5
-const CHART_BREAK := 2.4
-const PHASE_TWO_CHART_BREAK := 1.4
+const CHART_BREAK := 1.6
+const PHASE_TWO_CHART_BREAK := 1.0
 const TETHER_WINDUP := 0.9
 const TETHER_SHOWN_WHOLE := true
 const TETHER_LANE_WIDTH := 20.0
