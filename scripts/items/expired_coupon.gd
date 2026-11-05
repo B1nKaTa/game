@@ -25,6 +25,7 @@ func on_shop_open(ctx: EffectContext, stock: Array[Dictionary]) -> void:
 	for entry in stock:
 		entry["price"] = 0
 	ctx.notice(FREE_NOTICE)
+	ctx.play_sound("ui_ching")
 
 
 # This floor's free shop, since a resumed floor does not start again.

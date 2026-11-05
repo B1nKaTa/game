@@ -55,6 +55,7 @@ func file(ctx: EffectContext, boss: Enemy, amount: float) -> bool:
 	form["rest_until"] = _time + STUN + REST
 	ctx.stun(boss, STUN)
 	ctx.add_fx(ItemFx.make_stamp("COMPLAINT FILED"), boss.global_position)
+	ctx.play_sound("ticket_ding")
 	return true
 
 

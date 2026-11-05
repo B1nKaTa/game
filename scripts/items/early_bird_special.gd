@@ -20,6 +20,7 @@ func on_room_enter(ctx: EffectContext, _room: Node) -> void:
 		return
 	left = rush_time(ctx)
 	ctx.add_fx(ItemFx.make_pop(TEXT, COLOR), ctx.feet())
+	ctx.play_sound("charge_ready")
 
 
 func rush_time(ctx: EffectContext) -> float:

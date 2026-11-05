@@ -27,6 +27,7 @@ func spark(ctx: EffectContext) -> void:
 		ctx.player.stun_self(STUN)
 	ctx.add_fx(ItemFx.make_sparks(SPARK, 16.0), ctx.feet() + Vector2(0, -12))
 	ctx.add_fx(ItemFx.make_pop(TEXT, SPARK), ctx.feet())
+	ctx.play_sound("small_blast")
 
 
 # A resumed run never hears on_gain, so the dice are shuffled here instead.

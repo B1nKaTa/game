@@ -10,3 +10,4 @@ const INK := Color("e0307a")
 func on_slip_spent(ctx: EffectContext, _kept: bool) -> void:
 	ctx.pay(PAY)
 	ctx.add_fx(ItemFx.make_pop("APPROVED +%d" % PAY, INK), ctx.feet())
+	ctx.play_sound("form_filed")

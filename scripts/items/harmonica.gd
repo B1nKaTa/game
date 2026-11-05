@@ -43,4 +43,5 @@ func play(ctx: EffectContext) -> bool:
 	_played.clear()
 	ctx.heal_half()
 	ctx.add_fx(ItemFx.make_pop(TEXT, COLOR), ctx.feet())
+	ctx.play_sound("pill_heal")
 	return true

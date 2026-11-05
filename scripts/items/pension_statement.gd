@@ -23,3 +23,4 @@ func on_room_clear(ctx: EffectContext, _room: Node, _damage_taken_here: int) -> 
 		return
 	ctx.pay(paid)
 	ctx.add_fx(ItemFx.make_pop("+%d INTEREST" % paid, GOLD), ctx.feet())
+	ctx.play_sound("coin")

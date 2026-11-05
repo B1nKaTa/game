@@ -30,6 +30,7 @@ func on_saved(ctx: EffectContext) -> void:
 	ctx.return_to_door()
 	ctx.notice(NOTICE)
 	ctx.add_fx(ItemFx.make_pop("GOOD AS NEW", COLOR), ctx.feet())
+	ctx.play_sound("lethal_save")
 
 
 # Once a run, so a resumed run remembers it was used.

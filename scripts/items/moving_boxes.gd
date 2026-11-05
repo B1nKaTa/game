@@ -27,3 +27,4 @@ func on_room_enter(ctx: EffectContext, room: Node) -> void:
 		at = room.spot_inside(at)
 	ctx.drop(box["kind"], at, int(box["amount"]))
 	ctx.add_fx(ItemFx.make_pop("MOVED IN", COLOR), at)
+	ctx.play_sound("thermos_pickup")

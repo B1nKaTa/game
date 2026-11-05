@@ -11,6 +11,7 @@ const TEXT := "WHEEE!"
 func on_bomb(ctx: EffectContext, at: Vector2) -> void:
 	stun_reached(ctx, at)
 	ctx.add_fx(ItemFx.make_pop(TEXT, STEAM), at)
+	ctx.play_sound("steam_hiss")
 
 
 # Stuns each living enemy whose body the blast reached. Returns how many.

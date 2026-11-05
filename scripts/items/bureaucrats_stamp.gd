@@ -34,6 +34,7 @@ func tick(ctx: EffectContext, delta: float) -> void:
 		ready = true
 		left = 0.0
 		ctx.add_fx(ItemFx.make_pop(INKED, COLOR), ctx.feet())
+		ctx.play_sound("charge_ready")
 
 
 func on_hit(ctx: EffectContext, enemy: Enemy, _amount: float, source: String) -> void:
@@ -46,13 +47,14 @@ func on_hit(ctx: EffectContext, enemy: Enemy, _amount: float, source: String) ->
 		var chunk := boss_chunk(enemy.hp, enemy.max_hp())
 		enemy.take_damage(chunk, Vector2.ZERO)
 		ctx.add_fx(ItemFx.make_stamp("%s -%d%%" % [FILED, roundi(BOSS_SHARE * 100.0)]), at)
+		ctx.play_sound("form_filed")
 		var run := ctx.run()
 		if enemy.is_dead() and run != null:
 			run.effects.kill(enemy, RunEffects.ITEM)
 		return
 	enemy.dismiss()
 	ctx.add_fx(ItemFx.make_stamp(FILED), at)
-	ctx.play_sound("stamp")
+	ctx.play_sound("form_filed")
 
 
 # A boss, or something that can never fall, such as the Training Yard's dummy.

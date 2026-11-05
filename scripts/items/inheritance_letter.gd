@@ -9,3 +9,4 @@ const PAY := 60
 func on_gain(ctx: EffectContext) -> void:
 	ctx.pay(PAY)
 	ctx.notice("Inheritance Letter: +%d Pension" % PAY)
+	ctx.play_sound("coin")

@@ -31,6 +31,7 @@ func leave_shop(ctx: EffectContext, shop_key: int, purchases: int) -> bool:
 	_refunded[shop_key] = true
 	ctx.pay(PAY)
 	ctx.notice(NOTICE % PAY)
+	ctx.play_sound("coin")
 	return true
 
 

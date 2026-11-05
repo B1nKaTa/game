@@ -30,6 +30,7 @@ func on_room_enter(ctx: EffectContext, _room: Node) -> void:
 		enemy.hp *= 1.0 - CUT
 		enemy.health_changed.emit(enemy.hp)
 	ctx.add_fx(ItemFx.make_pop(TEXT, COLOR), ctx.feet())
+	ctx.play_sound("bingo")
 
 
 # The rooms cleared toward the next pass.

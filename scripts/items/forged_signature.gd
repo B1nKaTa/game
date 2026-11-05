@@ -16,6 +16,7 @@ func keeps_slip(ctx: EffectContext) -> bool:
 	if rng.randf() >= CHANCE:
 		return false
 	ctx.notice(NOTICE)
+	ctx.play_sound("slip_pickup")
 	return true
 
 

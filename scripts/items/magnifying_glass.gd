@@ -8,8 +8,11 @@ extends ItemEffect
 func on_room_enter(ctx: EffectContext, room: Node) -> void:
 	if room == null or not room.has_method("secret_walls"):
 		return
-	for wall: Node2D in room.secret_walls():
+	var walls: Array = room.secret_walls()
+	for wall: Node2D in walls:
 		mark(ctx, wall)
+	if not walls.is_empty():
+		ctx.play_sound("chime")
 
 
 # Lays one glint on a wall.

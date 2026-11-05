@@ -19,3 +19,4 @@ func on_kill(ctx: EffectContext, _enemy: Enemy, _source: String) -> void:
 	fed = true
 	ctx.heal(1)
 	ctx.add_fx(ItemFx.make_pop("GRANDKIDS +1", COLOR), ctx.feet() + Vector2(0, -14))
+	ctx.play_sound("pill_heal")

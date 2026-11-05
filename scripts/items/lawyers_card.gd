@@ -26,6 +26,7 @@ func on_hurt(ctx: EffectContext, pills: int, _source: String) -> int:
 		return pills
 	_used[key] = true
 	ctx.add_fx(ItemFx.make_pop(TEXT, COLOR), ctx.feet())
+	ctx.play_sound("shield_block")
 	return 0
 
 

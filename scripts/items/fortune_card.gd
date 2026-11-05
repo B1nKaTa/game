@@ -30,4 +30,5 @@ func watch(ctx: EffectContext, enemy: Enemy) -> bool:
 		return false
 	ctx.slow_time(SLOW_SHARE, SLOW_TIME)
 	ctx.add_fx(ItemFx.make_pop(TEXT, COLOR), enemy.global_position)
+	ctx.play_sound("card_flip")
 	return true

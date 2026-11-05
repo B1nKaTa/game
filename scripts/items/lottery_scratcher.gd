@@ -23,6 +23,8 @@ func scratch(ctx: EffectContext) -> int:
 	var won := rng.randi_range(0, MOST)
 	ctx.pay(won)
 	ctx.notice(notice_for(won))
+	if won > 0:
+		ctx.play_sound("slot_win")
 	return won
 
 
