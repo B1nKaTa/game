@@ -68,7 +68,7 @@ func _process(delta: float) -> void:
 	if _done:
 		return
 	_time += delta
-	var pressed := Input.is_action_just_pressed("interact") or Input.is_action_just_pressed("attack")
+	var pressed := Input.is_action_just_pressed("interact") or Input.is_action_just_pressed("attack") or Input.is_action_just_pressed("ui_accept") or Input.is_action_just_pressed(PadInput.BACK_ACTION)
 	if _time >= SHOW_TIME or (_time >= MIN_TIME and pressed):
 		_done = true
 		finished.emit()

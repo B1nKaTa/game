@@ -104,6 +104,10 @@ func _ready() -> void:
 	close.pressed.connect(func(): closed.emit())
 	column.add_child(close)
 	_rebuild()
+	# A controller drives it too, and the shoulder buttons switch the two tabs.
+	var focus := PadFocus.new()
+	focus.tabs = _switch_tab
+	add_child(focus)
 
 
 func _make_tab(text: String, decor: bool) -> Button:
@@ -113,6 +117,10 @@ func _make_tab(text: String, decor: bool) -> Button:
 	tab.add_theme_font_size_override("font_size", ROW_FONT + 1)
 	tab.pressed.connect(_show_tab.bind(decor))
 	return tab
+
+
+func _switch_tab(_step: int) -> void:
+	_show_tab(not _showing_decor)
 
 
 func _show_tab(decor: bool) -> void:

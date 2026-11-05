@@ -29,6 +29,8 @@ var perks: Dictionary = {}
 var look: Dictionary = {}
 # A run taken on a cursed ticket: tougher enemies that pay more Pension.
 var cursed := false
+# The Game tab's Pick up heals at full pills. Off, a heal on the floor waits there while pills are full.
+var heals_at_full := false
 var _promised := {}
 var _offered_recipes := {}
 var _upgrades: Array[UpgradeDef]
@@ -152,6 +154,22 @@ func is_promised(id: String) -> bool:
 	return _promised.has(id)
 
 
+# The promised and offered ids, for the run checkpoint, and how it puts them back.
+func promised_ids() -> Array:
+	return _promised.keys()
+
+
+func offered_recipe_ids() -> Array:
+	return _offered_recipes.keys()
+
+
+func restore_marks(promised: Array, offered: Array) -> void:
+	for id in promised:
+		_promised[str(id)] = true
+	for id in offered:
+		_offered_recipes[str(id)] = true
+
+
 func can_add_key() -> bool:
 	return keys < MAX_CONSUMABLE
 
@@ -188,6 +206,11 @@ func use_bomb() -> bool:
 	bombs -= 1
 	changed.emit()
 	return true
+
+
+# Whether a heal lying on the floor may be picked up now.
+func can_take_heal() -> bool:
+	return heals_at_full or health.pills < health.max_pills
 
 
 func can_take_potion() -> bool:

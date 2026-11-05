@@ -42,6 +42,9 @@ const LEGEND_BOTTOM := "T Treasure   $ Shop   M Mini boss   B Boss   V Vault   +
 const CLOSE_HINT := "Close"
 
 var enabled := true
+# The frame the big map last closed on, so the Esc that closed it never also pauses.
+var closed_frame := -1
+var _opened_frame := -1
 # The Night Vision option: secret rooms show, as outlines with a "?", before they are found.
 var show_secrets := false
 var _map: FloorMap
@@ -130,9 +133,19 @@ func set_open(open: bool) -> void:
 	if not _is_big or open == visible:
 		return
 	visible = open
+	if open:
+		_opened_frame = Engine.get_process_frames()
+	if not open:
+		closed_frame = Engine.get_process_frames()
 	get_tree().paused = open
 	queue_redraw()
 	opened_changed.emit(open)
+
+
+# Esc, or B on a pad, closes the big map as the map key does. It runs while the game is paused.
+func _process(_delta: float) -> void:
+	if is_open() and Engine.get_process_frames() != _opened_frame and (Input.is_action_just_pressed("pause") or Input.is_action_just_pressed(PadInput.BACK_ACTION)):
+		set_open(false)
 
 
 func _unhandled_input(event: InputEvent) -> void:

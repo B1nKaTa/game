@@ -118,7 +118,8 @@ func test_input_actions_exist() -> void:
 	InputSetup.ensure()
 	for action in ["move_left", "move_right", "move_up", "move_down", "attack", "throw", "dodge", "interact", "map", "bomb"]:
 		assert_true(InputMap.has_action(action), action)
-		assert_eq(InputMap.action_get_events(action).size(), 1, action)
+		# One key or mouse button, one controller input, and the D-pad beside the stick, never twice.
+		assert_eq(InputMap.action_get_events(action).size(), 2 + PadInput.extras(action).size(), action)
 
 
 func test_charge_only_shows_after_the_hold_delay() -> void:

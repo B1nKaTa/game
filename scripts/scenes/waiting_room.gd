@@ -54,6 +54,9 @@ var _notices: Array[String] = []
 var _notice_wait := 0.0
 # The lobby's ticket line and DEV hint, on the HUD's layer so the camera never scrolls them away.
 var _lobby_text: LobbyText
+# The pause menu while it is open, and the frame it closed on.
+var _pause: PauseMenu
+var _pause_closed_frame := -1
 
 
 func _ready() -> void:
@@ -63,7 +66,10 @@ func _ready() -> void:
 	_run = Progress.make_run()
 	player = Player.new()
 	player.setup(_run)
+	player.mouse_aim = Settings.game("mouse_aim")
+	Settings.changed.connect(_apply_game_settings)
 	add_child(player)
+	Input.mouse_mode = Settings.cursor_mode(false)
 	player.add_child(Lighting.make_light(Color(1.0, 0.85, 0.6), 0.7, 0.8))
 	_map = Departments.build_map(Departments.load_layouts())
 	_progress = FloorProgress.new(_map)
@@ -134,6 +140,11 @@ func _announce_new_departments() -> void:
 	Progress.mark_departments_seen(opened)
 
 
+# The Game tab's options that matter here, read again whenever Options is changed.
+func _apply_game_settings() -> void:
+	player.mouse_aim = Settings.game("mouse_aim")
+
+
 func _process(delta: float) -> void:
 	_follow_player()
 	_show_queued_notices(delta)
@@ -144,6 +155,61 @@ func _process(delta: float) -> void:
 	if _panel == null and Engine.get_process_frames() != _panel_closed_frame and Input.is_action_just_pressed("interact"):
 		if nearest != null:
 			_open_station(nearest)
+	# Never on the frame a panel or the pause menu closed on, so one Esc never closes one and opens another.
+	var frame := Engine.get_process_frames()
+	if frame != _pause_closed_frame and frame != _panel_closed_frame and Input.is_action_just_pressed("pause"):
+		_on_pause_key()
+	# B on a pad backs out of a panel as Esc does, but never opens the pause menu.
+	elif _pause == null and _panel != null and frame != _panel_closed_frame and Input.is_action_just_pressed(PadInput.BACK_ACTION):
+		_back_out_of_panel()
+
+
+# Esc closes an open panel first, as its Leave button does. Only with none open does it pause.
+func _on_pause_key() -> void:
+	if _pause != null:
+		return
+	if _panel != null:
+		_back_out_of_panel()
+		return
+	_pause = PauseMenu.new()
+	_pause.setup(false)
+	_pause.resumed.connect(_close_pause)
+	_pause.quit_wanted.connect(_on_pause_quit)
+	add_child(_pause)
+	player.cancel_charge()
+	get_tree().paused = true
+
+
+# Closes the open panel as its Leave button does. Options answers Esc and B itself, asking before it
+# throws changes away.
+func _back_out_of_panel() -> void:
+	if _panel.has_method("handles_pause_key"):
+		return
+	if _panel.has_method("leave"):
+		_panel.leave()
+	else:
+		_close_panel()
+
+
+func _close_pause() -> void:
+	if _pause == null:
+		return
+	_pause.queue_free()
+	_pause = null
+	_pause_closed_frame = Engine.get_process_frames()
+	get_tree().paused = false
+
+
+# Everything here is saved as it happens, so quitting needs nothing more.
+func _on_pause_quit(to_desktop: bool) -> void:
+	if to_desktop:
+		get_tree().quit()
+	else:
+		Game.quit_to_title()
+
+
+func debug_pause_menu() -> PauseMenu:
+	return _pause
 
 
 func _show_queued_notices(delta: float) -> void:
@@ -418,7 +484,9 @@ func _open_station(opened: WaitingStation) -> void:
 		return
 	match opened.id:
 		KEY_BOARD:
-			_show_panel(KeysPanel.new())
+			var options := OptionsPanel.new()
+			options.setup(GameSettings.INPUT)
+			_show_panel(options)
 		CRAFTER:
 			var craft := CraftPanel.new()
 			craft.setup(opened.title)
@@ -463,7 +531,7 @@ func _open_card_table(table: ArcadeTable) -> void:
 	var cards := CardTablePanel.new()
 	cards.setup(table, _room_view, _rng)
 	_show_panel(cards)
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	Input.mouse_mode = Settings.cursor_mode(false)
 
 
 # Shows the first line now and the rest one after another, ahead of whatever was waiting. Arrival news

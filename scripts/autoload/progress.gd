@@ -3,8 +3,13 @@ extends Node
 signal pension_changed(amount: int)
 signal condolences_changed(amount: int)
 
+# The old single save. It is only ever read, by the copy into slot 1 (SaveSlots.migrate), and stays
+# where it is.
 const SAVE_PATH := "user://save.json"
+# The folder the slots live in.
+const ROOT := "user://"
 const SMOKE_PATH := "user://smoke_save.json"
+const SMOKE_RUN_PATH := "user://smoke_run.json"
 const DEV_PATH := "user://save_dev.json"
 
 var data: ProgressData
@@ -19,14 +24,79 @@ var _real_store: SaveStore
 # The depth whose landing a run under the dev profile starts on: 3 for F3, 4 for F5, 5 for F6. A run
 # started through the dev Waiting Room's run door starts on the Floor 3 landing.
 var dev_start_depth := DevStart.START_DEPTH
+# The selected save slot, 1 to SaveSlots.COUNT. 0 in the full loop and test runs, which keep their own
+# files and never touch a slot.
+var slot := 0
+# An interrupted run the next floor scene resumes instead of starting fresh. Set by Game.resume_run.
+var resume := {}
+var _smoke := false
 
 
 func _ready() -> void:
-	var smoke := OS.get_cmdline_user_args().has("--smoke")
-	_store = SaveStore.new(SMOKE_PATH if smoke else SAVE_PATH)
-	if smoke:
+	_smoke = OS.get_cmdline_user_args().has("--smoke")
+	if _smoke:
+		_store = SaveStore.new(SMOKE_PATH)
 		_store.delete_all()
+		RunCheckpoint.delete(SMOKE_RUN_PATH)
+	elif OS.get_cmdline_args().has("--script"):
+		# A test or probe run reads the old save as before and copies nothing into any slot.
+		_store = SaveStore.new(SAVE_PATH)
+	else:
+		SaveSlots.migrate(ROOT)
+		slot = SaveSlots.read_last(ROOT)
+		_store = SaveStore.new(SaveSlots.save_path(ROOT, slot))
 	reload()
+
+
+# Switches to a slot's progress, and remembers it as the last used slot. Never in the full loop.
+func select_slot(number: int) -> void:
+	if _smoke or number < 1 or number > SaveSlots.COUNT:
+		return
+	end_dev_run(false)
+	slot = number
+	_store = SaveStore.new(SaveSlots.save_path(ROOT, slot))
+	SaveSlots.write_last(ROOT, slot)
+	reload()
+
+
+# Empties a slot for a new game: its progress and its interrupted run.
+func clear_slot(number: int) -> void:
+	if _smoke or number < 1 or number > SaveSlots.COUNT:
+		return
+	SaveSlots.delete_slot(ROOT, number)
+	if number == slot:
+		reload()
+
+
+func slot_summary(number: int) -> Dictionary:
+	return SaveSlots.summary(ROOT, number)
+
+
+# Where this slot's interrupted run is kept, or "" when nothing may keep one: a dev run, or a test run.
+func run_path() -> String:
+	if is_dev_run():
+		return ""
+	if _smoke:
+		return SMOKE_RUN_PATH
+	if slot < 1:
+		return ""
+	return SaveSlots.run_path(ROOT, slot)
+
+
+func read_checkpoint() -> Dictionary:
+	var path := run_path()
+	return {} if path.is_empty() else RunCheckpoint.read(path)
+
+
+func write_checkpoint(checkpoint: Dictionary) -> bool:
+	var path := run_path()
+	return false if path.is_empty() else RunCheckpoint.write(path, checkpoint)
+
+
+func clear_checkpoint() -> void:
+	var path := run_path()
+	if not path.is_empty():
+		RunCheckpoint.delete(path)
 
 
 func is_dev_run() -> bool:

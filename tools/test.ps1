@@ -5,5 +5,5 @@ $root = Split-Path $PSScriptRoot -Parent
 $output = & $godot --headless --path $root --script res://tests/run_tests.gd 2>&1 | ForEach-Object { "$_" }
 $code = $LASTEXITCODE
 $output | ForEach-Object { Write-Output $_ }
-if ($output -match "SCRIPT ERROR|Parse Error") { Write-Output "FAILED: script errors found"; exit 1 }
+if ($output -cmatch "SCRIPT ERROR|Parse Error") { Write-Output "FAILED: script errors found"; exit 1 }
 exit $code

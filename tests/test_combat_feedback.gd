@@ -80,3 +80,37 @@ func test_a_boss_dying_shakes_most_and_a_normal_enemy_does_not_shake() -> void:
 	assert_near(feedback.shake_magnitude(), ScreenShake.BOSS_DEATH)
 	feedback.free()
 
+
+
+func test_screen_shake_off_never_shakes() -> void:
+	var feedback := _fresh()
+	feedback.shake_enabled = false
+	var camera := Camera2D.new()
+	feedback.setup(camera)
+	feedback.on_hurt()
+	feedback.tick_real(0.01)
+	assert_near(feedback.shake_magnitude(), 0.0)
+	assert_eq(camera.offset, Vector2.ZERO)
+	feedback.free()
+	camera.free()
+
+
+func test_hit_stop_off_never_freezes() -> void:
+	var feedback := _fresh()
+	feedback.hit_stop_enabled = false
+	feedback.on_swing_landed(true, true)
+	assert_near(Engine.time_scale, 1.0)
+	feedback.on_teeth_bit()
+	assert_near(Engine.time_scale, 1.0)
+	feedback.free()
+
+
+func test_sounds_play_on_the_effects_bus() -> void:
+	assert_eq(CombatFeedback.BUS, "Effects")
+	var feedback := _fresh()
+	feedback._ready()
+	for child in feedback.get_children():
+		if child is AudioStreamPlayer:
+			assert_eq(String(child.bus), "Effects")
+	Engine.time_scale = 1.0
+	feedback.free()

@@ -181,6 +181,9 @@ func _process(delta: float) -> void:
 	if advance(delta):
 		_source.land_ground_strike(global_position, _radius, _damage)
 		landed.emit(global_position)
+		# A boss's strike landing is a slam the pad feels.
+		if _source.def != null and _source.def.is_boss:
+			PadRumble.play(PadRumble.BOSS_SLAM)
 		# Whoever the landing just hurt is not burned again at once.
 		if _linger > 0.0 and is_instance_valid(_source.target):
 			mark_burned(_source.target.get_instance_id())

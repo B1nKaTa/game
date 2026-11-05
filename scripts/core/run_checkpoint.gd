@@ -1,0 +1,147 @@
+class_name RunCheckpoint
+extends RefCounted
+
+# An interrupted run, kept in its slot's run.json so it can be resumed after any quit. The file is
+# written to run.json.tmp and then renamed, so a kill during the write leaves the old file or none,
+# never a broken one. A file from another build's version, a damaged one or a missing one is no run.
+
+const VERSION := 1
+
+
+static func write(path: String, data: Dictionary) -> bool:
+	var full := ProjectSettings.globalize_path(path)
+	var temp := full + ".tmp"
+	DirAccess.make_dir_recursive_absolute(full.get_base_dir())
+	var stamped := data.duplicate(true)
+	stamped["version"] = VERSION
+	var file := FileAccess.open(temp, FileAccess.WRITE)
+	if file == null:
+		push_error("Could not write the run checkpoint: %s" % temp)
+		return false
+	file.store_string(JSON.stringify(stamped))
+	file.close()
+	if FileAccess.file_exists(full) and DirAccess.remove_absolute(full) != OK:
+		push_error("Could not replace the run checkpoint: %s" % full)
+		return false
+	if DirAccess.rename_absolute(temp, full) != OK:
+		push_error("Could not move the run checkpoint into place: %s" % full)
+		return false
+	return true
+
+
+static func read(path: String) -> Dictionary:
+	var full := ProjectSettings.globalize_path(path)
+	if not FileAccess.file_exists(full):
+		return {}
+	var json := JSON.new()
+	if json.parse(FileAccess.get_file_as_string(full)) != OK:
+		return {}
+	var raw: Variant = json.data
+	if not raw is Dictionary or not raw.has("version"):
+		return {}
+	if typeof(raw["version"]) != TYPE_FLOAT and typeof(raw["version"]) != TYPE_INT:
+		return {}
+	if int(raw["version"]) != VERSION:
+		return {}
+	return raw
+
+
+static func delete(path: String) -> void:
+	var full := ProjectSettings.globalize_path(path)
+	for each in [full, full + ".tmp"]:
+		if FileAccess.file_exists(each):
+			DirAccess.remove_absolute(each)
+
+
+# The whole RunState, by ids, so the file names no resource paths.
+static func run_to_dict(run: RunState) -> Dictionary:
+	var item_ids: Array = []
+	for item in run.items:
+		item_ids.append(item.id)
+	var perks: Array = run.perks.keys()
+	perks.sort()
+	var promised := run.promised_ids()
+	promised.sort()
+	var offered := run.offered_recipe_ids()
+	offered.sort()
+	return {
+		"pills": run.health.pills,
+		"max_pills": run.health.max_pills,
+		"lethal_saves": run.health.lethal_saves,
+		"first_heal_bonus": run.health.first_heal_bonus,
+		"items": item_ids,
+		"keys": run.keys,
+		"bombs": run.bombs,
+		"potion": run.potion.id if run.potion != null else "",
+		"buff": run.buff.id if run.buff != null else "",
+		"buff_left": snappedf(run.buff_left, 0.01),
+		"cursed": run.cursed,
+		"perks": perks,
+		"promised": promised,
+		"offered": offered,
+	}
+
+
+# Puts a saved run back on a run made fresh by Progress.make_run. Ids that match nothing are skipped.
+static func apply_run(run: RunState, raw: Dictionary, items: Array[ItemDef]) -> void:
+	var perks := {}
+	for id in raw.get("perks", []):
+		perks[str(id)] = true
+	run.perks = perks
+	run.apply_perks()
+	for id in raw.get("items", []):
+		for item in items:
+			if item.id == str(id):
+				run.items.append(item)
+				break
+	run.refresh_stats()
+	run.health.max_pills = maxi(int(raw.get("max_pills", run.health.max_pills)), 1)
+	run.health.pills = clampi(int(raw.get("pills", run.health.pills)), 1, run.health.max_pills)
+	run.health.lethal_saves = int(raw.get("lethal_saves", run.health.lethal_saves))
+	run.health.first_heal_bonus = int(raw.get("first_heal_bonus", run.health.first_heal_bonus))
+	run.keys = clampi(int(raw.get("keys", 0)), 0, RunState.MAX_CONSUMABLE)
+	run.bombs = clampi(int(raw.get("bombs", 0)), 0, RunState.MAX_CONSUMABLE)
+	var potion := str(raw.get("potion", ""))
+	run.potion = Content.potion(potion) if not potion.is_empty() else null
+	var buff := str(raw.get("buff", ""))
+	run.buff = Content.potion(buff) if not buff.is_empty() else null
+	run.buff_left = float(raw.get("buff_left", 0.0)) if run.buff != null else 0.0
+	run.cursed = bool(raw.get("cursed", false))
+	run.restore_marks(raw.get("promised", []), raw.get("offered", []))
+	run.changed.emit()
+
+
+# A generator's seed and state as text, since JSON numbers cannot hold 64 bits.
+static func rng_to_dict(rng: RandomNumberGenerator) -> Dictionary:
+	return {"seed": str(rng.seed), "state": str(rng.state)}
+
+
+static func apply_rng(rng: RandomNumberGenerator, raw: Dictionary) -> void:
+	rng.seed = int(str(raw.get("seed", "0")))
+	rng.state = int(str(raw.get("state", "0")))
+
+
+# A fresh floor seed, as text for the same reason.
+static func new_seed(rng: RandomNumberGenerator) -> String:
+	return str(rng.randi())
+
+
+# Builds a floor from its seed alone, so the same seed always gives the same map.
+static func build_floor(def: FloorDef, seed_text: String, pool: Array[RoomLayout] = []) -> FloorMap:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = int(seed_text)
+	return FloorBuilder.build_from_pool(rng, def, pool if not pool.is_empty() else FloorBuilder.pool_for(def))
+
+
+# Everything that makes two maps the same floor.
+static func map_signature(map: FloorMap) -> Array:
+	var rooms := []
+	if map == null:
+		return rooms
+	for room in map.rooms:
+		var doors := []
+		for side: Vector2i in room.doors:
+			doors.append([side, room.doors[side]])
+		doors.sort()
+		rooms.append([room.id, room.room_type, room.cell, room.layout.resource_path if room.layout != null else "", room.decor_seed, room.extra_enemies, doors])
+	return [map.start_id, map.boss_id, map.main_path, rooms]

@@ -175,6 +175,10 @@ func _ready() -> void:
 	if game() != ArcadeTable.SLOT:
 		_message = CHOOSE_BET
 	_refresh()
+	# Its buttons take focus only while a pad plays, so a click never leaves a bet for Space to press.
+	var focus := PadFocus.new()
+	focus.pad_only = true
+	add_child(focus)
 
 
 func _process(_delta: float) -> void:

@@ -59,6 +59,8 @@ func _ready() -> void:
 	close.pressed.connect(func(): closed.emit())
 	column.add_child(close)
 	_rebuild()
+	# A controller drives it too: the D-pad moves between its buttons, A presses, B leaves.
+	add_child(PadFocus.new())
 
 
 func _rebuild() -> void:

@@ -13,6 +13,11 @@ const NOTICE_TIME := 3.5
 # A faint band behind the top row, so full pills never read as empty over a pale floor.
 const TOP_BAND_SIZE := Vector2(640, 22)
 const TOP_BAND := Color(0.0, 0.0, 0.0, 0.4)
+# The Game tab's run timer, on the top row in the gap before the Slip counter, right-aligned to it,
+# since the small map's floor name holds the row's right end.
+const TIMER_AT := Vector2(250, 5)
+const TIMER_WIDTH := 44.0
+const TIMER_FONT := 10
 
 var _run: RunState
 var _status: Label
@@ -20,6 +25,7 @@ var _items: Label
 var _slips: Label
 var _thermoses: Label
 var _potion_slot: PotionSlot
+var _potion_label := ""
 var _message: Label
 var _notice: Label
 var _notice_left := 0.0
@@ -32,6 +38,9 @@ var _condolences := 0
 # The Waiting Room shows Condolences beside Pension. A run shows Pension only, plus a pop-up when
 # Condolences are earned.
 var show_condolences := false
+# Set from the Game tab's Show run timer. Only a run's HUD has the timer.
+var show_timer := false
+var _timer: Label
 
 
 static func status_text(pension: int, condolences: int, with_condolences: bool) -> String:
@@ -44,6 +53,14 @@ static func bar_fraction(hp: float, max_hp: float) -> float:
 	if max_hp <= 0.0:
 		return 0.0
 	return clampf(hp / max_hp, 0.0, 1.0)
+
+
+# The run timer's text: minutes and seconds, with hours once a run passes one.
+static func timer_text(seconds: float) -> String:
+	var whole := maxi(int(seconds), 0)
+	if whole >= 3600:
+		return "%d:%02d:%02d" % [whole / 3600, (whole / 60) % 60, whole % 60]
+	return "%d:%02d" % [whole / 60, whole % 60]
 
 
 static func counter_text(amount: int) -> String:
@@ -90,6 +107,10 @@ func _ready() -> void:
 		_potion_slot.position = POTION_SLOT_AT
 		add_child(_potion_slot)
 		_run.changed.connect(_refresh)
+		_timer = _add_label(TIMER_AT, TIMER_FONT)
+		_timer.size = Vector2(TIMER_WIDTH, 12)
+		_timer.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		_timer.visible = show_timer
 	_refresh()
 
 
@@ -105,6 +126,14 @@ func set_condolences(amount: int) -> void:
 		_refresh()
 
 
+func set_run_time(seconds: float) -> void:
+	if _timer == null:
+		return
+	_timer.visible = show_timer
+	if show_timer:
+		_timer.text = timer_text(seconds)
+
+
 func show_message(text: String) -> void:
 	_message.text = text
 
@@ -115,6 +144,9 @@ func show_notice(text: String) -> void:
 
 
 func _process(delta: float) -> void:
+	# The potion slot names the active device's button, so it follows a switch of device.
+	if _run != null and _potion_slot != null and KeyBindings.prompt_label("potion") != _potion_label:
+		_refresh()
 	if _potion_slot != null:
 		_potion_slot.show_buff(_run.buff, _run.buff_left)
 	if _notice_left <= 0.0:
@@ -182,7 +214,8 @@ func _refresh() -> void:
 		text = "Pills: %s   %s" % [pills, text]
 		_slips.text = counter_text(_run.keys)
 		_thermoses.text = counter_text(_run.bombs)
-		_potion_slot.show_potion(_run.potion, KeyBindings.label_for("potion"))
+		_potion_label = KeyBindings.prompt_label("potion")
+		_potion_slot.show_potion(_run.potion, _potion_label)
 		var names: PackedStringArray = []
 		for item in _run.items:
 			names.append(item.display_name)

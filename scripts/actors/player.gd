@@ -29,12 +29,16 @@ const CROSSHAIR_COLOR := Color(1.0, 0.9, 0.55, 0.95)
 const GHOST_EVERY := 0.05
 const SLOW_COLOR := Color(0.62, 0.86, 1.0, 0.9)
 const CANE_COLOR := Color("a8692f")
+const MOVE_AIM_REACH := 40.0
 const SWING_COLOR := Color("ffe58a")
 
 var run: RunState
 var show_crosshair := false
 # Set by the full-loop check and balance probes, which have no mouse to aim with.
 var aim_source := Callable()
+# The Game tab's Mouse aim. Off, he aims the way he last walked, MOVE_AIM_REACH ahead of him.
+var mouse_aim := true
+var _last_move := Vector2.RIGHT
 var _ghost_left := 0.0
 # True while his feet stand on a wet floor, where he slides.
 var on_wet := false
@@ -205,7 +209,28 @@ func _physics_process(delta: float) -> void:
 
 
 func _aim_point() -> Vector2:
-	return aim_source.call() if aim_source.is_valid() else get_global_mouse_position()
+	if aim_source.is_valid():
+		return aim_source.call()
+	if ActiveDevice.using_pad:
+		var stick := Vector2(Input.get_joy_axis(ActiveDevice.pad_id, JOY_AXIS_RIGHT_X), Input.get_joy_axis(ActiveDevice.pad_id, JOY_AXIS_RIGHT_Y))
+		return pad_aim_point(global_position, stick, _aim, mouse_aim, _last_move)
+	if not mouse_aim:
+		return move_aim_point(global_position, _last_move)
+	return get_global_mouse_position()
+
+
+# Where a pad aims: the right stick while it is held, whatever Mouse aim says. Resting, the aim stays
+# where it was, or with Mouse aim off follows the way he last walked.
+static func pad_aim_point(from: Vector2, stick: Vector2, aim: Vector2, aim_by_stick: bool, last_move: Vector2) -> Vector2:
+	if PadInput.stick_dir(stick) == Vector2.ZERO and not aim_by_stick:
+		return move_aim_point(from, last_move)
+	return PadInput.aim_point(from, stick, aim)
+
+
+# Where he aims with Mouse aim off: a point ahead of him the way he last walked.
+static func move_aim_point(from: Vector2, last_move: Vector2) -> Vector2:
+	var way := last_move.normalized() if not last_move.is_zero_approx() else Vector2.RIGHT
+	return from + way * MOVE_AIM_REACH
 
 
 func _leave_dodge_ghosts(delta: float) -> void:
@@ -369,6 +394,8 @@ func _finish_swing() -> void:
 
 func _handle_movement() -> void:
 	var input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	if input != Vector2.ZERO:
+		_last_move = input
 	# Feet sunk in a sand bunker cannot dodge, and wade slower (Fairway's End).
 	var sunk := is_in_sand()
 	if Input.is_action_just_pressed("dodge") and SandRule.can_dodge(sunk) and _dodge.try_start(run.stats.dodge_cooldown, DodgeTimer.DURATION * run.stats.dodge_length):
@@ -450,7 +477,8 @@ func _draw() -> void:
 				var band := pointing * (7.0 + i * 5.0)
 				draw_line(band - pointing, band + pointing, GrandpaLook.STRIPE_BAND, 3.0)
 	if show_crosshair:
-		var lines := crosshair_lines(get_local_mouse_position())
+		var at_mouse := (mouse_aim or aim_source.is_valid()) and not ActiveDevice.using_pad
+		var lines := crosshair_lines(get_local_mouse_position() if at_mouse else to_local(_aim_point()))
 		draw_multiline(lines, Color.BLACK, 3.0)
 		draw_multiline(lines, CROSSHAIR_COLOR, 1.0)
 	if swinging:
