@@ -8,7 +8,6 @@ const REACH := 62.0
 const HALF_ANGLE := 70.0
 const PUSH := 170.0
 const DURATION := 0.16
-const FLOUR := Color("f6ecd6")
 
 
 func on_swing(ctx: EffectContext, swing: SwingAttack) -> void:
@@ -22,6 +21,8 @@ func on_swing(ctx: EffectContext, swing: SwingAttack) -> void:
 	swing.style = SwingAttack.STYLE_PIN
 	swing.set_duration(DURATION)
 	var origin := ctx.player.global_position if ctx.has_player() else Vector2.ZERO
+	ctx.add_fx(ItemFx.make_pin(ctx.player if ctx.has_player() else null, swing.direction, swing.reach, DURATION), origin)
+	# Flour comes off where it lands, in front and behind.
 	for side: float in [1.0, -1.0]:
-		ctx.add_fx(ItemFx.make_shockwave(30.0, FLOUR), origin + swing.direction * side * REACH * 0.7)
+		ctx.add_fx(ItemFx.make_cloud(14.0, 0.35, ItemFx.FLOUR_COLOR), origin + swing.direction * side * REACH * 0.7)
 	ctx.play_sound("charged_hit")

@@ -311,6 +311,8 @@ func _draw() -> void:
 	var spin := _time * 14.0 if boomerang and _state != null and _state.is_returning() else 0.0
 	if _glued != null:
 		_draw_glue()
+	if spin != 0.0:
+		_draw_whirl()
 	draw_set_transform(Vector2(0.0, hop), spin, Vector2(flip, 1.0))
 	var half := JAW_WIDTH / 2.0
 	var upper := Rect2(-half, -4.0 - open / 2.0, JAW_WIDTH, 3.0)
@@ -341,14 +343,30 @@ func _draw_glue() -> void:
 	draw_line(Vector2(2, 5), Vector2(2, 5 + drip), GLUE_COLOR, 2.0)
 
 
+# A boomerang on its way home: a whirl round the spinning teeth and a trail of dots behind them.
+func _draw_whirl() -> void:
+	var turn := _time * 14.0
+	for i in 2:
+		var from := turn + PI * i
+		draw_arc(Vector2.ZERO, 11.0, from, from + 1.6, 8, OUTLINE_COLOR, 4.0)
+		draw_arc(Vector2.ZERO, 11.0, from, from + 1.6, 8, TOOTH_COLOR, 2.0)
+	if not is_instance_valid(_player):
+		return
+	var behind := (global_position - _player.global_position).normalized()
+	for i in 3:
+		var at := behind * (16.0 + i * 7.0)
+		draw_circle(at, 3.0 - i * 0.6, OUTLINE_COLOR)
+		draw_circle(at, 2.2 - i * 0.6, GUM_COLOR)
+
+
 # A wind-up key on top, turning.
 func _draw_key(top: float) -> void:
-	var stem := Vector2(0, top - 4.0)
-	draw_line(Vector2(0, top), stem, OUTLINE_COLOR, 3.0)
-	draw_line(Vector2(0, top), stem, KEY_COLOR, 1.5)
+	var stem := Vector2(0, top - 6.0)
+	draw_line(Vector2(0, top), stem, OUTLINE_COLOR, 3.5)
+	draw_line(Vector2(0, top), stem, KEY_COLOR, 2.0)
 	var turn := absf(cos(_time * 6.0))
-	var wing := Vector2(5.0 * turn + 1.0, 0.0)
+	var wing := Vector2(6.0 * turn + 1.5, 0.0)
 	for side: float in [-1.0, 1.0]:
 		var at := stem + wing * side + Vector2(0, -1)
-		draw_circle(at, 3.0, OUTLINE_COLOR)
-		draw_circle(at, 2.0, KEY_COLOR)
+		draw_circle(at, 3.8, OUTLINE_COLOR)
+		draw_circle(at, 2.7, KEY_COLOR)

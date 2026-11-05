@@ -32,8 +32,8 @@ const CANE_COLOR := Color("a8692f")
 const SWING_COLOR := Color("ffe58a")
 # The Spare Set: how far apart, in degrees, the two sets of dentures fly.
 const SPARE_SPREAD := 14.0
-# Grandma's Rolling Pin and The Reaper's Other Scythe draw their swings in these.
-const PIN_WOOD := Color("d9a066")
+# Grandma's Rolling Pin and The Reaper's Other Scythe draw their swings in these. The pin itself is an
+# ItemFx drawn over bodies.
 const PIN_FLOUR := Color("f6ecd6")
 const SWEEP_FILL := Color(0.62, 0.52, 0.95, 0.2)
 const SWEEP_EDGE := Color("8f7ce0")
@@ -579,7 +579,7 @@ func _draw() -> void:
 		RedTape.draw_hold(self, FEET_OFFSET)
 
 
-# The swing as it hits: its arc (behind him too when it reaches both ways), or the Rolling Pin's smash,
+# The swing as it hits: its arc (behind him too when it reaches both ways), the Rolling Pin's flour arcs,
 # or the Scythe's sweep. Whatever is drawn here is what the swing hits, for as long as it shows.
 func _draw_swing(swing: SwingAttack) -> void:
 	var center := swing.direction.angle()
@@ -598,21 +598,6 @@ func _draw_swing(swing: SwingAttack) -> void:
 		if swing.style == SwingAttack.STYLE_PIN:
 			draw_arc(Vector2.ZERO, swing.reach, side - half_angle, side + half_angle, points, Color(Color.BLACK, 0.55), width + 3.0)
 		draw_arc(Vector2.ZERO, swing.reach, side - half_angle, side + half_angle, points, color, width)
-	if swing.style == SwingAttack.STYLE_PIN:
-		_draw_pin(swing)
-
-
-# The rolling pin coming down: a wooden bar across the swing, travelling out to its reach.
-func _draw_pin(swing: SwingAttack) -> void:
-	var across := swing.direction.orthogonal()
-	var at := swing.direction * lerpf(10.0, swing.reach * 0.8, swing.progress())
-	var half := across * 12.0
-	draw_line(at - half, at + half, Color.BLACK, 10.0)
-	draw_line(at - half, at + half, PIN_WOOD, 7.0)
-	draw_line(at - half * 1.6, at - half, Color.BLACK, 5.0)
-	draw_line(at + half, at + half * 1.6, Color.BLACK, 5.0)
-	draw_line(at - half * 1.55, at - half, PIN_WOOD.darkened(0.3), 3.0)
-	draw_line(at + half, at + half * 1.55, PIN_WOOD.darkened(0.3), 3.0)
 
 
 # The scythe's spin: the whole circle it hits, lit faintly, and the blade going once round.

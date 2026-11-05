@@ -23,7 +23,9 @@ const CLOUD_COLOR := Color(0.75, 0.78, 0.7, 0.55)
 const PUDDLE_COLOR := Color(0.95, 0.5, 0.2, 0.5)
 # The Bingo Dabber's ink, the Shark Tooth's blood and the Fizzy Cleaning Tablet's fizz.
 const DAB_COLOR := Color("e0307a")
-const BLOOD_COLOR := Color("d01c34")
+const BLOOD_COLOR := Color("ff3347")
+const PIN_WOOD := Color("d9a066")
+const FLOUR_COLOR := Color(0.97, 0.94, 0.86, 0.8)
 const FIZZ_COLOR := Color("8fe6f2")
 const STEEL_COLOR := Color("dfe6ee")
 # Marks that ride on an enemy last until it dies or the room is left, unless told otherwise.
@@ -70,9 +72,19 @@ static func make_dabs(enemy: Enemy, count: int) -> FxDabs:
 
 # Drops of blood running off an enemy while it bleeds. Its life can be stretched with keep_until.
 static func make_bleed(enemy: Enemy, seconds: float) -> Fx:
-	var bleed := FxBleed.new(0.0, BLOOD_COLOR, seconds)
+	var bleed := FxBleed.new(enemy.def.body_size.y / 2.0, BLOOD_COLOR, seconds)
 	bleed.ride(enemy)
 	return bleed
+
+
+# Grandma's Rolling Pin coming down over a swing: a wooden pin that travels out along the swing for
+# its time, drawn over bodies. A look only; the swing's own arcs are what hit. Place it at Grandpa.
+static func make_pin(follow: Node2D, direction: Vector2, reach: float, seconds: float) -> Fx:
+	var pin := FxPin.new(reach, PIN_WOOD, seconds)
+	pin.rotation = direction.angle()
+	if follow != null:
+		pin.ride(follow)
+	return pin
 
 
 # A fizzing patch on the floor that slows every enemy whose body it touches, while it lasts.
@@ -104,7 +116,7 @@ class Fx:
 	var color := Color.WHITE
 	var life := 0.3
 	var age := 0.0
-	# An enemy it rides on, if any: it stands where the enemy stands and goes when the enemy does.
+	# What it rides on, if anything: it stands where that stands, and goes when it does (or an enemy dies).
 	var _rider: WeakRef
 
 	func _init(at_radius: float, at_color: Color, seconds: float) -> void:
@@ -124,8 +136,8 @@ class Fx:
 	func covers(point: Vector2) -> bool:
 		return is_inside_tree() and global_position.distance_to(point) <= radius
 
-	func ride(enemy: Enemy) -> void:
-		_rider = weakref(enemy)
+	func ride(target: Node2D) -> void:
+		_rider = weakref(target)
 
 	# Lives on until this many seconds from now, if that is later than its end.
 	func keep_for(seconds: float) -> void:
@@ -137,12 +149,13 @@ class Fx:
 			queue_free()
 			return
 		if _rider != null:
-			var enemy := _rider.get_ref() as Enemy
-			if enemy == null or enemy.is_dead() or not enemy.is_inside_tree():
+			var target := _rider.get_ref() as Node2D
+			var enemy := target as Enemy
+			if target == null or not target.is_inside_tree() or (enemy != null and enemy.is_dead()):
 				queue_free()
 				return
-			global_position = enemy.global_position
-			visible = not enemy.submerged
+			global_position = target.global_position
+			visible = enemy == null or not enemy.submerged
 		queue_redraw()
 
 
@@ -267,15 +280,17 @@ class FxBleed:
 	func _init(at_radius: float, at_color: Color, seconds: float) -> void:
 		super(at_radius, at_color, seconds)
 
+	# radius is half the body's height, so drops run from the wound past its feet onto the floor.
 	func _draw() -> void:
-		for i in 3:
-			var fall := fmod(age * 1.6 + i / 3.0, 1.0)
-			var at := Vector2(-6.0 + i * 6.0, -4.0 + fall * 16.0)
-			var alpha := 1.0 - fall * 0.6
-			draw_circle(at, 2.6, Color(Color.BLACK, alpha))
-			draw_circle(at, 1.8, Color(color, alpha))
-		draw_line(Vector2(-7, -6), Vector2(7, -6), Color(Color.BLACK, 0.8), 3.0)
-		draw_line(Vector2(-7, -6), Vector2(7, -6), color, 1.5)
+		draw_line(Vector2(-7, -5), Vector2(6, -2), Color.BLACK, 4.5)
+		draw_line(Vector2(-7, -5), Vector2(6, -2), color, 2.5)
+		for i in 4:
+			var fall := fmod(age * 1.3 + i / 4.0, 1.0)
+			var at := Vector2(-6.0 + i * 4.0, -3.0 + fall * (radius + 10.0))
+			var alpha := 1.0 - maxf(fall - 0.7, 0.0) / 0.3
+			draw_circle(at, 3.6, Color(Color.BLACK, alpha))
+			draw_circle(at, 2.7, Color(color, alpha))
+			draw_circle(at + Vector2(-0.8, -0.8), 0.9, Color(1.0, 0.85, 0.85, alpha))
 
 
 # The Fizzy Cleaning Tablet's fizz: bubbles rising off a pale patch, slowing what stands in it.
@@ -428,9 +443,35 @@ class FxWave:
 	func _draw() -> void:
 		var fade := 1.0 - maxf(travelled / maxf(distance, 1.0) - 0.7, 0.0) / 0.3
 		var points := _local_points()
-		draw_polyline(points, Color(Color.BLACK, 0.7 * fade), 7.0)
-		draw_polyline(points, Color(color, fade), 4.0)
-		draw_polyline(points, Color(Color("7fb8ff"), fade), 1.5)
+		# Fainter copies trailing behind, so it reads as moving.
+		for k in [2, 1]:
+			var trail := PackedVector2Array()
+			for point in points:
+				trail.append(point - Vector2(8.0 * k, 0.0))
+			draw_polyline(trail, Color(color, 0.25 * fade / k), 5.0)
+		draw_polyline(points, Color(Color.BLACK, 0.75 * fade), 10.0)
+		draw_polyline(points, Color(color, fade), 6.0)
+		draw_polyline(points, Color(Color("7fb8ff"), fade), 2.0)
+
+
+# Grandma's Rolling Pin: the pin, across the swing, travelling out from him over its time.
+class FxPin:
+	extends Fx
+
+	func _init(at_radius: float, at_color: Color, seconds: float) -> void:
+		super(at_radius, at_color, seconds)
+		z_index = Z
+
+	func _draw() -> void:
+		var out := lerpf(14.0, radius * 0.8, minf(progress() * 1.4, 1.0))
+		var body := Rect2(out - 6.0, -16.0, 12.0, 32.0)
+		for handle: Rect2 in [Rect2(out - 3.0, -25.0, 6.0, 10.0), Rect2(out - 3.0, 15.0, 6.0, 10.0)]:
+			draw_rect(handle.grow(1.5), Color.BLACK)
+			draw_rect(handle, color.darkened(0.35))
+		draw_rect(body.grow(1.5), Color.BLACK)
+		draw_rect(body, color)
+		draw_line(Vector2(out - 3.0, -14.0), Vector2(out - 3.0, 14.0), color.lightened(0.35), 2.0)
+		draw_line(Vector2(out + 3.5, -14.0), Vector2(out + 3.5, 14.0), FLOUR_COLOR, 2.0)
 
 
 # A knitting needle: a thin grey line with a bead of yarn at the back.
@@ -438,7 +479,7 @@ class FxNeedle:
 	extends FxStrike
 
 	const SPEED := 380.0
-	const LENGTH := 11.0
+	const LENGTH := 14.0
 
 	func _init(at_radius: float, at_color: Color, seconds: float) -> void:
 		super(at_radius, at_color, seconds)
