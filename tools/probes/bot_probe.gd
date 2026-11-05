@@ -12,6 +12,9 @@ extends SceneTree
 # dodges through red tape it cannot walk round, steps out of every new lane, ring, sweep, roll and
 # mat to the nearest clear spot, stands on marked gaps unless a heavy strike falls there, and dodges
 # to snap the Chairman's tether.
+# Version 6 reads the floor-5 bosses' overlaps: the Chairman's desk slam is a warned spot like any
+# deep strike, and Augustine's runway mark is honoured while his lanes light, as a gap is while a
+# chart or a sweep runs (the mark is skipped whenever a lane or strike covers it, as before).
 
 const WALL_LIMIT_MS := 1700000
 const SKILLS := {
@@ -646,7 +649,8 @@ class Bot extends Node:
 				return child.global_position
 		return Vector2.INF
 
-	# The deep attacks that leave a marked gap: conga rows, the X-ray beam and the Chairman's bars.
+	# The deep attacks that leave a marked gap: conga rows, the X-ray beam, the Chairman's bars and
+	# Augustine's runway lights.
 	func _gap_attack_on() -> bool:
 		for child in scene.debug_room_view().get_children():
 			if child.is_queued_for_deletion():
@@ -654,6 +658,8 @@ class Bot extends Node:
 			if child is DeckLane and child.look() == DeckLane.LOOK_CONGA:
 				return true
 			if child is XRaySweep or (child is LaneDrop and child.look() == LaneDrop.LOOK_BAR and not child.is_finished()):
+				return true
+			if child is RunwayLane and not child.is_over():
 				return true
 		return false
 
@@ -755,7 +761,7 @@ class Bot extends Node:
 
 	# The deep floors' own marks on the ground: a giant ball, a gavel, a stamp or tray, a chipped ball.
 	func _is_deep_strike(child: Node) -> bool:
-		return child is GiantBallDrop or child is GavelStrike or child is TerminalStrike or child is GolfBallLob
+		return child is GiantBallDrop or child is GavelStrike or child is TerminalStrike or child is GolfBallLob or child is DeskSlam
 
 	# 0 for clear, 1 for somewhere better avoided (it slows or will warn soon), 2 for a coming hit.
 	func _deep_zone(child: Node, p: Vector2, strict := false) -> int:
