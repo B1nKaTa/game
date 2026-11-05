@@ -72,6 +72,9 @@ var _resumed := false
 # The last cleared room a checkpoint was written in on this map, and the room he came into it from.
 var _safe_room := -1
 var _safe_from := -1
+# The Pension the room he stands in has paid since he came in, left out of a checkpoint written while
+# its fight is still on.
+var _room_paid := 0
 # How long this run has gone, for the Game tab's run timer. It stops while the game is paused.
 var _run_time := 0.0
 # The pause menu while it is open, and the frame it closed on, so the Esc that closed it never opens it.
@@ -215,12 +218,18 @@ func write_checkpoint() -> bool:
 	# He comes back in the last room he cleared, so a fight going on now starts over when he walks back in.
 	var room := _current_id
 	var from := _arrived_from
+	# What this room paid while its fight is still on comes back with the fight, so it is left out.
+	var room_paid := 0
 	if _room_view != null and _room_view.is_finished():
 		_safe_room = room
 		_safe_from = from
-	elif _safe_room >= 0:
-		room = _safe_room
-		from = _safe_from
+	else:
+		room_paid = _room_paid
+		if _safe_room >= 0:
+			room = _safe_room
+			from = _safe_from
+	var ending := RunCheckpoint.ending_to_dict(_run)
+	ending["pension_earned"] = maxi(_run.pension_earned - room_paid, 0)
 	var rooms := {}
 	for id: int in _room_views:
 		var view: RoomView = _room_views[id]
@@ -237,9 +246,11 @@ func write_checkpoint() -> bool:
 		"from": from,
 		"rooms": rooms,
 		"run": RunCheckpoint.run_to_dict(_run),
-		"ending": RunCheckpoint.ending_to_dict(_run),
+		"ending": ending,
 		"rng": RunCheckpoint.rng_to_dict(_rng),
-		"run_earned": _run.pension_earned,
+		"run_earned": ending["pension_earned"],
+		# Put back on resume, so coins banked after this moment never pay twice. Condolences are not.
+		"pension": RunCheckpoint.pension_to_save(Progress.data, room_paid),
 		"bon_voyage": _bon_voyage,
 		"is_cleared": is_cleared,
 		"bosses": int(Progress.last_run.get("bosses", 0)),
@@ -305,6 +316,10 @@ func _resume_run(resume: Dictionary) -> void:
 	RunCheckpoint.apply_rng(_rng, resume.get("rng", {}))
 	# The ending's tracking, with the Pension the rooms paid from run_earned for older files.
 	RunCheckpoint.apply_ending(_run, resume.get("ending", {"pension_earned": resume.get("run_earned", 0)}))
+	# The save's Pension as the checkpoint kept it, after the items are back, so one that pays on gain
+	# never pays twice. Condolences stay as they are, since a first boss beat's Condolences must stay
+	# paid (RunCheckpoint.apply_pension).
+	Progress.restore_pension(resume)
 	_augustine_seen_before = Progress.data.bosses_beaten.has(EndingRules.AUGUSTINE)
 	_bon_voyage = str(resume.get("bon_voyage", ""))
 	_run_time = float(resume.get("run_time", 0.0))
@@ -450,6 +465,7 @@ func _enter_room(target_id: int) -> void:
 	_progress.enter(target_id)
 	_arrived_from = from_id
 	_current_id = target_id
+	_room_paid = 0
 	# Before the room is added, since a boss that appears on arrival starts its own music.
 	_play_room_music()
 	_room_view = _room_views.get(target_id)
@@ -603,7 +619,7 @@ func _make_room_view(room: FloorRoom) -> RoomView:
 		view.restore = _restored[room.id]
 	view.finished.connect(_write_checkpoint_soon)
 	view.notice.connect(_hud.show_notice)
-	view.pension_earned.connect(_on_pension_earned)
+	view.pension_earned.connect(_on_room_pension)
 	view.floor_cleared.connect(_on_floor_cleared)
 	view.boss_spawned.connect(_on_boss_spawned)
 	_feedback.watch_room(view)
@@ -655,6 +671,12 @@ func _close_card_table() -> void:
 func _on_pension_earned(amount: int) -> void:
 	_run.pension_earned += amount
 	Progress.add_pension(amount)
+
+
+# A room's coins and clear pay, counted for the checkpoint as well (see write_checkpoint).
+func _on_room_pension(amount: int) -> void:
+	_room_paid += amount
+	_on_pension_earned(amount)
 
 
 func _on_arcade_won() -> void:

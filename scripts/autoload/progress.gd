@@ -102,6 +102,12 @@ func clear_checkpoint() -> void:
 		RunCheckpoint.delete(path)
 
 
+# A resumed run's Pension, as its checkpoint kept it (see RunCheckpoint.apply_pension). Condolences stay.
+func restore_pension(checkpoint: Dictionary) -> void:
+	if RunCheckpoint.apply_pension(data, checkpoint):
+		_save_pension()
+
+
 func is_dev_run() -> bool:
 	return _real_store != null
 

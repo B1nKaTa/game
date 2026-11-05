@@ -53,6 +53,24 @@ static func delete(path: String) -> void:
 			DirAccess.remove_absolute(each)
 
 
+# The Pension the checkpoint keeps: the save's as it is now, less what the room he stands in paid while
+# its fight is still on, since that fight comes back on resume. room_paid is 0 in a cleared room.
+static func pension_to_save(data: ProgressData, room_paid: int) -> int:
+	return maxi(data.pension - maxi(room_paid, 0), 0)
+
+
+# Puts the save's Pension back as the checkpoint kept it. Coins are banked the moment they are picked
+# up, and every fight after the checkpoint comes back on resume, so without this they would pay twice.
+# The RunState in the file comes from the same moment, so the two agree. Condolences are NOT put back:
+# a first boss beat's Condolences are paid for good when the boss falls (record_boss_beaten), and must
+# stay paid even if the run is resumed from before it. False when the file keeps no Pension.
+static func apply_pension(data: ProgressData, raw: Dictionary) -> bool:
+	if not raw.has("pension") or (typeof(raw["pension"]) != TYPE_FLOAT and typeof(raw["pension"]) != TYPE_INT):
+		return false
+	data.pension = maxi(int(raw["pension"]), 0)
+	return true
+
+
 # The whole RunState, by ids, so the file names no resource paths.
 static func run_to_dict(run: RunState) -> Dictionary:
 	var item_ids: Array = []

@@ -68,6 +68,49 @@ func test_delete() -> void:
 	assert_false(FileAccess.file_exists(_path()))
 
 
+# Coins picked up after the last checkpoint are banked at once, and the fight they came from comes back
+# on resume, so resuming puts the Pension back as the checkpoint saw it. Condolences are left alone.
+func test_a_resume_gives_the_checkpoints_pension() -> void:
+	_clean()
+	var data := ProgressData.new()
+	data.pension = 100
+	data.condolences = 3
+	assert_true(RunCheckpoint.write(_path(), {"depth": 2, "pension": RunCheckpoint.pension_to_save(data, 0)}))
+	data.add_pension(25)
+	data.add_condolences(4)
+	assert_true(RunCheckpoint.apply_pension(data, RunCheckpoint.read(_path())))
+	assert_eq(data.pension, 100, "the coins of the fight that comes back are not kept twice")
+	assert_eq(data.condolences, 7, "a boss's Condolences stay paid")
+	_clean()
+
+
+# Saved mid-fight, the run comes back in the last cleared room, so that fight's coins come off.
+func test_a_checkpoint_mid_fight_leaves_out_that_fights_pension() -> void:
+	var data := ProgressData.new()
+	data.pension = 130
+	assert_eq(RunCheckpoint.pension_to_save(data, 30), 100)
+	assert_eq(RunCheckpoint.pension_to_save(data, 500), 0, "never below nothing")
+
+
+func test_an_older_checkpoint_without_pension_leaves_it() -> void:
+	var data := ProgressData.new()
+	data.pension = 40
+	assert_false(RunCheckpoint.apply_pension(data, {"depth": 2}))
+	assert_eq(data.pension, 40)
+
+
+func test_the_floor_scene_saves_and_restores_the_pension() -> void:
+	var source := FileAccess.get_file_as_string("res://scripts/scenes/floor_scene.gd")
+	var write := source.substr(source.find("func write_checkpoint"), 2000)
+	assert_true(write.contains("\"pension\": RunCheckpoint.pension_to_save(Progress.data"), "written with the checkpoint")
+	var resume := source.substr(source.find("func _resume_run"), 1200)
+	assert_true(resume.contains("Progress.restore_pension(resume)"), "put back on resume")
+	var progress := FileAccess.get_file_as_string("res://scripts/autoload/progress.gd")
+	var restore := progress.substr(progress.find("func restore_pension"), 300)
+	assert_true(restore.contains("RunCheckpoint.apply_pension(data, checkpoint)"))
+	assert_true(restore.contains("_save_pension()"), "and saved")
+
+
 func _item(id: String) -> ItemDef:
 	for item in Content.items():
 		if item.id == id:

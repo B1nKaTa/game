@@ -738,6 +738,10 @@ func _check_resume() -> void:
 	var runs_before: int = Progress.data.run_count
 	var checkpoint := RunCheckpoint.read(Progress.SMOKE_RUN_PATH)
 	_check(int(checkpoint.get("room", -1)) == room_id, "the checkpoint names the room he stands in")
+	var pension_saved: int = Progress.data.pension
+	_check(int(checkpoint.get("pension", -1)) == pension_saved, "the checkpoint keeps the Pension")
+	# Coins banked after the checkpoint, as a fight that comes back on resume would pay.
+	Progress.add_pension(9)
 	Game.resume_run()
 	await _wait(0.5)
 	_expect_scene("FloorScene")
@@ -748,6 +752,7 @@ func _check_resume() -> void:
 	_check(RunCheckpoint.map_signature(scene.debug_map()) == signature, "the floor is rebuilt the same from its seed")
 	_check(RunCheckpoint.run_to_dict(scene.player.run) == expected, "the run resumes with the same RunState")
 	_check(Progress.data.run_count == runs_before, "resuming never starts a new run")
+	_check(Progress.data.pension == pension_saved, "resuming puts the checkpoint's Pension back, got %d for %d" % [Progress.data.pension, pension_saved])
 	_check(not scene.debug_room_view().is_fighting(), "the cleared room comes back cleared")
 	scene.player.run.health.lethal_saves = 0
 	scene.player.run.health.hit(999)

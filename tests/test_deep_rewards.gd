@@ -111,5 +111,7 @@ func test_the_floor_scene_fills_the_jacket_on_each_floor_and_counts_what_the_run
 	var source := FileAccess.get_file_as_string("res://scripts/scenes/floor_scene.gd")
 	var choose := source.substr(source.find("func _choose_path"), 1400)
 	assert_true(choose.contains("_run.start_floor()"))
-	assert_true(source.contains("view.pension_earned.connect(_on_pension_earned)"))
+	# A room pays through _on_room_pension, which counts it for the checkpoint and then pays as any pay.
+	assert_true(source.contains("view.pension_earned.connect(_on_room_pension)"))
+	assert_true(source.substr(source.find("func _on_room_pension"), 200).contains("_on_pension_earned(amount)"))
 	assert_true(source.contains("_run.health.rescued.connect(_on_rescued)"))
