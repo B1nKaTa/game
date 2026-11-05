@@ -126,3 +126,82 @@ Verified with tests (1846, 0 failed), two full loops (602 s and 620 s, every fla
 check in a renamed copy's own user folder seeded with copies of the real save: first launch, a relaunch
 after slot 1 was emptied (it stayed empty), a half-written slot file recovered, and a `-s` run that
 copied nothing. The real save's MD5s never changed.
+
+## Items batches 3 and 4 (2026-11-05)
+
+`items` at 941bff5 (all 100 items and the 12 combos) was merged in 88de272, read with `git rev-parse`
+right before the merge. Tests after the merge: 1907, 0 failed. `--import` made no new `.uid` files.
+
+### Conflicts and how they were resolved
+
+Each block was resolved by an explicit per-block choice (ours, theirs, both, or written text) and read
+afterwards; no line was deduplicated outside LESSONS.md.
+
+- `LESSONS.md`: both sides kept, every line.
+- `run_state.gd`: the endings' tracking kept, with batch 3's `lost_max_pills`; `pension_earned` is
+  declared once and serves both the endings and the Pension Fund Statement.
+- `floor_scene.gd`: the checkpoint, resume and pause code kept; items' copy of the old `_ready` dropped,
+  with its one new line (`_run.changed.connect(_refresh_map_items)`) moved into the merged `_ready`.
+  `_on_pension_earned` keeps only `_run.pension_earned` (no `_run_earned`).
+- `room_view.gd`: `arcade_settled` (the endings' won visits) beside `arcade_win_bonus`; `_buy` plays the
+  till and counts the purchase, and takes a free (price 0) ware; `_create_shop_keeper(extra)` takes the
+  Coupon Booklet's extra ware cells so the plan's rewards keep off them.
+- `thermos.gd`: reads `fuse_time` (Pressure Cooker), then plays the hiss.
+- `income_probe.gd`: the deep clears and the item arguments both kept; `args` read once.
+- `test_cosmetics.gd`: the never-sold looks are `bingo_teal`, `geralds_hat` and `sooty_cane`, since batch
+  4 moved the Power Tie, Aviator Sunglasses, Golf Visor and Fountain Tiara to the Decor Office.
+
+### Fixes after the merge
+
+- **A resumed shop keeps its extra ware's spot, its "half" prices and its purchases** (in the merge):
+  `RoomView.restored_extra_cells` finds the snapshot's wares off the S cells, the snapshot keeps `half`
+  per ware and the shop's `purchases` (for the Tax Refund).
+- **Resume a run's items without a second on_gain** (c7d3448): `RunState.restore_item` adds an item
+  through `RunEffects.add(item, false)`, and combos formed on the way skip `on_gain` too. `ItemEffect`
+  has `save_state()` / `load_state()`, empty by default, with `state_of` / `load_members` helpers that
+  read JSON numbers back as each member's own type. The checkpoint keeps `effects` (item id or combo id
+  -> state), `lost_max_pills` and `half_pills`. Kept: the Eternal Warranty's `used`, the Expired
+  Coupon's free shop this floor, the Bureaucrat's Stamp's recharge, Bubble Wrap and Second Opinion per
+  floor, the Pill Organizer's heals, the Bingo Card's and Hall Pass's counters, the Knitted Cardigan's
+  half pill, the Reading Glasses' and Pogo Cane's counts, the Sympathy Card's count and the Tax Refund's
+  paid shops (now by room id, cleared on each floor). The five effects whose `on_gain` only shuffled
+  their dice shuffle them in `load_state`. `Progress.restore_pension` still runs after `apply_run`, as
+  the save-safety fix needs. Tests: `tests/test_resume_item_state.gd`.
+- **Sound the key moments of the third and fourth batches** (d1cff9a): through `ctx.play_sound`, which
+  `CombatFeedback.play` hands to `Sfx`. `form_filed` for the Rubber Stamps and the Bureaucrat's Stamp
+  (its old `"stamp"` named no sound), `coin` for the money items, `slot_win` for a winning scratcher,
+  `lethal_save` for the Warranty, `pill_heal` for the Harmonica and Family Visit, `ticket_ding` for a
+  filed complaint, `shield_block` for the Lawyer's objection, `card_flip` for the Fortune Teller,
+  `ui_ching` for a free shop, `slip_pickup` for a forged Slip, `steam_hiss` for the Kettle Whistle,
+  `small_blast` for the Polyester Suit's zap, `charge_ready` for the Early Bird and a re-inked stamp,
+  `thermos_pickup` for the Moving Boxes and the items' `chime` for the Magnifying Glass's glint. No new
+  audio files. `tests/test_item_sounds.gd` checks every item sound name can play.
+- **Check the map items with a controller in the full loop** (6137dd3): the Floor Plan and the Fortune
+  Teller's Card only change what the maps draw, and the big map holds nothing to focus, so no PadFocus
+  was needed. The controller check takes both items, sees the plan on both maps, opens the big map with
+  View and closes it with B. Shop wares (the Coupon Booklet's extra one too) are pickups. Tests:
+  `tests/test_items_pad.gd`.
+- **The counting switches**: `counting_exact` and `counting_pills` are set every physics frame by the
+  full loop, so the resume, start-checkpoint, controller and ending checks run with them; the resume
+  check's `run_to_dict` comparison now includes the effects' state.
+- **Add the final screenshot probe** (03bfb17, 35bfbec, 4e0febc): `tools/probes/final_look.gd`. The floor's
+  first room is a live fight, so the probe keeps him alive, and it shoots the combo banner a few frames
+  after it forms, since with `--fixed-fps` game time runs ahead of the probe's real-time waits.
+
+### Verification
+
+- Tests: 1927, 0 failed (1907 after the merge; 10 resume, 7 sound and 3 pad tests added).
+- Three full loops in parallel, `git archive` copies of 6137dd3 in `D:\grandpa-verify-final\smokeA/B/C`
+  (GrandpaSmokeFinA/B/C), without the rendered music: all exit 0, both SMOKE PASS lines, every flag
+  true (resume checked and controller checked included), no SCRIPT ERROR. Times: A 609 s, B 610 s,
+  C 617 s. The logs were plain ASCII (written through bash).
+- Music rendered into `audio/music/` in the integration worktree (25 songs, about 2 minutes).
+- Real-window screenshots from a renamed copy (GrandpaLookFin) in `D:/grandpa-look-final/`: the title
+  screen, the Lobby, a run's HUD, a shop with Grandma's Rolling Pin (legendary, gold) and the
+  Nitroglycerin Tablets (cursed, purple with the skull), the Mobility Scooter's combo banner, the big map
+  with the Floor Plan's outlines and the Fortune Teller's "Senior Adjuster" and "Regional Reaper" tags,
+  and the Ending Archive with the gold pad focus on the first Replay. Nothing broken by the merge. Still
+  there from before: a recipe's label on floor 1 `combat_02`'s top-left T cell runs under the HUD's
+  item line and past the room's left edge.
+- The real save's MD5s matched before and after every Godot session: save.json
+  f4a62baf2984c99a2fc54ebd6dc1e308, save.json.bak ec5412ad4aa142699213a24ad7563c92.
