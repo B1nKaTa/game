@@ -25,6 +25,8 @@ const HURT_FIRE := "fire"
 const HURT_BLAST := "blast"
 const HURT_PROJECTILE := "projectile"
 const HURT_OWN_BLAST := "own_blast"
+# Walking into an enemy's body. See ContactRule.
+const HURT_CONTACT := "contact"
 # What items tell each other through event(): a BINGO from the card or the dabber.
 const EVENT_BINGO := "bingo"
 # Item hits that set off item hits stop this deep, so two effects can never feed each other forever.

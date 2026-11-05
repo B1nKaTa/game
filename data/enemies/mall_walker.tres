@@ -10,6 +10,7 @@ display_name = "Mall Walker"
 max_hp = 15.0
 speed = 70.0
 pension_drop = 1
+contact_damage = 0
 body_size = Vector2(16, 20)
 color = Color(0.98, 0.55, 0.3, 1)
 behavior_script = ExtResource("2")

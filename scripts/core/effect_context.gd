@@ -30,6 +30,9 @@ var counting_pills := false
 # it is set, items pay nothing, keep no Slip, change no damage, fuse, shop or Arcade table, and lay no
 # burning puddle. Each of those rules has its own unit test.
 var counting_exact := false
+# Set by the full loop too, whose checks count pills with him standing in and beside enemies: while it
+# is set, walking into a body costs nothing. Its own contact check clears it. See ContactRule.
+var contact_off := false
 # Where he stood on walking into the room he is in, by its door. FloorScene sets it on every arrival.
 var arrival := Vector2.ZERO
 var has_arrival := false

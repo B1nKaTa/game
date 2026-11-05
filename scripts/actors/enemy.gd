@@ -465,6 +465,13 @@ func take_damage(amount: float, push: Vector2) -> void:
 			queue_free()
 
 
+# What walking into its body costs Grandpa right now. See ContactRule.
+func contact_damage() -> int:
+	var gone := _dead or _dismissed or is_queued_for_deletion()
+	var asleep := _behavior != null and _behavior.is_sleeping(self)
+	return ContactRule.damage(def, gone, _wake_left > 0.0, submerged, asleep)
+
+
 func hit_target(amount: int) -> void:
 	if is_instance_valid(target) and target.has_method("take_hit"):
 		target.take_hit(amount)

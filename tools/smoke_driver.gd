@@ -70,6 +70,8 @@ var _checked_controller := false
 var _force_fast_run := false
 var _checked_augustine := false
 var _checked_ending := false
+# Set only while the contact check runs. Everywhere else bodies cost nothing to touch.
+var _contact_check := false
 
 
 func _ready() -> void:
@@ -85,6 +87,8 @@ func _ready() -> void:
 # The checks also count Pension, Slips, damage, Thermos fuses, shop stock and Arcade payouts exactly, so
 # the items that change those stand aside too (EffectContext.counting_exact); tests/test_items_batch3.gd
 # checks each of them.
+# Its fight checks also stand Grandpa in and beside enemies while they count pills, so walking into a body
+# costs nothing (EffectContext.contact_off) except in _check_contact; tests/test_contact.gd checks the rule.
 func _physics_process(_delta: float) -> void:
 	var scene := get_tree().current_scene
 	if scene == null or not "player" in scene or not is_instance_valid(scene.player):
@@ -95,6 +99,7 @@ func _physics_process(_delta: float) -> void:
 		organizer.stored = 0
 	run.effects.ctx.counting_pills = true
 	run.effects.ctx.counting_exact = true
+	run.effects.ctx.contact_off = not _contact_check
 	run.stats.steady_feet = false
 	run.stats.notice_mult = 1.0
 
@@ -1609,6 +1614,7 @@ func _check_fight_room(scene: Node) -> void:
 	await _check_room_start(scene)
 	await _check_blast(scene)
 	await _check_shield(scene)
+	await _check_contact(scene)
 	await _check_dentures(scene)
 	await _check_chests(scene)
 	await _check_arcade(scene)
@@ -1732,6 +1738,52 @@ func _check_shield(scene: Node) -> void:
 	_check(officer.hp < after_swing, "thrown dentures go over the shield")
 	scene.player.recall_teeth()
 	scene.player.aim_source = Callable()
+	await _dismiss_all()
+
+
+# Walking into an enemy's body costs a pill and shoves him back out of it, and a dodge straight through one
+# costs nothing.
+func _check_contact(scene: Node) -> void:
+	var view := await _enter_made_room(scene, _fight_layout(20, 11, {}))
+	var center := RoomBackdrop.cell_center(Vector2i(10, 6))
+	var grunt := view._spawn_enemy(_enemy_def("intern_reaper"), center)
+	# Held still and awake, so only its body can hurt him.
+	grunt.set_physics_process(false)
+	grunt._wake_left = 0.0
+	var player: Player = scene.player
+	var health: Health = player.run.health
+	var touching := func() -> bool: return ContactRule.touches(grunt.body_rect(), ContactRule.feet_box(player.feet().global_position, Player.FEET_BOX_SIZE))
+	_put_feet(scene, center + Vector2(-80, 0))
+	await _wait_for(func() -> bool: return health.invulnerability_left() <= 0.0, 3.0)
+	_contact_check = true
+	await get_tree().physics_frame
+	var pills: int = health.pills
+	var hurts := [0]
+	var count_hurt := func() -> void: hurts[0] += 1
+	player.hurt.connect(count_hurt)
+	_put_feet(scene, center + Vector2(6, 0))
+	await _wait_for(func() -> bool: return health.pills != pills, 0.5)
+	_check(health.pills == pills - 1, "walking into an enemy costs a pill, %d to %d" % [pills, health.pills])
+	_check(hurts[0] == 1, "a touch hurts him as any hit does, sound and shake")
+	await _wait(0.3)
+	_check(not touching.call(), "the touch shoves him out of its body, feet %s" % str(player.feet().global_position))
+	_check(health.pills == pills - 1, "one touch costs one pill")
+	await _wait_for(func() -> bool: return health.invulnerability_left() <= 0.0 and player.dodge_cooldown_left() <= 0.0, 3.0)
+	_put_feet(scene, center + Vector2(-36, 0))
+	await get_tree().physics_frame
+	pills = health.pills
+	_check(player.start_dodge(Vector2.RIGHT), "a dodge starts at the body")
+	var crossed := false
+	var frames := 0
+	while player.is_dodging() and frames < 60:
+		await get_tree().physics_frame
+		frames += 1
+		crossed = crossed or touching.call()
+	await _wait(0.1)
+	_check(crossed, "the dodge went through its body")
+	_check(health.pills == pills, "a dodge through an enemy costs nothing, %d to %d" % [pills, health.pills])
+	player.hurt.disconnect(count_hurt)
+	_contact_check = false
 	await _dismiss_all()
 
 

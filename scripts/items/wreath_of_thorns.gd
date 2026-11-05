@@ -5,7 +5,8 @@ extends ItemEffect
 
 const DAMAGE := 4.0
 const AGAIN_AFTER := 0.5
-# His body, round where he stands, and how close counts as touching.
+# His body, round where he stands, and how close counts as touching. His feet box counts as body too, so
+# whatever costs him a pill by touching him (ContactRule) is always close enough to prick.
 const BODY := Vector2(20, 28)
 const REACH := 3.0
 const SPARK := Color("c9d98a")
@@ -25,7 +26,12 @@ func on_room_enter(ctx: EffectContext, _room: Node) -> void:
 func tick(ctx: EffectContext, delta: float) -> void:
 	_time += delta
 	if ctx.has_player() and not ctx.counting_exact:
-		prick(ctx, Rect2(ctx.player.global_position - BODY / 2.0, BODY))
+		prick(ctx, body_of(ctx.player.global_position, ctx.feet()))
+
+
+# His body round its middle, with his feet box added.
+static func body_of(center: Vector2, feet: Vector2) -> Rect2:
+	return Rect2(center - BODY / 2.0, BODY).merge(ContactRule.feet_box(feet, Player.FEET_BOX_SIZE))
 
 
 # Pricks every enemy due whose body touches this one. Returns how many it pricked.

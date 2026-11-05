@@ -17,6 +17,11 @@ func on_killed(_enemy: Enemy) -> void:
 	pass
 
 
+# Whether it lies asleep, an ambusher not yet woken, so walking into it costs nothing. See ContactRule.
+func is_sleeping(_enemy: Enemy) -> bool:
+	return false
+
+
 # What a hit's damage is multiplied by, for an enemy that is easier to hurt at some moments.
 func damage_scale(_enemy: Enemy) -> float:
 	return 1.0

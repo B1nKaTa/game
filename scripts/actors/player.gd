@@ -194,6 +194,31 @@ func take_fire_hit(amount: int) -> bool:
 	return landed
 
 
+# Walking into an enemy's body costs what it says (ContactRule) and shoves his feet back out of it,
+# through push, so the Gravity Boots and the anchor's halving hold for it as for every other shove. A
+# dodge passes through, and the grace after a hit keeps one touch from costing more. Returns whether a
+# touch counted, landed or shrugged off by an item.
+func touch_bodies() -> bool:
+	if run == null or _feet == null or not is_inside_tree() or run.effects.ctx.contact_off:
+		return false
+	if _dodge.is_active() or run.health.is_dead() or run.health.is_invulnerable():
+		return false
+	var box := ContactRule.feet_box(_feet.global_position, FEET_BOX_SIZE)
+	for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
+		if not ContactRule.touches(enemy.body_rect(), box):
+			continue
+		var cost := enemy.contact_damage()
+		if cost <= 0:
+			continue
+		take_hit(cost, RunEffects.HURT_CONTACT)
+		# A touch an item shrugged off shoves him out too, so he is never left standing in a body.
+		if run.health.is_invulnerable():
+			push(ContactRule.shove(enemy.global_position, _feet.global_position, _aim), ContactRule.SHOVE_TIME)
+			return true
+		return false
+	return false
+
+
 # A sedative takes some of his speed for a while. The strongest slow running counts.
 func slow(fraction: float, seconds: float) -> void:
 	_slow.apply(fraction, seconds)
@@ -289,6 +314,7 @@ func _physics_process(delta: float) -> void:
 	_handle_bomb()
 	_handle_potion()
 	_handle_movement()
+	touch_bodies()
 	_leave_dodge_ghosts(delta)
 	_charge_sounds()
 	queue_redraw()

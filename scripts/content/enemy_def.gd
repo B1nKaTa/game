@@ -6,6 +6,11 @@ extends Resource
 @export var max_hp: float = 30.0
 @export var speed: float = 60.0
 @export var damage: int = 1
+# What walking into its body costs Grandpa, in pills. Zero makes its body harmless to touch, as the
+# Training Yard's dummy and the Mall Walkers, whose line hurts on touch by its own clock. See ContactRule.
+@export var contact_damage: int = 1
+# A ghost passes through him harmlessly, whatever contact_damage says, unless this is set.
+@export var ghost_contact: bool = false
 @export var pension_drop: int = 4
 @export var ignores_walls: bool = false
 @export var is_boss: bool = false

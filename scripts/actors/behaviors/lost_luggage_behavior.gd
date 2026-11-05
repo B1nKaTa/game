@@ -45,6 +45,10 @@ func is_lying() -> bool:
 	return _state == State.LYING
 
 
+func is_sleeping(_enemy: Enemy) -> bool:
+	return is_lying()
+
+
 func tick(enemy: Enemy, delta: float) -> void:
 	match _state:
 		State.LYING:

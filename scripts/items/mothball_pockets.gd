@@ -13,10 +13,9 @@ var left := 0.0
 
 
 # Whether an enemy is one of the ghosts the mothballs keep off.
+# The same ghosts pass through him without a touch costing anything (ContactRule).
 static func is_ghost(enemy_def: EnemyDef) -> bool:
-	if enemy_def == null or enemy_def.is_boss:
-		return false
-	return enemy_def.id.contains("ghost") or enemy_def.id.contains("mourner")
+	return ContactRule.is_ghost(enemy_def)
 
 
 func on_room_enter(_ctx: EffectContext, _room: Node) -> void:

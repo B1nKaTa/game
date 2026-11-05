@@ -43,6 +43,10 @@ func is_asleep() -> bool:
 	return _state == State.ASLEEP
 
 
+func is_sleeping(_enemy: Enemy) -> bool:
+	return is_asleep()
+
+
 # He lies as a chair from his first frame, through the moment a room waits before anyone moves.
 func on_ready(enemy: Enemy) -> void:
 	if is_asleep():
