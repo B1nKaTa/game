@@ -150,3 +150,4 @@ func test_the_scenes_ask_for_music_where_they_change() -> void:
 	assert_true(defeated.contains("_play_room_music()"), "the path theme returns")
 	assert_true(_source("res://scripts/scenes/waiting_room.gd").contains("MusicRules.waiting_room(Departments.id_of(target_id))"))
 	assert_true(_source("res://scripts/scenes/opening.gd").contains("MusicRules.opening()"))
+	assert_true(_source("res://scripts/scenes/title_screen.gd").contains("MusicPlayer.play(MusicRules.title())"))
