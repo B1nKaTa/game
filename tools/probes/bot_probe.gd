@@ -15,6 +15,9 @@ extends SceneTree
 # Version 6 reads the floor-5 bosses' overlaps: the Chairman's desk slam is a warned spot like any
 # deep strike, and Augustine's runway mark is honoured while his lanes light, as a gap is while a
 # chart or a sweep runs (the mark is skipped whenever a lane or strike covers it, as before).
+# Version 7 knows touching a body costs a pill: outside escapes from warned attacks it keeps its feet
+# a few pixels off every body that hurts on touch, sliding round one in its way. Touches are named
+# touch_<id> in the hits by source.
 
 const WALL_LIMIT_MS := 1700000
 const SKILLS := {
@@ -372,6 +375,9 @@ func _steps(map: FloorMap, from_id: int, to_id: int) -> int:
 
 
 class Bot extends Node:
+	# How far ahead a walk is checked for a body, and how far off bodies the feet are kept (v7).
+	const BODY_LOOKAHEAD := 6.0
+	const BODY_MARGIN := 3.0
 	var scene
 	var skill: Dictionary
 	var rng: RandomNumberGenerator
@@ -496,6 +502,9 @@ class Bot extends Node:
 		_cut_tape_ahead()
 		if _dodge_against != Vector2.ZERO and _dodge_wish:
 			_move = _dodge_against
+		elif safe == Vector2.INF and _deep_goal == Vector2.INF and threat == Vector2.ZERO:
+			# Escapes from warned attacks go first; otherwise bodies are kept off.
+			_move = _keep_off_bodies(_move)
 		_press_move(_move)
 		_handle_dodge()
 		_handle_attack(target, delta)
@@ -1170,6 +1179,29 @@ class Bot extends Node:
 		if _path.size() >= 2:
 			return feet.direction_to(RoomBackdrop.cell_center(_path[1] if RoomBackdrop.cell_center(_path[0]).distance_to(feet) < 18.0 else _path[0]))
 		return me.direction_to(goal)
+
+	# A player keeps his feet off bodies that cost a pill to touch: a move heading into one loses the
+	# part that goes in, and feet already close step straight out. Dodges pass through, as in the game.
+	func _keep_off_bodies(move: Vector2) -> Vector2:
+		if _player.is_dodging():
+			return move
+		var feet: Vector2 = _player.feet().global_position
+		var box := ContactRule.feet_box(feet, Player.FEET_BOX_SIZE)
+		var ahead := box
+		if move != Vector2.ZERO:
+			ahead.position += move.normalized() * BODY_LOOKAHEAD
+		for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
+			if enemy.contact_damage() <= 0:
+				continue
+			var body := enemy.body_rect().grow(BODY_MARGIN)
+			if body.intersects(box):
+				var out := body.get_center().direction_to(feet)
+				return out if not out.is_zero_approx() else Vector2.DOWN
+			if move != Vector2.ZERO and body.intersects(ahead):
+				var toward := feet.direction_to(body.get_center())
+				var slid := move - toward * maxf(move.dot(toward), 0.0)
+				move = slid.normalized() if slid.length() > 0.2 else Vector2.ZERO
+		return move
 
 	func _walk_to(goal: Vector2) -> Vector2:
 		var feet: Vector2 = _player.feet().global_position
