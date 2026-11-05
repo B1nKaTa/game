@@ -11,7 +11,7 @@ const SNAP_RADIUS := 34.0
 const START_RANGE := 30.0
 const STRIKE_RANGE := 40.0
 const STRIKE_WINDUP := 0.45
-const COOLDOWN := 0.8
+const COOLDOWN := 1.2
 const WAKE_TEXT := "My tan!"
 const SAY_TIME := 1.0
 

@@ -7,7 +7,7 @@ extends EnemyBehavior
 const WAKE_RANGE := 72.0
 const BITE_WINDUP := 0.7
 const BITE_RADIUS := 34.0
-const COOLDOWN := 1.6
+const COOLDOWN := 2.2
 const SHUFFLE_SCALE := 1.0
 const WAKE_TEXT := "Is that you?"
 const SAY_TIME := 1.0
