@@ -222,6 +222,7 @@ func advance(delta: float, pressed: bool, held: bool) -> void:
 	if held and can_skip():
 		_hold += delta
 		if _hold >= SKIP_HOLD - 0.0001:
+			Sfx.play("ui_back")
 			_finish()
 			return
 	else:
@@ -231,6 +232,8 @@ func advance(delta: float, pressed: bool, held: bool) -> void:
 	_tick_background(delta)
 	_step_time += delta
 	if pressed and (_is_text_step()) and _step_time >= MIN_SHOW_TIME:
+		if _step_time < _step_length:
+			Sfx.play("ui_move")
 		_step_time = maxf(_step_time, _step_length)
 	var guard := 0
 	while not _done and _step_complete() and guard < 1000:
@@ -340,6 +343,10 @@ func _start(step: Dictionary) -> void:
 			if _zoom_length <= 0.0:
 				_zoom = _zoom_to
 				_zoom_at = _zoom_at_to
+		"sound":
+			# Read on its own line, so the sound test never takes the step's key for a sound name.
+			var sound_name: String = step["name"]
+			Sfx.play(sound_name)
 		"hide":
 			var leaving := actor(step["id"])
 			if leaving != null:

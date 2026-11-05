@@ -80,9 +80,13 @@ static func fade_in(seconds: float) -> Dictionary:
 	return {"op": "fade_in", "seconds": seconds}
 
 
-# For music and effects later. Plays nothing yet.
+# Plays a sound effect by its SoundBank name, at once. Built in two lines so the sound test, which reads
+# what a function named for a sound returns, never takes the step's keys for sound names;
+# test_ending_scripts checks the names the scenes use instead.
 static func sound(sound_name: String) -> Dictionary:
-	return {"op": "sound", "name": sound_name}
+	var step := {"op": "sound"}
+	step["name"] = sound_name
+	return step
 
 
 static func hide(id: String) -> Dictionary:

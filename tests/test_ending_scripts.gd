@@ -55,12 +55,19 @@ func test_every_scene_uses_only_known_steps_stages_and_actors() -> void:
 				placed[step["id"]] = true
 			if op == "anim":
 				assert_true(S.ANIM_TIME.has(step["name"]), "%s: anim %s" % [scene["name"], step["name"]])
+			if op == "sound":
+				assert_true(SoundBank.NAMES.has(step["name"]), "%s: sound %s" % [scene["name"], step["name"]])
 			if op in ["walk", "face", "anim", "tint", "hat", "hide", "look"]:
 				assert_true(placed.has(step["id"]), "%s: %s before %s is placed" % [scene["name"], op, step["id"]])
 			if op == "hide":
 				placed.erase(step["id"])
 			if op == "say" and not ActorLook.display_name(step["id"]).is_empty():
 				assert_true(placed.has(step["id"]), "%s: %s speaks before he is placed" % [scene["name"], step["id"]])
+
+
+func test_a_sound_step_names_its_sound() -> void:
+	assert_eq(S.sound("ui_confirm"), {"op": "sound", "name": "ui_confirm"})
+	assert_eq(S.duration_of([S.sound("ui_confirm")]), 0.0)
 
 
 func test_every_scene_lasts_as_long_as_it_should() -> void:
