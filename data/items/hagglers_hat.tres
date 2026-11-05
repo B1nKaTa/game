@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/hagglers_hat.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "hagglers_hat"
+display_name = "Haggler's Hat"
+description = "Each shop's cheapest item is half price. He hasn't paid full price since rationing."
+rarity = "common"
+tags = PackedStringArray("money")
+first_clear_path = "golden_years_mall"
+effect = SubResource("Effect")

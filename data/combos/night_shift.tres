@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ComboDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/combo_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "night_shift"
+display_name = "Night Shift"
+description = "Rooms never go dark, so the lights going out does nothing."
+item_a = "hearing_aid"
+item_b = "night_light"
+never_dark = true

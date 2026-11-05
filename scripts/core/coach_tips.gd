@@ -81,6 +81,17 @@ const TIPS := {
 	"tea_cosy": "Your own blasts can't touch you. Drop it at your feet and stand your ground.",
 	"rubber_stamps": "Every Slip pays you back. Open every locked thing you find.",
 	"kettle_whistle": "The blast stuns them. Wade in while their ears are still ringing.",
+	"coupon_booklet": "One more on the shelf. Look in every shop, there's always something.",
+	"penny_jar": "Coins come to you now. Keep fighting, the money follows.",
+	"lottery_scratcher": "A bit of cash every floor. Go deeper, scratch more.",
+	"pension_statement": "The more you've earned, the more it pays. Clear every room.",
+	"loaded_dice": "Win more at the tables, pay more at the tills. Gamble, don't shop.",
+	"expired_coupon": "One free shop a floor, but you shrink. Buy the heals, son.",
+	"hagglers_hat": "Cheapest thing's half off. Look for it first.",
+	"collection_plate": "Every one you finish pays a coin. So finish them all.",
+	"inheritance_letter": "Cash up front. Spend it at the next shop, it's no use to you dead.",
+	"tax_refund": "Walk out of a shop with nothing and get paid. Sometimes the best buy is none.",
+	"night_light": "When the lights go out, you see twice as far. Keep moving.",
 }
 
 const DEFAULT_TIP := "Pick something off the rack and I'll tell you what it's good for."

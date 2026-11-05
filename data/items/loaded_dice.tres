@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "loaded_dice"
+display_name = "Loaded Dice"
+description = "Arcade wins pay out more, but every shop charges you 20% more. Word gets around."
+rarity = "rare"
+cursed = true
+tags = PackedStringArray("money")
+first_clear_path = "golden_years_mall"
+shop_markup = 0.2
+arcade_win_bonus = 0.1

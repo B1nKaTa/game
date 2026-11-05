@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ComboDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/combo_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "card_shark"
+display_name = "Card Shark"
+description = "The poker table's wins pay 10% more again."
+item_a = "loaded_dice"
+item_b = "bingo_card"
+poker_win_bonus = 0.1

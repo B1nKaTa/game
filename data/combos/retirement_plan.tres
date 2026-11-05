@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ComboDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/combo_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "retirement_plan"
+display_name = "Retirement Plan"
+description = "Death pays back half of the run's Pension instead of a quarter."
+item_a = "golden_parachute"
+item_b = "pension_statement"
+death_pension_bonus = 0.25
