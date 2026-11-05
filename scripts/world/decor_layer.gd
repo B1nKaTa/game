@@ -179,5 +179,12 @@ func _draw_placeholder(kind: String, variant: int, at: Vector2) -> void:
 			draw_arc(Vector2.ZERO, 6.0, 0.0, TAU, 14, Color("4a4e58"), 1.0)
 			draw_rect(Rect2(-6, -9, 12, 3), Color("767c88"))
 			draw_rect(Rect2(-6, -9, 12, 3), Color("4a4e58"), false, 1.0)
+		RoomDecor.FOG:
+			# Two long, faint wisps lying flat across the cell. Only level streaks, never dots or
+			# patches (the sand's grains and bed) or upright bands (the mown stripes), and no outline,
+			# so fog never reads as a hazard or a warned lane.
+			var drift := -4.0 + variant * 2.5
+			draw_line(Vector2(-12 + drift, -3), Vector2(12 + drift, -3), p.fog, 4.0)
+			draw_line(Vector2(-9 - drift, 4), Vector2(13 - drift, 4), Color(p.fog, p.fog.a * 0.6), 3.0)
 	# Departures, Terminal Zero draws its own decor.
 	TerminalDecor.draw_placeholder(self, kind, variant, p)

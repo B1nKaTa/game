@@ -155,6 +155,8 @@ extends Resource
 @export var flag_cloth := Color("d9453b")
 @export var flag_pole := Color("f4f1e6")
 @export var ball_washer := Color("3b6fb0")
+# Thin ground fog (RoomDecor.FOG): faint flat wisps, kept see-through so nothing under them hides.
+@export var fog := Color(0.75, 0.82, 0.95, 0.14)
 
 
 func weight_of(kind: String) -> float:

@@ -33,6 +33,8 @@ const FICUS := "ficus"
 const OFFICE_CHAIR := "office_chair"
 # Departures, Terminal Zero: a departures board on its stand, with rows of amber flight times.
 const DEPARTURE_BOARD := "departure_board"
+# Fairway's End at Midnight: a wisp of thin ground fog lying flat on the grass.
+const FOG := "fog"
 const SYMBOL_KINDS := {
 	RoomLayout.SYMBOL_GRASS: GRASS,
 	RoomLayout.SYMBOL_BONES: BONES,
