@@ -100,6 +100,8 @@ var _ending_id := ""
 
 
 func _ready() -> void:
+	# Harold and the room's bodies are drawn in order of where their feet are (RoomView sorts too).
+	y_sort_enabled = true
 	_rng.randomize()
 	# An interrupted run comes back from its checkpoint, and never starts a new run on the way.
 	var resume := Progress.resume

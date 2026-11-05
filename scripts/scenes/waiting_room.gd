@@ -66,6 +66,8 @@ var _back_room_visit_won := false
 
 
 func _ready() -> void:
+	# Harold and the lobby's people are drawn in order of where their feet are (RoomView sorts too).
+	y_sort_enabled = true
 	_rng.randomize()
 	_floor_def = load(FLOOR_DEF_PATH)
 	_open_merchants = MerchantRules.open_ones(Departments.MERCHANTS, Progress.data)

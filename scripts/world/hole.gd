@@ -4,12 +4,16 @@ extends StaticBody2D
 # Grandpa and enemies that walk can't cross it, and nothing breaks it. Shots and the
 # thrown dentures fly over because it sits on its own layer, and ghosts ignore it.
 const LAYER := 8
+# Between the floor's decor (-9) and the bodies (0).
+const FLOOR_Z := -8
 
 var palette: RoomPalette
 
 
 func _ready() -> void:
 	add_to_group("holes")
+	# Flat on the floor, under the bodies the room sorts by y, so it never covers a foot.
+	z_index = FLOOR_Z
 	collision_layer = LAYER
 	collision_mask = 0
 	var shape := CollisionShape2D.new()

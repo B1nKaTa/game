@@ -49,6 +49,8 @@ func setup(npc_def: NpcDef, player: Node2D, start := 0) -> void:
 
 func _ready() -> void:
 	add_to_group("npcs")
+	# His art stands on his feet, so the room sorts him by them.
+	y_sort_enabled = true
 	if def != null:
 		var art := NpcSprite.new()
 		if art.setup(def.art()):

@@ -224,6 +224,10 @@ func setup(room: FloorRoom, map: FloorMap, floor_def: FloorDef, run: RunState, p
 
 
 func _ready() -> void:
+	# Everything at z 0 here is drawn in order of its y, with Harold among them (his scene sorts too):
+	# bodies stand on their feet (SpriteVisual.set_feet, NpcSprite), props on their middles. Flat floor
+	# things sit at a z below the bodies, so they never cover a foot.
+	y_sort_enabled = true
 	_walk_grid = WalkGrid.from_layout(_room.layout)
 	var backdrop := RoomBackdrop.new()
 	var palette := _floor_def.room_palette()

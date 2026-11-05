@@ -26,6 +26,7 @@ var _feedback: CombatFeedback
 
 
 func _ready() -> void:
+	y_sort_enabled = true
 	InputSetup.ensure()
 	var backdrop := RoomBackdrop.new()
 	backdrop.setup(PackedStringArray(ROWS))

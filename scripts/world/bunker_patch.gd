@@ -65,7 +65,8 @@ func sand_traps() -> Array:
 
 
 func lay() -> void:
-	z_index = 0
+	# Flat sand under the bodies the room sorts by y.
+	z_index = Hole.FLOOR_Z
 	for cell in _cells:
 		var sand := SandTrap.new()
 		sand.palette = _palette

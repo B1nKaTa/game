@@ -132,8 +132,15 @@ func _ready() -> void:
 	_feet = Marker2D.new()
 	_feet.position = FEET_OFFSET
 	add_child(_feet)
+	# His sprite stands on his feet at z 0, so the room sorts it among enemies, NPCs and props by where
+	# their feet are. What he draws himself (the swing, the cane skin, the crosshair) sits one z above,
+	# over every body, as it did before the room sorted.
+	y_sort_enabled = true
+	z_index = 1
 	_visual = SpriteVisual.new()
+	_visual.z_index = -1
 	add_child(_visual)
+	_visual.set_feet(SPRITE_FEET_Y)
 	_visual.setup("grandpa", Vector2(20, 28), Color("7d9a5c"), SPRITE_FRAME_WIDTH)
 	if not run.look.is_empty():
 		refresh_look()
@@ -144,7 +151,10 @@ func _ready() -> void:
 func refresh_look() -> void:
 	if _look == null:
 		_look = GrandpaLook.new()
-		add_child(_look)
+		# Worn on the sprite, so it sorts with him and never shows over a body in front of him.
+		_look.position = Vector2(0.0, -SPRITE_FEET_Y)
+		_visual.add_child(_look)
+		_look.z_index = 0
 	_look.setup(run.look)
 
 
