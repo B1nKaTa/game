@@ -5,7 +5,7 @@ extends EnemyBehavior
 # Running head on into a wall spills the bags and dazes him for a moment. Between runs he trudges after
 # Grandpa.
 const START_RANGE := 200.0
-const WINDUP := 0.8
+const WINDUP := 1.0
 const CHARGE_LENGTH := 260.0
 const CHARGE_SPEED := 300.0
 const LANE_WIDTH := 32.0

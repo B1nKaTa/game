@@ -86,7 +86,7 @@ func test_his_cart_stops_only_at_what_will_not_break_struck_head_on() -> void:
 
 
 func test_the_cart_run_follows_the_plan() -> void:
-	assert_near(BaggageHandlerBehavior.WINDUP, 0.8)
+	assert_near(BaggageHandlerBehavior.WINDUP, 1.0)
 	assert_near(BaggageHandlerBehavior.CHARGE_LENGTH, 260.0)
 	assert_near(BaggageHandlerBehavior.CHARGE_SPEED, 300.0)
 	assert_near(BaggageHandlerBehavior.LANE_WIDTH, 32.0)

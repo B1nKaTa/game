@@ -6,11 +6,11 @@ extends EnemyBehavior
 # of the chair, shown for its whole windup since he is right beside him, and then he chases and swats
 # as any brawler does.
 const WAKE_RANGE := 64.0
-const SNAP_WINDUP := 0.6
+const SNAP_WINDUP := 0.8
 const SNAP_RADIUS := 34.0
 const START_RANGE := 30.0
 const STRIKE_RANGE := 40.0
-const STRIKE_WINDUP := 0.45
+const STRIKE_WINDUP := 0.6
 const COOLDOWN := 1.2
 const WAKE_TEXT := "My tan!"
 const SAY_TIME := 1.0
@@ -90,7 +90,8 @@ func _wake_fully(enemy: Enemy) -> void:
 	_cooldown = COOLDOWN
 
 
-# Awake, he fights as a brawler: up close he winds up a swat, and otherwise he chases.
+# Awake, he fights as a brawler: up close he winds up a swat, shown for its whole windup as his
+# snap is, and otherwise he chases.
 func _brawl(enemy: Enemy, delta: float) -> void:
 	var distance := enemy.distance_to_target()
 	if _telegraph.is_active():
@@ -104,6 +105,6 @@ func _brawl(enemy: Enemy, delta: float) -> void:
 	if distance <= START_RANGE:
 		if _cooldown <= 0.0:
 			_telegraph.start(STRIKE_WINDUP)
-			enemy.set_warning(_telegraph, STRIKE_RANGE)
+			enemy.set_warning(_telegraph, STRIKE_RANGE, true)
 		return
 	enemy.desired_velocity = enemy.chase_direction() * enemy.def.speed

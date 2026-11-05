@@ -6,7 +6,7 @@ extends EnemyBehavior
 # well, so the turn reads before it comes. See ShuffleboardPuck.
 const TOO_CLOSE := 120.0
 const TOO_FAR := 220.0
-const WINDUP := 0.7
+const WINDUP := 0.9
 const WARNING_RADIUS := 18.0
 const SHOT_EVERY := 3.4
 const FIRST_SHOT := 1.4

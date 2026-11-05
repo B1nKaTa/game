@@ -5,7 +5,7 @@ extends EnemyBehavior
 # springs open with a warned bite around itself, shown whole since it starts right beside him. After
 # that it is awake: it shuffles after him on its little wheels and bites again whenever he is near.
 const WAKE_RANGE := 72.0
-const BITE_WINDUP := 0.7
+const BITE_WINDUP := 0.9
 const BITE_RADIUS := 34.0
 const COOLDOWN := 2.2
 const SHUFFLE_SCALE := 1.0
