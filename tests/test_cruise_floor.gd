@@ -57,7 +57,7 @@ func test_its_own_enemies_and_bosses() -> void:
 	for id in ["early_bird_diner", "shuffleboard_shark", "sunburnt_sunbather", "cruise_orderly", "cruise_stoker"]:
 		assert_true(ids.has(id), id)
 	assert_eq(ids.size(), 5)
-	assert_eq(def.enemy_weights, PackedInt32Array([3, 4, 3, 3, 2]))
+	assert_eq(def.enemy_weights, PackedInt32Array([4, 2, 2, 4, 1]))
 	assert_eq(def.mini_boss.id, "lorraine")
 	assert_eq(def.floor_boss.id, "commodore_wellington")
 	assert_eq(def.mimic.id, "mimic")
