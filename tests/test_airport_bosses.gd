@@ -429,9 +429,10 @@ func test_every_runway_pattern_with_the_ropes_up_leaves_a_way_out() -> void:
 		assert_true(stamp["mark"].distance_to(stamp["spot"]) > Augustine.STAMP_RADIUS, "seed %d: the mark is off the stamp" % seed_value)
 		live.set_extra_circle(stamp["spot"], Augustine.STAMP_RADIUS, Augustine.STAMP_WINDUP, Augustine.STAMP_WINDUP + OverlapRoute.STEP_TIME)
 		assert_true(live.escape(feet)["safe"], "seed %d: the stamp leaves a way out" % seed_value)
-	assert_true(centred > 100, "most patterns still run over him: %d of 200" % centred)
-	assert_true(stamps > 150, "the stamp nearly always finds a spot at once: %d of 200" % stamps)
-	assert_true(stamps_on_feet > 0, "and often on him: %d" % stamps_on_feet)
+	# Measured on 2026-11-05: 188 centred, 195 stamps, all 195 on his feet.
+	assert_true(centred >= 170, "most patterns still run over him: %d of 200" % centred)
+	assert_true(stamps >= 180, "the stamp nearly always finds a spot at once: %d of 200" % stamps)
+	assert_true(stamps_on_feet >= 170, "and nearly always on him: %d" % stamps_on_feet)
 
 
 func test_he_never_calls_over_the_cap_and_his_tour_groups_pay_nothing() -> void:
