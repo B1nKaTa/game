@@ -4,12 +4,16 @@ extends TestCase
 # items, and the combos they make possible (Full Set, Dentist's Nightmare, Bingo Night).
 
 const Hinge := preload("res://scripts/items/rusty_hinge.gd")
+const Rocking := preload("res://scripts/items/rocking_chair.gd")
 
 # id: [rarity, source, first-clear path or ""]
 const BATCH := {
 	"walker_tennis_balls": [ItemDef.COMMON, ItemUnlocks.START, ""],
 	"rusty_hinge": [ItemDef.COMMON, ItemUnlocks.START, ""],
+	"reading_glasses": [ItemDef.RARE, ItemUnlocks.START, ""],
+	"rocking_chair": [ItemDef.COMMON, ItemUnlocks.START, ""],
 	"rubber_ferrule": [ItemDef.COMMON, ItemUnlocks.START, ""],
+	"shoe_horn": [ItemDef.COMMON, ItemUnlocks.START, ""],
 }
 
 
@@ -97,7 +101,68 @@ func test_an_items_stun_holds_the_enemy_still() -> void:
 	kit.free_enemies()
 
 
+func test_reading_glasses_give_the_dodge_back_after_a_swing_landing_three() -> void:
+	var kit := ItemKit.new()
+	var run := kit.run_with(["reading_glasses"])
+	var effect = run.effects.effect_of("reading_glasses")
+	var enemy := kit.enemy("intern_reaper", 1000.0)
+	var swing := _swing()
+	run.effects.swing(swing)
+	run.effects.land(enemy, 1.0, RunEffects.SWING)
+	run.effects.land(enemy, 1.0, RunEffects.SWING)
+	run.effects.land(enemy, 1.0, RunEffects.ITEM)
+	run.effects.swing_end(swing)
+	assert_eq(effect.refunds, 0, "two of his own and an item's are not three")
+	run.effects.swing(swing)
+	for i in 3:
+		run.effects.land(enemy, 1.0, RunEffects.COMBO_3)
+	run.effects.swing_end(swing)
+	assert_eq(effect.refunds, 1)
+	var timer := DodgeTimer.new()
+	timer.try_start(1.0)
+	timer.tick(0.3)
+	timer.clear_cooldown()
+	assert_near(timer.cooldown_left(), 0.0)
+	assert_true(timer.try_start(1.0), "a refunded dodge starts at once")
+	kit.free_enemies()
+
+
+func test_rocking_chair_makes_the_first_swing_after_a_dodge_heavy() -> void:
+	var run := ItemKit.new().run_with(["rocking_chair"])
+	var plain := _swing()
+	run.effects.swing(plain)
+	assert_near(plain.damage, 10.0, "no dodge, no rhythm")
+	run.effects.dodge_end()
+	var first := _swing()
+	run.effects.swing(first)
+	assert_near(first.damage, 10.0 * Rocking.MULT)
+	assert_near(first.push, Rocking.PUSH)
+	var second := _swing()
+	run.effects.swing(second)
+	assert_near(second.damage, 10.0, "only the first")
+	run.effects.dodge_end()
+	run.effects.tick(Rocking.WINDOW + 0.05)
+	var late := _swing()
+	run.effects.swing(late)
+	assert_near(late.damage, 10.0, "too late")
+
+
 func test_rubber_ferrule_swings_faster_for_a_little_less() -> void:
 	var run := ItemKit.new().run_with(["rubber_ferrule"])
 	assert_near(run.stats.swing_speed, 1.15)
 	assert_near(run.damage_mult(), 0.95)
+
+
+func test_shoe_horn_hits_harder_while_an_enemy_winds_up() -> void:
+	var kit := ItemKit.new()
+	var run := kit.run_with(["shoe_horn"])
+	var enemy := kit.enemy()
+	assert_near(run.effects.hit_damage(enemy, 10.0, RunEffects.SWING), 10.0)
+	var windup := Telegraph.new()
+	windup.start(1.0)
+	enemy.set_warning(windup, 30.0)
+	assert_true(enemy.is_winding_up())
+	assert_near(run.effects.hit_damage(enemy, 10.0, RunEffects.BITE), 13.0)
+	windup.tick(1.0)
+	assert_near(run.effects.hit_damage(enemy, 10.0, RunEffects.SWING), 10.0, "the attack is out")
+	kit.free_enemies()

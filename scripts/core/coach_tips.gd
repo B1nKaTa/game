@@ -34,7 +34,10 @@ const TIPS := {
 	"undertakers_gloves": "What you finish stays finished. No bangs, no boxes. Go in close.",
 	"walker_tennis_balls": "Knock them back and keep them back. Space is your friend, son.",
 	"rusty_hinge": "Finish the combo every time. The third one sticks them.",
+	"reading_glasses": "Let them bunch up, then swing through the lot. Dodge's yours again.",
+	"rocking_chair": "Dodge in, swing at once. Rock and roll, that's the rhythm.",
 	"rubber_ferrule": "Quicker swings, lighter taps. Keep swinging, it adds up.",
+	"shoe_horn": "When they wind up, you wade in. Hit them mid-breath.",
 }
 
 const DEFAULT_TIP := "Pick something off the rack and I'll tell you what it's good for."
