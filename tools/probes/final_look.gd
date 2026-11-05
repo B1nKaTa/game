@@ -75,6 +75,8 @@ func _floor() -> void:
 	player.aim_source = func(): return player.global_position + Vector2(40, 0)
 	scene.debug_choose_path(0)
 	await _wait(0.3)
+	# The floor's first room is a live fight behind the map, so he is kept from dying in the shots.
+	player.run.health.lethal_saves = 99
 	# The real floor's big map, with the Floor Plan's rooms and the Fortune Teller's boss tags.
 	player.run.add_item(_item("floor_plan"))
 	player.run.add_item(_item("fortune_card"))
@@ -85,6 +87,7 @@ func _floor() -> void:
 	scene.debug_big_map().set_open(false)
 	await _wait(0.2)
 	var source: RoomLayout = load("res://data/rooms/floor_1/combat_02.tres")
+	player.run.health.heal(player.run.health.max_pills)
 	await _enter_layout(scene, source.duplicate())
 	await _wait(1.2)
 	await _shot("03_run_hud")
