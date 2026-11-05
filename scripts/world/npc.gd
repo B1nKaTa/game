@@ -20,6 +20,8 @@ const BUBBLE_PAD := Vector2(5, 3)
 # and every bubble stays inside the screen's sides.
 const BUBBLE_GAP := 18.0
 const BUBBLE_SIDE_MARGIN := 4.0
+# Hung below him, the bubble clears the Talk prompt under his feet.
+const BUBBLE_BELOW_GAP := 28.0
 # Speech draws above the room's props and pickups.
 const BUBBLE_Z := 50
 
@@ -200,7 +202,7 @@ static func bubble_box(at: Vector2, scale: Vector2, body_height: float, box_size
 	var above_y := -body_height / 2.0 - BUBBLE_GAP - box_size.y
 	var y := above_y
 	if at.y + above_y * zoom < Hud.BAND_BOTTOM:
-		y = body_height / 2.0 + BUBBLE_GAP
+		y = body_height / 2.0 + BUBBLE_BELOW_GAP
 	var x := -box_size.x / 2.0
 	var left := (BUBBLE_SIDE_MARGIN - at.x) / zoom
 	var right := (view.x - BUBBLE_SIDE_MARGIN - at.x) / zoom - box_size.x

@@ -276,3 +276,10 @@ func test_a_bosss_words_never_reach_into_the_huds_band() -> void:
 			assert_true(text_top >= Hud.BAND_BOTTOM or spot.y > 0.0, "words at %s reach into the HUD" % str(at))
 			assert_true(at.x + spot.x >= Enemy.SAY_MARGIN - 0.01 and at.x + spot.x + 90.0 <= view.x - Enemy.SAY_MARGIN + 0.01, "words at %s leave the screen" % str(at))
 	assert_true(Enemy.say_spot(Vector2(320, 200), 1.0, 52.0, 90.0, view).y < 0.0, "further down they stay over his head")
+
+
+func test_a_bubble_hung_below_clears_the_talk_prompt() -> void:
+	var body := 28.0
+	var rect := Npc.bubble_box(Vector2(320, 40), Vector2.ONE, body, Vector2(120, 16), Vector2(640, 360))
+	# The prompt's baseline is 12 px under his feet, and its text rises about 10 px above that.
+	assert_true(rect.position.y >= body / 2.0 + 12.0 + 4.0, "the bubble starts under the prompt")
