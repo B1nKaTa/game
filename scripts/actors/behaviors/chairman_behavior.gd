@@ -14,11 +14,11 @@ const GAVEL_DAMAGE := Enemy.HEAVIEST_DAMAGE
 # The gavel's warning shows for all of its windup, whatever the player's warning stat.
 const GAVEL_SHOWN_WHOLE := true
 const GAVEL_RADIUS := 44.0
-const PROJECTION_WINDUP := 0.6
+const PROJECTION_WINDUP := 0.45
 const BAR_WIDTH := 64.0
 # The open floor between two bars, wide enough to stand in.
 const BAR_GAP := 40.0
-const BAR_WARNING := 0.9
+const BAR_WARNING := 0.75
 const BAR_STAGGER := 0.3
 const BAR_STAND := 0.35
 # A bar cut down to less than this by a wall is left out.
@@ -39,13 +39,13 @@ const CHARGE_HIT_RANGE := 28.0
 const CHARGE_LANE_WIDTH := 52.0
 const CHARGE_DAMAGE := Enemy.HEAVY_DAMAGE
 const TAPE_WINDUP := 0.6
-const TAPE_EVERY := 16.0
+const TAPE_EVERY := 10.0
 const TAPE_ROWS := 3
 const TAPE_ROW_GAP := 3
 const WARNING_RADIUS := 40.0
 # Shorter than Mortimer's and the Mall Santa's 0.65 and 0.45.
-const BASE_COOLDOWN := 0.6
-const PHASE_TWO_COOLDOWN := 0.42
+const BASE_COOLDOWN := 0.35
+const PHASE_TWO_COOLDOWN := 0.25
 const PHASE_TWO_SPEED := 1.2
 const PHASE_TWO_WINDUP_SCALE := 0.8
 const KEEP_NEAR := 90.0

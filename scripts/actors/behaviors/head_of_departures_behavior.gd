@@ -23,8 +23,8 @@ const GATE_EVERY := 8.0
 const FIRST_GATE := 3.0
 const WARNING_RADIUS := 40.0
 # Shorter than Mortimer's and the Mall Santa's 0.65 and 0.45, as he must be clearly harder.
-const BASE_COOLDOWN := 0.6
-const PHASE_TWO_COOLDOWN := 0.4
+const BASE_COOLDOWN := 0.5
+const PHASE_TWO_COOLDOWN := 0.32
 const PHASE_TWO_SPEED := 1.2
 const PHASE_TWO_WINDUP_SCALE := 0.8
 # Below half health the barriers' timer runs this many times as fast.
@@ -33,7 +33,7 @@ const KEEP_NEAR := 90.0
 const MAX_ENEMIES := 5
 const SUMMON_COUNT := 3
 const FIRST_SUMMON := 1.5
-const SUMMON_EVERY := 10.0
+const SUMMON_EVERY := 8.0
 const SUMMON_DISTANCE := 100.0
 const SAY_TIME := 1.0
 

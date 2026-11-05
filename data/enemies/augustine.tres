@@ -8,7 +8,7 @@
 script = ExtResource("1")
 id = "augustine"
 display_name = "Augustine, Head of Departures"
-max_hp = 865.385
+max_hp = 923.077
 speed = 80.0
 pension_drop = 16
 is_boss = true

@@ -344,7 +344,8 @@ func test_augustine_is_clearly_harder_than_the_last_depths_floor_bosses() -> voi
 	var def := _load("augustine")
 	assert_true(def.is_boss)
 	var final := def.max_hp * TERMINAL_HEALTH
-	assert_true(absf(final - 2250.0) < 0.5, str(final))
+	# 2400 since the balance pass of 2026-11-05: just below the Chairman.
+	assert_true(absf(final - 2400.0) < 0.5, str(final))
 	assert_true(final >= FLOOR_FOUR_BOSS * 1.1, "the spec's fourth-floor floor bosses end at about 1950")
 	for id in ["mortimer_grimsby", "mall_santa"]:
 		assert_true(final >= _load(id).max_hp * FLOOR_THREE_HEALTH * 1.3, id)

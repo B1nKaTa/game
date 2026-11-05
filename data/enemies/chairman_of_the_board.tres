@@ -7,7 +7,7 @@
 script = ExtResource("1")
 id = "chairman_of_the_board"
 display_name = "The Chairman of the Board"
-max_hp = 865.385
+max_hp = 961.538
 speed = 80.0
 pension_drop = 16
 is_boss = true
