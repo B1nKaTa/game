@@ -117,7 +117,7 @@ func _waiting() -> void:
 	scene = current_scene
 	player = scene.player
 	for id in [Departments.LOBBY, Departments.BOUNTY_OFFICE, Departments.TRAINING_YARD, Departments.BACK_ROOM,
-			Departments.PURSERS_OFFICE, Departments.PRO_SHOP, Departments.DUTY_FREE, Departments.EXECUTIVE_SUITE]:
+			Departments.PURSERS_OFFICE, Departments.CRYSTAL_COUNTER, Departments.DUTY_FREE, Departments.EXECUTIVE_SUITE]:
 		scene.debug_enter_department(id)
 		await _wait(0.5)
 		view = scene.debug_room_view()

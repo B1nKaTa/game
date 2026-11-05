@@ -63,7 +63,7 @@ The code is in `scripts/world/npc_sprite.gd` and is used by `scripts/world/npc.g
 - `res://art/npcs/<art_id>/rotations.png` holds 8 frames in the order S, SE, E, NE, N, NW, W, SW (`direction()`). South plays the idle loop; every other way holds a rotation.
 - The feet go on the node origin. Each strip is placed by its own lowest used row (`used_rows`), because PixelLab's idle frames stand 1 to 5 px higher than its rotations.
 - The strips are built by `py tools/art/npc_strips.py <export> art/npcs`.
-- All 9 art ids have art: coach_bertram, dealer, deputy_dolores, duty_free_clerk, gerald, pro_shop_keeper, purser, severance_clerk, shop_merchant. `dealer_back_room` uses `dealer`.
+- 8 art ids have art: coach_bertram, dealer, deputy_dolores, duty_free_clerk, gerald, purser, severance_clerk, shop_merchant. `dealer_back_room` uses `dealer`. Esme (`esme`, the Crystal Counter's keeper) waits for hers and is drawn as a placeholder.
 
 ### 1.3 Case-file icons
 
@@ -757,9 +757,9 @@ One PX per item at 32 px, scaled down for the HUD, would be about 100 gens plus 
 
 ### 2.13 The Waiting Room (`scripts/scenes/waiting_room.gd`, `scripts/core/departments.gd`)
 
-There are 14 departments: Lobby, Hallway, Bounty Office, Training Yard, Apothecary Wing, Boiler Room, Decor Office, Back Room, Annexe, Upper Landing, Purser's Office, Pro Shop, Duty Free, Executive Suite.
+There are 14 departments: Lobby, Hallway, Bounty Office, Training Yard, Apothecary Wing, Boiler Room, Decor Office, Back Room, Annexe, Upper Landing, Purser's Office, Crystal Counter, Duty Free, Executive Suite.
 
-**People.** The NPCs with art are Gerald, Deputy Dolores, Coach Bertram, the Dealer, the Purser, the Pro Shop keeper, the Duty Free clerk and the Severance clerk. They need no new art.
+**People.** The NPCs with art are Gerald, Deputy Dolores, Coach Bertram, the Dealer, the Purser, the Duty Free clerk and the Severance clerk. They need no new art. Esme, the Crystal Counter's keeper, needs hers.
 
 The five station people need art, after moving them to NpcSprite (H10). Each is C48 plus an idle facing south (1 A); the 8 rotations come with the character.
 
@@ -783,7 +783,7 @@ The five station people need art, after moving them to NpcSprite (H10). Each is 
 | noticeboard | Lobby | 34x24 | MO 1 |
 | decor_counter | Decor Office | 44x24 | MO 1 |
 | item_rack | Training Yard | 36x28 | MO 1 |
-| Pro Shop board | Pro Shop | 40x24 | MO 1 |
+| Crystal Counter board | Crystal Counter | 40x24 | MO 1 |
 | Duty Free board | Duty Free | 40x24 | MO 1 |
 | severance_desk | Executive Suite | 48x24 | MO 1 |
 | employee_plaque | Executive Suite | 30x20 | MO 1 |

@@ -6,7 +6,7 @@ const HOLD_DELAY := 0.2
 const DAMAGE := 30
 const KNOCKBACK := 220.0
 
-# How long this charge takes, which the Golf Glove shortens. Never below HOLD_DELAY's worth.
+# How long this charge takes, which the Charging Crystal shortens. Never below HOLD_DELAY's worth.
 var charge_time := CHARGE_TIME
 var _holding := false
 var _time := 0.0

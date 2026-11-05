@@ -25,7 +25,7 @@ const VOICES := {
 	"dr_squint": {"sound": "blip_nasal", "pitch": 1.0},
 	# The four keepers of the deep floors' counters.
 	"purser": {"sound": "blip_prim", "pitch": 0.85},
-	"pro_shop_keeper": {"sound": "blip_plain", "pitch": 1.2},
+	"esme": {"sound": "blip_mystic", "pitch": 1.2},
 	"duty_free_clerk": {"sound": "blip_smooth", "pitch": 1.25},
 	"severance_clerk": {"sound": "blip_nasal", "pitch": 0.8},
 	"gerald": {"sound": "blip_gruff", "pitch": 1.25},

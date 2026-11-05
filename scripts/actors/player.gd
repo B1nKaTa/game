@@ -462,7 +462,7 @@ func _handle_attacks() -> void:
 		var damage := _combo.try_attack()
 		if damage > 0:
 			_swing(damage, ATTACK_REACH, ATTACK_ANGLE, ATTACK_PUSH, false, damage == CaneCombo.DAMAGE[-1])
-		# The Golf Glove charges it faster, so its time is read at every press.
+		# The Charging Crystal charges it faster, so its time is read at every press.
 		_charge.charge_time = ChargeSwing.CHARGE_TIME * run.stats.charge_time_mult
 		_charge.start()
 	if Input.is_action_just_released("attack"):

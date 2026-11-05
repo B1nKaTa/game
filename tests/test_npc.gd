@@ -223,7 +223,7 @@ func test_dolores_has_a_word_for_every_poster_and_for_paying() -> void:
 
 # --- the deep floors' keepers ---
 
-const KEEPERS := ["res://data/npcs/purser.tres", "res://data/npcs/pro_shop_keeper.tres", "res://data/npcs/duty_free_clerk.tres", "res://data/npcs/severance_clerk.tres"]
+const KEEPERS := ["res://data/npcs/purser.tres", "res://data/npcs/esme.tres", "res://data/npcs/duty_free_clerk.tres", "res://data/npcs/severance_clerk.tres"]
 
 
 func test_each_keeper_has_a_rotation_of_short_openers_and_a_word_for_each_run() -> void:
@@ -295,6 +295,10 @@ func _npc_defs() -> Array[NpcDef]:
 	return defs
 
 
+# NPCs drawn as a placeholder until the art pass reaches them.
+const AWAITING_ART := ["esme"]
+
+
 func test_every_npc_with_art_loads_his_idle_loop_and_rotations() -> void:
 	var with_art := 0
 	for def in _npc_defs():
@@ -307,11 +311,15 @@ func test_every_npc_with_art_loads_his_idle_loop_and_rotations() -> void:
 		assert_eq(sprite.rotation_frames(), NpcSprite.DIRECTIONS, "%s turns eight ways" % def.id)
 		assert_true(sprite.height >= 36.0 and sprite.height <= NpcSprite.FRAME, "%s stands about Harold's height" % def.id)
 		sprite.free()
-	assert_eq(with_art, _npc_defs().size(), "everyone has art, the back room's Dealer the Dealer's")
+	assert_eq(with_art, _npc_defs().size() - AWAITING_ART.size(), "everyone has art but those still waiting, the back room's Dealer the Dealer's")
+	for id in AWAITING_ART:
+		assert_false(NpcSprite.has_art(id), "%s's art has come, so the list can lose him" % id)
 
 
 func test_npc_art_is_imported_sharp() -> void:
 	for def in _npc_defs():
+		if AWAITING_ART.has(def.art()):
+			continue
 		for path in [NpcSprite.idle_path(def.art()), NpcSprite.rotations_path(def.art())]:
 			var settings := FileAccess.get_file_as_string(path + ".import")
 			assert_true(settings.contains("mipmaps/generate=false"), path)

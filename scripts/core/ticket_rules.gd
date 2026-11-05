@@ -23,7 +23,7 @@ const ARRIVAL_LINES: Array[String] = [
 	"Deputy Dolores: Your file has grown a second file.",
 	"Coach Bertram: Drop and give me twenty. Pills, I mean.",
 	"The Purser: I've packed you a sandwich. It's mostly bag.",
-	"Duffy: New gloves in. Same old swing, I expect.",
+	"Esme: New crystals in. They hum. Try not to hum back.",
 	"Ingrid: Duty Free has a sale. Everything must go. So must you.",
 	"Mr. Hollis: Your severance has been processed. You haven't.",
 ]
@@ -35,7 +35,7 @@ const ARRIVAL_DEPARTMENTS: Array[String] = [
 	"bounty_office",
 	"training_yard",
 	"pursers_office",
-	"pro_shop",
+	"crystal_counter",
 	"duty_free",
 	"executive_suite",
 ]

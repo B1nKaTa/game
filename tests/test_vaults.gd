@@ -391,7 +391,7 @@ func test_the_blast_shows_each_level() -> void:
 
 func test_every_upgrade_total_is_known() -> void:
 	# 2055 before the vaults. The Thermos fuel adds 380, Denture Adhesive 410, and nothing else may change quietly.
-	# The deep floors' forms add the Golf Glove's 1040, Frequent Flyer Miles' 1300 and the Golden Handshake's 1650.
+	# The deep floors' forms add the Charging Crystal's 1040, Frequent Flyer Miles' 1300 and the Golden Handshake's 1650.
 	var total := 0
 	for upgrade in Content.upgrades():
 		for level in upgrade.max_level():

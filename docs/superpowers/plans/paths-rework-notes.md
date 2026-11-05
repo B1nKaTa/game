@@ -31,3 +31,13 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
   keep their names, so the old tunes play under the new ids until Task 5 writes the new ones.
 - **Code comments about the old content** (sand bunkers, golf props, Mall tiles and the like) stay
   as they are, since that code is retired with its content in Tasks 4 and 5.
+- **Crystal Counter:** the Pro Shop's department and merchant ids both become `crystal_counter`
+  (the Golf Glove's `merchant` too), and its Waiting Room layout moves to `crystal_counter.tres`;
+  its board reads "Crystals" on the old 40x24 board, in violet.
+- **The Golf Glove** keeps its id `golf_glove` and its effects, renamed the Charging Crystal, with
+  options Full Moon (harder charged swings) and Burning Sage (faster combo), so saved levels and
+  form choices need no migration.
+- **Esme** speaks with `blip_mystic` at pitch 1.2, so she sounds apart from Madame Murk (1.0), and
+  stands where Duffy stood. She has no art yet, so test_npc keeps an `AWAITING_ART` list (`esme`)
+  that the art pass empties. Duffy's NpcDef and art folder are deleted; nothing else used them.
+- **Ticket line:** Duffy's new-arrival line becomes Esme's, in the same slot.
