@@ -22,4 +22,5 @@ func _draw_placeholder() -> void:
 	draw_line(Vector2(0, -13), Vector2(0, -17), Color("c9cdd6"), 2.0)
 	draw_line(Vector2(-4, -17), Vector2(4, -17), Color("c9cdd6"), 2.0)
 	draw_rect(Rect2(9, -11, 4, 9), Color("fbfbf4"))
-	draw_line(Vector2(9, -8), Vector2(13, -8), p.flag_cloth, 1.0)
+	# The club's green stripe on the towel: the pale pennant cloth would vanish on white.
+	draw_line(Vector2(9, -8), Vector2(13, -8), p.golf_cart_roof, 1.0)
