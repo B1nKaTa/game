@@ -1,7 +1,7 @@
 extends TestCase
 
 # One test per rule of the hundred items' second batch: the ten dodge and movement items and the first
-# ten defence and health items.
+# ten defence and health items, and the combo they make possible (Mobility Scooter).
 
 const BadHip := preload("res://scripts/items/bad_hip.gd")
 const Afterimage := preload("res://scripts/items/afterimage.gd")
@@ -9,6 +9,7 @@ const Wheels := preload("res://scripts/items/wheelchair_wheels.gd")
 const Peel := preload("res://scripts/items/banana_peel.gd")
 const Sympathy := preload("res://scripts/items/sympathy_card.gd")
 const Bottle := preload("res://scripts/items/hot_water_bottle.gd")
+const Scooter := preload("res://scripts/items/mobility_scooter.gd")
 
 # id: [rarity, source, first-clear path or "", cursed]
 const BATCH := {
@@ -420,3 +421,24 @@ func test_while_the_loop_counts_pills_items_neither_block_nor_heal() -> void:
 	assert_true(driver.contains("run.effects.ctx.counting_pills = true"), "the full loop sets it")
 	kit.free_enemies()
 
+
+func test_mobility_scooter_lays_a_fire_trail_that_burns_now_and_then() -> void:
+	var kit := ItemKit.new()
+	var run := _with_combos(kit, ["titanium_hip", "wheelchair_wheels"])
+	assert_true(run.effects.has_combo("mobility_scooter"))
+	assert_false(_with_combos(kit, ["wheelchair_wheels"]).effects.has_combo("mobility_scooter"))
+	var scooter := Scooter.new()
+	assert_true(scooter.trail(run.effects.ctx, Vector2.ZERO))
+	assert_false(scooter.trail(run.effects.ctx, Vector2(Scooter.STEP - 1.0, 0)), "not every frame")
+	assert_true(scooter.trail(run.effects.ctx, Vector2(Scooter.STEP, 0)))
+	assert_eq(kit.fx_of(ItemFx.FxBurn).size(), 2)
+	var burn := ItemFx.make_burn(run.effects.ctx, Scooter.RADIUS, Scooter.TIME, Scooter.DAMAGE)
+	var enemy := kit.enemy("intern_reaper", 100.0)
+	enemy.position = Vector2(4, 0)
+	assert_eq(burn.burn_touching([enemy]), 1)
+	assert_near(enemy.hp, 100.0 - Scooter.DAMAGE)
+	assert_eq(burn.burn_touching([enemy]), 0, "not again at once")
+	burn.age += ItemFx.FxBurn.BURN_EVERY
+	assert_eq(burn.burn_touching([enemy]), 1)
+	burn.free()
+	kit.free_enemies()
