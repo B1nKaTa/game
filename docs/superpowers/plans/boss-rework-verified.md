@@ -1,4 +1,17 @@
-# Floor-5 boss rework: checks still owed
+# Floor-5 boss rework: verified 2026-11-05
+
+Checked on `round-2` with Godot 4.7.2: headless import clean; `tools/test.ps1` 1972 tests, 0 failed, with exit-time leak lines identical to `integration` 85e7162 (3 Body2D RIDs, 3 CanvasItem RIDs, 6 ObjectDB instances, 2 resources); three full loops in `git archive` copies (D:\grandpa-verify-r2-1..3) all passed in 615, 627 and 625 s, with exit leaks matching an `integration` loop run alongside (627 s) and no warning line that loop lacks. The save guard held: slot_1/save.json stayed 510284fa2ead4647c94fee44f99ca787. Screenshots are in D:\grandpa-shots-r2\ (tools/probes/round2_look.gd, and golf_look.gd into golf\).
+
+- Fixed: a phase-two chart with its tape could leave no reachable spot (1 seed in 200); `choose_chart` now re-rolls up to 8 layouts. The 200-seed gavel test froze Grandpa under a falling bar 1.55 s into a chart; it now finds him on the mark for a late gavel and counts states the bars alone have lost (2 of 200). Measured thresholds: gavel on his feet 194 of 200 (test >= 175); runway centred 188, stamps found 195, stamps on feet 195 (tests >= 170, 180, 170).
+- Fixed: runway_plan took up to 169 ms in the 30x17 room. Tries share one floor and the floor is built per block and per cell: worst runway 33 ms, chart 7 ms, stamp 33 ms, gavel under 1 ms.
+- Slack beyond the 0.3 s reaction (tools/probes/slack_probe.gd, 200 seeds): runway median 1.0 s (p10 0.35), runway then stamp 0.45 (p10 0.2), chart 1.55 (p10 0.35), chart then gavel 0.45 (p10 0.2).
+- Screenshots b1-b7 (gavel during a chart in both phases, desk slam ring, papers and shove) and a1-a3 (runway with ropes up and its mark, a stamp and a gate change during a pattern) all read. The desk slam's outer ring is a thin line, fainter than the gavel's double ring.
+- Bot, max good, 20 fights a batch (wins; boss health left on losses). Before the rework: Augustine 18, 18; the Chairman 20, 20. After, bot v6: Augustine 0, 0; the Chairman 9, 11, 10. Bot v7 with escapes sliding round bodies: Augustine 0, 0 (36%, 37% left); the Chairman 13, 15, then with charts every 1.6 s (1.0 s in phase two) 13, 12 (11%, 10%); the Commodore 4, 2 and 6, 4 (21%, 28%); Thaddeus 0, 0 and 1, 1 (26%). At 3000 health the Chairman still won 12 and 7 (13%, 15%) in fights of 146 to 162 s, so that was reverted.
+- So Augustine already sits above the fourth floor for the bot, which mostly loses his runway among the ropes (90 to 104 runway hits a batch) though the slack matches the chart's. The Chairman is still the easiest deep boss for the bot; health and chart pacing do not change that. Left for the user.
+
+The original list of owed checks follows.
+
+## Floor-5 boss rework: checks still owed
 
 Branch `boss-rework`, off `integration` at 85e7162 (1927 tests passing there). Written on 2026-11-05.
 Testing was put on hold partway through the work. **None of the rework has been parsed or run by

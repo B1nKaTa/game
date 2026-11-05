@@ -1,4 +1,14 @@
-# Fairway's End at Midnight: what has not been run yet
+# Fairway's End at Midnight: verified 2026-11-05
+
+Checked on `round-2` with Godot 4.7.2: headless import clean; `tools/test.ps1` 1972 tests, 0 failed, with exit-time leak lines identical to `integration` 85e7162 (3 Body2D RIDs, 3 CanvasItem RIDs, 6 ObjectDB instances, 2 resources); three full loops in `git archive` copies (D:\grandpa-verify-r2-1..3) all passed in 615, 627 and 625 s, with exit leaks matching an `integration` loop run alongside (627 s) and no warning line that loop lacks. The save guard held: slot_1/save.json stayed 510284fa2ead4647c94fee44f99ca787. Screenshots are in D:\grandpa-shots-r2\ (tools/probes/round2_look.gd, and golf_look.gd into golf\).
+
+- The golf tests pass; fog loads and draws; the pennant polygon draws with no error (golf_look.gd: 54 shots, no errors).
+- Screenshots g1-g10 and golf\*: red warnings in the dark corners (Gopher ring, golfer fan, Caddie lane, Chip's spots, the hole in one) all read; the Gopher reads on the grass; hedges read as dark overgrowth; the pennant, washer and carts read; the fog is two faint wisps, never a lane. The long name fits the Crossroads sign, the big map and the HUD row (a small gap to the consumable label).
+- Darkness: not too dark. The course reads as a deep blue night rather than black, as dark as the Records Basement. The sand, left at its dusk colour, glows a near-white periwinkle under the cold light (whitest under a wall light); warnings and the Caddie still read on it, but it looks more like snow than a bunker. Left for the user.
+
+The original list of owed checks follows.
+
+## Fairway's End at Midnight: what has not been run yet
 
 On 2026-11-05, with testing on hold, the floor-4 east path `fairways_end` was restyled from dusk to
 midnight on `round-2`: the same course, mechanics, layouts, numbers and sand rule, under a darker,
