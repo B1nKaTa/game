@@ -28,6 +28,9 @@ extends Resource
 @export var art_hue_width: float = 0.0
 # Multiplies the value of those same hues, to lift a dark robe a floor's light would swallow.
 @export var art_value: float = 1.0
+# Whether its east-drawn art is mirrored to face west. An object drawn facing south (the mimic, the
+# Lost Luggage, the steam valve) never turns, so it is never mirrored. Looks only.
+@export var art_flips: bool = true
 @export var behavior_script: Script
 @export var summon: EnemyDef
 # How many spawn together at one enemy cell. Only the first of a group pays.

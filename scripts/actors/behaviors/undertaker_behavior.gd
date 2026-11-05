@@ -194,6 +194,12 @@ func _begin(enemy: Enemy, attack: int, phase_two: bool) -> void:
 			enemy.set_warning_lane(_volley_aim, WREATH_SPEED, LANE_WIDTH, false)
 		_:
 			enemy.set_warning(_telegraph, WARNING_RADIUS)
+	# Looks only: his own move plays over the windup and the moment it lands.
+	match attack:
+		Attack.WREATHS:
+			enemy.play_anim("wreath_throw", windup_for(attack, phase_two) + EnemyAnim.ATTACK_TIME)
+		Attack.PITS:
+			enemy.play_anim("point", windup_for(attack, phase_two) + EnemyAnim.ATTACK_TIME)
 
 
 func _finish_attack(enemy: Enemy, phase_two: bool) -> void:

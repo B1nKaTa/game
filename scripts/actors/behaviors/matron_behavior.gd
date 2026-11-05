@@ -178,6 +178,8 @@ func _begin(enemy: Enemy, attack: int, phase_two: bool) -> void:
 		Attack.LIGHTS_OUT:
 			enemy.set_warning(_telegraph, WARNING_RADIUS)
 			enemy.say("Lights out, dearie.", SAY_TIME)
+			# Looks only: her gesture plays over the windup and the moment the lights go.
+			enemy.play_anim("lights_out", windup_for(attack, phase_two) + EnemyAnim.ATTACK_TIME)
 		Attack.VISITING:
 			enemy.set_warning(_telegraph, WARNING_RADIUS)
 			enemy.say("Visiting hours!", SAY_TIME)
@@ -197,6 +199,8 @@ func _finish_attack(enemy: Enemy, phase_two: bool) -> void:
 		Attack.GURNEY:
 			var end := charge_end(enemy.global_position, _aim, GURNEY_LENGTH, enemy.open_ground) if enemy.open_ground.is_valid() else enemy.global_position + _aim * GURNEY_LENGTH
 			_dash.start(_aim, enemy.global_position.distance_to(end), GURNEY_SPEED, GURNEY_HIT_RANGE, Enemy.HEAVY_DAMAGE)
+			# Looks only: she pushes the gurney for as long as the dash runs.
+			enemy.play_anim("charge", enemy.global_position.distance_to(end) / GURNEY_SPEED)
 		Attack.LIGHTS_OUT:
 			_since_lights_out = 0.0
 			_dark_left = LIGHTS_OUT_WARNING + LIGHTS_OUT_TIME

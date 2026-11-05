@@ -179,6 +179,8 @@ func _begin(enemy: Enemy, attack: int, phase_two: bool) -> void:
 			enemy.set_warning_lane(_aim, FOGHORN_LENGTH, FOGHORN_WIDTH)
 			_foghorn_length = enemy.warning_lane_length()
 			enemy.say("BWAAAMP!", SAY_TIME)
+			# Looks only: his own move plays over the windup and the moment it lands.
+			enemy.play_anim("foghorn_blast", windup_for(attack, phase_two) + EnemyAnim.ATTACK_TIME)
 		Attack.PORT:
 			_aim = port_side(_rng.randf())
 			enemy.set_warning(_telegraph, WARNING_RADIUS)
@@ -186,6 +188,7 @@ func _begin(enemy: Enemy, attack: int, phase_two: bool) -> void:
 		Attack.BUOYS:
 			enemy.set_warning(_telegraph, WARNING_RADIUS)
 			enemy.say("Man overboard!", SAY_TIME)
+			enemy.play_anim("buoy_call", windup_for(attack, phase_two) + EnemyAnim.ATTACK_TIME)
 			_roll_buoys(enemy)
 
 

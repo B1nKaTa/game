@@ -294,9 +294,12 @@ func _begin(enemy: Enemy, attack: int, phase_two: bool) -> void:
 			_aim = enemy.direction_to_target()
 			enemy.set_warning(_telegraph, WARNING_RADIUS * 0.6)
 			enemy.set_warning_cone(_aim, SPRAY_LENGTH, SPRAY_ANGLE)
+			# Looks only: his own move plays over the windup and the moment it lands.
+			enemy.play_anim("embalming_spray", windup_for(attack, phase_two) + EnemyAnim.ATTACK_TIME)
 		Attack.CRESCENDO:
 			enemy.set_warning(_telegraph, WARNING_RADIUS)
 			enemy.say("A little music!", SAY_TIME)
+			enemy.play_anim("conduct", windup_for(attack, phase_two) + EnemyAnim.ATTACK_TIME)
 		Attack.CHARGE:
 			_aim = enemy.direction_to_target()
 			enemy.set_warning(_telegraph, CHARGE_HIT_RANGE)

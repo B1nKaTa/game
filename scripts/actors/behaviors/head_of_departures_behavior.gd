@@ -338,9 +338,12 @@ func _begin(enemy: Enemy, attack: int, phase_two: bool) -> void:
 		Attack.RUNWAY:
 			enemy.set_warning(_telegraph, WARNING_RADIUS)
 			enemy.say("Clear the runway!", SAY_TIME)
+			# Looks only: his own move plays over the windup and the moment it lands.
+			enemy.play_anim("runway_signal", windup_for(attack, phase_two) + EnemyAnim.ATTACK_TIME)
 		Attack.GATE:
 			enemy.set_warning(_telegraph, WARNING_RADIUS)
 			enemy.say("Gate change!", SAY_TIME)
+			enemy.play_anim("gate_change", windup_for(attack, phase_two) + EnemyAnim.ATTACK_TIME)
 
 
 func _finish_attack(enemy: Enemy, phase_two: bool) -> void:
