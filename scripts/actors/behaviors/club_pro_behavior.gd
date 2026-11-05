@@ -8,20 +8,20 @@ extends EnemyBehavior
 const CHIP_WINDUP := 0.6
 const CHIPS := 4
 const CHIP_RADIUS := 22.0
-const CHIP_WARNING := 0.9
+const CHIP_WARNING := 0.75
 # Each ball lands this long after the one before.
 const CHIP_STEP := 0.12
 # How far from his feet a ball may land.
 const CHIP_REACH := 80.0
 const CHIP_TRIES := 40
-const PUTT_WINDUP := 0.7
+const PUTT_WINDUP := 0.6
 # The putt rolls this far past Grandpa, breaking this far to one side at its middle.
 const PUTT_PAST := 80.0
 const PUTT_BEND := 70.0
 const PUTT_STEPS := 14
 const WARNING_RADIUS := 34.0
 # As short as the Reverend's rest, and shorter than Gloria's.
-const COOLDOWN := 0.4
+const COOLDOWN := 0.35
 const KEEP_NEAR := 110.0
 const FIRST_SUMMON := 5.0
 const SUMMON_EVERY := 8.0
