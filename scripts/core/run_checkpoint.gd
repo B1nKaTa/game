@@ -118,10 +118,12 @@ static func apply_run(run: RunState, raw: Dictionary, items: Array[ItemDef]) -> 
 		perks[str(id)] = true
 	run.perks = perks
 	run.apply_perks()
+	# Through add_item, so each item's effect and any combo come back too. The pills and saves it
+	# touches are set from the file below.
 	for id in raw.get("items", []):
 		for item in items:
 			if item.id == str(id):
-				run.items.append(item)
+				run.add_item(item)
 				break
 	run.refresh_stats()
 	run.health.max_pills = maxi(int(raw.get("max_pills", run.health.max_pills)), 1)

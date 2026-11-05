@@ -112,6 +112,20 @@ func test_a_run_round_trips() -> void:
 	assert_eq(back.stats.max_pills, run.stats.max_pills, "stats are worked out from the items again")
 
 
+func test_a_resumed_run_gets_its_items_effects_and_combos_back() -> void:
+	var run := _fresh_run()
+	run.effects.set_combos(Content.combos())
+	run.add_item(_item("bingo_card"))
+	run.add_item(_item("bingo_dabber"))
+	var raw: Dictionary = JSON.parse_string(JSON.stringify(RunCheckpoint.run_to_dict(run)))
+	var back := _fresh_run()
+	back.effects.set_combos(Content.combos())
+	RunCheckpoint.apply_run(back, raw, Content.items())
+	assert_true(back.effects.effect_of("bingo_card") != null, "the item's effect is held again")
+	assert_true(back.effects.has_combo("bingo_night"), "the combo forms again")
+	assert_eq(back.items.size(), 2)
+
+
 func test_the_ending_tracking_round_trips_through_the_checkpoint() -> void:
 	var run := _fresh_run()
 	run.play_time = 812.34
