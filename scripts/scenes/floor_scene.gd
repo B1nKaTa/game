@@ -101,6 +101,9 @@ func _ready() -> void:
 	var resume := Progress.resume
 	Progress.resume = {}
 	_resumed = not resume.is_empty() and not Progress.is_dev_run() and _resume_map(resume)
+	if not resume.is_empty() and not _resumed:
+		# A checkpoint this build cannot rebuild is no run, so it goes and is never offered again.
+		Progress.clear_checkpoint()
 	if _resumed:
 		_resume_run(resume)
 	else:

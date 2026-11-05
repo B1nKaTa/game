@@ -267,5 +267,18 @@ func test_the_first_crossroads_writes_and_resumes_a_start_checkpoint() -> void:
 	assert_true(resume.contains("kind == MAP_START"), "a start checkpoint is rebuilt")
 	assert_true(resume.contains("FloorMap.with_only_crossroads(load(CROSSROADS_LAYOUT))"))
 	var map := FloorMap.with_only_crossroads(load("res://data/rooms/crossroads/crossroads.tres"))
+	assert_true(map != null)
 	assert_eq(map.rooms.size(), 1, "the first Crossroads is a map of one room")
 	assert_eq(map.start_id, 0)
+
+
+# A checkpoint this build cannot rebuild starts a new run instead, and must not stay to be offered again.
+func test_a_failed_resume_deletes_the_checkpoint() -> void:
+	var source := FileAccess.get_file_as_string("res://scripts/scenes/floor_scene.gd")
+	var ready := source.substr(source.find("func _ready"), 900)
+	var tried := ready.find("_resume_map(resume)")
+	var cleared := ready.find("Progress.clear_checkpoint()")
+	var fresh := ready.find("_start_run()")
+	assert_true(tried > 0 and cleared > tried, "cleared after the rebuild fails")
+	assert_true(cleared < fresh, "before the new run starts")
+	assert_true(ready.substr(tried, cleared - tried).contains("not _resumed"), "only when the resume failed")
