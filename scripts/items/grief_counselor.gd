@@ -3,7 +3,7 @@ extends ItemEffect
 # Grief Counselor's Card: a fight room cleared without losing a pill pays PAY Pension. Each room clears
 # once, so it can pay once a room at most.
 
-const PAY := 8
+const PAY := 3
 const COLOR := Color("ffd24a")
 
 
