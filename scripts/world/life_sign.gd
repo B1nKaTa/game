@@ -15,6 +15,8 @@ const PAD := Vector2(6, 4)
 # The card's height, for where the bubble goes above it or below it (Npc.bubble_box).
 const CARD_HEIGHT := 22.0
 const BUBBLE_Z := 50
+# How far the bubble keeps from the small map.
+const MAP_MARGIN := 3.0
 const CARD_GOLD := Color("c9a24a")
 const CARD_PAPER := Color("d9c49a")
 const CARD_INK := Color("4a3522")
@@ -101,6 +103,21 @@ static func box_size_for(rows: PackedStringArray) -> Vector2:
 	return Vector2(widest, rows.size() * (FONT_SIZE + LINE_GAP) - LINE_GAP) + PAD * 2.0
 
 
+# Where the bubble goes, in the card's own space: as an NPC's speech goes (Npc.bubble_box), above the
+# card or below it when above would reach into the HUD's band, and inside the screen's sides. A bubble
+# that would cover the small map in the top right corner hangs below the card too, or, failing that,
+# moves left of the map. at is the card's spot on screen and scale the canvas's zoom.
+static func bubble_box(at: Vector2, scale: Vector2, box_size: Vector2, view: Vector2) -> Rect2:
+	var zoom := scale.y if scale.y > 0.0 else 1.0
+	var box := Npc.bubble_box(at, scale, CARD_HEIGHT, box_size, view)
+	var map := FloorMapView.MINI_RECT.grow(MAP_MARGIN)
+	if Rect2(at + box.position * zoom, box.size * zoom).intersects(map):
+		box.position.y = CARD_HEIGHT / 2.0 + Npc.BUBBLE_BELOW_GAP
+	if Rect2(at + box.position * zoom, box.size * zoom).intersects(map):
+		box.position.x = (map.position.x - at.x) / zoom - box.size.x
+	return box
+
+
 func _draw() -> void:
 	var art := PropArt.texture("life_sign")
 	if art != null:
@@ -123,7 +140,7 @@ func _draw_bubble() -> void:
 	var font := ThemeDB.fallback_font
 	var box_size := box_size_for(_rows)
 	var screen := _bubble.get_global_transform_with_canvas()
-	var box := Npc.bubble_box(screen.origin, screen.get_scale(), CARD_HEIGHT, box_size, Vector2(RoomBackdrop.VIEW_SIZE))
+	var box := bubble_box(screen.origin, screen.get_scale(), box_size, Vector2(RoomBackdrop.VIEW_SIZE))
 	var below := box.position.y > 0.0
 	var tail_y := box.position.y if below else box.end.y
 	var tail_tip := Vector2(0, tail_y - 5.0 if below else tail_y + 5.0)

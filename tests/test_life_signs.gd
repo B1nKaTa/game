@@ -255,9 +255,10 @@ func test_every_line_fits_its_card_and_stays_out_of_the_hud() -> void:
 		assert_true(size.x <= LifeSign.LINE_WIDTH + LifeSign.PAD.x * 2.0 + 1.0, text)
 		# A card near the top of the screen, and one at its far right: the bubble stays on screen and
 		# below the HUD's band.
-		for at: Vector2 in [Vector2(320, 70), Vector2(630, 120), Vector2(8, 300)]:
-			var box := Npc.bubble_box(at, Vector2.ONE, LifeSign.CARD_HEIGHT, size, Vector2(RoomBackdrop.VIEW_SIZE))
+		for at: Vector2 in [Vector2(320, 70), Vector2(630, 120), Vector2(8, 300), Vector2(600, 112), Vector2(560, 90), Vector2(630, 340)]:
+			var box := LifeSign.bubble_box(at, Vector2.ONE, size, Vector2(RoomBackdrop.VIEW_SIZE))
 			var on_screen := Rect2(at + box.position, box.size)
+			assert_false(on_screen.intersects(FloorMapView.MINI_RECT), "%s covers the small map at %s" % [text, str(at)])
 			assert_true(on_screen.position.y >= Hud.BAND_BOTTOM, "%s reaches into the HUD at %s" % [text, str(at)])
 			assert_true(on_screen.position.x >= 0.0 and on_screen.end.x <= RoomBackdrop.VIEW_SIZE.x, "%s runs off screen at %s" % [text, str(at)])
 			assert_true(on_screen.end.y <= RoomBackdrop.VIEW_SIZE.y, "%s runs off the bottom at %s" % [text, str(at)])
