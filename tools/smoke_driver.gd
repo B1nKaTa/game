@@ -605,7 +605,7 @@ func _clear_room(scene: Node) -> void:
 	var view: RoomView = scene.debug_room_view()
 	var map: FloorMap = scene.debug_map()
 	var is_floor_boss_room: bool = map.room(room_id).room_type == RoomLayout.TYPE_FLOOR_BOSS
-	var pool_before := _offerable_items(scene.player.run)
+	var pool_before := _offerable_items(scene.player.run, ItemRarity.BOSS)
 	_boss_choice_count = -1
 	if is_floor_boss_room:
 		view.boss_choice_dropped.connect(_on_boss_choice_dropped)
@@ -1567,7 +1567,7 @@ func _check_chests(scene: Node) -> void:
 	_check(_gone(locked) and run.keys == 0, "one Slip opens the locked chest and is spent")
 	# A gilded urn wants two Slips, then lays out two items of which only one can be taken.
 	var urn: Chest = view._create_chest(Vector2i(12, 3), ChestRules.URN)
-	var offer := mini(ChestRules.URN_CHOICES, _offerable_items(run))
+	var offer := mini(ChestRules.URN_CHOICES, _offerable_items(run, ItemRarity.URN))
 	var lying_before := _item_pickups(view)
 	run.add_key()
 	_put_feet(scene, urn.global_position)
@@ -1997,11 +1997,9 @@ func _check_vault_room(scene: Node) -> void:
 	_check(names.has(RoomRules.POTION_NAME) and names.has(RoomRules.BOMB_NAME) and names.has(RoomRules.KEY_NAME), "a vault holds a potion, a Thermos and a Slip in the open, found %s in %s" % [str(names.keys()), scene.debug_map().room(scene.debug_current_id()).layout.resource_path])
 	# This check takes every item it passes, where a player takes one of each choice, so by a late vault
 	# the run may have few left to offer. The vault must still lay out all it can, up to its three.
-	var can_offer := 0
-	for item in Content.items():
-		if run.can_offer(item) and not run.has_item(item.id) and not run.is_promised(item.id):
-			can_offer += 1
-	_check(choices >= mini(3, can_offer), "a vault offers a choice of items, found %d interactive pickups with %d items left to offer" % [choices, can_offer])
+	var can_offer := _offerable_items(run, ItemRarity.VAULT)
+	_check(choices >= mini(3, can_offer)
+, "a vault offers a choice of items, found %d interactive pickups with %d items left to offer" % [choices, can_offer])
 	if potion == null:
 		return
 	# A small potion fills the slot, and stays on the floor while the slot is full.
@@ -2394,12 +2392,9 @@ func _check_undertaker(scene: Node, health: Health) -> void:
 
 # --- The second floor: the boss's items, the stairwell, the landing ---
 
-func _offerable_items(run: RunState) -> int:
-	var count := 0
-	for item in Content.items():
-		if run.can_offer(item) and not run.has_item(item.id) and not run.is_promised(item.id):
-			count += 1
-	return count
+# What a source could still offer this run. Bosses and vaults never offer a cursed item.
+func _offerable_items(run: RunState, source: String) -> int:
+	return RoomRules.offerable(Content.items(), run, source).size()
 
 
 func _on_boss_choice_dropped(count: int) -> void:
@@ -2471,7 +2466,10 @@ func _take_the_stairwell(scene: Node) -> void:
 	_check(scene.debug_mini_map().floor_name() == floor_below and scene.debug_big_map().floor_name() == floor_below, "both maps name %s" % floor_below)
 	_check(get_tree().get_nodes_in_group("enemies").is_empty(), "nothing waits to fight on the landing")
 	# With the boarding pass hung, landing_heal is one more than LANDING_HEAL.
-	_check(health.pills == pills_before + mini(scene.landing_heal() + bonus, missing), "the landing heals him, %d to %d" % [pills_before, health.pills])
+	# The Neck Pillow heals him fully on a landing.
+	var expected := health.max_pills if run.has_item("neck_pillow") else pills_before + mini(scene.landing_heal() + bonus, missing)
+	_check(health.pills == expected, "the landing heals him, %d to %d" % [pills_before, health.pills])
+
 	_check(run.items.size() == items_before and run.keys == keys_before, "his items and Slips come down with him")
 	_check(not scene.is_cleared, "the new floor is not cleared yet")
 	_landings_reached += 1

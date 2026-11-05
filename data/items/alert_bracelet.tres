@@ -1,11 +1,18 @@
-[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/alert_bracelet.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
 
 [resource]
 script = ExtResource("1")
 id = "alert_bracelet"
 display_name = "Medical Alert Bracelet"
-description = "Two extra pills for this run. Help is not coming."
+description = "One more pill, and dropping to your last sets off an alarm that stuns enemies near you, once a room. Help is still not coming."
 craft_price = 100
-bonus_pills = 2
+rarity = "rare"
+tags = PackedStringArray("defence")
+bonus_pills = 1
+effect = SubResource("Effect")

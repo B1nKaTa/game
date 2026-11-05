@@ -1,11 +1,18 @@
-[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/neck_pillow.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
 
 [resource]
 script = ExtResource("1")
 id = "neck_pillow"
 display_name = "Neck Pillow"
-description = "One more pill. Finally, a good night's death."
+description = "One more pill, and landings heal you fully. Finally, a good night's death."
 from_bounty = true
+rarity = "common"
+tags = PackedStringArray("defence")
 bonus_pills = 1
+effect = SubResource("Effect")

@@ -7,5 +7,7 @@ script = ExtResource("1")
 id = "dentures"
 display_name = "Extra Strong Dentures"
 description = "Thrown dentures bite 50% harder and through up to 2 enemies. Don't ask how."
+rarity = "rare"
+tags = PackedStringArray("bite")
 bite_damage_bonus = 0.5
 bites_through = 2

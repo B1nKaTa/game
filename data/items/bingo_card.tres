@@ -1,10 +1,16 @@
-[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/bingo_card.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
 
 [resource]
 script = ExtResource("1")
 id = "bingo_card"
 display_name = "Lucky Bingo Card"
-description = "More Pension from all sources."
-pension_bonus = 0.25
+description = "Every fifth Pension pickup is worth five times as much. Eyes down for a full house."
+rarity = "common"
+tags = PackedStringArray("money")
+effect = SubResource("Effect")

@@ -6,6 +6,9 @@
 script = ExtResource("1")
 id = "undertakers_gloves"
 display_name = "Undertaker's Work Gloves"
-description = "More cane damage. They still smell of earth."
+description = "More cane damage, and what you finish goes quietly: no death blasts, no dropped coffins. They still smell of earth."
 from_bounty = true
+rarity = "common"
+tags = PackedStringArray("cane")
 damage_bonus = 0.2
+clean_kills = true

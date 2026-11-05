@@ -1,10 +1,17 @@
-[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/pill_organizer.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
 
 [resource]
 script = ExtResource("1")
 id = "pill_organizer"
 display_name = "Spare Pill Organizer"
-description = "One extra pill for this run."
+description = "One more pill. Heals taken at full health are stored, two at most, and soak your next hit. Morning, noon and night."
+rarity = "common"
+tags = PackedStringArray("defence")
 bonus_pills = 1
+effect = SubResource("Effect")

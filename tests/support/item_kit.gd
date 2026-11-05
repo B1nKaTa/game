@@ -8,7 +8,9 @@ extends RefCounted
 const ENEMY_DIR := "res://data/enemies/"
 
 var notices: Array[String] = []
-var fx: Array[Node2D] = []
+# Each fx an effect placed: {"script": its class, "text": a pop's words}. Out of a room the node
+# itself is freed at once, so only this is kept.
+var fx: Array[Dictionary] = []
 var sounds: Array[String] = []
 var drops: Array = []
 var slows: Array = []
@@ -73,11 +75,12 @@ func free_enemies() -> void:
 	enemies.clear()
 
 
-func fx_of(kind: Variant) -> Array[Node2D]:
-	var found: Array[Node2D] = []
-	for node in fx:
-		if is_instance_of(node, kind):
-			found.append(node)
+# The fx placed of one ItemFx class, such as ItemFx.FxPop.
+func fx_of(kind: Script) -> Array[Dictionary]:
+	var found: Array[Dictionary] = []
+	for entry in fx:
+		if entry["script"] == kind:
+			found.append(entry)
 	return found
 
 
@@ -90,7 +93,7 @@ func _on_notice(text: String) -> void:
 
 
 func _on_fx(node: Node2D) -> void:
-	fx.append(node)
+	fx.append({"script": node.get_script(), "text": str(node.get("text")) if "text" in node else ""})
 
 
 func _on_sound(sound_name: String) -> void:

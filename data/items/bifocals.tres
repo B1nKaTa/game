@@ -1,12 +1,18 @@
-[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/bifocals.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
 
 [resource]
 script = ExtResource("1")
 id = "bifocals"
 display_name = "Suspicious Bifocals"
-description = "See attacks much earlier, and see enemy health."
+description = "See enemy health, and hit anything under a quarter of it 50% harder. Suspiciously effective."
 craft_price = 70
-warning_bonus = 0.8
+rarity = "rare"
+tags = PackedStringArray("vision", "cane")
 reveals_enemy_health = true
+effect = SubResource("Effect")

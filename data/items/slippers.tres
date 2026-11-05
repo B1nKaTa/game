@@ -6,5 +6,8 @@
 script = ExtResource("1")
 id = "slippers"
 display_name = "Orthopedic Slippers"
-description = "Faster movement."
-move_speed_bonus = 0.15
+description = "A little faster, and wet floors never slide you. They squeak with confidence."
+rarity = "common"
+tags = PackedStringArray("dodge")
+move_speed_bonus = 0.1
+wet_grip = true

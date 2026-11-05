@@ -8,4 +8,6 @@ id = "golden_parachute"
 display_name = "Golden Parachute"
 description = "Die in a run and a quarter of its Pension is paid again. Executives only."
 craft_price = 110
+rarity = "rare"
+tags = PackedStringArray("money")
 death_pension_bonus = 0.25
