@@ -3,17 +3,24 @@ extends TestCase
 # One test per rule of the hundred items' first batch: the twelve cane items and the eight denture
 # items, and the combos they make possible (Full Set, Dentist's Nightmare, Bingo Night).
 
+const CaneSword := preload("res://scripts/items/cane_sword.gd")
+const Dabber := preload("res://scripts/items/bingo_dabber.gd")
 const Hinge := preload("res://scripts/items/rusty_hinge.gd")
 const Rocking := preload("res://scripts/items/rocking_chair.gd")
+const Needles := preload("res://scripts/items/knitting_needles.gd")
 
 # id: [rarity, source, first-clear path or ""]
 const BATCH := {
 	"walker_tennis_balls": [ItemDef.COMMON, ItemUnlocks.START, ""],
+	"cane_sword": [ItemDef.RARE, ItemUnlocks.RECIPE, ""],
+	"bingo_dabber": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "sunset_shores"],
 	"rusty_hinge": [ItemDef.COMMON, ItemUnlocks.START, ""],
 	"reading_glasses": [ItemDef.RARE, ItemUnlocks.START, ""],
 	"rocking_chair": [ItemDef.COMMON, ItemUnlocks.START, ""],
 	"rubber_ferrule": [ItemDef.COMMON, ItemUnlocks.START, ""],
+	"knitting_needles": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "fairways_end"],
 	"shoe_horn": [ItemDef.COMMON, ItemUnlocks.START, ""],
+	"brass_topper": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "fairways_end"],
 }
 
 
@@ -69,6 +76,54 @@ func test_walker_tennis_balls_knock_enemies_back_further() -> void:
 	assert_near(ItemKit.new().make_run().stats.swing_push_mult, 1.0)
 	var player := FileAccess.get_file_as_string("res://scripts/actors/player.gd")
 	assert_true(player.contains("push * run.stats.swing_push_mult"), "every swing's push is scaled")
+
+
+func test_cane_sword_sends_a_wave_on_a_full_charge_only() -> void:
+	var kit := ItemKit.new()
+	var run := kit.run_with(["cane_sword"])
+	run.effects.charge_release(false)
+	assert_eq(kit.fx_of(ItemFx.FxWave).size(), 0)
+	run.effects.charge_release(true)
+	assert_eq(kit.fx_of(ItemFx.FxWave).size(), 1)
+
+
+func test_the_cane_swords_wave_hits_what_its_crescent_covers_once() -> void:
+	var kit := ItemKit.new()
+	var run := kit.run_with(["cane_sword"])
+	var ahead := kit.enemy("intern_reaper", 100.0)
+	ahead.position = Vector2(8, 0)
+	var wing := kit.enemy("intern_reaper", 100.0)
+	wing.position = Vector2(-10, 22)
+	var clear := kit.enemy("intern_reaper", 100.0)
+	clear.position = Vector2(0, 80)
+	var wave := ItemFx.make_wave(run.effects.ctx, Vector2.RIGHT, CaneSword.DAMAGE, CaneSword.DISTANCE)
+	assert_true(wave._strike())
+	assert_near(ahead.hp, 100.0 - CaneSword.DAMAGE)
+	assert_near(wing.hp, 100.0 - CaneSword.DAMAGE, "the crescent's tips reach back beside it")
+	assert_near(clear.hp, 100.0)
+	assert_false(wave._strike(), "each enemy once")
+	wave.free()
+	kit.free_enemies()
+
+
+func test_bingo_dabber_bursts_on_the_fifth_mark() -> void:
+	var kit := ItemKit.new()
+	var run := kit.run_with(["bingo_dabber"])
+	var effect = run.effects.effect_of("bingo_dabber")
+	var enemy := kit.enemy("intern_reaper", 1000.0)
+	for i in 4:
+		run.effects.land(enemy, 1.0, RunEffects.SWING)
+	assert_eq(effect.marks_on(enemy), 4)
+	run.effects.land(enemy, 1.0, RunEffects.ITEM)
+	assert_eq(effect.marks_on(enemy), 4, "an item's hit dabs nothing")
+	assert_true(kit.fx_of(ItemFx.FxDabs).size() >= 1, "the marks show")
+	run.effects.land(enemy, 1.0, RunEffects.BITE)
+	assert_near(enemy.hp, 1000.0 - 6.0 - Dabber.BURST)
+	assert_eq(effect.marks_on(enemy), 0, "the card starts again")
+	var pops := kit.fx_of(ItemFx.FxPop)
+	assert_eq(pops.size(), 1)
+	assert_eq(pops[0]["text"], "BINGO!")
+	kit.free_enemies()
 
 
 func test_rusty_hinge_stuns_on_the_combos_third_hit_with_a_rest_between() -> void:
@@ -153,6 +208,22 @@ func test_rubber_ferrule_swings_faster_for_a_little_less() -> void:
 	assert_near(run.damage_mult(), 0.95)
 
 
+func test_knitting_needles_poke_two_needles_with_every_swing() -> void:
+	var kit := ItemKit.new()
+	var run := kit.run_with(["knitting_needles"])
+	run.effects.swing(_swing())
+	assert_eq(kit.fx_of(ItemFx.FxNeedle).size(), 2)
+	var enemy := kit.enemy("intern_reaper", 100.0)
+	enemy.position = Vector2(10, 0)
+	var behind := kit.enemy("intern_reaper", 100.0)
+	behind.position = Vector2(14, 0)
+	var needle := ItemFx.make_needle(run.effects.ctx, Vector2.RIGHT, Needles.DAMAGE, Needles.DISTANCE)
+	assert_true(needle._strike())
+	assert_near(enemy.hp + behind.hp, 200.0 - Needles.DAMAGE, "a needle stops in the first it pokes")
+	needle.free()
+	kit.free_enemies()
+
+
 func test_shoe_horn_hits_harder_while_an_enemy_winds_up() -> void:
 	var kit := ItemKit.new()
 	var run := kit.run_with(["shoe_horn"])
@@ -166,3 +237,21 @@ func test_shoe_horn_hits_harder_while_an_enemy_winds_up() -> void:
 	windup.tick(1.0)
 	assert_near(run.effects.hit_damage(enemy, 10.0, RunEffects.SWING), 10.0, "the attack is out")
 	kit.free_enemies()
+
+
+func test_brass_topper_turns_a_finisher_into_a_ring() -> void:
+	var kit := ItemKit.new()
+	var run := kit.run_with(["brass_topper"])
+	var plain := _swing()
+	run.effects.swing(plain)
+	assert_near(plain.half_angle_deg, Player.ATTACK_ANGLE)
+	var heavy := _swing(true)
+	run.effects.swing(heavy)
+	assert_near(heavy.half_angle_deg, Player.ATTACK_ANGLE)
+	var finisher := _swing(false, true)
+	run.effects.swing(finisher)
+	assert_near(finisher.half_angle_deg, 180.0)
+	var behind := Rect2(Vector2(-40, -10), Vector2(20, 20))
+	assert_true(finisher.covers(Vector2.ZERO, behind), "it hits behind him")
+	assert_false(plain.covers(Vector2.ZERO, behind))
+	assert_eq(kit.fx_of(ItemFx.FxShockwave).size(), 1)
