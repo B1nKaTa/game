@@ -109,3 +109,26 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
 - **Symbols:** `-` and `|` because every letter but `i` and every digit is taken; `i` is kept for the
   life signs. Both are appended with `+ "-|"` to `ALLOWED`, `SOLID_SYMBOLS`, `WALLS_AND_BOMB_ONLY`,
   and `|` to `WALLS`, as lesson 131 asks.
+- **The screen's wall:** the north wall is a single cell, and in medium and large rooms it sits under
+  the HUD's top band, so every Cinema fighting and boss room keeps its second row as wall too, except
+  the north door's cell, which becomes a one-cell alcove. That gives a 64 px screen wall whose lower
+  half is always clear of the HUD. `CinemaScreen.wall_rect` falls back to the single wall row (and a
+  shrunk picture) for a layout without it.
+- **Where the screen hangs:** west of the north door's alcove, always, centred on that stretch of
+  wall, since the door is in the middle of every wall and the small map covers the top right of the
+  view. The rest of that stretch is velvet drapes; the stretch east of the door is plain deco wall.
+- **Frame size for the art:** each scene frame is **160x56 px**, shown at 1:1, and a scene file
+  `res://art/cinema/scenes/<id>.png` is a horizontal strip of **3 frames** (480x56; 2 frames, 320x56,
+  also works), small changes of one still. The screen adds sepia, grain, scratches, flicker, gate
+  hops and a vignette itself. Until a file exists, `CinemaScenes.placeholder_image` paints a sepia
+  gradient, Harold's silhouette with his cane and one simple prop per scene.
+- **Scenes:** 14 (the spec's 11 plus the prize marrow, a fishing trip and the tandem). A room's scene
+  is `CinemaScenes.pick(decor_seed)`; `CinemaScenes.assign(map)` takes screen rooms in id order and
+  steps to the next scene when a room through any door already shows it, so neighbours never match.
+- **The beam:** a faint additive wedge (`CinemaBeam`, z -7, alpha 0.16 at the port to 0.05 at the
+  screen) straight up from a port in the south wall below the picture, with 18 slow dust motes, and
+  no light of its own, so bodies are never lit or hidden by it. It goes out while the screen is cut
+  to black. The screen itself is drawn unshaded and gives a cool glow light below the picture.
+- **The Projectionist's API** (Task 4): `CinemaScreen.in_room(room_view)` finds the screen;
+  `cut_to_black(seconds)`, `flash(strength = 1.0)`, `set_burning(progress 0..1)`, `burning()`,
+  `is_dark()`, `darkness()` and `picture_rect()` (global) drive and read it.

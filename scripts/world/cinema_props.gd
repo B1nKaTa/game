@@ -31,6 +31,28 @@ static func build(view: RoomView, layout: RoomLayout, palette: RoomPalette) -> v
 		light.palette = palette
 		light.position = spot
 		view.add_child(light)
+	if palette.screen and view._room != null and CinemaScenes.shows_screen(view._room.room_type):
+		add_screen(view, layout, palette, scene_for(view._map, view._room), view._room.decor_seed)
+
+
+# The film a room shows: its own pick, kept apart from the rooms next door on its floor.
+static func scene_for(map: FloorMap, room: FloorRoom) -> String:
+	if map == null:
+		return CinemaScenes.pick(room.decor_seed)
+	return CinemaScenes.assign(map).get(room.id, CinemaScenes.pick(room.decor_seed))
+
+
+# The screen on the north wall and the projector's beam up to it, both drawn at the room's origin.
+static func add_screen(view: Node2D, layout: RoomLayout, palette: RoomPalette, scene_id: String, room_seed: int) -> CinemaScreen:
+	var screen := CinemaScreen.new()
+	screen.palette = palette
+	screen.setup(layout, scene_id, room_seed)
+	view.add_child(screen)
+	var beam := CinemaBeam.new()
+	beam.palette = palette
+	beam.setup(screen, CinemaScreen.picture_rect_for(CinemaScreen.wall_rect(layout)), Vector2(layout.size_in_cells() * RoomBackdrop.TILE))
+	view.add_child(beam)
+	return screen
 
 
 # The plain floor cell just past each end of a seat row, as {cell, toward}: toward is the way to the
