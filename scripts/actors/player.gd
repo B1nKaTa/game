@@ -148,6 +148,10 @@ func refresh_look() -> void:
 	_look.setup(run.look)
 
 
+# The HURT_ id of the last hit that landed, read by the balance bot to tell touches from attacks.
+var last_hurt_source := ""
+
+
 # Every hit on him comes through here. source is one of RunEffects' HURT_ ids, for the items that care
 # what hurt him. Items may lower the amount (0 shrugs it off), and may save him from a finishing hit
 # once any Life Jacket is spent, leaving one pill.
@@ -172,6 +176,7 @@ func take_hit(amount: int, source := RunEffects.HURT_ENEMY) -> bool:
 	if saved:
 		run.effects.saved()
 	if landed:
+		last_hurt_source = source
 		if _visual != null:
 			_visual.flash(HURT_COLOR, HurtLook.RED_TIME)
 		hurt.emit()

@@ -209,6 +209,15 @@ var _kinds := {}
 
 func _attribute(scene) -> void:
 	var me: Vector2 = scene.player.global_position
+	# A touch is named by the body it came from, since its own attacks may be running too.
+	if scene.player.last_hurt_source == RunEffects.HURT_CONTACT:
+		var box := ContactRule.feet_box(scene.player.feet().global_position, Player.FEET_BOX_SIZE)
+		var toucher := "touch"
+		for enemy in scene.get_tree().get_nodes_in_group("enemies"):
+			if ContactRule.touches(enemy.body_rect(), box):
+				toucher = "touch_" + enemy.def.id
+		_sources[toucher] = _sources.get(toucher, 0) + 1
+		return
 	var best := "?"
 	var best_d := 1e9
 	for child in scene.debug_room_view().get_children():
