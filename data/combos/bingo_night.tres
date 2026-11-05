@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ComboDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/combo_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/bingo_night.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "bingo_night"
+display_name = "Bingo Night"
+description = "Every BINGO also heals half a pill."
+item_a = "bingo_card"
+item_b = "bingo_dabber"
+effect = SubResource("Effect")

@@ -124,6 +124,11 @@ func _ready() -> void:
 	_run.health.rescued.connect(_on_rescued)
 	player.bomb_requested.connect(_on_bomb_requested)
 	player.show_crosshair = true
+	var ctx := _run.effects.ctx
+	ctx.player = player
+	ctx.hud = _hud
+	ctx.feedback = _feedback
+	_run.effects.combo_formed.connect(_on_combo_formed)
 	Input.mouse_mode = Settings.cursor_mode(true)
 	add_child(player)
 	_feedback.watch_player(player)
@@ -134,6 +139,7 @@ func _ready() -> void:
 	_mini_map = _add_map_view(false)
 	_big_map = _add_map_view(true)
 	_big_map.opened_changed.connect(_on_big_map_changed)
+	_big_map.combo_names = _run.effects.combo_names()
 	_apply_game_settings()
 	Settings.changed.connect(_apply_game_settings)
 	PadWatch.pad_lost.connect(_on_pad_lost)
@@ -149,6 +155,7 @@ func _start_run() -> void:
 	_run = Progress.make_run()
 	# Before the first room is built, so every enemy of a cursed run is spawned tougher.
 	_run.cursed = Progress.take_cursed_run()
+	_wire_item_pension()
 	_run.extra_table_visits = Progress.table_wins_before_run
 	Progress.table_wins_before_run = 0
 	var crafted := Progress.take_crafted_item()
@@ -162,6 +169,13 @@ func _start_run() -> void:
 		_bon_voyage = BonVoyage.pack(_run, Content.potions_for_sale(), _rng.randf(), _rng.randf())
 	if Progress.is_dev_run():
 		DevStart.apply_kit(_run, Content.items())
+
+
+# Items pay and spend through here, so their Pension counts as the run's, as a coin's does. Before any
+# item is added, so an item's on_gain can already pay.
+func _wire_item_pension() -> void:
+	_run.effects.ctx.pay_pension = _on_pension_earned
+	_run.effects.ctx.spend_pension = Progress.spend
 
 
 func _show_start_notes() -> void:
@@ -286,6 +300,7 @@ func _resume_map(resume: Dictionary) -> bool:
 # Progress.start_run is never called again, so the run count and the ticket stay as they were.
 func _resume_run(resume: Dictionary) -> void:
 	_run = Progress.make_run()
+	_wire_item_pension()
 	RunCheckpoint.apply_run(_run, resume.get("run", {}), Content.items())
 	RunCheckpoint.apply_rng(_rng, resume.get("rng", {}))
 	# The ending's tracking, with the Pension the rooms paid from run_earned for older files.
@@ -413,6 +428,7 @@ func _choose_path(index: int) -> void:
 	_current_id = crossroads.id
 	_enter_room(map.start_id)
 	leaving.queue_free()
+	_run.effects.floor_start()
 	_write_checkpoint_soon()
 
 
@@ -455,6 +471,8 @@ func _enter_room(target_id: int) -> void:
 	_follow_player()
 	if first_visit:
 		_tip_hat(_map.room(target_id))
+	_run.effects.ctx.room = _room_view
+	_run.effects.room_enter(_room_view)
 
 
 # The room's music: its path's theme, the landing's, or the Arcade's. A boss's music starts when it
@@ -722,6 +740,15 @@ func _go_down() -> void:
 	_run.health.heal(landing_heal())
 	var healed := mini(landing_heal(), missing)
 	_hud.show_notice("You catch your breath. +%d pills" % healed if healed > 0 else "You catch your breath.")
+	# After the landing's own heal, so an item's landing rule has the last word.
+	_run.effects.floor_start()
+
+
+# A combo forms: its banner shows, and the paused map lists it from now on.
+func _on_combo_formed(combo: ComboDef) -> void:
+	_hud.show_combo(combo.display_name)
+	_big_map.combo_names = _run.effects.combo_names()
+
 
 
 # What a landing heals: LANDING_HEAL, and one more with the boarding pass.

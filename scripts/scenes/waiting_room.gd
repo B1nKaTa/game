@@ -85,6 +85,9 @@ func _ready() -> void:
 	_hud.setup(null)
 	_hud.show_condolences = true
 	add_child(_hud)
+	# Items tried in the yard act there, but never pay or spend: the context gets no Pension callables.
+	_run.effects.ctx.player = player
+	_run.effects.ctx.hud = _hud
 	_hud.set_pension(Progress.data.pension)
 	Progress.pension_changed.connect(_hud.set_pension)
 	_hud.set_condolences(Progress.data.condolences)
@@ -101,6 +104,7 @@ func _ready() -> void:
 	Progress.notice = ""
 	_announce_ending()
 	_announce_new_departments()
+	_announce_new_items()
 	_call_ticket()
 	# A boss beaten for the first time on that path hangs a new memento on the trophy wall.
 	if Progress.last_run.get("new_memento", false):
@@ -148,6 +152,16 @@ func _announce_ending() -> void:
 	if id.is_empty() or paid <= 0:
 		return
 	_notices.append_array(EndingRules.found_notices(id, paid))
+
+
+# A path's first clear puts its items in the pool, and the arrival notice names them, once.
+func _announce_new_items() -> void:
+	var news := ItemUnlocks.unannounced(Content.items(), Progress.data)
+	if news.is_empty():
+		return
+	for path in news:
+		_notices.append(ItemUnlocks.notice_for(news[path]))
+	Progress.mark_item_paths_seen(news.keys())
 
 
 func _announce_new_departments() -> void:
@@ -298,7 +312,9 @@ func _enter_department(target_id: int) -> void:
 	if is_new:
 		_furnish(_room_view, _map.room(target_id))
 	_room_view.refresh_doors()
+	_run.effects.ctx.room = _room_view
 	_set_yard_rules(Departments.id_of(target_id) == Departments.TRAINING_YARD)
+
 	_refresh_lobby_text()
 	player.global_position = Player.arrival_position(_progress.arrival_cell(target_id, from_id))
 	_follow_player()

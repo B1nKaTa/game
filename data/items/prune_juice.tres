@@ -1,10 +1,18 @@
-[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/prune_juice.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
 
 [resource]
 script = ExtResource("1")
 id = "prune_juice"
 display_name = "Prune Juice"
-description = "Shorter dodge cooldown. You will move quickly."
-dodge_cooldown_cut = 0.3
+description = "Your dodge recovers twice as fast, but every dodge costs 1 Pension. You will move quickly."
+rarity = "common"
+cursed = true
+tags = PackedStringArray("dodge", "money")
+dodge_cooldown_cut = 0.5
+effect = SubResource("Effect")

@@ -53,3 +53,34 @@ extends Resource
 @export var floor_lethal_saves: int = 0
 # The share of a run's Pension paid again when he dies in it.
 @export var death_pension_bonus: float = 0.0
+# The hundred items' always-on rules. Whether a wet floor never slides him.
+@export var wet_grip: bool = false
+# The least share of his speed any slow leaves him (wet, sand, sedatives, quoits, paper). Zero for none.
+@export var min_slow_factor: float = 0.0
+# Whether enemies he finishes skip their harmful last acts, such as a death blast.
+@export var clean_kills: bool = false
+# Whether arrows at the screen's edge point to enemies off screen.
+@export var shows_offscreen_enemies: bool = false
+# How much further his swings knock enemies back, as a fraction of their push.
+@export var swing_push_bonus: float = 0.0
+# Seconds the thrown dentures stay glued to the first enemy they bite, biting on. Zero for none.
+@export var teeth_glue_time: float = 0.0
+# Whether the thrown dentures fly back by themselves, biting on the way.
+@export var teeth_boomerang: bool = false
+# Whether the dentures lying on the floor bite whatever walks over them.
+@export var teeth_floor_bite: bool = false
+# Sets of dentures thrown at once. Zero leaves the usual one.
+@export var teeth_sets: int = 0
+# Dodges he can make back to back, on top of the usual one (Velcro Shoes).
+@export var bonus_dodge_charges: int = 0
+# Whether charging a swing leaves his walk at full speed (Hover Round).
+@export var charge_full_speed: bool = false
+# How much further sleeping enemies notice him, and how much sooner a room's enemies stop waiting, as a
+# fraction (Squeaky Shoes).
+@export var notice_bonus: float = 0.0
+# Whether a dodge steps round a prop's corner as a walk does (Bunion Pads).
+@export var dodge_rounds_corners: bool = false
+# Whether slides and pushes leave him where he stands (Gravity Boots).
+@export var steady_feet: bool = false
+# How much nearer he must stand to a heal on the floor to take it, as a fraction (Pill Crusher).
+@export var heal_reach_cut: float = 0.0

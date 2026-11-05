@@ -85,6 +85,9 @@ var endings_found: Dictionary = {}
 # is never the same. And every quick death seen, by its number as a string key.
 var last_repeat_death: int = 0
 var repeat_deaths_seen: Dictionary = {}
+# Path id -> true for every path whose first-clear items the Waiting Room has announced. An older save
+# starts empty, so its cleared paths announce their items once.
+var item_paths_seen: Dictionary = {}
 
 # The first path at each depth, the only one open before that depth's first clear.
 const FIRST_PATH_BY_DEPTH := {1: "floor_1", 2: "sunset_shores", 3: "funeral_parlour", 4: "last_resort_cruise", 5: "terminal_zero"}
@@ -468,6 +471,7 @@ func to_dict() -> Dictionary:
 		"endings_found": endings_found,
 		"last_repeat_death": last_repeat_death,
 		"repeat_deaths_seen": repeat_deaths_seen,
+		"item_paths_seen": item_paths_seen,
 	}
 
 
@@ -551,6 +555,8 @@ static func from_dict(raw: Variant) -> ProgressData:
 	for key in _id_set(raw.get("repeat_deaths_seen")):
 		if key.is_valid_int() and int(key) >= 1 and int(key) <= EndingRules.REPEAT_DEATHS:
 			data.repeat_deaths_seen[str(int(key))] = true
+	data.item_paths_seen = _id_set(raw.get("item_paths_seen"))
+
 	data._infer_first_paths()
 	return data
 

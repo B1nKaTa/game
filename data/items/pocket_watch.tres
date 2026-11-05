@@ -1,12 +1,17 @@
-[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/pocket_watch.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
 
 [resource]
 script = ExtResource("1")
 id = "pocket_watch"
 display_name = "Funeral Director's Pocket Watch"
-description = "Shorter dodge cooldown and a little more speed. Always running late."
+description = "A narrow dodge slows time to a crawl for a second. Always running late."
 from_bounty = true
-dodge_cooldown_cut = 0.15
-move_speed_bonus = 0.05
+rarity = "rare"
+tags = PackedStringArray("dodge")
+effect = SubResource("Effect")

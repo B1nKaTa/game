@@ -24,6 +24,10 @@ const SOUNDS := {
 	"explosion": {"from": 0.0, "to": 0.0, "time": 0.4, "shape": NOISE, "volume": 0.65},
 	"shield_block": {"from": 1400.0, "to": 900.0, "time": 0.09, "shape": SQUARE, "volume": 0.3},
 	"consumable_pickup": {"from": 520.0, "to": 780.0, "time": 0.14, "shape": SQUARE, "volume": 0.3},
+	# The items' own: a metal detector's chime, an alarm's beep and a bingo's ding.
+	"chime": {"from": 1320.0, "to": 1320.0, "time": 0.18, "shape": SINE, "volume": 0.35},
+	"alarm": {"from": 1000.0, "to": 700.0, "time": 0.3, "shape": SQUARE, "volume": 0.4},
+	"bingo": {"from": 660.0, "to": 1320.0, "time": 0.22, "shape": SINE, "volume": 0.45},
 }
 
 

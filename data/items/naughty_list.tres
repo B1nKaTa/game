@@ -1,11 +1,17 @@
-[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/naughty_list.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
 
 [resource]
 script = ExtResource("1")
 id = "naughty_list"
 display_name = "The Naughty List"
-description = "More Pension from all sources. You're on it twice."
+description = "Summoned enemies you finish drop a present one time in three, twice a room at most. You're on it twice."
 from_bounty = true
-pension_bonus = 0.25
+rarity = "rare"
+tags = PackedStringArray("boss", "room")
+effect = SubResource("Effect")

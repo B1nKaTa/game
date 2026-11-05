@@ -40,6 +40,12 @@ func tick(enemy: Enemy, delta: float) -> void:
 func on_killed(enemy: Enemy) -> void:
 	if _gone or not blows_when_killed(_lit):
 		return
+	# Finished with the Undertaker's Work Gloves, it goes quietly.
+	if enemy.harmless_death:
+		_gone = true
+		enemy.clear_warning()
+		return
+
 	_gone = true
 	enemy.clear_warning()
 	enemy.blast(BLAST_RADIUS, ENEMY_DAMAGE, PUSH)

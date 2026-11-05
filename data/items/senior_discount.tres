@@ -6,6 +6,8 @@
 script = ExtResource("1")
 id = "senior_discount"
 display_name = "Senior Discount Card"
-description = "Much more Pension from all sources. Valid everywhere, including here."
+description = "Everything in shops is 25% cheaper. Valid everywhere, including here."
 craft_price = 90
-pension_bonus = 0.4
+rarity = "rare"
+tags = PackedStringArray("money")
+shop_discount = 0.25

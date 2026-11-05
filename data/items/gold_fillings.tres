@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/gold_fillings.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "gold_fillings"
+display_name = "Gold Fillings"
+description = "Each bite has a 20% chance to knock a coin loose. Worth more than the teeth."
+rarity = "common"
+tags = PackedStringArray("bite", "money")
+effect = SubResource("Effect")

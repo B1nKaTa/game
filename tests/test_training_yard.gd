@@ -79,8 +79,8 @@ func test_the_rack_never_lists_bounty_items() -> void:
 
 func test_items_tried_in_the_yard_are_gone_on_leaving() -> void:
 	var run := _run()
-	var hip: ItemDef = load("res://data/items/titanium_hip.tres")
-	run.add_item(hip)
+	var slippers: ItemDef = load("res://data/items/slippers.tres")
+	run.add_item(slippers)
 	assert_true(run.stats.move_speed > PlayerStats.BASE_SPEED)
 	run.clear_items()
 	assert_eq(run.items.size(), 0)
@@ -99,9 +99,9 @@ func test_the_yard_supply_is_the_most_a_pocket_holds() -> void:
 	assert_eq(RunState.YARD_SUPPLY, RunState.MAX_CONSUMABLE)
 
 
-func test_the_coach_has_a_tip_for_every_recipe() -> void:
+func test_the_coach_has_a_tip_for_every_item() -> void:
 	var none: Array[ItemDef] = []
-	for item in Content.recipes():
+	for item in Content.items():
 		assert_true(CoachTips.TIPS.has(item.id), item.id)
 	assert_eq(CoachTips.lines_for(none, true), CoachTips.FIRST_VISIT)
 	var fallback: Array[String] = [CoachTips.DEFAULT_TIP]
@@ -144,14 +144,14 @@ func test_a_form_filed_during_the_visit_counts_in_the_yard() -> void:
 	var data := ProgressData.new()
 	data.pension = 1000
 	var run := _visit_run(data)
-	run.add_item(load("res://data/items/titanium_hip.tres"))
+	run.add_item(load("res://data/items/slippers.tres"))
 	var pills_before := run.health.max_pills
 	assert_true(data.buy(_form("black_market_pills")))
 	run.refresh_stats()
 	assert_eq(run.stats.max_pills, pills_before + 1, "the filed level adds its pill")
 	assert_eq(run.health.max_pills, pills_before + 1)
 	assert_eq(run.health.pills, run.health.max_pills, "the new pill is his to use at once")
-	assert_true(run.has_item("titanium_hip"), "refreshing keeps the items tried in the yard")
+	assert_true(run.has_item("slippers"), "refreshing keeps the items tried in the yard")
 	assert_true(run.stats.move_speed > PlayerStats.BASE_SPEED)
 
 

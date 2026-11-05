@@ -39,7 +39,9 @@ func test_heals_can_be_picked_up_at_full_pills_when_asked() -> void:
 
 func test_room_view_heals_ask_the_run() -> void:
 	var source := FileAccess.get_file_as_string("res://scripts/world/room_view.gd")
-	assert_true(source.contains("heal.can_take = _run.can_take_heal"), "the floor's heal pickups follow the option")
+	# Every heal on the floor goes through _add_heal, whose rule asks the run first, then the items.
+	assert_true(source.contains("heal.can_take = _can_take_heal"), "the floor's heal pickups follow the option")
+	assert_true(source.contains("return _run.can_take_heal() or _run.effects.accepts_pickup(RunEffects.HEAL)"))
 
 
 func test_timer_text() -> void:

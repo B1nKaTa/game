@@ -18,6 +18,8 @@ var first_heal_bonus := 0
 var heal_bonus := 0
 # How many more hits that would finish him leave one pill instead. RunState fills it on every floor.
 var lethal_saves := 0
+# A half pill healed and waiting for its other half. See heal_half.
+var half_pills := 0
 
 
 func _init(start_pills: int) -> void:
@@ -60,6 +62,16 @@ func heal(amount: int) -> void:
 		bonus += heal_bonus
 	pills = mini(pills + amount + bonus, max_pills)
 	changed.emit()
+
+
+# Half a pill, from the items that heal by halves. Every second half heals a whole pill.
+func heal_half() -> void:
+	if is_dead():
+		return
+	half_pills += 1
+	if half_pills >= 2:
+		half_pills = 0
+		heal(1)
 
 
 func raise_max(new_max: int) -> void:

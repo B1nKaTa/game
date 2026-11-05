@@ -77,6 +77,25 @@ func _ready() -> void:
 	_run()
 
 
+# The loop's fight checks count every pill a hit costs, so a Spare Pill Organizer it picked up is kept
+# empty: a stored heal would soak the hit a check measures. tests/test_reworked_items.gd checks the store.
+# For the same reason the items that block, soften or soak a hit, heal, or drop a heal are held off
+# (EffectContext.counting_pills), and Gravity Boots and Squeaky Shoes are set aside, so the push checks
+# and the room's wait see the rooms' own rules. tests/test_items_batch2.gd checks each of those.
+func _physics_process(_delta: float) -> void:
+	var scene := get_tree().current_scene
+	if scene == null or not "player" in scene or not is_instance_valid(scene.player):
+		return
+	var run: RunState = scene.player.run
+	var organizer = run.effects.effect_of("pill_organizer")
+	if organizer != null:
+		organizer.stored = 0
+	run.effects.ctx.counting_pills = true
+	run.stats.steady_feet = false
+	run.stats.notice_mult = 1.0
+
+
+
 func _run() -> void:
 	await _wait(0.5)
 	_expect_scene("Opening")
@@ -624,7 +643,7 @@ func _clear_room(scene: Node) -> void:
 	var view: RoomView = scene.debug_room_view()
 	var map: FloorMap = scene.debug_map()
 	var is_floor_boss_room: bool = map.room(room_id).room_type == RoomLayout.TYPE_FLOOR_BOSS
-	var pool_before := _offerable_items(scene.player.run)
+	var pool_before := _offerable_items(scene.player.run, ItemRarity.BOSS)
 	_boss_choice_count = -1
 	if is_floor_boss_room:
 		view.boss_choice_dropped.connect(_on_boss_choice_dropped)
@@ -1680,6 +1699,13 @@ func _check_dentures(scene: Node) -> void:
 	var player: Player = scene.player
 	var run: RunState = player.run
 	player.recall_teeth()
+	# The check times one plain throw, so the denture items the loop may hold (a boomerang comes back at
+	# once, wound-up teeth bite again, glue bites on) are set aside for it. Their rules are unit tested.
+	var held := [run.stats.teeth_boomerang, run.stats.teeth_floor_bite, run.stats.teeth_glue_time, run.stats.teeth_sets]
+	run.stats.teeth_boomerang = false
+	run.stats.teeth_floor_bite = false
+	run.stats.teeth_glue_time = 0.0
+	run.stats.teeth_sets = 1
 	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(4, 5)))
 	var far: Enemy = view._spawn_enemy(_enemy_def("intern_reaper"), RoomBackdrop.cell_center(Vector2i(8, 5)) - Player.FEET_OFFSET, true)
 	far.set_physics_process(false)
@@ -1722,6 +1748,10 @@ func _check_dentures(scene: Node) -> void:
 	await _wait(0.7)
 	_check(first.hp < first_hp and second.hp < second_hp, "with the item one throw bites both enemies in a row")
 	run.stats.bites_per_throw = bites_before
+	run.stats.teeth_boomerang = held[0]
+	run.stats.teeth_floor_bite = held[1]
+	run.stats.teeth_glue_time = held[2]
+	run.stats.teeth_sets = held[3]
 	player.recall_teeth()
 	player.aim_source = Callable()
 	await _dismiss_all()
@@ -1762,7 +1792,7 @@ func _check_chests(scene: Node) -> void:
 	_check(_gone(locked) and run.keys == 0, "one Slip opens the locked chest and is spent")
 	# A gilded urn wants two Slips, then lays out two items of which only one can be taken.
 	var urn: Chest = view._create_chest(Vector2i(12, 3), ChestRules.URN)
-	var offer := mini(ChestRules.URN_CHOICES, _offerable_items(run))
+	var offer := mini(ChestRules.URN_CHOICES, _offerable_items(run, ItemRarity.URN))
 	var lying_before := _item_pickups(view)
 	run.add_key()
 	_put_feet(scene, urn.global_position)
@@ -2192,11 +2222,9 @@ func _check_vault_room(scene: Node) -> void:
 	_check(names.has(RoomRules.POTION_NAME) and names.has(RoomRules.BOMB_NAME) and names.has(RoomRules.KEY_NAME), "a vault holds a potion, a Thermos and a Slip in the open, found %s in %s" % [str(names.keys()), scene.debug_map().room(scene.debug_current_id()).layout.resource_path])
 	# This check takes every item it passes, where a player takes one of each choice, so by a late vault
 	# the run may have few left to offer. The vault must still lay out all it can, up to its three.
-	var can_offer := 0
-	for item in Content.items():
-		if run.can_offer(item) and not run.has_item(item.id) and not run.is_promised(item.id):
-			can_offer += 1
-	_check(choices >= mini(3, can_offer), "a vault offers a choice of items, found %d interactive pickups with %d items left to offer" % [choices, can_offer])
+	var can_offer := _offerable_items(run, ItemRarity.VAULT)
+	_check(choices >= mini(3, can_offer)
+, "a vault offers a choice of items, found %d interactive pickups with %d items left to offer" % [choices, can_offer])
 	if potion == null:
 		return
 	# A small potion fills the slot, and stays on the floor while the slot is full.
@@ -2592,12 +2620,9 @@ func _check_undertaker(scene: Node, health: Health) -> void:
 
 # --- The second floor: the boss's items, the stairwell, the landing ---
 
-func _offerable_items(run: RunState) -> int:
-	var count := 0
-	for item in Content.items():
-		if run.can_offer(item) and not run.has_item(item.id) and not run.is_promised(item.id):
-			count += 1
-	return count
+# What a source could still offer this run. Bosses and vaults never offer a cursed item.
+func _offerable_items(run: RunState, source: String) -> int:
+	return RoomRules.offerable(Content.items(), run, source).size()
 
 
 func _on_boss_choice_dropped(count: int) -> void:
@@ -2669,7 +2694,10 @@ func _take_the_stairwell(scene: Node) -> void:
 	_check(scene.debug_mini_map().floor_name() == floor_below and scene.debug_big_map().floor_name() == floor_below, "both maps name %s" % floor_below)
 	_check(get_tree().get_nodes_in_group("enemies").is_empty(), "nothing waits to fight on the landing")
 	# With the boarding pass hung, landing_heal is one more than LANDING_HEAL.
-	_check(health.pills == pills_before + mini(scene.landing_heal() + bonus, missing), "the landing heals him, %d to %d" % [pills_before, health.pills])
+	# The Neck Pillow heals him fully on a landing.
+	var expected := health.max_pills if run.has_item("neck_pillow") else pills_before + mini(scene.landing_heal() + bonus, missing)
+	_check(health.pills == expected, "the landing heals him, %d to %d" % [pills_before, health.pills])
+
 	_check(run.items.size() == items_before and run.keys == keys_before, "his items and Slips come down with him")
 	_check(not scene.is_cleared, "the new floor is not cleared yet")
 	_landings_reached += 1
@@ -2726,11 +2754,20 @@ func _check_wet_floor(scene: Node) -> void:
 	var view := await _enter_made_room(scene, _fight_layout(20, 11, changes))
 	_check(_props_in(view, WetFloor).size() == 10, "the made room laid its wet floor")
 	_check(_props_in(view, WetSign).size() == 1, "a wet patch gets one caution sign")
+	# Orthopedic Slippers grip the wet, so the slide is checked without them and then with them.
+	var stats: PlayerStats = scene.player.run.stats
+	var grip := stats.wet_grip
+	stats.wet_grip = false
 	var dry := await _walk_and_let_go(scene, RoomBackdrop.cell_center(Vector2i(5, 7)))
 	var wet := await _walk_and_let_go(scene, RoomBackdrop.cell_center(Vector2i(5, 3)))
 	_check(scene.player.on_wet, "his feet on the wet floor count as wet")
 	_check(dry < 2.0, "on a dry floor he stops when he lets go, slid %f" % dry)
 	_check(wet > 8.0, "on a wet floor he slides on, slid %f" % wet)
+	stats.wet_grip = true
+	var gripped := await _walk_and_let_go(scene, RoomBackdrop.cell_center(Vector2i(5, 3)))
+	_check(gripped < 2.0, "in Orthopedic Slippers the wet floor never slides him, slid %f" % gripped)
+	scene.player.run.stats.wet_grip = grip
+
 	var caution: WetSign = _props_in(view, WetSign)[0]
 	_check(caution.hit_by(BreakableBlock.SOURCE_CANE), "the caution sign can be knocked over")
 

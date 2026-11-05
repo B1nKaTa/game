@@ -152,6 +152,8 @@ func reload() -> void:
 	data = _store.load_progress()
 	# ProgressData loads no defs, so a poster id that matches none is dropped here.
 	BountyBoard.drop_unknown_taken(BountyBoard.all(), data)
+	# A poster retired before it paid an item, as the Regional Reaper's paid a hood, gives its item now.
+	BountyBoard.grant_retired_items(BountyBoard.all(), data)
 	notice = ""
 	if _store.last_status == SaveStore.STATUS_BACKUP:
 		notice = "Your save was damaged, so a backup was restored."
@@ -376,7 +378,17 @@ func record_floor_cleared(depth: int, path_id: String) -> void:
 	_store.save_progress(data)
 
 
+# Paths whose first-clear items have been announced, so each path's news plays once.
+func mark_item_paths_seen(ids: Array) -> void:
+	if ids.is_empty():
+		return
+	for id in ids:
+		data.item_paths_seen[str(id)] = true
+	_store.save_progress(data)
+
+
 # Departments whose opening has been announced, so each arrival line plays once.
+
 func mark_departments_seen(ids: Array) -> void:
 	if ids.is_empty():
 		return
@@ -403,6 +415,9 @@ func take_brewed_potion() -> PotionDef:
 func make_run() -> RunState:
 	var run := RunState.new(Content.upgrades(), data.upgrades, data.form_choices)
 	run.unlocked_items = data.items_unlocked
+	run.paths_cleared = data.paths_cleared
+	run.effects.set_combos(Content.combos())
+
 	run.perks = Mementos.perks(data)
 	run.apply_perks()
 	run.look = RunState.look_from(data.cosmetics_worn, CosmeticDef.all())

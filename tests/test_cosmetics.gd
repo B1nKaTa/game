@@ -25,7 +25,7 @@ func test_only_the_bounty_cosmetics_are_never_sold() -> void:
 		if not def.is_sold():
 			never_sold.append(def.id)
 	never_sold.sort()
-	assert_eq(never_sold, ["aviator_sunglasses", "bingo_teal", "captains_hat", "fountain_tiara", "geralds_hat", "golf_visor", "power_tie", "reaper_hood", "sooty_cane"])
+	assert_eq(never_sold, ["aviator_sunglasses", "bingo_teal", "fountain_tiara", "geralds_hat", "golf_visor", "power_tie", "sooty_cane"])
 
 
 func test_condolences_buy_and_bounty_ones_are_never_for_sale() -> void:
@@ -34,7 +34,7 @@ func test_condolences_buy_and_bounty_ones_are_never_for_sale() -> void:
 	assert_true(data.buy_cosmetic(_cosmetic("flat_cap")))
 	assert_eq(data.condolences, 70)
 	assert_false(data.buy_cosmetic(_cosmetic("flat_cap")), "owned already")
-	assert_false(data.buy_cosmetic(_cosmetic("reaper_hood")))
+	assert_false(data.buy_cosmetic(_cosmetic("golf_visor")))
 	assert_eq(data.condolences, 70)
 
 
@@ -95,12 +95,12 @@ func test_the_panel_buttons_say_what_a_press_does() -> void:
 	var data := ProgressData.new()
 	assert_eq(DecorPanel.decor_button_text(_cosmetic("potted_fern"), data), "Buy (20 Condolences)")
 	assert_eq(DecorPanel.look_button_text(_cosmetic("flat_cap"), data), "Buy (30)")
-	assert_eq(DecorPanel.look_button_text(_cosmetic("reaper_hood"), data), DecorPanel.BOUNTY_REWARD)
-	data.cosmetics_owned = {"potted_fern": true, "flat_cap": true, "reaper_hood": true}
+	assert_eq(DecorPanel.look_button_text(_cosmetic("golf_visor"), data), DecorPanel.BOUNTY_REWARD)
+	data.cosmetics_owned = {"potted_fern": true, "flat_cap": true, "golf_visor": true}
 	assert_eq(DecorPanel.decor_button_text(_cosmetic("potted_fern"), data), DecorPanel.PLACED)
 	assert_eq(DecorPanel.look_button_text(_cosmetic("flat_cap"), data), DecorPanel.WEAR)
-	data.wear(_cosmetic("reaper_hood"))
-	assert_eq(DecorPanel.look_button_text(_cosmetic("reaper_hood"), data), DecorPanel.TAKE_OFF)
+	data.wear(_cosmetic("golf_visor"))
+	assert_eq(DecorPanel.look_button_text(_cosmetic("golf_visor"), data), DecorPanel.TAKE_OFF)
 
 
 func test_the_two_tabs_split_decor_from_looks() -> void:

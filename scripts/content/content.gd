@@ -4,6 +4,7 @@ extends RefCounted
 const ITEMS_DIR := "res://data/items/"
 const UPGRADES_DIR := "res://data/upgrades/"
 const POTIONS_DIR := "res://data/potions/"
+const COMBOS_DIR := "res://data/combos/"
 
 
 static func load_dir(path: String) -> Array:
@@ -30,7 +31,19 @@ static func items() -> Array[ItemDef]:
 	return list
 
 
+# An empty or missing folder gives none, since a combo ships only once both its items exist.
+static func combos() -> Array[ComboDef]:
+	var list: Array[ComboDef] = []
+	if not DirAccess.dir_exists_absolute(COMBOS_DIR):
+		return list
+	for resource in load_dir(COMBOS_DIR):
+		if resource is ComboDef:
+			list.append(resource)
+	return list
+
+
 static func recipes() -> Array[ItemDef]:
+
 	var list: Array[ItemDef] = []
 	for item in items():
 		if item.needs_recipe():

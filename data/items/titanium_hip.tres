@@ -1,12 +1,17 @@
-[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/titanium_hip.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
 
 [resource]
 script = ExtResource("1")
 id = "titanium_hip"
 display_name = "Titanium Hip"
-description = "Faster movement and a shorter dodge cooldown. Sets off every metal detector."
+description = "Dodge through an enemy and it takes half a swing. Sets off every metal detector."
 craft_price = 80
-move_speed_bonus = 0.15
-dodge_cooldown_cut = 0.15
+rarity = "rare"
+tags = PackedStringArray("dodge", "cane")
+effect = SubResource("Effect")

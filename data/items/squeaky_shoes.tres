@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "squeaky_shoes"
+display_name = "Squeaky Shoes"
+description = "You walk 15% faster, but enemies notice you twice as soon. Every step a small announcement."
+rarity = "common"
+cursed = true
+tags = PackedStringArray("dodge")
+move_speed_bonus = 0.15
+notice_bonus = 1.0

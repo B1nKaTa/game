@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "velcro_shoes"
+display_name = "Velcro Shoes"
+description = "Dodge twice back to back, but the dodge takes 30% longer to come back. No laces, no excuses."
+rarity = "common"
+tags = PackedStringArray("dodge")
+first_clear_path = "terminal_zero"
+dodge_cooldown_cut = -0.3
+bonus_dodge_charges = 1

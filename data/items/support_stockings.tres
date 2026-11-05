@@ -6,7 +6,8 @@
 script = ExtResource("1")
 id = "support_stockings"
 display_name = "Support Stockings"
-description = "Shorter dodge cooldown and a little more speed."
+description = "Sand, sedatives, quoits and paper never slow you below 70% speed. Compression is everything."
 craft_price = 80
-dodge_cooldown_cut = 0.25
-move_speed_bonus = 0.1
+rarity = "common"
+tags = PackedStringArray("dodge", "defence")
+min_slow_factor = 0.7

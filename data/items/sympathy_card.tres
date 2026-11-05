@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/sympathy_card.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "sympathy_card"
+display_name = "Sympathy Card"
+description = "Clearing a room has a 1 in 4 chance to leave a heal. Thinking of you, more or less."
+rarity = "common"
+tags = PackedStringArray("defence", "room")
+effect = SubResource("Effect")

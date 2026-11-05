@@ -25,6 +25,8 @@ const DROP_KEY := "key"
 const DROP_BOMB := "bomb"
 const DROP_COIN := "coin"
 const DROP_POTION := "potion"
+# Only items drop a heal this way (the Sympathy Card). Rooms lay theirs out as H cells.
+const DROP_HEAL := "heal"
 const CLEAR_KEY_CHANCE := 0.15
 const CLEAR_BOMB_CHANCE := 0.2
 const BLOCK_COIN_CHANCE := 0.3
@@ -103,17 +105,38 @@ static func door_icon(room_type: String) -> String:
 	return ICONS.get(room_type, "<")
 
 
-static func pick_items(all: Array[ItemDef], run: RunState, count: int, rng: RandomNumberGenerator) -> Array[ItemDef]:
-	var options: Array[ItemDef] = []
-	for item in all:
-		if run.can_offer(item) and not run.has_item(item.id) and not run.is_promised(item.id):
-			options.append(item)
+# Each pick rolls a rarity on the source's table (ItemRarity.WEIGHTS), then takes an item of it at
+# random. A rarity with nothing left falls to the others, so a pool is never short for want of one.
+static func pick_items(all: Array[ItemDef], run: RunState, count: int, rng: RandomNumberGenerator, source := ItemRarity.ITEM_ROOM) -> Array[ItemDef]:
+	var options := offerable(all, run, source)
 	var picked: Array[ItemDef] = []
 	while picked.size() < count and not options.is_empty():
-		var index := rng.randi_range(0, options.size() - 1)
-		picked.append(options[index])
-		options.remove_at(index)
+		var rolled := ItemRarity.roll(source, rng.randf())
+		for rarity in ItemRarity.fallback_order(rolled):
+			var of_rarity: Array[int] = []
+			for i in options.size():
+				if options[i].rarity == rarity:
+					of_rarity.append(i)
+			if of_rarity.is_empty():
+				continue
+			var index := of_rarity[rng.randi_range(0, of_rarity.size() - 1)]
+			picked.append(options[index])
+			options.remove_at(index)
+			break
 	return picked
+
+
+# What a source could offer this run: open, not held, not promised, and no cursed item where the
+# source never gives one.
+static func offerable(all: Array[ItemDef], run: RunState, source := ItemRarity.ITEM_ROOM) -> Array[ItemDef]:
+	var options: Array[ItemDef] = []
+	for item in all:
+		if item.cursed and not ItemRarity.allows_cursed(source):
+			continue
+		if run.can_offer(item) and not run.has_item(item.id) and not run.is_promised(item.id):
+			options.append(item)
+	return options
+
 
 
 # Picks a recipe the player hasn't found and that this run hasn't already offered, or null.

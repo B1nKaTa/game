@@ -6,5 +6,8 @@
 script = ExtResource("1")
 id = "hearing_aid"
 display_name = "Hearing Aid"
-description = "See enemy attacks coming earlier."
+description = "See attacks coming earlier, and arrows at the screen's edge point to enemies out of view. Pardon?"
+rarity = "common"
+tags = PackedStringArray("vision")
 warning_bonus = 0.5
+shows_offscreen_enemies = true

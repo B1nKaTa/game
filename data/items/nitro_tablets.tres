@@ -1,11 +1,19 @@
-[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/nitro_tablets.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
 
 [resource]
 script = ExtResource("1")
 id = "nitro_tablets"
 display_name = "Nitroglycerin Tablets"
-description = "Much more cane damage. Do not drop them."
+description = "Much more cane damage, but any hit of two pills or more sets them off in a blast around you. Do not drop them."
 craft_price = 120
+rarity = "rare"
+cursed = true
+tags = PackedStringArray("cane", "defence")
 damage_bonus = 0.4
+effect = SubResource("Effect")

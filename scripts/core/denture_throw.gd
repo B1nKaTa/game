@@ -35,6 +35,12 @@ func drop() -> void:
 	_dropped_time = 0.0
 
 
+# Straight back to him now, from flight or from the floor, as a boomerang turns for home.
+func recall() -> void:
+	if _state == State.FLYING or _state == State.DROPPED:
+		_state = State.RETURNING
+
+
 func tick(delta: float) -> void:
 	if _state != State.DROPPED:
 		return

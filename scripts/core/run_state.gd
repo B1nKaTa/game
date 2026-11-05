@@ -16,9 +16,13 @@ const PENSION_BOSS := "boss"
 var stats: PlayerStats
 var health: Health
 var items: Array[ItemDef] = []
+# What the held items do at moments of play, in pickup order, and the combos they form.
+var effects: RunEffects
 var keys := 0
 var bombs := STARTING_BOMBS
 var unlocked_items := {}
+# Path id -> true for every path whose floor boss has fallen, for the items those first clears open.
+var paths_cleared := {}
 # The one potion Grandpa carries, and the buff he is under, if any.
 var potion: PotionDef
 var buff: PotionDef
@@ -54,6 +58,7 @@ func _init(upgrades: Array[UpgradeDef], levels: Dictionary, choices: Dictionary 
 	_upgrades = upgrades
 	_levels = levels
 	_choices = choices
+	effects = RunEffects.new(self)
 	stats = PlayerStats.compute(_upgrades, _levels, items, _choices)
 	health = Health.new(stats.max_pills)
 	health.changed.connect(changed.emit)
@@ -120,9 +125,7 @@ func prop_coin_mult() -> float:
 
 # Recipe items only join the rotation once they have been crafted, and bounty items once won.
 func can_offer(item: ItemDef) -> bool:
-	if item.from_bounty:
-		return unlocked_items.has(item.id)
-	return not item.needs_recipe() or unlocked_items.has(item.id)
+	return ItemUnlocks.is_open(item, unlocked_items, paths_cleared)
 
 
 func offer_recipe(id: String) -> void:
@@ -135,6 +138,7 @@ func was_recipe_offered(id: String) -> bool:
 
 func add_item(item: ItemDef) -> void:
 	items.append(item)
+	effects.add(item)
 	refresh_stats()
 	# A Life Jacket picked up mid-floor works on this floor already.
 	health.lethal_saves += item.floor_lethal_saves
@@ -156,6 +160,7 @@ func parachute_pay(earned: int) -> int:
 # maximum never leaves him holding more pills than it allows.
 func clear_items() -> void:
 	items.clear()
+	effects.clear()
 	refresh_stats()
 	health.lethal_saves = mini(health.lethal_saves, stats.floor_lethal_saves)
 
@@ -165,8 +170,9 @@ func clear_items() -> void:
 # save, so a form filed or refiled since then counts here. A higher maximum adds the pills it gains,
 # and a lower one never leaves him holding more pills than it allows (Health.raise_max).
 func refresh_stats() -> void:
-	stats = PlayerStats.compute(_upgrades, _levels, items, _choices)
+	stats = PlayerStats.compute(_upgrades, _levels, items, _choices, effects.active_combos())
 	health.heal_bonus = stats.heal_bonus
+
 	if stats.max_pills != health.max_pills:
 		health.raise_max(stats.max_pills)
 	else:
@@ -323,8 +329,11 @@ func charge_damage_mult() -> float:
 	return stats.charge_damage_mult + (Mementos.CHARGE_POWER_BONUS if has_perk(Mementos.CHARGE_PERK) else 0.0)
 
 
-# How far slides and pushes move him, as a share: half with the ship's anchor.
+# How far slides and pushes move him, as a share: half with the ship's anchor, and not at all in
+# Gravity Boots.
 func slide_mult() -> float:
+	if stats.steady_feet:
+		return 0.0
 	return Mementos.SLIDE_MULT if has_perk(Mementos.SLIDE_PERK) else 1.0
 
 

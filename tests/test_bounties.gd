@@ -51,7 +51,7 @@ func test_the_extras_are_six_items_six_recipes_and_eight_cosmetics_and_all_real(
 			assert_true(Content.items().any(func(i): return i.id == def.extra_id and i.from_bounty), def.id)
 		if def.extra_kind == BountyDef.EXTRA_COSMETIC:
 			assert_true(CosmeticDef.find(def.extra_id, CosmeticDef.all()) != null, def.id)
-	assert_eq(counts, {BountyDef.EXTRA_ITEM: 6, BountyDef.EXTRA_RECIPE: 6, BountyDef.EXTRA_COSMETIC: 8})
+	assert_eq(counts, {BountyDef.EXTRA_ITEM: 8, BountyDef.EXTRA_RECIPE: 6, BountyDef.EXTRA_COSMETIC: 6})
 
 
 func test_a_fresh_save_sees_only_the_first_floors_posters() -> void:
@@ -145,11 +145,37 @@ func test_collecting_an_item_poster_unlocks_the_item() -> void:
 
 func test_collecting_a_cosmetic_poster_owns_the_cosmetic() -> void:
 	var data := ProgressData.new()
+	var poster := _poster("old_smokey")
+	BountyBoard.take(poster, data)
+	data.record_boss_beaten("old_smokey", true)
+	BountyBoard.collect(poster, data)
+	assert_true(data.cosmetics_owned.has("sooty_cane"))
+
+
+func test_the_regional_reaper_pays_his_other_scythe_and_his_hood_is_sold() -> void:
 	var poster := _poster("regional_reaper")
+	assert_eq(poster.extra_kind, BountyDef.EXTRA_ITEM)
+	assert_eq(poster.extra_id, "reapers_scythe")
+	var hood := CosmeticDef.find("reaper_hood", CosmeticDef.all())
+	assert_true(hood.is_sold(), "the hood moved to the Decor Office for Condolences")
+	var data := ProgressData.new()
 	BountyBoard.take(poster, data)
 	data.record_boss_beaten("regional_reaper", true)
 	BountyBoard.collect(poster, data)
-	assert_true(data.cosmetics_owned.has("reaper_hood"))
+	assert_true(data.is_unlocked("reapers_scythe"))
+
+
+func test_a_poster_retired_before_it_paid_an_item_gives_the_item_on_load() -> void:
+	var data := ProgressData.new()
+	data.bounties_retired = {"regional_reaper": true, "senior_adjuster": true}
+	data.cosmetics_owned = {"reaper_hood": true}
+	assert_true(BountyBoard.grant_retired_items(BountyBoard.all(), data))
+	assert_true(data.is_unlocked("reapers_scythe"))
+	assert_true(data.cosmetics_owned.has("reaper_hood"), "the hood he won stays his")
+	assert_false(data.is_unlocked("support_stockings"), "a recipe poster unlocks nothing by itself")
+	assert_false(BountyBoard.grant_retired_items(BountyBoard.all(), data), "once only")
+	var progress := FileAccess.get_file_as_string("res://scripts/autoload/progress.gd")
+	assert_true(progress.contains("BountyBoard.grant_retired_items(BountyBoard.all(), data)"), "every load checks")
 
 
 func test_a_won_item_joins_the_pool_only_once_won() -> void:
@@ -163,7 +189,7 @@ func test_a_won_item_joins_the_pool_only_once_won() -> void:
 func test_the_extra_text_names_what_the_poster_pays() -> void:
 	assert_eq(BountyPanel.extra_text(_poster("senior_adjuster")), "a recipe for Agnes")
 	assert_eq(BountyPanel.extra_text(_poster("tired_undertaker")), "a unique item")
-	assert_eq(BountyPanel.extra_text(_poster("regional_reaper")), "something to wear")
+	assert_eq(BountyPanel.extra_text(_poster("old_smokey")), "something to wear")
 
 
 func test_a_row_names_the_boss_and_the_whole_reward() -> void:
@@ -229,7 +255,7 @@ func test_progress_drops_an_unknown_poster_on_load() -> void:
 # Mini bosses' posters pay a look and floor bosses' an item or a recipe, on the deep floors as above.
 func test_the_deep_floors_posters_pay_what_the_spec_says() -> void:
 	var wanted := {
-		"lorraine": "captains_hat", "commodore_wellington": "life_jacket",
+		"lorraine": "gravity_boots", "commodore_wellington": "life_jacket",
 		"chip": "golf_visor", "thaddeus_fairweather": "lucky_tee",
 		"sergeant_wanda": "aviator_sunglasses", "augustine": "neck_pillow",
 		"doreen": "power_tie", "chairman_of_the_board": "golden_parachute",
@@ -240,7 +266,9 @@ func test_the_deep_floors_posters_pay_what_the_spec_says() -> void:
 		if def == null:
 			continue
 		assert_eq(def.extra_id, wanted[id], id)
-		assert_eq(def.extra_kind == BountyDef.EXTRA_COSMETIC, not def.floor_boss, id)
+		# Lorraine's poster pays the Gravity Boots now, and her hat moved to the Decor Office.
+		if id != "lorraine":
+			assert_eq(def.extra_kind == BountyDef.EXTRA_COSMETIC, not def.floor_boss, id)
 
 
 # The board holds every poster at once, so twenty papers fit it with the taken one marked.

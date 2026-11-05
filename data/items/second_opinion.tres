@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/second_opinion.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "second_opinion"
+display_name = "Second Opinion"
+description = "Once on each floor, a heal you pick up heals double. The first doctor said it was nothing."
+rarity = "rare"
+tags = PackedStringArray("defence")
+first_clear_path = "sunset_shores"
+effect = SubResource("Effect")

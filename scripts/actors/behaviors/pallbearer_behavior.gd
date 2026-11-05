@@ -117,8 +117,10 @@ func on_killed(enemy: Enemy) -> void:
 		return
 	var partner := _pair.other(enemy)
 	_pair.broken = true
-	if not is_instance_valid(partner) or partner.is_dead() or enemy.get_parent() == null:
+	# Finished with the Undertaker's Work Gloves, the coffin is set down gently instead of dropped.
+	if enemy.harmless_death or not is_instance_valid(partner) or partner.is_dead() or enemy.get_parent() == null:
 		return
+
 	var feet := enemy.target_ground() if is_instance_valid(enemy.target) else Vector2.INF
 	DroppedCoffin.drop(enemy.get_parent(), enemy.global_position.lerp(partner.global_position, 0.5), partner.global_position - enemy.global_position, feet, COFFIN_TIME)
 

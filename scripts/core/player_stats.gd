@@ -20,6 +20,10 @@ const WOUNDED_BELOW := 0.5
 # this core script never names a world node class: Thermos -> Player -> RunState -> PlayerStats would
 # otherwise close a load cycle.
 const BASE_BLAST_RADIUS := 56.0
+# Enemies never notice him less than this share as far, and a heal is never out of reach nearer than
+# this share of its usual reach.
+const MIN_NOTICE_MULT := 0.25
+const MIN_HEAL_REACH := 0.25
 
 var max_pills: int = BASE_PILLS
 var move_speed: float = BASE_SPEED
@@ -66,11 +70,33 @@ var lucky_swing_chance := 0.0
 var floor_lethal_saves := 0
 # The share of a run's Pension paid again on dying in it.
 var death_pension_bonus := 0.0
+# The hundred items' rules. See StatEffect.
+var wet_grip := false
+var min_slow_factor := 0.0
+var clean_kills := false
+var shows_offscreen_enemies := false
+# What his swings' push is multiplied by.
+var swing_push_mult := 1.0
+# The dentures' items. See StatEffect.
+var teeth_glue_time := 0.0
+var teeth_boomerang := false
+var teeth_floor_bite := false
+var teeth_sets := 1
+# The movement items. Dodges he can make back to back, whether charging keeps his full walk, what
+# sleepers' noticing range and a room's wait are scaled by, whether a dodge rounds corners, whether
+# slides and pushes leave him be, and what his reach to take a heal on the floor is scaled by.
+var dodge_charges := 1
+var charge_full_speed := false
+var notice_mult := 1.0
+var dodge_rounds_corners := false
+var steady_feet := false
+var heal_reach_mult := 1.0
 
 
 # choices maps a form id to its milestone option. A form at or past its milestone with no entry
 # reads as option A, and the chosen option's effect counts once, whatever the level.
-static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Array[ItemDef], choices: Dictionary = {}) -> PlayerStats:
+# combos are the ComboDefs the run has formed. Their numbers count once each, as an item's do.
+static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Array[ItemDef], choices: Dictionary = {}, combos: Array[ComboDef] = []) -> PlayerStats:
 	var pills := 0
 	var speed := 0.0
 	var cut := 0.0
@@ -102,6 +128,21 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 	var lucky := 0.0
 	var lethal_saves := 0
 	var death_pension := 0.0
+	var grip := false
+	var slow_floor := 0.0
+	var clean := false
+	var arrows := false
+	var push := 0.0
+	var glue := 0.0
+	var boomerang := false
+	var floor_bite := false
+	var sets := 1
+	var charges := 0
+	var full_charge := false
+	var notice := 0.0
+	var corners := false
+	var steady := false
+	var reach_cut := 0.0
 	var effects: Array = []
 	for upgrade in upgrades:
 		var level := int(levels.get(upgrade.id, 0))
@@ -110,6 +151,8 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 			effects.append([upgrade.option(str(choices.get(upgrade.id, UpgradeDef.OPTION_A))), 1])
 	for item in items:
 		effects.append([item, 1])
+	for combo in combos:
+		effects.append([combo, 1])
 	for entry in effects:
 		var effect: StatEffect = entry[0]
 		var count: int = entry[1]
@@ -138,6 +181,10 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 		lucky += effect.lucky_swing_chance * count
 		lethal_saves += effect.floor_lethal_saves * count
 		death_pension += effect.death_pension_bonus * count
+		push += effect.swing_push_bonus * count
+		charges += effect.bonus_dodge_charges * count
+		notice += effect.notice_bonus * count
+		reach_cut += effect.heal_reach_cut * count
 		if count > 0:
 			bites = maxi(bites, effect.bites_through)
 		if effect is UpgradeDef and effect.thermos_damage_bonus > 0.0:
@@ -150,6 +197,18 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 			reveals = true
 		if count > 0 and effect.reveals_secrets:
 			secrets = true
+		if count > 0:
+			grip = grip or effect.wet_grip
+			slow_floor = maxf(slow_floor, effect.min_slow_factor)
+			clean = clean or effect.clean_kills
+			arrows = arrows or effect.shows_offscreen_enemies
+			glue = maxf(glue, effect.teeth_glue_time)
+			boomerang = boomerang or effect.teeth_boomerang
+			floor_bite = floor_bite or effect.teeth_floor_bite
+			sets = maxi(sets, effect.teeth_sets)
+			full_charge = full_charge or effect.charge_full_speed
+			corners = corners or effect.dodge_rounds_corners
+			steady = steady or effect.steady_feet
 	var stats := PlayerStats.new()
 	stats.max_pills = BASE_PILLS + pills
 	stats.move_speed = BASE_SPEED * (1.0 + speed)
@@ -184,7 +243,23 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 	stats.lucky_swing_chance = clampf(lucky, 0.0, 1.0)
 	stats.floor_lethal_saves = lethal_saves
 	stats.death_pension_bonus = death_pension
+	stats.wet_grip = grip
+	stats.min_slow_factor = clampf(slow_floor, 0.0, 1.0)
+	stats.clean_kills = clean
+	stats.shows_offscreen_enemies = arrows
+	stats.swing_push_mult = maxf(1.0 + push, 0.0)
+	stats.teeth_glue_time = glue
+	stats.teeth_boomerang = boomerang
+	stats.teeth_floor_bite = floor_bite
+	stats.teeth_sets = sets
+	stats.dodge_charges = 1 + maxi(charges, 0)
+	stats.charge_full_speed = full_charge
+	stats.notice_mult = maxf(1.0 + notice, MIN_NOTICE_MULT)
+	stats.dodge_rounds_corners = corners
+	stats.steady_feet = steady
+	stats.heal_reach_mult = clampf(1.0 - reach_cut, MIN_HEAL_REACH, 1.0)
 	return stats
+
 
 
 # What a hit does once the weak spot is counted: wounded_mult applies only below WOUNDED_BELOW health.

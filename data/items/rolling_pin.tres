@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/rolling_pin.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "rolling_pin"
+display_name = "Grandma's Rolling Pin"
+description = "Every swing becomes a slow, huge overhead smash that also hits behind you. She never once used it on pastry."
+rarity = "legendary"
+tags = PackedStringArray("cane")
+craft_price = 400
+swing_speed_bonus = -0.4
+effect = SubResource("Effect")

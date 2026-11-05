@@ -60,7 +60,7 @@ func _physics_process(delta: float) -> void:
 		return
 	global_position = next
 	if global_position.distance_to(_target.global_position) <= HIT_RADIUS:
-		var landed: bool = _target.take_hit(_damage)
+		var landed: bool = _target.take_hit(_damage, RunEffects.HURT_PROJECTILE)
 		if landed and is_dart() and _target.has_method("slow"):
 			_target.slow(slow_fraction, slow_time)
 		queue_free()
