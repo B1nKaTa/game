@@ -91,6 +91,26 @@ func share_floor(other: OverlapRoute) -> void:
 		_built = false
 
 
+# A copy of this route with more strips over it, each hurting in its own window, sharing this route's
+# floor: for trying layouts of a new attack over attacks already under way.
+func with_rects(rects: Array[Rect2], windows: Array[Vector2]) -> OverlapRoute:
+	var copy := OverlapRoute.new(area)
+	copy.react = react
+	copy._rects = _rects.duplicate()
+	copy._rect_times = _rect_times.duplicate()
+	copy._circles = _circles.duplicate()
+	copy._circle_times = _circle_times.duplicate()
+	copy._blocks = _blocks.duplicate()
+	copy._is_open = _is_open
+	copy._sticky = _sticky.duplicate()
+	copy._extra = _extra
+	copy._extra_time = _extra_time
+	for i in rects.size():
+		copy.add_rect(rects[i], windows[i].x, windows[i].y)
+	copy.share_floor(self)
+	return copy
+
+
 # Red tape on a cell, strung from a time counted from now (0 when it is strung already).
 func add_sticky(cell: Vector2i, from: float) -> void:
 	_sticky[cell] = minf(_sticky.get(cell, INF), from)

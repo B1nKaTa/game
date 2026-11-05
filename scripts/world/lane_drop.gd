@@ -11,6 +11,13 @@ const WAITING_ALPHA := 0.35
 const SHOW_TIME := 0.3
 const LOOK_MEMOS := "memos"
 const LOOK_BAR := "bar"
+# The Chairman's restructuring: a row of filing cabinets whose drawers slide out across the room.
+const LOOK_DRAWERS := "drawers"
+const CABINET := Color("6f7a6a")
+const CABINET_EDGE := Color("1c211b")
+const DRAWER_LINE := Color("4a5347")
+const HANDLE := Color("d8cfa8")
+const DRAWER_WIDTH := 24.0
 const MEMO := Color("f4efe0")
 const MEMO_EDGE := Color("8e8878")
 const BAR := Color("3b7dd8")
@@ -133,6 +140,22 @@ func _draw() -> void:
 		var filled := fill()
 		draw_rect(strip_at, Color(COLOR, 0.15 + 0.3 * filled))
 		draw_rect(strip_at, COLOR, false, 2.0)
+		return
+	if _look == LOOK_DRAWERS:
+		# The drawers slide out from the left wall while up, then back in.
+		var out := 1.0 if _stand_left > 0.0 else clampf(_show_left / SHOW_TIME, 0.0, 1.0)
+		var row := Rect2(strip_at.position + Vector2(0.0, 4.0), Vector2(strip_at.size.x * out, strip_at.size.y - 8.0))
+		draw_rect(row, Color(CABINET, 0.92))
+		var x := row.position.x + DRAWER_WIDTH
+		while x < row.end.x - 2.0:
+			draw_line(Vector2(x, row.position.y), Vector2(x, row.end.y), DRAWER_LINE, 2.0)
+			x += DRAWER_WIDTH
+		var handle_y := row.position.y + row.size.y / 2.0
+		x = row.position.x + DRAWER_WIDTH / 2.0
+		while x < row.end.x - 4.0:
+			draw_rect(Rect2(x - 4.0, handle_y - 1.5, 8.0, 3.0), HANDLE)
+			x += DRAWER_WIDTH
+		draw_rect(row, CABINET_EDGE, false, 2.0)
 		return
 	if _look == LOOK_BAR:
 		# The bar stands full height while up, then sinks back into the floor.

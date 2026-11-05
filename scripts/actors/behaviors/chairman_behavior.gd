@@ -13,6 +13,10 @@ extends EnemyBehavior
 # slams his desk: a warned ring round him, shown whole, that costs a pill and shoves Grandpa out.
 # Below half health he is quicker, the charts come closer together, red tape spreads across warned rows
 # of the room for ten seconds as a chart starts, and the gavel follows the chart without a rest.
+# While a chart runs he may also restructure: rows of filing cabinets slide their drawers out across
+# the room in turn, crossing the bars, so the open floor is only where a gap and a row's gap meet, and
+# it moves. The rows are laid out with OverlapRoute against the chart as it stands, so a way out is
+# always left, and the green mark moves to a spot that stays safe.
 const GAVEL_WINDUP := 1.2
 const GAVEL_DAMAGE := Enemy.HEAVIEST_DAMAGE
 # The gavel's warning shows for all of its windup, whatever the player's warning stat.
@@ -68,8 +72,21 @@ const SAY_TIME := 1.0
 const GAVEL_RETRY := 0.15
 # How many ways to lay out a chart are tried before settling for one with no checked spot.
 const CHART_TRIES := 8
+# Restructuring: rows across the room, as tall as a bar is wide, with gaps as wide as a bar's.
+const ROW_HEIGHT := BAR_WIDTH
+const ROW_GAP := BAR_GAP
+const ROW_WARNING := 0.9
+const ROW_STAGGER := 0.4
+const ROW_STAND := 0.4
+# The rows start this long after he calls them, at one of a few delays.
+const ROW_DELAYS: Array[float] = [0.0, 0.25, 0.5]
+const ROW_TRIES := 12
+# The share of charts he restructures during, before and below half health. Never twice in one chart.
+const RESTRUCTURE_SHARE := 0.5
+const PHASE_TWO_RESTRUCTURE_SHARE := 0.8
+const RESTRUCTURE_WINDUP := 0.35
 
-enum Attack { NONE, GAVEL, PROJECTIONS, TAKEOVER, CHARGE, TAPE, SLAM }
+enum Attack { NONE, GAVEL, PROJECTIONS, TAKEOVER, CHARGE, TAPE, SLAM, RESTRUCTURE }
 
 var _telegraph := Telegraph.new()
 var _dash := BossDash.new()
@@ -87,6 +104,9 @@ var _bars: Array = []
 var _chart_left := 0.0
 var _chart_wait := FIRST_CHART
 var _mark: GapMark
+# The restructuring's rows standing now, and whether this chart has had them.
+var _rows: Array = []
+var _restructured := false
 var _rng := RandomNumberGenerator.new()
 
 
@@ -120,14 +140,64 @@ static func windup_for(attack: int, phase_two: bool) -> float:
 			windup = CHARGE_WINDUP
 		Attack.TAPE:
 			windup = TAPE_WINDUP
+		Attack.RESTRUCTURE:
+			return RESTRUCTURE_WINDUP
 	return windup * (PHASE_TWO_WINDUP_SCALE if phase_two else 1.0)
 
 
-# A chart is always followed by the gavel, which falls while its bars run. Nothing else chains.
+# A chart is always followed by the gavel, which falls while its bars run, and so is a restructuring.
 static func followup(attack: int, _phase_two: bool) -> int:
-	if attack == Attack.PROJECTIONS:
+	if attack == Attack.PROJECTIONS or attack == Attack.RESTRUCTURE:
 		return Attack.GAVEL
 	return Attack.NONE
+
+
+# Whether he restructures in this chart: once at most, for a share of charts (roll in [0, 1)).
+static func restructures(phase_two: bool, already: bool, roll: float) -> bool:
+	return not already and roll < (PHASE_TWO_RESTRUCTURE_SHARE if phase_two else RESTRUCTURE_SHARE)
+
+
+# The rows across the room: a chart's bars laid on their side, each the room's whole width. A strip
+# by a wall too narrow to stand in is widened into a whole gap, as the bars' are.
+static func restructure_rows(room: Rect2, offset: float) -> Array[Rect2]:
+	var turned := Rect2(room.position.y, room.position.x, room.size.y, room.size.x)
+	var rows: Array[Rect2] = []
+	for bar in projection_bars(turned, offset):
+		rows.append(Rect2(bar.position.y, bar.position.x, bar.size.y, bar.size.x))
+	return rows
+
+
+# When each row hurts, counted from now: in turn from the top or the bottom, after delay.
+static func row_windows(count: int, top_first: bool, delay: float) -> Array[Vector2]:
+	var windows: Array[Vector2] = []
+	for i in count:
+		var order := i if top_first else count - 1 - i
+		var rises := delay + order * ROW_STAGGER + ROW_WARNING
+		windows.append(Vector2(rises, rises + ROW_STAND))
+	return windows
+
+
+# Rows to lay over the chart as it stands (route), that still leave Grandpa a way to a spot nothing
+# will hurt. Each roll is an offset along the room (x), top first (y < 0.5) and a delay (z, a share
+# into ROW_DELAYS), tried in turn. {rows, top_first, delay, mark, route}, empty when none works.
+static func restructure_plan(route: OverlapRoute, room: Rect2, rolls: Array[Vector3], feet: Vector2, body := Rect2()) -> Dictionary:
+	for roll in rolls:
+		var rows := restructure_rows(room, roll.x)
+		if rows.is_empty():
+			continue
+		var top_first := roll.y < 0.5
+		var delay: float = ROW_DELAYS[mini(int(roll.z * ROW_DELAYS.size()), ROW_DELAYS.size() - 1)]
+		var windows := row_windows(rows.size(), top_first, delay)
+		var trial := route.with_rects(rows, windows)
+		var out := trial.escape(feet, keep_off_body(body))
+		if out["safe"] and out["pure"] != Vector2.INF:
+			return {"rows": rows, "top_first": top_first, "delay": delay, "mark": out["pure"], "route": trial}
+	return {}
+
+
+# How long a restructuring lasts from its call to its last row sinking.
+static func restructure_time(row_count: int, delay: float) -> float:
+	return delay + maxi(row_count - 1, 0) * ROW_STAGGER + ROW_WARNING + ROW_STAND + LaneDrop.SHOW_TIME
 
 
 # In the second phase the gavel follows the chart without a rest.
@@ -135,7 +205,7 @@ static func rest_after_chart(phase_two: bool) -> float:
 	return 0.0 if phase_two else BASE_COOLDOWN
 
 
-# While a chart runs he only gavels. Between charts the gavel takes turns with the desk slam when
+# While a chart runs he only gavels (a restructuring is chosen apart, in tick). Between charts the gavel takes turns with the desk slam when
 # Grandpa's feet are close, and with the takeover when they are far.
 static func choose_attack(last: int, distance: float, charting: bool, roll: float) -> int:
 	if charting:
@@ -373,6 +443,10 @@ func tick(enemy: Enemy, delta: float) -> void:
 	if _next != Attack.NONE and _cooldown <= cooldown_for(phase_two) * 0.5:
 		var chained := _next
 		_next = Attack.NONE
+		# Right after a chart rises he may restructure first; the gavel follows the rows.
+		if chained == Attack.GAVEL and _last == Attack.PROJECTIONS and _charting() and restructures(phase_two, _restructured, _rng.randf()):
+			_restructured = true
+			chained = Attack.RESTRUCTURE
 		_begin(enemy, chained, phase_two)
 		return
 	if _cooldown <= 0.0:
@@ -408,9 +482,21 @@ func _begin(enemy: Enemy, attack: int, phase_two: bool) -> void:
 			return
 		gavel_at = plan["spot"]
 		_move_mark(enemy, plan["mark"], plan["spot"])
+	if attack == Attack.RESTRUCTURE and not _lay_rows(enemy):
+		# No rows leave a way out over this chart, so he gavels instead.
+		attack = Attack.GAVEL
+		var plan := gavel_plan(_live_route(enemy), enemy.target_ground(), enemy.body_rect(), enemy.open_ground)
+		if plan["spot"] == Vector2.INF:
+			_cooldown = GAVEL_RETRY
+			return
+		gavel_at = plan["spot"]
+		_move_mark(enemy, plan["mark"], plan["spot"])
 	_attack = attack
 	_telegraph.start(windup_for(attack, phase_two))
 	match attack:
+		Attack.RESTRUCTURE:
+			enemy.set_warning(_telegraph, WARNING_RADIUS)
+			enemy.say("Restructuring!", SAY_TIME)
 		Attack.GAVEL:
 			enemy.set_warning(_telegraph, WARNING_RADIUS, GAVEL_SHOWN_WHOLE)
 			enemy.say("Order! Order!", SAY_TIME)
@@ -452,6 +538,13 @@ func _begin(enemy: Enemy, attack: int, phase_two: bool) -> void:
 
 func _finish_attack(enemy: Enemy, phase_two: bool) -> void:
 	match _attack:
+		Attack.RESTRUCTURE:
+			# The rows are already warning; the gavel follows as it does a chart.
+			_last = Attack.RESTRUCTURE
+			_next = followup(Attack.RESTRUCTURE, phase_two)
+			_cooldown = rest_after_chart(phase_two)
+			_attack = Attack.NONE
+			return
 		Attack.PROJECTIONS:
 			_raise_projections(enemy)
 			_chart_wait = chart_break(phase_two)
@@ -543,11 +636,11 @@ func _tape_now(enemy: Enemy) -> Dictionary:
 	return tape
 
 
-# The chart as it stands this moment, with each bar's own time left.
+# The chart as it stands this moment, with each bar's and row's own time left.
 func _live_route(enemy: Enemy) -> OverlapRoute:
 	var bars: Array[Rect2] = []
 	var windows: Array[Vector2] = []
-	for drop in _bars:
+	for drop in _bars + _rows:
 		if is_instance_valid(drop):
 			bars.append(drop.strip())
 			windows.append(drop.danger_window())
@@ -578,7 +671,34 @@ func _bar_rects() -> Array[Rect2]:
 	return rects
 
 
+# Lays the restructuring's rows over the chart as it stands, if any layout leaves a way out, moves the
+# mark, and keeps the chart running until the last row sinks. False when nothing works.
+func _lay_rows(enemy: Enemy) -> bool:
+	var room := ForemanBehavior.room_rect(enemy.room_cells)
+	var rolls: Array[Vector3] = []
+	for i in ROW_TRIES:
+		rolls.append(Vector3(_rng.randf() * (ROW_HEIGHT + ROW_GAP), _rng.randf(), _rng.randf()))
+	var plan := restructure_plan(_live_route(enemy), room, rolls, enemy.target_ground(), enemy.body_rect())
+	if plan.is_empty():
+		return false
+	var rows: Array[Rect2] = plan["rows"]
+	var top_first: bool = plan["top_first"]
+	var delay: float = plan["delay"]
+	_rows.clear()
+	for i in rows.size():
+		var order := i if top_first else rows.size() - 1 - i
+		var drop := LaneDrop.new()
+		drop.setup(enemy, rows[i], ROW_WARNING, delay + order * ROW_STAGGER, ROW_STAND, -1, LaneDrop.LOOK_DRAWERS)
+		enemy.get_parent().add_child(drop)
+		_rows.append(drop)
+	_chart_left = maxf(_chart_left, restructure_time(rows.size(), delay))
+	_move_mark(enemy, plan["mark"], Vector2.INF)
+	return true
+
+
 func _raise_projections(enemy: Enemy) -> void:
+	_restructured = false
+	_rows.clear()
 	var room := ForemanBehavior.room_rect(enemy.room_cells)
 	var rolls: Array[Vector2] = []
 	for i in CHART_TRIES:

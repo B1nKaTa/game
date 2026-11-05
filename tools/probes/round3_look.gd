@@ -330,4 +330,33 @@ func _bubble() -> void:
 # --- the Chairman's new attack (filled in with the attack) ---
 
 func _chairman() -> void:
-	pass
+	await _new_run(5, OFFICE)
+	var layout := await _enter_quiet("res://data/rooms/head_office/floor_boss_large_01.tres")
+	var center := _middle(layout)
+	for phase_two in [false, true]:
+		var boss: Enemy = _spawn("chairman_of_the_board", center + Vector2(0, -60))
+		var b = boss._behavior
+		_held = b
+		await _wait(0.1)
+		if phase_two:
+			boss.hp = boss.max_hp() * 0.4
+			boss.health_changed.emit(boss.hp)
+		_stand(_floor_near(layout, center + Vector2(-120, 50)))
+		await _wait(0.1)
+		b._begin(boss, ChairmanBehavior.Attack.PROJECTIONS, phase_two)
+		await _until(func(): return not b._telegraph.is_active(), 2.0)
+		await _wait(0.15)
+		b._begin(boss, ChairmanBehavior.Attack.RESTRUCTURE, phase_two)
+		var tag := "p2" if phase_two else "p1"
+		var rows: Array = b._rows
+		await _until(func(): return rows.any(func(r): return is_instance_valid(r) and not r.is_waiting() and r.fill() > 0.5), 3.0)
+		await _shot("k1_%s_restructure_rows_warning" % tag)
+		await _until(func(): return rows.any(func(r): return is_instance_valid(r) and r.has_landed()), 3.0)
+		await _wait(0.05)
+		await _shot("k2_%s_restructure_drawers_out" % tag)
+		await _wait(1.0)
+		await _shot("k3_%s_restructure_later" % tag)
+		await _wait(2.5)
+		_held = null
+		await _clear()
+		await _wait(0.5)

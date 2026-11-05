@@ -514,6 +514,126 @@ func test_a_gavel_during_a_chart_always_leaves_a_reachable_safe_spot() -> void:
 	assert_true(on_feet >= 175, "nearly every gavel still falls on him: %d of 200" % on_feet)
 
 
+# --- the Chairman: restructuring ---
+
+func test_restructuring_rows_cross_the_room_with_gaps_to_stand_in() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 11
+	for cells in ROOMS:
+		var room := ForemanBehavior.room_rect(cells)
+		for i in 100:
+			var rows := Chairman.restructure_rows(room, rng.randf() * 200.0)
+			assert_false(rows.is_empty(), "%s has rows" % str(room))
+			var y := room.position.y
+			for row in rows:
+				assert_near(row.position.x, room.position.x)
+				assert_near(row.size.x, room.size.x, "each row runs wall to wall")
+				assert_true(row.size.y <= Chairman.ROW_HEIGHT + 0.01)
+				if row.position.y - y > 0.01:
+					assert_true(row.position.y - y >= Chairman.ROW_GAP - 0.01, "a gap above %s is wide enough to stand in" % str(row))
+				y = row.end.y
+			if room.end.y - y > 0.01:
+				assert_true(room.end.y - y >= Chairman.ROW_GAP - 0.01, "and the one under the last row")
+
+
+func test_restructuring_comes_once_a_chart_and_the_gavel_follows_it() -> void:
+	assert_eq(Chairman.followup(Chairman.Attack.RESTRUCTURE, false), Chairman.Attack.GAVEL)
+	assert_false(Chairman.restructures(false, true, 0.0), "never twice in one chart")
+	assert_true(Chairman.restructures(false, false, Chairman.RESTRUCTURE_SHARE - 0.01))
+	assert_false(Chairman.restructures(false, false, Chairman.RESTRUCTURE_SHARE + 0.01))
+	assert_true(Chairman.restructures(true, false, Chairman.PHASE_TWO_RESTRUCTURE_SHARE - 0.01), "more often below half health")
+	var windows := Chairman.row_windows(3, false, 0.25)
+	assert_near(windows[2].x, 0.25 + Chairman.ROW_WARNING, "from the bottom, the last row first")
+	assert_near(windows[0].x, 0.25 + 2 * Chairman.ROW_STAGGER + Chairman.ROW_WARNING)
+	assert_near(windows[0].y - windows[0].x, Chairman.ROW_STAND)
+	var drawers := LaneDrop.new()
+	drawers.setup(null, Rect2(32, 32, 448, 64), Chairman.ROW_WARNING, 0.25, Chairman.ROW_STAND, -1, LaneDrop.LOOK_DRAWERS)
+	assert_near(drawers.danger_window().x, 0.25 + Chairman.ROW_WARNING, "a row's own window agrees")
+	assert_eq(drawers.look(), LaneDrop.LOOK_DRAWERS)
+	drawers.free()
+	var source := FileAccess.get_file_as_string("res://scripts/actors/behaviors/chairman_behavior.gd")
+	assert_true(source.contains("for drop in _bars + _rows:"), "the gavel's plan counts the rows too")
+
+
+# Over 200 charts in both of his rooms and both phases, laid out as the game does: the rows go up
+# just after the chart rises, over the bars as they then stand, and must leave a spot he can reach
+# that no bar and no row ever covers. Then the gavel comes, a windup and a rest later, with him not
+# yet moved: it must find a spot that leaves a way out, or hold back. A state the chart alone has
+# already lost is only counted (in play he is led out by the chart's mark first).
+func test_restructuring_over_a_chart_always_leaves_a_reachable_safe_spot() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 1105
+	var planned := 0
+	var caught := 0
+	var gavels := 0
+	var slowest := 0
+	for seed_value in 200:
+		var layout := _boss_layout("floor_boss_01" if seed_value % 2 == 0 else "floor_boss_large_01")
+		var cells := layout.size_in_cells()
+		var room := ForemanBehavior.room_rect(cells)
+		var is_open := _open_in(layout)
+		var rolls: Array[Vector2] = []
+		for i in Chairman.CHART_TRIES:
+			rolls.append(Vector2(rng.randf() * 200.0, rng.randf()))
+		var feet := _feet_spot(layout, rng, room)
+		var boss_at := _feet_spot(layout, rng, room)
+		if boss_at.distance_to(feet) < 50.0:
+			boss_at = room.get_center() if feet.distance_to(room.get_center()) >= 50.0 else room.position + Vector2(40, 40)
+		var body := Rect2(boss_at - Vector2(22, 26), Vector2(44, 52))
+		var tape := {}
+		var phase_two := seed_value % 4 >= 2
+		if phase_two:
+			for cell in Chairman.tape_cells(cells, WalkGrid.cell_of(feet), is_open):
+				tape[cell] = TapeSpread.WARNING - Chairman.windup_for(Chairman.Attack.PROJECTIONS, true)
+		var choice := Chairman.choose_chart(room, rolls, feet, body, is_open, tape)
+		if choice["mark"] == Vector2.INF:
+			continue
+		var bars: Array[Rect2] = choice["bars"]
+		var left_first: bool = choice["left_first"]
+		var rest := Chairman.rest_after_chart(phase_two)
+		var elapsed := rest * 0.5 if not phase_two else 0.0
+		var route := Chairman.chart_route(room, bars, Chairman.bar_windows(bars.size(), left_first, elapsed), body, is_open, tape)
+		if not route.escape(feet, Chairman.keep_off_body(body))["safe"]:
+			caught += 1
+			continue
+		var row_rolls: Array[Vector3] = []
+		for i in Chairman.ROW_TRIES:
+			row_rolls.append(Vector3(rng.randf() * 200.0, rng.randf(), rng.randf()))
+		var began := Time.get_ticks_usec()
+		var plan := Chairman.restructure_plan(route, room, row_rolls, feet, body)
+		slowest = maxi(slowest, Time.get_ticks_usec() - began)
+		if plan.is_empty():
+			# He gavels instead; the gavel test covers that.
+			continue
+		planned += 1
+		var rows: Array[Rect2] = plan["rows"]
+		var mark: Vector2 = plan["mark"]
+		for strip in bars + rows:
+			assert_false(strip.has_point(mark), "seed %d: the mark is never under a bar or a row" % seed_value)
+		assert_false(body.grow(SafeSpotMark.RADIUS).has_point(mark), "seed %d: off his body" % seed_value)
+		var both: OverlapRoute = plan["route"]
+		assert_true(both.danger_end_at(mark) <= 0.0, "seed %d: nothing covers the mark" % seed_value)
+		assert_true(both.escape(feet)["safe"], "seed %d: he can walk clear of bars and rows" % seed_value)
+		# The gavel, a windup and half a rest later, with every window counted from then.
+		var later := Chairman.RESTRUCTURE_WINDUP + rest * 0.5
+		var row_windows := Chairman.row_windows(rows.size(), plan["top_first"], plan["delay"])
+		for i in row_windows.size():
+			row_windows[i] -= Vector2(later, later)
+		var then := Chairman.chart_route(room, bars, Chairman.bar_windows(bars.size(), left_first, elapsed + later), body, is_open, tape).with_rects(rows, row_windows)
+		var gavel := Chairman.gavel_plan(then, feet, body, is_open)
+		if gavel["spot"] == Vector2.INF:
+			continue
+		gavels += 1
+		then.set_extra_circle(gavel["spot"], Chairman.GAVEL_RADIUS, Chairman.GAVEL_WINDUP, Chairman.GAVEL_WINDUP + OverlapRoute.STEP_TIME)
+		assert_true(then.escape(feet)["safe"], "seed %d: and clear of the gavel after the rows" % seed_value)
+		assert_true(then.danger_end_at(gavel["mark"]) <= 0.0, "seed %d: the gavel's mark is clear" % seed_value)
+	print("restructuring: planned %d, caught by the chart %d, gavels after %d, slowest plan %d us" % [planned, caught, gavels, slowest])
+	assert_true(caught <= 6, "the chart alone rarely catches him: %d of 200" % caught)
+	assert_true(planned >= 150, "rows are nearly always laid: %d of 200" % planned)
+	assert_true(gavels >= 100, "the gavel usually still follows: %d" % gavels)
+	assert_true(slowest < 80000, "a plan never hitches a frame badly: %d us" % slowest)
+
+
 # --- the Chairman: phase two ---
 
 func test_only_the_second_phase_spreads_tape_and_not_too_often() -> void:

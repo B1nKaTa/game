@@ -12,6 +12,7 @@ extends SceneTree
 # dodges through red tape it cannot walk round, steps out of every new lane, ring, sweep, roll and
 # mat to the nearest clear spot, stands on marked gaps unless a heavy strike falls there, and dodges
 # to snap the Chairman's tether.
+# Version 8 counts the Chairman's restructuring rows as a gap attack, so it honours their mark.
 # Version 6 reads the floor-5 bosses' overlaps: the Chairman's desk slam is a warned spot like any
 # deep strike, and Augustine's runway mark is honoured while his lanes light, as a gap is while a
 # chart or a sweep runs (the mark is skipped whenever a lane or strike covers it, as before).
@@ -692,7 +693,7 @@ class Bot extends Node:
 				continue
 			if child is DeckLane and child.look() == DeckLane.LOOK_CONGA:
 				return true
-			if child is XRaySweep or (child is LaneDrop and child.look() == LaneDrop.LOOK_BAR and not child.is_finished()):
+			if child is XRaySweep or (child is LaneDrop and (child.look() == LaneDrop.LOOK_BAR or child.look() == LaneDrop.LOOK_DRAWERS) and not child.is_finished()):
 				return true
 			if child is RunwayLane and not child.is_over():
 				return true
