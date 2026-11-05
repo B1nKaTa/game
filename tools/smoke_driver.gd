@@ -857,6 +857,7 @@ func _check_pad_play() -> void:
 	_check(player._active_swing != null, "the right trigger swings")
 	await _pad_axis(JOY_AXIS_TRIGGER_RIGHT, 0.0)
 	await _wait(0.6)
+	await _check_pad_map(scene, player)
 	var pills := player.run.health.pills
 	_check(player.take_hit(1), "a hit lands on him")
 	_check(PadRumble.last == PadRumble.HIT_TAKEN, "a hit taken rumbles the pad, got '%s'" % PadRumble.last)
@@ -880,6 +881,24 @@ func _check_pad_play() -> void:
 	await _wait(2.5)
 	_expect_scene("WaitingRoom")
 	_checked_controller = not _failed
+
+
+# The map items' changes (the Floor Plan's whole floor, the Fortune Teller's boss tags) are drawn on
+# the big map, which the pad's View button opens and B closes, with nothing in it to focus.
+func _check_pad_map(scene: Node, player: Player) -> void:
+	for id in ["floor_plan", "fortune_card"]:
+		for item in Content.items():
+			if item.id == id and not player.run.has_item(id):
+				player.run.add_item(item)
+	var big: FloorMapView = scene.debug_big_map()
+	_check(big.show_plan and scene.debug_mini_map().show_plan, "the Floor Plan reaches both maps")
+	await _pad_press(JOY_BUTTON_BACK)
+	await _wait(0.1)
+	_check(big.is_open() and get_tree().paused, "the pad's View button opens the big map")
+	await _pad_press(JOY_BUTTON_B)
+	await _wait(0.1)
+	_check(not big.is_open() and not get_tree().paused, "B closes the big map")
+	_check(scene.debug_pause_menu() == null, "B on the map never opens the pause menu")
 
 
 func _pad_press(button: int) -> void:
