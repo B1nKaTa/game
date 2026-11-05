@@ -862,7 +862,7 @@ func _add_pickup(at: Vector2, label: String, color: Color, on_take: Callable, ne
 
 func _create_rewards() -> void:
 	var cells := _room.layout.cells_of("I")
-	# The empty sack memento lays one more item out in a treasure room, on open floor near the others.
+	# The last reel memento lays one more item out in a treasure room, on open floor near the others.
 	if _room.room_type == RoomLayout.TYPE_TREASURE and not cells.is_empty() and _run.has_perk(Mementos.TREASURE_CHOICE_PERK):
 		var extra := _room.layout.open_spots_near(cells, cells)
 		for i in mini(Mementos.TREASURE_EXTRA, extra.size()):

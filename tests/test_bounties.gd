@@ -25,14 +25,14 @@ func test_there_is_a_poster_for_every_mini_and_floor_boss() -> void:
 	var floors := _floors()
 	var wanted := {}
 	for id in floors:
-		wanted[(floors[id] as FloorDef).mini_boss.id] = id
-		wanted[(floors[id] as FloorDef).floor_boss.id] = id
+		wanted[PendingBosses.id_of((floors[id] as FloorDef).mini_boss.id)] = id
+		wanted[PendingBosses.id_of((floors[id] as FloorDef).floor_boss.id)] = id
 	assert_eq(BountyBoard.all().size(), 20)
 	for def in BountyBoard.all():
 		assert_eq(wanted.get(def.id, ""), def.floor_id, def.id)
 		var floor_def: FloorDef = floors[def.floor_id]
 		assert_eq(def.depth, floor_def.depth, def.id)
-		assert_eq(def.floor_boss, floor_def.floor_boss.id == def.id, def.id)
+		assert_eq(def.floor_boss, PendingBosses.id_of(floor_def.floor_boss.id) == def.id, def.id)
 
 
 func test_the_rewards_follow_the_depth() -> void:
@@ -256,12 +256,12 @@ func test_progress_drops_an_unknown_poster_on_load() -> void:
 func test_the_deep_floors_posters_pay_what_the_spec_says() -> void:
 	var wanted := {
 		"lorraine": "gravity_boots", "commodore_wellington": "life_jacket",
-		"chip": "lawyers_card", "thaddeus_fairweather": "lucky_tee",
+		"celestine": "lawyers_card", "madame_zara": "lucky_tee",
 		"sergeant_wanda": "complaint_form", "augustine": "neck_pillow",
 		"doreen": "bureaucrats_stamp", "chairman_of_the_board": "golden_parachute",
 	}
 	# These mini bosses' posters pay an item now, and the looks they paid moved to the Decor Office.
-	var item_posters := ["lorraine", "chip", "sergeant_wanda", "doreen"]
+	var item_posters := ["lorraine", "celestine", "sergeant_wanda", "doreen"]
 	for id in wanted:
 		var def := _poster(id)
 		assert_true(def != null, id)

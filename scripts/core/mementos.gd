@@ -24,12 +24,12 @@ const PROP_COIN_MULT := 1.25
 const FIRST_HEAL_EXTRA := 1
 # The top hat's pill on first entering a boss room.
 const BOSS_ROOM_HEAL := 1
-# The empty sack's extra item in treasure rooms.
+# The last reel's extra item in treasure rooms.
 const TREASURE_EXTRA := 1
 # The ship's anchor: slides and pushes move Grandpa this share as far (RunState.slide_mult). A queue
 # barrier's push-out is left whole, since it moves him only just clear of the rope.
 const SLIDE_MULT := 0.5
-# The golf trophy's share more damage from a charged swing.
+# The crystal ball's share more damage from a charged swing.
 const CHARGE_POWER_BONUS := 0.15
 # The boarding pass's extra pill on every landing.
 const LANDING_EXTRA := 1
@@ -48,12 +48,12 @@ const ALL: Array[Dictionary] = [
 		"memento": "Coal shovel", "perk": FIRE_PERK, "perk_text": "Every second hit from fire is shrugged off"},
 	{"boss": "mortimer_grimsby", "boss_name": "Mortimer Grimsby", "short_name": "Mortimer", "path": "funeral_parlour",
 		"memento": "Top hat", "perk": BOSS_ROOM_PILL_PERK, "perk_text": "+1 pill on entering a boss room"},
-	{"boss": "mall_santa", "boss_name": "The Mall Santa", "short_name": "Santa", "path": "flashback_cinema",
-		"memento": "Empty sack", "perk": TREASURE_CHOICE_PERK, "perk_text": "One more item to choose from in treasure rooms"},
+	{"boss": "projectionist", "boss_name": "The Projectionist", "short_name": "Projectionist", "path": "flashback_cinema",
+		"memento": "Last reel", "perk": TREASURE_CHOICE_PERK, "perk_text": "One more item to choose from in treasure rooms"},
 	{"boss": "commodore_wellington", "boss_name": "Commodore Wellington", "short_name": "Commodore", "path": "last_resort_cruise",
 		"memento": "Ship's anchor", "perk": SLIDE_PERK, "perk_text": "Slides and pushes move Grandpa half as far"},
-	{"boss": "thaddeus_fairweather", "boss_name": "Club President Thaddeus Fairweather", "short_name": "Thaddeus", "path": "seance_hotline",
-		"memento": "Golf trophy", "perk": CHARGE_PERK, "perk_text": "Charged swings hit 15% harder"},
+	{"boss": "madame_zara", "boss_name": "Madame Zara, the Medium", "short_name": "Zara", "path": "seance_hotline",
+		"memento": "Crystal ball", "perk": CHARGE_PERK, "perk_text": "Charged swings hit 15% harder"},
 	{"boss": "augustine", "boss_name": "Augustine, Head of Departures", "short_name": "Augustine", "path": "terminal_zero",
 		"memento": "Boarding pass", "perk": LANDING_PERK, "perk_text": "Every landing heals one extra pill"},
 	{"boss": "chairman_of_the_board", "boss_name": "The Chairman of the Board", "short_name": "Chairman", "path": "head_office",

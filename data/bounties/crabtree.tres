@@ -4,12 +4,12 @@
 
 [resource]
 script = ExtResource("1")
-id = "thaddeus_fairweather"
-boss_name = "Thaddeus Fairweather"
-floor_id = "seance_hotline"
-depth = 4
-floor_boss = true
-pension = 400
-condolences = 20
-extra_kind = "recipe"
-extra_id = "lucky_tee"
+id = "crabtree"
+boss_name = "Cornelius Crabtree"
+floor_id = "flashback_cinema"
+depth = 3
+floor_boss = false
+pension = 120
+condolences = 10
+extra_kind = "item"
+extra_id = "fortune_card"

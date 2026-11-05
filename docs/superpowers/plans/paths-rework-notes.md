@@ -46,3 +46,16 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
   cursed); the Seance's are the Crystal Cane Topper (brass_topper), Incense Sticks
   (knitting_needles) and Levitation Slippers (hover_round). Ids, effects and drawn looks are
   unchanged, so the item audit can still rename them.
+- **Posters and mementos before their bosses:** the bounty files and the two mementos already name
+  `crabtree`, `projectionist`, `celestine` and `madame_zara`, while the floor defs still hold the
+  Mall's and golf club's bosses. Rather than placeholder EnemyDefs or an alias in game code, the
+  tests that match a floor's boss to its poster or memento (test_bounties, test_mementos) read it
+  through `tests/support/pending_bosses.gd` (`PendingBosses.BY_OLD`), a test-only map. **Tasks 4
+  and 5 delete that file** with the boss swap. Until then a taken poster for a new boss cannot be
+  won in play, which only the branch ever sees.
+- **Mementos:** the Projectionist hangs the Last reel (one more treasure choice) and Madame Zara the
+  Crystal ball (charged swings 15% harder), drawn as a silver film reel and a violet ball on a
+  stand. Short names "Projectionist" and "Zara" pass the caption-overlap test.
+- **Deputy Dolores** gets a new take line for each of the four new posters, in her usual voice.
+- **Poster looks** fountain_tiara and golf_visor (now sold at the Decor Office) keep their names;
+  the item audit or Tasks 4 and 5 may retheme them.

@@ -4,8 +4,8 @@
 
 [resource]
 script = ExtResource("1")
-id = "mall_santa"
-boss_name = "The Mall Santa"
+id = "projectionist"
+boss_name = "The Projectionist"
 floor_id = "flashback_cinema"
 depth = 3
 floor_boss = true

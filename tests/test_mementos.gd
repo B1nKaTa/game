@@ -6,7 +6,7 @@ func test_every_floor_boss_has_a_frame_and_its_floor_names_it() -> void:
 	for entry: Dictionary in Mementos.ALL:
 		var floor_path := "res://data/floors/%s.tres" % entry["path"]
 		var def: FloorDef = load(floor_path)
-		assert_eq(def.floor_boss.id, entry["boss"], entry["path"])
+		assert_eq(PendingBosses.id_of(def.floor_boss.id), entry["boss"], entry["path"])
 
 
 func test_a_fresh_save_hangs_nothing() -> void:

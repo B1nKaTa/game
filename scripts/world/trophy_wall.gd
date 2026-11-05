@@ -101,9 +101,14 @@ func _draw_memento(perk: String, at: Vector2) -> void:
 			draw_rect(Rect2(at + Vector2(-9, 4), Vector2(18, 2)), Color("141216"))
 			draw_rect(Rect2(at + Vector2(-5, 1), Vector2(10, 2)), Color("8c2a2a"))
 		Mementos.TREASURE_CHOICE_PERK:
-			# Empty sack: a red sack outline, tied at the top.
-			draw_polyline(PackedVector2Array([at + Vector2(-2, -6), at + Vector2(-7, 1), at + Vector2(-5, 6), at + Vector2(5, 6), at + Vector2(7, 1), at + Vector2(2, -6)]), Color("c8323a"), 1.5)
-			draw_line(at + Vector2(-3, -6), at + Vector2(3, -6), Color("c8323a"), 1.5)
+			# Last reel: a silver film reel with four holes round a hub, a strip of film trailing off it.
+			var reel := Color("b8bcc6")
+			draw_circle(at + Vector2(-1, -1), 6.5, reel)
+			draw_arc(at + Vector2(-1, -1), 6.5, 0.0, TAU, 16, Color("555a66"), 1.0)
+			for hole: Vector2 in [Vector2(-1, -4.5), Vector2(-1, 2.5), Vector2(-4.5, -1), Vector2(2.5, -1)]:
+				draw_circle(at + hole, 1.4, Color("2a2a30"))
+			draw_circle(at + Vector2(-1, -1), 1.2, Color("555a66"))
+			draw_line(at + Vector2(4, 4), at + Vector2(9, 7), Color("3a2a1a"), 2.0)
 		Mementos.SLIDE_PERK:
 			# Ship's anchor: a ring, a shank with a stock across it, and two curved arms.
 			var iron := Color("2e3440")
@@ -114,14 +119,11 @@ func _draw_memento(perk: String, at: Vector2) -> void:
 			draw_colored_polygon(PackedVector2Array([at + Vector2(-6, 0), at + Vector2(-7, 3), at + Vector2(-4, 3)]), iron)
 			draw_colored_polygon(PackedVector2Array([at + Vector2(6, 0), at + Vector2(7, 3), at + Vector2(4, 3)]), iron)
 		Mementos.CHARGE_PERK:
-			# Golf trophy: a gold cup with two handles on a dark base, a white ball on top.
-			var cup_gold := Color("d4a62a")
-			draw_colored_polygon(PackedVector2Array([at + Vector2(-5, -5), at + Vector2(5, -5), at + Vector2(3, 1), at + Vector2(-3, 1)]), cup_gold)
-			draw_arc(at + Vector2(-5, -3), 2.0, PI * 0.5, PI * 1.5, 8, cup_gold, 1.0)
-			draw_arc(at + Vector2(5, -3), 2.0, -PI * 0.5, PI * 0.5, 8, cup_gold, 1.0)
-			draw_rect(Rect2(at + Vector2(-1, 1), Vector2(2, 3)), cup_gold)
-			draw_rect(Rect2(at + Vector2(-4, 4), Vector2(8, 3)), Color("3a2a1a"))
-			draw_circle(at + Vector2(0, -6), 1.5, Color.WHITE)
+			# Crystal ball: a violet glass ball with a pale glint, on a dark brass stand.
+			draw_circle(at + Vector2(0, -2), 5.5, Color("8a5ac8"))
+			draw_arc(at + Vector2(0, -2), 5.5, 0.0, TAU, 16, Color("3a2458"), 1.0)
+			draw_circle(at + Vector2(-2, -4), 1.5, Color("e8dcff"))
+			draw_colored_polygon(PackedVector2Array([at + Vector2(-4, 3), at + Vector2(4, 3), at + Vector2(6, 7), at + Vector2(-6, 7)]), Color("6a4a20"))
 		Mementos.LANDING_PERK:
 			# Boarding pass: a pale ticket with a navy band, a torn-off stub and a bar code.
 			var ticket := Rect2(at + Vector2(-8, -4), Vector2(16, 8))

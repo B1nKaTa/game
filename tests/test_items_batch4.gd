@@ -45,8 +45,8 @@ const BATCH := {
 const POSTERS := {
 	"doreen": ["bureaucrats_stamp", "power_tie"],
 	"sergeant_wanda": ["complaint_form", "aviator_sunglasses"],
-	"chip": ["lawyers_card", "golf_visor"],
-	"gloria": ["fortune_card", "fountain_tiara"],
+	"celestine": ["lawyers_card", "golf_visor"],
+	"crabtree": ["fortune_card", "fountain_tiara"],
 }
 const PATHS := ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "flashback_cinema", "last_resort_cruise", "seance_hotline", "terminal_zero", "head_office"]
 
