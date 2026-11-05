@@ -11,7 +11,7 @@ const DENIED_META := "sfx_denied"
 
 # Set at once, not in _ready, since test runs ask for sounds before the tree has started.
 func _init() -> void:
-	quiet = OS.get_cmdline_user_args().has("--smoke") or OS.get_cmdline_args().has("--script")
+	quiet = OS.get_cmdline_user_args().has("--smoke") or RunMode.is_script_run()
 
 
 func _ready() -> void:

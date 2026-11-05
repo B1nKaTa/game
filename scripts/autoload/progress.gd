@@ -41,7 +41,7 @@ func _ready() -> void:
 		_store = SaveStore.new(SMOKE_PATH)
 		_store.delete_all()
 		RunCheckpoint.delete(SMOKE_RUN_PATH)
-	elif OS.get_cmdline_args().has("--script"):
+	elif RunMode.is_script_run():
 		# A test or probe run reads the old save as before and copies nothing into any slot.
 		_store = SaveStore.new(SAVE_PATH)
 	else:

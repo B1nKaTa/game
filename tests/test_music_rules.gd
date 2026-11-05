@@ -140,7 +140,7 @@ func test_the_rendered_songs_stay_out_of_git() -> void:
 func test_the_player_is_an_autoload_that_stays_quiet_in_checks_and_tests() -> void:
 	assert_true(_source("res://project.godot").contains("MusicPlayer=\"*res://scripts/autoload/music_player.gd\""))
 	var player := _source("res://scripts/autoload/music_player.gd")
-	assert_true(player.contains("has(\"--smoke\")") and player.contains("has(\"--script\")"), "quiet under --smoke and --script")
+	assert_true(player.contains("has(\"--smoke\")") and player.contains("RunMode.is_script_run()"), "quiet under --smoke and --script (or -s)")
 	assert_true(player.contains("if not ResourceLoader.exists(path):"), "a missing song is silence")
 	assert_true(player.contains("const FADE := 1.2"))
 	assert_true(player.contains("AudioServer.get_bus_index(BUS) != -1 else \"Master\""), "falls back to Master")

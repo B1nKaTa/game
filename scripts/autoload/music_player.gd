@@ -32,7 +32,7 @@ func _ready() -> void:
 
 
 static func is_quiet() -> bool:
-	return OS.get_cmdline_user_args().has("--smoke") or OS.get_cmdline_args().has("--script")
+	return OS.get_cmdline_user_args().has("--smoke") or RunMode.is_script_run()
 
 
 # The song asked for last, whether or not its file was there to play.

@@ -23,7 +23,7 @@ func _ready() -> void:
 
 # The full loop and test runs never touch settings.cfg or the window.
 static func is_quiet() -> bool:
-	return OS.get_cmdline_user_args().has("--smoke") or OS.get_cmdline_args().has("--script")
+	return OS.get_cmdline_user_args().has("--smoke") or RunMode.is_script_run()
 
 
 # Applies settings without saving them, as the Options panel does while it is open.
