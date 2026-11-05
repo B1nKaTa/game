@@ -99,6 +99,43 @@ func test_a_slot_one_from_before_the_marker_is_kept_and_marked() -> void:
 	_wipe(root)
 
 
+# A copy killed halfway leaves a slot 1 file that does not parse and no marker: the next start copies again.
+func test_a_half_written_slot_one_is_copied_again() -> void:
+	var root := _root()
+	_write(root + "save.json", _fixture_text())
+	_write(root + "save.json.bak", _fixture_text())
+	_write(root + "slot_1/save.json", _fixture_text().substr(0, 40))
+	assert_true(SaveSlots.migrate(root), "a broken copy is made again")
+	assert_eq(FileAccess.get_md5(root + "slot_1/save.json"), FileAccess.get_md5(root + "save.json"))
+	assert_eq(FileAccess.get_md5(root + "slot_1/save.json.bak"), FileAccess.get_md5(root + "save.json.bak"))
+	assert_false(FileAccess.file_exists(root + "slot_1/save.json.tmp"), "no temp file is left")
+	assert_eq(SaveSlots.load_data(root, 1).pension, 312)
+	_wipe(root)
+
+
+# A kill after the backup was copied but before the save: the save is still copied next time.
+func test_a_copy_killed_after_the_backup_finishes_next_time() -> void:
+	var root := _root()
+	_write(root + "save.json", _fixture_text())
+	_write(root + "save.json.bak", "backup text")
+	_write(root + "slot_1/save.json.bak", "backup text")
+	assert_true(SaveSlots.migrate(root))
+	assert_eq(FileAccess.get_md5(root + "slot_1/save.json"), FileAccess.get_md5(root + "save.json"))
+	_wipe(root)
+
+
+# A save whose main file was lost still has its backup, and that backup is worth copying.
+func test_an_orphaned_backup_is_copied() -> void:
+	var root := _root()
+	_write(root + "save.json.bak", _fixture_text())
+	assert_true(SaveSlots.migrate(root))
+	assert_eq(FileAccess.get_md5(root + "slot_1/save.json.bak"), FileAccess.get_md5(root + "save.json.bak"))
+	assert_false(FileAccess.file_exists(root + "slot_1/save.json"))
+	assert_eq(SaveSlots.load_data(root, 1).pension, 312, "the slot loads from the backup")
+	assert_true(FileAccess.file_exists(root + SaveSlots.MIGRATED_FILE))
+	_wipe(root)
+
+
 func test_no_old_save_means_nothing_to_copy() -> void:
 	var root := _root()
 	assert_false(SaveSlots.migrate(root))

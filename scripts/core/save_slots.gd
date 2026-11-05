@@ -38,21 +38,46 @@ static func migrate(root: String) -> bool:
 		return false
 	var old := ProjectSettings.globalize_path(root + SAVE_FILE)
 	var target := ProjectSettings.globalize_path(save_path(root, 1))
-	if not FileAccess.file_exists(old):
+	# A backup alone is still a save: its main file was lost, and the slot loads from the backup.
+	if not FileAccess.file_exists(old) and not FileAccess.file_exists(old + ".bak"):
 		return false
-	# A slot 1 already there came from an earlier build's copy, or from play since: it is kept.
-	if FileAccess.file_exists(target):
+	# A slot 1 already there came from an earlier build's copy, or from play since: it is kept. One that
+	# does not parse, with no marker, is a copy killed halfway, and is made again.
+	if FileAccess.file_exists(target) and _parses(target):
 		_write_marker(marker)
 		return false
 	DirAccess.make_dir_recursive_absolute(target.get_base_dir())
-	if DirAccess.copy_absolute(old, target) != OK:
-		push_error("Could not copy the save into slot 1: %s" % old)
+	# The backup first and the save last, each through a temp file renamed into place, so a kill at any
+	# point leaves no slot_1/save.json that is only half there, and no marker until both are done.
+	if FileAccess.file_exists(old + ".bak") and not _copy_into(old + ".bak", target + ".bak"):
 		return false
-	if FileAccess.file_exists(old + ".bak"):
-		DirAccess.copy_absolute(old + ".bak", target + ".bak")
+	if FileAccess.file_exists(old):
+		if not _copy_into(old, target):
+			return false
+	elif FileAccess.file_exists(target) and DirAccess.remove_absolute(target) != OK:
+		return false
 	write_last(root, 1)
 	_write_marker(marker)
 	return true
+
+
+static func _copy_into(from: String, to: String) -> bool:
+	var temp := to + ".tmp"
+	if DirAccess.copy_absolute(from, temp) != OK:
+		push_error("Could not copy the save into slot 1: %s" % from)
+		return false
+	if FileAccess.file_exists(to) and DirAccess.remove_absolute(to) != OK:
+		push_error("Could not replace a broken copy in slot 1: %s" % to)
+		return false
+	if DirAccess.rename_absolute(temp, to) != OK:
+		push_error("Could not move the copy into slot 1: %s" % to)
+		return false
+	return true
+
+
+static func _parses(path: String) -> bool:
+	var json := JSON.new()
+	return json.parse(FileAccess.get_file_as_string(path)) == OK and json.data is Dictionary
 
 
 static func _write_marker(marker: String) -> void:
