@@ -364,6 +364,15 @@ func test_the_desk_slam_answers_him_up_close() -> void:
 		assert_true(Chairman.choose_attack(Chairman.Attack.NONE, 50.0, true, i / 20.0) == Chairman.Attack.GAVEL, "while a chart runs he only gavels")
 
 
+# The slam's ring was a thin line, fainter than the gavel's double ring.
+func test_the_desk_slam_ring_reads_at_least_as_strongly_as_the_gavels() -> void:
+	assert_true(DeskSlam.RING_WIDTH >= 2.0, "a rim no thinner than the gavel's")
+	assert_true(DeskSlam.RING_BACKING.a >= 0.4 and DeskSlam.RING_BACKING_WIDTH > DeskSlam.RING_WIDTH, "a dark backing round it")
+	assert_true(DeskSlam.INNER_RING_WIDTH >= 2.0 and DeskSlam.INNER_RING_GAP >= 6.0, "and a second ring, as the gavel has")
+	var source := FileAccess.get_file_as_string("res://scripts/world/desk_slam.gd")
+	assert_true(source.contains("_radius - INNER_RING_GAP"), "the second ring is drawn")
+
+
 func test_the_desk_slam_warns_whole_and_leaves_time_to_step_out() -> void:
 	assert_true(Chairman.SLAM_SHOWN_WHOLE, "it starts right beside him")
 	for phase_two in [false, true]:

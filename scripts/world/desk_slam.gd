@@ -11,6 +11,13 @@ const DESK := Color("5a3423")
 const SHOVE_SPEED := 260.0
 const SHOVE_TIME := 0.25
 const PAPERS := 10
+# Its warning reads at least as strongly as the gavel's double ring (GavelStrike): a thicker rim on a
+# dark backing, so it shows on pale paper and carpet alike, and a second ring inside it.
+const RING_WIDTH := 3.0
+const RING_BACKING := Color(0.05, 0.02, 0.03, 0.55)
+const RING_BACKING_WIDTH := 6.0
+const INNER_RING_GAP := 8.0
+const INNER_RING_WIDTH := 2.0
 
 
 # Which way, and how hard, the slam shoves feet that stand inside it.
@@ -50,7 +57,9 @@ func _draw() -> void:
 		return
 	var filled := fill()
 	draw_circle(Vector2.ZERO, _radius * filled, Color(COLOR, 0.15 + 0.3 * filled))
-	draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 32, COLOR, 2.0)
+	draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 48, RING_BACKING, RING_BACKING_WIDTH)
+	draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 48, COLOR, RING_WIDTH)
+	draw_arc(Vector2.ZERO, _radius - INNER_RING_GAP, 0.0, TAU, 48, COLOR, INNER_RING_WIDTH)
 	# His fists coming down on the desk in front of him.
 	var lift := 10.0 * (1.0 - filled)
 	draw_rect(Rect2(-22, -4 - lift, 12, 9), Color(DESK, 0.4 + 0.5 * filled))
