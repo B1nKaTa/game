@@ -13,7 +13,7 @@ static func steps(_variant := 0) -> Array:
 		S.stage("funeral"),
 		S.actor("harold", COFFIN + Vector2(18, 0)),
 		S.anim("harold", "lie"),
-		S.actor("mourners", Vector2(46, G)),
+		S.actor("mourners", Vector2(70, G)),
 		S.actor("wreath", Vector2(104, G)),
 		S.actor("gerald", Vector2(266, G), -1),
 		S.fade_in(1.0),

@@ -109,8 +109,9 @@ const STATIONS: Array[Dictionary] = [
 	{"id": "key_board", "department": LOBBY, "cell": Vector2i(20, 7), "title": "Key Settings", "prompt": "Key Settings", "label": "Keys", "size": Vector2(28, 36), "color": Color("6b4a2a")},
 	{"id": "crafter", "department": LOBBY, "cell": Vector2i(11, 7), "title": "Agnes, Afterlife Arts and Crafts", "prompt": "Craft", "art": "crafter", "color": Color("c98a3c")},
 	{"id": "forms_counter", "department": LOBBY, "cell": Vector2i(11, 3), "title": "Forms Counter. Refiling, Window 2", "prompt": "Refile", "label": "Forms", "size": Vector2(28, 36), "color": Color("7a6f5a")},
-	# The TrophyWall draws the frames on the top wall above it, so the station itself draws no board.
-	{"id": "trophy_wall", "department": LOBBY, "cell": Vector2i(20, 3), "title": "Trophy Wall", "prompt": "Look", "board": false},
+	# The TrophyWall draws the frames on the top wall above it, so the station itself draws no board. Its
+	# prompt sits low, under the wall's "Endings found" line.
+	{"id": "trophy_wall", "department": LOBBY, "cell": Vector2i(20, 3), "title": "Trophy Wall", "prompt": "Look", "board": false, "prompt_offset": Vector2(-20, -4)},
 	# A red box with a paper tongue, and a cork board that marks NEW while a letter waits unread.
 	{"id": "ticket_machine", "department": LOBBY, "cell": Vector2i(23, 3), "title": "Take a Number", "prompt": "Ticket", "size": Vector2(20, 28), "color": Color("c8323a"), "look": "ticket_machine"},
 	{"id": "noticeboard", "department": LOBBY, "cell": Vector2i(23, 7), "title": "Noticeboard. Letters from the Living", "prompt": "Read", "size": Vector2(34, 24), "color": Color("a8794a"), "look": "noticeboard"},
