@@ -260,6 +260,8 @@ func _shoot_enemy(id: String, floor_id: String) -> void:
 	var whistled := false
 	while Time.get_ticks_msec() - began < 9000 and not (wound and struck) and is_instance_valid(enemy):
 		await process_frame
+		if not is_instance_valid(enemy):
+			break
 		if not whistled and enemy.visual().anim() == "whistle":
 			whistled = true
 			await _wait(0.2)
