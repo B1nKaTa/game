@@ -16,8 +16,10 @@ const SHADOW_COLOR := Color(0, 0, 0, 0.3)
 const BUBBLE_COLOR := Color("fff6d8")
 const BUBBLE_TEXT_COLOR := Color("2b2218")
 const BUBBLE_PAD := Vector2(5, 3)
-# Near the top of a room the bubble hangs below him instead, so it never leaves the screen.
-const BUBBLE_FLIP_Y := 96.0
+# A bubble that would reach into the HUD's top rows (Hud.BAND_BOTTOM on screen) hangs below him instead,
+# and every bubble stays inside the screen's sides.
+const BUBBLE_GAP := 18.0
+const BUBBLE_SIDE_MARGIN := 4.0
 # Speech draws above the room's props and pickups.
 const BUBBLE_Z := 50
 
@@ -178,9 +180,9 @@ func _draw_bubble(layer: Node2D) -> void:
 	var font := ThemeDB.fallback_font
 	var text_size := font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE)
 	var box_size := Vector2(text_size.x, FONT_SIZE) + BUBBLE_PAD * 2.0
-	var below := global_position.y < BUBBLE_FLIP_Y
-	var y := def.body_size.y / 2.0 + 18.0 if below else -def.body_size.y / 2.0 - 18.0 - box_size.y
-	var box := Rect2(Vector2(-box_size.x / 2.0, y), box_size)
+	var screen := layer.get_global_transform_with_canvas()
+	var box := bubble_box(screen.origin, screen.get_scale(), def.body_size.y, box_size, Vector2(RoomBackdrop.VIEW_SIZE))
+	var below := box.position.y > 0.0
 	var tail_y := box.position.y if below else box.end.y
 	var tail_tip := Vector2(0, tail_y - 5.0 if below else tail_y + 5.0)
 	layer.draw_colored_polygon(PackedVector2Array([Vector2(-4, tail_y), Vector2(4, tail_y), tail_tip]), BUBBLE_COLOR)
@@ -188,6 +190,23 @@ func _draw_bubble(layer: Node2D) -> void:
 	layer.draw_rect(box, Color.BLACK, false, 1.0)
 	# The bubble is sized for the whole line, and the words type into it.
 	layer.draw_string(font, box.position + Vector2(BUBBLE_PAD.x, BUBBLE_PAD.y + FONT_SIZE - 2.0), _talk.revealed(), HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE, BUBBLE_TEXT_COLOR)
+
+
+# Where the bubble's box goes, in the speaker's own space: above his head, or below his feet when above
+# would reach into the HUD's band at the top of the screen. at is the speaker's spot on screen and
+# scale the canvas's zoom. The box slides sideways to stay inside the screen.
+static func bubble_box(at: Vector2, scale: Vector2, body_height: float, box_size: Vector2, view: Vector2) -> Rect2:
+	var zoom := scale.y if scale.y > 0.0 else 1.0
+	var above_y := -body_height / 2.0 - BUBBLE_GAP - box_size.y
+	var y := above_y
+	if at.y + above_y * zoom < Hud.BAND_BOTTOM:
+		y = body_height / 2.0 + BUBBLE_GAP
+	var x := -box_size.x / 2.0
+	var left := (BUBBLE_SIDE_MARGIN - at.x) / zoom
+	var right := (view.x - BUBBLE_SIDE_MARGIN - at.x) / zoom - box_size.x
+	if right >= left:
+		x = clampf(x, left, right)
+	return Rect2(Vector2(x, y), box_size)
 
 
 static func _draw_centered(canvas: CanvasItem, text: String, at: Vector2, color: Color) -> void:

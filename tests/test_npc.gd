@@ -244,3 +244,22 @@ func test_a_keeper_greets_a_death_before_a_boss_and_says_nothing_after_a_quiet_r
 	assert_eq(def.greeting_key({}), "", "no run played yet")
 	var merchant: NpcDef = load(MERCHANT_PATH)
 	assert_eq(merchant.greeting_key({"died": true}), "", "no line, no greeting")
+
+
+# A bubble over someone near the top wall ran into the HUD's top rows. It hangs below him instead
+# whenever above would reach into the band, and slides in from the screen's sides.
+func test_a_bubble_never_reaches_into_the_huds_band_or_off_the_sides() -> void:
+	var view := Vector2(640, 360)
+	var box := Vector2(120, 16)
+	var body := 28.0
+	for y in range(0, 361, 6):
+		for x in [0.0, 30.0, 320.0, 610.0, 640.0]:
+			var at := Vector2(x, y)
+			var rect := Npc.bubble_box(at, Vector2.ONE, body, box, view)
+			var on_screen := Rect2(at + rect.position, rect.size)
+			assert_true(on_screen.position.y >= Hud.BAND_BOTTOM or on_screen.position.y > at.y, "the bubble at %s reaches into the HUD" % str(at))
+			assert_true(on_screen.position.x >= Npc.BUBBLE_SIDE_MARGIN - 0.01 and on_screen.end.x <= view.x - Npc.BUBBLE_SIDE_MARGIN + 0.01, "the bubble at %s leaves the screen" % str(at))
+	var high := Npc.bubble_box(Vector2(320, 60), Vector2.ONE, body, box, view)
+	assert_true(high.position.y > 0.0, "near the top it hangs below him")
+	var low := Npc.bubble_box(Vector2(320, 200), Vector2.ONE, body, box, view)
+	assert_true(low.end.y < 0.0, "further down it sits over his head")

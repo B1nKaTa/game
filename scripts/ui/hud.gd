@@ -13,6 +13,8 @@ const NOTICE_TIME := 3.5
 # A faint band behind the top row, so full pills never read as empty over a pale floor.
 const TOP_BAND_SIZE := Vector2(640, 22)
 const TOP_BAND := Color(0.0, 0.0, 0.0, 0.4)
+# The bottom of the HUD's top rows on screen: the band and the item row under it. Speech stays below it.
+const BAND_BOTTOM := 36.0
 # The Game tab's run timer, on the top row in the gap before the Slip counter, right-aligned to it,
 # since the small map's floor name holds the row's right end.
 const TIMER_AT := Vector2(250, 5)
