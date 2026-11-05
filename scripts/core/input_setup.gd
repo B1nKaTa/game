@@ -14,6 +14,7 @@ static func ensure() -> void:
 	_action("dodge", _key(KEY_SPACE))
 	_action("interact", _key(KEY_E))
 	_action("map", _key(KEY_M))
+	_action("case_file", _key(KEY_TAB))
 	_action("bomb", _key(KEY_Q))
 	_action("potion", _key(KEY_H))
 	_action("pause", _key(KEY_ESCAPE))

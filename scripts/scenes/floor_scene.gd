@@ -80,6 +80,10 @@ var _run_time := 0.0
 # The pause menu while it is open, and the frame it closed on, so the Esc that closed it never opens it.
 var _pause: PauseMenu
 var _pause_closed_frame := -1
+# Harold's case file while it is open (Tab), and the frame it closed on, so the key that closed it
+# never opens it again or pauses.
+var _case_file: CaseFile
+var _case_closed_frame := -1
 # Counts every room entry, so a won Arcade game knows which visit it was on (RunState.note_arcade_win).
 var _visit := 0
 # The run as it stood when the Chairman fell, for EndingRules, or empty when he has not. The ending
@@ -445,6 +449,7 @@ func _choose_path(index: int) -> void:
 		_end_run("This floor could not be built. Returning to the Waiting Room.")
 		return
 	_floor_seed = seed_text
+	_run.seeds.append(seed_text)
 	_restored.clear()
 	_safe_room = -1
 	_exit_side = _room_view.side_of_path(index)
@@ -559,8 +564,10 @@ func _process(delta: float) -> void:
 	var fighting := _room_view != null and _room_view.is_fighting()
 	_mini_map.visible = GameSettings.minimap_visible(Settings.game("hide_minimap_in_combat"), fighting, _big_map.is_open())
 	var frame := Engine.get_process_frames()
-	if frame != _pause_closed_frame and frame != _big_map.closed_frame and Input.is_action_just_pressed("pause"):
+	if frame != _pause_closed_frame and frame != _big_map.closed_frame and frame != _case_closed_frame and Input.is_action_just_pressed("pause"):
 		_on_pause_key()
+	if frame != _case_closed_frame and Input.is_action_just_pressed("case_file"):
+		_open_case_file()
 	# B backs out of a card table, as its Leave does, but never opens the pause menu.
 	if _card_panel != null and Input.is_action_just_pressed(PadInput.BACK_ACTION):
 		_card_panel.leave()
@@ -583,9 +590,59 @@ func _on_pause_key() -> void:
 func _on_pad_lost() -> void:
 	if is_over or _pause != null:
 		return
+	_close_case_file()
 	if _big_map.is_open():
 		_big_map.set_open(false)
 	_open_pause()
+
+
+# Tab: the case file on the Harold tab, over nothing else that is open. It pauses the game itself.
+func _open_case_file() -> void:
+	if is_over or _pause != null or _card_panel != null or _case_file != null or _big_map.is_open() or debug_cutscene() != null:
+		return
+	Sfx.play("pause_open")
+	player.cancel_charge()
+	_case_file = CaseFile.new()
+	_case_file.setup(_run, case_info())
+	_case_file.closed.connect(_close_case_file)
+	add_child(_case_file)
+	Input.mouse_mode = Settings.cursor_mode(false)
+
+
+func _close_case_file() -> void:
+	if _case_file == null:
+		return
+	Sfx.play("pause_close")
+	_case_file.queue_free()
+	_case_file = null
+	_case_closed_frame = Engine.get_process_frames()
+	get_tree().paused = false
+	Input.mouse_mode = Settings.cursor_mode(_card_panel == null)
+
+
+func debug_case_file() -> CaseFile:
+	return _case_file
+
+
+func debug_open_case_file() -> void:
+	_open_case_file()
+
+
+# What the case file's Harold tab says of the floor, the route and the time.
+func case_info() -> Dictionary:
+	var route: PackedStringArray = []
+	var depths := _run.paths_taken.keys()
+	depths.sort()
+	for depth in depths:
+		for path: String in PATHS_BY_DEPTH.get(int(depth), []):
+			var def := load(path) as FloorDef
+			if def != null and def.id == str(_run.paths_taken[depth]):
+				route.append(def.display_name)
+	return {
+		"floor": "%s (floor %d)" % [_floor_def.display_name, _depth] if _floor_def != null else "",
+		"route": " > ".join(route) if not route.is_empty() else "-",
+		"time": _run_time,
+	}
 
 
 func _open_pause() -> void:
@@ -715,6 +772,7 @@ func _on_arcade_won() -> void:
 
 # Whether the Chairman's room cost him a pill, for Under New Management.
 func _on_player_hurt() -> void:
+	_run.hits_taken += 1
 	if _current_id != -1 and _map.room(_current_id).room_type == RoomLayout.TYPE_FLOOR_BOSS:
 		_run.boss_room_pill_lost = true
 
@@ -818,6 +876,8 @@ func _end_run(message: String) -> void:
 	is_over = true
 	# Death, FLOOR CLEARED or anything else that ends the run ends its checkpoint too.
 	Progress.clear_checkpoint()
+	_log_run(message)
+	_close_case_file()
 	if _card_panel != null:
 		_card_panel.leave()
 	if _big_map != null:
@@ -850,11 +910,56 @@ func _play_ending() -> void:
 		variant = EndingRules.pick_repeat_death(Progress.data.last_repeat_death, _rng.randf())
 		Progress.record_repeat_death(variant)
 	var paid := Progress.record_ending(_ending_id)
+	Progress.set_last_run_ending(_ending_id)
 	Progress.last_run["ending"] = _ending_id
 	Progress.last_run["ending_paid"] = paid
 	Progress.notice = ARRIVAL_NOTICE
 	MusicPlayer.play(MusicRules.ending_scene(_ending_id))
 	await _play_cutscene(CutsceneSteps.for_ending(_ending_id, variant), not found_before.has(_ending_id))
+
+
+# The run's line in the case file's Log, saved the moment it ends, before any scene can be quit.
+func _log_run(message: String) -> void:
+	var result := RunLog.ENDED
+	if Progress.last_run.get("died", false):
+		result = RunLog.DIED
+	elif message == FLOOR_CLEARED:
+		result = RunLog.CLEARED
+	var room := ""
+	if _map != null and _current_id >= 0 and _current_id < _map.rooms.size():
+		room = _map.room(_current_id).room_type
+	Progress.record_run(RunLog.entry(_run, {
+		"n": Progress.data.run_count,
+		"date": Time.get_datetime_string_from_system(false, true),
+		"result": result,
+		"depth": _depth,
+		"floor": _floor_def.display_name if _floor_def != null else "",
+		"room": room,
+		"killer": _killer_name() if result == RunLog.DIED else "",
+	}))
+
+
+# Who the Log says he fell to: his own Thermos, or else the boss in the room, or the nearest enemy
+# still standing. Hits carry only a kind of source, so the nearest one stands in for the attacker.
+func _killer_name() -> String:
+	if player == null:
+		return ""
+	if player.last_hurt_source == RunEffects.HURT_OWN_BLAST:
+		return "his own Thermos"
+	var best: Enemy = null
+	var best_score := INF
+	if _room_view != null:
+		for node in get_tree().get_nodes_in_group("enemies"):
+			var enemy := node as Enemy
+			if enemy == null or enemy.def == null or enemy.is_dead() or not _room_view.is_ancestor_of(enemy):
+				continue
+			var score := enemy.global_position.distance_to(player.global_position) - (10000.0 if enemy.def.is_boss and not enemy.is_summon else 0.0)
+			if score < best_score:
+				best_score = score
+				best = enemy
+	if best != null:
+		return best.def.display_name
+	return "the room itself"
 
 
 func _play_cutscene(steps: Array, first_time: bool) -> void:

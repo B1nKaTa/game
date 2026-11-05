@@ -196,9 +196,21 @@ func _process(delta: float) -> void:
 	var frame := Engine.get_process_frames()
 	if frame != _pause_closed_frame and frame != _panel_closed_frame and Input.is_action_just_pressed("pause"):
 		_on_pause_key()
+	elif _pause == null and _panel == null and frame != _panel_closed_frame and Input.is_action_just_pressed("case_file"):
+		open_case_file()
 	# B on a pad backs out of a panel as Esc does, but never opens the pause menu.
 	elif _pause == null and _panel != null and frame != _panel_closed_frame and Input.is_action_just_pressed(PadInput.BACK_ACTION):
 		_back_out_of_panel()
+
+
+# Tab opens the case file here too, where the Harold tab has no active case. It pauses the game itself.
+func open_case_file() -> void:
+	if _panel != null or _pause != null:
+		return
+	Sfx.play("pause_open")
+	var file := CaseFile.new()
+	file.setup(null)
+	_show_panel(file)
 
 
 # Esc closes an open panel first, as its Leave button does. Only with none open does it pause.

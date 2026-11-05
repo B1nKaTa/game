@@ -19,6 +19,7 @@ const ACTIONS := [
 	{"action": "potion", "label": "Drink potion"},
 	{"action": "interact", "label": "Interact"},
 	{"action": "map", "label": "Floor map"},
+	{"action": "case_file", "label": "Case file"},
 	{"action": "pause", "label": "Pause / back"},
 ]
 const TYPE_KEY := "key"

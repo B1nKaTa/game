@@ -39,6 +39,8 @@ const DEFAULT_BUTTONS := {
 	"bomb": JOY_BUTTON_RIGHT_SHOULDER,
 	"potion": JOY_BUTTON_LEFT_SHOULDER,
 	"map": JOY_BUTTON_BACK,
+	# The DualSense's touchpad press. An Xbox pad has no such button, so it is named for both and can be rebound.
+	"case_file": JOY_BUTTON_TOUCHPAD,
 	"pause": JOY_BUTTON_START,
 }
 # Each as [axis, sign].
@@ -69,6 +71,7 @@ const XBOX_NAMES := {
 	JOY_BUTTON_LEFT_SHOULDER: "LB",
 	JOY_BUTTON_RIGHT_SHOULDER: "RB",
 	JOY_BUTTON_MISC1: "Share",
+	JOY_BUTTON_TOUCHPAD: "Touchpad",
 }
 const PLAYSTATION_NAMES := {
 	JOY_BUTTON_A: "Cross",

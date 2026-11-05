@@ -15,6 +15,14 @@ const TOP_BAND_SIZE := Vector2(640, 22)
 const TOP_BAND := Color(0.0, 0.0, 0.0, 0.4)
 # The bottom of the HUD's top rows on screen: the band and the item row under it. Speech stays below it.
 const BAND_BOTTOM := 36.0
+# The item row under the band: the count and the newest few names, cut short with an ellipsis, and the
+# case file's key on its right. It ends before the small map (FloorMapView.MINI_RECT) and never wraps.
+const ITEM_ROW_AT := Vector2(8, 22)
+const ITEM_ROW_END := 520.0
+const ITEM_ROW_FONT := 9
+const ITEMS_SHOWN := 3
+const CASE_FILE_HINT := "Case file"
+const HINT_GAP := 10.0
 # The Game tab's run timer, on the top row in the gap before the Slip counter, right-aligned to it,
 # since the small map's floor name holds the row's right end.
 const TIMER_AT := Vector2(250, 5)
@@ -29,6 +37,8 @@ const BANNER_COLOR := Color("ffd24a")
 var _run: RunState
 var _status: Label
 var _items: Label
+var _case_hint: Label
+var _case_label := ""
 var _slips: Label
 var _thermoses: Label
 var _potion_slot: PotionSlot
@@ -72,6 +82,28 @@ static func timer_text(seconds: float) -> String:
 	return "%d:%02d" % [whole / 60, whole % 60]
 
 
+# "Items: 12   Kettle, Rolling Pin, Wreath of Thorns": the count, then the newest names first.
+static func items_text(names: PackedStringArray) -> String:
+	if names.is_empty():
+		return "Items: 0"
+	var newest: PackedStringArray = []
+	for i in mini(ITEMS_SHOWN, names.size()):
+		newest.append(names[names.size() - 1 - i])
+	return "Items: %d   %s" % [names.size(), ", ".join(newest)]
+
+
+static func case_hint_text(key_label: String) -> String:
+	return "%s: %s" % [key_label, CASE_FILE_HINT]
+
+
+# Where the item row's two labels sit: the hint right-aligned to the row's end, and the names in what
+# is left, so neither runs into the other or into the small map.
+static func item_row_rects(hint_width: float) -> Array[Rect2]:
+	var hint := Rect2(ITEM_ROW_END - hint_width, ITEM_ROW_AT.y, hint_width, 12.0)
+	var names := Rect2(ITEM_ROW_AT, Vector2(maxf(hint.position.x - HINT_GAP - ITEM_ROW_AT.x, 0.0), 12.0))
+	return [names, hint]
+
+
 static func banner_text(combo_name: String) -> String:
 	return BANNER_TEXT % combo_name
 
@@ -99,7 +131,13 @@ func setup(run: RunState) -> void:
 func _ready() -> void:
 	_add_rect(Vector2.ZERO, TOP_BAND_SIZE, TOP_BAND)
 	_status = _add_label(Vector2(8, 4), 12)
-	_items = _add_label(Vector2(8, 22), 9)
+	_items = _add_label(ITEM_ROW_AT, ITEM_ROW_FONT)
+	_items.clip_text = true
+	_items.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_items.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_case_hint = _add_label(ITEM_ROW_AT, ITEM_ROW_FONT)
+	_case_hint.add_theme_color_override("font_color", Color(0.85, 0.82, 0.74, 0.8))
+	_case_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_message = _add_label(Vector2(0, 150), 20)
 	_message.size = Vector2(640, 40)
 	_message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -179,7 +217,7 @@ func banner() -> String:
 
 func _process(delta: float) -> void:
 	# The potion slot names the active device's button, so it follows a switch of device.
-	if _run != null and _potion_slot != null and KeyBindings.prompt_label("potion") != _potion_label:
+	if _run != null and _potion_slot != null and (KeyBindings.prompt_label("potion") != _potion_label or KeyBindings.prompt_label("case_file") != _case_label):
 		_refresh()
 	if _potion_slot != null:
 		_potion_slot.show_buff(_run.buff, _run.buff_left)
@@ -258,5 +296,13 @@ func _refresh() -> void:
 		var names: PackedStringArray = []
 		for item in _run.items:
 			names.append(item.display_name)
-		_items.text = ", ".join(names)
+		_items.text = items_text(names)
+		_case_label = KeyBindings.prompt_label("case_file")
+		_case_hint.text = case_hint_text(_case_label)
+		var font := ThemeDB.fallback_font
+		var rects := item_row_rects(font.get_string_size(_case_hint.text, HORIZONTAL_ALIGNMENT_LEFT, -1, ITEM_ROW_FONT).x + 6.0)
+		_items.position = rects[0].position
+		_items.size = rects[0].size
+		_case_hint.position = rects[1].position
+		_case_hint.size = rects[1].size
 	_status.text = text
