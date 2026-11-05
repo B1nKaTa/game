@@ -569,8 +569,8 @@ func test_phase_two_tape_goes_up_with_a_chart_not_on_its_own() -> void:
 func test_the_chairman_is_clearly_harder_than_every_floor_boss_before_him() -> void:
 	var def := _load("chairman_of_the_board")
 	assert_true(def.is_boss)
-	# 2500 since the balance pass of 2026-11-05, so he ends above Augustine (2400), the hardest of all.
-	assert_true(absf(def.max_hp * OFFICE_HEALTH - 2500.0) < 0.5, str(def.max_hp * OFFICE_HEALTH))
+	# 3000 since the round-2 bot batches of 2026-11-05 (2500 before), so he ends well above Augustine (2400), the hardest of all.
+	assert_true(absf(def.max_hp * OFFICE_HEALTH - 3000.0) < 0.5, str(def.max_hp * OFFICE_HEALTH))
 	assert_true(def.max_hp > _load("augustine").max_hp, "more than Augustine, who stands just below him")
 	assert_true(def.max_hp * OFFICE_HEALTH >= FLOOR_FOUR_BOSS * 1.1, "the fourth floor's bosses, about 1950 by the spec")
 	for id in ["mortimer_grimsby", "mall_santa"]:
