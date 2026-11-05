@@ -101,7 +101,7 @@ func test_it_looks_like_no_other_floor() -> void:
 		assert_true(_difference(mine.wall, theirs.wall) > 0.15, "walls against %s" % id)
 	assert_eq(mine.floor_pattern, GolfLook.FAIRWAY, "mown fairway")
 	assert_eq(mine.wall_pattern, GolfLook.HEDGE_WALL, "clipped hedges")
-	for kind in [RoomDecor.GRASS, RoomDecor.BENCH, RoomDecor.PLANT, RoomDecor.LANTERN]:
+	for kind in [RoomDecor.GRASS, RoomDecor.BENCH, RoomDecor.PLANT, RoomDecor.LANTERN, RoomDecor.FOG]:
 		assert_true(mine.weight_of(kind) > 0.0, kind)
 	for kind in [RoomDecor.BONES, RoomDecor.IV_STAND, RoomDecor.FURNACE, RoomDecor.GAUGE, RoomDecor.STAINED_GLASS, RoomDecor.COFFIN_STAND, RoomDecor.FLUORESCENT, RoomDecor.FOOD_TABLE, RoomDecor.COBWEB]:
 		assert_near(mine.weight_of(kind), 0.0, kind)
@@ -136,11 +136,106 @@ func test_sand_reads_against_the_palest_fairway() -> void:
 	assert_true(_difference(palette.sand, palette.sand_grain) > 0.25, "the grains show on the sand")
 
 
-# The dusk light is mauve and orange, and a warm sand turned salmon under it, so every red warning
-# faded into a bunker. A sand with nearly as much blue as red stays a pale cream there.
+# Under the old dusk light a warm sand turned salmon, so every red warning faded into a bunker. A sand
+# with nearly as much blue as red stays pale under any light, and under the midnight blue it reads as
+# moonlit, far from the warning's red.
 func test_sand_is_cool_enough_that_red_warnings_show_on_it() -> void:
 	var sand := _def().room_palette().sand
 	assert_true(sand.b >= sand.r * 0.8, "sand %s is too warm" % str(sand))
+
+
+# --- its midnight light ---
+
+# A colour as the room's light leaves it: the ambient plus a fill light at its centre, clipped at
+# white. Far from every fill it is darker still, and a wall light or lantern adds to it.
+func _night_lit(color: Color, palette: RoomPalette) -> Color:
+	var light := Color(palette.ambient.r + palette.fill_light.r * Lighting.FILL_ENERGY,
+		palette.ambient.g + palette.fill_light.g * Lighting.FILL_ENERGY,
+		palette.ambient.b + palette.fill_light.b * Lighting.FILL_ENERGY)
+	return Color(minf(color.r * light.r, 1.0), minf(color.g * light.g, 1.0), minf(color.b * light.b, 1.0))
+
+
+func _darkest_grass(palette: RoomPalette) -> Color:
+	var darkest := palette.floor_a
+	for tone: Color in [palette.floor_b, palette.floor_c]:
+		if tone.get_luminance() < darkest.get_luminance():
+			darkest = tone
+	return darkest
+
+
+# Midnight: a blue-black sky, cold moonlight from the walls and a cold fill, and the lanterns the only
+# warm light on the course.
+func test_the_night_is_cold_and_only_the_lanterns_are_warm() -> void:
+	var palette := _def().room_palette()
+	for light: Color in [palette.ambient, palette.torch, palette.fill_light]:
+		assert_true(light.b > light.r and light.b > light.g, "cold light %s" % str(light))
+	assert_true(palette.darkness.get_luminance() < 0.05, "a blue-black sky")
+	assert_true(palette.lantern_light.r > palette.lantern_light.b + 0.3, "a warm lantern")
+	assert_true(palette.weight_of(RoomDecor.TORCH) <= 0.0, "no warm torches in the scatter")
+
+
+# The palest tile is a light mown stripe right under a wall light, with the fill on it too (the Head
+# Office rule). Moonlight must not burn it white, or the HUD and pale bodies vanish there.
+func test_the_palest_fairway_under_the_moonlight_stays_below_white() -> void:
+	var palette := _def().room_palette()
+	var light := Color(palette.ambient.r + palette.torch.r + palette.fill_light.r * Lighting.FILL_ENERGY,
+		palette.ambient.g + palette.torch.g + palette.fill_light.g * Lighting.FILL_ENERGY,
+		palette.ambient.b + palette.torch.b + palette.fill_light.b * Lighting.FILL_ENERGY)
+	for tone: Color in [palette.floor_a, palette.floor_b, palette.floor_c]:
+		var stripe := tone.lerp(Color(palette.fairway_stripe, 1.0), palette.fairway_stripe.a)
+		var peak := maxf(stripe.r * light.r, maxf(stripe.g * light.g, stripe.b * light.b))
+		assert_true(peak < 1.0, "the stripe near a wall light burns to white (%.2f)" % peak)
+
+
+# Every red warning on the course lies on sand or on grass, and the blue light takes most of its red.
+# Lit as the room lights it, it must still stand apart from both.
+func test_red_warnings_show_on_the_sand_and_the_darkest_grass_at_night() -> void:
+	var palette := _def().room_palette()
+	var warning := _night_lit(Enemy.WARNING_COLOR, palette)
+	assert_true(_difference(warning, _night_lit(palette.sand, palette)) >= 0.4, "a warning on sand")
+	assert_true(_difference(warning, _night_lit(_darkest_grass(palette), palette)) >= 0.3, "a warning on the darkest grass")
+
+
+func test_enemies_stand_out_from_the_grass_under_the_night_light() -> void:
+	var palette := _def().room_palette()
+	var defs: Array[EnemyDef] = []
+	defs.assign(_def().enemies)
+	defs.append(_def().mini_boss)
+	defs.append(_def().floor_boss)
+	for def in defs:
+		var body := _night_lit(SpriteVisual.readable(def.color), palette)
+		for tone: Color in [palette.floor_a, palette.floor_b, palette.floor_c]:
+			assert_true(_difference(body, _night_lit(tone, palette)) >= 0.22, "%s against the grass at night" % def.id)
+
+
+# Two pale bodies read as one under a single light (the cruise's lesson), so only one of the course's
+# people is pale: the Caddie in his whites.
+func test_only_one_of_the_floors_people_is_pale() -> void:
+	var defs: Array[EnemyDef] = []
+	defs.assign(_def().enemies)
+	defs.append(_def().mini_boss)
+	defs.append(_def().floor_boss)
+	var pale: Array[String] = []
+	for enemy in defs:
+		if enemy.color.s < 0.4:
+			pale.append(enemy.id)
+	assert_true(pale.size() <= 1, "pale bodies: %s" % str(pale))
+
+
+# The fog is a thin veil: faint enough that nothing under it hides, no light of its own, and drawn only
+# as level streaks, never with the dots and filled cells of the sand or a warned lane's outline.
+func test_the_ground_fog_is_faint_and_shares_no_shape_with_the_sand() -> void:
+	var palette := _def().room_palette()
+	assert_true(palette.fog.a <= 0.2, "fog %s is too thick" % str(palette.fog))
+	assert_false(RoomDecor.is_light(RoomDecor.FOG))
+	var source := FileAccess.get_file_as_string("res://scripts/world/decor_layer.gd")
+	var start := source.find("RoomDecor.FOG:")
+	assert_true(start >= 0, "the decor layer draws fog")
+	var fog_part := source.substr(start, source.find("TerminalDecor.draw_placeholder") - start)
+	for shape in ["draw_circle", "draw_rect", "draw_arc", "draw_colored_polygon"]:
+		assert_false(fog_part.contains(shape), "fog drawn with %s" % shape)
+	for id in ["floor_1", "cemetery", "golden_years_mall"]:
+		assert_near(_floor(id).room_palette().weight_of(RoomDecor.FOG), 0.0, "no fog on %s" % id)
 
 
 # --- its rooms ---
