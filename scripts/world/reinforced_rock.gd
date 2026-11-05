@@ -34,6 +34,13 @@ func art_id() -> String:
 	return "reinforced_rock"
 
 
+# Over its picture the stone keeps its slow pulse round the edge, so it still reads as something special.
+func _draw_over_art() -> void:
+	var pulse := 0.5 + 0.5 * sin(_time * TAU / GLOW_PERIOD)
+	var half := RoomBackdrop.TILE / 2.0
+	draw_rect(Rect2(-half, -half, half * 2.0, half * 2.0).grow(-1.0), Color(look().reinforced_glow, 0.2 + 0.3 * pulse), false, 1.0)
+
+
 func debris_color() -> Color:
 	return look().reinforced
 

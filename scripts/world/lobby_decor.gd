@@ -101,8 +101,13 @@ func _draw() -> void:
 			draw_kind(self, def.shape, spot_position(def.id, cell), def.color)
 
 
-# Draws one kind of decor centred on at, in its colour.
+# Draws one kind of decor centred on at, in its colour. A picture at res://art/props/lobby_<kind>.png
+# replaces the placeholder, in its own colours (each kind is one piece of decor).
 static func draw_kind(canvas: CanvasItem, kind: String, at: Vector2, color := Color.WHITE) -> void:
+	var art := PropArt.texture("lobby_" + kind)
+	if art != null:
+		PropArt.draw(canvas, art, at)
+		return
 	match kind:
 		"fern":
 			var pot := PackedVector2Array([at + Vector2(-7, 2), at + Vector2(7, 2), at + Vector2(5, 13), at + Vector2(-5, 13)])

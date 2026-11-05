@@ -15,6 +15,7 @@ decor_density = 0.0
 [resource]
 script = ExtResource("1")
 id = "landing"
+art_set = "crossroads"
 display_name = "Floor 2"
 palette = SubResource("palette")
 depth = 2

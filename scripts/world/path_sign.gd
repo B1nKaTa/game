@@ -86,10 +86,24 @@ func _process(_delta: float) -> void:
 		queue_redraw()
 
 
+# The sign's picture, drawn pointing east and mirrored for a west exit: path_sign, or path_sign_chained
+# while the path is closed (PropArt). Its foot stands where the post's does.
+const ART := "path_sign"
+const ART_FEET := Vector2(0, 16)
+
+
 func _draw() -> void:
-	_draw_post()
-	if not _is_open:
-		_draw_chains()
+	var art := PropArt.state_texture(ART, "" if _is_open else "chained")
+	if art != null:
+		var at := PropArt.standing(art, ART_FEET)
+		if _side.x < 0:
+			draw_texture_rect(art, Rect2(at + Vector2(art.get_width(), 0), Vector2(-art.get_width(), art.get_height())), false)
+		else:
+			draw_texture(art, at)
+	else:
+		_draw_post()
+		if not _is_open:
+			_draw_chains()
 	if _near and _def != null:
 		_draw_details()
 

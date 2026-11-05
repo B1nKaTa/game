@@ -28,6 +28,9 @@ var skull := false
 # for anything that stays (coins, items, shop wares).
 var carry_kind := ""
 var carry_amount := 1
+# Its picture in res://art/props/ (PropArt), such as pickup_coin, or "" to draw the coloured disc. The
+# name label is still drawn in code over it.
+var art_id := ""
 var _label := ""
 var _color := Color.WHITE
 var _player: Node2D
@@ -177,5 +180,9 @@ static func draw_skull(canvas: CanvasItem, at: Vector2, color: Color) -> void:
 # A plain coloured disc. Pickups with a shape of their own, such as chests, draw that instead.
 
 func _draw_body() -> void:
+	var art := PropArt.texture(art_id) if not art_id.is_empty() else null
+	if art != null:
+		PropArt.draw(self, art)
+		return
 	draw_circle(Vector2.ZERO, 8.0, _color)
 	draw_arc(Vector2.ZERO, 8.0, 0.0, TAU, 16, Color.BLACK, 1.0)

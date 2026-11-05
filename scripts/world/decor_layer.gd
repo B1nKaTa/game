@@ -3,7 +3,8 @@ extends Node2D
 
 # Draws every piece of decor that blocks nothing and keeps no state of its own, in one
 # node. Grass is its own node because it can be cut. The look comes from the palette,
-# and a picture at res://art/decor/<kind>.png replaces a placeholder.
+# and a picture at res://art/props/[<path>/]decor_<kind>.png replaces a placeholder (PropArt). Odd
+# variants show it mirrored, so two of a kind side by side never look stamped.
 var _items: Array[Dictionary] = []
 var _palette: RoomPalette
 
@@ -26,7 +27,11 @@ func _draw() -> void:
 		var at: Vector2 = RoomBackdrop.cell_center(item["cell"]) + item["offset"]
 		var art := PropArt.texture("decor_" + kind)
 		if art != null:
-			draw_texture(art, at - art.get_size() / 2.0)
+			var corner := PropArt.centred(art, at)
+			if int(item["variant"]) % 2 == 1:
+				draw_texture_rect(art, Rect2(corner + Vector2(art.get_width(), 0), Vector2(-art.get_width(), art.get_height())), false)
+			else:
+				draw_texture(art, corner)
 			continue
 		draw_set_transform(at)
 		_draw_placeholder(kind, item["variant"], at)

@@ -1,0 +1,138 @@
+# Props for tools/art/env_art.py: set  game_id  export_file  max_w  max_h
+# set "shared" writes art/props/<game_id>.png; any other set writes art/props/<set>/<game_id>.png, which
+# that path's rooms use first (PropArt.art_set). Boxes come from the prop's body or drawn size.
+
+# Breakables and floor pieces shared by every path
+shared  crate                crate.png                32 32
+shared  rock                 rock.png                 30 30
+shared  reinforced_rock      reinforced_rock.png      32 32
+shared  barrel               barrel.png               24 28
+shared  bone_pile            bone_pile.png            22 18
+shared  grass                grass.png                22 20
+shared  grass_cut            grass_cut.png            22 12
+shared  hole                 hole.png                 32 32 exact
+
+# Chests, closed and left open (Chest, PropPicture). A mimic wears chest_locked.
+shared  chest_lunchbox       chest_lunchbox.png       22 18
+shared  chest_lunchbox_open  chest_lunchbox_open_r.png 22 20
+shared  chest_locked         chest_locked.png         22 20
+shared  chest_locked_open    chest_locked_open_r.png  22 22
+shared  chest_safe           chest_safe.png           20 22
+shared  chest_safe_open      chest_safe_open_r.png    22 22
+shared  chest_urn            chest_urn.png            18 22
+shared  chest_urn_open       chest_urn_open.png       22 22
+
+# Pickups (Pickup.art_id), the coloured disc today is 16 px
+shared  pickup_coin          pickup_coin.png          14 14
+shared  pickup_slip          pickup_slip.png          14 16
+shared  pickup_thermos       pickup_thermos.png       10 17
+shared  pickup_potion        pickup_potion.png        13 16
+shared  pickup_pill          pickup_pill.png          16 12
+shared  pickup_recipe        pickup_recipe.png        14 16
+
+# Decor (DecorLayer, decor_<kind>)
+shared  decor_torch          decor_torch.png          12 26
+shared  decor_lantern        decor_lantern.png        14 20
+shared  decor_stump          decor_stump.png          20 18
+shared  decor_sapling        decor_sapling.png        18 24
+shared  decor_plant          decor_plant.png          18 24
+shared  decor_iv_stand       decor_iv_stand.png       14 28
+shared  decor_gauge          decor_gauge.png          16 20
+shared  decor_pipe           decor_pipe.png           24 18
+shared  decor_furnace        decor_furnace.png        28 28
+shared  decor_stained_glass  decor_stained_glass.png  22 28
+shared  decor_coffin_stand   decor_coffin_stand.png   26 20
+shared  decor_ficus          decor_ficus.png          18 28
+shared  decor_office_chair   decor_office_chair.png   18 24
+shared  decor_departure_board decor_departure_board.png 26 24
+
+# Doors (Door, door_<state>), 28 px in a wall cell; the letter stays code
+shared  door_open            door_open_r.png          28 30
+shared  door_locked          door_locked.png          28 30
+shared  door_key             door_key.png             28 30
+shared  door_chained         door_chained.png         28 30
+
+# The Unkempt Cemetery
+shared  gravestone           gravestone.png           20 26
+shared  dead_tree            dead_tree.png            32 40
+
+# Sunset Shores
+shared  care_bed             care_bed_r.png           24 30
+shared  armchair             armchair.png             28 26
+shared  wheelchair           wheelchair.png           24 26
+shared  food_trolley         food_trolley.png         24 26
+shared  flower_vase          flower_vase.png          16 20
+shared  wet_sign             wet_sign.png             14 20
+
+# The Furnace Works
+shared  coal_heap            coal_heap.png            30 25
+shared  coal_sack            coal_sack.png            26 28
+shared  furnace_crate        furnace_crate.png        24 24
+shared  pipe_valve           pipe_valve.png           14 22
+shared  floor_vent           floor_vent.png           26 26
+
+# Eternal Rest Funeral Parlour
+shared  chapel_pew           chapel_pew.png           30 26
+shared  hymn_cart            hymn_cart.png            27 22
+shared  wreath_stand         wreath_stand.png         18 24
+shared  candle_stand         candle_stand.png         14 26
+shared  dropped_coffin       dropped_coffin.png       44 18
+shared  organ_pipe           organ_pipe.png           30 32
+
+# The Last Resort Cruise
+shared  deck_chair           deck_chair.png           26 24
+shared  buffet_tray          buffet_tray.png          22 20
+shared  lifeboat_davit       lifeboat_davit.png       28 28
+shared  pool_water           pool_water.png           32 32 exact
+
+# Departures, Terminal Zero
+shared  luggage_trolley      luggage_trolley.png      30 28
+shared  suitcase_stack       suitcase_stack.png       20 24
+shared  departure_seats      departure_seats.png      30 24
+
+# Head Office
+shared  cubicle_wall         cubicle_wall.png         32 29
+shared  water_cooler         water_cooler.png         18 30
+shared  in_tray              in_tray.png              18 16
+
+# Shared stations: the Retirement Plan, the Crossroads signs, the Arcade tables
+shared  retirement_station   retirement_station.png   30 30
+shared  path_sign            path_sign.png            40 40
+shared  path_sign_chained    path_sign_chained.png    40 40
+shared  arcade_table_slot    arcade_table_slot.png    30 30
+shared  arcade_table_cards   arcade_table_cards.png   30 30
+
+# The Waiting Room: station boards (WaitingStation, station_<id>), sized to each board
+shared  station_key_board       station_key_board.png       28 36
+shared  station_forms_counter   station_forms_counter_r.png 28 36 main
+shared  station_ticket_machine  station_ticket_machine.png  20 30
+shared  station_noticeboard     station_noticeboard.png     34 28
+shared  station_decor_counter   station_decor_counter.png   44 26
+shared  station_item_rack       station_item_rack.png       36 30
+shared  station_duty_free       station_duty_free_r.png     40 26
+shared  station_severance_desk  station_severance_desk.png  48 26
+shared  station_employee_plaque station_employee_plaque.png 30 22
+shared  station_ending_archive  station_ending_archive.png  22 34
+
+# The Waiting Room: the trophy frames, the bounty poster board and the lobby decor (lobby_<shape>)
+shared  trophy_frame         trophy_frame.png         22 22 exact
+shared  poster_board         poster_board.png         104 30 exact
+shared  lobby_fern           lobby_fern.png           24 26
+shared  lobby_poster         lobby_poster_r.png       18 24
+shared  lobby_chair          lobby_chair.png          20 26
+shared  lobby_lamps          lobby_lamps.png          14 18
+shared  lobby_tank           lobby_tank.png           30 28
+shared  lobby_carpet         lobby_carpet_r.png       320 160 keybg exact
+
+# The Flashback Cinema and the Seance Hotline: drawn ahead of their floors, which are not on this
+# branch, so nothing loads these yet. Each is named for the prop it is meant for (docs/art/env-art-notes.md).
+flashback_cinema  seat_row       seat_row.png             32 28
+flashback_cinema  pillar         pillar.png               24 40
+flashback_cinema  lobby_card     lobby_card.png           20 26
+flashback_cinema  screen_frame   screen_frame.png         160 80
+flashback_cinema  aisle_light    aisle_light.png          12 10
+seance_hotline    cubicle_wall   cubicle_wall.png         32 29
+seance_hotline    psychic_desk   psychic_desk_r.png       30 26
+seance_hotline    lava_lamp      lava_lamp.png            12 24
+seance_hotline    beaded_curtain beaded_curtain_r.png     30 32
+seance_hotline    seance_table   seance_table.png         44 40

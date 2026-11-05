@@ -54,6 +54,14 @@ const MIMIC_SHOUT_TIME := 1.2
 # Where a Gilded Urn's two items wait, in cells from the urn: one each side, a row lower.
 const URN_CHOICE_OFFSETS: Array[Vector2i] = [Vector2i(-2, 1), Vector2i(2, 1)]
 const PENSION_COLOR := Color("ffd24a")
+# Pickup pictures in res://art/props/ (Pickup.art_id). Items have none yet and keep the rarity disc.
+const ART_COIN := "pickup_coin"
+const ART_SLIP := "pickup_slip"
+const ART_THERMOS := "pickup_thermos"
+const ART_POTION := "pickup_potion"
+const ART_PILL := "pickup_pill"
+const ART_RECIPE := "pickup_recipe"
+const SHOP_ART := {ShopRules.KIND_HEAL: ART_PILL, ShopRules.KIND_KEY: ART_SLIP, ShopRules.KIND_BOMB: ART_THERMOS}
 const ITEM_COLOR := Color("7dd3fc")
 const HEAL_COLOR := Color("e4524f")
 const COIN_SCATTER := 10.0
@@ -231,9 +239,14 @@ func _ready() -> void:
 	_walk_grid = WalkGrid.from_layout(_room.layout)
 	var backdrop := RoomBackdrop.new()
 	var palette := _floor_def.room_palette()
+	# Props, doors, chests and pickups look in the path's own art folder first (PropArt).
+	PropArt.art_set = _floor_def.art()
+	# An Arcade Room keeps its neon patterns, so it never passes for one of the floor's own rooms.
+	var tile_set := _floor_def.art()
 	if _room.room_type == RoomLayout.TYPE_ARCADE:
 		palette = arcade_palette(palette)
-	backdrop.setup(_room.layout.rows, palette, _room.decor_seed)
+		tile_set = ""
+	backdrop.setup(_room.layout.rows, palette, _room.decor_seed, tile_set)
 	add_child(backdrop)
 	Lighting.add_room_mood(self, _room.layout.size_in_cells(), palette)
 	_create_decor(palette)
@@ -785,6 +798,7 @@ func _on_enemy_defeated(enemy: Enemy) -> void:
 func _drop_coin(at: Vector2, base_amount: int, source := "") -> void:
 	var amount := _run.pension_amount(base_amount, source)
 	var coin := _add_pickup(at + Vector2(_rng.randf_range(-COIN_SCATTER, COIN_SCATTER), _rng.randf_range(-COIN_SCATTER, COIN_SCATTER)), "+%d" % amount, PENSION_COLOR, func(): _collect_pension(amount))
+	coin.art_id = ART_COIN
 	# A coin lying in a pocket only a bomb opens would fly out through the stones.
 	if not _room.layout.coin_can_fly_from(_cell_of(at)):
 		return
@@ -802,16 +816,19 @@ func _drop_consumable(at: Vector2, kind: String) -> void:
 			var slip := _add_pickup(at, RoomRules.KEY_NAME, KEY_COLOR, func(): _take_consumable(_run.add_key, RunEffects.SLIP), false, "slip_pickup")
 			slip.can_take = _run.can_add_key
 			slip.carry_kind = kind
+			slip.art_id = ART_SLIP
 		RoomRules.DROP_BOMB:
 			var thermos := _add_pickup(at, RoomRules.BOMB_NAME, BOMB_COLOR, func(): _take_consumable(_run.add_bomb, RunEffects.BOMB), false, "thermos_pickup")
 			thermos.can_take = _run.can_add_bomb
 			thermos.carry_kind = kind
+			thermos.art_id = ART_THERMOS
 		RoomRules.DROP_POTION:
 			# It fills the potion slot, and waits on the floor while the slot is full.
 			var small := Content.potion(RoomRules.SMALL_POTION_ID)
 			var potion := _add_pickup(at, RoomRules.POTION_NAME, HEAL_COLOR, func(): _take_consumable(func(): _run.give_potion(small)), false, "pill_heal")
 			potion.can_take = _run.can_take_potion
 			potion.carry_kind = kind
+			potion.art_id = ART_POTION
 
 
 # kind is the RunEffects pickup kind the items hear, or "" for one they do not.
@@ -845,6 +862,7 @@ func _add_heal(at: Vector2, pills: int) -> Pickup:
 	heal.collect_radius = Pickup.COLLECT_RADIUS * _run.stats.heal_reach_mult
 	heal.carry_kind = RoomRules.DROP_HEAL
 	heal.carry_amount = pills
+	heal.art_id = ART_PILL
 	return heal
 
 
@@ -1120,6 +1138,7 @@ func _add_shop_entry(at: Vector2, entry: Dictionary) -> void:
 		text = "%s: %d, half" % [label, price]
 	var pickup := _add_pickup(at, text, color, func(): _buy(price, give), true)
 	pickup.prompt = SHOP_PROMPT
+	pickup.art_id = SHOP_ART.get(entry["kind"], "")
 	var item_id: String = entry["item"].id if entry.get("item") != null else ""
 	pickup.set_meta(KEEP, {"kind": KEEP_SHOP, "shop": entry["kind"], "price": price, "id": item_id,
 			"half": entry.get("half", false)})
@@ -1344,6 +1363,7 @@ func _drop_recipe(at: Vector2) -> bool:
 
 func _add_recipe_pickup(at: Vector2, item: ItemDef) -> Pickup:
 	var pickup := _add_pickup(at, "Recipe: %s" % item.display_name, RECIPE_COLOR, func(): _take_recipe(item), true, "slip_pickup")
+	pickup.art_id = ART_RECIPE
 	pickup.prompt = RECIPE_PROMPT
 	pickup.set_meta(KEEP, {"kind": KEEP_RECIPE, "id": item.id})
 	return pickup

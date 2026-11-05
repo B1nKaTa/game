@@ -2,7 +2,7 @@ class_name TerminalDecor
 extends RefCounted
 
 # The placeholder look of Departures, Terminal Zero's own decor. DecorLayer calls this after its own
-# kinds, so the shared file only gains one line. A picture at res://art/decor/<kind>.png still
+# kinds, so the shared file only gains one line. A picture at res://art/props/decor_<kind>.png still
 # replaces it, as for every kind.
 const BOARD := Color("15131a")
 const BOARD_EDGE := Color("5a5f6a")

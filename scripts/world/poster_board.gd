@@ -6,6 +6,8 @@ extends Node2D
 # from about column 5 to 8, still clear of the north door at column 10.
 
 const BOARD_SIZE := Vector2(104, 30)
+# A bare cork board in a wooden frame; the posters on it stay code (PropArt).
+const ART := "poster_board"
 const PAPER_SIZE := Vector2(8, 11)
 const GAP := 2.0
 const COLUMNS := 10
@@ -39,8 +41,12 @@ static func paper_rect(index: int) -> Rect2:
 
 func _draw() -> void:
 	var box := Rect2(-BOARD_SIZE / 2.0, BOARD_SIZE)
-	draw_rect(box, CORK)
-	draw_rect(box, FRAME, false, 2.0)
+	var art := PropArt.texture(ART)
+	if art != null:
+		PropArt.draw(self, art)
+	else:
+		draw_rect(box, CORK)
+		draw_rect(box, FRAME, false, 2.0)
 	var font := ThemeDB.fallback_font
 	var title_width := font.get_string_size(TITLE, HORIZONTAL_ALIGNMENT_LEFT, -1, TITLE_FONT).x
 	var title_at := Vector2(-title_width / 2.0, box.position.y - 3.0)

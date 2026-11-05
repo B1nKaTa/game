@@ -77,7 +77,24 @@ func _player_has_key() -> bool:
 	return has_key.is_valid() and has_key.call()
 
 
+# Which picture the door shows (PropArt door_<state>): chained, locked, a Slip's lock, or open.
+func art_state() -> String:
+	if chained:
+		return "chained"
+	if locked:
+		return "locked"
+	if requires_key:
+		return "key"
+	return "open"
+
+
 func _draw() -> void:
+	var art := PropArt.state_texture("door", art_state())
+	if art != null:
+		PropArt.draw(self, art)
+		if not chained:
+			_draw_icon_and_prompt(true)
+		return
 	var color := Color("7a3b3b") if locked else Color("c98a3c")
 	if requires_key and not locked:
 		color = Color("5d4a8c")
@@ -91,9 +108,17 @@ func _draw() -> void:
 		draw_line(Vector2(-14, -14), Vector2(14, 14), PathSign.CHAIN_COLOR, 2.0)
 		draw_line(Vector2(14, -14), Vector2(-14, 14), PathSign.CHAIN_COLOR, 2.0)
 		return
+	_draw_icon_and_prompt()
+
+
+# The room's letter (or the Arcade's die) and the Slip prompt stay in code, over a picture or not. Over
+# a picture the letter gets a dark outline, so it reads on any door.
+func _draw_icon_and_prompt(outlined := false) -> void:
 	if _icon == RoomRules.ARCADE_ICON:
 		ArcadeTable.draw_die(self, Vector2.ZERO, 16.0)
 	else:
+		if outlined:
+			draw_string_outline(ThemeDB.fallback_font, Vector2(-5, 6), _icon, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 4, Color.BLACK)
 		draw_string(ThemeDB.fallback_font, Vector2(-5, 6), _icon, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
 	if requires_key and not locked and _near:
 		var prompt := KeyBindings.with_key("interact", KEY_PROMPT) if _player_has_key() else NO_KEY_PROMPT
