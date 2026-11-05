@@ -8,9 +8,10 @@ extends SceneTree
 #         against its body box.
 #  sort   Harold behind and in front of an NPC and an enemy.
 
-const OUT := "D:/grandpa-shots-r7/"
-const WALL_LIMIT_MS := 560000
+const OUT := "D:/grandpa-shots-r8/"
+const WALL_LIMIT_MS := 1500000
 const CROP := Vector2i(160, 120)
+const WARNING_RED := Color("e4524f")
 # floor id -> [depth, path index].
 const FLOORS := {
 	"floor_1": [1, 0], "cemetery": [1, 1], "sunset_shores": [2, 0], "furnace_works": [2, 1],
@@ -25,7 +26,31 @@ const ENEMIES := [
 	["club_golfer", "fairways_end"], ["thaddeus_fairweather", "fairways_end"],
 	["cruise_stoker", "last_resort_cruise"], ["airport_mall_cop", "terminal_zero"],
 	["hr_representative", "head_office"], ["chairman_of_the_board", "head_office"],
+	# The second batch (2026-11-06).
+	["filing_clerk", "floor_1"], ["debt_ghost", "floor_1"], ["seasonal_temp", "floor_1"], ["notary_public", "floor_1"],
+	["burnt_out_auditor", "floor_1"], ["denial_officer", "floor_1"], ["senior_adjuster", "floor_1"],
+	["plot_holder", "cemetery"], ["head_groundskeeper", "cemetery"], ["tired_undertaker", "cemetery"],
+	["orderly", "sunset_shores"], ["cart_nurse", "sunset_shores"], ["bingo_caller", "sunset_shores"], ["resident", "sunset_shores"],
+	["activities_coordinator", "sunset_shores"], ["matron_mercy", "sunset_shores"], ["mimic", "sunset_shores"],
+	["shores_seasonal_temp", "sunset_shores"], ["shores_denial_officer", "sunset_shores"],
+	["soot_ghost", "furnace_works"], ["foreman_klaus", "furnace_works"], ["steam_valve", "furnace_works"],
+	["furnace_burnt_out_auditor", "furnace_works"],
+	["weeping_mourner", "funeral_parlour"], ["florist", "funeral_parlour"], ["pallbearer", "funeral_parlour"],
+	["reverend", "funeral_parlour"], ["mortimer_grimsby", "funeral_parlour"], ["parlour_plot_holder", "funeral_parlour"],
+	["parlour_seasonal_temp", "funeral_parlour"],
+	["early_bird_diner", "last_resort_cruise"], ["shuffleboard_shark", "last_resort_cruise"],
+	["sunburnt_sunbather", "last_resort_cruise"], ["lorraine", "last_resort_cruise"],
+	["commodore_wellington", "last_resort_cruise"], ["cruise_orderly", "last_resort_cruise"],
+	["tour_group", "terminal_zero"], ["baggage_handler", "terminal_zero"], ["lost_luggage", "terminal_zero"],
+	["sergeant_wanda", "terminal_zero"], ["augustine", "terminal_zero"], ["airport_weeping_mourner", "terminal_zero"],
+	["yes_man", "head_office"], ["paper_shredder", "head_office"], ["doreen", "head_office"], ["office_florist", "head_office"],
 ]
+# A boss's own anims, shot by playing each once (the behaviors' play_anim calls are tested).
+const OWN_ANIMS := {
+	"tired_undertaker": ["wreath_throw", "point"], "matron_mercy": ["charge", "lights_out"],
+	"mortimer_grimsby": ["embalming_spray", "conduct"], "commodore_wellington": ["foghorn_blast", "buoy_call"],
+	"augustine": ["runway_signal", "gate_change"],
+}
 
 var _start := 0
 var scene
@@ -209,7 +234,8 @@ func _shots() -> void:
 	for entry: Array in ENEMIES:
 		var id: String = entry[0]
 		var floor_id: String = entry[1]
-		if not only.is_empty() and not only.split(",").has(floor_id):
+		# Only these floors or enemy ids, comma separated.
+		if not only.is_empty() and not only.split(",").has(floor_id) and not only.split(",").has(id):
 			continue
 		if floor_id != current:
 			await _new_run(floor_id)
@@ -275,6 +301,17 @@ func _shoot_enemy(id: String, floor_id: String) -> void:
 			await _wait(0.05)
 			_save(await _image(), tag + "_attack_%s" % enemy.visual().shown_anim(), _screen(enemy))
 	print("ACT %s wound=%s struck=%s" % [id, wound, struck])
+	if OWN_ANIMS.has(id) and is_instance_valid(enemy):
+		enemy.set_physics_process(false)
+		enemy.desired_velocity = Vector2.ZERO
+		await _wait(0.6)
+		for anim: String in OWN_ANIMS[id]:
+			enemy.play_anim(anim, 1.6)
+			await _wait(0.5)
+			_save(await _image(), tag + "_own_%s_a" % anim, _screen(enemy))
+			await _wait(0.6)
+			_save(await _image(), tag + "_own_%s_b" % anim, _screen(enemy))
+			await _wait(0.6)
 
 
 # Prints the lit luminance of the pixels that change when the sprite hides, and how wide they are at
@@ -287,6 +324,8 @@ func _measure(id: String, def: EnemyDef, lit: Image, dark: Image, at: Vector2) -
 	var box_right := -1
 	var box_top := int(at.y - def.body_size.y / 2.0)
 	var box_bottom := int(at.y + def.body_size.y / 2.0)
+	var coloured := 0
+	var reds := 0
 	for y in range(maxi(int(at.y) - 90, 0), mini(int(at.y) + 40, lit.get_height())):
 		for x in range(maxi(int(at.x) - 70, 0), mini(int(at.x) + 70, lit.get_width())):
 			var a := lit.get_pixel(x, y)
@@ -294,6 +333,11 @@ func _measure(id: String, def: EnemyDef, lit: Image, dark: Image, at: Vector2) -
 			if absf(a.r - b.r) + absf(a.g - b.g) + absf(a.b - b.b) < 0.06:
 				continue
 			lums.append(a.get_luminance())
+			# Reads as the warning red (#e4524f): its hue within 12 degrees, and as saturated.
+			if a.s >= 0.45 and a.v >= 0.25:
+				coloured += 1
+				if absf(fposmod(a.h * 360.0 - WARNING_RED.h * 360.0 + 180.0, 360.0) - 180.0) <= 12.0:
+					reds += 1
 			top = mini(top, y)
 			bottom = maxi(bottom, y)
 			if y >= box_top and y < box_bottom:
@@ -317,6 +361,7 @@ func _measure(id: String, def: EnemyDef, lit: Image, dark: Image, at: Vector2) -
 	print("MEASURE %s px=%d body_median_lum=%.3f p75=%.3f body_share>=0.4=%.2f height=%d feet_row=%d box_bottom=%d width_in_box=%d box=%d phys=%d" % [
 		id, lums.size(), body[body.size() / 2], lums[lums.size() * 3 / 4], float(above) / body.size(),
 		bottom - top + 1, bottom + 1, box_bottom, box_right - box_left + 1, int(def.body_size.x), int(def.body_size.x * 0.8)])
+	print("RED %s warning_red_share=%.2f of %d saturated px" % [id, float(reds) / maxi(coloured, 1), coloured])
 
 
 # ---- y-sort ----
