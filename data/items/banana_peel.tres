@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/banana_peel.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "banana_peel"
+display_name = "Banana Peel"
+description = "Your first dodge in each fight drops a peel that trips the first enemy onto it. The oldest joke there is, and it still works."
+rarity = "common"
+tags = PackedStringArray("dodge", "room")
+first_clear_path = "last_resort_cruise"
+effect = SubResource("Effect")

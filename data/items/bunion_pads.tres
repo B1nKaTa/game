@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "bunion_pads"
+display_name = "Bunion Pads"
+description = "You walk 8% faster, and a dodge slips round the corners of things. Soft where it counts."
+rarity = "common"
+tags = PackedStringArray("dodge")
+move_speed_bonus = 0.08
+dodge_rounds_corners = true

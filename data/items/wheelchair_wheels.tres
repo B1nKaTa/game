@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/wheelchair_wheels.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "wheelchair_wheels"
+display_name = "Wheelchair Wheels"
+description = "Dodges become a longer roll that runs over enemies on the way. Mind your toes, he isn't braking."
+rarity = "rare"
+tags = PackedStringArray("dodge", "cane")
+craft_price = 240
+dodge_length_bonus = 0.6
+effect = SubResource("Effect")

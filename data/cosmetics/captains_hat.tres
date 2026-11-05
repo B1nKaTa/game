@@ -8,6 +8,6 @@ id = "captains_hat"
 display_name = "Captain's Hat"
 description = "Lorraine wore it for the captain's table. The captain never came."
 slot = "hat"
-price = 0
+price = 35
 color = Color(0.952941176, 0.949019608, 0.925490196, 1)
 shape = "captain"

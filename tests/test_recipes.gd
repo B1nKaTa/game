@@ -27,14 +27,14 @@ func _data(pension := 1000) -> ProgressData:
 
 func test_shipped_recipe_items_have_prices_and_base_items_do_not() -> void:
 	# The eight that came first, then the hundred items' batches add theirs.
-	assert_eq(Content.recipes().size(), 13)
+	assert_eq(Content.recipes().size(), 14)
 	for item in Content.recipes():
 		assert_true(item.needs_recipe(), item.id)
 	var base := 0
 	for item in Content.items():
 		if not item.needs_recipe() and not item.from_bounty:
 			base += 1
-	assert_eq(base, 20)
+	assert_eq(base, 28)
 
 
 func test_recipe_items_stay_out_of_rotation_until_crafted() -> void:

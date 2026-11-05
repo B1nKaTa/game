@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "hover_round"
+display_name = "Hover Round"
+description = "Charging a swing no longer slows your walk. Top speed: brisk."
+rarity = "rare"
+tags = PackedStringArray("dodge", "cane")
+first_clear_path = "fairways_end"
+charge_full_speed = true

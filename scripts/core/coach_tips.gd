@@ -52,6 +52,16 @@ const TIPS := {
 	"windup_teeth": "Drop the teeth in a doorway. Let them come to you.",
 	"overbite": "Longer throws. Pick them off from across the room.",
 	"shark_tooth": "Bite and back off. The bleeding does the rest.",
+	"bad_hip": "Dodge through the pack, not away. The cough slows the ones behind you.",
+	"afterimage": "Dodge late and let them swing at the copy. Then hit them from the side.",
+	"wheelchair_wheels": "Roll straight through the crowd. Brakes are for people with time.",
+	"velcro_shoes": "Two dodges in your pocket. Save the second for getting back out.",
+	"hover_round": "Charge while you walk. Circle them till it's full, then let go.",
+	"squeaky_shoes": "They hear you coming, so come quick. Speed's the only cure.",
+	"pogo_cane": "Dodge right through the swing. Do it right and you can do it again.",
+	"banana_peel": "Dodge early in a fight, where they'll walk. Then watch.",
+	"bunion_pads": "Dodge round the furniture all you like. Nothing catches your toes now.",
+	"gravity_boots": "Decks roll, fans blow, you stand there. Plant your feet and swing.",
 }
 
 const DEFAULT_TIP := "Pick something off the rack and I'll tell you what it's good for."
