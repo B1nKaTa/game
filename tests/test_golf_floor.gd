@@ -196,6 +196,23 @@ func test_red_warnings_show_on_the_sand_and_the_darkest_grass_at_night() -> void
 	assert_true(_difference(warning, _night_lit(_darkest_grass(palette), palette)) >= 0.3, "a warning on the darkest grass")
 
 
+# The dusk sand left under the moonlight glowed near white at a wall light (luminance 0.96), more snow
+# than bunker. Lit by a wall light and a fill together it must stay a dim moonlit grey, and the
+# warning red must still stand apart from it there.
+func test_the_sand_under_a_wall_light_stays_dim_and_warnings_show_on_it() -> void:
+	var palette := _def().room_palette()
+	var light := Color(palette.ambient.r + palette.torch.r + palette.fill_light.r * Lighting.FILL_ENERGY,
+		palette.ambient.g + palette.torch.g + palette.fill_light.g * Lighting.FILL_ENERGY,
+		palette.ambient.b + palette.torch.b + palette.fill_light.b * Lighting.FILL_ENERGY)
+	var sand := palette.sand * light
+	var clipped := Color(minf(sand.r, 1.0), minf(sand.g, 1.0), minf(sand.b, 1.0))
+	assert_true(clipped.get_luminance() < 0.8, "the sand glows at a wall light (%.2f)" % clipped.get_luminance())
+	var warning := Enemy.WARNING_COLOR * light
+	var warning_clipped := Color(minf(warning.r, 1.0), minf(warning.g, 1.0), minf(warning.b, 1.0))
+	assert_true(_difference(warning_clipped, clipped) >= 0.4, "a warning on sand at a wall light")
+	assert_true(_night_lit(palette.sand, palette).get_luminance() < 0.4, "the sand at a fill stays dim")
+
+
 func test_enemies_stand_out_from_the_grass_under_the_night_light() -> void:
 	var palette := _def().room_palette()
 	var defs: Array[EnemyDef] = []
