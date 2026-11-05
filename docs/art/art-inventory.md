@@ -206,6 +206,31 @@ No font file or Theme exists. Everything uses Godot's fallback font with outline
 | H12 | **UI** | `hud.gd`, `consumable_icon.gd`, `potion_slot.gd`, `menu_style.gd`, `title_screen.gd`, `title_scene_art.gd`, `card_table_panel.gd`, `case_file.gd` | TextureRects and StyleBoxTexture in place of the drawn shapes and ■ □ text. |
 | H13 | **Bestiary icons** | a tool, not game code | Cut `res://art/icons/enemies/<id>.png` from each enemy's first idle frame with a py script. This costs no generations. |
 
+### 1.9 Enemy art as built (H1 to H4, 2026-11-05)
+
+H1 to H4 are in. The first ten enemies have art: intern_reaper, stoker, mall_cop, club_golfer, hr_representative, regional_reaper, old_smokey, mall_santa, thaddeus_fairweather and chairman_of_the_board.
+
+- **Folders.** `res://art/sprites/<art_id>/<anim>.png`, one row of square frames per anim. `EnemyDef.art()` is `art_id`, or the id when that is empty.
+- **Building strips.** Run `py tools/art/enemy_strips.py D:/grandpa-art/enemies art/sprites [id ...]`. It reads `<id>/<state>/animations/<anim>/east/frame_###.png` and writes every anim folder it finds as `<anim>.png`. idle and walk keep every frame. Every other anim drops frame 000, the reference pose. All frames of one enemy go on one square canvas, a multiple of 4 wide, centred on the source canvas's middle column, with each frame's lowest row on one feet row.
+- **Anim names the game asks for.** `idle`, `walk`, `windup` and `attack`, plus any name a behavior plays through `Enemy.play_anim(name, seconds)` (today only the Mall Cop's `whistle`). Put a new one in the export as `animations/<name>/east/` and rerun the tool.
+- **Cuts.** `CUTS` in the tool picks frames for one export, matched by the hash of its frames: the windup is cut from the first frames of the attack, and the attack is trimmed to open on the strike. A newer export of the same anim gets the default (every frame but 000), and a real `windup` folder always wins over a cut.
+- **H1, the driver** (`EnemyAnim`, `Enemy._update_anim`, run every frame).
+  - `windup` plays once over the warning's windup and holds its last frame.
+  - `attack` plays for `EnemyAnim.ATTACK_TIME` (0.3 s) from the frame the windup ends, which is when every enemy's hit lands.
+  - Otherwise it shows `walk` while its own walk moves it, and `idle` when it stands still.
+  - While busy or standing it faces Harold; while walking it faces the way it walks, by mirroring the east-drawn art.
+  - Fallbacks (`SpriteVisual.resolve`): windup, attack and walk fall back to idle. A behavior's own anim falls back to attack, then to idle. With no idle, the placeholder box draws as before.
+  - An enemy with no attack strip keeps walking or standing when its windup ends.
+- **H2, the feet.** `SpriteVisual.set_feet(body_size.y / 2)` stands the visual on the body box bottom. Each strip is placed by its own lowest used row there. Harold's visual does the same at `SPRITE_FEET_Y`.
+- **H3, sharing art.** `art_id` lets an enemy use another's art. `art_hue_from`, `art_hue_to` and `art_hue_width` (in degrees) recolour that art in the shader. Only hues inside the band move, and only on pixels at least 0.15 saturated, so skin, greys and whites stay. `art_value` multiplies the value of the same band. The reapers use it to lift their robes on the Records Basement (1.3 for the intern, 1.5 for the Regional Reaper).
+- **H4, frame size.** `EnemyDef.frame_width` defaults to 0, which means square frames as tall as the strip.
+- **Marks.** `EnemyMarks` draws no hat or prop for an enemy that shows art. The shield arc still draws.
+- **Draw order.** Floor scenes, the Waiting Room, the sandbox and every RoomView sort by y.
+  - Enemies, NPCs and Harold stand their looks on their feet, so they sort by where their feet are. Props sort by their middles.
+  - Harold's own drawing (swing, cane skin, crosshair) sits at z 1, over every body.
+  - Holes, pool water and laid sand sit at z -8, under the bodies.
+  - Warnings stay at z 60.
+
 ---
 
 ## 2. Every visual entity, by floor and path

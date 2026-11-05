@@ -8,8 +8,7 @@ High-quality moody pixel art, seen from a top-down angle. Dark stone rooms are l
 
 - Game resolution: 640×360.
 - Grandpa: 68×68 frames, with the character about 46 tall inside them.
-- Regular enemies: 32 wide frames.
-- Senior Adjuster: 48 wide frames. Regional Reaper: 64 wide frames.
+- Enemies: square frames, as tall as each strip (one canvas per enemy, built by `tools/art/enemy_strips.py`). The data's `frame_width` is 0 unless a strip needs another width.
 - Tiles: 32×32.
 - Colors: keep the colors the generator produces, because reducing sprites to art/palette.txt made Grandpa clearly worse. Lighting happens in the engine, so sprites use flat, evenly lit colors with no baked-in glow.
 - Backgrounds: transparent.
