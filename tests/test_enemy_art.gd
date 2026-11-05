@@ -18,7 +18,10 @@ const ARTED := ["intern_reaper", "stoker", "mall_cop", "club_golfer", "hr_repres
 # Floor variants wearing a base's art, recoloured: variant -> base. The Mall's and Fairway's End's own
 # (mall_*, golf_*) are left to the branch replacing those floors.
 const VARIANTS := {"furnace_intern_reaper": "intern_reaper", "mall_intern_reaper": "intern_reaper",
-	"cruise_stoker": "stoker", "airport_mall_cop": "mall_cop"}
+	"cruise_stoker": "stoker", "airport_mall_cop": "mall_cop", "airport_weeping_mourner": "weeping_mourner",
+	"cruise_orderly": "orderly", "furnace_burnt_out_auditor": "burnt_out_auditor", "office_florist": "florist",
+	"parlour_plot_holder": "plot_holder", "parlour_seasonal_temp": "seasonal_temp",
+	"shores_seasonal_temp": "seasonal_temp", "shores_denial_officer": "denial_officer"}
 # Objects drawn facing south, which never turn and so are never mirrored.
 const UNFLIPPED := ["mimic", "lost_luggage", "steam_valve"]
 # A boss's own anims, each played by its behavior through Enemy.play_anim: id -> [behavior, anims].
