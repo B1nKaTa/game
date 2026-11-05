@@ -211,6 +211,25 @@ func is_winding_up() -> bool:
 
 
 # A few words over its head, such as a called-out bingo number.
+# What a boss says sits over his head, or under his feet when over his head would reach into the
+# HUD's top rows (Hud.BAND_BOTTOM on screen), and slides in from the screen's sides. at is his spot on
+# screen and zoom the canvas's scale; returns the text's baseline start in his own space.
+const SAY_SIZE := 10
+const SAY_MARGIN := 4.0
+
+
+static func say_spot(at: Vector2, zoom: float, body_height: float, width: float, view: Vector2) -> Vector2:
+	var z := zoom if zoom > 0.0 else 1.0
+	var spot := Vector2(-width / 2.0, -body_height / 2.0 - 12.0)
+	if at.y + (spot.y - SAY_SIZE) * z < Hud.BAND_BOTTOM:
+		spot.y = body_height / 2.0 + SAY_SIZE + 8.0
+	var left := (SAY_MARGIN - at.x) / z
+	var right := (view.x - SAY_MARGIN - at.x) / z - width
+	if right >= left:
+		spot.x = clampf(spot.x, left, right)
+	return spot
+
+
 func say(text: String, seconds: float) -> void:
 	_say_text = text
 	_say_left = seconds
@@ -749,8 +768,9 @@ func _draw_warning(layer: Node2D) -> void:
 			layer.draw_line(at - Vector2(3, 0), at + Vector2(3, 0), DAZE_COLOR, 1.0)
 	if _say_left > 0.0 and not _say_text.is_empty():
 		var font := ThemeDB.fallback_font
-		var size := 10
+		var size := SAY_SIZE
 		var width := font.get_string_size(_say_text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
-		var at := Vector2(-width / 2.0, top - 12.0)
+		var screen := layer.get_global_transform_with_canvas()
+		var at := say_spot(screen.origin, screen.get_scale().y, def.body_size.y, width, Vector2(RoomBackdrop.VIEW_SIZE))
 		layer.draw_string_outline(font, at, _say_text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, 4, Color.BLACK)
 		layer.draw_string(font, at, _say_text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, SAY_COLOR)

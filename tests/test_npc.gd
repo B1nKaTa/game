@@ -263,3 +263,16 @@ func test_a_bubble_never_reaches_into_the_huds_band_or_off_the_sides() -> void:
 	assert_true(high.position.y > 0.0, "near the top it hangs below him")
 	var low := Npc.bubble_box(Vector2(320, 200), Vector2.ONE, body, box, view)
 	assert_true(low.end.y < 0.0, "further down it sits over his head")
+
+
+# A boss's words over his head ran into the HUD's rows near the top wall, as the bubbles did.
+func test_a_bosss_words_never_reach_into_the_huds_band() -> void:
+	var view := Vector2(640, 360)
+	for y in range(0, 361, 8):
+		for x in [0.0, 320.0, 640.0]:
+			var at := Vector2(x, y)
+			var spot := Enemy.say_spot(at, 1.0, 52.0, 90.0, view)
+			var text_top := at.y + spot.y - Enemy.SAY_SIZE
+			assert_true(text_top >= Hud.BAND_BOTTOM or spot.y > 0.0, "words at %s reach into the HUD" % str(at))
+			assert_true(at.x + spot.x >= Enemy.SAY_MARGIN - 0.01 and at.x + spot.x + 90.0 <= view.x - Enemy.SAY_MARGIN + 0.01, "words at %s leave the screen" % str(at))
+	assert_true(Enemy.say_spot(Vector2(320, 200), 1.0, 52.0, 90.0, view).y < 0.0, "further down they stay over his head")
