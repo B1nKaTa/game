@@ -43,6 +43,15 @@ func tapes() -> Array:
 	return found
 
 
+func cells() -> Array[Vector2i]:
+	return _cells
+
+
+# How long until the tape is strung, 0 once it is.
+func warning_left() -> float:
+	return 0.0 if _strung else maxf(_warning, 0.0)
+
+
 func is_strung() -> bool:
 	return _strung
 
