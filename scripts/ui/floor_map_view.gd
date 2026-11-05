@@ -230,7 +230,7 @@ func _draw() -> void:
 		_draw_text(panel.position + Vector2(12, 22), _floor_name, 16, Color.WHITE)
 		if not combo_names.is_empty():
 			_draw_text(panel.position + Vector2(12, 36), combos_line(combo_names), 10, Hud.BANNER_COLOR)
-		var hint := close_hint(ActiveDevice.using_pad, ActiveDevice.family)
+		var hint := close_hint(true, ActiveDevice.family) if ActiveDevice.using_pad else KeyBindings.with_key("map", CLOSE_HINT)
 		var hint_width := ThemeDB.fallback_font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x
 		_draw_text(Vector2(panel.end.x - 10.0 - hint_width, panel.position.y + 23.0), hint, 11, Color("ffd24a"))
 		_draw_text(panel.position + Vector2(12, panel.size.y - 26), LEGEND_TOP, 11, Color("ece9e0"))
