@@ -124,6 +124,7 @@ static func ending_to_dict(run: RunState) -> Dictionary:
 		"boss_room_pill_lost": run.boss_room_pill_lost,
 		"paths": paths,
 		"table_visits_won": run.arcade_visits_won(),
+		"tally": tally_to_dict(run),
 	}
 
 
@@ -138,6 +139,46 @@ static func apply_ending(run: RunState, raw: Dictionary) -> void:
 			if str(key).is_valid_int():
 				run.paths_taken[int(key)] = str(paths[key])
 	run.extra_table_visits = maxi(int(raw.get("table_visits_won", 0)), 0)
+	apply_tally(run, raw.get("tally", {}))
+
+
+# The case file's tally (RunState.kills and the rest). An older checkpoint has none and starts empty.
+static func tally_to_dict(run: RunState) -> Dictionary:
+	return {
+		"kills": run.kills.duplicate(),
+		"met": run.met.keys(),
+		"found": Array(run.found),
+		"hits": run.hits_taken,
+		"seeds": Array(run.seeds),
+	}
+
+
+static func apply_tally(run: RunState, raw: Variant) -> void:
+	if not raw is Dictionary:
+		return
+	var kills: Variant = raw.get("kills", {})
+	if kills is Dictionary:
+		for id in kills:
+			if (kills[id] is int or kills[id] is float) and int(kills[id]) > 0:
+				run.kills[str(id)] = int(kills[id])
+				run.met[str(id)] = true
+	for key in ["met", "found", "seeds"]:
+		var list: Variant = raw.get(key, [])
+		if not list is Array:
+			continue
+		for value in list:
+			if not value is String or value.is_empty():
+				continue
+			match key:
+				"met":
+					run.met[value] = true
+				"found":
+					run.found.append(value)
+				"seeds":
+					run.seeds.append(value)
+	var hits: Variant = raw.get("hits", 0)
+	if hits is int or hits is float:
+		run.hits_taken = maxi(int(hits), 0)
 
 
 # Puts a saved run back on a run made fresh by Progress.make_run. Ids that match nothing are skipped.

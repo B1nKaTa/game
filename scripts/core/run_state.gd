@@ -49,6 +49,14 @@ var boss_room_pill_lost := false
 var paths_taken := {}
 # Back Room visits won in the Waiting Room just before the run, which count as table visits too.
 var extra_table_visits := 0
+# The case file's tally of this run, for its pages and the run log (RunLog): kills by EnemyDef id, every
+# EnemyDef id met, each item id picked up in order, the hits that cost him pills, and each floor's seed.
+# The checkpoint keeps it (RunCheckpoint.ending_to_dict).
+var kills := {}
+var met := {}
+var found: Array[String] = []
+var hits_taken := 0
+var seeds: Array[String] = []
 var _won_visits := {}
 var _promised := {}
 var _offered_recipes := {}
@@ -141,12 +149,32 @@ func was_recipe_offered(id: String) -> bool:
 
 
 func add_item(item: ItemDef) -> void:
+	found.append(item.id)
 	var saves_before := stats.floor_lethal_saves
 	items.append(item)
 	effects.add(item)
 	refresh_stats()
 	# A Life Jacket picked up mid-floor works on this floor already, as does a combo that adds a save.
 	health.lethal_saves += maxi(stats.floor_lethal_saves - saves_before, 0)
+
+
+func note_met(enemy_id: String) -> void:
+	if not enemy_id.is_empty():
+		met[enemy_id] = true
+
+
+func note_kill(enemy_id: String) -> void:
+	if enemy_id.is_empty():
+		return
+	met[enemy_id] = true
+	kills[enemy_id] = int(kills.get(enemy_id, 0)) + 1
+
+
+func kill_count() -> int:
+	var total := 0
+	for id in kills:
+		total += int(kills[id])
+	return total
 
 
 # A resumed run's item, put back as it was held: its effect and combos come back, but its on_gain never

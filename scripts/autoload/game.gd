@@ -72,6 +72,15 @@ func abandon_and_load(slot: int) -> void:
 		Progress.clear_checkpoint()
 		if parachute > 0:
 			Progress.add_pension(parachute)
+		# The case file's Log keeps the run, as given up, with what its checkpoint kept.
+		var ending: Variant = checkpoint.get("ending", {})
+		RunCheckpoint.apply_ending(run, ending if ending is Dictionary else {})
+		Progress.record_run(RunLog.entry(run, {
+			"n": Progress.data.run_count,
+			"date": Time.get_datetime_string_from_system(false, true),
+			"result": RunLog.ABANDONED,
+			"depth": int(checkpoint.get("depth", 1)),
+		}))
 		Progress.last_run = {"died": true, "bosses": int(checkpoint.get("bosses", 0))}
 	enter_slot()
 

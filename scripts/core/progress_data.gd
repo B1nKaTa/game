@@ -16,6 +16,8 @@ const CURSED_FLOOR_CONDOLENCES := 10
 # Paid the first time each ending is found. The true ending also gives Gerald's Hat.
 const ENDING_CONDOLENCES := 15
 const GERALDS_HAT := "geralds_hat"
+# The deepest floor, whose boss falling ends a run as a win. Mirrors FloorScene.LAST_DEPTH.
+const LAST_DEPTH := 5
 
 var pension: int = 0
 var upgrades: Dictionary = {}
@@ -88,6 +90,16 @@ var repeat_deaths_seen: Dictionary = {}
 # Path id -> true for every path whose first-clear items the Waiting Room has announced. An older save
 # starts empty, so its cleared paths announce their items once.
 var item_paths_seen: Dictionary = {}
+# The case file's history, each optional in a save (RunLog). An older save starts with them empty, its
+# crafted items counted as found and its beaten bosses as met.
+# ItemDef id -> times picked up, for every item found. EnemyDef id -> times defeated, for every one met.
+var items_seen: Dictionary = {}
+var enemies_seen: Dictionary = {}
+# RunLog.LIFETIME_KEYS -> a total over every logged run, and RunLog.BEST_KEYS -> the best single run.
+var lifetime: Dictionary = {}
+var best_run: Dictionary = {}
+# The last RunLog.CAP runs, newest first.
+var run_log: Array = []
 
 # The first path at each depth, the only one open before that depth's first clear.
 const FIRST_PATH_BY_DEPTH := {1: "floor_1", 2: "sunset_shores", 3: "funeral_parlour", 4: "last_resort_cruise", 5: "terminal_zero"}
@@ -472,6 +484,11 @@ func to_dict() -> Dictionary:
 		"last_repeat_death": last_repeat_death,
 		"repeat_deaths_seen": repeat_deaths_seen,
 		"item_paths_seen": item_paths_seen,
+		"items_seen": items_seen,
+		"enemies_seen": enemies_seen,
+		"lifetime": lifetime,
+		"best_run": best_run,
+		"run_log": run_log,
 	}
 
 
@@ -556,9 +573,82 @@ static func from_dict(raw: Variant) -> ProgressData:
 		if key.is_valid_int() and int(key) >= 1 and int(key) <= EndingRules.REPEAT_DEATHS:
 			data.repeat_deaths_seen[str(int(key))] = true
 	data.item_paths_seen = _id_set(raw.get("item_paths_seen"))
+	# The case file's history. An older save has none: what it already records seeds the catalog.
+	data.items_seen = _count_map(raw.get("items_seen"))
+	if not raw.has("items_seen"):
+		for id in data.items_unlocked:
+			data.items_seen[id] = 0
+	data.enemies_seen = _count_map(raw.get("enemies_seen"))
+	if not raw.has("enemies_seen"):
+		for id in data.bosses_beaten:
+			data.enemies_seen[id] = 0
+	var totals := _count_map(raw.get("lifetime"))
+	for key in RunLog.LIFETIME_KEYS:
+		if totals.has(key):
+			data.lifetime[key] = totals[key]
+	var best := _count_map(raw.get("best_run"))
+	for key in RunLog.BEST_KEYS:
+		if best.has(key):
+			data.best_run[key] = best[key]
+	var log_raw: Variant = raw.get("run_log", [])
+	if log_raw is Array:
+		for each in log_raw:
+			if each is Dictionary and data.run_log.size() < RunLog.CAP:
+				data.run_log.append(RunLog.clean(each))
 
 	data._infer_first_paths()
 	return data
+
+
+# A run that ended goes to the top of the Log, the oldest past RunLog.CAP drops off, and its kills,
+# finds and pay add to the lifetime totals and the catalog.
+func record_run(entry: Dictionary) -> void:
+	var clean := RunLog.clean(entry)
+	run_log.push_front(clean)
+	while run_log.size() > RunLog.CAP:
+		run_log.pop_back()
+	var result: String = clean["result"]
+	_add_total("wins", 1 if result == RunLog.CLEARED and int(clean["depth"]) >= LAST_DEPTH else 0)
+	_add_total("deaths", 1 if result == RunLog.DIED or result == RunLog.ABANDONED else 0)
+	var kills := RunLog.kill_total(clean)
+	_add_total("kills", kills)
+	_add_total("hits", int(clean["hits"]))
+	_add_total("pension", int(clean["pension"]))
+	_add_total("items", clean["found"].size())
+	_raise_best("kills", kills)
+	_raise_best("pension", int(clean["pension"]))
+	_raise_best("time", int(clean["time"]))
+	_raise_best("items", clean["items"].size())
+	_raise_best("depth", int(clean["depth"]))
+	for id in clean["found"]:
+		items_seen[id] = int(items_seen.get(id, 0)) + 1
+	for id in clean["met"]:
+		if not enemies_seen.has(id):
+			enemies_seen[id] = 0
+	for id in clean["kills"]:
+		enemies_seen[id] = int(enemies_seen.get(id, 0)) + int(clean["kills"][id])
+
+
+# The ending a cleared run reached, chosen after its entry was logged.
+func set_last_ending(id: String) -> void:
+	if not run_log.is_empty():
+		run_log[0]["ending"] = id
+
+
+func total(key: String) -> int:
+	return int(lifetime.get(key, 0))
+
+
+func best(key: String) -> int:
+	return int(best_run.get(key, 0))
+
+
+func _add_total(key: String, amount: int) -> void:
+	lifetime[key] = total(key) + maxi(amount, 0)
+
+
+func _raise_best(key: String, value: int) -> void:
+	best_run[key] = maxi(best(key), value)
 
 
 # A save from before paths were kept has its clears but no path ids. At each depth only one path is
@@ -575,6 +665,16 @@ func _has_path_at_depth(depth: int) -> bool:
 		if paths_cleared.has(id):
 			return true
 	return false
+
+
+# Id -> a count of zero or more, from a saved Dictionary. Anything else reads as empty.
+static func _count_map(raw: Variant) -> Dictionary:
+	var counts := {}
+	if raw is Dictionary:
+		for id in raw:
+			if raw[id] is int or raw[id] is float:
+				counts[str(id)] = maxi(int(raw[id]), 0)
+	return counts
 
 
 static func _id_set(raw: Variant) -> Dictionary:

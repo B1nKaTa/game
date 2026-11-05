@@ -725,6 +725,7 @@ func _spawn_enemy(def: EnemyDef, at: Vector2, summoned := false) -> Enemy:
 	_spawned += 1
 	_alive += 1
 	_had_enemies = true
+	_run.note_met(def.id)
 	add_child(enemy)
 	if def.is_boss:
 		boss_spawned.emit(enemy)
@@ -753,6 +754,7 @@ func _spawn_summon(def: EnemyDef, at: Vector2) -> void:
 
 func _on_enemy_defeated(enemy: Enemy) -> void:
 	_alive -= 1
+	_run.note_kill(enemy.def.id)
 	DeathBurst.spawn(self, enemy.position, enemy.def.color, enemy.def.is_boss)
 	enemy_died.emit(enemy.position, enemy.def.is_boss)
 	var spot := clear_spot(enemy.position)

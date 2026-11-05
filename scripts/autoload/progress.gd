@@ -308,6 +308,17 @@ func record_ending(id: String) -> int:
 	return paid
 
 
+# A run that ended goes into the case file's Log and lifetime totals, saved at once.
+func record_run(entry: Dictionary) -> void:
+	data.record_run(entry)
+	_store.save_progress(data)
+
+
+func set_last_run_ending(id: String) -> void:
+	data.set_last_ending(id)
+	_store.save_progress(data)
+
+
 func record_repeat_death(n: int) -> void:
 	data.record_repeat_death(n)
 	_store.save_progress(data)
