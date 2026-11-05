@@ -6,13 +6,17 @@ extends RefCounted
 # temp folder in tests), so nothing here is tied to the real user folder.
 #
 # Migration copies an existing save.json and save.json.bak into slot_1, byte for byte, and leaves the
-# originals exactly where and as they were. It never copies over a slot_1/save.json already there.
+# originals exactly where and as they were. It never copies over a slot_1/save.json already there,
+# and it happens once: migrated.txt marks it done, so a slot 1 deleted later is never filled again.
 
 const COUNT := 3
 const SAVE_FILE := "save.json"
 const RUN_FILE := "run.json"
 # Which slot was used last, kept beside the slots. Like settings.cfg, it is no slot's own.
 const LAST_FILE := "last_slot.txt"
+# Left beside the slots once the old save has been copied into slot 1, so the copy is made only once
+# and a slot 1 deleted since stays deleted.
+const MIGRATED_FILE := "migrated.txt"
 
 
 static func slot_dir(root: String, slot: int) -> String:
@@ -29,9 +33,16 @@ static func run_path(root: String, slot: int) -> String:
 
 # Returns whether anything was copied.
 static func migrate(root: String) -> bool:
+	var marker := ProjectSettings.globalize_path(root + MIGRATED_FILE)
+	if FileAccess.file_exists(marker):
+		return false
 	var old := ProjectSettings.globalize_path(root + SAVE_FILE)
 	var target := ProjectSettings.globalize_path(save_path(root, 1))
-	if not FileAccess.file_exists(old) or FileAccess.file_exists(target):
+	if not FileAccess.file_exists(old):
+		return false
+	# A slot 1 already there came from an earlier build's copy, or from play since: it is kept.
+	if FileAccess.file_exists(target):
+		_write_marker(marker)
 		return false
 	DirAccess.make_dir_recursive_absolute(target.get_base_dir())
 	if DirAccess.copy_absolute(old, target) != OK:
@@ -40,7 +51,15 @@ static func migrate(root: String) -> bool:
 	if FileAccess.file_exists(old + ".bak"):
 		DirAccess.copy_absolute(old + ".bak", target + ".bak")
 	write_last(root, 1)
+	_write_marker(marker)
 	return true
+
+
+static func _write_marker(marker: String) -> void:
+	var file := FileAccess.open(marker, FileAccess.WRITE)
+	if file != null:
+		file.store_string("slot 1")
+		file.close()
 
 
 # A slot has progress once the opening has been seen or a run played. A brand new save has neither.

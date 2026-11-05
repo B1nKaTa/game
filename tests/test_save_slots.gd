@@ -75,6 +75,30 @@ func test_migration_runs_once() -> void:
 	_wipe(root)
 
 
+# New Game on slot 1, quit before anything saves: the old save must not come back on the next start.
+func test_a_deleted_slot_one_stays_deleted() -> void:
+	var root := _root()
+	_write(root + "save.json", _fixture_text())
+	assert_true(SaveSlots.migrate(root))
+	assert_true(FileAccess.file_exists(root + SaveSlots.MIGRATED_FILE), "a finished copy leaves its marker")
+	SaveSlots.delete_slot(root, 1)
+	assert_false(SaveSlots.migrate(root), "the copy is made once")
+	assert_false(FileAccess.file_exists(root + "slot_1/save.json"))
+	assert_true(SaveSlots.summary(root, 1)["empty"])
+	_wipe(root)
+
+
+# A slot 1 made by an earlier build, which left no marker, is kept and marked.
+func test_a_slot_one_from_before_the_marker_is_kept_and_marked() -> void:
+	var root := _root()
+	_write(root + "save.json", _fixture_text())
+	_write(root + "slot_1/save.json", "{\"played since\": true}")
+	assert_false(SaveSlots.migrate(root))
+	assert_eq(FileAccess.get_file_as_string(root + "slot_1/save.json"), "{\"played since\": true}")
+	assert_true(FileAccess.file_exists(root + SaveSlots.MIGRATED_FILE))
+	_wipe(root)
+
+
 func test_no_old_save_means_nothing_to_copy() -> void:
 	var root := _root()
 	assert_false(SaveSlots.migrate(root))
