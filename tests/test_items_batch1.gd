@@ -10,6 +10,9 @@ const Rocking := preload("res://scripts/items/rocking_chair.gd")
 const Needles := preload("res://scripts/items/knitting_needles.gd")
 const Pin := preload("res://scripts/items/rolling_pin.gd")
 const Scythe := preload("res://scripts/items/reapers_scythe.gd")
+const Gold := preload("res://scripts/items/gold_fillings.gd")
+const Fizzy := preload("res://scripts/items/fizzy_tablet.gd")
+const Shark := preload("res://scripts/items/shark_tooth.gd")
 
 # id: [rarity, source, first-clear path or ""]
 const BATCH := {
@@ -28,8 +31,11 @@ const BATCH := {
 	"glue_gun": [ItemDef.RARE, ItemUnlocks.RECIPE, ""],
 	"spare_set": [ItemDef.RARE, ItemUnlocks.RECIPE, ""],
 	"boomerang_bite": [ItemDef.COMMON, ItemUnlocks.START, ""],
+	"gold_fillings": [ItemDef.COMMON, ItemUnlocks.START, ""],
+	"fizzy_tablet": [ItemDef.COMMON, ItemUnlocks.START, ""],
 	"windup_teeth": [ItemDef.RARE, ItemUnlocks.START, ""],
 	"overbite": [ItemDef.COMMON, ItemUnlocks.START, ""],
+	"shark_tooth": [ItemDef.LEGENDARY, ItemUnlocks.RECIPE, ""],
 }
 
 
@@ -371,6 +377,48 @@ func test_boomerang_bite_turns_home_and_bites_on_the_way() -> void:
 	kit.free_enemies()
 
 
+func test_gold_fillings_knock_a_coin_loose_one_bite_in_five() -> void:
+	var kit := ItemKit.new()
+	var run := kit.run_with(["gold_fillings"])
+	var effect = run.effects.effect_of("gold_fillings")
+	effect.rng.seed = 9
+	var enemy := kit.enemy()
+	for i in 1000:
+		run.effects.room_enter(null)
+		run.effects.bite(enemy)
+	assert_true(absf(kit.drops.size() / 1000.0 - Gold.CHANCE) < 0.04, "about one in five, got %d" % kit.drops.size())
+	assert_eq(kit.drops[0][0], RoomRules.DROP_COIN)
+	kit.drops.clear()
+	run.effects.room_enter(null)
+	for i in 50:
+		effect.knock_out(run.effects.ctx, enemy)
+	assert_eq(kit.drops.size(), Gold.ROOM_LIMIT, "a room's worth at most")
+	var summon := kit.enemy()
+	summon.is_summon = true
+	run.effects.room_enter(null)
+	assert_false(effect.knock_out(run.effects.ctx, summon), "a summon pays nothing")
+	kit.free_enemies()
+
+
+func test_fizzy_tablet_slows_the_bitten_and_what_stands_in_the_fizz() -> void:
+	var kit := ItemKit.new()
+	var run := kit.run_with(["fizzy_tablet"])
+	var enemy := kit.enemy()
+	run.effects.bite(enemy)
+	assert_true(enemy.is_slowed())
+	assert_eq(kit.fx_of(ItemFx.FxFizz).size(), 1)
+	var fizz := ItemFx.make_fizz(Fizzy.RADIUS, Fizzy.TIME, Fizzy.SHARE)
+	var inside := kit.enemy()
+	inside.position = Vector2(20, 0)
+	var outside := kit.enemy()
+	outside.position = Vector2(80, 0)
+	assert_eq(fizz.slow_touching([inside, outside]), 1)
+	assert_true(inside.is_slowed())
+	assert_false(outside.is_slowed())
+	fizz.free()
+	kit.free_enemies()
+
+
 func test_windup_teeth_bite_what_walks_over_them_now_and_then() -> void:
 	var kit := ItemKit.new()
 	var run := kit.run_with(["windup_teeth"])
@@ -393,3 +441,25 @@ func test_windup_teeth_bite_what_walks_over_them_now_and_then() -> void:
 func test_overbite_throws_forty_percent_further() -> void:
 	var run := ItemKit.new().run_with(["overbite"])
 	assert_near(run.stats.bite_range, DentureThrow.BASE_RANGE * 1.4)
+
+
+func test_shark_tooth_bleeds_stack_three_hits_each() -> void:
+	var kit := ItemKit.new()
+	var run := kit.run_with(["shark_tooth"])
+	var effect = run.effects.effect_of("shark_tooth")
+	var enemy := kit.enemy("intern_reaper", 1000.0)
+	run.effects.bite(enemy)
+	run.effects.bite(enemy)
+	assert_eq(effect.bleeds_on(enemy), 2, "they stack")
+	run.effects.tick(0.5)
+	assert_near(enemy.hp, 1000.0)
+	run.effects.tick(0.5)
+	assert_near(enemy.hp, 1000.0 - 2.0 * Shark.DAMAGE)
+	run.effects.tick(1.0)
+	run.effects.tick(1.0)
+	assert_near(enemy.hp, 1000.0 - 6.0 * Shark.DAMAGE)
+	assert_eq(effect.bleeds_on(enemy), 0, "three hits each, then done")
+	run.effects.tick(1.0)
+	assert_near(enemy.hp, 1000.0 - 6.0 * Shark.DAMAGE)
+	assert_eq(kit.fx_of(ItemFx.FxBleed).size(), 2)
+	kit.free_enemies()
