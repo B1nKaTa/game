@@ -70,6 +70,18 @@ func _ready() -> void:
 	_run()
 
 
+# The loop's fight checks count every pill a hit costs, so a Spare Pill Organizer it picked up is kept
+# empty: a stored heal would soak the hit a check measures. tests/test_reworked_items.gd checks the store.
+func _physics_process(_delta: float) -> void:
+	var scene := get_tree().current_scene
+	if scene == null or not "player" in scene or not is_instance_valid(scene.player):
+		return
+	var organizer = scene.player.run.effects.effect_of("pill_organizer")
+	if organizer != null:
+		organizer.stored = 0
+
+
+
 func _run() -> void:
 	await _wait(0.5)
 	_expect_scene("Opening")
