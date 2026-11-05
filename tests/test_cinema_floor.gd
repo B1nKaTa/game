@@ -1,6 +1,13 @@
 extends TestCase
 
 const DIR := "res://data/rooms/flashback_cinema/"
+const SEEDS := 300
+const BossSpawn := preload("res://tests/test_boss_spawn_room.gd")
+# The Projectionist and Cornelius Crabtree, who take the floor's boss rooms in Task 4.
+const PROJECTIONIST_BODY := Vector2(44, 52)
+const CRABTREE_BODY := Vector2(32, 40)
+# Every symbol a Cinema room may hold: walls and floor, what the rules place, seats, pillars and cards.
+const CINEMA_SYMBOLS := "#.EIHTBCSP-|i"
 # Every other path a palette must stand apart from.
 const OTHER_PATHS := ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "last_resort_cruise", "seance_hotline", "terminal_zero", "head_office"]
 
@@ -243,3 +250,244 @@ func test_a_room_never_has_more_than_a_few_aisle_lights() -> void:
 	var layout := _room(changes)
 	assert_true(CinemaProps.aisle_light_cells(layout).size() > CinemaProps.MAX_AISLE_LIGHTS)
 	assert_eq(CinemaProps.aisle_light_spots(layout).size(), CinemaProps.MAX_AISLE_LIGHTS)
+
+
+# --- the path ---
+
+func _basement() -> FloorDef:
+	return _floor("floor_1")
+
+
+func _pool() -> Array[RoomLayout]:
+	return RoomCatalog.load_valid(_def().rooms_dir)
+
+
+func _layouts() -> Array[RoomLayout]:
+	var found: Array[RoomLayout] = []
+	for resource in Content.load_dir(DIR):
+		found.append(resource)
+	return found
+
+
+func _name(layout: RoomLayout) -> String:
+	return layout.resource_path.get_file()
+
+
+func test_the_cinema_is_the_locked_third_floor_path_with_its_own_rooms() -> void:
+	var def := _def()
+	assert_eq(def.id, "flashback_cinema")
+	assert_eq(def.display_name, "The Flashback Cinema, Last Showing")
+	assert_eq(def.depth, 3)
+	assert_eq(def.clears_to_open, 1, "it opens after a third-floor clear")
+	assert_eq(def.rooms_dir, DIR)
+
+
+func test_its_difficulty_follows_the_third_floor() -> void:
+	var def := _def()
+	assert_near(def.health_mult, 1.8)
+	assert_near(def.pension_mult, 2.0)
+	assert_eq(def.enemies_by_size, {"small": 6, "medium": 8, "large": 13})
+	assert_eq(def.treasure_pension, ceili(_basement().treasure_pension * 2.0))
+	assert_eq(def.clear_pension, _basement().clear_pension)
+	assert_eq(def.prop_pension, _basement().prop_pension)
+	assert_eq(def.vault_stone_level, _basement().vault_stone_level)
+	assert_eq(def.chest_weights, _floor("funeral_parlour").chest_weights, "the same chest odds as the other third floor")
+
+
+# --- its rooms ---
+
+func test_every_layout_in_the_folder_is_valid() -> void:
+	var count := 0
+	for layout in _layouts():
+		count += 1
+		assert_eq(layout.validate().size(), 0, "%s: %s" % [_name(layout), str(layout.validate())])
+	assert_eq(count, 33)
+
+
+func test_the_rooms_keep_the_old_paths_mix() -> void:
+	var mix := {}
+	for layout in _layouts():
+		var key := "%s %s" % [layout.room_type, layout.size_class()]
+		mix[key] = int(mix.get(key, 0)) + 1
+	assert_eq(mix, {
+		"combat medium": 7, "combat large": 3, "combat small": 3,
+		"mini_boss medium": 1, "mini_boss large": 1, "floor_boss medium": 1, "floor_boss large": 1,
+		"item medium": 1, "item large": 1, "item small": 1, "healing medium": 1, "healing small": 1,
+		"treasure medium": 1, "treasure small": 1, "side medium": 1, "side large": 1, "side small": 1,
+		"secret medium": 1, "secret small": 1, "vault medium": 1, "vault large": 1, "vault small": 1,
+		"shop medium": 1})
+
+
+func test_combat_rooms_hold_the_third_floors_numbers() -> void:
+	for layout in _pool():
+		if layout.room_type == RoomLayout.TYPE_COMBAT:
+			assert_eq(_def().room_size_errors(layout).size(), 0, "%s %s" % [_name(layout), str(_def().room_size_errors(layout))])
+
+
+func test_every_room_type_a_floor_uses_is_covered() -> void:
+	var types := {}
+	for layout in _pool():
+		types[layout.room_type] = true
+	for room_type: String in RoomLayout.REQUIRED:
+		if not room_type in [RoomLayout.TYPE_CROSSROADS, RoomLayout.TYPE_LANDING, RoomLayout.TYPE_ARCADE, RoomLayout.TYPE_DEPARTMENT]:
+			assert_true(types.has(room_type), room_type)
+
+
+# The Mall's props and escalator strips are gone: the Cinema has seat rows, pillars and lobby cards,
+# and no hazard laid in its floor.
+func test_rooms_hold_seats_pillars_and_chests_and_nothing_of_the_mall() -> void:
+	var seats := 0
+	var pillars := 0
+	var chest_rooms := 0
+	for layout in _layouts():
+		for row in layout.rows:
+			for symbol in row:
+				assert_true(CINEMA_SYMBOLS.contains(symbol), "'%s' in %s" % [symbol, _name(layout)])
+		seats += layout.cells_of(RoomLayout.SYMBOL_SEAT).size()
+		pillars += layout.cells_of(RoomLayout.SYMBOL_PILLAR).size()
+		chest_rooms += 1 if not layout.cells_of("C").is_empty() else 0
+		assert_false(layout.strips_reverse, _name(layout))
+		assert_false(layout.ship_rolls, _name(layout))
+	assert_true(seats >= 300, "seat cells %d" % seats)
+	assert_true(pillars >= 20, "pillars %d" % pillars)
+	assert_true(chest_rooms >= 3, "rooms with a chest %d" % chest_rooms)
+
+
+func test_seat_rows_leave_the_runners_clear() -> void:
+	for layout in _layouts():
+		var size := layout.size_in_cells()
+		for cell in layout.cells_of(RoomLayout.SYMBOL_SEAT) + layout.cells_of(RoomLayout.SYMBOL_PILLAR):
+			assert_false(CinemaLook.is_runner(cell, size), "%s blocks a runner at %s" % [_name(layout), str(cell)])
+
+
+# Every fighting and boss room keeps its second row as wall, all but the north door's alcove, so the
+# screen has a wall two cells deep, below the HUD's band, and never covers a door.
+func test_every_fighting_room_keeps_its_north_wall_for_the_screen() -> void:
+	var rooms := 0
+	for layout in _layouts():
+		if not CinemaScenes.shows_screen(layout.room_type):
+			continue
+		rooms += 1
+		var size := layout.size_in_cells()
+		var door := layout.door_cell(RoomLayout.NORTH)
+		for x in range(1, size.x - 1):
+			var wanted := RoomLayout.SYMBOL_FLOOR if x == door.x else RoomLayout.SYMBOL_WALL
+			assert_eq(layout.rows[1][x], wanted, "%s row 1 at x %d" % [_name(layout), x])
+		var wall := CinemaScreen.wall_rect(layout)
+		assert_near(wall.size.y, RoomBackdrop.TILE * 2.0, "%s has a two-cell screen wall" % _name(layout))
+		var picture := CinemaScreen.picture_rect_for(wall).grow(CinemaScreen.FRAME_WIDTH)
+		assert_eq(Vector2i(CinemaScreen.picture_rect_for(wall).size), CinemaScenes.FRAME_SIZE, _name(layout))
+		var door_rect := Rect2(Vector2(door) * RoomBackdrop.TILE - Vector2(0, RoomBackdrop.TILE), Vector2(RoomBackdrop.TILE, RoomBackdrop.TILE * 2.0))
+		assert_false(picture.intersects(door_rect), "%s: the screen covers the north door" % _name(layout))
+		assert_true(picture.position.x >= RoomBackdrop.TILE and picture.end.y <= RoomBackdrop.TILE * 2.0, _name(layout))
+	assert_eq(rooms, 17)
+
+
+func test_every_room_has_one_lobby_card_clear_of_the_doors() -> void:
+	for layout in _layouts():
+		var cards := layout.cells_of(RoomLayout.SYMBOL_LIFE_SIGN)
+		assert_eq(cards.size(), 1, _name(layout))
+		for cell in cards:
+			assert_false(layout.touches_a_door(cell), "%s: the card at %s touches a door" % [_name(layout), str(cell)])
+			assert_true(cell.y > RoomLayout.UNDER_THE_HUD, "%s: the card under the HUD row" % _name(layout))
+
+
+# The Projectionist (44x52) and Crabtree (32x40) take these rooms in Task 4, so their real collision
+# boxes must start clear of seats and pillars, as test_boss_spawn_room checks for whoever holds them now.
+func test_the_boss_rooms_fit_the_cinemas_own_bosses() -> void:
+	var checked := 0
+	for layout in _layouts():
+		var body := Vector2.ZERO
+		if layout.room_type == RoomLayout.TYPE_FLOOR_BOSS:
+			body = PROJECTIONIST_BODY
+		elif layout.room_type == RoomLayout.TYPE_MINI_BOSS:
+			body = CRABTREE_BODY
+		else:
+			continue
+		for cell in layout.cells_of("B"):
+			checked += 1
+			assert_eq(BossSpawn.solid_cells_under(layout, cell, body).size(), 0, "%s at %s" % [_name(layout), str(cell)])
+			for offset in [Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1), Vector2i(-1, 0), Vector2i(1, 0), Vector2i(-1, 1), Vector2i(0, 1), Vector2i(1, 1)]:
+				assert_false(layout.is_solid_at(cell + offset), "%s: room round the boss at %s" % [_name(layout), str(cell + offset)])
+	assert_eq(checked, 4)
+
+
+func test_props_and_the_screen_go_into_a_fighting_room() -> void:
+	var layout: RoomLayout = load(DIR + "combat_01.tres")
+	var view := _bare_room(layout, RoomLayout.TYPE_COMBAT)
+	CinemaProps.build(view, layout, _def().room_palette())
+	var counts := {}
+	for child in view.get_children():
+		var kind: String = child.get_script().get_global_name()
+		counts[kind] = int(counts.get(kind, 0)) + 1
+	assert_eq(int(counts.get("CinemaSeat", 0)), layout.cells_of(RoomLayout.SYMBOL_SEAT).size())
+	assert_eq(int(counts.get("CinemaScreen", 0)), 1, "one screen")
+	assert_eq(int(counts.get("CinemaBeam", 0)), 1, "and its beam")
+	assert_eq(int(counts.get("LifeSign", 0)), 1, "one lobby card")
+	assert_true(int(counts.get("AisleLight", 0)) > 0, "aisle lights at the row ends")
+	assert_true(CinemaScenes.ids().has(CinemaScreen.in_room(view).scene_id))
+	view.free()
+
+
+func test_a_shop_has_its_card_but_no_screen() -> void:
+	var layout: RoomLayout = load(DIR + "shop_01.tres")
+	var view := _bare_room(layout, RoomLayout.TYPE_SHOP)
+	CinemaProps.build(view, layout, _def().room_palette())
+	assert_true(CinemaScreen.in_room(view) == null, "no screen in a shop")
+	var cards := 0
+	for child in view.get_children():
+		if child is LifeSign:
+			cards += 1
+	assert_eq(cards, 1)
+	view.free()
+
+
+func test_another_floors_palette_never_hangs_a_screen() -> void:
+	var layout: RoomLayout = load(DIR + "combat_01.tres")
+	var view := _bare_room(layout, RoomLayout.TYPE_COMBAT)
+	CinemaProps.build(view, layout, _floor("funeral_parlour").room_palette())
+	assert_true(CinemaScreen.in_room(view) == null)
+	view.free()
+
+
+func _bare_room(layout: RoomLayout, type: String) -> RoomView:
+	var room := FloorRoom.new()
+	room.layout = layout
+	room.room_type = type
+	room.decor_seed = 12
+	var no_upgrades: Array[UpgradeDef] = []
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 3
+	var view := RoomView.new()
+	view.setup(room, null, _def(), RunState.new(no_upgrades, {}), null, rng, null, null)
+	return view
+
+
+# --- whole floors ---
+
+func test_every_built_floor_follows_the_same_rules_as_the_first() -> void:
+	var pool := _pool()
+	var vaults := 0
+	var sizes := {}
+	for seed_value in SEEDS:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = seed_value
+		var map := FloorBuilder.build_from_pool(rng, _def(), pool)
+		assert_true(map != null, "seed %d" % seed_value)
+		if map == null:
+			continue
+		for room in map.rooms:
+			sizes[room.layout.size_class()] = true
+			vaults += 1 if room.room_type == RoomLayout.TYPE_VAULT else 0
+		assert_true(map.only_hidden_rooms_need_a_bomb(), "seed %d" % seed_value)
+		assert_true(map.hidden_rooms_are_dead_ends(), "seed %d" % seed_value)
+		assert_eq(map.room(map.boss_id).room_type, RoomLayout.TYPE_FLOOR_BOSS)
+		assert_eq(map.room(map.main_path[map.main_path.size() / 2]).room_type, RoomLayout.TYPE_MINI_BOSS)
+	assert_eq(sizes.size(), 3)
+	assert_true(vaults > 250, "most floors have a vault, %d" % vaults)
+
+
+func test_vault_extras_find_their_spots_here_too() -> void:
+	for layout in _pool():
+		if layout.room_type == RoomLayout.TYPE_VAULT:
+			assert_eq(layout.vault_extra_cells(RoomLayout.VAULT_EXTRAS).size(), RoomLayout.VAULT_EXTRAS, _name(layout))

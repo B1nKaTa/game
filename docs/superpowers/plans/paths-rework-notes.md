@@ -152,3 +152,14 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
   resumed run never repeats one. An older checkpoint starts with none shown.
 - **The 40 lines:** the spec's three word for word, ten about Gerald, eight about Biscuit, nine about
   the depot and ten small wins and failures; none mention an ending or his house.
+- **The 33 layouts:** the same file names, types, sizes and mix as the Mall's, drawn from its shapes:
+  planters and fountains became seat rows, the corner walls of `combat_04` and `combat_large_03`
+  became pillar boxes, a few pillars were added, and the strips, carts, gumball machines and sale
+  signs are gone, so the Cinema lays no hazard in its floor. The 17 fighting and boss rooms were
+  redrawn round the screen wall (their row-1 enemies moved down, from the legal-cell maps); the other
+  16 kept their shapes. Seat rows and pillars never lie on the two carpet runners, so a clear aisle
+  always runs door to door. Chests stand in four fighting rooms. Every boss cell has its 3x3 clear, so
+  the Projectionist (44x52) and Crabtree (32x40) fit as well as the Mall's bosses now holding them.
+- **Tests moved:** the Mall's layout, room-mix and whole-floor tests now live in `test_cinema_floor.gd`
+  against the new rooms; `test_mall_floor.gd` keeps only the Mall's enemies, bosses, decor kinds and
+  props, for Task 4 to retire with them.
