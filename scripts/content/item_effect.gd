@@ -24,6 +24,22 @@ func on_room_enter(_ctx: EffectContext, _room: Node) -> void:
 	pass
 
 
+# Grandpa is about to leave this room for another (Moving Boxes). ctx.room is still the room he leaves.
+func on_room_leave(_ctx: EffectContext, _room: Node) -> void:
+	pass
+
+
+# What his walking speed is multiplied by at this moment (Early Bird Special). 1.0 for no change.
+func move_pace(_ctx: EffectContext) -> float:
+	return 1.0
+
+
+# What his swing pace is multiplied by at this moment: above 1 the combo swings come quicker (Early Bird
+# Special, Dentures in a Glass). 1.0 for no change.
+func swing_pace(_ctx: EffectContext) -> float:
+	return 1.0
+
+
 # A fight room's last enemy falls. damage_taken_here counts the pills he lost since he walked in.
 func on_room_clear(_ctx: EffectContext, _room: Node, _damage_taken_here: int) -> void:
 	pass

@@ -587,8 +587,11 @@ func enemies_alive() -> int:
 	return get_tree().get_nodes_in_group("enemies").size()
 
 
+# Whether its whole body is in what the camera shows. The camera centres on Grandpa's camera_focus,
+# which the Telescope Cane moves ahead of his feet, so this asks the same point.
 func target_in_view() -> bool:
-	return BossMoves.in_view(body_rect(), Vector2(room_cells) * RoomBackdrop.TILE, target_ground())
+	var focus: Vector2 = target.camera_focus() if target.has_method("camera_focus") else target_ground()
+	return BossMoves.in_view(body_rect(), Vector2(room_cells) * RoomBackdrop.TILE, focus)
 
 
 # Which way to walk toward Grandpa: straight while nothing stands between, otherwise around

@@ -24,6 +24,10 @@ var prompt := PROMPT_TEXT
 # What the name is drawn in, and whether a skull sits before it, as a cursed item's does.
 var label_color := Color.WHITE
 var skull := false
+# A small pickup the Moving Boxes may carry to the next room: its RoomRules.DROP_ kind and amount, or ""
+# for anything that stays (coins, items, shop wares).
+var carry_kind := ""
+var carry_amount := 1
 var _label := ""
 var _color := Color.WHITE
 var _player: Node2D
@@ -112,6 +116,11 @@ func _fly_toward_player(delta: float) -> void:
 
 # The reward is paid when the coin starts flying, so leaving the room, dying or
 # ending the run mid-flight can never lose it. The flight is only for show.
+# Whether it still lies in the room, untaken.
+func is_waiting() -> bool:
+	return not _done and not _flying and not is_queued_for_deletion()
+
+
 func fly() -> void:
 	if _done or _flying or is_queued_for_deletion():
 		return

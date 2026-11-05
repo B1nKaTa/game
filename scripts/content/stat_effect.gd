@@ -103,3 +103,9 @@ extends Resource
 # rooms never go dark at all (Night Shift).
 @export var dark_light_bonus: float = 0.0
 @export var never_dark: bool = false
+# The fourth batch. Whether the map shows every room of a floor on arrival, not what is in them (Floor
+# Plan), and whether it shows the boss rooms and their bosses' names (Fortune Teller's Card).
+@export var shows_floor_plan: bool = false
+@export var names_bosses: bool = false
+# Pixels the camera looks ahead of him, the way he aims (Telescope Cane).
+@export var look_ahead_bonus: float = 0.0

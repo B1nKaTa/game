@@ -130,6 +130,8 @@ func _ready() -> void:
 	_big_map = _add_map_view(true)
 	_big_map.opened_changed.connect(_on_big_map_changed)
 	_big_map.combo_names = _run.effects.combo_names()
+	# An item taken mid-floor can change what the maps show (Floor Plan, Fortune Teller's Card).
+	_run.changed.connect(_refresh_map_items)
 	_enter_room(_map.start_id)
 
 
@@ -184,6 +186,17 @@ func debug_card_panel() -> CardTablePanel:
 # Walks out of the Crossroads along a path at once, for checks that are not about the walking.
 func debug_choose_path(index: int) -> void:
 	_choose_path(index)
+
+
+# The maps show what the held items let them: the whole floor's rooms with the Floor Plan, and with the
+# Fortune Teller's Card the boss rooms and, on the big map, who waits in them.
+func _refresh_map_items() -> void:
+	if _mini_map == null or _big_map == null:
+		return
+	var names := FloorMapView.boss_names_for(_floor_def) if _run.stats.names_bosses else {}
+	for view: FloorMapView in [_mini_map, _big_map]:
+		view.show_plan = _run.stats.shows_floor_plan
+		view.boss_names = names
 
 
 func _add_map_view(is_big: bool) -> FloorMapView:
@@ -242,6 +255,8 @@ func _enter_room(target_id: int) -> void:
 	player.end_push()
 	var from_id := _current_id
 	if _room_view != null:
+		# Before anything leaves the room, so an item can still take from it (Moving Boxes).
+		_run.effects.room_leave(_room_view)
 		_room_view.clear_passing_effects()
 		remove_child(_room_view)
 	var first_visit := not _progress.is_visited(target_id)
@@ -258,6 +273,7 @@ func _enter_room(target_id: int) -> void:
 	# Where the Eternal Warranty brings him back to.
 	_run.effects.ctx.arrival = player.global_position
 	_run.effects.ctx.has_arrival = true
+	_refresh_map_items()
 	_mini_map.set_current(target_id)
 	_big_map.set_current(target_id)
 	_follow_player()
@@ -286,7 +302,7 @@ func _follow_player() -> void:
 	if _camera == null or _current_id == -1:
 		return
 	var room_size := Vector2(_map.room(_current_id).layout.size_in_cells()) * RoomBackdrop.TILE
-	_camera.position = RoomCamera.center_for(room_size, player.feet().global_position, RoomBackdrop.VIEW_SIZE)
+	_camera.position = RoomCamera.center_for(room_size, player.camera_focus(), RoomBackdrop.VIEW_SIZE)
 
 
 func _make_room_view(room: FloorRoom) -> RoomView:

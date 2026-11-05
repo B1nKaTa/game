@@ -180,6 +180,30 @@ func room_enter(room: Node) -> void:
 		effect.on_room_enter(ctx, room)
 
 
+func room_leave(room: Node) -> void:
+	for effect in _all():
+		effect.on_room_leave(ctx, room)
+
+
+# What his walk and his swings are sped up by. The full loop times both, so there they stay as they are.
+func move_pace() -> float:
+	var pace := 1.0
+	if ctx.counting_exact:
+		return pace
+	for effect in _all():
+		pace *= effect.move_pace(ctx)
+	return pace
+
+
+func swing_pace() -> float:
+	var pace := 1.0
+	if ctx.counting_exact:
+		return pace
+	for effect in _all():
+		pace *= effect.swing_pace(ctx)
+	return pace
+
+
 func room_clear(room: Node) -> void:
 	for effect in _all():
 		effect.on_room_clear(ctx, room, _damage_this_room)

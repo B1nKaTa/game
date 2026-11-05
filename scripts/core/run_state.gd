@@ -273,7 +273,13 @@ func tick_buff(delta: float) -> void:
 
 
 func move_speed() -> float:
-	return stats.move_speed * (1.0 + (buff.speed_bonus if buff != null else 0.0))
+	return stats.move_speed * (1.0 + (buff.speed_bonus if buff != null else 0.0)) * effects.move_pace()
+
+
+# How fast the cane combo swings, as a multiple of its usual pace: the forms' and items' stats, and any
+# item that speeds it for a while (Early Bird Special, Dentures in a Glass).
+func swing_speed() -> float:
+	return stats.swing_speed * effects.swing_pace()
 
 
 # What the cane multiplies its damage by. The dentures and a Thermos have their own stats.

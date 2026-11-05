@@ -36,6 +36,17 @@ const WHEEL_STEEL := Color("c9ced8")
 const PEEL_YELLOW := Color("ffd84a")
 const FLAME_COLOR := Color("ff8a2a")
 const SOUP_COLOR := Color("d9772b")
+# The fourth batch: the Magnifying Glass's glint, the Bureaucrat's Stamp's red ink, the Complaint Form's
+# paper, the Wreath of Thorns' leaves, the Harmonica's notes and the Alarm Clock's bell.
+const GLINT_COLOR := Color("fff3a8")
+const STAMP_RED := Color("e0262f")
+const FORM_PAPER := Color("f2ecd8")
+const WREATH_GREEN := Color("3f8a3a")
+const NOTE_COLOR := Color("9fd8ff")
+const ALARM_BRASS := Color("f2b84a")
+const STAMP_TIME := 1.1
+const ALARM_TIME := 1.0
+const NOTE_TIME := 1.2
 # Marks that ride on an enemy last until it dies or the room is left, unless told otherwise.
 const RIDE_TIME := 3600.0
 
@@ -163,6 +174,50 @@ static func make_soup(ctx: EffectContext, radius: float, seconds: float, damage:
 	soup.ctx = ctx
 	soup.damage = damage
 	return soup
+
+
+# The Magnifying Glass: a star that glints on a secret wall now and then, for as long as the wall stands.
+static func make_glint(wall: Node2D) -> Fx:
+	var glint := FxGlint.new(9.0, GLINT_COLOR, RIDE_TIME)
+	if wall != null:
+		glint.ride(wall)
+	return glint
+
+
+# The Bureaucrat's Stamp coming down: a red stamped box with a word in it, slammed on and left a moment.
+static func make_stamp(text: String) -> FxStamp:
+	var stamp := FxStamp.new(0.0, STAMP_RED, STAMP_TIME)
+	stamp.text = text
+	return stamp
+
+
+# The Complaint Form's meter: a small form over a boss whose bar fills as he hits it. Set fill (0 to 1)
+# as it fills and filed while the boss is held. above is how far over the boss's middle it sits.
+static func make_meter(boss: Enemy, above: float) -> FxMeter:
+	var meter := FxMeter.new(above, FORM_PAPER, RIDE_TIME)
+	if boss != null:
+		meter.ride(boss)
+	return meter
+
+
+# The Wreath of Thorns: a ring of thorny leaves round his feet, riding on him for the room.
+static func make_wreath(follow: Node2D) -> Fx:
+	var wreath := FxWreath.new(16.0, WREATH_GREEN, RIDE_TIME)
+	if follow != null:
+		wreath.ride(follow)
+	return wreath
+
+
+# A note from the Harmonica rising over his head. pitch (0, 1, 2) sets how high it starts and its colour.
+static func make_note(pitch: int) -> FxNote:
+	var note := FxNote.new(0.0, NOTE_COLOR, NOTE_TIME)
+	note.pitch = pitch
+	return note
+
+
+# The Alarm Clock going off over his head: a brass bell clock shaking, with its ring.
+static func make_alarm() -> Fx:
+	return FxAlarm.new(0.0, ALARM_BRASS, ALARM_TIME)
 
 
 # The base of every room effect: a radius, a colour and a life, after which it frees itself.
@@ -895,6 +950,189 @@ class FxSoup:
 			var flame := PackedVector2Array([base + Vector2(-2.5, 0), tip, base + Vector2(2.5, 0)])
 			draw_polyline(flame, Color(Color.BLACK, 0.8 * fade), 3.5)
 			draw_colored_polygon(flame, Color(FLAME_COLOR, fade))
+
+
+# The Magnifying Glass's glint: a four-pointed star with a dark rim that flares and fades every
+# PERIOD, so a secret wall catches the eye from across the room.
+class FxGlint:
+	extends Fx
+
+	const PERIOD := 1.4
+
+	func _init(at_radius: float, at_color: Color, seconds: float) -> void:
+		super(at_radius, at_color, seconds)
+		z_index = Enemy.WARNING_Z - 1
+
+	# How bright it is now, from 0 to 1: a quick flare at the start of each period, then nothing.
+	func flare() -> float:
+		var t := fmod(age, PERIOD) / PERIOD
+		return maxf(0.0, sin(t * PI * 2.5)) if t < 0.4 else 0.0
+
+	func _draw() -> void:
+		var bright := flare()
+		var size := radius * (0.55 + 0.45 * bright)
+		# A faint mark stays between flares, so the wall never looks plain again once seen.
+		draw_circle(Vector2.ZERO, 2.0, Color(color, 0.35 + 0.65 * bright))
+		if bright <= 0.01:
+			return
+		var spokes := PackedVector2Array([Vector2(0, -size), Vector2(0, size), Vector2(-size, 0), Vector2(size, 0)])
+		draw_multiline(spokes, Color(Color.BLACK, 0.7 * bright), 4.0)
+		draw_multiline(spokes, Color(color, bright), 2.0)
+		var small := size * 0.45
+		var diagonal := PackedVector2Array([Vector2(-small, -small), Vector2(small, small), Vector2(-small, small), Vector2(small, -small)])
+		draw_multiline(diagonal, Color(Color.WHITE, bright), 1.0)
+		draw_circle(Vector2.ZERO, 2.5, Color(Color.WHITE, bright))
+
+
+# The Bureaucrat's Stamp: a red box with a word in it, tilted, slammed down large and settling, then
+# left a moment so the word is read.
+class FxStamp:
+	extends Fx
+
+	const FONT_SIZE := 14
+	const TILT := -0.2
+
+	var text := "FILED"
+
+	func _init(at_radius: float, at_color: Color, seconds: float) -> void:
+		super(at_radius, at_color, seconds)
+		z_index = Enemy.WARNING_Z + 1
+
+	func _draw() -> void:
+		var t := progress()
+		var slam := 1.0 + 0.8 * maxf(0.0, 1.0 - age / 0.12)
+		var alpha := 1.0 - maxf(t - 0.75, 0.0) / 0.25
+		var font := ThemeDB.fallback_font
+		var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE).x
+		var box := Rect2(-width / 2.0 - 5.0, -FONT_SIZE / 2.0 - 5.0, width + 10.0, FONT_SIZE + 8.0)
+		draw_set_transform(Vector2.ZERO, TILT, Vector2(slam, slam))
+		draw_rect(box, Color(FORM_PAPER, 0.85 * alpha))
+		draw_rect(box.grow(1.5), Color(Color.BLACK, 0.8 * alpha), false, 2.0)
+		draw_rect(box, Color(color, alpha), false, 2.5)
+		draw_rect(box.grow(-3.0), Color(color, 0.8 * alpha), false, 1.0)
+		var at := Vector2(-width / 2.0, FONT_SIZE / 2.0 - 2.0)
+		draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE, Color(color, alpha))
+		draw_set_transform(Vector2.ZERO)
+
+
+# The Complaint Form's meter over a boss: a paper form with a dark rim, the word COMPLAINT and a red
+# bar that fills. While the boss is held it reads FILED. radius is how far over the boss's middle it sits.
+class FxMeter:
+	extends Fx
+
+	const SIZE := Vector2(46, 14)
+	const FONT_SIZE := 8
+
+	var fill := 0.0
+	var filed := false
+
+	func _init(at_radius: float, at_color: Color, seconds: float) -> void:
+		super(at_radius, at_color, seconds)
+		z_index = Enemy.WARNING_Z + 1
+
+	func _draw() -> void:
+		var top := Vector2(-SIZE.x / 2.0, -radius - SIZE.y)
+		var form := Rect2(top, SIZE)
+		draw_rect(form.grow(1.5), Color.BLACK)
+		draw_rect(form, color)
+		var font := ThemeDB.fallback_font
+		var word := "FILED!" if filed else "COMPLAINT"
+		var width := font.get_string_size(word, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE).x
+		draw_string(font, top + Vector2((SIZE.x - width) / 2.0, 7.0), word, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE, STAMP_RED if filed else Color("3a3346"))
+		var bar := Rect2(top + Vector2(3.0, 9.0), Vector2(SIZE.x - 6.0, 3.0))
+		draw_rect(bar, Color(0.3, 0.27, 0.32))
+		draw_rect(Rect2(bar.position, Vector2(bar.size.x * clampf(1.0 if filed else fill, 0.0, 1.0), bar.size.y)), STAMP_RED)
+
+
+# The Wreath of Thorns: a dark-rimmed green ring round his feet with thorns pointing out and a few red
+# berries, turning slowly.
+class FxWreath:
+	extends Fx
+
+	const FEET := Vector2(0, 17)
+	const THORNS := 12
+
+	func _init(at_radius: float, at_color: Color, seconds: float) -> void:
+		super(at_radius, at_color, seconds)
+		z_index = 0
+
+	func _draw() -> void:
+		draw_set_transform(FEET, 0.0, Vector2(1.0, 0.5))
+		draw_arc(Vector2.ZERO, radius, 0.0, TAU, 32, Color.BLACK, 6.0)
+		draw_arc(Vector2.ZERO, radius, 0.0, TAU, 32, color, 3.5)
+		var turn := age * 0.6
+		for i in THORNS:
+			var way := Vector2.from_angle(turn + TAU * i / THORNS)
+			var base := way * radius
+			var tip := way * (radius + 5.0)
+			draw_line(base, tip, Color.BLACK, 3.0)
+			draw_line(base, tip, Color("c9d98a"), 1.5)
+			if i % 4 == 0:
+				draw_circle(way * (radius - 1.0), 2.4, Color.BLACK)
+				draw_circle(way * (radius - 1.0), 1.6, Color("e0303a"))
+		draw_set_transform(Vector2.ZERO)
+
+
+# A Harmonica note: a note head with its stem and flag, dark rimmed, rising and swaying over his head.
+class FxNote:
+	extends Fx
+
+	const COLORS := [Color("9fd8ff"), Color("b7f29a"), Color("ffd27a")]
+
+	var pitch := 0
+
+	func _init(at_radius: float, at_color: Color, seconds: float) -> void:
+		super(at_radius, at_color, seconds)
+		z_index = Enemy.WARNING_Z + 1
+
+	func _draw() -> void:
+		var t := progress()
+		var alpha := 1.0 - maxf(t - 0.6, 0.0) / 0.4
+		var tint: Color = COLORS[clampi(pitch, 0, COLORS.size() - 1)]
+		var head := Vector2(8.0 + pitch * 6.0 + sin(age * 6.0) * 3.0, -30.0 - pitch * 5.0 - 20.0 * t)
+		for pass_index in 2:
+			var ink := Color(Color.BLACK, alpha) if pass_index == 0 else Color(tint, alpha)
+			var grow := 1.5 if pass_index == 0 else 0.0
+			draw_set_transform(head, -0.4, Vector2(1.0, 0.75))
+			draw_circle(Vector2.ZERO, 3.2 + grow, ink)
+			draw_set_transform(Vector2.ZERO)
+			draw_line(head + Vector2(2.6, 0), head + Vector2(2.6, -11.0), ink, 1.5 + grow * 1.5)
+			draw_line(head + Vector2(2.6, -11.0), head + Vector2(7.0, -6.5), ink, 1.5 + grow * 1.5)
+
+
+# The Alarm Clock: a brass bell clock over his head, shaking, with ringing arcs either side and RING!
+class FxAlarm:
+	extends Fx
+
+	const FONT_SIZE := 12
+
+	func _init(at_radius: float, at_color: Color, seconds: float) -> void:
+		super(at_radius, at_color, seconds)
+		z_index = Enemy.WARNING_Z + 1
+
+	func _draw() -> void:
+		var t := progress()
+		var alpha := 1.0 - maxf(t - 0.7, 0.0) / 0.3
+		var shake := sin(age * 60.0) * 2.0
+		var at := Vector2(shake, -40.0)
+		for side: float in [-1.0, 1.0]:
+			draw_circle(at + Vector2(6.0 * side, -8.0), 4.4, Color(Color.BLACK, alpha))
+			draw_circle(at + Vector2(6.0 * side, -8.0), 3.2, Color(color, alpha))
+			for k in 2:
+				var ring := 13.0 + k * 5.0 + fmod(age * 30.0, 4.0)
+				var mid := 0.0 if side > 0.0 else PI
+				draw_arc(at, ring, mid - 0.5, mid + 0.5, 8, Color(Color.BLACK, alpha), 3.0)
+				draw_arc(at, ring, mid - 0.5, mid + 0.5, 8, Color(color, alpha), 1.5)
+		draw_circle(at, 8.5, Color(Color.BLACK, alpha))
+		draw_circle(at, 7.0, Color(color, alpha))
+		draw_circle(at, 5.0, Color(1.0, 0.97, 0.88, alpha))
+		draw_line(at, at + Vector2(0, -3.5), Color(Color.BLACK, alpha), 1.2)
+		draw_line(at, at + Vector2(2.5, 1.0), Color(Color.BLACK, alpha), 1.2)
+		var font := ThemeDB.fallback_font
+		var width := font.get_string_size("RING!", HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE).x
+		var word := Vector2(-width / 2.0, -54.0)
+		draw_string_outline(font, word, "RING!", HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE, 4, Color(Color.BLACK, alpha))
+		draw_string(font, word, "RING!", HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE, Color(color, alpha))
 
 
 # Arrows at the screen's edge pointing to enemies off screen, while the run's stats ask for them. It

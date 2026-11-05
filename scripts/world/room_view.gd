@@ -54,6 +54,8 @@ const BOSS_CHOICE_OFFSETS: Array[Vector2i] = [Vector2i(-2, 1), Vector2i(2, 1)]
 const STAIRWELL_ID := -2
 const STAIRWELL_ICON := "v"
 const FLOOR_SIGN_COLOR := Color("ece9e0")
+# A small potion has no shop price, so the Moving Boxes count it dearer than a Slip.
+const POTION_WORTH := 30
 
 var _room: FloorRoom
 var _map: FloorMap
@@ -103,6 +105,64 @@ func drop_for_item(kind: String, at: Vector2, amount := 1) -> void:
 # Where the room's last enemy fell, for what an item leaves after a clear.
 func last_death_spot() -> Vector2:
 	return _last_death_at
+
+
+# The secret walls still standing in the room, for the Magnifying Glass's glint.
+func secret_walls() -> Array[SecretWall]:
+	var walls: Array[SecretWall] = []
+	for child in get_children():
+		if child is SecretWall and not child.is_queued_for_deletion():
+			walls.append(child)
+	return walls
+
+
+# What the Moving Boxes value each small pickup at, to carry the cheapest: its shop price.
+static func carry_worth(kind: String) -> int:
+	match kind:
+		RoomRules.DROP_HEAL:
+			return ShopRules.HEAL_PRICE
+		RoomRules.DROP_BOMB:
+			return ShopRules.BOMB_PRICE
+		RoomRules.DROP_KEY:
+			return ShopRules.KEY_PRICE
+	return POTION_WORTH
+
+
+# The cheapest of these small pickups still lying untaken, or null. Ties go to the first laid out.
+static func cheapest_waiting(pickups: Array) -> Pickup:
+	var best: Pickup = null
+	for node in pickups:
+		var pickup := node as Pickup
+		if pickup == null or pickup.carry_kind.is_empty() or not pickup.is_waiting():
+			continue
+		if best == null or carry_worth(pickup.carry_kind) < carry_worth(best.carry_kind):
+			best = pickup
+	return best
+
+
+# Takes the cheapest small pickup left on the floor away with him (Moving Boxes): it is gone from this
+# room, and the result says what to lay out in the next, {"kind", "amount"}, or is empty.
+func take_leftover() -> Dictionary:
+	var best := cheapest_waiting(get_children())
+	if best == null:
+		return {}
+	var taken := {"kind": best.carry_kind, "amount": best.carry_amount}
+	best.queue_free()
+	return taken
+
+
+# Two cells into the room from where he stands, toward its middle, on open floor clear of the doors,
+# for a pickup he brought along.
+func spot_inside(from: Vector2) -> Vector2:
+	var middle := Vector2(_room.layout.size_in_cells()) * RoomBackdrop.TILE / 2.0
+	var at := from + from.direction_to(middle) * RoomBackdrop.TILE * 2.0
+	var cell := _room.layout.nearest_floor_cell(_cell_of(at))
+	for i in 4:
+		if not _room.layout.touches_a_door(cell):
+			break
+		at += from.direction_to(middle) * RoomBackdrop.TILE
+		cell = _room.layout.nearest_floor_cell(_cell_of(at))
+	return RoomBackdrop.cell_center(cell)
 
 
 # The floor's palette, for anything a boss lays down in the room later, such as a wet patch.
@@ -699,14 +759,17 @@ func _drop_consumable(at: Vector2, kind: String) -> void:
 		RoomRules.DROP_KEY:
 			var slip := _add_pickup(at, RoomRules.KEY_NAME, KEY_COLOR, func(): _take_consumable(_run.add_key, RunEffects.SLIP))
 			slip.can_take = _run.can_add_key
+			slip.carry_kind = kind
 		RoomRules.DROP_BOMB:
 			var thermos := _add_pickup(at, RoomRules.BOMB_NAME, BOMB_COLOR, func(): _take_consumable(_run.add_bomb, RunEffects.BOMB))
 			thermos.can_take = _run.can_add_bomb
+			thermos.carry_kind = kind
 		RoomRules.DROP_POTION:
 			# It fills the potion slot, and waits on the floor while the slot is full.
 			var small := Content.potion(RoomRules.SMALL_POTION_ID)
 			var potion := _add_pickup(at, RoomRules.POTION_NAME, HEAL_COLOR, func(): _take_consumable(func(): _run.give_potion(small)))
 			potion.can_take = _run.can_take_potion
+			potion.carry_kind = kind
 
 
 # kind is the RunEffects pickup kind the items hear, or "" for one they do not.
@@ -737,6 +800,8 @@ func _add_heal(at: Vector2, pills: int) -> Pickup:
 	var heal := _add_pickup(at, "Heal", HEAL_COLOR, func(): _take_heal(pills))
 	heal.can_take = _can_take_heal
 	heal.collect_radius = Pickup.COLLECT_RADIUS * _run.stats.heal_reach_mult
+	heal.carry_kind = RoomRules.DROP_HEAL
+	heal.carry_amount = pills
 	return heal
 
 

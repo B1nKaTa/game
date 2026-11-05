@@ -42,6 +42,8 @@ const PIN_FLOUR := Color("f6ecd6")
 const SWEEP_FILL := Color(0.62, 0.52, 0.95, 0.2)
 const SWEEP_EDGE := Color("8f7ce0")
 const SWEEP_BLADE := Color("e8ecf4")
+# How quickly the Telescope Cane's look ahead follows his aim, per second.
+const LOOK_EASE := 4.0
 
 var run: RunState
 var show_crosshair := false
@@ -77,6 +79,10 @@ var _tape := RedTapeRule.new()
 # Whether this dodge has had its close call yet, and whether he was dodging last frame, for the items.
 var _close_call_spent := false
 var _was_dodging := false
+# The Polyester Suit's spark: while it runs he can neither walk, dodge, swing nor throw.
+var _self_stun_left := 0.0
+# The Telescope Cane: how far ahead of his feet the camera looks, eased toward where he aims.
+var _look_ahead := Vector2.ZERO
 
 
 static func arrival_position(cell: Vector2i) -> Vector2:
@@ -215,6 +221,31 @@ func is_dodging() -> bool:
 
 func is_taped() -> bool:
 	return _tape.is_holding()
+
+
+# The Polyester Suit's spark holds him for a moment: no walking, dodging, swinging or throwing.
+func stun_self(seconds: float) -> void:
+	_self_stun_left = maxf(_self_stun_left, seconds)
+	cancel_charge()
+
+
+func is_self_stunned() -> bool:
+	return _self_stun_left > 0.0
+
+
+# Where the camera centres on him: his feet, and with the Telescope Cane a little ahead of where he aims.
+# FloorScene, the Waiting Room and Enemy.target_in_view all read this, so what counts as on screen is
+# what the camera shows.
+func camera_focus() -> Vector2:
+	var at := _feet.global_position if _feet != null else global_position + FEET_OFFSET
+	return at + _look_ahead
+
+
+# Eases the look ahead toward where he aims, so a turn swings the view over instead of jumping it. The
+# full loop checks where the camera rests, so there it stays on his feet.
+func ease_look_ahead(delta: float) -> void:
+	var wanted := Vector2.ZERO if run.effects.ctx.counting_exact else _aim * run.stats.look_ahead
+	_look_ahead = _look_ahead.lerp(wanted, minf(LOOK_EASE * delta, 1.0))
 # Whether his feet stand in a sand bunker, where he wades slower and cannot dodge.
 func is_in_sand() -> bool:
 	return _feet != null and is_inside_tree() and SandTrap.is_sand_at(get_tree(), _feet.global_position)
@@ -229,6 +260,7 @@ func _physics_process(delta: float) -> void:
 	_was_dodging = _dodge.is_active()
 	_slow.tick(delta)
 	_push_left = maxf(_push_left - delta, 0.0)
+	_self_stun_left = maxf(_self_stun_left - delta, 0.0)
 	run.health.tick(delta)
 	run.tick_buff(delta)
 	_advance_swing(delta)
@@ -240,6 +272,7 @@ func _physics_process(delta: float) -> void:
 	if _look != null:
 		_look.set_facing(_aim.x)
 	_visual.set_alpha(HurtLook.alpha_for(_dodge.is_active(), run.health.invulnerability_left()))
+	ease_look_ahead(delta)
 	_handle_attacks()
 	_handle_bomb()
 	_handle_potion()
@@ -327,6 +360,8 @@ func teeth_out() -> Array[ThrownDentures]:
 
 
 func _handle_attacks() -> void:
+	if is_self_stunned():
+		return
 	if Input.is_action_just_pressed("throw") and can_throw(_teeth):
 		_throw_teeth()
 	if not can_swing(_teeth):
@@ -334,7 +369,7 @@ func _handle_attacks() -> void:
 		return
 	if Input.is_action_just_pressed("attack"):
 		# The Heavy Head and Lightweight options change the pace, so it is read at every swing.
-		_combo.lock_time = CaneCombo.LOCK_TIME / run.stats.swing_speed
+		_combo.lock_time = CaneCombo.LOCK_TIME / run.swing_speed()
 		var damage := _combo.try_attack()
 		if damage > 0:
 			_swing(damage, ATTACK_REACH, ATTACK_ANGLE, ATTACK_PUSH, false, damage == CaneCombo.DAMAGE[-1])
@@ -521,7 +556,7 @@ func _handle_movement() -> void:
 			velocity += ConveyorStrip.carry_at(get_tree(), _feet.global_position)
 			# A rolling deck slides him too. A dodge holds him where it is aimed instead.
 			velocity += ShipDeck.slide_at(get_tree(), _feet.global_position) * run.slide_mult()
-		if taped:
+		if taped or is_self_stunned():
 			velocity = Vector2.ZERO
 		if not _visual.is_playing_once():
 			_visual.play("walk" if input != Vector2.ZERO else "idle")
@@ -532,6 +567,9 @@ func _handle_movement() -> void:
 
 # Starts a dodge that way if the cooldown allows, and tells the items. Returns whether it started.
 func start_dodge(direction: Vector2) -> bool:
+	# The Polyester Suit's spark holds him, dodge and all.
+	if is_self_stunned():
+		return false
 	# Velcro Shoes give a second dodge, so the count is read at every start.
 	_dodge.charges = run.stats.dodge_charges
 	if not _dodge.try_start(run.stats.dodge_cooldown, DodgeTimer.DURATION * run.stats.dodge_length):

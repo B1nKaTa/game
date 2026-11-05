@@ -40,6 +40,15 @@ const ROOM_FILL := 0.8
 const LEGEND_TOP := "C Combat   I Item   H Healing   ? Side   S Secret"
 const LEGEND_BOTTOM := "T Treasure   $ Shop   M Mini boss   B Boss   V Vault   + Crossroads"
 const CLOSE_HINT := "Close"
+# A room the Floor Plan shows but he has not walked into: an outline only, saying nothing of what is in it.
+const PLAN_COLOR := Color("8a8698")
+const PLAN_LINK_COLOR := Color(0.79, 0.77, 0.84, 0.45)
+# The Fortune Teller's Card writes who waits in a boss room under it on the big map.
+const BOSS_NAME_FONT := 10
+const BOSS_NAME_COLOR := Color("ffd24a")
+# Rooms the Floor Plan never gives away, since finding them is the point.
+const HIDDEN_TYPES := [RoomLayout.TYPE_SECRET, RoomLayout.TYPE_VAULT]
+const BOSS_TYPES := [RoomLayout.TYPE_FLOOR_BOSS, RoomLayout.TYPE_MINI_BOSS]
 
 var enabled := true
 # The Night Vision option: secret rooms show, as outlines with a "?", before they are found.
@@ -54,17 +63,51 @@ var combo_names := PackedStringArray():
 	set(value):
 		combo_names = value
 		queue_redraw()
+# The Floor Plan: every room but the hidden ones shows from the start, as an outline until visited.
+var show_plan := false:
+	set(value):
+		show_plan = value
+		queue_redraw()
+# The Fortune Teller's Card: room type -> the name of the boss who waits there. Boss rooms then show
+# before they are found, and the big map names them.
+var boss_names := {}:
+	set(value):
+		boss_names = value
+		queue_redraw()
 
 
-# The rooms the map shows: every visited room, and with show_secrets every secret room as well.
-static func shown_ids(map: FloorMap, progress: FloorProgress, with_secrets: bool) -> Array[int]:
+# The rooms the map shows: every visited room, and with show_secrets every secret room as well. With
+# the Floor Plan every room but the secret ones and vaults shows, and with boss names every boss room.
+static func shown_ids(map: FloorMap, progress: FloorProgress, with_secrets: bool, with_plan := false, with_bosses := false) -> Array[int]:
 	var ids: Array[int] = []
 	ids.append_array(progress.visited_ids())
-	if with_secrets:
-		for room in map.rooms:
-			if room.room_type == RoomLayout.TYPE_SECRET and not ids.has(room.id):
-				ids.append(room.id)
+	for room in map.rooms:
+		if ids.has(room.id):
+			continue
+		var secret := room.room_type == RoomLayout.TYPE_SECRET
+		if (with_secrets and secret) or (with_plan and not HIDDEN_TYPES.has(room.room_type)) or (with_bosses and BOSS_TYPES.has(room.room_type)):
+			ids.append(room.id)
 	return ids
+
+
+# Who waits in this floor's boss rooms, by room type, for the Fortune Teller's Card.
+static func boss_names_for(floor_def: FloorDef) -> Dictionary:
+	var names := {}
+	if floor_def == null:
+		return names
+	if floor_def.floor_boss != null:
+		names[RoomLayout.TYPE_FLOOR_BOSS] = floor_def.floor_boss.display_name
+	if floor_def.mini_boss != null:
+		names[RoomLayout.TYPE_MINI_BOSS] = floor_def.mini_boss.display_name
+	return names
+
+
+# Whether a link between two rooms shows: between two visited rooms always, and with the Floor Plan
+# between any two rooms it shows, as long as neither is hidden.
+static func link_shown(a: FloorRoom, b: FloorRoom, progress: FloorProgress, with_plan: bool) -> bool:
+	if progress.is_visited(a.id) and progress.is_visited(b.id):
+		return true
+	return with_plan and not HIDDEN_TYPES.has(a.room_type) and not HIDDEN_TYPES.has(b.room_type)
 
 
 # A room's place on the map is its grid cell, counted from the floor's top left, whatever its size.
@@ -160,10 +203,14 @@ func _draw() -> void:
 	var origin := big_origin(extent, spacing) if _is_big else mini_origin(map_position(_map, _map.room(_current_id)))
 	draw_rect(panel, BIG_PANEL_COLOR if _is_big else PANEL_COLOR)
 	draw_rect(panel, Color("625e6f"), false, 1.0)
-	for room_id in _progress.visited_ids():
+	var shown := shown_ids(_map, _progress, show_secrets, show_plan, not boss_names.is_empty())
+	for room_id in (shown if show_plan else _progress.visited_ids()):
 		_draw_links(_map.room(room_id), panel, origin, spacing)
-	for room_id in shown_ids(_map, _progress, show_secrets):
+	for room_id in shown:
 		_draw_room(_map.room(room_id), panel, origin, spacing)
+	if _is_big:
+		for room_id in shown:
+			_draw_boss_name(_map.room(room_id), panel, origin, spacing)
 	if not _is_big:
 		_draw_floor_name()
 	else:
@@ -195,10 +242,28 @@ func _draw_links(room: FloorRoom, panel: Rect2, origin: Vector2, spacing: Vector
 		return
 	for side: Vector2i in room.doors:
 		var other_id: int = room.doors[side]
-		if not _progress.is_visited(other_id) or not panel.encloses(_rect_of(_map.room(other_id), origin, spacing)):
+		var other := _map.room(other_id)
+		if not link_shown(room, other, _progress, show_plan) or not panel.encloses(_rect_of(other, origin, spacing)):
 			continue
 		var center := from.get_center()
-		draw_line(center, center + Vector2(side) * spacing, LINE_COLOR, BIG_LINK if _is_big else MINI_LINK)
+		var known := _progress.is_visited(room.id) and _progress.is_visited(other_id)
+		draw_line(center, center + Vector2(side) * spacing, LINE_COLOR if known else PLAN_LINK_COLOR, BIG_LINK if _is_big else MINI_LINK)
+
+
+# The Fortune Teller's Card: the boss's name in the gap under its room, outlined so it reads over links.
+func _draw_boss_name(room: FloorRoom, panel: Rect2, origin: Vector2, spacing: Vector2) -> void:
+	if not boss_names.has(room.room_type):
+		return
+	var rect := _rect_of(room, origin, spacing)
+	if not panel.encloses(rect):
+		return
+	var text: String = boss_names[room.room_type]
+	var font := ThemeDB.fallback_font
+	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, BOSS_NAME_FONT).x
+	var x := clampf(rect.get_center().x - width / 2.0, panel.position.x + 4.0, panel.end.x - width - 4.0)
+	var at := Vector2(x, rect.end.y + font.get_ascent(BOSS_NAME_FONT) + 1.0)
+	draw_string_outline(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, BOSS_NAME_FONT, 4, Color.BLACK)
+	draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, BOSS_NAME_FONT, BOSS_NAME_COLOR)
 
 
 func _rect_of(room: FloorRoom, origin: Vector2, spacing: Vector2) -> Rect2:
@@ -212,6 +277,22 @@ func _draw_room(room: FloorRoom, panel: Rect2, origin: Vector2, spacing: Vector2
 	var is_crossroads := room.room_type == RoomLayout.TYPE_CROSSROADS
 	if is_crossroads:
 		rect = crossroads_rect(rect)
+	# A boss room the Fortune Teller's Card shows before it is found: an outline in its colour, with its letter.
+	if not _progress.is_visited(room.id) and boss_names.has(room.room_type):
+		var boss_color: Color = ROOM_COLORS.get(room.room_type, Color.WHITE)
+		draw_rect(rect, Color(boss_color, 0.25))
+		draw_rect(rect, boss_color, false, 1.0)
+		var letter_size := BIG_FONT if _is_big else MINI_FONT
+		var letter := RoomRules.door_icon(room.room_type)
+		var letter_box := ThemeDB.fallback_font.get_string_size(letter, HORIZONTAL_ALIGNMENT_LEFT, -1, letter_size)
+		var letter_ascent := ThemeDB.fallback_font.get_ascent(letter_size)
+		_draw_text(rect.get_center() + Vector2(-letter_box.x / 2.0, letter_ascent - letter_box.y / 2.0), letter, letter_size, boss_color)
+		return
+	# A room the Floor Plan shows but he has not walked into: a plain outline, nothing of what it holds.
+	if not _progress.is_visited(room.id) and room.room_type != RoomLayout.TYPE_SECRET:
+		draw_rect(rect, Color(PLAN_COLOR, 0.18))
+		draw_rect(rect, PLAN_COLOR, false, 1.0)
+		return
 	# A secret room Night Vision shows but Grandpa has not found is only an outline with a "?".
 	if not _progress.is_visited(room.id):
 		draw_rect(rect, ROOM_COLORS.get(room.room_type, Color.WHITE), false, 1.0)
