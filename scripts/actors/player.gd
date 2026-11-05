@@ -640,7 +640,7 @@ func _handle_movement() -> void:
 	else:
 		# Support Stockings: no slow takes him below their share of his speed.
 		var speed := run.move_speed() * maxf(SandRule.slowed(_slow.speed_factor(), sunk), run.stats.min_slow_factor)
-		# The Hover Round keeps his full walk while he charges.
+		# The Levitation Slippers keep his full walk while he charges.
 		if _charge.is_charging() and not run.stats.charge_full_speed:
 			speed *= CHARGE_SLOWDOWN
 		# What he carries onto the wet is never more than a walk, so a dodge does not fling him.

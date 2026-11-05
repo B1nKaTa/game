@@ -41,3 +41,8 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
   stands where Duffy stood. She has no art yet, so test_npc keeps an `AWAITING_ART` list (`esme`)
   that the art pass empties. Duffy's NpcDef and art folder are deleted; nothing else used them.
 - **Ticket line:** Duffy's new-arrival line becomes Esme's, in the same slot.
+- **First-clear items' new names:** the Cinema's are the Ticket Stub Book (coupon_booklet, as the
+  spec says), the Matinee Pass (hagglers_hat) and the Lucky Seat Ticket (loaded_dice, still
+  cursed); the Seance's are the Crystal Cane Topper (brass_topper), Incense Sticks
+  (knitting_needles) and Levitation Slippers (hover_round). Ids, effects and drawn looks are
+  unchanged, so the item audit can still rename them.

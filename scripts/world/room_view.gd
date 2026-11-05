@@ -953,7 +953,7 @@ func arcade_settled(payout: int, bet_amount: int) -> void:
 		arcade_won.emit()
 
 
-# How much more a win at this game pays of its winnings: Loaded Dice, and Card Shark at the poker
+# How much more a win at this game pays of its winnings: the Lucky Seat Ticket, and Card Shark at the poker
 # table. Never while the full loop counts every payout.
 func arcade_win_bonus(game: String) -> float:
 	if _run == null or _run.effects.ctx.counting_exact:
@@ -1004,7 +1004,7 @@ func _create_shop() -> void:
 	var stock := ShopRules.stock(Content.items(), _run, _rng, _floor_def.pension_mult)
 	_run.effects.shop_open(stock)
 	var cells := _room.layout.cells_of("S")
-	# A Coupon Booklet's extra ware lies on open floor near the others.
+	# A Ticket Stub Book's extra ware lies on open floor near the others.
 	var extra := extra_shop_cells(_room.layout, stock.size() - cells.size())
 	cells.append_array(extra)
 	for i in mini(stock.size(), cells.size()):
@@ -1437,7 +1437,7 @@ func snapshot() -> Dictionary:
 	return shot
 
 
-# The cells of a snapshot's wares that lie off the shop's own S cells (a Coupon Booklet's extra ware),
+# The cells of a snapshot's wares that lie off the shop's own S cells (a Ticket Stub Book's extra ware),
 # so a resumed shop's plan rewards keep clear of them as they did before.
 static func restored_extra_cells(layout: RoomLayout, shot: Dictionary) -> Array[Vector2i]:
 	var cells: Array[Vector2i] = []

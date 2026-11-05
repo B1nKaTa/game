@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = "coupon_booklet"
-display_name = "Coupon Booklet"
-description = "Shops sell one more item. Most of the coupons ran out in 1987, but not this one."
+display_name = "Ticket Stub Book"
+description = "Shops sell one more item. Every stub says Admit One, and nobody ever checks which one."
 rarity = "common"
 tags = PackedStringArray("money")
 first_clear_path = "flashback_cinema"

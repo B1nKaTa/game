@@ -1,6 +1,6 @@
 extends ItemEffect
 
-# Brass Cane Topper: a combo's finisher hits all the way round him, at the swing's own reach.
+# Crystal Cane Topper: a combo's finisher hits all the way round him, at the swing's own reach.
 
 const BRASS := Color("e8b84a")
 

@@ -17,8 +17,8 @@ const ITEMS_FOR_SALE := 2
 # keep their prices.
 static func stock(all_items: Array[ItemDef], run: RunState, rng: RandomNumberGenerator, pension_mult := 1.0) -> Array[Dictionary]:
 	var entries: Array[Dictionary] = []
-	# Frequent Flyer Miles take their share off every price, and Loaded Dice put a share on. A Coupon
-	# Booklet adds wares. The full loop counts the stock and prices as the rooms set them.
+	# Frequent Flyer Miles take their share off every price, and a Lucky Seat Ticket puts a share on. A Ticket Stub
+	# Book adds wares. The full loop counts the stock and prices as the rooms set them.
 	var discount := run.stats.shop_discount
 	var for_sale := ITEMS_FOR_SALE
 	if not run.effects.ctx.counting_exact:
