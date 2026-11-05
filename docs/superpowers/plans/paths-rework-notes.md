@@ -163,3 +163,15 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
 - **Tests moved:** the Mall's layout, room-mix and whole-floor tests now live in `test_cinema_floor.gd`
   against the new rooms; `test_mall_floor.gd` keeps only the Mall's enemies, bosses, decor kinds and
   props, for Task 4 to retire with them.
+- **Looked at in a real window** (`tools/probes/cinema_look.gd`, shots in `D:\grandpa-shots-pr\cinema_*.png`):
+  the dim teal house keeps every enemy readable, the HUD's band dims the screen's top third in medium
+  and large rooms but the HUD stays readable over it, the beam is faint and under the bodies, and
+  aisle lights mark every row end. Fixed after looking: a card's line near the top right covered the
+  small map, so `LifeSign.bubble_box` hangs it below the card instead.
+- **Left for Task 4:** the Mall's props (`ShoppingCart`, `GumballMachine`, `MallPlanter`,
+  `MallFountain`, `SaleSign`, the symbols `a z d q e`, their palette fields and room_view branches),
+  the escalator strips (`><^v`, `ConveyorStrip`, `strips_reverse`, still read by the Mall Santa,
+  Gloria, enemy.gd and player.gd), the Mall's floor and wall pattern 3, `test_mall_floor.gd` and
+  `test_mall_hazard.gd`, and `tools/probes/floor3_look.gd` (it still shoots strips in the Cinema's
+  rooms, which no longer have any). No layout uses any of them now. The Projectionist reaches the
+  screen through `CinemaScreen.in_room(room_view)`.
