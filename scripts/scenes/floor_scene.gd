@@ -415,6 +415,8 @@ func _enter_room(target_id: int) -> void:
 	_progress.enter(target_id)
 	_arrived_from = from_id
 	_current_id = target_id
+	# Before the room is added, since a boss that appears on arrival starts its own music.
+	_play_room_music()
 	_room_view = _room_views.get(target_id)
 	if _room_view == null:
 		_room_view = _make_room_view(_map.room(target_id))
@@ -434,6 +436,13 @@ func _enter_room(target_id: int) -> void:
 	_follow_player()
 	if first_visit:
 		_tip_hat(_map.room(target_id))
+
+
+# The room's music: its path's theme, the landing's, or the Arcade's. A boss's music starts when it
+# appears, and this brings the room's back once it falls.
+func _play_room_music() -> void:
+	if not is_over:
+		MusicPlayer.play(MusicRules.room(_floor_def.id, _map.room(_current_id).room_type))
 
 
 # The top hat memento: a pill on first walking into a boss room.
@@ -614,6 +623,8 @@ func _on_rescued() -> void:
 
 func _on_player_died() -> void:
 	Progress.last_run["died"] = true
+	if not is_over:
+		MusicPlayer.play(MusicRules.game_over(), 0.3)
 	var parachute := _run.parachute_pay(_run_earned)
 	if parachute > 0 and not is_over:
 		Progress.add_pension(parachute)
@@ -639,6 +650,7 @@ func _continue_after_floor() -> void:
 	if _floor_def.depth < LAST_DEPTH:
 		_room_view.add_stairwell()
 		return
+	MusicPlayer.stop()
 	_end_run("FLOOR CLEARED")
 
 
@@ -710,6 +722,7 @@ func _end_run(message: String) -> void:
 func _show_ending_card() -> void:
 	_ending_card = EndingCard.new()
 	add_child(_ending_card)
+	MusicPlayer.play(MusicRules.ending())
 	Progress.mark_ending_seen()
 	await _ending_card.finished
 
@@ -722,6 +735,8 @@ func _on_boss_spawned(boss: Enemy) -> void:
 	_hud.show_boss_bar(boss.def.display_name, boss.max_hp())
 	boss.health_changed.connect(_hud.set_boss_health)
 	boss.defeated.connect(_on_boss_defeated)
+	if not boss.is_summon and not is_over:
+		MusicPlayer.play(MusicRules.boss(boss.def.id, boss.def == _floor_def.floor_boss, _floor_def.depth))
 
 
 func _on_boss_defeated(boss: Enemy) -> void:
@@ -729,6 +744,7 @@ func _on_boss_defeated(boss: Enemy) -> void:
 	# Only a real mini boss or floor boss counts, never something one of them summoned.
 	if boss.is_summon or not boss.def.is_boss:
 		return
+	_play_room_music()
 	Progress.last_run["bosses"] = int(Progress.last_run.get("bosses", 0)) + 1
 	if EndingCard.is_due(boss.def.id, Progress.data.ending_seen):
 		_ending_due = true

@@ -14,6 +14,7 @@ PadWatch="*res://scripts/autoload/pad_watch.gd"
 Sounds="*res://scripts/autoload/sounds.gd"
 Progress="*res://scripts/autoload/progress.gd"
 Game="*res://scripts/autoload/game.gd"
+MusicPlayer="*res://scripts/autoload/music_player.gd"
 
 [display]
 
