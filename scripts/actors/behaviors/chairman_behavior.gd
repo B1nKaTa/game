@@ -66,6 +66,8 @@ const KEEP_NEAR := 90.0
 const SAY_TIME := 1.0
 # When no spot for the gavel leaves a way out, he waits this long and tries again.
 const GAVEL_RETRY := 0.15
+# How many ways to lay out a chart are tried before settling for one with no checked spot.
+const CHART_TRIES := 8
 
 enum Attack { NONE, GAVEL, PROJECTIONS, TAKEOVER, CHARGE, TAPE, SLAM }
 
@@ -273,6 +275,22 @@ static func keep_off_body(body: Rect2) -> Callable:
 static func chart_mark(route: OverlapRoute, feet: Vector2, body := Rect2()) -> Vector2:
 	var out := route.escape(feet, keep_off_body(body))
 	return out["pure"] if out["safe"] else Vector2.INF
+
+
+# Bars for a new chart that leave him a spot to reach. Each roll is an offset along the room (x) and
+# whether the bars rise from the left (y < 0.5), tried in turn; the first chart with a reachable mark
+# wins. Tape spread with the chart can box him in under the first bar, so one roll is not enough.
+# {bars, left_first, mark, route}; mark is Vector2.INF only when no roll works, and the last is kept.
+static func choose_chart(room: Rect2, rolls: Array[Vector2], feet: Vector2, body := Rect2(), is_open := Callable(), tape := {}) -> Dictionary:
+	var choice := {}
+	for roll in rolls:
+		var bars := projection_bars(room, roll.x)
+		var left_first := roll.y < 0.5
+		var route := chart_route(room, bars, bar_windows(bars.size(), left_first), body, is_open, tape)
+		choice = {"bars": bars, "left_first": left_first, "mark": chart_mark(route, feet, body), "route": route}
+		if choice["mark"] != Vector2.INF:
+			return choice
+	return choice
 
 
 # Where the gavel falls while a chart runs, and where the mark moves: on his feet when that still
@@ -557,8 +575,12 @@ func _bar_rects() -> Array[Rect2]:
 
 func _raise_projections(enemy: Enemy) -> void:
 	var room := ForemanBehavior.room_rect(enemy.room_cells)
-	var bars := projection_bars(room, _rng.randf() * (BAR_WIDTH + BAR_GAP))
-	var left_first := _rng.randf() < 0.5
+	var rolls: Array[Vector2] = []
+	for i in CHART_TRIES:
+		rolls.append(Vector2(_rng.randf() * (BAR_WIDTH + BAR_GAP), _rng.randf()))
+	var choice := choose_chart(room, rolls, enemy.target_ground(), enemy.body_rect(), _open_cells(enemy), _tape_now(enemy))
+	var bars: Array[Rect2] = choice["bars"]
+	var left_first: bool = choice["left_first"]
 	_bar_count = bars.size()
 	_bars.clear()
 	for i in bars.size():
@@ -568,8 +590,8 @@ func _raise_projections(enemy: Enemy) -> void:
 		enemy.get_parent().add_child(drop)
 		_bars.append(drop)
 	_chart_left = projection_time(bars.size())
-	var route := chart_route(room, bars, bar_windows(bars.size(), left_first), enemy.body_rect(), _open_cells(enemy), _tape_now(enemy))
-	var spot := chart_mark(route, enemy.target_ground(), enemy.body_rect())
+	var route: OverlapRoute = choice["route"]
+	var spot: Vector2 = choice["mark"]
 	if spot == Vector2.INF:
 		spot = safe_gap_point(projection_gaps(room, bars), enemy.target_ground(), enemy.body_rect())
 	else:

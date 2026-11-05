@@ -442,17 +442,23 @@ func test_bar_windows_follow_the_order_they_rise_in() -> void:
 # Over 200 charts in both of his rooms, with him and Grandpa anywhere, in both phases (the second with
 # red tape going up as the chart does): every chart marks a spot he can reach, and every gavel while
 # the bars run leaves a spot he can reach in time, off every bar, off the gavel and off the Chairman.
+# The chart is laid out as the game does, through choose_chart. A gavel late in the chart finds him on
+# the chart's mark, where he was led. One soon after the bars rise finds him where he stood; if he
+# could not get clear of the bars even with no gavel, the gavel is not to blame (in play it waits),
+# so such a state is only counted, and must stay rare.
 func test_a_gavel_during_a_chart_always_leaves_a_reachable_safe_spot() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 2026
 	var on_feet := 0
+	var caught := 0
 	for seed_value in 200:
 		var layout := _boss_layout("floor_boss_01" if seed_value % 2 == 0 else "floor_boss_large_01")
 		var cells := layout.size_in_cells()
 		var room := ForemanBehavior.room_rect(cells)
 		var is_open := _open_in(layout)
-		var bars := Chairman.projection_bars(room, rng.randf() * 200.0)
-		var left_first := rng.randf() < 0.5
+		var rolls: Array[Vector2] = []
+		for i in Chairman.CHART_TRIES:
+			rolls.append(Vector2(rng.randf() * 200.0, rng.randf()))
 		var feet := _feet_spot(layout, rng, room)
 		var boss_at := _feet_spot(layout, rng, room)
 		if boss_at.distance_to(feet) < 50.0:
@@ -463,17 +469,25 @@ func test_a_gavel_during_a_chart_always_leaves_a_reachable_safe_spot() -> void:
 		if phase_two:
 			for cell in Chairman.tape_cells(cells, WalkGrid.cell_of(feet), is_open):
 				tape[cell] = TapeSpread.WARNING - Chairman.windup_for(Chairman.Attack.PROJECTIONS, true)
-		var fresh := Chairman.chart_route(room, bars, Chairman.bar_windows(bars.size(), left_first), body, is_open, tape)
-		var first_mark := Chairman.chart_mark(fresh, feet, body)
+		var choice := Chairman.choose_chart(room, rolls, feet, body, is_open, tape)
+		var bars: Array[Rect2] = choice["bars"]
+		var left_first: bool = choice["left_first"]
+		var first_mark: Vector2 = choice["mark"]
 		assert_true(first_mark != Vector2.INF, "seed %d: the chart marks a spot" % seed_value)
+		if first_mark == Vector2.INF:
+			continue
 		for bar in bars:
 			assert_false(bar.has_point(first_mark), "seed %d: the mark is never under a bar" % seed_value)
 		# The gavel comes as the chart is raised in the second phase, after a rest in the first, or
-		# later on in the chart for a second gavel.
+		# later on in the chart for a second gavel, by which time he has walked to the mark.
 		var elapsed := 0.0 if phase_two else Chairman.BASE_COOLDOWN * 0.5
 		if seed_value % 5 == 4:
 			elapsed = Chairman.GAVEL_WINDUP + Chairman.BASE_COOLDOWN
+			feet = first_mark
 		var route := Chairman.chart_route(room, bars, Chairman.bar_windows(bars.size(), left_first, elapsed), body, is_open, tape)
+		if not route.escape(feet, Chairman.keep_off_body(body))["safe"]:
+			caught += 1
+			continue
 		var plan := Chairman.gavel_plan(route, feet, body, is_open)
 		assert_true(plan["spot"] != Vector2.INF, "seed %d: the gavel finds a spot" % seed_value)
 		if plan["spot"] == Vector2.INF:
@@ -486,7 +500,9 @@ func test_a_gavel_during_a_chart_always_leaves_a_reachable_safe_spot() -> void:
 		assert_true(route.danger_end_at(mark) <= 0.0, "seed %d: no bar covers the mark" % seed_value)
 		route.set_extra_circle(plan["spot"], Chairman.GAVEL_RADIUS, Chairman.GAVEL_WINDUP, Chairman.GAVEL_WINDUP + OverlapRoute.STEP_TIME)
 		assert_true(route.escape(feet)["safe"], "seed %d: and he can walk clear of it all" % seed_value)
-	assert_true(on_feet > 100, "most gavels still fall on him: %d of 200" % on_feet)
+	# Measured on 2026-11-05: 194 on his feet, 2 caught by the bars alone.
+	assert_true(caught <= 6, "he is rarely caught by the bars alone: %d of 200" % caught)
+	assert_true(on_feet >= 175, "nearly every gavel still falls on him: %d of 200" % on_feet)
 
 
 # --- the Chairman: phase two ---
