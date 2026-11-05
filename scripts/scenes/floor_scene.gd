@@ -26,6 +26,9 @@ const LANDING_HEAL := 2
 const MESSAGE_TIME := 2.0
 const CURSED_NOTICE := "Cursed ticket: tougher enemies, better pay"
 const LIFE_JACKET_NOTICE := "Your life jacket keeps you afloat. One pill left."
+const FLOOR_CLEARED := "FLOOR CLEARED"
+# Shown on arriving back in the Waiting Room after an ending.
+const ARRIVAL_NOTICE := "Welcome back. Please take a number."
 
 var player: Player
 var is_cleared := false
@@ -69,17 +72,24 @@ var _resumed := false
 # The last cleared room a checkpoint was written in on this map, and the room he came into it from.
 var _safe_room := -1
 var _safe_from := -1
-# Pension the rooms of this run have paid, for the Golden Parachute on a death.
-var _run_earned := 0
-# Whether this run beat the Chairman for the first time, so the ending card shows before the Waiting
-# Room, and the card while it shows.
-var _ending_due := false
-var _ending_card: EndingCard
 # How long this run has gone, for the Game tab's run timer. It stops while the game is paused.
 var _run_time := 0.0
 # The pause menu while it is open, and the frame it closed on, so the Esc that closed it never opens it.
 var _pause: PauseMenu
 var _pause_closed_frame := -1
+# Counts every room entry, so a won Arcade game knows which visit it was on (RunState.note_arcade_win).
+var _visit := 0
+# The run as it stood when the Chairman fell, for EndingRules, or empty when he has not. The ending
+# plays after the run's last message, before the Waiting Room.
+var _ending_snapshot := {}
+# A scene to play before the last message: Augustine's, on a win over him.
+var _scene_before_message: Array = []
+var _scene_first_time := false
+# Whether Augustine had been beaten before this run, so his whole scene shows only the first time.
+var _augustine_seen_before := false
+# The scene playing, if any, and the ending it is.
+var _cutscene: CutscenePlayer
+var _ending_id := ""
 
 
 func _ready() -> void:
@@ -110,6 +120,7 @@ func _ready() -> void:
 	player = Player.new()
 	player.setup(_run)
 	player.died.connect(_on_player_died)
+	player.hurt.connect(_on_player_hurt)
 	_run.health.rescued.connect(_on_rescued)
 	player.bomb_requested.connect(_on_bomb_requested)
 	player.show_crosshair = true
@@ -134,9 +145,12 @@ func _ready() -> void:
 
 func _start_run() -> void:
 	Progress.start_run()
+	_augustine_seen_before = Progress.data.bosses_beaten.has(EndingRules.AUGUSTINE)
 	_run = Progress.make_run()
 	# Before the first room is built, so every enemy of a cursed run is spawned tougher.
 	_run.cursed = Progress.take_cursed_run()
+	_run.extra_table_visits = Progress.table_wins_before_run
+	Progress.table_wins_before_run = 0
 	var crafted := Progress.take_crafted_item()
 	if crafted != null:
 		_run.add_item(crafted)
@@ -210,10 +224,9 @@ func write_checkpoint() -> bool:
 		"rooms": rooms,
 		"run": RunCheckpoint.run_to_dict(_run),
 		"rng": RunCheckpoint.rng_to_dict(_rng),
-		"run_earned": _run_earned,
+		"run_earned": _run.pension_earned,
 		"bon_voyage": _bon_voyage,
 		"is_cleared": is_cleared,
-		"ending_due": _ending_due,
 		"bosses": int(Progress.last_run.get("bosses", 0)),
 		"run_time": snappedf(_run_time, 0.1),
 	}
@@ -274,9 +287,8 @@ func _resume_run(resume: Dictionary) -> void:
 	_run = Progress.make_run()
 	RunCheckpoint.apply_run(_run, resume.get("run", {}), Content.items())
 	RunCheckpoint.apply_rng(_rng, resume.get("rng", {}))
-	_run_earned = int(resume.get("run_earned", 0))
+	_run.pension_earned = int(resume.get("run_earned", 0))
 	_bon_voyage = str(resume.get("bon_voyage", ""))
-	_ending_due = bool(resume.get("ending_due", false))
 	_run_time = float(resume.get("run_time", 0.0))
 	Progress.last_run = {"died": false, "bosses": int(resume.get("bosses", 0))}
 
@@ -386,6 +398,9 @@ func _choose_path(index: int) -> void:
 	_room_views.clear()
 	_floor_def = def
 	_map = map
+	_run.paths_taken[_depth] = def.id
+	# A new floor, a new boss room: only the pills lost in this floor's boss room count.
+	_run.boss_room_pill_lost = false
 	_progress = FloorProgress.new(map)
 	_progress.enter(crossroads.id)
 	# Each floor fills the Life Jacket again.
@@ -412,6 +427,7 @@ func _enter_room(target_id: int) -> void:
 		_room_view.clear_passing_effects()
 		remove_child(_room_view)
 	var first_visit := not _progress.is_visited(target_id)
+	_visit += 1
 	_progress.enter(target_id)
 	_arrived_from = from_id
 	_current_id = target_id
@@ -466,9 +482,11 @@ func _apply_game_settings() -> void:
 	_hud.set_run_time(_run_time)
 
 
+# The scene pauses with the tree, so a paused big map adds no play time.
 func _process(delta: float) -> void:
 	_follow_player()
 	if not is_over:
+		_run.play_time += delta
 		_run_time += delta
 	_hud.set_run_time(_run_time)
 	var fighting := _room_view != null and _room_view.is_fighting()
@@ -558,6 +576,7 @@ func _make_room_view(room: FloorRoom) -> RoomView:
 		view.door_entered.connect(func(id: int): _enter_room.call_deferred(id))
 		view.stairwell_entered.connect(func(): _go_down.call_deferred())
 		view.arcade_game_wanted.connect(_open_card_table)
+		view.arcade_won.connect(_on_arcade_won)
 	view.setup(room, _map, _floor_def, _run, player, _rng, _progress, Progress)
 	if _restored.has(room.id):
 		view.restore = _restored[room.id]
@@ -613,8 +632,18 @@ func _close_card_table() -> void:
 
 
 func _on_pension_earned(amount: int) -> void:
-	_run_earned += amount
+	_run.pension_earned += amount
 	Progress.add_pension(amount)
+
+
+func _on_arcade_won() -> void:
+	_run.note_arcade_win(_visit)
+
+
+# Whether the Chairman's room cost him a pill, for Under New Management.
+func _on_player_hurt() -> void:
+	if _current_id != -1 and _map.room(_current_id).room_type == RoomLayout.TYPE_FLOOR_BOSS:
+		_run.boss_room_pill_lost = true
 
 
 func _on_rescued() -> void:
@@ -625,7 +654,7 @@ func _on_player_died() -> void:
 	Progress.last_run["died"] = true
 	if not is_over:
 		MusicPlayer.play(MusicRules.game_over(), 0.3)
-	var parachute := _run.parachute_pay(_run_earned)
+	var parachute := _run.parachute_pay(_run.pension_earned)
 	if parachute > 0 and not is_over:
 		Progress.add_pension(parachute)
 		_hud.show_notice("Golden Parachute: +%d Pension" % parachute)
@@ -651,7 +680,14 @@ func _continue_after_floor() -> void:
 		_room_view.add_stairwell()
 		return
 	MusicPlayer.stop()
-	_end_run("FLOOR CLEARED")
+	# Read here rather than when the boss falls, since the room hears the fall first and clears.
+	var boss_id := _floor_def.floor_boss.id if _floor_def.floor_boss != null else ""
+	if boss_id == EndingRules.CHAIRMAN:
+		_ending_snapshot = _run.ending_snapshot()
+	elif boss_id == EndingRules.AUGUSTINE:
+		_scene_first_time = not _augustine_seen_before
+		_scene_before_message = CutsceneSteps.for_ending(EndingRules.AUGUSTINE, 0 if _scene_first_time else 1)
+	_end_run(FLOOR_CLEARED)
 
 
 # Takes the stairwell: a safe landing that heals him, with the next Crossroads beyond it. Everything he
@@ -706,29 +742,55 @@ func _end_run(message: String) -> void:
 		_big_map.enabled = false
 		_big_map.set_open(false)
 	_hud.hide_boss_bar()
-	_hud.show_message(message)
 	if player != null:
 		player.recall_teeth()
 		player.process_mode = Node.PROCESS_MODE_DISABLED
 	if _room_view != null:
 		_room_view.process_mode = Node.PROCESS_MODE_DISABLED
+	if not _scene_before_message.is_empty():
+		await _play_cutscene(_scene_before_message, _scene_first_time)
+		_cutscene.queue_free()
+		_cutscene = null
+	_hud.show_message(message)
 	await get_tree().create_timer(MESSAGE_TIME).timeout
-	if _ending_due:
-		await _show_ending_card()
+	if message == FLOOR_CLEARED and not _ending_snapshot.is_empty():
+		await _play_ending()
 	Game.return_to_waiting()
 
 
-# Saved as seen once it shows, so quitting on the card never shows it twice.
-func _show_ending_card() -> void:
-	_ending_card = EndingCard.new()
-	add_child(_ending_card)
-	MusicPlayer.play(MusicRules.ending())
-	Progress.mark_ending_seen()
-	await _ending_card.finished
+# Chooses the ending and saves it found before the scene plays, so quitting during the scene never
+# plays it as new again. The scene stays on its black last frame until the Waiting Room loads.
+func _play_ending() -> void:
+	var found_before := Progress.data.endings_found.duplicate()
+	_ending_id = EndingRules.choose(_ending_snapshot, found_before)
+	var variant := 0
+	if _ending_id == EndingRules.REPEAT_CUSTOMER:
+		variant = EndingRules.pick_repeat_death(Progress.data.last_repeat_death, _rng.randf())
+		Progress.record_repeat_death(variant)
+	var paid := Progress.record_ending(_ending_id)
+	Progress.last_run["ending"] = _ending_id
+	Progress.last_run["ending_paid"] = paid
+	Progress.notice = ARRIVAL_NOTICE
+	await _play_cutscene(CutsceneSteps.for_ending(_ending_id, variant), not found_before.has(_ending_id))
 
 
-func debug_ending_card() -> EndingCard:
-	return _ending_card if is_instance_valid(_ending_card) else null
+func _play_cutscene(steps: Array, first_time: bool) -> void:
+	_cutscene = CutscenePlayer.new()
+	_cutscene.setup(steps, first_time)
+	add_child(_cutscene)
+	await _cutscene.finished
+
+
+func debug_cutscene() -> CutscenePlayer:
+	return _cutscene if is_instance_valid(_cutscene) else null
+
+
+func debug_ending_id() -> String:
+	return _ending_id
+
+
+func debug_ending_snapshot() -> Dictionary:
+	return _ending_snapshot
 
 
 func _on_boss_spawned(boss: Enemy) -> void:
@@ -746,8 +808,6 @@ func _on_boss_defeated(boss: Enemy) -> void:
 		return
 	_play_room_music()
 	Progress.last_run["bosses"] = int(Progress.last_run.get("bosses", 0)) + 1
-	if EndingCard.is_due(boss.def.id, Progress.data.ending_seen):
-		_ending_due = true
 	var paid := Progress.record_boss_beaten(boss.def.id, boss.def == _floor_def.floor_boss)
 	if paid > 0:
 		_hud.show_notice("+%d Condolences" % paid)

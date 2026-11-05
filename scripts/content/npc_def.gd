@@ -12,6 +12,8 @@ extends Resource
 # Dolores has paid and take:<bounty id>; Coach Bertram and the deep floors' keepers have died and
 # boss_win.
 @export var moments: Dictionary = {}
+# Drawn as this ActorLook instead of the shopkeeper placeholder, as Gerald is. Empty for the placeholder.
+@export var look: String = ""
 
 const DIED := "died"
 const BOSS_WIN := "boss_win"

@@ -109,8 +109,9 @@ const STATIONS: Array[Dictionary] = [
 	{"id": "key_board", "department": LOBBY, "cell": Vector2i(20, 7), "title": "Key Settings", "prompt": "Key Settings", "label": "Keys", "size": Vector2(28, 36), "color": Color("6b4a2a")},
 	{"id": "crafter", "department": LOBBY, "cell": Vector2i(11, 7), "title": "Agnes, Afterlife Arts and Crafts", "prompt": "Craft", "art": "crafter", "color": Color("c98a3c")},
 	{"id": "forms_counter", "department": LOBBY, "cell": Vector2i(11, 3), "title": "Forms Counter. Refiling, Window 2", "prompt": "Refile", "label": "Forms", "size": Vector2(28, 36), "color": Color("7a6f5a")},
-	# The TrophyWall draws the frames on the top wall above it, so the station itself draws no board.
-	{"id": "trophy_wall", "department": LOBBY, "cell": Vector2i(20, 3), "title": "Trophy Wall", "prompt": "Look", "board": false},
+	# The TrophyWall draws the frames on the top wall above it, so the station itself draws no board. Its
+	# prompt sits low, under the wall's "Endings found" line.
+	{"id": "trophy_wall", "department": LOBBY, "cell": Vector2i(20, 3), "title": "Trophy Wall", "prompt": "Look", "board": false, "prompt_offset": Vector2(-20, -4)},
 	# A red box with a paper tongue, and a cork board that marks NEW while a letter waits unread.
 	{"id": "ticket_machine", "department": LOBBY, "cell": Vector2i(23, 3), "title": "Take a Number", "prompt": "Ticket", "size": Vector2(20, 28), "color": Color("c8323a"), "look": "ticket_machine"},
 	{"id": "noticeboard", "department": LOBBY, "cell": Vector2i(23, 7), "title": "Noticeboard. Letters from the Living", "prompt": "Read", "size": Vector2(34, 24), "color": Color("a8794a"), "look": "noticeboard"},
@@ -123,6 +124,8 @@ const STATIONS: Array[Dictionary] = [
 	{"id": "decor_counter", "department": DECOR_OFFICE, "cell": Vector2i(10, 4), "title": "Decor Office. Sympathy in Every Shade", "prompt": "Browse", "label": "Decor", "size": Vector2(44, 24), "color": Color("8a6a8a")},
 	# A brass plaque that counts Head Office clears (plaque_text).
 	{"id": "employee_plaque", "department": EXECUTIVE_SUITE, "cell": Vector2i(14, 3), "title": "Employee of Eternity", "prompt": "Read", "label": "Plaque", "size": Vector2(30, 20), "color": Color("b08a2a")},
+	# A grey filing cabinet holding every ending found (EndingArchivePanel).
+	{"id": "ending_archive", "department": EXECUTIVE_SUITE, "cell": Vector2i(14, 7), "title": "Ending Archive. Files 27B-1 to 27B-11", "prompt": "Browse files", "size": Vector2(22, 34), "color": Color("6a6a72"), "look": "filing_cabinet"},
 ]
 
 # People who stand in a department, each made from its NpcDef on the department's first entry. They
@@ -136,6 +139,9 @@ const NPCS: Array[Dictionary] = [
 	{"id": "pro_shop_keeper", "department": PRO_SHOP, "cell": Vector2i(9, 4), "def": "res://data/npcs/pro_shop_keeper.tres", "greets": true},
 	{"id": "duty_free_clerk", "department": DUTY_FREE, "cell": Vector2i(9, 4), "def": "res://data/npcs/duty_free_clerk.tres", "greets": true},
 	{"id": "severance_clerk", "department": EXECUTIVE_SUITE, "cell": Vector2i(6, 6), "def": "res://data/npcs/severance_clerk.tres", "greets": true},
+	# Gerald, once the true ending has put him in the queue too. "needs_ending" keeps him out until then
+	# (npc_stands). He stands off the way across, clear of the trophy captions and the loadout bench.
+	{"id": "gerald", "department": LOBBY, "cell": Vector2i(17, 4), "def": "res://data/npcs/gerald.tres", "greets": true, "needs_ending": EndingRules.ETERNAL_FEUD},
 ]
 
 # The trophy wall's frames hang centred on this x in the lobby, the line between columns 19 and 20, on
@@ -275,6 +281,12 @@ static func closed_hint(id: String) -> String:
 	if opens_on.is_empty():
 		return ""
 	return "Opens when %s is cleared" % FLOOR_NAMES.get(opens_on, "a floor")
+
+
+# Whether a department NPC stands there yet: always, unless he waits on an ending being found.
+static func npc_stands(npc: Dictionary, data: ProgressData) -> bool:
+	var needs := str(npc.get("needs_ending", ""))
+	return needs.is_empty() or data.endings_found.has(needs)
 
 
 static func station_entry(station_id: String) -> Dictionary:

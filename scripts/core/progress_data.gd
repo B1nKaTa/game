@@ -13,6 +13,9 @@ const CLERK_DEAL_CUT := 0.25
 const FIRST_MINI_BOSS_CONDOLENCES := 5
 const FIRST_FLOOR_BOSS_CONDOLENCES := 10
 const CURSED_FLOOR_CONDOLENCES := 10
+# Paid the first time each ending is found. The true ending also gives Gerald's Hat.
+const ENDING_CONDOLENCES := 15
+const GERALDS_HAT := "geralds_hat"
 
 var pension: int = 0
 var upgrades: Dictionary = {}
@@ -73,9 +76,15 @@ var cursed_offer: bool = false
 var cursed_next_run: bool = false
 # Letter id -> true for every letter read.
 var letters_read: Dictionary = {}
-# Whether the ending card has been shown, the first time the Chairman of the Board fell. An older save
-# starts false.
+# Whether any ending has been seen. Still written for older builds, which read it as their one card.
+# A save that has it and no endings_found has found Briefly Alive.
 var ending_seen: bool = false
+# EndingRules id -> true for every ending found. Optional in a save.
+var endings_found: Dictionary = {}
+# Repeat Customer's last quick death, 1 to EndingRules.REPEAT_DEATHS, or 0 for none yet, so the next
+# is never the same. And every quick death seen, by its number as a string key.
+var last_repeat_death: int = 0
+var repeat_deaths_seen: Dictionary = {}
 
 # The first path at each depth, the only one open before that depth's first clear.
 const FIRST_PATH_BY_DEPTH := {1: "floor_1", 2: "sunset_shores", 3: "funeral_parlour", 4: "last_resort_cruise", 5: "terminal_zero"}
@@ -214,6 +223,28 @@ func record_boss_beaten(boss_id: String, is_floor_boss: bool) -> int:
 	var paid := FIRST_FLOOR_BOSS_CONDOLENCES if is_floor_boss else FIRST_MINI_BOSS_CONDOLENCES
 	add_condolences(paid)
 	return paid
+
+
+# Marks an ending found and returns the Condolences paid: ENDING_CONDOLENCES the first time, else 0.
+# The Eternal Feud also gives Gerald's Hat, owned at once and ready to wear.
+func record_ending(id: String) -> int:
+	if not EndingRules.is_ending(id):
+		return 0
+	ending_seen = true
+	if endings_found.has(id):
+		return 0
+	endings_found[id] = true
+	if id == EndingRules.ETERNAL_FEUD:
+		cosmetics_owned[GERALDS_HAT] = true
+	add_condolences(ENDING_CONDOLENCES)
+	return ENDING_CONDOLENCES
+
+
+func record_repeat_death(n: int) -> void:
+	if n < 1 or n > EndingRules.REPEAT_DEATHS:
+		return
+	last_repeat_death = n
+	repeat_deaths_seen[str(n)] = true
 
 
 # Whether a taken poster is the one for this boss. A poster's BountyDef id is its boss's EnemyDef id,
@@ -434,6 +465,9 @@ func to_dict() -> Dictionary:
 		"cursed_next_run": cursed_next_run,
 		"letters_read": letters_read,
 		"ending_seen": ending_seen,
+		"endings_found": endings_found,
+		"last_repeat_death": last_repeat_death,
+		"repeat_deaths_seen": repeat_deaths_seen,
 	}
 
 
@@ -504,6 +538,19 @@ static func from_dict(raw: Variant) -> ProgressData:
 	data.cursed_next_run = _bool_or_false(raw.get("cursed_next_run", false))
 	data.letters_read = _id_set(raw.get("letters_read"))
 	data.ending_seen = _bool_or_false(raw.get("ending_seen", false))
+	# Only real ending ids and quick-death numbers are kept. A save from before the endings saw the one
+	# card, which is Briefly Alive.
+	for id in _id_set(raw.get("endings_found")):
+		if EndingRules.is_ending(id):
+			data.endings_found[id] = true
+	if data.ending_seen and not raw.has("endings_found"):
+		data.endings_found[EndingRules.BRIEFLY_ALIVE] = true
+	var last_death: Variant = raw.get("last_repeat_death", 0)
+	if (last_death is int or last_death is float) and int(last_death) >= 1 and int(last_death) <= EndingRules.REPEAT_DEATHS:
+		data.last_repeat_death = int(last_death)
+	for key in _id_set(raw.get("repeat_deaths_seen")):
+		if key.is_valid_int() and int(key) >= 1 and int(key) <= EndingRules.REPEAT_DEATHS:
+			data.repeat_deaths_seen[str(int(key))] = true
 	data._infer_first_paths()
 	return data
 

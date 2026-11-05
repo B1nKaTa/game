@@ -104,7 +104,7 @@ func test_the_golden_parachute_pays_a_quarter_of_the_run_again_on_a_death() -> v
 	assert_eq(run.parachute_pay(0), 0)
 	var source := FileAccess.get_file_as_string("res://scripts/scenes/floor_scene.gd")
 	var died := source.substr(source.find("func _on_player_died"), 400)
-	assert_true(died.contains("_run.parachute_pay(_run_earned)"))
+	assert_true(died.contains("_run.parachute_pay(_run.pension_earned)"))
 
 
 func test_the_floor_scene_fills_the_jacket_on_each_floor_and_counts_what_the_run_earns() -> void:

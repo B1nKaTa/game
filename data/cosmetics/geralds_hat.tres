@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CosmeticDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/cosmetic_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "geralds_hat"
+display_name = "Gerald's Hat"
+description = "A terrible bucket hat. He left it to you. He would hate this."
+slot = "hat"
+price = 0
+color = Color(0.580392182, 0.552941203, 0.384313732, 1)
+shape = "bucket"

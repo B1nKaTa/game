@@ -79,6 +79,14 @@ func _draw() -> void:
 # The few boards with more to them than a coloured box. Placeholders, drawn in code.
 func _draw_look(look: String, size: Vector2) -> void:
 	match look:
+		"filing_cabinet":
+			# Three drawers, each with a handle and a white label slot.
+			var drawer_height := size.y / 3.0
+			for i in 3:
+				var top := -size.y / 2.0 + drawer_height * i
+				draw_line(Vector2(-size.x / 2.0, top), Vector2(size.x / 2.0, top), BOARD_EDGE, 1.0)
+				draw_rect(Rect2(Vector2(-4.0, top + 2.0), Vector2(8.0, 3.0)), PAPER)
+				draw_rect(Rect2(Vector2(-3.0, top + drawer_height - 5.0), Vector2(6.0, 2.0)), Color("c8c8d0"))
 		"ticket_machine":
 			# A dark slot with a paper tongue sticking out of it, and a number window above.
 			draw_rect(Rect2(Vector2(-size.x / 2.0 + 3.0, -size.y / 2.0 + 3.0), Vector2(size.x - 6.0, 6.0)), Color(0.1, 0.1, 0.1))

@@ -82,6 +82,16 @@ func _draw() -> void:
 # Draws one hat shape over a head centred at head.
 static func draw_hat(canvas: CanvasItem, shape: String, head: Vector2, color: Color, facing_dir := 1.0) -> void:
 	match shape:
+		"bucket":
+			# Gerald's terrible bucket hat: a squat crown, a floppy brim drooping at both ends, and a
+			# stitched line round it.
+			var crown := PackedVector2Array([head + Vector2(-6, -5), head + Vector2(-5, -11), head + Vector2(5, -11), head + Vector2(6, -5)])
+			var brim := PackedVector2Array([head + Vector2(-11, -2), head + Vector2(-7, -6), head + Vector2(7, -6), head + Vector2(11, -2), head + Vector2(7, -4), head + Vector2(-7, -4)])
+			canvas.draw_colored_polygon(brim, color.darkened(0.15))
+			canvas.draw_colored_polygon(crown, color)
+			canvas.draw_line(head + Vector2(-5, -8), head + Vector2(5, -8), color.darkened(0.35), 1.0)
+			canvas.draw_polyline(PackedVector2Array([crown[0], crown[1], crown[2], crown[3]]), OUTLINE, 1.0)
+			canvas.draw_polyline(PackedVector2Array([brim[0], brim[1], brim[2], brim[3], brim[4], brim[5], brim[0]]), OUTLINE, 1.0)
 		"flat_cap":
 			var crown := Rect2(head + Vector2(-7, -9), Vector2(14, 5))
 			canvas.draw_rect(crown, color)

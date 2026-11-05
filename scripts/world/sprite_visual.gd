@@ -9,9 +9,10 @@ shader_type canvas_item;
 uniform vec3 flash_color = vec3(1.0);
 uniform float amount = 0.0;
 uniform float alpha = 1.0;
+uniform vec3 tint = vec3(1.0);
 void fragment() {
 	vec4 c = texture(TEXTURE, UV);
-	COLOR = vec4(mix(c.rgb, flash_color, amount), c.a * alpha);
+	COLOR = vec4(mix(c.rgb * tint, flash_color, amount), c.a * alpha);
 }
 """
 
@@ -27,6 +28,8 @@ var _flash_color := Color.WHITE
 var _flash_left := 0.0
 var _flash_time := 0.0
 var _alpha := 1.0
+# Multiplies the art's colour, as for a sunburnt Harold in an ending scene. White leaves it as drawn.
+var _tint := Color.WHITE
 var _material: ShaderMaterial
 
 
@@ -142,11 +145,18 @@ func get_alpha() -> float:
 	return _alpha
 
 
+# The shader draws the art itself, so modulate never reaches it: a tint goes through the shader.
+func set_tint(color: Color) -> void:
+	_tint = color
+	_apply_look()
+
+
 func _apply_look() -> void:
 	if _material != null:
 		_material.set_shader_parameter("flash_color", Vector3(_flash_color.r, _flash_color.g, _flash_color.b))
 		_material.set_shader_parameter("amount", flash_amount(_flash_left, _flash_time))
 		_material.set_shader_parameter("alpha", _alpha)
+		_material.set_shader_parameter("tint", Vector3(_tint.r, _tint.g, _tint.b))
 	queue_redraw()
 
 

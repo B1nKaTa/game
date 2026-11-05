@@ -18,6 +18,7 @@ const DECOR_COUNTER := "decor_counter"
 const TICKET_MACHINE := "ticket_machine"
 const NOTICEBOARD := "noticeboard"
 const EMPLOYEE_PLAQUE := "employee_plaque"
+const ENDING_ARCHIVE := "ending_archive"
 const MERCHANT_PROMPT := "Trade"
 const RUN_DOOR_ICON := ">"
 # A number that is not called shows the old 666 on the lobby's ticket line.
@@ -59,6 +60,9 @@ var _lobby_text: LobbyText
 # The pause menu while it is open, and the frame it closed on.
 var _pause: PauseMenu
 var _pause_closed_frame := -1
+# Whether a game has been won on this visit to the Back Room, so each visit counts once as a table
+# visit won for the next run's ending (Progress.table_wins_before_run).
+var _back_room_visit_won := false
 
 
 func _ready() -> void:
@@ -95,6 +99,7 @@ func _ready() -> void:
 	# A save-damage notice shows first, and the news of new departments waits its turn.
 	_notice_wait = Hud.NOTICE_TIME if not Progress.notice.is_empty() else 0.0
 	Progress.notice = ""
+	_announce_ending()
 	_announce_new_departments()
 	_call_ticket()
 	# A boss beaten for the first time on that path hangs a new memento on the trophy wall.
@@ -134,6 +139,15 @@ func _refresh_noticeboard() -> void:
 # it, or the old 666.
 static func now_serving(data: ProgressData) -> int:
 	return data.run_count if data.ticket_was_called() else NOT_CALLED
+
+
+# After an ending: a new one says which file it was and what it paid, and the true ending's hat.
+func _announce_ending() -> void:
+	var id := str(Progress.last_run.get("ending", ""))
+	var paid := int(Progress.last_run.get("ending_paid", 0))
+	if id.is_empty() or paid <= 0:
+		return
+	_notices.append_array(EndingRules.found_notices(id, paid))
 
 
 func _announce_new_departments() -> void:
@@ -273,6 +287,7 @@ func _enter_department(target_id: int) -> void:
 	_progress.enter(target_id)
 	_current_id = target_id
 	MusicPlayer.play(MusicRules.waiting_room(Departments.id_of(target_id)))
+	_back_room_visit_won = false
 	_room_view = _views.get(target_id)
 	var is_new := _room_view == null
 	if is_new:
@@ -315,6 +330,12 @@ func _on_yard_bomb(at: Vector2) -> void:
 	_run.changed.emit()
 
 
+func _on_back_room_won() -> void:
+	if not _back_room_visit_won:
+		_back_room_visit_won = true
+		Progress.table_wins_before_run += 1
+
+
 func _on_rack_taken(item: ItemDef) -> void:
 	if not _run.has_item(item.id):
 		_run.add_item(item)
@@ -345,6 +366,7 @@ func _make_view(room: FloorRoom) -> RoomView:
 	view.notice.connect(_hud.show_notice)
 	# Only the Back Room has card tables to ask for.
 	view.arcade_game_wanted.connect(_open_card_table)
+	view.arcade_won.connect(_on_back_room_won)
 	return view
 
 
@@ -380,7 +402,7 @@ func _furnish(view: RoomView, room: FloorRoom) -> void:
 		if entry["department"] == department:
 			_add_station(view, entry)
 	for entry: Dictionary in Departments.NPCS:
-		if entry["department"] == department:
+		if entry["department"] == department and Departments.npc_stands(entry, Progress.data):
 			_add_npc(view, entry)
 	if department == Departments.BOUNTY_OFFICE:
 		_poster_board = PosterBoard.new()
@@ -532,6 +554,10 @@ func _open_station(opened: WaitingStation) -> void:
 			var letters := NoticeboardPanel.new()
 			letters.setup(opened.title)
 			_show_panel(letters)
+		ENDING_ARCHIVE:
+			var archive := EndingArchivePanel.new()
+			archive.setup(opened.title)
+			_show_panel(archive)
 
 
 # A Back Room table opens the Arcade's card-table overlay, as floor_scene does: never on the frame a

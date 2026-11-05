@@ -19,15 +19,26 @@ const CAPTION_Y := 21.0
 # Every second caption hangs a whole caption lower, since a name like "Commodore" is wider than a
 # frame step and two empty frames side by side would run their names together.
 const CAPTION_STAGGER := 13.0
+# A small line under the frames and their captions: how many endings are found (EndingRules).
+const ENDINGS_Y := 48.0
+const ENDINGS_COLOR := Color("ffd24a")
+# A size up from the captions, since it sits over the pale lobby floor rather than the wall.
+const ENDINGS_SIZE := 8
 
 var _hung := {}
+var _endings_line := ""
 
 
 func setup(data: ProgressData) -> void:
 	_hung = {}
 	for entry in Mementos.hung(data):
 		_hung[entry["boss"]] = true
+	_endings_line = EndingRules.found_line(data)
 	queue_redraw()
+
+
+func endings_line() -> String:
+	return _endings_line
 
 
 # The middle of each frame, from left to right.
@@ -42,6 +53,11 @@ static func caption_y(index: int) -> float:
 
 func _draw() -> void:
 	var font := ThemeDB.fallback_font
+	if not _endings_line.is_empty():
+		var line_width := font.get_string_size(_endings_line, HORIZONTAL_ALIGNMENT_LEFT, -1, ENDINGS_SIZE).x
+		var spot := Vector2(-line_width / 2.0, ENDINGS_Y)
+		draw_string_outline(font, spot, _endings_line, HORIZONTAL_ALIGNMENT_LEFT, -1, ENDINGS_SIZE, 3, Color.BLACK)
+		draw_string(font, spot, _endings_line, HORIZONTAL_ALIGNMENT_LEFT, -1, ENDINGS_SIZE, ENDINGS_COLOR)
 	for i in Mementos.ALL.size():
 		var entry: Dictionary = Mementos.ALL[i]
 		var at := frame_center(i)
