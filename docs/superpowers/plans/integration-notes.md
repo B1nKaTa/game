@@ -103,3 +103,26 @@ probe and notes) had landed. That tip was merged.
 - The real save's MD5s matched before and after every Godot session: save.json
   f4a62baf2984c99a2fc54ebd6dc1e308, save.json.bak ec5412ad4aa142699213a24ad7563c92. No `slot_1`
   folder was made in the real user folder.
+
+## Save-safety fixes (2026-11-05)
+
+A review of the save code found nine problems, all confirmed and fixed one commit each:
+
+- **Make the slot folder before the first save** (e8356a1): `SaveStore.save_progress` makes its folder.
+- **Copy the old save into slot 1 only once** (c221dfd): `user://migrated.txt` marks the copy done.
+- **Make the copy into slot 1 safe to kill and retry** (0dec4b4): the backup first and the save last,
+  each through a temp file; a slot 1 save that does not parse, with no marker, is copied again; a lone
+  old `save.json.bak` is copied too.
+- **Put the checkpoint's Pension back on resume** (94c3901): the checkpoint keeps the save's Pension, less
+  what the current room paid while its fight is on; Condolences are not put back.
+- **Write a start checkpoint at the first Crossroads** (089c701): kind `start`, so Save and Quit there
+  keeps what `start_run` used up.
+- **Delete a checkpoint that cannot be resumed** (6c92d76).
+- **Read a finished temp checkpoint when run.json is missing** (f21cf7e).
+- **Clear an abandoned run before paying its parachute** (6347902).
+- **Treat -s as a script run in every autoload guard** (0dd155e): `RunMode.is_script_run()`.
+
+Verified with tests (1846, 0 failed), two full loops (602 s and 620 s, every flag true), and a migration
+check in a renamed copy's own user folder seeded with copies of the real save: first launch, a relaunch
+after slot 1 was emptied (it stayed empty), a half-written slot file recovered, and a `-s` run that
+copied nothing. The real save's MD5s never changed.
