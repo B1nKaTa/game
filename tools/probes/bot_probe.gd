@@ -104,7 +104,10 @@ func _print_summary() -> void:
 	var mini_times: Array = []
 	var boss_hits: Array = []
 	var mini_hits: Array = []
+	var boss_left: Array = []
 	for r in _results:
+		if r.has("boss_left"):
+			boss_left.append(r["boss_left"])
 		for key in ["reached_mini", "beat_mini", "reached_boss", "beat_boss"]:
 			sums[key] += 1 if r[key] else 0
 		sums["income"] += r["income"]
@@ -118,7 +121,7 @@ func _print_summary() -> void:
 		if r["mini_ttk"] > 0.0:
 			mini_times.append(r["mini_ttk"])
 			mini_hits.append(r["mini_hits"])
-	print("SUMMARY %s runs=%d reached_mini=%d beat_mini=%d reached_boss=%d beat_boss=%d income=%.0f run_minutes=%.1f rooms=%.1f hits=%.1f stuck_rooms=%d mini_ttk=%s mini_hits=%s boss_ttk=%s boss_hits=%s" % [_config, n, sums["reached_mini"], sums["beat_mini"], sums["reached_boss"], sums["beat_boss"], sums["income"] / n, sums["time"] / n / 60.0, sums["rooms"] / float(n), sums["hits"] / n, sums["stuck"], _mean(mini_times), _mean(mini_hits), _mean(boss_times), _mean(boss_hits)])
+	print("SUMMARY %s runs=%d reached_mini=%d beat_mini=%d reached_boss=%d beat_boss=%d income=%.0f run_minutes=%.1f rooms=%.1f hits=%.1f stuck_rooms=%d mini_ttk=%s mini_hits=%s boss_ttk=%s boss_hits=%s boss_left=%s" % [_config, n, sums["reached_mini"], sums["beat_mini"], sums["reached_boss"], sums["beat_boss"], sums["income"] / n, sums["time"] / n / 60.0, sums["rooms"] / float(n), sums["hits"] / n, sums["stuck"], _mean(mini_times), _mean(mini_hits), _mean(boss_times), _mean(boss_hits), _mean(boss_left)])
 
 
 func _mean(list: Array) -> String:
@@ -337,12 +340,22 @@ func _run_bosses(_progress, mode := "bosses") -> Dictionary:
 		r[key + "_ttk"] = bot.clock - began if won else 0.0
 		r[key + "_hits"] = r["hits"] - hits_before
 		r[key + "_lost_hits"] = r["hits"] - hits_before
+		# How much of the boss is left when he falls: tells hard bosses apart when few fights are won.
+		r[key + "_left"] = 0.0 if won else _boss_left(scene) * 100.0
 		if not won:
 			r["death_in"] = kind
 			break
 	r["time"] = bot.clock
 	bot.release_all()
 	return r
+
+
+func _boss_left(scene) -> float:
+	var left := 0.0
+	for enemy in scene.get_tree().get_nodes_in_group("enemies"):
+		if is_instance_valid(enemy) and enemy.def != null and enemy.def.is_boss and enemy.max_hp() > 0.0:
+			left = maxf(left, enemy.hp / enemy.max_hp())
+	return left
 
 
 func _next_room(scene, map: FloorMap) -> int:
