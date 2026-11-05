@@ -10,6 +10,8 @@ const FLY_START_SPEED := 120.0
 const FLY_ACCELERATION := 700.0
 const FLY_MAX_SPEED := 420.0
 const PROMPT_TEXT := "Take"
+# Bone white, so the skull stands out from the cursed name's purple on any floor.
+const SKULL_COLOR := Color("ece9e0")
 
 var requires_interact := false
 var can_take := Callable()
@@ -138,19 +140,22 @@ func _draw() -> void:
 	Npc._draw_centered(self, _label, Vector2(0, -12), label_color)
 	if skull:
 		var width := ThemeDB.fallback_font.get_string_size(_label, HORIZONTAL_ALIGNMENT_LEFT, -1, Npc.FONT_SIZE).x
-		draw_skull(self, Vector2(-width / 2.0 - 7.0, -16.0), label_color)
+		draw_skull(self, Vector2(-width / 2.0 - 8.0, -16.0), SKULL_COLOR)
 	if _prompt_shown:
 		Npc._draw_centered(self, KeyBindings.with_key("interact", prompt), Vector2(0, 22), Color("ffd24a"))
 
 
 # A small skull, drawn in code: a round head, a jaw, two dark eyes. It marks a cursed item's name.
 static func draw_skull(canvas: CanvasItem, at: Vector2, color: Color) -> void:
-	canvas.draw_circle(at, 4.5, Color.BLACK)
-	canvas.draw_circle(at, 3.5, color)
-	canvas.draw_rect(Rect2(at + Vector2(-2.5, 2.0), Vector2(5, 3)), color)
-	canvas.draw_rect(Rect2(at + Vector2(-2.5, 2.0), Vector2(5, 3)), Color.BLACK, false, 1.0)
-	canvas.draw_circle(at + Vector2(-1.4, -0.3), 1.0, Color.BLACK)
-	canvas.draw_circle(at + Vector2(1.4, -0.3), 1.0, Color.BLACK)
+	canvas.draw_rect(Rect2(at + Vector2(-3.5, 2.0), Vector2(7, 4)), Color.BLACK)
+	canvas.draw_circle(at, 5.5, Color.BLACK)
+	canvas.draw_circle(at, 4.5, color)
+	canvas.draw_rect(Rect2(at + Vector2(-2.5, 2.5), Vector2(5, 2.5)), color)
+	canvas.draw_circle(at + Vector2(-1.8, -0.2), 1.3, Color.BLACK)
+	canvas.draw_circle(at + Vector2(1.8, -0.2), 1.3, Color.BLACK)
+	canvas.draw_line(at + Vector2(-1.0, 3.0), at + Vector2(-1.0, 5.0), Color.BLACK, 1.0)
+	canvas.draw_line(at + Vector2(1.0, 3.0), at + Vector2(1.0, 5.0), Color.BLACK, 1.0)
+
 
 
 # A plain coloured disc. Pickups with a shape of their own, such as chests, draw that instead.
