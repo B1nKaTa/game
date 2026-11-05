@@ -209,7 +209,7 @@ func open_case_file() -> void:
 		return
 	Sfx.play("pause_open")
 	var file := CaseFile.new()
-	file.setup(null)
+	file.setup(null, {}, Progress.data)
 	_show_panel(file)
 
 

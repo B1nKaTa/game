@@ -280,3 +280,17 @@ func test_the_item_row_fits_one_line_clear_of_the_potion_slot_and_the_small_map(
 	assert_true(label.text.begins_with("Items: 100"))
 	hud.get_parent().remove_child(hud)
 	hud.free()
+
+
+# A probe that named CaseFile compiled it before the autoloads and failed on Progress, so the file
+# could not open at all there. It takes the save from the scene that opens it.
+func test_the_file_never_names_an_autoload() -> void:
+	for path in ["res://scripts/ui/case_file.gd", "res://scripts/core/case_file_data.gd", "res://scripts/core/run_log.gd"]:
+		var source := FileAccess.get_file_as_string(path)
+		for autoload in ["Progress.", "Game.", "MusicPlayer.", "Settings.", "PadWatch.", "Sounds."]:
+			var at := source.find(autoload)
+			while at >= 0:
+				# A mention in a comment is fine.
+				var line_start := source.rfind("\n", at) + 1
+				assert_true(source.substr(line_start, at - line_start).contains("#"), "%s names %s" % [path, autoload])
+				at = source.find(autoload, at + 1)

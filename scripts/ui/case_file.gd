@@ -37,7 +37,8 @@ const HINT := "Q / E: tabs    Tab / Esc: close"
 const PAD_HINT := "%s / %s: tabs    %s: close"
 
 var _run: RunState
-# The save the file reads: Progress.data, unless a test hands its own.
+# The save the file reads, handed in by the scene (Progress.data). The file never names the Progress
+# autoload itself, so a probe or test that loads it before the autoloads still compiles it.
 var _data: ProgressData
 # What only the scene knows about the run: floor, route, time.
 var _info := {}
@@ -87,7 +88,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_opened_frame = Engine.get_process_frames()
 	if _data == null:
-		_data = Progress.data
+		_data = ProgressData.new()
 	# Through the main loop, so the file pauses the game even while it is still being added.
 	var tree := Engine.get_main_loop() as SceneTree
 	_was_paused = tree.paused

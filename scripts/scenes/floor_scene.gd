@@ -603,7 +603,7 @@ func _open_case_file() -> void:
 	Sfx.play("pause_open")
 	player.cancel_charge()
 	_case_file = CaseFile.new()
-	_case_file.setup(_run, case_info())
+	_case_file.setup(_run, case_info(), Progress.data)
 	_case_file.closed.connect(_close_case_file)
 	add_child(_case_file)
 	Input.mouse_mode = Settings.cursor_mode(false)
