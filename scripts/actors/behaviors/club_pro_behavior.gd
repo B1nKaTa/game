@@ -21,10 +21,10 @@ const PUTT_BEND := 70.0
 const PUTT_STEPS := 14
 const WARNING_RADIUS := 34.0
 # As short as the Reverend's rest, and shorter than Gloria's.
-const COOLDOWN := 0.5
+const COOLDOWN := 0.4
 const KEEP_NEAR := 110.0
 const FIRST_SUMMON := 5.0
-const SUMMON_EVERY := 10.0
+const SUMMON_EVERY := 8.0
 const SUMMON_COUNT := 2
 const SUMMON_DISTANCE := 90.0
 const SUMMON_SPREAD := 0.9

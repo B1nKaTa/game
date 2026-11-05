@@ -10,7 +10,7 @@ const MEMO_LANES := 3
 const MEMO_LANE_WIDTH := 48.0
 # The open floor left between two lanes, wide enough to stand in.
 const MEMO_GAP := 40.0
-const MEMO_WARNING := 1.0
+const MEMO_WARNING := 0.85
 const MEMO_STAGGER := 0.15
 const MUSIC_WINDUP := 0.55
 const MUSIC_ARMS := 3
@@ -20,10 +20,10 @@ const MUSIC_TURN := 0.3
 const NOTE_SPEED := 90.0
 const WARNING_RADIUS := 36.0
 # As short as the Reverend's rest, the shortest of the third floor's mini bosses.
-const COOLDOWN := 0.5
+const COOLDOWN := 0.4
 const KEEP_NEAR := 120.0
 const FIRST_SUMMON := 5.0
-const SUMMON_EVERY := 9.0
+const SUMMON_EVERY := 7.0
 const SUMMON_COUNT := 3
 const SUMMON_DISTANCE := 100.0
 const SUMMON_SPREAD := 0.8
