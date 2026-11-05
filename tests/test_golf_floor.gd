@@ -206,7 +206,7 @@ func test_the_sand_under_a_wall_light_stays_dim_and_warnings_show_on_it() -> voi
 		palette.ambient.b + palette.torch.b + palette.fill_light.b * Lighting.FILL_ENERGY)
 	var sand := palette.sand * light
 	var clipped := Color(minf(sand.r, 1.0), minf(sand.g, 1.0), minf(sand.b, 1.0))
-	assert_true(clipped.get_luminance() < 0.8, "the sand glows at a wall light (%.2f)" % clipped.get_luminance())
+	assert_true(clipped.get_luminance() < 0.7, "the sand glows at a wall light (%.2f)" % clipped.get_luminance())
 	var warning := Enemy.WARNING_COLOR * light
 	var warning_clipped := Color(minf(warning.r, 1.0), minf(warning.g, 1.0), minf(warning.b, 1.0))
 	assert_true(_difference(warning_clipped, clipped) >= 0.4, "a warning on sand at a wall light")

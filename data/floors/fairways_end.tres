@@ -44,9 +44,9 @@ decor_weights = {
 "plant": 1.0
 }
 scatter_lights = 3
-sand = Color(0.66, 0.6, 0.74, 1)
-sand_grain = Color(0.4, 0.36, 0.34, 1)
-sand_shine = Color(0.8, 0.78, 0.82, 1)
+sand = Color(0.55, 0.5, 0.76, 1)
+sand_grain = Color(0.32, 0.29, 0.3, 1)
+sand_shine = Color(0.7, 0.68, 0.78, 1)
 fairway_stripe = Color(0.8, 0.9, 1, 0.07)
 hedge = Color(0.08, 0.21, 0.12, 1)
 hedge_leaf = Color(0.13, 0.3, 0.18, 1)
