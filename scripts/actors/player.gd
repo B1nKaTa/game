@@ -218,7 +218,7 @@ func touch_bodies() -> bool:
 		take_hit(cost, RunEffects.HURT_CONTACT)
 		# A touch an item shrugged off shoves him out too, so he is never left standing in a body.
 		if run.health.is_invulnerable():
-			push(ContactRule.shove(enemy.global_position, _feet.global_position, _aim), ContactRule.SHOVE_TIME)
+			push(ContactRule.shove(enemy.global_position, _feet.global_position, _aim, enemy.body_rect(), FEET_BOX_SIZE), ContactRule.SHOVE_TIME)
 			return true
 		return false
 	return false

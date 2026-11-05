@@ -19,9 +19,11 @@ extends RefCounted
 # - an ambusher still asleep: the Sunbather in his chair and Lost Luggage lying on the carpet.
 # NPCs, summon marks and a mimic still passing for a chest are no enemies at all, so they never touch.
 
-# The shove out of a body: about 30 px, enough to clear any body's edge from its middle.
+# The plain shove out of a body: about 30 px, enough to clear any regular enemy's edge from its middle.
 const SHOVE := 180.0
 const SHOVE_TIME := 0.16
+# A body-sized shove carries his feet this far past the body's edge.
+const CLEAR_SPARE := 2.0
 
 
 # Whether an enemy is a ghost. Mothball Pockets keep the same ones off. Bosses never count as ghosts.
@@ -58,9 +60,30 @@ static func touches(body: Rect2, feet: Rect2) -> bool:
 
 
 # The shove that carries his feet out of a body: straight away from its middle, or, standing right on it,
-# back the way he faces.
-static func shove(body_center: Vector2, feet: Vector2, facing: Vector2) -> Vector2:
+# back the way he faces. Given the body, it is fast enough to carry his whole feet box clear of it in
+# SHOVE_TIME, which a boss's body needs (from a 44 by 52 body's middle that is up to 32 px).
+static func shove(body_center: Vector2, feet: Vector2, facing: Vector2, body := Rect2(), feet_size := Vector2.ZERO) -> Vector2:
 	var away := body_center.direction_to(feet)
 	if away.is_zero_approx():
 		away = -facing.normalized() if not facing.is_zero_approx() else Vector2.DOWN
-	return away * SHOVE
+	var speed := SHOVE
+	if body.has_area():
+		speed = maxf(speed, (exit_distance(body, feet, away, feet_size) + CLEAR_SPARE) / SHOVE_TIME)
+	return away * speed
+
+
+# How far feet must move along way before their box no longer touches body; 0 when it already is clear.
+static func exit_distance(body: Rect2, feet: Vector2, way: Vector2, feet_size: Vector2) -> float:
+	var grown := body.grow_individual(feet_size.x / 2.0, feet_size.y / 2.0, feet_size.x / 2.0, feet_size.y / 2.0)
+	if not grown.has_point(feet):
+		return 0.0
+	var along := INF
+	if way.x > 0.001:
+		along = minf(along, (grown.end.x - feet.x) / way.x)
+	elif way.x < -0.001:
+		along = minf(along, (grown.position.x - feet.x) / way.x)
+	if way.y > 0.001:
+		along = minf(along, (grown.end.y - feet.y) / way.y)
+	elif way.y < -0.001:
+		along = minf(along, (grown.position.y - feet.y) / way.y)
+	return maxf(along, 0.0) if along != INF else 0.0

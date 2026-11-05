@@ -143,6 +143,31 @@ func test_the_shove_carries_him_out_of_any_body() -> void:
 	assert_true(reach <= 40.0, "but only a small shove")
 
 
+# A boss's body is bigger than the plain shove reaches from its middle, so a shove given the body is
+# sized to carry the whole feet box out, from anywhere inside, and stays plain when a plain one does.
+func test_a_shove_given_the_body_clears_even_a_boss() -> void:
+	var feet_size := Player.FEET_BOX_SIZE
+	var biggest := Vector2.ZERO
+	for file in DirAccess.get_files_at("res://data/enemies/"):
+		if file.ends_with(".tres"):
+			var def: EnemyDef = load("res://data/enemies/" + file)
+			if ContactRule.damage_of(def) > 0 and def.body_size.x * def.body_size.y > biggest.x * biggest.y:
+				biggest = def.body_size
+	var body := Rect2(Vector2(200, 200) - biggest / 2.0, biggest)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 4
+	for i in 300:
+		var feet := body.get_center() + Vector2(rng.randf_range(-1, 1) * (biggest.x / 2.0 + 6.0), rng.randf_range(-1, 1) * (biggest.y / 2.0 + 5.0))
+		if i == 0:
+			feet = body.get_center() + Vector2(0, 0.5)
+		var shove := ContactRule.shove(body.get_center(), feet, Vector2.RIGHT, body, feet_size)
+		var after := feet + shove * ContactRule.SHOVE_TIME
+		assert_false(ContactRule.touches(body, ContactRule.feet_box(after, feet_size)), "from %s the %s body is left behind, ends at %s" % [str(feet - body.get_center()), str(biggest), str(after - body.get_center())])
+		assert_true(shove.length() >= ContactRule.SHOVE - 0.01, "never weaker than the plain shove")
+	var edge := body.get_center() + Vector2(biggest.x / 2.0 + 5.0, 0)
+	assert_near(ContactRule.shove(body.get_center(), edge, Vector2.RIGHT, body, feet_size).length(), ContactRule.SHOVE, "at the edge it is the plain shove")
+
+
 # --- Grandpa ---
 
 func test_a_touch_goes_through_take_hit_as_a_contact_hit() -> void:
