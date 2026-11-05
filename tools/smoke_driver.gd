@@ -1019,7 +1019,9 @@ func _check_stations_in(scene: Node, id: String) -> void:
 		var met := false
 		for child in view.get_children():
 			met = met or (child is Npc and child.def.id == entry["id"])
-		_check(met, "%s stands in the %s" % [entry["id"], id])
+		# Gerald waits on the true ending, which the loop never reaches.
+		var stands := Departments.npc_stands(entry, Progress.data)
+		_check(met == stands, "%s %s in the %s" % [entry["id"], "stands" if stands else "is not yet", id])
 
 
 # The Back Room: the Dealer and two card tables, each played once through the Arcade's overlay for
