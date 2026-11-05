@@ -32,6 +32,9 @@ const TIPS := {
 	"support_stockings": "Sand and sedatives can't stop you now. Walk right through.",
 	"titanium_hip": "Dodge through them, not around them. The hip does the rest.",
 	"undertakers_gloves": "What you finish stays finished. No bangs, no boxes. Go in close.",
+	"walker_tennis_balls": "Knock them back and keep them back. Space is your friend, son.",
+	"rusty_hinge": "Finish the combo every time. The third one sticks them.",
+	"rubber_ferrule": "Quicker swings, lighter taps. Keep swinging, it adds up.",
 }
 
 const DEFAULT_TIP := "Pick something off the rack and I'll tell you what it's good for."

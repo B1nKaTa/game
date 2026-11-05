@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "rubber_ferrule"
+display_name = "Rubber Ferrule"
+description = "Swings are 15% faster, but deal 5% less damage. Grip is everything at your age."
+rarity = "common"
+tags = PackedStringArray("cane")
+damage_bonus = -0.05
+swing_speed_bonus = 0.15
