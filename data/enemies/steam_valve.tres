@@ -12,6 +12,7 @@ speed = 0.0
 pension_drop = 1
 body_size = Vector2(22, 22)
 color = Color(0.62, 0.66, 0.72, 1)
+art_flips = false
 behavior_script = ExtResource("2")
 max_per_room = 2
 mark = "valve"

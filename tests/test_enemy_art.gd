@@ -5,9 +5,39 @@ extends TestCase
 # for an enemy with none, and the order bodies are drawn in.
 
 const ART_DIR := "res://art/sprites/"
+# Every enemy with a PixelLab export (D:/grandpa-art/enemies/<id>), built into art/sprites/<id>/.
 const ARTED := ["intern_reaper", "stoker", "mall_cop", "club_golfer", "hr_representative", "regional_reaper",
-	"old_smokey", "mall_santa", "thaddeus_fairweather", "chairman_of_the_board"]
-const ANIMS := ["idle", "walk", "windup", "attack", "whistle"]
+	"old_smokey", "mall_santa", "thaddeus_fairweather", "chairman_of_the_board",
+	"filing_clerk", "debt_ghost", "seasonal_temp", "notary_public", "burnt_out_auditor", "denial_officer",
+	"senior_adjuster", "plot_holder", "head_groundskeeper", "tired_undertaker",
+	"orderly", "cart_nurse", "bingo_caller", "resident", "activities_coordinator", "matron_mercy", "mimic",
+	"soot_ghost", "foreman_klaus", "steam_valve",
+	"weeping_mourner", "florist", "pallbearer", "reverend", "mortimer_grimsby",
+	"early_bird_diner", "shuffleboard_shark", "sunburnt_sunbather", "lorraine", "commodore_wellington",
+	"tour_group", "baggage_handler", "lost_luggage", "sergeant_wanda", "augustine", "yes_man", "paper_shredder", "doreen"]
+# Floor variants wearing a base's art, recoloured: variant -> base. The Mall's and Fairway's End's own
+# (mall_*, golf_*) are left to the branch replacing those floors.
+const VARIANTS := {"furnace_intern_reaper": "intern_reaper", "mall_intern_reaper": "intern_reaper",
+	"cruise_stoker": "stoker", "airport_mall_cop": "mall_cop"}
+# Objects drawn facing south, which never turn and so are never mirrored.
+const UNFLIPPED := ["mimic", "lost_luggage", "steam_valve"]
+# A boss's own anims, each played by its behavior through Enemy.play_anim: id -> [behavior, anims].
+const BOSS_ANIMS := {
+	"tired_undertaker": ["undertaker_behavior.gd", ["wreath_throw", "point"]],
+	"matron_mercy": ["matron_behavior.gd", ["charge", "lights_out"]],
+	"mortimer_grimsby": ["funeral_director_behavior.gd", ["embalming_spray", "conduct"]],
+	"commodore_wellington": ["commodore_behavior.gd", ["foghorn_blast", "buoy_call"]],
+	"augustine": ["head_of_departures_behavior.gd", ["runway_signal", "gate_change"]],
+}
+
+
+# Every anim strip in an art folder.
+func _anims(id: String) -> Array[String]:
+	var names: Array[String] = []
+	for file in DirAccess.get_files_at(ART_DIR + id):
+		if file.ends_with(".png"):
+			names.append(file.get_basename())
+	return names
 
 
 func _has(names: Array) -> Callable:
@@ -126,7 +156,7 @@ func test_every_strip_is_square_frames_with_the_feet_on_one_row() -> void:
 	for id in ARTED:
 		var size := -1
 		var row := -1
-		for anim in ANIMS:
+		for anim in _anims(id):
 			var path := ART_DIR + "%s/%s.png" % [id, anim]
 			if not ResourceLoader.exists(path):
 				continue
@@ -142,7 +172,10 @@ func test_every_strip_is_square_frames_with_the_feet_on_one_row() -> void:
 				assert_eq(used.end.y, row, "%s %s frame %d: feet on one row" % [id, anim, i])
 				assert_true(used.position.y > 0, "%s %s frame %d: room above the head" % [id, anim, i])
 		assert_true(size > 0, id + " has art")
-		assert_true(SpriteVisual.has_anim(id, "idle") and SpriteVisual.has_anim(id, "walk"), id)
+		assert_true(SpriteVisual.has_anim(id, "idle"), id)
+		# The steam valve is bolted to a wall and never walks.
+		var def: EnemyDef = load("res://data/enemies/%s.tres" % id)
+		assert_true(SpriteVisual.has_anim(id, "walk") or def.wall_mounted, id + " walks")
 
 
 func test_every_strip_puts_the_feet_on_the_body_box_bottom() -> void:
@@ -151,7 +184,7 @@ func test_every_strip_puts_the_feet_on_the_body_box_bottom() -> void:
 		var visual := SpriteVisual.new()
 		visual.set_feet(def.body_size.y / 2.0)
 		visual.setup(def.art(), def.body_size, def.color, def.frame_width)
-		for anim in ANIMS:
+		for anim in _anims(id):
 			if not SpriteVisual.has_anim(id, anim):
 				continue
 			visual.play(anim)
@@ -165,9 +198,12 @@ func test_every_strip_puts_the_feet_on_the_body_box_bottom() -> void:
 
 
 func test_a_floor_variant_wears_its_bases_art_recoloured() -> void:
-	for pair in [["furnace_intern_reaper", "intern_reaper"], ["mall_intern_reaper", "intern_reaper"], ["cruise_stoker", "stoker"], ["airport_mall_cop", "mall_cop"]]:
-		var def: EnemyDef = load("res://data/enemies/%s.tres" % pair[0])
-		assert_eq(def.art(), pair[1], pair[0])
+	for variant: String in VARIANTS:
+		var def: EnemyDef = load("res://data/enemies/%s.tres" % variant)
+		assert_eq(def.art(), VARIANTS[variant], variant)
+		var shown := _enemy(variant)
+		assert_true(shown.visual().has_art(), variant + " shows its base's art")
+		shown.free()
 	var base: EnemyDef = load("res://data/enemies/intern_reaper.tres")
 	assert_eq(base.art(), "intern_reaper", "an empty art_id is its own id")
 	var enemy := _enemy("furnace_intern_reaper")
@@ -177,13 +213,103 @@ func test_a_floor_variant_wears_its_bases_art_recoloured() -> void:
 
 
 func test_an_enemy_without_art_keeps_its_placeholder_and_marks() -> void:
-	var enemy := _enemy("filing_clerk")
+	var enemy := _enemy("training_dummy")
 	assert_false(enemy.visual().has_art())
 	assert_false(enemy._marks.art_shown)
 	enemy.free()
 	var arted := _enemy("stoker")
 	assert_true(arted._marks.art_shown, "art draws its own shovel")
 	arted.free()
+
+
+func test_every_enemy_with_an_export_shows_its_art() -> void:
+	for id in ARTED:
+		var enemy := _enemy(id)
+		assert_true(enemy.visual().has_art(), id + " shows art, not its placeholder")
+		assert_eq(enemy.visual().shown_anim(), "idle", id)
+		assert_true(enemy._marks.art_shown, id + " draws no placeholder marks over its art")
+		enemy.free()
+		if id != "mall_cop" and id != "mall_santa":
+			assert_true(SpriteVisual.has_anim(id, "windup") and SpriteVisual.has_anim(id, "attack"), id + " has a cut windup and attack")
+
+
+func test_every_enemy_in_data_whose_art_folder_exists_loads_it() -> void:
+	for file in DirAccess.get_files_at("res://data/enemies/"):
+		if not file.ends_with(".tres"):
+			continue
+		var def: EnemyDef = load("res://data/enemies/" + file)
+		if not DirAccess.dir_exists_absolute(ART_DIR + def.art()):
+			continue
+		var enemy := _enemy(def.id)
+		assert_true(enemy.visual().has_art(), def.id)
+		enemy.free()
+
+
+func test_objects_drawn_facing_south_are_never_mirrored() -> void:
+	for id in UNFLIPPED:
+		var enemy := _enemy(id)
+		assert_false(enemy.def.art_flips, id)
+		enemy.desired_velocity = Vector2(-enemy.def.speed - 10.0, 0)
+		enemy._update_anim(0.016)
+		assert_false(enemy.visual().is_facing_left(), id + " walking west stays as drawn")
+		enemy.desired_velocity = Vector2.ZERO
+		var telegraph := Telegraph.new()
+		telegraph.start(0.5)
+		enemy.set_warning(telegraph, 20.0)
+		enemy._update_anim(0.016)
+		assert_false(enemy.visual().is_facing_left(), id + " winding up stays as drawn")
+		enemy.free()
+	var shredder := _enemy("paper_shredder")
+	assert_true(shredder.def.art_flips, "the shredder is drawn facing east and turns")
+	shredder.desired_velocity = Vector2(-shredder.def.speed, 0)
+	shredder._update_anim(0.016)
+	assert_true(shredder.visual().is_facing_left())
+	shredder.free()
+
+
+func test_the_mimic_sleeps_shut_and_lunges_open() -> void:
+	# Its export's idle opens the lid; the cut keeps the closed frames for the idle and the open ones
+	# for the lunge.
+	var idle := _image(ART_DIR + "mimic/idle.png")
+	var attack := _image(ART_DIR + "mimic/attack.png")
+	assert_eq(idle.get_width() / idle.get_height(), 6)
+	assert_eq(attack.get_width() / attack.get_height(), 3)
+
+
+func test_each_boss_plays_its_own_anims() -> void:
+	for id: String in BOSS_ANIMS:
+		var source := FileAccess.get_file_as_string("res://scripts/actors/behaviors/" + BOSS_ANIMS[id][0])
+		for anim: String in BOSS_ANIMS[id][1]:
+			assert_true(SpriteVisual.has_anim(id, anim), "%s has %s" % [id, anim])
+			assert_true(source.contains("enemy.play_anim(\"%s\"" % anim), "%s plays %s" % [id, anim])
+
+
+func test_a_behaviors_own_anim_plays_through_the_windup_and_the_hit() -> void:
+	var enemy := _enemy("tired_undertaker")
+	var telegraph := Telegraph.new()
+	telegraph.start(0.6)
+	enemy.set_warning(telegraph, 40.0)
+	enemy.play_anim("wreath_throw", 0.9)
+	enemy._update_anim(0.016)
+	assert_eq(enemy.visual().shown_anim(), "wreath_throw", "not the plain windup")
+	telegraph.tick(1.0)
+	enemy.clear_warning()
+	enemy._update_anim(0.016)
+	assert_eq(enemy.visual().shown_anim(), "wreath_throw", "not the plain attack")
+	for i in 70:
+		enemy._update_anim(0.016)
+	assert_eq(enemy.visual().shown_anim(), "idle")
+	# Without its own anim, the plain windup and attack still play.
+	telegraph = Telegraph.new()
+	telegraph.start(0.6)
+	enemy.set_warning(telegraph, 40.0)
+	enemy._update_anim(0.016)
+	assert_eq(enemy.visual().shown_anim(), "windup")
+	telegraph.tick(1.0)
+	enemy.clear_warning()
+	enemy._update_anim(0.016)
+	assert_eq(enemy.visual().shown_anim(), "attack")
+	enemy.free()
 
 
 func test_bodies_stand_on_their_feet_for_the_room_sort() -> void:

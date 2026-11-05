@@ -12,6 +12,7 @@ speed = 50.0
 pension_drop = 1
 body_size = Vector2(22, 18)
 color = Color(0.3, 0.75, 0.7, 1)
+art_flips = false
 behavior_script = ExtResource("2")
 max_per_room = 3
 mark = "suitcase"

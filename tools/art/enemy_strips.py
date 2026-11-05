@@ -2,7 +2,7 @@
 # SpriteVisual loads (res://art/sprites/<art_id>/<anim>.png). Plain Python, no packages.
 # Usage: py tools/art/enemy_strips.py <export folder holding one folder per enemy id> <art/sprites folder> [id ...]
 #
-# Anims. Every east anim in the export, <id>/<state>/animations/<name>/east/frame_###.png, becomes
+# Anims. Every east (or, for an object that never turns, south) anim in the export, <id>/<state>/animations/<name>/east/frame_###.png, becomes
 # <name>.png, so a new folder (windup, or a boss's own such as summon or charge) is picked up as it lands.
 # The names the game asks for are idle, walk, windup and attack (see EnemyAnim), plus whatever a
 # behavior names through Enemy.play_anim. idle and walk keep every frame. Every other anim drops
@@ -27,9 +27,14 @@ from npc_strips import join, load  # noqa: E402
 # Rows left empty under the feet.
 FOOT_MARGIN = 1
 KEEP_FIRST = ('idle', 'walk')
+# The way an anim was drawn: east, mirrored in the game, or south for an object that never turns
+# (EnemyDef.art_flips false: the mimic, the Lost Luggage and the steam valve).
+DIRECTIONS = ('east', 'south')
 
-# id -> {game anim: (export anim, frames, hash of the export anim's frames)}. A game anim cut to no
-# frames is left out, so the game falls back (Santa's attack shows no strike yet).
+# id -> {game anim: (export anim, frames, hash of the export anim's frames[, replace])}. Frames are the
+# export's own numbers (000 is the reference pose). A game anim cut to no frames is left out, so the
+# game falls back (Santa's attack shows no strike yet). replace lets a cut win over the export's own
+# anim of that name (the mimic's lunge comes from its idle, whose lid opens).
 CUTS = {
     # The scythe drawn back, then the low sweep from the moment it lands.
     'intern_reaper': {'windup': ('attack', [1, 2, 3], '4090bbed'), 'attack': ('attack', [4, 5, 6, 8], '4090bbed')},
@@ -41,13 +46,59 @@ CUTS = {
     'club_golfer': {'windup': ('attack', [3, 4, 5, 6], 'b990c9bf'), 'attack': ('attack', [7, 8], 'b990c9bf')},
     # The memo raised back, then thrown.
     'hr_representative': {'windup': ('attack', [4, 5, 6, 7], '06a0adcd'), 'attack': ('attack', [8], '06a0adcd')},
-    'regional_reaper': {'windup': ('attack', [1, 2], 'cc7370db'), 'attack': ('attack', [3, 4, 5, 6, 7], 'cc7370db')},
     'old_smokey': {'windup': ('attack', [3, 4, 5], 'f5edbd72'), 'attack': ('attack', [6, 7, 8], 'f5edbd72')},
     # The export barely moves and shows no strike, so Santa keeps the fallbacks until it is redone.
     'mall_santa': {'attack': ('attack', [], '026823f5')},
     'thaddeus_fairweather': {'windup': ('attack', [4, 5, 6], 'eb66e3b2'), 'attack': ('attack', [7, 8], 'eb66e3b2')},
     # The gavel raised overhead, then brought down.
     'chairman_of_the_board': {'windup': ('attack', [3, 4, 5, 6], '2c6098a8'), 'attack': ('attack', [7, 8], '2c6098a8')},
+    # The regenerated, lighter robe (2026-11-06): the scythe drawn back over his shoulder, then swept low.
+    'regional_reaper': {'windup': ('attack', [1, 2, 3, 4], '436d18dc'), 'attack': ('attack', [5, 6, 7, 8], '436d18dc')},
+    # The second batch (2026-11-06), picked off labelled contact sheets of each attack.
+    'filing_clerk': {'windup': ('attack', [2, 3, 4, 5], '72d5a1a2'), 'attack': ('attack', [6, 7, 8], '72d5a1a2')},
+    'debt_ghost': {'windup': ('attack', [2, 3, 4, 5, 6], '4a29e87f'), 'attack': ('attack', [7, 8], '4a29e87f')},
+    'seasonal_temp': {'windup': ('attack', [2, 3, 4, 5], 'cc82e029'), 'attack': ('attack', [7, 8], 'cc82e029')},
+    'notary_public': {'windup': ('attack', [1, 2, 3, 4, 5], '56314993'), 'attack': ('attack', [6, 7, 8], '56314993')},
+    # His windup is the lit fuse, which he crawls through; the blast is code and he is gone after it.
+    'burnt_out_auditor': {'windup': ('attack', [3, 4, 5, 6, 7, 8], '0cb59401'), 'attack': ('attack', [8], '0cb59401')},
+    'denial_officer': {'windup': ('attack', [2, 3, 4], '3861f270'), 'attack': ('attack', [5, 6, 7, 8], '3861f270')},
+    'senior_adjuster': {'windup': ('attack', [1, 2, 3, 4], '6efafedd'), 'attack': ('attack', [5, 6, 7, 8], '6efafedd')},
+    'plot_holder': {'windup': ('attack', [1, 2], '6d2d20b4'), 'attack': ('attack', [3, 4, 5, 6, 7], '6d2d20b4')},
+    'head_groundskeeper': {'windup': ('attack', [3, 4, 5, 6, 7], 'ca1f2154'), 'attack': ('attack', [8], 'ca1f2154')},
+    'tired_undertaker': {'windup': ('attack', [1, 2, 3, 4, 5], 'bc9e77cc'), 'attack': ('attack', [6, 7, 8], 'bc9e77cc')},
+    'orderly': {'windup': ('attack', [1, 2, 3], '1e74290e'), 'attack': ('attack', [4, 5, 6], '1e74290e')},
+    'cart_nurse': {'windup': ('attack', [1, 2, 3], '42d72338'), 'attack': ('attack', [4, 5, 6, 7, 8], '42d72338')},
+    'bingo_caller': {'windup': ('attack', [1, 2], 'fa80664a'), 'attack': ('attack', [3, 4, 5, 6], 'fa80664a')},
+    'resident': {'windup': ('attack', [2, 3, 4, 5], '8467683f'), 'attack': ('attack', [6, 7, 8], '8467683f')},
+    'activities_coordinator': {'windup': ('attack', [1, 2, 3], 'd336d6c6'), 'attack': ('attack', [4, 5, 6, 7, 8], 'd336d6c6')},
+    'matron_mercy': {'windup': ('attack', [2, 3, 4], 'f1fae23f'), 'attack': ('attack', [5, 6, 7, 8], 'f1fae23f')},
+    # The mimic's export opens its lid in the idle and barely moves in the attack: it sleeps on the
+    # closed frames, cracks the lid over the windup and lunges with it wide open (replacing its attack).
+    'mimic': {'idle': ('idle', [0, 1, 2, 3, 7, 8], '43d91cae'), 'windup': ('idle', [3, 4], '43d91cae', True),
+              'attack': ('idle', [5, 6, 5], '43d91cae', True)},
+    'soot_ghost': {'windup': ('attack', [2, 3, 4, 5], '34ec3f23'), 'attack': ('attack', [6, 7, 8], '34ec3f23')},
+    'foreman_klaus': {'windup': ('attack', [2, 3, 4], 'a20d2a9f'), 'attack': ('attack', [5, 6, 7, 8], 'a20d2a9f')},
+    # The wheel turns as the lane is warned, then the vent.
+    'steam_valve': {'windup': ('attack', [1, 2, 3, 4, 5], '888e423f'), 'attack': ('attack', [6, 7, 8], '888e423f')},
+    'weeping_mourner': {'windup': ('attack', [1, 2, 3, 4, 5], '24d60d69'), 'attack': ('attack', [6, 7, 8], '24d60d69')},
+    'florist': {'windup': ('attack', [2, 3, 4], '18910f6c'), 'attack': ('attack', [5, 6, 7, 8], '18910f6c')},
+    'pallbearer': {'windup': ('attack', [2, 3, 4], 'e47cf197'), 'attack': ('attack', [5, 6, 7, 8], 'e47cf197')},
+    'reverend': {'windup': ('attack', [1, 2, 3, 4, 5], 'f3cc9ded'), 'attack': ('attack', [6, 7, 8], 'f3cc9ded')},
+    'mortimer_grimsby': {'windup': ('attack', [1, 2, 3], 'd163d56a'), 'attack': ('attack', [4, 5, 6, 7], 'd163d56a')},
+    'early_bird_diner': {'windup': ('attack', [1, 2, 3, 4, 5, 6], '13176c9a'), 'attack': ('attack', [7, 8], '13176c9a')},
+    'shuffleboard_shark': {'windup': ('attack', [3, 4, 5, 6, 7], 'eadce400'), 'attack': ('attack', [8], 'eadce400')},
+    'sunburnt_sunbather': {'windup': ('attack', [2, 3, 4, 5], '34adec86'), 'attack': ('attack', [6, 7, 8], '34adec86')},
+    'lorraine': {'windup': ('attack', [1, 2, 3], 'd0421961'), 'attack': ('attack', [4, 5, 6, 7, 8], 'd0421961')},
+    'commodore_wellington': {'windup': ('attack', [2, 3, 4], 'd64b43ee'), 'attack': ('attack', [5, 6, 7, 8], 'd64b43ee')},
+    'tour_group': {'windup': ('attack', [1, 2, 3, 4, 5], '4476b4a5'), 'attack': ('attack', [6, 7, 8], '4476b4a5')},
+    'baggage_handler': {'windup': ('attack', [2, 3, 4], 'db21c530'), 'attack': ('attack', [5, 6, 7, 8], 'db21c530')},
+    # Its mouth gapes over the windup and snaps shut on the bite.
+    'lost_luggage': {'windup': ('attack', [1, 2, 3, 4, 5], '4f73d2d0'), 'attack': ('attack', [6, 7, 8], '4f73d2d0')},
+    'sergeant_wanda': {'windup': ('attack', [2, 3, 4, 5], 'cd03d84f'), 'attack': ('attack', [6, 7, 8], 'cd03d84f')},
+    'augustine': {'windup': ('attack', [1, 2, 3], '93bfcf81'), 'attack': ('attack', [4, 5, 6, 7, 8], '93bfcf81')},
+    'yes_man': {'windup': ('attack', [1, 2, 3, 4], '1cce2630'), 'attack': ('attack', [5, 6, 7, 8], '1cce2630')},
+    'paper_shredder': {'windup': ('attack', [1, 2, 3, 4], 'bdcec632'), 'attack': ('attack', [5, 6, 7, 8], 'bdcec632')},
+    'doreen': {'windup': ('attack', [1, 2, 3], '1a44f1cb'), 'attack': ('attack', [4, 5, 6, 7, 8], '1a44f1cb')},
 }
 
 
@@ -102,8 +153,12 @@ def export_anims(base):
     anims = {}
     folder = os.path.join(base, 'animations')
     for name in sorted(os.listdir(folder)) if os.path.isdir(folder) else []:
-        east = os.path.join(folder, name, 'east')
-        files = sorted(os.path.join(east, f) for f in os.listdir(east) if f.endswith('.png')) if os.path.isdir(east) else []
+        files = []
+        for way in DIRECTIONS:
+            drawn = os.path.join(folder, name, way)
+            if os.path.isdir(drawn):
+                files = sorted(os.path.join(drawn, f) for f in os.listdir(drawn) if f.endswith('.png'))
+                break
         if files:
             anims[name.lower().replace('-', '_').replace(' ', '_')] = files
     return anims
@@ -114,10 +169,12 @@ def plan(enemy, anims):
     out = {}
     for name, files in anims.items():
         out[name] = files if name in KEEP_FIRST or len(files) == 1 else files[1:]
-    for name, (source, picks, wanted) in CUTS.get(enemy, {}).items():
+    for name, cut in CUTS.get(enemy, {}).items():
+        source, picks, wanted = cut[:3]
+        replace = len(cut) > 3 and cut[3]
         if source not in anims:
             continue
-        if name != source and name in anims:
+        if name != source and name in anims and not replace:
             print('  %s: the export has its own %s, the cut is skipped' % (enemy, name))
             continue
         got = frame_hash(anims[source])
