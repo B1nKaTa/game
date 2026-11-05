@@ -39,6 +39,34 @@ func test_the_conga_line_leaves_its_gap_inside_the_room_and_marks_it() -> void:
 						assert_false(lane.has_point(spot), "no dancer crosses the mark")
 
 
+# The mark used to last the room's diagonal, seconds after the rows had gone, so standing on it could
+# get him caught by her next quoits.
+func test_the_gap_mark_ends_when_its_rows_end() -> void:
+	var lorraine := Enemy.new()
+	lorraine.setup(_load("lorraine"), null, 0.5)
+	var step := 1.0 / 60.0
+	for cells in ROOMS:
+		var room := ForemanBehavior.room_rect(cells)
+		for across in [Vector2.RIGHT, Vector2.DOWN]:
+			var lane: Rect2 = FuneralDirectorBehavior.procession_lanes(room, across, 0)[0]
+			var row := DeckLane.new()
+			row.setup(lorraine, across, lane.size.x if across == Vector2.RIGHT else lane.size.y, FuneralDirectorBehavior.LANE_WIDTH, Director.CONGA_WARNING)
+			var mark := SafeSpotMark.new()
+			mark.setup(Director.gap_mark_time(room, across))
+			var row_took := 0.0
+			while not row.is_queued_for_deletion() and row_took < 30.0:
+				row._process(step)
+				row_took += step
+			var mark_took := 0.0
+			while not mark.is_queued_for_deletion() and mark_took < 30.0:
+				mark._process(step)
+				mark_took += step
+			assert_true(absf(mark_took - row_took) <= step * 1.5, "%s %s: the mark goes at %.2f s, the rows at %.2f s" % [str(cells), str(across), mark_took, row_took])
+			row.free()
+			mark.free()
+	lorraine.free()
+
+
 func test_a_conga_row_hits_only_where_it_has_danced() -> void:
 	var row := DeckLane.row_for(DeckLane.LOOK_CONGA)
 	assert_true(DeckLane.row_hits(Vector2.ZERO, Vector2.RIGHT, 40.0, 100.0, row, Vector2(80, 10)))

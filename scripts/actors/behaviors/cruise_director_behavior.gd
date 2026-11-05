@@ -44,6 +44,7 @@ var _summon_timer := FIRST_SUMMON
 var _gap := -1
 var _across := Vector2.RIGHT
 var _aim := Vector2.RIGHT
+var _gap_mark: SafeSpotMark
 var _rng := RandomNumberGenerator.new()
 
 
@@ -92,6 +93,18 @@ static func _inside(point: Vector2, room: Rect2) -> Vector2:
 static func gap_spot(gap: Rect2, feet: Vector2) -> Vector2:
 	var inner := gap.grow(-GAP_MARGIN) if gap.size.x > GAP_MARGIN * 2.0 and gap.size.y > GAP_MARGIN * 2.0 else gap
 	return feet.clamp(inner.position, inner.end)
+
+
+# How long the gap stays marked: exactly as long as the rows dance, so the mark never outlasts them
+# and promises safety from her next attack.
+static func gap_mark_time(room_rect: Rect2, across: Vector2) -> float:
+	return DeckLane.duration(room_rect.size.x if across == Vector2.RIGHT else room_rect.size.y, CONGA_WARNING)
+
+
+# The rows go when she falls, and their gap's mark with them.
+func on_killed(_enemy: Enemy) -> void:
+	if is_instance_valid(_gap_mark):
+		_gap_mark.queue_free()
 
 
 func tick(enemy: Enemy, delta: float) -> void:
@@ -188,7 +201,7 @@ func _dance(enemy: Enemy) -> void:
 	var gap := FuneralDirectorBehavior.procession_slot(room, _across, _gap, feet)
 	var spot := gap_spot(gap, feet)
 	if enemy.walk_grid == null or enemy.walk_grid.is_open(WalkGrid.cell_of(spot)):
-		var mark := SafeSpotMark.new()
-		mark.setup(CONGA_WARNING + room.size.length() / DeckLane.CONGA_SPEED)
-		enemy.get_parent().add_child(mark)
-		mark.global_position = spot
+		_gap_mark = SafeSpotMark.new()
+		_gap_mark.setup(gap_mark_time(room, _across))
+		enemy.get_parent().add_child(_gap_mark)
+		_gap_mark.global_position = spot

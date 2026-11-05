@@ -53,6 +53,11 @@ static func speed_for(look: String) -> float:
 	return BUOY_SPEED if look == LOOK_LIFEBUOY else CONGA_SPEED
 
 
+# How long a lane lasts from its setup until the back of its row has left the far end.
+static func duration(length: float, warning: float, look := LOOK_CONGA) -> float:
+	return warning + (length + row_for(look)) / speed_for(look)
+
+
 # Where each file of dancers stands across a lane of this width, from one edge to the other.
 static func dancer_offsets(width: float) -> Array[float]:
 	var span := width - DANCER_RADIUS * 2.0
