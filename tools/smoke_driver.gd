@@ -2202,11 +2202,14 @@ func _check_plot_holder(scene: Node, health: Health) -> void:
 	_check(holder._warning != null, "a rise shows a warning first")
 	_check(holder.submerged and health.pills == pills, "the warning comes before anything is up")
 	_check(holder.global_position.distance_to(center) <= 30.0, "the warning lies under him, off by %f" % holder.global_position.distance_to(center))
+	# Counted in physics time, which is what the rise runs on: under load a 0.02 s timer can take a
+	# whole slow frame, so counting timers undercounts the warning.
 	waited = 0.0
 	while holder.submerged and waited < 2.0:
-		await _wait(0.02)
-		waited += 0.02
+		await get_tree().physics_frame
+		waited += get_physics_process_delta_time()
 	_check(not holder.submerged, "it rises when the warning ends")
+
 	_check(waited >= 0.7, "the warning shows long enough to step out, %f" % waited)
 	_check(health.pills == pills - holder.def.damage, "staying on the warning costs a hit")
 	holder.take_damage(1.0, Vector2.ZERO)
