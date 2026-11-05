@@ -30,3 +30,8 @@ static func notice_for(won: int) -> String:
 	if won <= 0:
 		return "Lottery Scratcher: not a winner. Better luck next floor."
 	return "Lottery Scratcher: you win %d Pension!" % won
+
+
+# A resumed run never hears on_gain, so the dice are shuffled here instead.
+func load_state(_state: Dictionary) -> void:
+	rng.randomize()

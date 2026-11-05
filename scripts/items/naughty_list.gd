@@ -27,3 +27,8 @@ func on_kill(ctx: EffectContext, enemy: Enemy, _source: String) -> void:
 	_given += 1
 	ctx.drop(PRESENTS[rng.randi_range(0, PRESENTS.size() - 1)], enemy.global_position)
 	ctx.add_fx(ItemFx.make_sparks(Color("3aa05a")), enemy.global_position)
+
+
+# A resumed run never hears on_gain, so the dice are shuffled here instead.
+func load_state(_state: Dictionary) -> void:
+	rng.randomize()

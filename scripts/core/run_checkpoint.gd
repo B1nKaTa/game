@@ -95,7 +95,10 @@ static func run_to_dict(run: RunState) -> Dictionary:
 		"max_pills": run.health.max_pills,
 		"lethal_saves": run.health.lethal_saves,
 		"first_heal_bonus": run.health.first_heal_bonus,
+		"half_pills": run.health.half_pills,
+		"lost_max_pills": run.lost_max_pills,
 		"items": item_ids,
+		"effects": run.effects.save_state(),
 		"keys": run.keys,
 		"bombs": run.bombs,
 		"potion": run.potion.id if run.potion != null else "",
@@ -144,18 +147,23 @@ static func apply_run(run: RunState, raw: Dictionary, items: Array[ItemDef]) -> 
 		perks[str(id)] = true
 	run.perks = perks
 	run.apply_perks()
-	# Through add_item, so each item's effect and any combo come back too. The pills and saves it
-	# touches are set from the file below.
+	# Through restore_item, so each item's effect and any combo come back too, without a second on_gain.
+	# Each effect's own state (a once-a-run flag, a counter, a recharge) comes back after them. The pills
+	# and saves are set from the file below.
 	for id in raw.get("items", []):
 		for item in items:
 			if item.id == str(id):
-				run.add_item(item)
+				run.restore_item(item)
 				break
+	run.lost_max_pills = maxi(int(raw.get("lost_max_pills", 0)), 0)
+	var effects: Variant = raw.get("effects", {})
+	run.effects.load_state(effects if effects is Dictionary else {})
 	run.refresh_stats()
 	run.health.max_pills = maxi(int(raw.get("max_pills", run.health.max_pills)), 1)
 	run.health.pills = clampi(int(raw.get("pills", run.health.pills)), 1, run.health.max_pills)
 	run.health.lethal_saves = int(raw.get("lethal_saves", run.health.lethal_saves))
 	run.health.first_heal_bonus = int(raw.get("first_heal_bonus", run.health.first_heal_bonus))
+	run.health.half_pills = clampi(int(raw.get("half_pills", 0)), 0, 1)
 	run.keys = clampi(int(raw.get("keys", 0)), 0, RunState.MAX_CONSUMABLE)
 	run.bombs = clampi(int(raw.get("bombs", 0)), 0, RunState.MAX_CONSUMABLE)
 	var potion := str(raw.get("potion", ""))

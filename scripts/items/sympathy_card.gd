@@ -26,3 +26,13 @@ func send(ctx: EffectContext, room: Node) -> void:
 		at = room.last_death_spot()
 	ctx.drop(RoomRules.DROP_HEAL, at, PILLS)
 	ctx.add_fx(ItemFx.make_pop("Get well soon", COLOR), at)
+
+
+# How many cards were sent. A resumed run never hears on_gain, so the dice are shuffled here instead.
+func save_state() -> Dictionary:
+	return state_of(["sent"])
+
+
+func load_state(state: Dictionary) -> void:
+	load_members(state, ["sent"])
+	rng.randomize()

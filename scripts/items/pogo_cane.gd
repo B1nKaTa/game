@@ -10,3 +10,12 @@ func on_close_call(ctx: EffectContext) -> void:
 	if ctx.has_player():
 		ctx.player.refund_dodge()
 	ctx.add_fx(ItemFx.make_pop("Boing!", Color("9fdcff")), ctx.feet())
+
+
+# How many dodges it made ready.
+func save_state() -> Dictionary:
+	return state_of(["resets"])
+
+
+func load_state(state: Dictionary) -> void:
+	load_members(state, ["resets"])

@@ -68,3 +68,12 @@ static func boss_chunk(hp: float, max_hp: float) -> float:
 	if hp > line:
 		chunk = minf(chunk, hp - line)
 	return maxf(chunk, 0.0)
+
+
+# The stamp's recharge.
+func save_state() -> Dictionary:
+	return state_of(["ready", "left"])
+
+
+func load_state(state: Dictionary) -> void:
+	load_members(state, ["ready", "left"])

@@ -103,6 +103,11 @@ var restore := {}
 var _restored_groups := {}
 
 
+# The room's id on its floor's map.
+func room_id() -> int:
+	return _room.id
+
+
 func room_type() -> String:
 	return _room.room_type if _room != null else ""
 

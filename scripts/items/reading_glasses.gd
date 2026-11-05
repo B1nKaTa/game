@@ -27,3 +27,12 @@ func on_swing_end(ctx: EffectContext, _swing: SwingAttack) -> void:
 		ctx.player.refund_dodge()
 		ctx.add_fx(ItemFx.make_pop("DODGE!", Color("9fd8ff")), ctx.feet())
 	ctx.play_sound("chime")
+
+
+# How many dodges it gave back.
+func save_state() -> Dictionary:
+	return state_of(["refunds"])
+
+
+func load_state(state: Dictionary) -> void:
+	load_members(state, ["refunds"])

@@ -30,3 +30,12 @@ func on_saved(ctx: EffectContext) -> void:
 	ctx.return_to_door()
 	ctx.notice(NOTICE)
 	ctx.add_fx(ItemFx.make_pop("GOOD AS NEW", COLOR), ctx.feet())
+
+
+# Once a run, so a resumed run remembers it was used.
+func save_state() -> Dictionary:
+	return state_of(["used"])
+
+
+func load_state(state: Dictionary) -> void:
+	load_members(state, ["used"])

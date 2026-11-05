@@ -54,12 +54,15 @@ func _run() -> RunState:
 
 # --- the held items and combos ---
 
-func add(item: ItemDef) -> void:
+# gain is false when a resumed run gets its items back: on_gain ran when the item was first taken, so
+# it must not pay or give again. The copy's state comes back through load_state.
+func add(item: ItemDef, gain := true) -> void:
 	if item.effect != null:
 		var copy: ItemEffect = item.effect.duplicate()
 		_entries.append([item.id, copy])
-		copy.on_gain(ctx)
-	_form_combos()
+		if gain:
+			copy.on_gain(ctx)
+	_form_combos(gain)
 
 
 func clear() -> void:
@@ -100,7 +103,7 @@ func combo_names() -> PackedStringArray:
 	return names
 
 
-func _form_combos() -> void:
+func _form_combos(gain := true) -> void:
 	var run := _run()
 	if run == null:
 		return
@@ -111,8 +114,49 @@ func _form_combos() -> void:
 		if combo.effect != null:
 			var copy: ItemEffect = combo.effect.duplicate()
 			_combo_effects.append(copy)
-			copy.on_gain(ctx)
+			if gain:
+				copy.on_gain(ctx)
 		combo_formed.emit(combo)
+
+
+# What the run checkpoint keeps of every effect copy: item id or combo id -> its save_state, only those
+# that keep something.
+func save_state() -> Dictionary:
+	var held := {}
+	for entry in _entries:
+		var state: Dictionary = entry[1].save_state()
+		if not state.is_empty():
+			held[entry[0]] = state
+	var formed := {}
+	for i in _combo_effects.size():
+		var state := _combo_effects[i].save_state()
+		if not state.is_empty():
+			formed[_combo_id_of(_combo_effects[i])] = state
+	return {"items": held, "combos": formed}
+
+
+# Hands each effect copy what save_state kept for it, or {} when nothing was, so every copy of a resumed
+# run hears load_state once.
+func load_state(raw: Dictionary) -> void:
+	var held: Variant = raw.get("items", {})
+	var formed: Variant = raw.get("combos", {})
+	for entry in _entries:
+		var state: Variant = held.get(entry[0], {}) if held is Dictionary else {}
+		entry[1].load_state(state if state is Dictionary else {})
+	for copy in _combo_effects:
+		var state: Variant = formed.get(_combo_id_of(copy), {}) if formed is Dictionary else {}
+		copy.load_state(state if state is Dictionary else {})
+
+
+func _combo_id_of(copy: ItemEffect) -> String:
+	var at := 0
+	for combo in _combos:
+		if combo.effect == null:
+			continue
+		if _combo_effects[at] == copy:
+			return combo.id
+		at += 1
+	return ""
 
 
 func _all() -> Array[ItemEffect]:

@@ -31,3 +31,8 @@ func knock_out(ctx: EffectContext, enemy: Enemy) -> bool:
 	ctx.drop(RoomRules.DROP_COIN, enemy.global_position, 1)
 	ctx.add_fx(ItemFx.make_sparks(GOLD), enemy.global_position)
 	return true
+
+
+# A resumed run never hears on_gain, so the dice are shuffled here instead.
+func load_state(_state: Dictionary) -> void:
+	rng.randomize()

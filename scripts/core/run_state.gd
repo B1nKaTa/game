@@ -149,6 +149,13 @@ func add_item(item: ItemDef) -> void:
 	health.lethal_saves += maxi(stats.floor_lethal_saves - saves_before, 0)
 
 
+# A resumed run's item, put back as it was held: its effect and combos come back, but its on_gain never
+# runs twice (the Inheritance Letter's Pension, the Strap's Thermoses). The caller refreshes the stats.
+func restore_item(item: ItemDef) -> void:
+	items.append(item)
+	effects.add(item, false)
+
+
 # A new floor fills the Life Jacket's saves again.
 func start_floor() -> void:
 	health.lethal_saves = stats.floor_lethal_saves

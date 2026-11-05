@@ -25,3 +25,12 @@ func on_shop_open(ctx: EffectContext, stock: Array[Dictionary]) -> void:
 	for entry in stock:
 		entry["price"] = 0
 	ctx.notice(FREE_NOTICE)
+
+
+# This floor's free shop, since a resumed floor does not start again.
+func save_state() -> Dictionary:
+	return state_of(["_used_this_floor"])
+
+
+func load_state(state: Dictionary) -> void:
+	load_members(state, ["_used_this_floor"])

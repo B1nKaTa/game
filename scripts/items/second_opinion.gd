@@ -18,3 +18,12 @@ func on_pickup(ctx: EffectContext, kind: String, amount: int) -> int:
 	used = true
 	ctx.add_fx(ItemFx.make_pop("Second opinion: x2", COLOR), ctx.feet())
 	return amount * 2
+
+
+# This floor's second heal, since a resumed floor does not start again.
+func save_state() -> Dictionary:
+	return state_of(["used"])
+
+
+func load_state(state: Dictionary) -> void:
+	load_members(state, ["used"])

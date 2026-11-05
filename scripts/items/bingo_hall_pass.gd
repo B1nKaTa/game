@@ -30,3 +30,12 @@ func on_room_enter(ctx: EffectContext, _room: Node) -> void:
 		enemy.hp *= 1.0 - CUT
 		enemy.health_changed.emit(enemy.hp)
 	ctx.add_fx(ItemFx.make_pop(TEXT, COLOR), ctx.feet())
+
+
+# The rooms cleared toward the next pass.
+func save_state() -> Dictionary:
+	return state_of(["cleared"])
+
+
+func load_state(state: Dictionary) -> void:
+	load_members(state, ["cleared"])

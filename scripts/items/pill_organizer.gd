@@ -31,3 +31,12 @@ func on_hurt(ctx: EffectContext, pills: int, _source: String) -> int:
 	stored -= used
 	ctx.add_fx(ItemFx.make_pop("-%d soaked" % used, Color("e4524f")), ctx.feet())
 	return pills - used
+
+
+# The heals waiting in the organizer.
+func save_state() -> Dictionary:
+	return state_of(["stored"])
+
+
+func load_state(state: Dictionary) -> void:
+	load_members(state, ["stored"])

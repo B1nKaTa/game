@@ -158,3 +158,41 @@ func on_shop_open(_ctx: EffectContext, _stock: Array[Dictionary]) -> void:
 # Every physics frame while he plays. Use it sparingly, for timers.
 func tick(_ctx: EffectContext, _delta: float) -> void:
 	pass
+
+
+# --- a resumed run ---
+
+# What of this copy's run a checkpoint must keep, as plain values (a once-a-run flag, a per-floor flag,
+# a counter, a recharge). Per-room state needs nothing, since a resumed run walks into its room again.
+func save_state() -> Dictionary:
+	return {}
+
+
+# Puts back what save_state kept, on a resumed run's fresh copy, which never hears on_gain again. Called
+# on every held effect when a run is resumed, with {} when nothing was kept.
+func load_state(_state: Dictionary) -> void:
+	pass
+
+
+# save_state's usual body: these members by name.
+func state_of(names: Array) -> Dictionary:
+	var state := {}
+	for name: String in names:
+		state[name] = get(name)
+	return state
+
+
+# load_state's usual body: each named member found in state, read as the type it already has, since a
+# JSON file gives every number back as a float.
+func load_members(state: Dictionary, names: Array) -> void:
+	for name: String in names:
+		if not state.has(name):
+			continue
+		var value: Variant = state[name]
+		match typeof(get(name)):
+			TYPE_BOOL:
+				set(name, bool(value))
+			TYPE_INT:
+				set(name, int(value))
+			TYPE_FLOAT:
+				set(name, float(value))

@@ -17,3 +17,8 @@ func keeps_slip(ctx: EffectContext) -> bool:
 		return false
 	ctx.notice(NOTICE)
 	return true
+
+
+# A resumed run never hears on_gain, so the dice are shuffled here instead.
+func load_state(_state: Dictionary) -> void:
+	rng.randomize()

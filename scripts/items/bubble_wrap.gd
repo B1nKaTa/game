@@ -19,3 +19,12 @@ func on_hurt(ctx: EffectContext, pills: int, source: String) -> int:
 	ctx.add_fx(ItemFx.make_sparks(COLOR, 16.0), ctx.feet() + Vector2(0, -10))
 	ctx.add_fx(ItemFx.make_pop("POP!", COLOR), ctx.feet())
 	return 0
+
+
+# This floor's pop, since a resumed floor does not start again.
+func save_state() -> Dictionary:
+	return state_of(["popped"])
+
+
+func load_state(state: Dictionary) -> void:
+	load_members(state, ["popped"])

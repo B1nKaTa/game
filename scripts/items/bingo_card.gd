@@ -20,3 +20,12 @@ func on_pickup(ctx: EffectContext, kind: String, amount: int) -> int:
 	ctx.play_sound("bingo")
 	ctx.event(RunEffects.EVENT_BINGO)
 	return amount * MULT
+
+
+# The Pension pickups toward the next BINGO.
+func save_state() -> Dictionary:
+	return state_of(["_count"])
+
+
+func load_state(state: Dictionary) -> void:
+	load_members(state, ["_count"])
