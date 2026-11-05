@@ -5,20 +5,22 @@ extends Node2D
 # The cane's colour is read by the Player for its placeholder cane line and swing arc. Placeholders,
 # drawn in code until the art pass. Nothing here touches a stat.
 
-# Relative to the Player's origin, for the 68 pixel frame: his hair tops out near y = -24 and his
-# beard ends near y = -1, so a hat sits on the hair and the band on the cardigan below the beard.
-const HEAD := Vector2(0, -18)
-const CHEST := Vector2(0, 1)
-const BAND_SIZE := Vector2(16, 5)
-# The idle frame's face sits right of the middle when he faces right: skin from x = 3 to 10, with the
-# eyes near y = -16, two pixels under HEAD. Aviator lenses sit there, mirrored when he faces left.
-const EYES := Vector2(0, 2)
-const LENS_NEAR := 4.0
-const LENS_FAR := 8.5
-const LENS_RADIUS := 2.2
+# Relative to the Player's origin, for the 60 pixel frame (tools/art/harold_strips.py), facing right:
+# his hair tops out at y = -17 (-18 mid-stride) and his chin ends near y = -3, so a hat's crown sits on
+# the hair, and the band goes on the cardigan under the chin, which runs from about x = -5 to 3.
+# Anything off the middle across is mirrored when he faces left.
+const HEAD := Vector2(0, -11)
+const CHEST := Vector2(-1, 1)
+const BAND_SIZE := Vector2(11, 4)
+# His face runs from x = 0 to 6 with his own glasses at y = -11, level with HEAD, so aviator lenses
+# sit over them.
+const EYES := Vector2(0, 0)
+const LENS_NEAR := 2.0
+const LENS_FAR := 5.5
+const LENS_RADIUS := 1.8
 const LENS_GLASS := Color(0.12, 0.1, 0.08, 0.92)
-# The body's middle is a little right of the origin in the idle frame, so a tie hangs there.
-const TIE_SHIFT := 2.0
+# His shirt front shows at x = 2 to 3, so a tie hangs there, its knot at the collar.
+const TIE_AT := Vector2(2.5, -1)
 const OUTLINE := Color(0.08, 0.06, 0.05)
 const STRIPE_BAND := Color("d8323a")
 # A swing arc stays at least this bright, so a dark cane skin never hides where the swing reaches.
@@ -68,15 +70,20 @@ static func has_stripes(look: Dictionary) -> bool:
 func _draw() -> void:
 	var cardigan := _look.get(CosmeticDef.SLOT_CARDIGAN) as CosmeticDef
 	if cardigan != null and cardigan.shape == "tie":
-		draw_tie(self, CHEST + Vector2(TIE_SHIFT * facing, 0), cardigan.color)
+		draw_tie(self, mirrored(TIE_AT, facing), cardigan.color)
 	elif cardigan != null:
-		var band := Rect2(CHEST - BAND_SIZE / 2.0, BAND_SIZE)
+		var band := Rect2(mirrored(CHEST, facing) - BAND_SIZE / 2.0, BAND_SIZE)
 		draw_rect(band, cardigan.color)
 		draw_line(band.position + Vector2(BAND_SIZE.x / 2.0, 0), band.position + Vector2(BAND_SIZE.x / 2.0, BAND_SIZE.y), cardigan.color.darkened(0.35), 1.0)
 		draw_rect(band, OUTLINE, false, 1.0)
 	var hat := _look.get(CosmeticDef.SLOT_HAT) as CosmeticDef
 	if hat != null:
-		draw_hat(self, hat.shape, HEAD, hat.color, facing)
+		draw_hat(self, hat.shape, mirrored(HEAD, facing), hat.color, facing)
+
+
+# An anchor measured facing right, for the way he faces now.
+static func mirrored(anchor: Vector2, facing_dir: float) -> Vector2:
+	return Vector2(anchor.x * facing_dir, anchor.y)
 
 
 # Draws one hat shape over a head centred at head.

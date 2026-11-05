@@ -9,8 +9,8 @@ extends Node2D
 const HAROLD := "harold"
 const HAROLD_COLOR := Color("7d9a5c")
 # Where Harold's sprite sits over his feet, and his head for a hat (GrandpaLook.HEAD over the feet).
-const HAROLD_SPRITE_OFFSET := Vector2(0, -17)
-const HAROLD_HEAD := Vector2(0, -35)
+const HAROLD_SPRITE_OFFSET := -Player.FEET_OFFSET
+const HAROLD_HEAD := HAROLD_SPRITE_OFFSET + GrandpaLook.HEAD
 const FLOAT_RISE := 10.0
 const GHOST_ALPHA := 0.6
 
