@@ -114,8 +114,8 @@ This build is the `integration` branch (see the last commit in the git log; this
 ## Housekeeping
 
 - **Delete these by hand on D: when you like.** Each is test copies, screenshots or logs, and none is needed:
-  - every `D:\grandpa-verify*` folder: `grandpa-verify`, `-bal2`, `-deep`, `-endings`, `-fix`, `-items`, `-items1` to `-items4`, `-logs-wr`, `-menu`, `-music`, `-sfx` and `-tmp`;
+  - every `D:\grandpa-verify*` folder: `grandpa-verify`, `-bal2`, `-deep`, `-endings`, `-fix`, `-items`, `-items1` to `-items4`, `-logs-wr`, `-menu`, `-music`, `-sfx`, `-tmp` and `-final` (tonight's loop logs; a safety check stopped me from deleting it);
   - the `D:\grandpa-look-*`, `D:\grandpa-shots-wr`, `D:\grandpa-music-samples` and `D:\grandpa-sfx-samples` folders.
-- **Leftover Godot user folders** from earlier agents, in `%APPDATA%\Godot\app_userdata\`: every `GrandpaSmoke*` folder (for example `GrandpaSmoke1` to `3`, `GrandpaSmokeA`, `-Bal2A/B`, `-EndA/B/Base`, `-It4A/B`, `-f1` to `3`, `-fin1` to `3`, `-fw1/2` and `-t1` to `-t9b`), every `GrandpaLook*` and `GrandpaVerify*` folder, and `GrandpaFurnaceLook` and `GrandpaStep1Look`. Only `Grandpa` is your real one.
+- **Leftover Godot user folders** from earlier agents, in `%APPDATA%\Godot\app_userdata\`: every `GrandpaSmoke*` folder (for example `GrandpaSmoke1` to `3`, `GrandpaSmokeA`, `-Bal2A/B`, `-EndA/B/Base`, `-It4A/B`, `-f1` to `3`, `-fin1` to `3`, `-fw1/2` and `-t1` to `-t9b`), every `GrandpaLook*`, `GrandpaLoop*` and `GrandpaVerify*` folder, and `GrandpaFurnaceLook` and `GrandpaStep1Look`. Only `Grandpa` is your real one.
 - **`D:\grandpa-git-backup`** is an old backup of the repository. Delete it once you are happy with the pushed branches.
 - **`D:\grandpa-save-backups`** holds copies of your save. Keep it until you have played the merged build.
