@@ -47,6 +47,8 @@ const TIPS := {
 	"glue_gun": "Throw at the big one. The teeth hang on while you work.",
 	"spare_set": "Two sets, two lanes. Throw down the middle of a pair.",
 	"boomerang_bite": "Throw past them and step aside. The teeth bite coming home.",
+	"windup_teeth": "Drop the teeth in a doorway. Let them come to you.",
+	"overbite": "Longer throws. Pick them off from across the room.",
 }
 
 const DEFAULT_TIP := "Pick something off the rack and I'll tell you what it's good for."

@@ -28,6 +28,8 @@ const BATCH := {
 	"glue_gun": [ItemDef.RARE, ItemUnlocks.RECIPE, ""],
 	"spare_set": [ItemDef.RARE, ItemUnlocks.RECIPE, ""],
 	"boomerang_bite": [ItemDef.COMMON, ItemUnlocks.START, ""],
+	"windup_teeth": [ItemDef.RARE, ItemUnlocks.START, ""],
+	"overbite": [ItemDef.COMMON, ItemUnlocks.START, ""],
 }
 
 
@@ -367,3 +369,27 @@ func test_boomerang_bite_turns_home_and_bites_on_the_way() -> void:
 	plain.free()
 	home.free()
 	kit.free_enemies()
+
+
+func test_windup_teeth_bite_what_walks_over_them_now_and_then() -> void:
+	var kit := ItemKit.new()
+	var run := kit.run_with(["windup_teeth"])
+	assert_true(run.stats.teeth_floor_bite)
+	var enemy := kit.enemy("intern_reaper", 1000.0)
+	enemy.position = Vector2(5, 0)
+	var state := DentureThrow.new()
+	var teeth := _flying(run, state)
+	state.drop()
+	teeth.bite_on_floor(0.1)
+	assert_near(enemy.hp, 1000.0 - ThrownDentures.DAMAGE * ThrownDentures.FLOOR_SHARE)
+	teeth.bite_on_floor(0.3)
+	assert_near(enemy.hp, 1000.0 - ThrownDentures.DAMAGE * ThrownDentures.FLOOR_SHARE, "not every frame")
+	teeth.bite_on_floor(ThrownDentures.FLOOR_BITE_EVERY)
+	assert_near(enemy.hp, 1000.0 - 2.0 * ThrownDentures.DAMAGE * ThrownDentures.FLOOR_SHARE)
+	teeth.free()
+	kit.free_enemies()
+
+
+func test_overbite_throws_forty_percent_further() -> void:
+	var run := ItemKit.new().run_with(["overbite"])
+	assert_near(run.stats.bite_range, DentureThrow.BASE_RANGE * 1.4)
