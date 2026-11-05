@@ -194,13 +194,20 @@ static func keep_off_body(body: Rect2) -> Callable:
 static func runway_plan(room: Rect2, feet: Vector2, prefer: Vector2, reverse_first: bool, ropes: Array[Rect2], body := Rect2(), is_open := Callable()) -> Dictionary:
 	var other := Vector2.DOWN if prefer == Vector2.RIGHT else Vector2.RIGHT
 	var keep_off := keep_off_body(body)
+	# Every try shares one floor, worked out by the first.
+	var floor_route: OverlapRoute = null
 	for direction: Vector2 in [prefer, other]:
 		var axis := Vector2(0, 1) if direction == Vector2.RIGHT else Vector2(1, 0)
 		for shift: float in [0.0, 1.0, -1.0, 2.0, -2.0, 3.0, -3.0, 4.0, -4.0, 5.0, -5.0]:
 			var center := feet + axis * shift * RUNWAY_WIDTH
 			for reverse: bool in [reverse_first, not reverse_first]:
 				var lanes := runway_lanes(room, direction, center, reverse)
-				var out := runway_route(room, lanes, runway_windows(), ropes, body, is_open).escape(feet, keep_off)
+				var route := runway_route(room, lanes, runway_windows(), ropes, body, is_open)
+				if floor_route == null:
+					floor_route = route
+				else:
+					route.share_floor(floor_route)
+				var out := route.escape(feet, keep_off)
 				if out["safe"]:
 					var mark: Vector2 = out["pure"] if out["pure"] != Vector2.INF else out["haven"]
 					return {"direction": direction, "reverse": reverse, "center": center, "mark": mark}

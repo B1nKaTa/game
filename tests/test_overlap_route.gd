@@ -86,3 +86,42 @@ func test_a_strike_moves_off_him_rather_than_take_the_last_way_out() -> void:
 func test_the_answer_is_cautious_about_its_grid() -> void:
 	assert_true(OverlapRoute.MARGIN >= OverlapRoute.STEP / 2.0, "nothing passes between two grid points unseen")
 	assert_near(OverlapRoute.STEP_TIME, OverlapRoute.STEP / PlayerStats.BASE_SPEED, "a step at his base speed, never faster")
+
+
+# The floor is worked out block by block and cell by cell for speed: it must block exactly the
+# positions where his feet box touches a block or a closed cell, and a route sharing that floor must
+# answer as one that worked it out itself.
+func test_the_fast_floor_matches_the_plain_rule_and_can_be_shared() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 11
+	var room := Rect2(32, 32, 576, 288)
+	for trial in 20:
+		var blocks: Array[Rect2] = []
+		for b in 6:
+			blocks.append(Rect2(rng.randf_range(0, 640), rng.randf_range(0, 352), rng.randf_range(8, 90), rng.randf_range(8, 90)))
+		var closed_x := rng.randi_range(2, 18)
+		var is_open := func(spot: Vector2) -> bool: return WalkGrid.cell_of(spot).x != closed_x
+		var route := OverlapRoute.new(room)
+		for block in blocks:
+			route.add_block(block)
+		route.set_open(is_open)
+		route.add_rect(Rect2(200, 32, 64, 288), 1.0, 1.4)
+		var shared := OverlapRoute.new(room)
+		shared.add_rect(Rect2(200, 32, 64, 288), 1.0, 1.4)
+		shared.share_floor(route)
+		var half := Player.FEET_BOX_SIZE / 2.0
+		var mismatch := 0
+		for j in floori(room.size.y / OverlapRoute.STEP):
+			for i in floori(room.size.x / OverlapRoute.STEP):
+				var spot := room.position + Vector2(i + 0.5, j + 0.5) * OverlapRoute.STEP
+				var box := Rect2(spot - half, Player.FEET_BOX_SIZE)
+				var plain := false
+				for block in blocks:
+					plain = plain or block.intersects(box)
+				for corner in [box.position, Vector2(box.end.x, box.position.y), box.end, Vector2(box.position.x, box.end.y)]:
+					plain = plain or not is_open.call(corner)
+				if route.is_blocked_at(spot) != plain or shared.is_blocked_at(spot) != plain:
+					mismatch += 1
+		assert_eq(mismatch, 0, "trial %d: blocked positions" % trial)
+		var feet := room.position + Vector2(3.5, 8.5) * OverlapRoute.STEP
+		assert_eq(shared.escape(feet), route.escape(feet), "trial %d: the same way out" % trial)

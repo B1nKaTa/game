@@ -283,10 +283,15 @@ static func chart_mark(route: OverlapRoute, feet: Vector2, body := Rect2()) -> V
 # {bars, left_first, mark, route}; mark is Vector2.INF only when no roll works, and the last is kept.
 static func choose_chart(room: Rect2, rolls: Array[Vector2], feet: Vector2, body := Rect2(), is_open := Callable(), tape := {}) -> Dictionary:
 	var choice := {}
+	var floor_route: OverlapRoute = null
 	for roll in rolls:
 		var bars := projection_bars(room, roll.x)
 		var left_first := roll.y < 0.5
 		var route := chart_route(room, bars, bar_windows(bars.size(), left_first), body, is_open, tape)
+		if floor_route == null:
+			floor_route = route
+		else:
+			route.share_floor(floor_route)
 		choice = {"bars": bars, "left_first": left_first, "mark": chart_mark(route, feet, body), "route": route}
 		if choice["mark"] != Vector2.INF:
 			return choice

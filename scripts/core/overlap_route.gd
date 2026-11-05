@@ -33,6 +33,8 @@ var _built := false
 var _blocked := PackedByteArray()
 var _covers: Array = []
 var _last_end := PackedFloat32Array()
+# Blocked positions taken from another route over the same floor (share_floor), or empty.
+var _shared_blocked := PackedByteArray()
 
 
 func _init(room: Rect2) -> void:
@@ -75,6 +77,16 @@ func add_block(rect: Rect2) -> void:
 func set_open(is_open: Callable) -> void:
 	_is_open = is_open
 	_built = false
+
+
+# Uses the blocked positions of another route over the same room, blocks and open cells, so a plan
+# that tries many hazard layouts over one floor works the floor out once (it is most of the cost in
+# a large room). Blocks and open cells given to this route are then ignored.
+func share_floor(other: OverlapRoute) -> void:
+	other._build()
+	if other.area == area:
+		_shared_blocked = other._blocked
+		_built = false
 
 
 # Red tape on a cell, strung from a time counted from now (0 when it is strung already).
@@ -233,21 +245,12 @@ func _build() -> void:
 	_blocked.resize(count)
 	_last_end.resize(count)
 	_covers.resize(count)
-	var feet_half := Player.FEET_BOX_SIZE / 2.0
+	if _shared_blocked.size() == count:
+		_blocked = _shared_blocked.duplicate()
+	else:
+		_build_blocked()
 	for index in count:
 		var spot := position_of(index)
-		var box := Rect2(spot - feet_half, Player.FEET_BOX_SIZE)
-		var blocked := false
-		for block in _blocks:
-			if block.intersects(box):
-				blocked = true
-				break
-		if not blocked and _is_open.is_valid():
-			for corner in [box.position, Vector2(box.end.x, box.position.y), box.end, Vector2(box.position.x, box.end.y)]:
-				if not _is_open.call(corner):
-					blocked = true
-					break
-		_blocked[index] = 1 if blocked else 0
 		var over: Array[Vector2] = []
 		var end := 0.0
 		for r in _rects.size():
@@ -260,6 +263,38 @@ func _build() -> void:
 				end = maxf(end, _circle_times[c].y)
 		_covers[index] = over
 		_last_end[index] = end
+
+
+# Which positions his feet box may not stand on. Each block marks only the positions near it, and
+# is_open, which answers for a whole cell (set_open), is asked once per cell, since both were slow
+# in a large room with many ropes.
+func _build_blocked() -> void:
+	_blocked.fill(0)
+	var feet_half := Player.FEET_BOX_SIZE / 2.0
+	for block in _blocks:
+		var i_from := clampi(floori((block.position.x - feet_half.x - area.position.x) / STEP - 0.5), 0, _nx - 1)
+		var i_to := clampi(ceili((block.end.x + feet_half.x - area.position.x) / STEP - 0.5), 0, _nx - 1)
+		var j_from := clampi(floori((block.position.y - feet_half.y - area.position.y) / STEP - 0.5), 0, _ny - 1)
+		var j_to := clampi(ceili((block.end.y + feet_half.y - area.position.y) / STEP - 0.5), 0, _ny - 1)
+		for j in range(j_from, j_to + 1):
+			for i in range(i_from, i_to + 1):
+				var index := j * _nx + i
+				if _blocked[index] == 0 and block.intersects(Rect2(position_of(index) - feet_half, Player.FEET_BOX_SIZE)):
+					_blocked[index] = 1
+	if not _is_open.is_valid():
+		return
+	var asked := {}
+	for index in _nx * _ny:
+		if _blocked[index] != 0:
+			continue
+		var box := Rect2(position_of(index) - feet_half, Player.FEET_BOX_SIZE)
+		for corner: Vector2 in [box.position, Vector2(box.end.x, box.position.y), box.end, Vector2(box.position.x, box.end.y)]:
+			var cell := WalkGrid.cell_of(corner)
+			if not asked.has(cell):
+				asked[cell] = _is_open.call(corner)
+			if not asked[cell]:
+				_blocked[index] = 1
+				break
 
 
 func _in_circle(spot: Vector2, circle: Vector3) -> bool:
