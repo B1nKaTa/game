@@ -128,3 +128,23 @@ func test_saving_after_recovery_keeps_the_good_backup() -> void:
 	assert_eq(store.load_progress().pension, 10)
 	assert_eq(store.last_status, SaveStore.STATUS_BACKUP)
 	store.delete_all()
+
+
+# New Game on an empty slot 2 or 3 saves into a folder nothing has made yet.
+func test_saving_makes_the_slot_folder() -> void:
+	var root := OS.get_temp_dir().path_join("grandpa_test_fresh_root")
+	var dir := root.path_join("slot_2")
+	for file in ["save.json", "save.json.bak", "save.json.tmp"]:
+		if FileAccess.file_exists(dir.path_join(file)):
+			DirAccess.remove_absolute(dir.path_join(file))
+	DirAccess.remove_absolute(dir)
+	DirAccess.remove_absolute(root)
+	assert_false(DirAccess.dir_exists_absolute(dir), "the slot folder starts missing")
+	var store := SaveStore.new(dir.path_join("save.json"))
+	var data := ProgressData.new()
+	data.opening_seen = true
+	assert_true(store.save_progress(data), "the first save of a fresh slot succeeds")
+	assert_true(store.load_progress().opening_seen)
+	store.delete_all()
+	DirAccess.remove_absolute(dir)
+	DirAccess.remove_absolute(root)

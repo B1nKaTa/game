@@ -16,6 +16,8 @@ func _init(path: String) -> void:
 
 
 func save_progress(data: ProgressData) -> bool:
+	# A slot's folder exists only once something was saved into it, so a fresh slot makes it here.
+	DirAccess.make_dir_recursive_absolute(_path.get_base_dir())
 	var file := FileAccess.open(_temp, FileAccess.WRITE)
 	if file == null:
 		push_error("Could not write save file: %s" % _temp)
