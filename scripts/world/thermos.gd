@@ -19,6 +19,8 @@ var level := 0
 var damage_mult := 1.0
 # How far the blast reaches. The Big Bang option widens it.
 var radius := BLAST_RADIUS
+# How long it burns before it goes off. The Pressure Cooker lengthens it. Set before it enters the room.
+var fuse_time := FUSE_TIME
 var _player: Player
 var _fuse := FUSE_TIME
 var _gone_off := false
@@ -31,6 +33,10 @@ static func in_blast(center: Vector2, body: Rect2, reach := BLAST_RADIUS) -> boo
 
 func setup(player: Player) -> void:
 	_player = player
+
+
+func _ready() -> void:
+	_fuse = fuse_time
 
 
 func blast_damage() -> float:
@@ -96,7 +102,7 @@ func _draw() -> void:
 			var ring_radius := radius * (0.3 + 0.2 * ring) * minf(0.5 + progress, 1.0)
 			draw_arc(Vector2.ZERO, ring_radius, 0.0, TAU, 24, Color(1.0, 1.0, 1.0, 0.8 * (1.0 - progress)), 1.5)
 		return
-	var urgency := 1.0 - _fuse / FUSE_TIME
+	var urgency := 1.0 - _fuse / fuse_time
 	var blink_on := int(_fuse * (6.0 + 14.0 * urgency)) % 2 == 0
 	draw_arc(Vector2.ZERO, radius, 0.0, TAU, 32, Color(WARNING_COLOR, 0.25 + 0.45 * urgency), 1.0)
 	draw_rect(Rect2(-5, -9, 10, 15), WARNING_COLOR if blink_on else BODY_COLOR)

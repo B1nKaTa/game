@@ -17,9 +17,14 @@ const ITEMS_FOR_SALE := 2
 # keep their prices.
 static func stock(all_items: Array[ItemDef], run: RunState, rng: RandomNumberGenerator, pension_mult := 1.0) -> Array[Dictionary]:
 	var entries: Array[Dictionary] = []
-	# Frequent Flyer Miles take their share off every price.
+	# Frequent Flyer Miles take their share off every price, and Loaded Dice put a share on. A Coupon
+	# Booklet adds wares. The full loop counts the stock and prices as the rooms set them.
 	var discount := run.stats.shop_discount
-	for item in RoomRules.pick_items(all_items, run, ITEMS_FOR_SALE, rng, ItemRarity.SHOP):
+	var for_sale := ITEMS_FOR_SALE
+	if not run.effects.ctx.counting_exact:
+		discount -= run.stats.shop_markup
+		for_sale += run.stats.shop_extra_items
+	for item in RoomRules.pick_items(all_items, run, for_sale, rng, ItemRarity.SHOP):
 		entries.append({"kind": KIND_ITEM, "price": item_price(item, pension_mult, discount), "item": item})
 	entries.append({"kind": KIND_HEAL, "price": price_after(HEAL_PRICE, discount), "item": null})
 	entries.append({"kind": KIND_KEY, "price": price_after(KEY_PRICE, discount), "item": null})
@@ -31,7 +36,7 @@ static func item_price(item: ItemDef, pension_mult: float, discount: float) -> i
 	return price_after(ItemRarity.price(item, pension_mult), discount)
 
 
-# A price with a share taken off, rounded to the nearest Pension and never below 1.
-
+# A price with a share taken off, rounded to the nearest Pension and never below 1. A share below zero
+# puts that much on instead.
 static func price_after(price: int, discount: float) -> int:
 	return maxi(roundi(price * (1.0 - discount)), 1)

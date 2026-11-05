@@ -66,6 +66,8 @@ var _bank: Node
 var _reward_cells: Array[Vector2i] = []
 var _alive := 0
 var _finished := false
+# Wares bought here, for the Tax Refund, which pays only for a shop left without buying.
+var shop_purchases := 0
 var _had_enemies := false
 var _doors: Array[Door] = []
 var _coins: Array[Pickup] = []
@@ -163,11 +165,16 @@ func _ready() -> void:
 
 # Call each time the player arrives, so the door he stands on waits until he steps away.
 func refresh_doors() -> void:
-	for door in _doors:
-		door.rearm()
+	rearm_doors()
 	# Each Arcade game plays once per visit, so coming back fills them again.
 	for table in _tables:
 		table.refill()
+
+
+# Every door waits until he has stepped off it, as on arriving.
+func rearm_doors() -> void:
+	for door in _doors:
+		door.rearm()
 
 
 func arcade_tables() -> Array[ArcadeTable]:
@@ -215,6 +222,9 @@ func place_bomb(at: Vector2) -> void:
 	thermos.level = _run.stats.thermos_level
 	thermos.damage_mult = _run.stats.thermos_damage_mult
 	thermos.radius = _run.stats.blast_radius
+	# The Pressure Cooker's longer fuse. The full loop times its Thermoses by the plain fuse.
+	if not _run.effects.ctx.counting_exact:
+		thermos.fuse_time = Thermos.FUSE_TIME + _run.stats.fuse_bonus
 	thermos.position = at
 	thermos.exploded.connect(bomb_exploded.emit)
 	thermos.exploded.connect(_run.effects.bomb.bind(at))
@@ -677,6 +687,8 @@ func _drop_coin(at: Vector2, base_amount: int, source := "") -> void:
 	if not _room.layout.coin_can_fly_from(_cell_of(at)):
 		return
 	coin.flies = true
+	# The Penny Jar calls coins from further off.
+	coin.magnet_radius = Pickup.MAGNET_RADIUS * _run.stats.coin_reach_mult
 	_coins.append(coin)
 	if _finished:
 		coin.fly()
@@ -824,6 +836,14 @@ func arcade_bet(amount: int) -> bool:
 	return amount > 0 and _bank.spend(amount)
 
 
+# How much more a win at this game pays of its winnings: Loaded Dice, and Card Shark at the poker
+# table. Never while the full loop counts every payout.
+func arcade_win_bonus(game: String) -> float:
+	if _run == null or _run.effects.ctx.counting_exact:
+		return 0.0
+	return ArcadeOdds.win_bonus(game, _run.stats.arcade_win_bonus, _run.stats.poker_win_bonus)
+
+
 # Winnings go straight into his Pension, exactly as the game's rules pay them.
 func arcade_pay(amount: int) -> void:
 	if amount > 0:
@@ -867,10 +887,14 @@ func _create_shop() -> void:
 	var stock := ShopRules.stock(Content.items(), _run, _rng, _floor_def.pension_mult)
 	_run.effects.shop_open(stock)
 	var cells := _room.layout.cells_of("S")
-	for i in stock.size():
+	# A Coupon Booklet's extra ware lies on open floor near the others.
+	var extra := extra_shop_cells(_room.layout, stock.size() - cells.size())
+	cells.append_array(extra)
+	for i in mini(stock.size(), cells.size()):
 		_add_shop_entry(RoomBackdrop.cell_center(cells[i]), stock[i])
-	# The merchant stands first, so the plan's reward spots keep clear of him.
+	# The merchant stands first, so the plan's reward spots keep clear of him and of any extra ware.
 	var merchant_at := _add_merchant()
+	merchant_at.append_array(extra)
 	_reward_cells = _room.layout.plan_reward_cells(ProgressData.RETIREMENT_TIERS.size(), merchant_at)
 	var station := RetirementStation.new()
 	station.setup(_bank, _player.feet())
@@ -878,6 +902,29 @@ func _create_shop() -> void:
 	station.deposit_wanted.connect(_on_deposit_wanted)
 	station.blasted.connect(_on_plan_blasted)
 	add_child(station)
+
+
+# Spots for wares beyond a shop's own S cells: plain floor near the last of them, spaced from every
+# ware, the merchant and the plan, and clear of the plan's own text.
+static func extra_shop_cells(layout: RoomLayout, count: int) -> Array[Vector2i]:
+	var found: Array[Vector2i] = []
+	if count <= 0:
+		return found
+	var wares := layout.cells_of("S")
+	var taken: Array[Vector2i] = wares.duplicate()
+	var plans := layout.cells_of(RoomLayout.SYMBOL_PLAN)
+	taken.append_array(plans)
+	if layout.merchant_cell() != Vector2i(-1, -1):
+		taken.append(layout.merchant_cell())
+	# The plan's text runs above and left of the station, so those cells count as taken too.
+	if not plans.is_empty():
+		for cell in layout.cells_of(RoomLayout.SYMBOL_FLOOR):
+			if not RoomLayout.clear_of_the_plan_text(cell, plans[0]):
+				taken.append(cell)
+	var wanted: Array[Vector2i] = []
+	for i in count:
+		wanted.append(wares[wares.size() - 1 - (i % wares.size())] if not wares.is_empty() else Vector2i(1, 1))
+	return layout.open_spots_near(wanted, taken)
 
 
 # He stands near his wares, which stay on the floor, and talks when Grandpa asks. Returns his cell.
@@ -922,7 +969,12 @@ func _add_shop_entry(at: Vector2, entry: Dictionary) -> void:
 			color = BOMB_COLOR
 			give = func(): _take_consumable(_run.add_bomb, RunEffects.BOMB)
 			allowed = _run.can_add_bomb
-	var pickup := _add_pickup(at, "%s: %d" % [label, price], color, func(): _buy(price, give), true)
+	var text := "%s: %d" % [label, price]
+	if price <= 0:
+		text = "Free: %s" % label
+	elif entry.get("half", false):
+		text = "%s: %d, half" % [label, price]
+	var pickup := _add_pickup(at, text, color, func(): _buy(price, give), true)
 	pickup.prompt = SHOP_PROMPT
 	if entry["kind"] == ShopRules.KIND_ITEM:
 		_mark_item(pickup, entry["item"])
@@ -930,7 +982,8 @@ func _add_shop_entry(at: Vector2, entry: Dictionary) -> void:
 
 
 func _buy(price: int, give: Callable) -> void:
-	if _bank.spend(price):
+	if price <= 0 or _bank.spend(price):
+		shop_purchases += 1
 		give.call()
 
 

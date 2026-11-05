@@ -255,6 +255,9 @@ func _enter_room(target_id: int) -> void:
 	move_child(_room_view, 0)
 	_room_view.refresh_doors()
 	player.global_position = Player.arrival_position(_progress.arrival_cell(target_id, from_id))
+	# Where the Eternal Warranty brings him back to.
+	_run.effects.ctx.arrival = player.global_position
+	_run.effects.ctx.has_arrival = true
 	_mini_map.set_current(target_id)
 	_big_map.set_current(target_id)
 	_follow_player()
@@ -350,6 +353,7 @@ func _close_card_table() -> void:
 
 func _on_pension_earned(amount: int) -> void:
 	_run_earned += amount
+	_run.pension_earned += amount
 	Progress.add_pension(amount)
 
 

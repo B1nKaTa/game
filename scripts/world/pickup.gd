@@ -18,6 +18,8 @@ var requires_interact := false
 var collect_radius := COLLECT_RADIUS
 var can_take := Callable()
 var flies := false
+# How near a flying coin must be to set off toward him. The Penny Jar widens it.
+var magnet_radius := MAGNET_RADIUS
 var prompt := PROMPT_TEXT
 # What the name is drawn in, and whether a skull sits before it, as a cursed item's does.
 var label_color := Color.WHITE
@@ -36,8 +38,8 @@ static func should_collect(needs_interact: bool, in_range: bool, interact_presse
 	return in_range and (interact_pressed or not needs_interact)
 
 
-static func should_magnet(can_fly: bool, distance: float) -> bool:
-	return can_fly and distance <= MAGNET_RADIUS
+static func should_magnet(can_fly: bool, distance: float, reach := MAGNET_RADIUS) -> bool:
+	return can_fly and distance <= reach
 
 
 static func fly_speed(time: float) -> float:
@@ -87,7 +89,7 @@ func _process(delta: float) -> void:
 		_fly_toward_player(delta)
 		return
 	var distance := global_position.distance_to(_player.global_position)
-	if should_magnet(flies, distance):
+	if should_magnet(flies, distance, magnet_radius):
 		fly()
 		return
 	var in_range := distance <= collect_radius

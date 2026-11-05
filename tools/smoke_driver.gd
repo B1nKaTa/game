@@ -75,6 +75,9 @@ func _ready() -> void:
 # For the same reason the items that block, soften or soak a hit, heal, or drop a heal are held off
 # (EffectContext.counting_pills), and Gravity Boots and Squeaky Shoes are set aside, so the push checks
 # and the room's wait see the rooms' own rules. tests/test_items_batch2.gd checks each of those.
+# The checks also count Pension, Slips, damage, Thermos fuses, shop stock and Arcade payouts exactly, so
+# the items that change those stand aside too (EffectContext.counting_exact); tests/test_items_batch3.gd
+# checks each of them.
 func _physics_process(_delta: float) -> void:
 	var scene := get_tree().current_scene
 	if scene == null or not "player" in scene or not is_instance_valid(scene.player):
@@ -84,6 +87,7 @@ func _physics_process(_delta: float) -> void:
 	if organizer != null:
 		organizer.stored = 0
 	run.effects.ctx.counting_pills = true
+	run.effects.ctx.counting_exact = true
 	run.stats.steady_feet = false
 	run.stats.notice_mult = 1.0
 

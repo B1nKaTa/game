@@ -227,7 +227,7 @@ func pull() -> bool:
 	_table.use_play()
 	_reels = SlotMachine.spin(_rng)
 	var won := SlotMachine.payout(_reels, SlotMachine.BET)
-	_last_payout = won["pension"]
+	_last_payout = ArcadeOdds.boosted(won["pension"], SlotMachine.BET, _room.arcade_win_bonus(game()))
 	_room.arcade_pay(_last_payout)
 	_played = true
 	_last_result = result_of(_last_payout, SlotMachine.BET, won["item"] or won["full_heal"])
@@ -316,7 +316,7 @@ func draw_cards() -> void:
 func _settle() -> void:
 	if game() == ArcadeTable.BLACKJACK:
 		var result := _blackjack.outcome()
-		_last_payout = Blackjack.payout(result, _bet)
+		_last_payout = ArcadeOdds.boosted(Blackjack.payout(result, _bet), _bet, _room.arcade_win_bonus(game()))
 		match result:
 			Blackjack.BLACKJACK:
 				_message = "Blackjack! %d back." % _last_payout
@@ -330,7 +330,7 @@ func _settle() -> void:
 				_message = "The house wins."
 	else:
 		var hand_name := DrawPoker.rank_hand(_poker.hand)
-		_last_payout = DrawPoker.payout(hand_name, _bet)
+		_last_payout = ArcadeOdds.boosted(DrawPoker.payout(hand_name, _bet), _bet, _room.arcade_win_bonus(game()))
 		if _last_payout > 0:
 			_message = "%s! %d back." % [DrawPoker.display_name(hand_name), _last_payout]
 		else:

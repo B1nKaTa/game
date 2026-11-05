@@ -35,6 +35,7 @@ const GHOST_TINT := Color("6cc4ff")
 const WHEEL_STEEL := Color("c9ced8")
 const PEEL_YELLOW := Color("ffd84a")
 const FLAME_COLOR := Color("ff8a2a")
+const SOUP_COLOR := Color("d9772b")
 # Marks that ride on an enemy last until it dies or the room is left, unless told otherwise.
 const RIDE_TIME := 3600.0
 
@@ -153,6 +154,15 @@ static func make_burn(ctx: EffectContext, radius: float, seconds: float, damage:
 	burn.ctx = ctx
 	burn.damage = damage
 	return burn
+
+
+# The Hot Soup Thermos's puddle: a pool of burning soup that hurts what stands in it now and then,
+# as the scooter's flames do.
+static func make_soup(ctx: EffectContext, radius: float, seconds: float, damage: float) -> FxSoup:
+	var soup := FxSoup.new(radius, SOUP_COLOR, seconds)
+	soup.ctx = ctx
+	soup.damage = damage
+	return soup
 
 
 # The base of every room effect: a radius, a colour and a life, after which it frees itself.
@@ -853,6 +863,36 @@ class FxBurn:
 			draw_polyline(flame, Color(Color.BLACK, 0.8 * fade), 4.0)
 			draw_colored_polygon(flame, Color(color, fade))
 			draw_line(base, base.lerp(tip, 0.55), Color(1.0, 0.92, 0.5, fade), 1.5)
+
+
+# The burning soup: a wide amber pool with a dark rim, so it reads on pale tile and dark stone alike,
+# bubbling, with small flames licking its edge.
+class FxSoup:
+	extends FxBurn
+
+	func _init(at_radius: float, at_color: Color, seconds: float) -> void:
+		super(at_radius, at_color, seconds)
+
+	func _draw() -> void:
+		var fade := 1.0 - maxf(progress() - 0.8, 0.0) / 0.2
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.6))
+		draw_circle(Vector2.ZERO, radius + 2.5, Color(0.22, 0.08, 0.02, 0.9 * fade))
+		draw_circle(Vector2.ZERO, radius, Color(color, 0.85 * fade))
+		draw_circle(Vector2(-radius * 0.2, -radius * 0.15), radius * 0.5, Color(color.lightened(0.2), 0.8 * fade))
+		for i in 6:
+			var angle := TAU * i / 6.0 + 0.4
+			var at := Vector2.from_angle(angle) * radius * (0.35 + 0.25 * (i % 2))
+			var size := 2.0 + 1.2 * (0.5 + 0.5 * sin(age * 7.0 + i * 1.7))
+			draw_arc(at, size, 0.0, TAU, 10, Color(1.0, 0.93, 0.75, fade), 1.2)
+		draw_set_transform(Vector2.ZERO)
+		for i in 4:
+			var angle := TAU * i / 4.0 + 0.8
+			var base := Vector2(cos(angle) * radius * 0.85, sin(angle) * radius * 0.5)
+			var flick := sin(age * 13.0 + i * 2.3) * 1.2
+			var tip := base + Vector2(flick, -7.0)
+			var flame := PackedVector2Array([base + Vector2(-2.5, 0), tip, base + Vector2(2.5, 0)])
+			draw_polyline(flame, Color(Color.BLACK, 0.8 * fade), 3.5)
+			draw_colored_polygon(flame, Color(FLAME_COLOR, fade))
 
 
 # Arrows at the screen's edge pointing to enemies off screen, while the run's stats ask for them. It

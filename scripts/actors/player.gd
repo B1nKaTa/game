@@ -145,9 +145,14 @@ func take_hit(amount: int, source := RunEffects.HURT_ENEMY) -> bool:
 	if amount <= 0:
 		run.health.shrug_off()
 		return false
+	var saved := false
 	if amount >= run.health.pills and run.health.lethal_saves <= 0 and run.effects.lethal():
+		saved = true
 		amount = run.health.pills - 1
 	var landed := run.health.hit(amount)
+	# After the hit, so an item that brings him back (Eternal Warranty) has the last word.
+	if saved:
+		run.effects.saved()
 	if landed:
 		if _visual != null:
 			_visual.flash(HURT_COLOR, HurtLook.RED_TIME)

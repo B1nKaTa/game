@@ -67,6 +67,22 @@ func on_lethal(_ctx: EffectContext) -> bool:
 	return false
 
 
+# The hit that this effect's on_lethal saved him from has landed, leaving him on one pill. Only the
+# effect that saved him hears it, so it can finish its rescue (Eternal Warranty).
+func on_saved(_ctx: EffectContext) -> void:
+	pass
+
+
+# A Slip is about to be handed over. Return true and it stays in his pocket (Forged Signature).
+func keeps_slip(_ctx: EffectContext) -> bool:
+	return false
+
+
+# A Slip has been handed over to open something. kept says whether it stayed in his pocket.
+func on_slip_spent(_ctx: EffectContext, _kept: bool) -> void:
+	pass
+
+
 # The dentures leave his mouth.
 func on_throw(_ctx: EffectContext) -> void:
 	pass
