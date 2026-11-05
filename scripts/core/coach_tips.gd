@@ -88,7 +88,7 @@ const TIPS := {
 	"loaded_dice": "Win more at the tables, pay more at the tills. Gamble, don't shop.",
 	"expired_coupon": "One free shop a floor, but you shrink. Buy the heals, son.",
 	"hagglers_hat": "Cheapest thing's half off. Look for it first.",
-	"collection_plate": "Every one you finish pays a coin. So finish them all.",
+	"collection_plate": "The first few you finish in a room pay a coin. Finish them quick.",
 	"inheritance_letter": "Cash up front. Spend it at the next shop, it's no use to you dead.",
 	"tax_refund": "Walk out of a shop with nothing and get paid. Sometimes the best buy is none.",
 	"night_light": "When the lights go out, you see twice as far. Keep moving.",

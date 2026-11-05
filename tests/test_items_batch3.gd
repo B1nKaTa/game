@@ -269,6 +269,7 @@ func test_every_shop_has_room_for_an_extra_ware() -> void:
 		var cell := extra[0]
 		assert_false(layout.cells_of("S").has(cell), dir)
 		assert_false(layout.touches_a_door(cell), dir)
+		assert_true(RoomView.shop_label_fits(layout, cell), "%s has room for the name at %s" % [dir, cell])
 		var plan := layout.cells_of(RoomLayout.SYMBOL_PLAN)[0]
 		assert_true(RoomLayout.clear_of_the_plan_text(cell, plan), "%s keeps the plan's text clear" % dir)
 		assert_true(cell != layout.merchant_cell(), dir)
@@ -299,7 +300,7 @@ func test_lottery_scratcher_pays_zero_to_a_hundred_each_floor() -> void:
 		assert_true(won >= 0 and won <= Lottery.MOST, "won %d" % won)
 		total += won
 	assert_eq(kit.paid, total)
-	assert_true(total > 400 * 42 and total < 400 * 58, "about 50 a floor, got %d" % total)
+	assert_true(total > 400 * 24 and total < 400 * 36, "about 30 a floor, got %d" % total)
 	kit.notices.clear()
 	run.effects.floor_start()
 	assert_eq(kit.notices.size(), 1, "each new floor scratches once")
@@ -308,14 +309,14 @@ func test_lottery_scratcher_pays_zero_to_a_hundred_each_floor() -> void:
 
 func test_pension_statement_pays_a_share_of_the_run_on_each_clear() -> void:
 	assert_eq(Statement.pay_for(0), 0)
-	assert_eq(Statement.pay_for(49), 0)
-	assert_eq(Statement.pay_for(500), 10)
-	assert_eq(Statement.pay_for(5000), Statement.MOST, "never more than 20 at a time")
+	assert_eq(Statement.pay_for(99), 0)
+	assert_eq(Statement.pay_for(320), 3)
+	assert_eq(Statement.pay_for(5000), Statement.MOST, "never more than 5 at a time")
 	var kit := ItemKit.new()
 	var run := kit.run_with(["pension_statement"])
-	run.pension_earned = 600
+	run.pension_earned = 420
 	run.effects.room_clear(null)
-	assert_eq(kit.paid, 12)
+	assert_eq(kit.paid, 4)
 
 
 func test_loaded_dice_pay_more_at_the_arcade_and_charge_more_in_shops() -> void:
@@ -406,9 +407,16 @@ func test_collection_plate_drops_a_coin_for_each_paying_kill() -> void:
 	summon.is_summon = true
 	run.effects.kill(summon, RunEffects.SWING)
 	assert_eq(kit.drops.size(), 1, "summons pay nothing, so they cannot be farmed")
+	for i in 5:
+		run.effects.kill(enemy, RunEffects.SWING)
+	assert_eq(kit.drops.size(), 3, "three a room")
+	run.effects.room_enter(null)
 	run.effects.ctx.counting_exact = true
 	run.effects.kill(enemy, RunEffects.SWING)
-	assert_eq(kit.drops.size(), 1, "the loop counts Pension exactly")
+	assert_eq(kit.drops.size(), 3, "the loop counts Pension exactly")
+	run.effects.ctx.counting_exact = false
+	run.effects.kill(enemy, RunEffects.SWING)
+	assert_eq(kit.drops.size(), 4, "a new room pays again")
 	kit.free_enemies()
 
 

@@ -1,10 +1,12 @@
 extends ItemEffect
 
 # Pension Fund Statement: each fight room cleared pays a small share of what the run has earned so
-# far, never more than MOST at a time. Each room clears once, so it cannot be farmed.
+# far, never more than MOST at a time. Each room clears once, so it cannot be farmed. The spec's 2%
+# and 20 added about 37% to a full clear, since the deep floors' rooms all paid the full 20; 1% and 5
+# keep it near a tenth (income_probe, 2026-11-05).
 
-const SHARE := 0.02
-const MOST := 20
+const SHARE := 0.01
+const MOST := 5
 const GOLD := Color("ffd24a")
 
 
