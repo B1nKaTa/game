@@ -2526,11 +2526,20 @@ func _check_wet_floor(scene: Node) -> void:
 	var view := await _enter_made_room(scene, _fight_layout(20, 11, changes))
 	_check(_props_in(view, WetFloor).size() == 10, "the made room laid its wet floor")
 	_check(_props_in(view, WetSign).size() == 1, "a wet patch gets one caution sign")
+	# Orthopedic Slippers grip the wet, so the slide is checked without them and then with them.
+	var stats: PlayerStats = scene.player.run.stats
+	var grip := stats.wet_grip
+	stats.wet_grip = false
 	var dry := await _walk_and_let_go(scene, RoomBackdrop.cell_center(Vector2i(5, 7)))
 	var wet := await _walk_and_let_go(scene, RoomBackdrop.cell_center(Vector2i(5, 3)))
 	_check(scene.player.on_wet, "his feet on the wet floor count as wet")
 	_check(dry < 2.0, "on a dry floor he stops when he lets go, slid %f" % dry)
 	_check(wet > 8.0, "on a wet floor he slides on, slid %f" % wet)
+	stats.wet_grip = true
+	var gripped := await _walk_and_let_go(scene, RoomBackdrop.cell_center(Vector2i(5, 3)))
+	_check(gripped < 2.0, "in Orthopedic Slippers the wet floor never slides him, slid %f" % gripped)
+	scene.player.run.stats.wet_grip = grip
+
 	var caution: WetSign = _props_in(view, WetSign)[0]
 	_check(caution.hit_by(BreakableBlock.SOURCE_CANE), "the caution sign can be knocked over")
 
