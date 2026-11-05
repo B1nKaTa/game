@@ -181,11 +181,13 @@ func _soup() -> void:
 func _kettle() -> void:
 	_take(["kettle_whistle"])
 	var at := _cell(12, 5)
-	# Walking, so their stars are drawn while the stun holds them.
-	var first := _dummy(at + Vector2(24, 0), false)
-	_dummy(at + Vector2(-20, 14), false)
+	var first := _dummy(at + Vector2(24, 0))
+	var second := _dummy(at + Vector2(-20, 14))
 	view.place_bomb(at)
 	await _until(func(): return first.is_stunned())
+	# Ticking again, so their stars are drawn while the stun holds them still.
+	first.set_physics_process(true)
+	second.set_physics_process(true)
 	await _seconds(0.15)
 	await _shot("kettle_stun")
 	await _seconds(0.5)

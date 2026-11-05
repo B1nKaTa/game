@@ -904,27 +904,49 @@ func _create_shop() -> void:
 	add_child(station)
 
 
-# Spots for wares beyond a shop's own S cells: plain floor near the last of them, spaced from every
-# ware, the merchant and the plan, and clear of the plan's own text.
+# Spots for wares beyond a shop's own S cells: plain floor nearest the last of them, off the doors,
+# spaced from every ware, the merchant and the plan, clear of the plan's own text, and far enough from
+# the side walls for a long name and price to fit.
 static func extra_shop_cells(layout: RoomLayout, count: int) -> Array[Vector2i]:
 	var found: Array[Vector2i] = []
-	if count <= 0:
-		return found
 	var wares := layout.cells_of("S")
+	if count <= 0 or wares.is_empty():
+		return found
 	var taken: Array[Vector2i] = wares.duplicate()
 	var plans := layout.cells_of(RoomLayout.SYMBOL_PLAN)
 	taken.append_array(plans)
 	if layout.merchant_cell() != Vector2i(-1, -1):
 		taken.append(layout.merchant_cell())
-	# The plan's text runs above and left of the station, so those cells count as taken too.
-	if not plans.is_empty():
-		for cell in layout.cells_of(RoomLayout.SYMBOL_FLOOR):
-			if not RoomLayout.clear_of_the_plan_text(cell, plans[0]):
-				taken.append(cell)
-	var wanted: Array[Vector2i] = []
 	for i in count:
-		wanted.append(wares[wares.size() - 1 - (i % wares.size())] if not wares.is_empty() else Vector2i(1, 1))
-	return layout.open_spots_near(wanted, taken)
+		var wanted := wares[wares.size() - 1 - (i % wares.size())]
+		# The full label spacing first; a crowded shop (Fairway's End) settles for the plan's loose one.
+		var best := Vector2i(-1, -1)
+		for loose in [false, true]:
+			var best_distance := INF
+			for cell in layout.cells_of(RoomLayout.SYMBOL_FLOOR):
+				if not shop_label_fits(layout, cell) or layout.touches_a_door(cell):
+					continue
+				if not (layout._spaced_loosely(cell, taken) if loose else layout._spaced_from(cell, taken)):
+					continue
+				if not plans.is_empty() and not RoomLayout.clear_of_the_plan_text(cell, plans[0]):
+					continue
+				var distance := Vector2(cell - wanted).length_squared()
+				if distance < best_distance:
+					best_distance = distance
+					best = cell
+			if best != Vector2i(-1, -1):
+				break
+		if best == Vector2i(-1, -1):
+			break
+		taken.append(best)
+		found.append(best)
+	return found
+
+
+# A ware's name and price are drawn centred over it, so it keeps LABEL_CELLS from either side wall and
+# off the HUD's row.
+static func shop_label_fits(layout: RoomLayout, cell: Vector2i) -> bool:
+	return layout._label_fits(cell) and cell.x >= RoomLayout.LABEL_CELLS
 
 
 # He stands near his wares, which stay on the floor, and talks when Grandpa asks. Returns his cell.
