@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/complaint_form.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "complaint_form"
+display_name = "Complaint Form"
+description = "Your hits on a boss fill a form, and a full form stuns it for 2 seconds. Please allow three to five working days."
+rarity = "rare"
+tags = PackedStringArray("boss")
+from_bounty = true
+effect = SubResource("Effect")

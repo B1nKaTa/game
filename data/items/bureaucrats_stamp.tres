@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/bureaucrats_stamp.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "bureaucrats_stamp"
+display_name = "Bureaucrat's Stamp"
+description = "Every 30 seconds your next hit files an enemy away for good, and a boss loses 15% of its health instead. Denied, in triplicate."
+rarity = "legendary"
+tags = PackedStringArray("boss", "cane")
+from_bounty = true
+effect = SubResource("Effect")

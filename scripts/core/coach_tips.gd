@@ -105,6 +105,13 @@ const TIPS := {
 	"bingo_hall_pass": "Every three rooms you clear, the next lot comes in weaker. Keep the streak going.",
 	"moving_boxes": "Leave a heal behind and it follows you. Nothing goes to waste. Nothing.",
 	"last_orders": "The last one standing takes double. Save your big swing for him.",
+	"photo_of_grandkids": "On your last pill you hit twice as hard. Not a plan. A last resort.",
+	"complaint_form": "Keep hitting the boss and he gets the paperwork. Two seconds of peace. Use them.",
+	"bureaucrats_stamp": "Every half minute your next hit files someone away for good. Pick the worst one.",
+	"lawyers_card": "The first boss hit in each half of the fight bounces off. The second won't. Don't push it.",
+	"dentures_in_glass": "Teeth out, cane faster. Throw them, then get stuck in.",
+	"polyester_suit": "Hits harder, but it sparks and you'll freeze up now and then. Don't swing next to anything big.",
+	"harmonica": "Land three combo finishers quickly and it heals you a little. Once a room. Tunefully.",
 }
 
 const DEFAULT_TIP := "Pick something off the rack and I'll tell you what it's good for."

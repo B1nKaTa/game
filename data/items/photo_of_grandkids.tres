@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/photo_of_grandkids.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "photo_of_grandkids"
+display_name = "Photo of the Grandkids"
+description = "On your last pill, all your damage is doubled. Do it for the little ones."
+rarity = "rare"
+tags = PackedStringArray("boss", "defence")
+effect = SubResource("Effect")

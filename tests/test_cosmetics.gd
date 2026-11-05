@@ -25,7 +25,7 @@ func test_only_the_bounty_cosmetics_are_never_sold() -> void:
 		if not def.is_sold():
 			never_sold.append(def.id)
 	never_sold.sort()
-	assert_eq(never_sold, ["aviator_sunglasses", "bingo_teal", "golf_visor", "power_tie", "sooty_cane"])
+	assert_eq(never_sold, ["bingo_teal", "sooty_cane"])
 
 
 func test_condolences_buy_and_bounty_ones_are_never_for_sale() -> void:

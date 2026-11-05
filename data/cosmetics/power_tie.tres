@@ -8,6 +8,6 @@ id = "power_tie"
 display_name = "Power Tie"
 description = "The Chairman's spare. Doreen kept it ironed for forty years."
 slot = "cardigan"
-price = 0
+price = 35
 color = Color(0.749019608, 0.152941176, 0.180392157, 1)
 shape = "tie"
