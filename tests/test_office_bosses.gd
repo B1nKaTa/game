@@ -338,15 +338,155 @@ func test_the_charge_after_the_pull_warns_its_own_lane() -> void:
 
 func test_the_takeover_is_only_for_when_he_is_far() -> void:
 	for roll in [0.0, 0.3, 0.6, 0.99]:
-		assert_true(Chairman.choose_attack(Chairman.Attack.NONE, false, roll) != Chairman.Attack.TAKEOVER)
+		for distance: float in [0.0, 60.0, 100.0, Chairman.TAKEOVER_START - 1.0]:
+			assert_true(Chairman.choose_attack(Chairman.Attack.NONE, distance, false, roll) != Chairman.Attack.TAKEOVER)
 	var seen := {}
 	for i in 100:
-		seen[Chairman.choose_attack(Chairman.Attack.NONE, true, i / 100.0)] = true
+		seen[Chairman.choose_attack(Chairman.Attack.NONE, 200.0, false, i / 100.0)] = true
 	assert_true(seen.has(Chairman.Attack.TAKEOVER), "far away it comes")
-	assert_eq(seen.size(), 3)
-	for last in [Chairman.Attack.GAVEL, Chairman.Attack.PROJECTIONS, Chairman.Attack.TAKEOVER]:
+	assert_true(seen.has(Chairman.Attack.GAVEL))
+	for last in [Chairman.Attack.GAVEL, Chairman.Attack.TAKEOVER]:
 		for i in 20:
-			assert_true(Chairman.choose_attack(last, true, i / 20.0) != last, "never the same twice running")
+			assert_true(Chairman.choose_attack(last, 200.0, false, i / 20.0) != last, "never the same twice running")
+
+
+# --- the Chairman: the desk slam up close ---
+
+func test_the_desk_slam_answers_him_up_close() -> void:
+	var seen := {}
+	for i in 100:
+		seen[Chairman.choose_attack(Chairman.Attack.NONE, 50.0, false, i / 100.0)] = true
+	assert_true(seen.has(Chairman.Attack.SLAM), "up close he slams")
+	assert_true(Chairman.SLAM_START >= 75.0 and Chairman.SLAM_START <= 85.0, "about 80 px")
+	for i in 20:
+		assert_true(Chairman.choose_attack(Chairman.Attack.SLAM, 50.0, false, i / 20.0) != Chairman.Attack.SLAM, "never twice running")
+		assert_true(Chairman.choose_attack(Chairman.Attack.NONE, 100.0, false, i / 20.0) != Chairman.Attack.SLAM, "not from further off")
+		assert_true(Chairman.choose_attack(Chairman.Attack.NONE, 50.0, true, i / 20.0) == Chairman.Attack.GAVEL, "while a chart runs he only gavels")
+
+
+func test_the_desk_slam_warns_whole_and_leaves_time_to_step_out() -> void:
+	assert_true(Chairman.SLAM_SHOWN_WHOLE, "it starts right beside him")
+	for phase_two in [false, true]:
+		assert_near(Chairman.windup_for(Chairman.Attack.SLAM, phase_two), Chairman.SLAM_WINDUP, "the second phase never shortens it")
+	var body := _load("chairman_of_the_board").body_size * 0.8
+	var closest := minf(body.x, body.y) / 2.0
+	var walk := PlayerStats.BASE_SPEED * (Chairman.SLAM_WINDUP - 0.3)
+	assert_true(walk > Chairman.SLAM_RADIUS - closest + 4.0, "out of the ring from right beside him: %f" % walk)
+	assert_true(Chairman.SLAM_RADIUS <= Chairman.SLAM_START, "the ring reaches where it is called for")
+	var slam := DeskSlam.new()
+	slam.setup(null, Chairman.SLAM_RADIUS, Chairman.SLAM_WINDUP)
+	assert_true(slam is GroundStrike, "it lands as any warned spot does")
+	assert_true(RoomView.is_passing_effect(slam), "and is cleared from a stored room")
+	assert_false(slam.advance(Chairman.SLAM_WINDUP - 0.05))
+	assert_true(slam.advance(0.1))
+	slam.free()
+	var shove := DeskSlam.shove_for(Vector2(100, 100), Vector2(140, 100))
+	assert_true(shove.normalized().is_equal_approx(Vector2.RIGHT), "away from him")
+	assert_true(DeskSlam.SHOVE_SPEED * DeskSlam.SHOVE_TIME <= 96.0, "a short shove")
+	assert_true(DeskSlam.shove_for(Vector2(5, 5), Vector2(5, 5)) != Vector2.ZERO, "even right under him")
+
+
+# --- the Chairman: the chart and the gavel together ---
+
+func _boss_layout(name: String) -> RoomLayout:
+	return load("res://data/rooms/head_office/%s.tres" % name)
+
+
+func _open_in(layout: RoomLayout) -> Callable:
+	return func(spot: Vector2) -> bool: return not layout.is_solid_at(WalkGrid.cell_of(spot))
+
+
+# A spot for feet: open floor, its whole feet box on open cells.
+func _feet_spot(layout: RoomLayout, rng: RandomNumberGenerator, room: Rect2) -> Vector2:
+	var is_open := _open_in(layout)
+	for i in 200:
+		var spot := Vector2(rng.randf_range(room.position.x + 10.0, room.end.x - 10.0), rng.randf_range(room.position.y + 10.0, room.end.y - 10.0))
+		var box := Rect2(spot - Player.FEET_BOX_SIZE / 2.0, Player.FEET_BOX_SIZE)
+		if is_open.call(box.position) and is_open.call(box.end) and is_open.call(Vector2(box.position.x, box.end.y)) and is_open.call(Vector2(box.end.x, box.position.y)):
+			return spot
+	return room.get_center()
+
+
+func test_projection_gaps_are_all_wide_enough_to_stand_in() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 3
+	for cells in ROOMS:
+		var room := ForemanBehavior.room_rect(cells)
+		for i in 200:
+			var bars := Chairman.projection_bars(room, rng.randf() * 200.0)
+			for gap in Chairman.projection_gaps(room, bars):
+				assert_true(gap.size.x >= Chairman.BAR_GAP - 0.01, "%s in %s" % [str(gap), str(room)])
+			for bar in bars:
+				assert_true(bar.size.x <= Chairman.BAR_WIDTH + 0.01)
+
+
+func test_bar_windows_follow_the_order_they_rise_in() -> void:
+	var left := Chairman.bar_windows(4, true)
+	assert_near(left[0].x, Chairman.BAR_WARNING)
+	assert_near(left[3].x, Chairman.BAR_WARNING + 3 * Chairman.BAR_STAGGER)
+	assert_near(left[0].y - left[0].x, Chairman.BAR_STAND)
+	var right := Chairman.bar_windows(4, false, 0.5)
+	assert_near(right[3].x, Chairman.BAR_WARNING - 0.5, "the right one first, counted from half a second in")
+	var bar := LaneDrop.new()
+	bar.setup(null, Rect2(32, 32, 64, 288), Chairman.BAR_WARNING, 0.3, Chairman.BAR_STAND, -1, LaneDrop.LOOK_BAR)
+	var window := bar.danger_window()
+	assert_near(window.x, 0.3 + Chairman.BAR_WARNING, "a bar's own window agrees")
+	assert_near(window.y, 0.3 + Chairman.BAR_WARNING + Chairman.BAR_STAND)
+	bar.advance(0.3)
+	bar.advance(Chairman.BAR_WARNING + 0.01)
+	bar.advance(Chairman.BAR_STAND + 0.01)
+	assert_true(bar.danger_window().y < 0.0, "and is over once it sinks")
+	bar.free()
+
+
+# Over 200 charts in both of his rooms, with him and Grandpa anywhere, in both phases (the second with
+# red tape going up as the chart does): every chart marks a spot he can reach, and every gavel while
+# the bars run leaves a spot he can reach in time, off every bar, off the gavel and off the Chairman.
+func test_a_gavel_during_a_chart_always_leaves_a_reachable_safe_spot() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 2026
+	var on_feet := 0
+	for seed_value in 200:
+		var layout := _boss_layout("floor_boss_01" if seed_value % 2 == 0 else "floor_boss_large_01")
+		var cells := layout.size_in_cells()
+		var room := ForemanBehavior.room_rect(cells)
+		var is_open := _open_in(layout)
+		var bars := Chairman.projection_bars(room, rng.randf() * 200.0)
+		var left_first := rng.randf() < 0.5
+		var feet := _feet_spot(layout, rng, room)
+		var boss_at := _feet_spot(layout, rng, room)
+		if boss_at.distance_to(feet) < 50.0:
+			boss_at = room.get_center() if feet.distance_to(room.get_center()) >= 50.0 else room.position + Vector2(40, 40)
+		var body := Rect2(boss_at - Vector2(22, 26), Vector2(44, 52))
+		var tape := {}
+		var phase_two := seed_value % 4 >= 2
+		if phase_two:
+			for cell in Chairman.tape_cells(cells, WalkGrid.cell_of(feet), is_open):
+				tape[cell] = TapeSpread.WARNING - Chairman.windup_for(Chairman.Attack.PROJECTIONS, true)
+		var fresh := Chairman.chart_route(room, bars, Chairman.bar_windows(bars.size(), left_first), body, is_open, tape)
+		var first_mark := Chairman.chart_mark(fresh, feet, body)
+		assert_true(first_mark != Vector2.INF, "seed %d: the chart marks a spot" % seed_value)
+		for bar in bars:
+			assert_false(bar.has_point(first_mark), "seed %d: the mark is never under a bar" % seed_value)
+		# The gavel comes as the chart is raised in the second phase, after a rest in the first, or
+		# later on in the chart for a second gavel.
+		var elapsed := 0.0 if phase_two else Chairman.BASE_COOLDOWN * 0.5
+		if seed_value % 5 == 4:
+			elapsed = Chairman.GAVEL_WINDUP + Chairman.BASE_COOLDOWN
+		var route := Chairman.chart_route(room, bars, Chairman.bar_windows(bars.size(), left_first, elapsed), body, is_open, tape)
+		var plan := Chairman.gavel_plan(route, feet, body, is_open)
+		assert_true(plan["spot"] != Vector2.INF, "seed %d: the gavel finds a spot" % seed_value)
+		if plan["spot"] == Vector2.INF:
+			continue
+		if plan["spot"] == feet:
+			on_feet += 1
+		var mark: Vector2 = plan["mark"]
+		assert_true(mark.distance_to(plan["spot"]) > Chairman.GAVEL_RADIUS, "seed %d: the mark is off the gavel" % seed_value)
+		assert_false(body.grow(SafeSpotMark.RADIUS).has_point(mark), "seed %d: off his body" % seed_value)
+		assert_true(route.danger_end_at(mark) <= 0.0, "seed %d: no bar covers the mark" % seed_value)
+		route.set_extra_circle(plan["spot"], Chairman.GAVEL_RADIUS, Chairman.GAVEL_WINDUP, Chairman.GAVEL_WINDUP + OverlapRoute.STEP_TIME)
+		assert_true(route.escape(feet)["safe"], "seed %d: and he can walk clear of it all" % seed_value)
+	assert_true(on_feet > 100, "most gavels still fall on him: %d of 200" % on_feet)
 
 
 # --- the Chairman: phase two ---
@@ -384,18 +524,30 @@ func test_spread_tape_lies_in_rows_inside_the_room_off_doors_and_props() -> void
 				assert_true(taped.has(target), "one row runs through where he stands")
 
 
-func test_phase_two_chains_a_projection_straight_into_one_gavel() -> void:
+func test_every_chart_is_followed_by_the_gavel_straight_away_in_phase_two() -> void:
 	var projections := Chairman.Attack.PROJECTIONS
 	var gavel := Chairman.Attack.GAVEL
 	assert_eq(Chairman.followup(projections, true), gavel)
-	assert_eq(Chairman.followup(projections, false), Chairman.Attack.NONE)
+	assert_eq(Chairman.followup(projections, false), gavel, "the gavel falls while the bars run in both phases")
+	assert_near(Chairman.rest_after_chart(true), 0.0, "without a rest in the second phase")
+	assert_true(Chairman.rest_after_chart(false) > 0.0)
 	assert_eq(Chairman.followup(gavel, true), Chairman.Attack.NONE, "the gavel never chains again")
-	for attack in [Chairman.Attack.TAKEOVER, Chairman.Attack.CHARGE, Chairman.Attack.TAPE]:
+	for attack in [Chairman.Attack.TAKEOVER, Chairman.Attack.CHARGE, Chairman.Attack.TAPE, Chairman.Attack.SLAM]:
 		assert_eq(Chairman.followup(attack, true), Chairman.Attack.NONE)
 	for attack in [Chairman.Attack.PROJECTIONS, Chairman.Attack.TAKEOVER, Chairman.Attack.CHARGE, Chairman.Attack.TAPE]:
 		assert_true(Chairman.windup_for(attack, true) < Chairman.windup_for(attack, false), "his other windups quicken")
 	assert_true(Chairman.cooldown_for(true) < Chairman.cooldown_for(false))
+	assert_true(Chairman.chart_break(true) < Chairman.chart_break(false), "charts come closer together")
 	assert_near(Chairman.PHASE_TWO_SPEED, 1.2)
+
+
+func test_phase_two_tape_goes_up_with_a_chart_not_on_its_own() -> void:
+	var source := FileAccess.get_file_as_string("res://scripts/actors/behaviors/chairman_behavior.gd")
+	var begin := source.substr(source.find("func _begin("), 4000)
+	var chart := begin.substr(begin.find("Attack.PROJECTIONS:"), 400)
+	assert_true(chart.contains("spreads_tape(") and chart.contains("_spread_tape(enemy)"), "the tape spreads as the chart is raised")
+	var tick := source.substr(source.find("func tick("), 2400)
+	assert_false(tick.contains("Attack.TAPE"), "and never comes as an attack of its own")
 
 
 func test_the_chairman_is_clearly_harder_than_every_floor_boss_before_him() -> void:
