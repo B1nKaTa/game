@@ -68,10 +68,11 @@ func abandon_and_load(slot: int) -> void:
 		var run := Progress.make_run()
 		RunCheckpoint.apply_run(run, checkpoint.get("run", {}), Content.items())
 		var parachute := run.parachute_pay(int(checkpoint.get("run_earned", 0)))
+		# Cleared before the pay, so a kill in between can never leave the run to abandon and pay again.
+		Progress.clear_checkpoint()
 		if parachute > 0:
 			Progress.add_pension(parachute)
 		Progress.last_run = {"died": true, "bosses": int(checkpoint.get("bosses", 0))}
-		Progress.clear_checkpoint()
 	enter_slot()
 
 

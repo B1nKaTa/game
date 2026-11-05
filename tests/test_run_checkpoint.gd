@@ -295,3 +295,15 @@ func test_a_complete_temp_file_stands_in_for_a_missing_run_file() -> void:
 	_write_text(JSON.stringify({"version": RunCheckpoint.VERSION, "depth": 2}))
 	assert_eq(int(RunCheckpoint.read(_path()).get("depth", 0)), 2, "run.json wins while it is there")
 	_clean()
+
+
+# Abandoning pays the Golden Parachute into the save at once, so a kill after the pay but before the
+# clear would leave the run to abandon, and pay, again: the checkpoint goes first.
+func test_abandoning_clears_the_checkpoint_before_the_parachute_pays() -> void:
+	var source := FileAccess.get_file_as_string("res://scripts/autoload/game.gd")
+	var abandon := source.substr(source.find("func abandon_and_load"), 900)
+	var cleared := abandon.find("Progress.clear_checkpoint()")
+	var paid := abandon.find("Progress.add_pension(parachute)")
+	assert_true(cleared > 0 and paid > 0)
+	assert_true(cleared < paid, "cleared before the pay")
+	assert_true(abandon.find("run.parachute_pay(") < cleared, "the pay is worked out from the checkpoint first")
