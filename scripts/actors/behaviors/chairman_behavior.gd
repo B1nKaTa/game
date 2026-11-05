@@ -1,14 +1,18 @@
 class_name ChairmanBehavior
 extends EnemyBehavior
 
-# The Chairman of the Board, the last boss of all. His gavel comes down on a warned spot, the one attack
-# that costs three pills, so its warning always shows whole, with a second ring round the spot. His
-# quarterly projections raise the bars of a bar chart out of the floor in turn, down warned columns
-# with open gaps between, the nearest gap marked green. His hostile takeover shows a warned tether to
-# Grandpa and then pulls him a short way in, never through anything solid, and charges down a fresh
-# warned lane; a dodge before the pull snaps the tether. Below half health he is quicker, red tape
-# spreads across warned rows of the room every so often for ten seconds, and every projection chains
-# straight into one gavel.
+# The Chairman of the Board, the last boss of all, and the hardest fight in the game, because his
+# attacks overlap. His quarterly projections raise the bars of a bar chart out of the floor in turn,
+# down warned columns with open gaps between, and the chart keeps rising and falling in the background
+# while he stands at it and brings his gavel down: the one attack that costs three pills, its warning
+# always shown whole for its 1.2 s with a second ring. So the safe gap and the gavel's spot must be
+# found together. Before each gavel he works out where Grandpa can still walk to in time (OverlapRoute),
+# and the gavel never takes the last way out: a green mark shows a spot that stays safe to the end.
+# Between charts, his hostile takeover shows a warned tether to Grandpa far away and pulls him a short
+# way in, then charges down a fresh warned lane; a dodge before the pull snaps the tether. Up close he
+# slams his desk: a warned ring round him, shown whole, that costs a pill and shoves Grandpa out.
+# Below half health he is quicker, the charts come closer together, red tape spreads across warned rows
+# of the room for ten seconds as a chart starts, and the gavel follows the chart without a rest.
 const GAVEL_WINDUP := 1.2
 const GAVEL_DAMAGE := Enemy.HEAVIEST_DAMAGE
 # The gavel's warning shows for all of its windup, whatever the player's warning stat.
@@ -23,6 +27,10 @@ const BAR_STAGGER := 0.3
 const BAR_STAND := 0.35
 # A bar cut down to less than this by a wall is left out.
 const BAR_MIN := 12.0
+# How long after one chart has sunk the next one rises, and below half health.
+const FIRST_CHART := 1.5
+const CHART_BREAK := 2.4
+const PHASE_TWO_CHART_BREAK := 1.4
 const TETHER_WINDUP := 0.9
 const TETHER_SHOWN_WHOLE := true
 const TETHER_LANE_WIDTH := 20.0
@@ -38,6 +46,12 @@ const CHARGE_SPEED := 400.0
 const CHARGE_HIT_RANGE := 28.0
 const CHARGE_LANE_WIDTH := 52.0
 const CHARGE_DAMAGE := Enemy.HEAVY_DAMAGE
+# The desk slam, his answer when Grandpa's feet are this close. It starts right beside him, so its
+# warning shows whole, and the second phase never shortens it.
+const SLAM_START := 80.0
+const SLAM_RADIUS := 72.0
+const SLAM_WINDUP := 0.8
+const SLAM_SHOWN_WHOLE := true
 const TAPE_WINDUP := 0.6
 const TAPE_EVERY := 10.0
 const TAPE_ROWS := 3
@@ -50,8 +64,10 @@ const PHASE_TWO_SPEED := 1.2
 const PHASE_TWO_WINDUP_SCALE := 0.8
 const KEEP_NEAR := 90.0
 const SAY_TIME := 1.0
+# When no spot for the gavel leaves a way out, he waits this long and tries again.
+const GAVEL_RETRY := 0.15
 
-enum Attack { NONE, GAVEL, PROJECTIONS, TAKEOVER, CHARGE, TAPE }
+enum Attack { NONE, GAVEL, PROJECTIONS, TAKEOVER, CHARGE, TAPE, SLAM }
 
 var _telegraph := Telegraph.new()
 var _dash := BossDash.new()
@@ -59,11 +75,16 @@ var _attack := Attack.NONE
 var _last := Attack.NONE
 var _next := Attack.NONE
 var _cooldown := 1.2
-# Starts full, so the first spread comes as soon as he reaches the second phase.
+# Starts full, so the first spread comes with the first chart of the second phase.
 var _since_tape := TAPE_EVERY
 var _aim := Vector2.RIGHT
 var _tether: TakeoverTether
 var _bar_count := 0
+# The chart standing now: its bars, how long until the last has sunk, and its green mark.
+var _bars: Array = []
+var _chart_left := 0.0
+var _chart_wait := FIRST_CHART
+var _mark: GapMark
 var _rng := RandomNumberGenerator.new()
 
 
@@ -79,12 +100,18 @@ static func cooldown_for(phase_two: bool) -> float:
 	return PHASE_TWO_COOLDOWN if phase_two else BASE_COOLDOWN
 
 
-# The second phase quickens his windups, but never the gavel's extra-clear warning.
+static func chart_break(phase_two: bool) -> float:
+	return PHASE_TWO_CHART_BREAK if phase_two else CHART_BREAK
+
+
+# The second phase quickens his windups, but never the gavel's extra-clear warning or the slam's.
 static func windup_for(attack: int, phase_two: bool) -> float:
 	var windup := PROJECTION_WINDUP
 	match attack:
 		Attack.GAVEL:
 			return GAVEL_WINDUP
+		Attack.SLAM:
+			return SLAM_WINDUP
 		Attack.TAKEOVER:
 			windup = TETHER_WINDUP
 		Attack.CHARGE:
@@ -94,17 +121,27 @@ static func windup_for(attack: int, phase_two: bool) -> float:
 	return windup * (PHASE_TWO_WINDUP_SCALE if phase_two else 1.0)
 
 
-# In the second phase every projection chains straight into one gavel, and nothing else chains.
-static func followup(attack: int, phase_two: bool) -> int:
-	if phase_two and attack == Attack.PROJECTIONS:
+# A chart is always followed by the gavel, which falls while its bars run. Nothing else chains.
+static func followup(attack: int, _phase_two: bool) -> int:
+	if attack == Attack.PROJECTIONS:
 		return Attack.GAVEL
 	return Attack.NONE
 
 
-# The takeover is only for when Grandpa is far, and the gavel stands in for it up close.
-static func choose_attack(last: int, far: bool, roll: float) -> int:
-	var options: Array[int] = [Attack.GAVEL, Attack.PROJECTIONS]
-	if far:
+# In the second phase the gavel follows the chart without a rest.
+static func rest_after_chart(phase_two: bool) -> float:
+	return 0.0 if phase_two else BASE_COOLDOWN
+
+
+# While a chart runs he only gavels. Between charts the gavel takes turns with the desk slam when
+# Grandpa's feet are close, and with the takeover when they are far.
+static func choose_attack(last: int, distance: float, charting: bool, roll: float) -> int:
+	if charting:
+		return Attack.GAVEL
+	var options: Array[int] = [Attack.GAVEL]
+	if distance <= SLAM_START:
+		options.append(Attack.SLAM)
+	elif distance >= TAKEOVER_START:
 		options.append(Attack.TAKEOVER)
 	if options.size() > 1:
 		options.erase(last)
@@ -134,7 +171,9 @@ static func pull_shove(feet: Vector2, chairman: Vector2) -> Vector2:
 
 
 # The bars of the chart, across the room's floor from wall to wall, each running its whole height.
-# offset slides the chart along, so the gaps are somewhere new each time.
+# offset slides the chart along, so the gaps are somewhere new each time. A strip left by a wall too
+# narrow to stand in is widened into a whole gap, by trimming the bar beside it, so every gap can be
+# stood in and every bar has a gap at its side.
 static func projection_bars(room: Rect2, offset: float) -> Array[Rect2]:
 	var bars: Array[Rect2] = []
 	var pitch := BAR_WIDTH + BAR_GAP
@@ -145,6 +184,24 @@ static func projection_bars(room: Rect2, offset: float) -> Array[Rect2]:
 		if right - left >= BAR_MIN:
 			bars.append(Rect2(left, room.position.y, right - left, room.size.y))
 		x += pitch
+	if not bars.is_empty():
+		var first := bars[0]
+		var edge := first.position.x - room.position.x
+		if edge > 0.01 and edge < BAR_GAP:
+			var trimmed := first.end.x - (room.position.x + BAR_GAP)
+			if trimmed >= BAR_MIN:
+				bars[0] = Rect2(room.position.x + BAR_GAP, first.position.y, trimmed, first.size.y)
+			else:
+				bars.remove_at(0)
+	if not bars.is_empty():
+		var last := bars[bars.size() - 1]
+		var edge_end := room.end.x - last.end.x
+		if edge_end > 0.01 and edge_end < BAR_GAP:
+			var kept := (room.end.x - BAR_GAP) - last.position.x
+			if kept >= BAR_MIN:
+				bars[bars.size() - 1] = Rect2(last.position.x, last.position.y, kept, last.size.y)
+			else:
+				bars.remove_at(bars.size() - 1)
 	return bars
 
 
@@ -161,8 +218,8 @@ static func projection_gaps(room: Rect2, bars: Array[Rect2]) -> Array[Rect2]:
 	return gaps
 
 
-# Where the green mark goes: the middle of the gap nearest his feet, at his height, kept off the
-# Chairman's own body. Only a gap wide enough to stand in counts.
+# The middle of the gap nearest his feet, at his height, kept off the Chairman's own body. Only a gap
+# wide enough to stand in counts. Used when nothing else is known about the room.
 static func safe_gap_point(gaps: Array[Rect2], feet: Vector2, avoid := Rect2()) -> Vector2:
 	var best := Vector2.INF
 	var best_distance := INF
@@ -177,6 +234,66 @@ static func safe_gap_point(gaps: Array[Rect2], feet: Vector2, avoid := Rect2()) 
 			best_distance = distance
 			best = spot
 	return best
+
+
+# When each bar of a chart hurts, counted from elapsed seconds after it was raised: x when it rises
+# and y when it sinks. Bars rise in turn from the left, or from the right.
+static func bar_windows(count: int, left_first: bool, elapsed := 0.0) -> Array[Vector2]:
+	var windows: Array[Vector2] = []
+	for i in count:
+		var order := i if left_first else count - 1 - i
+		var rises := order * BAR_STAGGER + BAR_WARNING - elapsed
+		windows.append(Vector2(rises, rises + BAR_STAND))
+	return windows
+
+
+# The floor of a chart for working out a way out: each bar hurting in its window (one that is over
+# has a negative end), his body in the way, closed cells, and red tape by the time it is strung.
+static func chart_route(room: Rect2, bars: Array[Rect2], windows: Array[Vector2], body := Rect2(), is_open := Callable(), tape := {}) -> OverlapRoute:
+	var route := OverlapRoute.new(room)
+	for i in bars.size():
+		if windows[i].y >= 0.0:
+			route.add_rect(bars[i], windows[i].x, windows[i].y)
+	if body.has_area():
+		route.add_block(body)
+	route.set_open(is_open)
+	for cell in tape:
+		route.add_sticky(cell, tape[cell])
+	return route
+
+
+# A mark may not go on his body or just beside it.
+static func keep_off_body(body: Rect2) -> Callable:
+	var avoid := body.grow(SafeSpotMark.RADIUS)
+	return func(spot: Vector2) -> bool: return avoid.has_area() and avoid.has_point(spot)
+
+
+# Where the green mark of a new chart goes: the nearest spot he can reach that no bar ever covers.
+# Vector2.INF if there is none, which the tests rule out.
+static func chart_mark(route: OverlapRoute, feet: Vector2, body := Rect2()) -> Vector2:
+	var out := route.escape(feet, keep_off_body(body))
+	return out["pure"] if out["safe"] else Vector2.INF
+
+
+# Where the gavel falls while a chart runs, and where the mark moves: on his feet when that still
+# leaves him a way to a spot nothing will hurt, otherwise a little off. {spot, mark}, both INF when
+# no spot works, and then he holds the gavel back.
+static func gavel_plan(route: OverlapRoute, feet: Vector2, body := Rect2(), open_at := Callable()) -> Dictionary:
+	return route.strike_plan(feet, GAVEL_RADIUS, GAVEL_WINDUP, open_at, keep_off_body(body))
+
+
+# A mark that lies in a gap sits in its middle, where it reads best, when the middle is as safe.
+static func centered_in_gap(route: OverlapRoute, spot: Vector2, gaps: Array[Rect2], strike := Vector2.INF) -> Vector2:
+	for gap in gaps:
+		if spot.x < gap.position.x or spot.x >= gap.end.x:
+			continue
+		var middle := Vector2(gap.get_center().x, spot.y)
+		if route.danger_end_at(middle) > 0.0 or route.is_blocked_at(middle):
+			return spot
+		if strike != Vector2.INF and middle.distance_to(strike) <= GAVEL_RADIUS + OverlapRoute.MARGIN:
+			return spot
+		return middle
+	return spot
 
 
 # Whether a cell may be taped: inside the walls, on open floor, and well clear of every doorway.
@@ -209,6 +326,9 @@ static func tape_cells(room_cells: Vector2i, target_cell: Vector2i, is_open := C
 func tick(enemy: Enemy, delta: float) -> void:
 	var phase_two := is_phase_two(enemy.hp, enemy.max_hp())
 	_since_tape += delta
+	_chart_left = maxf(_chart_left - delta, 0.0)
+	if _chart_left <= 0.0:
+		_chart_wait -= delta
 	if _dash.is_active():
 		_dash.tick(enemy, delta)
 		if not _dash.is_active():
@@ -233,13 +353,22 @@ func tick(enemy: Enemy, delta: float) -> void:
 		_begin(enemy, chained, phase_two)
 		return
 	if _cooldown <= 0.0:
-		if spreads_tape(phase_two, _since_tape):
-			_begin(enemy, Attack.TAPE, phase_two)
+		if not _charting() and _chart_wait <= 0.0:
+			_begin(enemy, Attack.PROJECTIONS, phase_two)
 		else:
-			_begin(enemy, choose_attack(_last, enemy.distance_to_target() >= TAKEOVER_START, _rng.randf()), phase_two)
+			_begin(enemy, choose_attack(_last, _feet_distance(enemy), _charting(), _rng.randf()), phase_two)
 		return
-	if enemy.distance_to_target() > KEEP_NEAR:
+	# He stands at his chart while it runs, so its mark is never under him.
+	if not _charting() and enemy.distance_to_target() > KEEP_NEAR:
 		enemy.desired_velocity = enemy.chase_direction() * speed
+
+
+func _charting() -> bool:
+	return _chart_left > 0.0
+
+
+func _feet_distance(enemy: Enemy) -> float:
+	return enemy.global_position.distance_to(enemy.target_ground())
 
 
 func _target_dodging(enemy: Enemy) -> bool:
@@ -247,17 +376,29 @@ func _target_dodging(enemy: Enemy) -> bool:
 
 
 func _begin(enemy: Enemy, attack: int, phase_two: bool) -> void:
+	var gavel_at := enemy.target_ground()
+	if attack == Attack.GAVEL and _charting():
+		var plan := gavel_plan(_live_route(enemy), enemy.target_ground(), enemy.body_rect(), enemy.open_ground)
+		if plan["spot"] == Vector2.INF:
+			# No spot leaves him a way out while the bars run, so the gavel waits.
+			_cooldown = GAVEL_RETRY
+			return
+		gavel_at = plan["spot"]
+		_move_mark(enemy, plan["mark"], plan["spot"])
 	_attack = attack
 	_telegraph.start(windup_for(attack, phase_two))
 	match attack:
 		Attack.GAVEL:
 			enemy.set_warning(_telegraph, WARNING_RADIUS, GAVEL_SHOWN_WHOLE)
 			enemy.say("Order! Order!", SAY_TIME)
-			drop_gavel(enemy, enemy.target_ground(), GAVEL_WINDUP)
+			drop_gavel(enemy, gavel_at, GAVEL_WINDUP)
 		Attack.PROJECTIONS:
 			enemy.set_warning(_telegraph, WARNING_RADIUS)
 			enemy.say("Quarterly projections!", SAY_TIME)
-			_raise_projections(enemy)
+			# Below half health the tape goes up as the chart does.
+			if spreads_tape(phase_two, _since_tape):
+				_since_tape = 0.0
+				_spread_tape(enemy)
 		Attack.TAKEOVER:
 			_aim = enemy.direction_to_target()
 			enemy.set_warning(_telegraph, WARNING_RADIUS, TETHER_SHOWN_WHOLE)
@@ -272,6 +413,13 @@ func _begin(enemy: Enemy, attack: int, phase_two: bool) -> void:
 			enemy.set_warning(_telegraph, CHARGE_HIT_RANGE)
 			enemy.set_warning_lane(_aim, enemy.global_position.distance_to(_charge_end(enemy)), CHARGE_LANE_WIDTH)
 			enemy.say("Acquired!", SAY_TIME)
+		Attack.SLAM:
+			enemy.set_warning(_telegraph, WARNING_RADIUS, SLAM_SHOWN_WHOLE)
+			enemy.say("Meeting adjourned!", SAY_TIME)
+			var slam := DeskSlam.new()
+			slam.setup(enemy, SLAM_RADIUS, SLAM_WINDUP)
+			enemy.get_parent().add_child(slam)
+			slam.global_position = enemy.global_position
 		Attack.TAPE:
 			_since_tape = 0.0
 			enemy.set_warning(_telegraph, WARNING_RADIUS)
@@ -280,10 +428,14 @@ func _begin(enemy: Enemy, attack: int, phase_two: bool) -> void:
 
 
 func _finish_attack(enemy: Enemy, phase_two: bool) -> void:
-	var busy := 0.0
 	match _attack:
 		Attack.PROJECTIONS:
-			busy = maxf(projection_time(_bar_count) - windup_for(Attack.PROJECTIONS, phase_two), 0.0)
+			_raise_projections(enemy)
+			_chart_wait = chart_break(phase_two)
+			_cooldown = rest_after_chart(phase_two)
+			_last = Attack.PROJECTIONS
+			_next = followup(Attack.PROJECTIONS, phase_two)
+			return
 		Attack.TAKEOVER:
 			# The tether held: he pulls, then winds up a charge down a fresh lane.
 			_pull(enemy)
@@ -294,7 +446,7 @@ func _finish_attack(enemy: Enemy, phase_two: bool) -> void:
 			_dash.start(_aim, enemy.global_position.distance_to(_charge_end(enemy)), CHARGE_SPEED, CHARGE_HIT_RANGE, CHARGE_DAMAGE)
 			_attack = Attack.NONE
 			return
-	_cooldown = cooldown_for(phase_two) + busy
+	_cooldown = cooldown_for(phase_two)
 	_last = _attack
 	_next = followup(_attack, phase_two)
 
@@ -342,22 +494,91 @@ static func projection_time(bar_count: int) -> float:
 	return maxi(bar_count - 1, 0) * BAR_STAGGER + BAR_WARNING + BAR_STAND + LaneDrop.SHOW_TIME
 
 
+func _open_cells(enemy: Enemy) -> Callable:
+	var grid := enemy.walk_grid
+	if grid == null:
+		return Callable()
+	return func(spot: Vector2) -> bool: return grid.is_open(WalkGrid.cell_of(spot))
+
+
+# Every cell of red tape in the room, by when it is strung: now for strung tape, after its warning for
+# a spread still warning, after the cut heals for tape a dodge has cut.
+func _tape_now(enemy: Enemy) -> Dictionary:
+	var tape := {}
+	if not enemy.is_inside_tree():
+		return tape
+	for node in enemy.get_tree().get_nodes_in_group(RedTape.GROUP):
+		if not is_instance_valid(node):
+			continue
+		var from := 0.0
+		var spread = node.get_parent()
+		if spread is TapeSpread and not spread.is_strung():
+			from = spread.warning_left()
+		elif node.is_cut():
+			from = node._cut_left
+		tape[WalkGrid.cell_of(node.global_position)] = from
+	return tape
+
+
+# The chart as it stands this moment, with each bar's own time left.
+func _live_route(enemy: Enemy) -> OverlapRoute:
+	var bars: Array[Rect2] = []
+	var windows: Array[Vector2] = []
+	for drop in _bars:
+		if is_instance_valid(drop):
+			bars.append(drop.strip())
+			windows.append(drop.danger_window())
+	return chart_route(ForemanBehavior.room_rect(enemy.room_cells), bars, windows, enemy.body_rect(), _open_cells(enemy), _tape_now(enemy))
+
+
+func _move_mark(enemy: Enemy, spot: Vector2, strike: Vector2) -> void:
+	if spot == Vector2.INF:
+		return
+	var room := ForemanBehavior.room_rect(enemy.room_cells)
+	var gaps := projection_gaps(room, _bar_rects())
+	var at := centered_in_gap(_live_route(enemy), spot, gaps, strike)
+	var lasts := maxf(_chart_left, GAVEL_WINDUP + 0.3)
+	if not is_instance_valid(_mark):
+		_mark = GapMark.new()
+		_mark.setup(lasts)
+		enemy.get_parent().add_child(_mark)
+	else:
+		_mark.setup(maxf(_mark.time_left(), lasts))
+	_mark.global_position = at
+
+
+func _bar_rects() -> Array[Rect2]:
+	var rects: Array[Rect2] = []
+	for drop in _bars:
+		if is_instance_valid(drop):
+			rects.append(drop.strip())
+	return rects
+
+
 func _raise_projections(enemy: Enemy) -> void:
 	var room := ForemanBehavior.room_rect(enemy.room_cells)
 	var bars := projection_bars(room, _rng.randf() * (BAR_WIDTH + BAR_GAP))
 	var left_first := _rng.randf() < 0.5
 	_bar_count = bars.size()
+	_bars.clear()
 	for i in bars.size():
 		var order := i if left_first else bars.size() - 1 - i
 		var drop := LaneDrop.new()
 		drop.setup(enemy, bars[i], BAR_WARNING, order * BAR_STAGGER, BAR_STAND, -1, LaneDrop.LOOK_BAR)
 		enemy.get_parent().add_child(drop)
-	var spot := safe_gap_point(projection_gaps(room, bars), enemy.target_ground(), enemy.body_rect())
+		_bars.append(drop)
+	_chart_left = projection_time(bars.size())
+	var route := chart_route(room, bars, bar_windows(bars.size(), left_first), enemy.body_rect(), _open_cells(enemy), _tape_now(enemy))
+	var spot := chart_mark(route, enemy.target_ground(), enemy.body_rect())
+	if spot == Vector2.INF:
+		spot = safe_gap_point(projection_gaps(room, bars), enemy.target_ground(), enemy.body_rect())
+	else:
+		spot = centered_in_gap(route, spot, projection_gaps(room, bars))
 	if spot != Vector2.INF:
-		var mark := GapMark.new()
-		mark.setup(projection_time(bars.size()))
-		enemy.get_parent().add_child(mark)
-		mark.global_position = spot
+		_mark = GapMark.new()
+		_mark.setup(_chart_left)
+		enemy.get_parent().add_child(_mark)
+		_mark.global_position = spot
 
 
 func _spread_tape(enemy: Enemy) -> void:

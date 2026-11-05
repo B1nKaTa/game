@@ -589,7 +589,6 @@ func _augustine() -> void:
 	boss.global_position = center
 	_stand(_cell(12, 8))
 	await _wait(0.1)
-	b._chained = false
 	b._begin(boss, HeadOfDeparturesBehavior.Attack.RUNWAY, true)
 	await _until(func(): return _of(TerminalStrike).any(func(s): return s.kind == TerminalStrike.LOOK_STAMP), 4.0)
 	await _wait(0.3)

@@ -77,6 +77,17 @@ func fill() -> float:
 	return clampf(1.0 - _left / _warning, 0.0, 1.0)
 
 
+# When, counted from now, the strip can hurt: x its start and y its end, or (-1, -1) once it never
+# will again. Memos hurt on the moment they land, a bar for as long as it stands.
+func danger_window() -> Vector2:
+	if not _landed:
+		var lands := maxf(_delay, 0.0) + maxf(_left, 0.0)
+		return Vector2(lands, lands + maxf(_stand, 0.02))
+	if _stand_left > 0.0 and not _has_hit:
+		return Vector2(0.0, _stand_left)
+	return Vector2(-1.0, -1.0)
+
+
 func is_finished() -> bool:
 	return _landed and _stand_left <= 0.0 and _show_left <= 0.0
 

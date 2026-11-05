@@ -65,6 +65,21 @@ func advance(delta: float) -> bool:
 	return was_lit
 
 
+# When, counted from now, the lane is lit: x its start and y its end, or (-1, -1) once it is over.
+func danger_window() -> Vector2:
+	if is_over():
+		return Vector2(-1.0, -1.0)
+	var lights := maxf(_delay, 0.0) + maxf(_left, 0.0)
+	return Vector2(lights, lights + maxf(_lit_left, 0.0))
+
+
+# The lane's floor as a rectangle in the room, for a lane running right or down.
+func lane_rect() -> Rect2:
+	var across := _direction.orthogonal().abs()
+	var start := global_position - across * _width / 2.0
+	return Rect2(start, _direction.abs() * _length + across * _width)
+
+
 func is_over() -> bool:
 	return _delay <= 0.0 and _left <= 0.0 and _lit_left <= 0.0
 
