@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/last_orders.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "last_orders"
+display_name = "Last Orders"
+description = "The last enemy left in a room takes double damage, bosses excepted. Time, gentlemen, please."
+rarity = "rare"
+tags = PackedStringArray("room", "cane")
+first_clear_path = "cemetery"
+effect = SubResource("Effect")

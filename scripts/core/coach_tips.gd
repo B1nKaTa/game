@@ -97,6 +97,14 @@ const TIPS := {
 	"mothball_pockets": "Take a hit and the ghosts back off. Use the two seconds. Don't sniff them.",
 	"telescope_cane": "The view runs ahead of you. Aim where you're going, see what's coming.",
 	"fortune_card": "Check the map: you'll know who's waiting. And watch his first move, it comes slow.",
+	"obituary_clippings": "Every kill in a room makes the next hit harder. Start with the easy ones.",
+	"grief_counselor": "Clear a room without a scratch and get paid. Dodge first, swing second.",
+	"early_bird_special": "You're quick for the first ten seconds of a fight. Spend them on the nasty ones.",
+	"alarm_clock": "Walk in and everyone's dozy for a moment. Get your first swing in. Free shot.",
+	"wreath_of_thorns": "Anything that bumps into you gets pricked. Let them come. Not too close.",
+	"bingo_hall_pass": "Every three rooms you clear, the next lot comes in weaker. Keep the streak going.",
+	"moving_boxes": "Leave a heal behind and it follows you. Nothing goes to waste. Nothing.",
+	"last_orders": "The last one standing takes double. Save your big swing for him.",
 }
 
 const DEFAULT_TIP := "Pick something off the rack and I'll tell you what it's good for."

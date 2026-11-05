@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/grief_counselor.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "grief_counselor"
+display_name = "Grief Counselor's Card"
+description = "A fight room cleared without losing a pill pays 8 Pension. You're handling this very well."
+rarity = "rare"
+tags = PackedStringArray("room", "money")
+first_clear_path = "funeral_parlour"
+effect = SubResource("Effect")
