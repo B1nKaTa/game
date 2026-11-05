@@ -82,3 +82,17 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
   Crossroads, with nothing visited or cleared. Items, pills, keys, Thermoses, potion, Pension and
   run earnings are the checkpoint's own. The route (`ending.paths`) is mapped too. A per-floor item
   state is restored as saved rather than reset, as any resume does.
+
+## Task 3: the Cinema's look, props, screen, life signs and rooms
+
+- **Palette:** a deep teal carpet (0.09, 0.32, 0.33) in three close tones, dark indigo panels
+  (0.12, 0.07, 0.21) with gold trim, plum velvet seats, a dim violet-grey ambient, warm amber wall
+  sconces, a faint cool fill and no scattered lanterns. Nothing large is red; a test keeps every big
+  area's hue off red and far from the warning colour, and the walls apart from the Parlour's.
+- **Patterns 14:** `CinemaLook.CARPET` lays two lighter carpet runners edged in thin gold lines along
+  the door column and the door row (so they always lead door to door), and faint art-deco fans of
+  thin arcs on the rest. No dots, small squares, speckle or dark bands, which are the film strip's
+  look (Task 2), and no bright diagonals, which are the wet floor's. `CinemaLook.DECO_WALL` draws a
+  gold rail, fluting, a gold skirting and a gold chevron on every other panel.
+- **Decor:** only cobwebs and potted palms are scattered, thinly (density 0.03); the aisle lights are
+  placed by rule with the seat rows, not scattered.

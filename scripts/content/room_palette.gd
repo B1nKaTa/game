@@ -157,6 +157,21 @@ extends Resource
 @export var ball_washer := Color("3b6fb0")
 # Thin ground fog (RoomDecor.FOG): faint flat wisps, kept see-through so nothing under them hides.
 @export var fog := Color(0.75, 0.82, 0.95, 0.14)
+# The Flashback Cinema. The carpet runners (CinemaLook.CARPET), the gold of the art-deco trim, the plum
+# velvet seat rows, the pillars, the little aisle lights in the floor, and the screen on the north wall
+# of every fighting room with the projector's beam from the south, when screen is on.
+@export_group("The Flashback Cinema")
+@export var carpet_runner := Color("23595c")
+@export var deco_gold := Color("c9a24a")
+@export var deco_gold_dim := Color(0.79, 0.64, 0.29, 0.55)
+@export var seat_velvet := Color("6e3f7c")
+@export var seat_velvet_dark := Color("3f2348")
+@export var pillar := Color("3a3a52")
+@export var pillar_edge := Color("17172a")
+@export var aisle_light := Color("ffcf7a")
+@export var screen_glow := Color(0.7, 0.8, 1.0)
+@export var projector_beam := Color(1.0, 0.86, 0.62)
+@export var screen := false
 
 
 func weight_of(kind: String) -> float:

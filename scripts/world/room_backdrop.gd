@@ -109,6 +109,9 @@ func _draw() -> void:
 				# Fairway's End: clipped hedges.
 				if _palette.wall_pattern == GolfLook.HEDGE_WALL:
 					GolfLook.draw_wall_tile(self, tile, Vector2i(x, y), _palette)
+				# The Flashback Cinema: dark panels with gold trim.
+				if _palette.wall_pattern == CinemaLook.DECO_WALL:
+					CinemaLook.draw_wall_tile(self, tile, Vector2i(x, y), _palette)
 				continue
 			draw_rect(tile, _palette.floor_color(Vector2i(x, y), _seed))
 			# A patterned floor lays carpet on its middle tone, woven and seamless, and tiles the rest.
@@ -156,6 +159,10 @@ func _draw() -> void:
 			# Fairway's End: mown stripes and nothing else, since dots are the sand's look.
 			if _palette.floor_pattern == GolfLook.FAIRWAY:
 				GolfLook.draw_floor_tile(self, tile, Vector2i(x, y), _palette)
+				continue
+			# The Flashback Cinema: teal carpet with runners through the doors, and no speckles.
+			if _palette.floor_pattern == CinemaLook.CARPET:
+				CinemaLook.draw_floor_tile(self, tile, Vector2i(x, y), Vector2i(_rows[0].length(), _rows.size()), _palette)
 				continue
 			draw_line(tile.position, tile.position + Vector2(TILE, 0), _palette.grout, 1.0)
 			draw_line(tile.position, tile.position + Vector2(0, TILE), _palette.grout, 1.0)
