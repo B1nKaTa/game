@@ -15,9 +15,9 @@ extends SceneTree
 # Version 6 reads the floor-5 bosses' overlaps: the Chairman's desk slam is a warned spot like any
 # deep strike, and Augustine's runway mark is honoured while his lanes light, as a gap is while a
 # chart or a sweep runs (the mark is skipped whenever a lane or strike covers it, as before).
-# Version 7 knows touching a body costs a pill: outside escapes from warned attacks it keeps its feet
-# a few pixels off every body that hurts on touch, sliding round one in its way. Touches are named
-# touch_<id> in the hits by source.
+# Version 7 knows touching a body costs a pill: it keeps its feet a few pixels off every body that
+# hurts on touch, sliding round one in its way (an escape from a warned attack slides but never
+# stops for one). Touches are named touch_<id> in the hits by source.
 
 const WALL_LIMIT_MS := 1700000
 const SKILLS := {
@@ -503,8 +503,12 @@ class Bot extends Node:
 		if _dodge_against != Vector2.ZERO and _dodge_wish:
 			_move = _dodge_against
 		elif safe == Vector2.INF and _deep_goal == Vector2.INF and threat == Vector2.ZERO:
-			# Escapes from warned attacks go first; otherwise bodies are kept off.
 			_move = _keep_off_bodies(_move)
+		else:
+			# An escape slides round a body in its way rather than walk through it, and never stops.
+			var kept := _keep_off_bodies(_move)
+			if kept != Vector2.ZERO:
+				_move = kept
 		_press_move(_move)
 		_handle_dodge()
 		_handle_attack(target, delta)
