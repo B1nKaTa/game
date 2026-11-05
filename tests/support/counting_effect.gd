@@ -100,3 +100,19 @@ func on_shop_open(ctx: EffectContext, _stock: Array[Dictionary]) -> void:
 
 func tick(ctx: EffectContext, _delta: float) -> void:
 	_note("tick", ctx)
+
+
+func on_swing(ctx: EffectContext, _swing: SwingAttack) -> void:
+	_note("swing", ctx)
+
+
+func on_swing_end(ctx: EffectContext, _swing: SwingAttack) -> void:
+	_note("swing_end", ctx)
+
+
+func on_glue_tick(ctx: EffectContext, _enemy: Enemy) -> void:
+	_note("glue_tick", ctx)
+
+
+func on_event(ctx: EffectContext, _event: String) -> void:
+	_note("event", ctx)

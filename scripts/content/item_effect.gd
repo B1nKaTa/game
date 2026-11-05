@@ -82,6 +82,27 @@ func on_charge_release(_ctx: EffectContext, _full: bool) -> void:
 	pass
 
 
+# A swing of the cane starts, before it hits anything. Its damage, push, reach, angle, duration,
+# both_ways and style may be changed in place; whatever is changed is also what Player draws.
+func on_swing(_ctx: EffectContext, _swing: SwingAttack) -> void:
+	pass
+
+
+# A swing has finished. swing.landed_count() says how many it landed on.
+func on_swing_end(_ctx: EffectContext, _swing: SwingAttack) -> void:
+	pass
+
+
+# The dentures have stayed glued to an enemy for one more whole second (Denture Glue Gun).
+func on_glue_tick(_ctx: EffectContext, _enemy: Enemy) -> void:
+	pass
+
+
+# Something an item made happen that other items listen for, such as RunEffects.EVENT_BINGO.
+func on_event(_ctx: EffectContext, _event: String) -> void:
+	pass
+
+
 # One of his Thermoses goes off at this spot.
 func on_bomb(_ctx: EffectContext, _at: Vector2) -> void:
 	pass

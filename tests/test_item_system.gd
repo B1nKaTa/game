@@ -3,7 +3,7 @@ extends TestCase
 const Counting := preload("res://tests/support/counting_effect.gd")
 const HOOKS := ["floor_start", "room_enter", "room_clear", "hit_damage", "hit", "kill", "dodge", "dodge_end",
 	"close_call", "hurt", "lethal", "throw", "bite", "charge_release", "bomb", "accepts_pickup", "pickup",
-	"shop_open", "tick"]
+	"shop_open", "tick", "swing", "swing_end", "glue_tick", "event"]
 
 
 func _counting(tag: String) -> ItemEffect:
@@ -43,6 +43,11 @@ func _fire_all(run: RunState, kit: ItemKit) -> void:
 	run.effects.pickup(RunEffects.PENSION, 3)
 	run.effects.shop_open(stock)
 	run.effects.tick(0.1)
+	var swing := SwingAttack.new(Vector2.RIGHT, 44.0, 60.0, 10.0, 60.0, false, false)
+	run.effects.swing(swing)
+	run.effects.swing_end(swing)
+	run.effects.glue_tick(enemy)
+	run.effects.event(RunEffects.EVENT_BINGO)
 
 
 func test_each_hook_fires_once_for_each_held_item() -> void:
@@ -179,7 +184,8 @@ func test_item_hits_from_hooks_stop_two_levels_deep() -> void:
 func test_play_calls_every_hook() -> void:
 	var player := FileAccess.get_file_as_string("res://scripts/actors/player.gd")
 	for call: String in ["effects.dodge(", "effects.dodge_end(", "effects.close_call(", "effects.hurt(",
-			"effects.lethal(", "effects.throw(", "effects.charge_release(", "effects.tick(", "effects.land("]:
+			"effects.lethal(", "effects.throw(", "effects.charge_release(", "effects.tick(", "effects.land(",
+			"effects.swing(", "effects.swing_end("]:
 		assert_true(player.contains(call), "player.gd calls %s" % call)
 	var room := FileAccess.get_file_as_string("res://scripts/world/room_view.gd")
 	for call: String in ["effects.room_clear(", "effects.pickup(", "effects.shop_open(", "effects.accepts_pickup(", "effects.bomb"]:
@@ -189,6 +195,7 @@ func test_play_calls_every_hook() -> void:
 		assert_true(scene.contains(call), "floor_scene.gd calls %s" % call)
 	var teeth := FileAccess.get_file_as_string("res://scripts/actors/thrown_dentures.gd")
 	assert_true(teeth.contains("effects.land(") and teeth.contains("effects.bite("), "bites go through the hooks")
+	assert_true(teeth.contains("effects.glue_tick("), "a glued second is heard")
 	var thermos := FileAccess.get_file_as_string("res://scripts/world/thermos.gd")
 	assert_true(thermos.contains("effects.land("), "a Thermos's hits go through the hooks")
 

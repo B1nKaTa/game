@@ -61,3 +61,13 @@ extends Resource
 @export var clean_kills: bool = false
 # Whether arrows at the screen's edge point to enemies off screen.
 @export var shows_offscreen_enemies: bool = false
+# How much further his swings knock enemies back, as a fraction of their push.
+@export var swing_push_bonus: float = 0.0
+# Seconds the thrown dentures stay glued to the first enemy they bite, biting on. Zero for none.
+@export var teeth_glue_time: float = 0.0
+# Whether the thrown dentures fly back by themselves, biting on the way.
+@export var teeth_boomerang: bool = false
+# Whether the dentures lying on the floor bite whatever walks over them.
+@export var teeth_floor_bite: bool = false
+# Sets of dentures thrown at once. Zero leaves the usual one.
+@export var teeth_sets: int = 0

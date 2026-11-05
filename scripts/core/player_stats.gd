@@ -71,6 +71,13 @@ var wet_grip := false
 var min_slow_factor := 0.0
 var clean_kills := false
 var shows_offscreen_enemies := false
+# What his swings' push is multiplied by.
+var swing_push_mult := 1.0
+# The dentures' items. See StatEffect.
+var teeth_glue_time := 0.0
+var teeth_boomerang := false
+var teeth_floor_bite := false
+var teeth_sets := 1
 
 
 # choices maps a form id to its milestone option. A form at or past its milestone with no entry
@@ -112,6 +119,11 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 	var slow_floor := 0.0
 	var clean := false
 	var arrows := false
+	var push := 0.0
+	var glue := 0.0
+	var boomerang := false
+	var floor_bite := false
+	var sets := 1
 	var effects: Array = []
 	for upgrade in upgrades:
 		var level := int(levels.get(upgrade.id, 0))
@@ -150,6 +162,7 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 		lucky += effect.lucky_swing_chance * count
 		lethal_saves += effect.floor_lethal_saves * count
 		death_pension += effect.death_pension_bonus * count
+		push += effect.swing_push_bonus * count
 		if count > 0:
 			bites = maxi(bites, effect.bites_through)
 		if effect is UpgradeDef and effect.thermos_damage_bonus > 0.0:
@@ -167,6 +180,10 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 			slow_floor = maxf(slow_floor, effect.min_slow_factor)
 			clean = clean or effect.clean_kills
 			arrows = arrows or effect.shows_offscreen_enemies
+			glue = maxf(glue, effect.teeth_glue_time)
+			boomerang = boomerang or effect.teeth_boomerang
+			floor_bite = floor_bite or effect.teeth_floor_bite
+			sets = maxi(sets, effect.teeth_sets)
 	var stats := PlayerStats.new()
 	stats.max_pills = BASE_PILLS + pills
 	stats.move_speed = BASE_SPEED * (1.0 + speed)
@@ -205,6 +222,11 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 	stats.min_slow_factor = clampf(slow_floor, 0.0, 1.0)
 	stats.clean_kills = clean
 	stats.shows_offscreen_enemies = arrows
+	stats.swing_push_mult = maxf(1.0 + push, 0.0)
+	stats.teeth_glue_time = glue
+	stats.teeth_boomerang = boomerang
+	stats.teeth_floor_bite = floor_bite
+	stats.teeth_sets = sets
 	return stats
 
 

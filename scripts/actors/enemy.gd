@@ -84,6 +84,10 @@ var _dismissed := false
 var _blink_wait := 0.0
 var _wake_left := 0.0
 var _dazed_left := 0.0
+# An item's stun and slow. See stun and slow.
+var _stun_left := 0.0
+var _slow_left := 0.0
+var _slow_share := 1.0
 var _say_text := ""
 var _say_left := 0.0
 var _warning_layer: Node2D
@@ -173,6 +177,34 @@ func daze(seconds: float) -> void:
 
 func is_dazed() -> bool:
 	return _dazed_left > 0.0
+
+
+# An item's stun: stars over its head, and its behavior holds still for so long, while a knockback
+# still carries it. Behaviors that daze themselves keep their own timers and never call this.
+func stun(seconds: float) -> void:
+	if def != null and (def.wall_mounted or submerged):
+		return
+	daze(seconds)
+	_stun_left = maxf(_stun_left, seconds)
+
+
+func is_stunned() -> bool:
+	return _stun_left > 0.0
+
+
+# An item's slow: its own walk runs at this share of its speed for so long. The strongest one counts.
+func slow(share: float, seconds: float) -> void:
+	_slow_share = clampf(share, 0.0, 1.0) if _slow_left <= 0.0 else minf(_slow_share, share)
+	_slow_left = maxf(_slow_left, seconds)
+
+
+func is_slowed() -> bool:
+	return _slow_left > 0.0
+
+
+# Whether it is winding up an attack: its warning's windup is still running.
+func is_winding_up() -> bool:
+	return _warning != null and _warning.is_active()
 
 
 # A few words over its head, such as a called-out bingo number.
@@ -265,7 +297,12 @@ func _physics_process(delta: float) -> void:
 	_route_left -= delta
 	desired_velocity = Vector2.ZERO
 	_holding_lane = false
-	_behavior.tick(self, delta)
+	_stun_left = maxf(_stun_left - delta, 0.0)
+	if _stun_left <= 0.0:
+		_behavior.tick(self, delta)
+	if _slow_left > 0.0:
+		_slow_left = maxf(_slow_left - delta, 0.0)
+		desired_velocity *= _slow_share
 	# Called by a whistle, it hurries to Grandpa whenever it would walk anyway, so it never drops an attack.
 	if _rally_left > 0.0:
 		_rally_left -= delta

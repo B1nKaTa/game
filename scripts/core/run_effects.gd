@@ -25,6 +25,8 @@ const HURT_FIRE := "fire"
 const HURT_BLAST := "blast"
 const HURT_PROJECTILE := "projectile"
 const HURT_OWN_BLAST := "own_blast"
+# What items tell each other through event(): a BINGO from the card or the dabber.
+const EVENT_BINGO := "bingo"
 # Item hits that set off item hits stop this deep, so two effects can never feed each other forever.
 const MAX_HIT_DEPTH := 2
 
@@ -229,6 +231,26 @@ func bite(enemy: Enemy) -> void:
 func charge_release(full: bool) -> void:
 	for effect in _all():
 		effect.on_charge_release(ctx, full)
+
+
+func swing(attack: SwingAttack) -> void:
+	for effect in _all():
+		effect.on_swing(ctx, attack)
+
+
+func swing_end(attack: SwingAttack) -> void:
+	for effect in _all():
+		effect.on_swing_end(ctx, attack)
+
+
+func glue_tick(enemy: Enemy) -> void:
+	for effect in _all():
+		effect.on_glue_tick(ctx, enemy)
+
+
+func event(event_name: String) -> void:
+	for effect in _all():
+		effect.on_event(ctx, event_name)
 
 
 func bomb(at: Vector2) -> void:

@@ -25,7 +25,7 @@ func test_every_old_item_id_still_ships() -> void:
 		shipped[item.id] = item
 	for id: String in IDS:
 		assert_true(shipped.has(id), id)
-	assert_eq(shipped.size(), IDS.size())
+	assert_true(shipped.size() >= IDS.size())
 
 
 func test_rarity_curses_and_sources_follow_the_design() -> void:

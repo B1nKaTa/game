@@ -30,6 +30,14 @@ const GHOST_EVERY := 0.05
 const SLOW_COLOR := Color(0.62, 0.86, 1.0, 0.9)
 const CANE_COLOR := Color("a8692f")
 const SWING_COLOR := Color("ffe58a")
+# The Spare Set: how far apart, in degrees, the two sets of dentures fly.
+const SPARE_SPREAD := 14.0
+# Grandma's Rolling Pin and The Reaper's Other Scythe draw their swings in these.
+const PIN_WOOD := Color("d9a066")
+const PIN_FLOUR := Color("f6ecd6")
+const SWEEP_FILL := Color(0.62, 0.52, 0.95, 0.2)
+const SWEEP_EDGE := Color("8f7ce0")
+const SWEEP_BLADE := Color("e8ecf4")
 
 var run: RunState
 var show_crosshair := false
@@ -44,6 +52,8 @@ var _charge := ChargeSwing.new()
 # His false teeth, the thrown attack. The cane itself never leaves his hand.
 var _teeth := DentureThrow.new()
 var _thrown_teeth: ThrownDentures
+# The Spare Set's second set in flight. It has its own throw state, and never holds back a throw.
+var _spare_teeth: Array[ThrownDentures] = []
 var _dodge := DodgeTimer.new()
 var _aim := Vector2.RIGHT
 var _dodge_direction := Vector2.RIGHT
@@ -273,6 +283,31 @@ func has_teeth() -> bool:
 	return _teeth.is_held()
 
 
+# Where he aims, as a unit vector.
+func aim_direction() -> Vector2:
+	return _aim
+
+
+# The dodge is ready again at once (Reading Glasses on a Chain).
+func refund_dodge() -> void:
+	_dodge.clear_cooldown()
+
+
+func dodge_cooldown_left() -> float:
+	return _dodge.cooldown_left()
+
+
+# The dentures in flight or lying in the room, the Spare Set's too.
+func teeth_out() -> Array[ThrownDentures]:
+	var out: Array[ThrownDentures] = []
+	if is_instance_valid(_thrown_teeth):
+		out.append(_thrown_teeth)
+	for spare in _spare_teeth:
+		if is_instance_valid(spare):
+			out.append(spare)
+	return out
+
+
 func _handle_attacks() -> void:
 	if Input.is_action_just_pressed("throw") and can_throw(_teeth):
 		_throw_teeth()
@@ -311,19 +346,41 @@ func _throw_teeth() -> void:
 		if collider is BreakableBlock:
 			collider.hit_by(BreakableBlock.SOURCE_CANE)
 		spawn = wall["position"] + wall["normal"] * ThrownDentures.WALL_BACKOFF
-	_thrown_teeth = ThrownDentures.new()
-	_thrown_teeth.setup(_teeth, self, _aim, run.bite_damage_mult(), run.stats.bite_range, run.stats.bites_per_throw)
-	_thrown_teeth.wounded_mult = run.stats.wounded_damage_mult
-	_thrown_teeth.boss_mult = run.boss_damage_mult()
-	_thrown_teeth.effects = run.effects
-	_thrown_teeth.hit_enemy.connect(teeth_bit.emit)
+	var sets := maxi(run.stats.teeth_sets, 1)
+	var way := _aim.rotated(-deg_to_rad(SPARE_SPREAD) / 2.0) if sets > 1 else _aim
+	_thrown_teeth = _make_teeth(_teeth, way)
 	_thrown_teeth.caught.connect(teeth_caught.emit)
 	parent.add_child(_thrown_teeth)
 	_thrown_teeth.global_position = spawn
+	# A spare still out from the last throw goes, so every set in the room is one the room can recall.
+	_free_spares()
+	for i in sets - 1:
+		var spare_state := DentureThrow.new(run.stats.teeth_return_delay)
+		spare_state.try_throw()
+		var spare := _make_teeth(spare_state, _aim.rotated(deg_to_rad(SPARE_SPREAD) * (0.5 + i)))
+		spare.spare = true
+		parent.add_child(spare)
+		spare.global_position = spawn
+		_spare_teeth.append(spare)
+		if not wall.is_empty():
+			spare_state.drop()
 	teeth_thrown.emit()
 	run.effects.throw()
 	if not wall.is_empty():
 		_teeth.drop()
+
+
+func _make_teeth(state: DentureThrow, way: Vector2) -> ThrownDentures:
+	var teeth := ThrownDentures.new()
+	teeth.setup(state, self, way, run.bite_damage_mult(), run.stats.bite_range, run.stats.bites_per_throw)
+	teeth.wounded_mult = run.stats.wounded_damage_mult
+	teeth.boss_mult = run.boss_damage_mult()
+	teeth.effects = run.effects
+	teeth.glue_time = run.stats.teeth_glue_time
+	teeth.boomerang = run.stats.teeth_boomerang
+	teeth.floor_bite = run.stats.teeth_floor_bite
+	teeth.hit_enemy.connect(teeth_bit.emit)
+	return teeth
 
 
 func cancel_charge() -> void:
@@ -334,12 +391,21 @@ func recall_teeth() -> void:
 	if is_instance_valid(_thrown_teeth):
 		_thrown_teeth.queue_free()
 	_thrown_teeth = null
+	_free_spares()
 	_teeth.catch_teeth()
+
+
+func _free_spares() -> void:
+	for spare in _spare_teeth:
+		if is_instance_valid(spare):
+			spare.queue_free()
+	_spare_teeth.clear()
 
 
 func _exit_tree() -> void:
 	if is_instance_valid(_thrown_teeth):
 		_thrown_teeth.queue_free()
+	_free_spares()
 
 
 func _swing(damage: float, reach: float, angle: float, push: float, heavy: bool, finisher: bool) -> void:
@@ -348,7 +414,10 @@ func _swing(damage: float, reach: float, angle: float, push: float, heavy: bool,
 	# The Lucky Tee: now and then a swing does double.
 	if run.stats.lucky_swing_chance > 0.0:
 		swing_damage = PlayerStats.lucky_damage(swing_damage, run.stats.lucky_swing_chance, randf())
-	_active_swing = SwingAttack.new(_aim, reach, angle, swing_damage, push, heavy, finisher)
+	# Walker Tennis Balls knock enemies further.
+	_active_swing = SwingAttack.new(_aim, reach, angle, swing_damage, push * run.stats.swing_push_mult, heavy, finisher)
+	# Items may reshape the swing before it hits: what they change is also what is drawn.
+	run.effects.swing(_active_swing)
 	_visual.play_once("attack", CaneCombo.LOCK_TIME)
 	_strike_enemies()
 
@@ -372,7 +441,7 @@ func _strike_enemies() -> void:
 		if swing.try_hit(global_position, enemy.get_instance_id(), enemy.body_rect()):
 			var damage := PlayerStats.strike_damage(swing.damage, enemy.hp / maxf(enemy.max_hp(), 1.0), run.stats.wounded_damage_mult)
 			damage = PlayerStats.boss_damage(damage, enemy.def.is_boss, run.boss_damage_mult())
-			if not run.effects.land(enemy, damage, swing_source(swing.heavy, swing.finisher), swing.direction * swing.push, global_position - enemy.global_position):
+			if not run.effects.land(enemy, damage, swing_source(swing.heavy, swing.finisher), swing.push_toward(global_position, enemy.global_position), global_position - enemy.global_position):
 				swing.mark_blocked()
 	for block: BreakableBlock in get_tree().get_nodes_in_group("breakable"):
 		if block.is_queued_for_deletion() or not block.can_break_by(BreakableBlock.SOURCE_CANE):
@@ -395,7 +464,9 @@ func _finish_swing() -> void:
 		return
 	if not _active_swing.has_reached_something():
 		swing_missed.emit(_active_swing.heavy)
+	var ended := _active_swing
 	_active_swing = null
+	run.effects.swing_end(ended)
 
 
 func _handle_movement() -> void:
@@ -499,15 +570,63 @@ func _draw() -> void:
 		draw_multiline(lines, Color.BLACK, 3.0)
 		draw_multiline(lines, CROSSHAIR_COLOR, 1.0)
 	if swinging:
-		var center := _active_swing.direction.angle()
-		var half_angle := deg_to_rad(_active_swing.half_angle_deg)
-		draw_arc(Vector2.ZERO, _active_swing.reach, center - half_angle, center + half_angle, 12, GrandpaLook.arc_color(run.look, SWING_COLOR), 3.0)
+		_draw_swing(_active_swing)
 	if _charge.is_charging():
 		draw_arc(Vector2.ZERO, 22.0, -PI / 2.0, -PI / 2.0 + TAU * _charge.progress(), 24, Color("f4c542"), 2.0)
 	if _slow.is_active():
 		_draw_slowed()
 	if _tape.is_holding():
 		RedTape.draw_hold(self, FEET_OFFSET)
+
+
+# The swing as it hits: its arc (behind him too when it reaches both ways), or the Rolling Pin's smash,
+# or the Scythe's sweep. Whatever is drawn here is what the swing hits, for as long as it shows.
+func _draw_swing(swing: SwingAttack) -> void:
+	var center := swing.direction.angle()
+	var half_angle := deg_to_rad(swing.half_angle_deg)
+	var points := maxi(12, ceili(swing.half_angle_deg / 6.0))
+	if swing.style == SwingAttack.STYLE_SWEEP:
+		_draw_sweep(swing)
+		return
+	var color := GrandpaLook.arc_color(run.look, SWING_COLOR)
+	var width := 3.0
+	if swing.style == SwingAttack.STYLE_PIN:
+		color = PIN_FLOUR
+		width = 5.0
+	var sides := [center, center + PI] if swing.both_ways else [center]
+	for side: float in sides:
+		if swing.style == SwingAttack.STYLE_PIN:
+			draw_arc(Vector2.ZERO, swing.reach, side - half_angle, side + half_angle, points, Color(Color.BLACK, 0.55), width + 3.0)
+		draw_arc(Vector2.ZERO, swing.reach, side - half_angle, side + half_angle, points, color, width)
+	if swing.style == SwingAttack.STYLE_PIN:
+		_draw_pin(swing)
+
+
+# The rolling pin coming down: a wooden bar across the swing, travelling out to its reach.
+func _draw_pin(swing: SwingAttack) -> void:
+	var across := swing.direction.orthogonal()
+	var at := swing.direction * lerpf(10.0, swing.reach * 0.8, swing.progress())
+	var half := across * 12.0
+	draw_line(at - half, at + half, Color.BLACK, 10.0)
+	draw_line(at - half, at + half, PIN_WOOD, 7.0)
+	draw_line(at - half * 1.6, at - half, Color.BLACK, 5.0)
+	draw_line(at + half, at + half * 1.6, Color.BLACK, 5.0)
+	draw_line(at - half * 1.55, at - half, PIN_WOOD.darkened(0.3), 3.0)
+	draw_line(at + half, at + half * 1.55, PIN_WOOD.darkened(0.3), 3.0)
+
+
+# The scythe's spin: the whole circle it hits, lit faintly, and the blade going once round.
+func _draw_sweep(swing: SwingAttack) -> void:
+	draw_circle(Vector2.ZERO, swing.reach, SWEEP_FILL)
+	draw_arc(Vector2.ZERO, swing.reach, 0.0, TAU, 48, Color(Color.BLACK, 0.6), 4.0)
+	draw_arc(Vector2.ZERO, swing.reach, 0.0, TAU, 48, SWEEP_EDGE, 2.0)
+	var blade := swing.direction.angle() + TAU * swing.progress()
+	draw_arc(Vector2.ZERO, swing.reach - 6.0, blade - 1.8, blade, 18, Color(SWEEP_BLADE, 0.45), 6.0)
+	var tip := Vector2.from_angle(blade) * swing.reach
+	draw_line(Vector2.ZERO, tip, Color.BLACK, 5.0)
+	draw_line(Vector2.ZERO, tip, Color("5b4636"), 3.0)
+	draw_arc(Vector2.ZERO, swing.reach - 3.0, blade - 0.55, blade, 10, Color.BLACK, 7.0)
+	draw_arc(Vector2.ZERO, swing.reach - 3.0, blade - 0.55, blade, 10, SWEEP_BLADE, 4.0)
 
 
 # A pale blue ring at his feet and drowsy bubbles over his head while a sedative holds him.

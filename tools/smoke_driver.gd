@@ -1497,6 +1497,13 @@ func _check_dentures(scene: Node) -> void:
 	var player: Player = scene.player
 	var run: RunState = player.run
 	player.recall_teeth()
+	# The check times one plain throw, so the denture items the loop may hold (a boomerang comes back at
+	# once, wound-up teeth bite again, glue bites on) are set aside for it. Their rules are unit tested.
+	var held := [run.stats.teeth_boomerang, run.stats.teeth_floor_bite, run.stats.teeth_glue_time, run.stats.teeth_sets]
+	run.stats.teeth_boomerang = false
+	run.stats.teeth_floor_bite = false
+	run.stats.teeth_glue_time = 0.0
+	run.stats.teeth_sets = 1
 	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(4, 5)))
 	var far: Enemy = view._spawn_enemy(_enemy_def("intern_reaper"), RoomBackdrop.cell_center(Vector2i(8, 5)) - Player.FEET_OFFSET, true)
 	far.set_physics_process(false)
@@ -1539,6 +1546,10 @@ func _check_dentures(scene: Node) -> void:
 	await _wait(0.7)
 	_check(first.hp < first_hp and second.hp < second_hp, "with the item one throw bites both enemies in a row")
 	run.stats.bites_per_throw = bites_before
+	run.stats.teeth_boomerang = held[0]
+	run.stats.teeth_floor_bite = held[1]
+	run.stats.teeth_glue_time = held[2]
+	run.stats.teeth_sets = held[3]
 	player.recall_teeth()
 	player.aim_source = Callable()
 	await _dismiss_all()

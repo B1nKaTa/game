@@ -18,4 +18,5 @@ func on_pickup(ctx: EffectContext, kind: String, amount: int) -> int:
 	_count = 0
 	ctx.add_fx(ItemFx.make_pop(POP), ctx.feet())
 	ctx.play_sound("bingo")
+	ctx.event(RunEffects.EVENT_BINGO)
 	return amount * MULT

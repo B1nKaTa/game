@@ -26,3 +26,12 @@ func tick(delta: float) -> void:
 
 func is_active() -> bool:
 	return _active > 0.0
+
+
+# The dodge is ready again at once, as Reading Glasses on a Chain give back. A dodge under way goes on.
+func clear_cooldown() -> void:
+	_cooldown = 0.0
+
+
+func cooldown_left() -> float:
+	return _cooldown

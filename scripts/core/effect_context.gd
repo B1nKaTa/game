@@ -54,6 +54,20 @@ func heal(pills: int) -> void:
 		state.health.heal(pills)
 
 
+# Half a pill. Two halves make a pill; a half left over waits for the next.
+func heal_half() -> void:
+	var state := run()
+	if state != null:
+		state.health.heal_half()
+
+
+# Tells every held item that something happened, as a BINGO (RunEffects.EVENT_BINGO).
+func event(event_name: String) -> void:
+	var state := run()
+	if state != null:
+		state.effects.event(event_name)
+
+
 # Pension straight into the save, counted as the run's earnings, as a coin would be.
 func pay(amount: int) -> void:
 	if amount > 0 and pay_pension.is_valid():
@@ -100,9 +114,10 @@ func hit_enemy(enemy: Enemy, amount: float, source := RunEffects.ITEM, push := V
 	return state.effects.land(enemy, amount, source, push)
 
 
+# Holds an enemy still for a while, stars over its head.
 func stun(enemy: Enemy, seconds: float) -> void:
 	if enemy != null and is_instance_valid(enemy):
-		enemy.daze(seconds)
+		enemy.stun(seconds)
 
 
 # A small pickup lying in the room: one of RoomRules.DROP_KEY, DROP_BOMB, DROP_POTION or DROP_COIN.
