@@ -16,7 +16,18 @@ extends Resource
 @export var is_boss: bool = false
 @export var body_size: Vector2 = Vector2(20, 24)
 @export var color: Color = Color.WHITE
-@export var frame_width: int = 32
+# How wide one frame of its art is. Zero means square frames, as tall as each strip (SpriteVisual.frame_size).
+@export var frame_width: int = 0
+# Whose art it wears, from res://art/sprites/<art_id>/, so a floor variant can share its base's. Empty
+# means its own id. See art().
+@export var art_id: String = ""
+# A recolour of that art for a floor variant: hues within art_hue_width degrees of art_hue_from turn
+# to art_hue_to, on coloured pixels only, so skin, greys and whites stay. Zero width keeps the art's own.
+@export var art_hue_from: float = 0.0
+@export var art_hue_to: float = 0.0
+@export var art_hue_width: float = 0.0
+# Multiplies the value of those same hues, to lift a dark robe a floor's light would swallow.
+@export var art_value: float = 1.0
 @export var behavior_script: Script
 @export var summon: EnemyDef
 # How many spawn together at one enemy cell. Only the first of a group pays.
@@ -33,3 +44,8 @@ extends Resource
 @export var hidden_look: String = "mound"
 # Drops a Permission Slip when it falls, as a mimic does. Summons never drop one.
 @export var drops_key: bool = false
+
+
+# The art folder it uses: art_id, or its own id.
+func art() -> String:
+	return art_id if not art_id.is_empty() else id

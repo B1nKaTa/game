@@ -14,7 +14,6 @@ pension_drop = 8
 is_boss = true
 body_size = Vector2(32, 38)
 color = Color(0.42, 0.58, 0.28, 1)
-frame_width = 48
 behavior_script = ExtResource("2")
 summon = ExtResource("3")
 mark = "spade"

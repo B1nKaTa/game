@@ -13,6 +13,5 @@ pension_drop = 16
 is_boss = true
 body_size = Vector2(42, 50)
 color = Color(0.45, 0.12, 0.2, 1)
-frame_width = 64
 behavior_script = ExtResource("2")
 mark = "carnation_hat"

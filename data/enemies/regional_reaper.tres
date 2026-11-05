@@ -14,6 +14,5 @@ pension_drop = 16
 is_boss = true
 body_size = Vector2(40, 48)
 color = Color(0.13, 0.1, 0.22, 1)
-frame_width = 64
 behavior_script = ExtResource("2")
 summon = ExtResource("3")

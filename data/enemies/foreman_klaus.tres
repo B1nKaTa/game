@@ -14,7 +14,6 @@ pension_drop = 8
 is_boss = true
 body_size = Vector2(34, 40)
 color = Color(0.34, 0.46, 0.66, 1)
-frame_width = 48
 behavior_script = ExtResource("2")
 summon = ExtResource("3")
 mark = "hard_hat"

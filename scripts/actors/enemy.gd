@@ -113,6 +113,10 @@ var harmless_death := false
 # How much sooner it notices Grandpa: sleepers wake this many times as far, and a room's wait as he
 # walks in is cut by it (Squeaky Shoes). Set by the room from his stats when it spawns.
 var notice_mult := 1.0
+# The anim driver's state (see _update_anim): how long a once-played anim still shows, and whether
+# it was winding up last frame.
+var _anim_once_left := 0.0
+var _was_winding := false
 
 
 
@@ -150,12 +154,19 @@ func _ready() -> void:
 	rect.size = def.body_size * 0.8
 	shape.shape = rect
 	add_child(shape)
+	# Its look stands on its feet, the body box bottom, so the room sorts it there among the others.
+	y_sort_enabled = true
 	_visual = SpriteVisual.new()
 	add_child(_visual)
-	_visual.setup(def.id, def.body_size, def.color, def.frame_width)
+	_visual.set_feet(def.body_size.y / 2.0)
+	_visual.setup(def.art(), def.body_size, def.color, def.frame_width)
+	_visual.set_recolor(def.art_hue_from, def.art_hue_to, def.art_hue_width, def.art_value)
 	_marks = EnemyMarks.new()
 	_marks.setup(def)
-	add_child(_marks)
+	# Art draws its own hat or prop; the shield arc still shows over it.
+	_marks.art_shown = _visual.has_art()
+	_marks.position = Vector2(0.0, -def.body_size.y / 2.0)
+	_visual.add_child(_marks)
 	# A soft glow keeps every enemy readable, however far it is from the room's torches.
 	add_child(Lighting.make_light(READ_GLOW_COLOR, READ_GLOW_ENERGY, READ_GLOW_SCALE))
 	_warning_layer = WarningLayer.new()
@@ -208,6 +219,42 @@ func is_slowed() -> bool:
 # Whether it is winding up an attack: its warning's windup is still running.
 func is_winding_up() -> bool:
 	return _warning != null and _warning.is_active()
+
+
+# Plays one of its anims once over seconds, as a behavior's own move (a whistle, a summon). Without
+# that strip it falls back to the attack, then the idle. Looks only: nothing waits on it.
+func play_anim(anim_name: String, seconds: float) -> void:
+	if _visual == null or not _visual.has_art():
+		return
+	_visual.play_once(anim_name, seconds)
+	_anim_once_left = seconds
+
+
+func visual() -> SpriteVisual:
+	return _visual
+
+
+# Picks its anim and the way it faces from what it does (EnemyAnim). Looks only.
+func _update_anim(delta: float) -> void:
+	if _visual == null or not _visual.has_art():
+		return
+	var winding := is_winding_up()
+	var to_target := direction_to_target() if is_instance_valid(target) else Vector2.ZERO
+	if winding and not _was_winding:
+		_visual.play_once(EnemyAnim.WINDUP, _warning.remaining())
+		_anim_once_left = 0.0
+	elif _was_winding and not winding and not _dead:
+		# The hit lands as the windup ends. Without an attack strip it carries on as it would.
+		if SpriteVisual.has_anim(def.art(), EnemyAnim.ATTACK):
+			_visual.play_once(EnemyAnim.ATTACK, EnemyAnim.ATTACK_TIME)
+			_anim_once_left = EnemyAnim.ATTACK_TIME
+	_was_winding = winding
+	var busy := winding or _anim_once_left > 0.0
+	if _anim_once_left > 0.0:
+		_anim_once_left = maxf(_anim_once_left - delta, 0.0)
+	elif not winding:
+		_visual.play(EnemyAnim.pick(false, desired_velocity))
+	_visual.set_facing_left(EnemyAnim.faces_left(_visual.is_facing_left(), busy, desired_velocity, to_target))
 
 
 # A few words over its head, such as a called-out bingo number.
@@ -351,6 +398,10 @@ func _physics_process(delta: float) -> void:
 		position = clamp_inside_room(position, room_cells)
 	_marks.show_facing(facing)
 	queue_redraw()
+
+
+func _process(delta: float) -> void:
+	_update_anim(delta)
 
 
 static func clamp_inside_room(point: Vector2, cells: Vector2i) -> Vector2:

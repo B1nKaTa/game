@@ -23,6 +23,11 @@ func tick(delta: float) -> bool:
 	return _remaining <= 0.0
 
 
+# How long the windup has left to run.
+func remaining() -> float:
+	return maxf(_remaining, 0.0)
+
+
 func is_active() -> bool:
 	return _remaining > 0.0
 

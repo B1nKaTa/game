@@ -87,6 +87,7 @@ func _stop(enemy: Enemy) -> void:
 	_cooldown = COOLDOWN
 	_whistle_left = WHISTLE_TIME
 	enemy.say(WHISTLE_TEXT, WHISTLE_TIME + 0.3)
+	enemy.play_anim("whistle", WHISTLE_TIME)
 	if not enemy.is_inside_tree():
 		return
 	var others: Array[Enemy] = []

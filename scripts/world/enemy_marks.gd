@@ -78,6 +78,8 @@ const HEADSET_MIC := Color("6fd6ff")
 const CHAIN_GOLD := Color("e8c04a")
 const PINSTRIPE := Color(1.0, 1.0, 1.0, 0.35)
 
+# Set when the enemy shows its art, which draws its own hat or prop: only the shield arc is drawn then.
+var art_shown := false
 var _def: EnemyDef
 var _facing := Vector2.RIGHT
 var _flash_left := 0.0
@@ -108,6 +110,13 @@ func _draw() -> void:
 	if _def == null:
 		return
 	var half := _def.body_size / 2.0
+	if not art_shown:
+		_draw_mark(half)
+	if _def.shield_half_angle > 0.0:
+		_draw_shield(half)
+
+
+func _draw_mark(half: Vector2) -> void:
 	match _def.mark:
 		"stamp":
 			draw_rect(Rect2(-half.x + 3.0, -half.y + 3.0, half.x * 2.0 - 6.0, 7.0), STAMP_COLOR)
@@ -283,9 +292,11 @@ func _draw() -> void:
 			GolfMarks.draw_mark(self, _def.mark, half)
 	# Departures, Terminal Zero draws its own marks.
 	TerminalMarks.draw_mark(self, _def.mark, half)
-	if _def.shield_half_angle > 0.0:
-		var reach := maxf(half.x, half.y) + SHIELD_GAP
-		var half_arc := deg_to_rad(_def.shield_half_angle)
-		var color := SHIELD_FLASH if _flash_left > 0.0 else SHIELD_COLOR
-		draw_arc(Vector2.ZERO, reach, _facing.angle() - half_arc, _facing.angle() + half_arc, 16, Color.BLACK, SHIELD_WIDTH + 2.0)
-		draw_arc(Vector2.ZERO, reach, _facing.angle() - half_arc, _facing.angle() + half_arc, 16, color, SHIELD_WIDTH)
+
+
+func _draw_shield(half: Vector2) -> void:
+	var reach := maxf(half.x, half.y) + SHIELD_GAP
+	var half_arc := deg_to_rad(_def.shield_half_angle)
+	var color := SHIELD_FLASH if _flash_left > 0.0 else SHIELD_COLOR
+	draw_arc(Vector2.ZERO, reach, _facing.angle() - half_arc, _facing.angle() + half_arc, 16, Color.BLACK, SHIELD_WIDTH + 2.0)
+	draw_arc(Vector2.ZERO, reach, _facing.angle() - half_arc, _facing.angle() + half_arc, 16, color, SHIELD_WIDTH)
