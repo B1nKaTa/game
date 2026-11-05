@@ -1,12 +1,16 @@
 class_name HeadOfDeparturesBehavior
 extends EnemyBehavior
 
-# Augustine, Head of Departures. His boarding stamp comes down on a warned spot under Grandpa, the one
-# attack that costs three pills, so its warning always shows whole, with a second ring and the stamp's
-# growing shadow. His runway lights light warned lanes one after another across the room. His gate
-# change raises or drops every queue barrier in the room at once, after the barriers' own chime. Below
-# half health he calls Tour Groups, never past five enemies in the room, the barriers cycle twice as
-# fast, and once, one runway-lights pattern chains straight into the stamp.
+# Augustine, Head of Departures, the hardest boss but the Chairman, because his attacks overlap the
+# queue barriers. His runway lights light warned lanes one after another across the room, and he runs
+# them while the barriers are up, so routes close as lanes light: he picks the pattern from the ones
+# that still leave Grandpa a way out (OverlapRoute counts every rope as up), and a green mark shows a
+# spot he can reach that stays safe. While the lanes run he may change the gate, every barrier in the
+# room rising or dropping at once after the barriers' own chime, and his boarding stamp always follows
+# a pattern: the one attack that costs three pills, its warning shown whole for its 1.2 s with a second
+# ring and the stamp's growing shadow, never put where it would take the last way out. Below half
+# health he calls Tour Groups, never past five enemies in the room, the barriers cycle twice as fast,
+# and the stamp follows every pattern without a rest.
 const STAMP_WINDUP := 1.2
 const STAMP_RADIUS := 46.0
 const STAMP_DAMAGE := Enemy.HEAVIEST_DAMAGE
@@ -36,6 +40,8 @@ const FIRST_SUMMON := 1.5
 const SUMMON_EVERY := 8.0
 const SUMMON_DISTANCE := 100.0
 const SAY_TIME := 1.0
+# When no spot for the stamp leaves a way out, he waits this long and tries again.
+const STAMP_RETRY := 0.15
 
 enum Attack { NONE, STAMP, RUNWAY, GATE }
 
@@ -48,8 +54,10 @@ var _since_gate := GATE_EVERY - FIRST_GATE
 var _summon_timer := FIRST_SUMMON
 var _across := Vector2.RIGHT
 var _phase_two_seen := false
-# The one runway pattern of the second phase that chains into the stamp has run.
-var _chained := false
+# The runway pattern lighting now, how long until its last lane is out, and its green mark.
+var _lanes: Array = []
+var _runway_left := 0.0
+var _mark: SafeSpotMark
 var _rng := RandomNumberGenerator.new()
 
 
@@ -76,15 +84,26 @@ static func windup_for(attack: int, phase_two: bool) -> float:
 	return windup * (PHASE_TWO_WINDUP_SCALE if phase_two else 1.0)
 
 
-# In the second phase one runway-lights pattern, and only one, chains straight into the stamp.
-static func followup(attack: int, phase_two: bool, already_chained: bool) -> int:
-	if phase_two and attack == Attack.RUNWAY and not already_chained:
+# The stamp follows every runway pattern, in both phases. Nothing else chains.
+static func followup(attack: int, _phase_two: bool) -> int:
+	if attack == Attack.RUNWAY:
 		return Attack.STAMP
 	return Attack.NONE
 
 
-# With no barriers in the room there is no gate change: the runway lights stand in for it.
-static func choose_attack(last: int, has_barriers: bool, roll: float) -> int:
+# In the second phase the stamp follows the pattern without a rest.
+static func rest_after_runway(phase_two: bool) -> float:
+	return 0.0 if phase_two else BASE_COOLDOWN
+
+
+# With no barriers in the room there is no gate change: the runway lights stand in for it. With
+# ropes up or chiming he lights the runway, so the lanes run while they stand. While a pattern runs
+# he changes the gate when it is due, and stamps otherwise.
+static func choose_attack(last: int, has_barriers: bool, roll: float, ropes_up := false, running := false) -> int:
+	if running:
+		return Attack.GATE if has_barriers else Attack.STAMP
+	if ropes_up and last != Attack.RUNWAY:
+		return Attack.RUNWAY
 	var options: Array[int] = [Attack.STAMP, Attack.RUNWAY]
 	if has_barriers:
 		options.append(Attack.GATE)
@@ -132,11 +151,74 @@ static func runway_light_time(order: int) -> float:
 	return RUNWAY_WARNING + order * RUNWAY_STEP
 
 
+# How long a whole pattern lasts, from the lanes' first warning to the last one going out.
+static func runway_time() -> float:
+	return runway_light_time(RUNWAY_LANES - 1) + RunwayLane.LIT_TIME
+
+
+# When each lane of a fresh pattern is lit, in the order they light.
+static func runway_windows(elapsed := 0.0) -> Array[Vector2]:
+	var windows: Array[Vector2] = []
+	for i in RUNWAY_LANES:
+		var lights := runway_light_time(i) - elapsed
+		windows.append(Vector2(lights, lights + RunwayLane.LIT_TIME))
+	return windows
+
+
+# The floor of a pattern for working out a way out: each lane lit in its window, every rope of the
+# room counted as up the whole time (the room's timer or a gate change may raise any of them), his
+# body in the way and closed cells.
+static func runway_route(room: Rect2, lanes: Array[Rect2], windows: Array[Vector2], ropes: Array[Rect2], body := Rect2(), is_open := Callable()) -> OverlapRoute:
+	var route := OverlapRoute.new(room)
+	for i in lanes.size():
+		if windows[i].y >= 0.0:
+			route.add_rect(lanes[i], windows[i].x, windows[i].y)
+	for rope in ropes:
+		route.add_block(rope)
+	if body.has_area():
+		route.add_block(body)
+	route.set_open(is_open)
+	return route
+
+
+# A mark may not go on his body or just beside it.
+static func keep_off_body(body: Rect2) -> Callable:
+	var avoid := body.grow(SafeSpotMark.RADIUS)
+	return func(spot: Vector2) -> bool: return avoid.has_area() and avoid.has_point(spot)
+
+
+# The pattern to light: across the preferred way first, centred on his feet first, then moved across
+# a lane at a time and the other way round, until one leaves him a way out. Moved far enough the band
+# misses him and standing still is safe, so one always does in a room the size of his. Returns
+# {direction, reverse, center, mark}, with "direction" Vector2.ZERO when none works.
+static func runway_plan(room: Rect2, feet: Vector2, prefer: Vector2, reverse_first: bool, ropes: Array[Rect2], body := Rect2(), is_open := Callable()) -> Dictionary:
+	var other := Vector2.DOWN if prefer == Vector2.RIGHT else Vector2.RIGHT
+	var keep_off := keep_off_body(body)
+	for direction: Vector2 in [prefer, other]:
+		var axis := Vector2(0, 1) if direction == Vector2.RIGHT else Vector2(1, 0)
+		for shift: float in [0.0, 1.0, -1.0, 2.0, -2.0, 3.0, -3.0, 4.0, -4.0, 5.0, -5.0]:
+			var center := feet + axis * shift * RUNWAY_WIDTH
+			for reverse: bool in [reverse_first, not reverse_first]:
+				var lanes := runway_lanes(room, direction, center, reverse)
+				var out := runway_route(room, lanes, runway_windows(), ropes, body, is_open).escape(feet, keep_off)
+				if out["safe"]:
+					var mark: Vector2 = out["pure"] if out["pure"] != Vector2.INF else out["haven"]
+					return {"direction": direction, "reverse": reverse, "center": center, "mark": mark}
+	return {"direction": Vector2.ZERO, "reverse": false, "center": feet, "mark": Vector2.INF}
+
+
+# Where the stamp falls while a pattern runs, and where the mark moves: on his feet when that still
+# leaves him a way out, otherwise a little off. {spot, mark}, both INF when no spot works.
+static func stamp_plan(route: OverlapRoute, feet: Vector2, body := Rect2(), open_at := Callable()) -> Dictionary:
+	return route.strike_plan(feet, STAMP_RADIUS, STAMP_WINDUP, open_at, keep_off_body(body))
+
+
 func tick(enemy: Enemy, delta: float) -> void:
 	var phase_two := is_phase_two(enemy.hp, enemy.max_hp())
 	if phase_two and not _phase_two_seen:
 		_enter_phase_two(enemy)
 	_since_gate += delta
+	_runway_left = maxf(_runway_left - delta, 0.0)
 	if phase_two:
 		_call_tour_groups(enemy, delta)
 	if _telegraph.is_active():
@@ -152,12 +234,18 @@ func tick(enemy: Enemy, delta: float) -> void:
 	if _cooldown <= 0.0 or (_next != Attack.NONE and _cooldown <= cooldown_for(phase_two) * 0.5):
 		var attack := _next
 		if attack == Attack.NONE:
-			attack = choose_attack(_last, _has_barriers(enemy) and _since_gate >= GATE_EVERY, _rng.randf())
+			var gate_due := _has_barriers(enemy) and _since_gate >= GATE_EVERY
+			attack = choose_attack(_last, gate_due, _rng.randf(), _ropes_up(enemy), _running())
 		_next = Attack.NONE
 		_begin(enemy, attack, phase_two)
 		return
-	if enemy.distance_to_target() > KEEP_NEAR:
+	# He stands still while his lanes light, so the mark is never under him.
+	if not _running() and enemy.distance_to_target() > KEEP_NEAR:
 		enemy.desired_velocity = enemy.chase_direction() * speed
+
+
+func _running() -> bool:
+	return _runway_left > 0.0
 
 
 func _enter_phase_two(enemy: Enemy) -> void:
@@ -186,17 +274,60 @@ func _has_barriers(enemy: Enemy) -> bool:
 	return not _barriers(enemy).is_empty()
 
 
+func _ropes_up(enemy: Enemy) -> bool:
+	for barrier in _barriers(enemy):
+		if is_instance_valid(barrier) and (barrier.is_up() or barrier.is_chiming()):
+			return true
+	return false
+
+
+func _ropes(enemy: Enemy) -> Array[Rect2]:
+	var ropes: Array[Rect2] = []
+	for barrier in _barriers(enemy):
+		if is_instance_valid(barrier):
+			ropes.append(QueueBarrier.rope_rect(barrier.global_position, barrier.runs_across()))
+	return ropes
+
+
+func _open_cells(enemy: Enemy) -> Callable:
+	var grid := enemy.walk_grid
+	if grid == null:
+		return Callable()
+	return func(spot: Vector2) -> bool: return grid.is_open(WalkGrid.cell_of(spot))
+
+
+# The pattern as it lights this moment, with each lane's own time left.
+func _live_route(enemy: Enemy) -> OverlapRoute:
+	var lanes: Array[Rect2] = []
+	var windows: Array[Vector2] = []
+	for lane in _lanes:
+		if is_instance_valid(lane):
+			lanes.append(lane.lane_rect())
+			windows.append(lane.danger_window())
+	return runway_route(ForemanBehavior.room_rect(enemy.room_cells), lanes, windows, _ropes(enemy), enemy.body_rect(), _open_cells(enemy))
+
+
 func _begin(enemy: Enemy, attack: int, phase_two: bool) -> void:
 	if attack == Attack.GATE and not _has_barriers(enemy):
-		attack = Attack.RUNWAY
+		attack = Attack.STAMP if _running() else Attack.RUNWAY
+	var stamp_at := enemy.target_ground()
+	if attack == Attack.STAMP and _running():
+		var plan := stamp_plan(_live_route(enemy), enemy.target_ground(), enemy.body_rect(), enemy.open_ground)
+		if plan["spot"] == Vector2.INF:
+			# No spot leaves him a way out while the lanes light, so the stamp waits.
+			_next = Attack.STAMP
+			_cooldown = STAMP_RETRY
+			return
+		stamp_at = plan["spot"]
+		_place_mark(enemy, plan["mark"], maxf(_runway_left, STAMP_WINDUP + 0.3))
 	_attack = attack
 	_telegraph.start(windup_for(attack, phase_two))
 	match attack:
 		Attack.STAMP:
-			# The windup on him shows whole too, and the stamp's spot is locked under Grandpa at once.
+			# The windup on him shows whole too, and the stamp's spot is locked at once.
 			enemy.set_warning(_telegraph, WARNING_RADIUS, STAMP_SHOWN_WHOLE)
 			enemy.say("Stamped and departed!", SAY_TIME)
-			TerminalStrike.strike(enemy, enemy.target_ground(), STAMP_RADIUS, STAMP_WINDUP, 0.0, STAMP_DAMAGE, TerminalStrike.LOOK_STAMP)
+			TerminalStrike.strike(enemy, stamp_at, STAMP_RADIUS, STAMP_WINDUP, 0.0, STAMP_DAMAGE, TerminalStrike.LOOK_STAMP)
 		Attack.RUNWAY:
 			enemy.set_warning(_telegraph, WARNING_RADIUS)
 			enemy.say("Clear the runway!", SAY_TIME)
@@ -209,8 +340,11 @@ func _finish_attack(enemy: Enemy, phase_two: bool) -> void:
 	var busy := 0.0
 	match _attack:
 		Attack.RUNWAY:
-			_light_runway(enemy)
-			busy = runway_light_time(RUNWAY_LANES - 1)
+			if _light_runway(enemy):
+				_cooldown = rest_after_runway(phase_two)
+				_last = Attack.RUNWAY
+				_next = followup(Attack.RUNWAY, phase_two)
+				return
 		Attack.GATE:
 			_since_gate = 0.0
 			var barriers := _barriers(enemy)
@@ -220,26 +354,46 @@ func _finish_attack(enemy: Enemy, phase_two: bool) -> void:
 			var kind := gate_kind(up, barriers.size())
 			for barrier in barriers:
 				barrier.take_control(kind)
-			busy = QueueBarrier.CHIME
+			# While lanes light he goes straight on to the stamp; otherwise he waits out the chime.
+			busy = 0.0 if _running() else QueueBarrier.CHIME
 	_cooldown = cooldown_for(phase_two) + busy
 	_last = _attack
-	_next = followup(_attack, phase_two, _chained)
-	if _next == Attack.STAMP:
-		# Straight into it: the chained stamp starts as the last lane lights.
-		_chained = true
-		_cooldown = busy
+	_next = followup(_attack, phase_two)
 
 
-# The lanes run across the way to him, turning each time, and light from one end of the band.
-func _light_runway(enemy: Enemy) -> void:
+# The lanes run across the way to him, turning each time, and light from one end of the band, in the
+# first pattern that leaves him a way out. False when none does, and then nothing lights.
+func _light_runway(enemy: Enemy) -> bool:
 	_across = Vector2.DOWN if _across == Vector2.RIGHT else Vector2.RIGHT
 	var room := ForemanBehavior.room_rect(enemy.room_cells)
-	var lanes := runway_lanes(room, _across, enemy.target_ground(), _rng.randf() < 0.5)
+	var plan := runway_plan(room, enemy.target_ground(), _across, _rng.randf() < 0.5, _ropes(enemy), enemy.body_rect(), _open_cells(enemy))
+	var direction: Vector2 = plan["direction"]
+	if direction == Vector2.ZERO:
+		return false
+	_across = direction
+	var lanes := runway_lanes(room, direction, plan["center"], plan["reverse"])
+	_lanes.clear()
 	for i in lanes.size():
 		var lane := lanes[i]
-		var length := lane.size.x if _across == Vector2.RIGHT else lane.size.y
-		var origin := lane.get_center() - _across * length / 2.0
+		var length := lane.size.x if direction == Vector2.RIGHT else lane.size.y
+		var origin := lane.get_center() - direction * length / 2.0
 		var row := RunwayLane.new()
-		row.setup(enemy, _across, length, RUNWAY_WIDTH, i * RUNWAY_STEP, RUNWAY_WARNING)
+		row.setup(enemy, direction, length, RUNWAY_WIDTH, i * RUNWAY_STEP, RUNWAY_WARNING)
 		enemy.get_parent().add_child(row)
 		row.global_position = origin
+		_lanes.append(row)
+	_runway_left = runway_time()
+	_place_mark(enemy, plan["mark"], _runway_left)
+	return true
+
+
+func _place_mark(enemy: Enemy, spot: Vector2, seconds: float) -> void:
+	if spot == Vector2.INF:
+		return
+	if not is_instance_valid(_mark):
+		_mark = SafeSpotMark.new()
+		_mark.setup(seconds)
+		enemy.get_parent().add_child(_mark)
+	else:
+		_mark.setup(maxf(_mark.time_left(), seconds))
+	_mark.global_position = spot

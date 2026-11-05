@@ -311,17 +311,127 @@ func test_a_gate_change_always_changes_the_room() -> void:
 	assert_eq(Augustine.gate_kind(4, 6), QueueBarrier.DROP)
 
 
-func test_phase_two_chains_one_runway_pattern_straight_into_the_stamp() -> void:
-	assert_eq(Augustine.followup(RUNWAY, true, false), STAMP, "the first runway of the second phase")
-	assert_eq(Augustine.followup(RUNWAY, true, true), HeadOfDeparturesBehavior.Attack.NONE, "only once")
-	assert_eq(Augustine.followup(RUNWAY, false, false), HeadOfDeparturesBehavior.Attack.NONE, "never in the first phase")
+func test_the_stamp_follows_every_runway_pattern_straight_away_in_phase_two() -> void:
+	for phase_two in [false, true]:
+		assert_eq(Augustine.followup(RUNWAY, phase_two), STAMP, "after every pattern, in both phases")
+	assert_near(Augustine.rest_after_runway(true), 0.0, "without a rest in the second phase")
+	assert_true(Augustine.rest_after_runway(false) > 0.0)
 	for attack in [STAMP, GATE]:
-		assert_eq(Augustine.followup(attack, true, false), HeadOfDeparturesBehavior.Attack.NONE)
+		assert_eq(Augustine.followup(attack, true), HeadOfDeparturesBehavior.Attack.NONE)
 	assert_true(Augustine.windup_for(RUNWAY, true) < Augustine.RUNWAY_WINDUP, "his other windups quicken")
 	assert_true(Augustine.windup_for(GATE, true) < Augustine.GATE_WINDUP)
 	assert_true(Augustine.is_phase_two(1100.0, 2250.0))
 	assert_false(Augustine.is_phase_two(1200.0, 2250.0))
 	assert_near(Augustine.PHASE_TWO_BARRIER_PACE, 2.0, "the barriers cycle twice as fast")
+
+
+func test_he_lights_the_runway_while_the_ropes_are_up_and_changes_the_gate_during_it() -> void:
+	for roll in [0.0, 0.5, 0.99]:
+		assert_eq(Augustine.choose_attack(STAMP, true, roll, true), RUNWAY, "ropes up or chiming: the lanes run while they stand")
+		assert_true(Augustine.choose_attack(RUNWAY, true, roll, true) != RUNWAY, "but never two patterns running")
+		assert_eq(Augustine.choose_attack(RUNWAY, true, roll, false, true), GATE, "the gate changes while the lanes light")
+		assert_eq(Augustine.choose_attack(RUNWAY, false, roll, false, true), STAMP, "or, not due, he stamps")
+	assert_near(Augustine.runway_time(), Augustine.runway_light_time(Augustine.RUNWAY_LANES - 1) + RunwayLane.LIT_TIME)
+	var windows := Augustine.runway_windows(0.5)
+	assert_near(windows[0].x, Augustine.RUNWAY_WARNING - 0.5)
+	assert_near(windows[1].y - windows[1].x, RunwayLane.LIT_TIME)
+
+
+func test_a_runway_lanes_own_window_and_floor_agree_with_the_plan() -> void:
+	var lane := RunwayLane.new()
+	lane.setup(null, Vector2.RIGHT, 200.0, 40.0, 0.35, 0.9)
+	lane.position = Vector2(32, 100)
+	var window := lane.danger_window()
+	assert_near(window.x, 0.35 + 0.9)
+	assert_near(window.y, 0.35 + 0.9 + RunwayLane.LIT_TIME)
+	assert_true(lane.lane_rect().is_equal_approx(Rect2(32, 80, 200, 40)), str(lane.lane_rect()))
+	lane.free()
+	var down := RunwayLane.new()
+	down.setup(null, Vector2.DOWN, 150.0, 40.0, 0.0, 0.9)
+	down.position = Vector2(100, 32)
+	assert_true(down.lane_rect().is_equal_approx(Rect2(80, 32, 40, 150)), str(down.lane_rect()))
+	down.free()
+
+
+func _terminal_layout(name: String) -> RoomLayout:
+	return load("res://data/rooms/terminal_zero/%s.tres" % name)
+
+
+func _ropes_of(layout: RoomLayout) -> Array[Rect2]:
+	var ropes: Array[Rect2] = []
+	var size := layout.size_in_cells()
+	for y in size.y:
+		for x in size.x:
+			var cell := Vector2i(x, y)
+			if layout.symbol_at(cell) == RoomLayout.SYMBOL_BARRIER:
+				ropes.append(QueueBarrier.rope_rect(RoomBackdrop.cell_center(cell), layout.barrier_runs_across(cell)))
+	return ropes
+
+
+func _clear_spot(layout: RoomLayout, ropes: Array[Rect2], rng: RandomNumberGenerator, room: Rect2) -> Vector2:
+	for i in 400:
+		var spot := Vector2(rng.randf_range(room.position.x + 10.0, room.end.x - 10.0), rng.randf_range(room.position.y + 10.0, room.end.y - 10.0))
+		var box := Rect2(spot - Player.FEET_BOX_SIZE / 2.0, Player.FEET_BOX_SIZE)
+		var clear := true
+		for corner in [box.position, box.end, Vector2(box.position.x, box.end.y), Vector2(box.end.x, box.position.y)]:
+			if layout.is_solid_at(WalkGrid.cell_of(corner)):
+				clear = false
+		for rope in ropes:
+			if rope.intersects(box):
+				clear = false
+		if clear:
+			return spot
+	return room.get_center()
+
+
+# Over 200 patterns in both of his rooms, with him and Grandpa anywhere and every rope up: the plan
+# always leaves a way out and a mark, and a stamp after it never takes the last way out.
+func test_every_runway_pattern_with_the_ropes_up_leaves_a_way_out() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 77
+	var centred := 0
+	var stamps := 0
+	var stamps_on_feet := 0
+	for seed_value in 200:
+		var layout := _terminal_layout("floor_boss_01" if seed_value % 2 == 0 else "floor_boss_large_01")
+		var room := ForemanBehavior.room_rect(layout.size_in_cells())
+		var ropes := _ropes_of(layout)
+		assert_false(ropes.is_empty(), "his rooms have barriers")
+		var is_open := func(spot: Vector2) -> bool: return not layout.is_solid_at(WalkGrid.cell_of(spot))
+		var feet := _clear_spot(layout, ropes, rng, room)
+		var boss_at := _clear_spot(layout, ropes, rng, room)
+		if boss_at.distance_to(feet) < 50.0:
+			boss_at = feet + (Vector2(80, 0) if feet.x < room.get_center().x else Vector2(-80, 0))
+		var body := Rect2(boss_at - Vector2(22, 26), Vector2(44, 52))
+		var prefer := Vector2.RIGHT if seed_value % 3 == 0 else Vector2.DOWN
+		var plan := Augustine.runway_plan(room, feet, prefer, rng.randf() < 0.5, ropes, body, is_open)
+		assert_true(plan["direction"] != Vector2.ZERO, "seed %d: a pattern is found" % seed_value)
+		if plan["direction"] == Vector2.ZERO:
+			continue
+		if plan["center"] == feet:
+			centred += 1
+		var lanes := Augustine.runway_lanes(room, plan["direction"], plan["center"], plan["reverse"])
+		var route := Augustine.runway_route(room, lanes, Augustine.runway_windows(), ropes, body, is_open)
+		assert_true(route.escape(feet)["safe"], "seed %d: it leaves a way out" % seed_value)
+		var mark: Vector2 = plan["mark"]
+		assert_true(mark != Vector2.INF, "seed %d: and a mark" % seed_value)
+		assert_false(body.grow(SafeSpotMark.RADIUS).has_point(mark), "seed %d: off his body" % seed_value)
+		assert_false(route.is_blocked_at(mark), "seed %d: on open floor" % seed_value)
+		# The stamp: straight away in the second phase, after half a rest in the first.
+		var elapsed := 0.0 if seed_value % 2 == 0 else Augustine.BASE_COOLDOWN * 0.5
+		var live := Augustine.runway_route(room, lanes, Augustine.runway_windows(elapsed), ropes, body, is_open)
+		var stamp := Augustine.stamp_plan(live, feet, body, is_open)
+		if stamp["spot"] == Vector2.INF:
+			continue
+		stamps += 1
+		if stamp["spot"] == feet:
+			stamps_on_feet += 1
+		assert_true(stamp["mark"].distance_to(stamp["spot"]) > Augustine.STAMP_RADIUS, "seed %d: the mark is off the stamp" % seed_value)
+		live.set_extra_circle(stamp["spot"], Augustine.STAMP_RADIUS, Augustine.STAMP_WINDUP, Augustine.STAMP_WINDUP + OverlapRoute.STEP_TIME)
+		assert_true(live.escape(feet)["safe"], "seed %d: the stamp leaves a way out" % seed_value)
+	assert_true(centred > 100, "most patterns still run over him: %d of 200" % centred)
+	assert_true(stamps > 150, "the stamp nearly always finds a spot at once: %d of 200" % stamps)
+	assert_true(stamps_on_feet > 0, "and often on him: %d" % stamps_on_feet)
 
 
 func test_he_never_calls_over_the_cap_and_his_tour_groups_pay_nothing() -> void:
