@@ -2,8 +2,8 @@ class_name RunCheckpoint
 extends RefCounted
 
 # An interrupted run, kept in its slot's run.json so it can be resumed after any quit. The file is
-# written to run.json.tmp and then renamed, so a kill during the write leaves the old file or none,
-# never a broken one. A file from another build's version, a damaged one or a missing one is no run.
+# written to run.json.tmp and then renamed, so a kill during the write leaves the old file, or only the
+# finished temp file, which read takes in its place, never a broken one. A file from another build's version, a damaged one or a missing one is no run.
 
 const VERSION := 1
 
@@ -31,6 +31,14 @@ static func write(path: String, data: Dictionary) -> bool:
 
 static func read(path: String) -> Dictionary:
 	var full := ProjectSettings.globalize_path(path)
+	if not FileAccess.file_exists(full):
+		# write removes the old file before renaming the new one, so a kill between the two leaves only
+		# the temp file, written whole. One cut off mid-write does not parse and is no run.
+		return _read_file(full + ".tmp")
+	return _read_file(full)
+
+
+static func _read_file(full: String) -> Dictionary:
 	if not FileAccess.file_exists(full):
 		return {}
 	var json := JSON.new()

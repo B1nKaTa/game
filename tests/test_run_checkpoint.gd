@@ -282,3 +282,16 @@ func test_a_failed_resume_deletes_the_checkpoint() -> void:
 	assert_true(tried > 0 and cleared > tried, "cleared after the rebuild fails")
 	assert_true(cleared < fresh, "before the new run starts")
 	assert_true(ready.substr(tried, cleared - tried).contains("not _resumed"), "only when the resume failed")
+
+
+# write deletes the old run.json and then renames the temp file, so a kill between the two leaves only a
+# complete run.json.tmp: that is the run.
+func test_a_complete_temp_file_stands_in_for_a_missing_run_file() -> void:
+	_clean()
+	var file := FileAccess.open(_path() + ".tmp", FileAccess.WRITE)
+	file.store_string(JSON.stringify({"version": RunCheckpoint.VERSION, "depth": 4}))
+	file.close()
+	assert_eq(int(RunCheckpoint.read(_path()).get("depth", 0)), 4, "the temp file is read")
+	_write_text(JSON.stringify({"version": RunCheckpoint.VERSION, "depth": 2}))
+	assert_eq(int(RunCheckpoint.read(_path()).get("depth", 0)), 2, "run.json wins while it is there")
+	_clean()
