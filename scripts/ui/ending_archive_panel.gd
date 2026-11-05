@@ -3,7 +3,8 @@ extends CanvasLayer
 
 # The Executive Suite's filing cabinet: one row per ending (EndingRules.archive_row), a found one with
 # a Replay button. Replay plays the scene over the panel, skippable at once, and the panel comes back
-# afterwards, not the Waiting Room's arrival.
+# afterwards, not the Waiting Room's arrival. A controller drives it as every panel: the D-pad moves
+# between Replay and Leave, A presses, and B (or Esc) leaves, or ends a replay and shows the files again.
 
 signal closed
 
@@ -69,9 +70,12 @@ func _ready() -> void:
 	_scroll.add_child(_list)
 	var close := Button.new()
 	close.text = "Leave"
+	# The Waiting Room plays the closing sound itself.
+	close.set_meta("sfx", "")
 	close.pressed.connect(func(): closed.emit())
 	column.add_child(close)
 	_rebuild()
+	add_child(PadFocus.new())
 
 
 func _rebuild() -> void:
@@ -99,6 +103,14 @@ func _rebuild() -> void:
 			button.pressed.connect(replay.bind(each["id"]))
 			row.add_child(button)
 		_list.add_child(row)
+
+
+# Esc and B in the Waiting Room: a replay ends and the files show again, or the panel closes.
+func leave() -> void:
+	if is_replaying():
+		_cutscene.skip()
+	else:
+		closed.emit()
 
 
 func rows_listed() -> int:

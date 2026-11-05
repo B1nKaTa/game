@@ -6,7 +6,9 @@ extends CanvasLayer
 # shakes and zooms always run behind what follows. Any key or click moves a text box on, once it has
 # shown for MIN_SHOW_TIME so the press that won the fight never skips it. Holding interact for
 # SKIP_HOLD skips the whole scene, but the first time a scene plays only once its first text box has
-# gone. _process reads the input and calls advance(), which tests call directly.
+# gone. A controller works the same: any pad button moves text on, holding the pad's interact skips,
+# and the skip hint names the device in use. _process reads the input and calls advance(), which tests
+# call directly.
 
 signal finished
 
@@ -58,6 +60,8 @@ var _shake_length := 0.0
 var _rng := RandomNumberGenerator.new()
 var _key_pressed := false
 var _built := false
+# Whether the skip hint was last written for a pad, so it is rewritten when the device changes.
+var _hint_for_pad := false
 
 var _world: Node2D
 var _stage: CutsceneStage
@@ -118,7 +122,7 @@ func _ready() -> void:
 	add_child(_card_label)
 	_hint_label = _make_label(Vector2(SCREEN.x - 216, BOX.position.y - 16), Vector2(200, 12), HINT_SIZE, HINT_COLOR)
 	_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_hint_label.text = KeyBindings.with_key("interact", SKIP_TEXT)
+	_write_hint()
 	add_child(_hint_label)
 	_hold_bar = ColorRect.new()
 	_hold_bar.color = NAME_COLOR
@@ -142,8 +146,19 @@ func _make_label(at: Vector2, size: Vector2, font_size: int, color: Color) -> La
 	return label
 
 
+func _write_hint() -> void:
+	_hint_for_pad = ActiveDevice.using_pad
+	_hint_label.text = KeyBindings.with_key("interact", SKIP_TEXT)
+
+
 func is_done() -> bool:
 	return _done
+
+
+# Ends the scene at once, as a finished skip hold does. The Ending Archive calls it when Esc or B
+# backs out of a replay.
+func skip() -> void:
+	_finish()
 
 
 func can_skip() -> bool:
@@ -185,12 +200,15 @@ func _input(event: InputEvent) -> void:
 	if (event is InputEventKey and event.pressed and not event.echo) or (event is InputEventMouseButton and event.pressed):
 		_key_pressed = true
 		get_viewport().set_input_as_handled()
+	# Left unhandled, so PadWatch still sees which device is in use.
+	elif event is InputEventJoypadButton and event.pressed:
+		_key_pressed = true
 
 
 # Polled, not read from input events alone, since the full loop presses keys with Input.action_press.
 func _process(delta: float) -> void:
 	var pressed := _key_pressed
-	for action in ["attack", "interact", "dodge", "ui_accept"]:
+	for action in ["attack", "interact", "dodge", "ui_accept", PadInput.BACK_ACTION]:
 		if InputMap.has_action(action) and Input.is_action_just_pressed(action):
 			pressed = true
 	_key_pressed = false
@@ -401,4 +419,6 @@ func _refresh_view() -> void:
 	_card_label.visible = _is_card
 	_card_label.text = _text if _is_card else ""
 	_hint_label.visible = can_skip() and not _done
+	if _hint_for_pad != ActiveDevice.using_pad:
+		_write_hint()
 	_hold_bar.size = Vector2(200.0 * skip_progress(), 2)

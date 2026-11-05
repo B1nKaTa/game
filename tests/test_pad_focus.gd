@@ -142,6 +142,7 @@ const PANELS := [
 	"res://scripts/ui/slot_picker.gd",
 	"res://scripts/ui/confirm_box.gd",
 	"res://scripts/scenes/title_screen.gd",
+	"res://scripts/ui/ending_archive_panel.gd",
 ]
 
 
@@ -151,8 +152,14 @@ func test_every_panel_takes_controller_focus() -> void:
 
 
 func test_b_backs_out_of_every_menu_and_panel() -> void:
-	for path in ["res://scripts/ui/options_panel.gd", "res://scripts/ui/pause_menu.gd", "res://scripts/ui/slot_picker.gd", "res://scripts/ui/confirm_box.gd", "res://scripts/ui/credits_card.gd", "res://scripts/ui/ending_card.gd", "res://scripts/scenes/waiting_room.gd", "res://scripts/scenes/floor_scene.gd"]:
+	for path in ["res://scripts/ui/options_panel.gd", "res://scripts/ui/pause_menu.gd", "res://scripts/ui/slot_picker.gd", "res://scripts/ui/confirm_box.gd", "res://scripts/ui/credits_card.gd", "res://scripts/ui/cutscene_player.gd", "res://scripts/scenes/waiting_room.gd", "res://scripts/scenes/floor_scene.gd"]:
 		assert_true(FileAccess.get_file_as_string(path).contains("PadInput.BACK_ACTION"), path)
+
+
+func test_the_ending_archive_backs_out_of_a_replay_before_it_closes() -> void:
+	var source := FileAccess.get_file_as_string("res://scripts/ui/ending_archive_panel.gd")
+	var leave := source.substr(source.find("func leave()"), 160)
+	assert_true(leave.contains("_cutscene.skip()") and leave.contains("closed.emit()"))
 
 
 func test_tabs_switch_on_the_shoulder_buttons() -> void:

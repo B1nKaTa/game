@@ -82,7 +82,7 @@ func test_the_player_aims_with_the_pad_while_a_pad_plays() -> void:
 func test_every_prompt_names_the_active_device() -> void:
 	# Prompts go through KeyBindings.with_key or prompt_label, which follow the active device, never
 	# through the keyboard-only label_for.
-	for path in ["res://scripts/ui/hud.gd", "res://scripts/world/npc.gd", "res://scripts/world/pickup.gd", "res://scripts/world/door.gd", "res://scripts/world/waiting_station.gd", "res://scripts/world/arcade_table.gd", "res://scripts/world/retirement_station.gd", "res://scripts/ui/floor_map_view.gd", "res://scripts/ui/ending_card.gd", "res://scripts/ui/card_table_panel.gd"]:
+	for path in ["res://scripts/ui/hud.gd", "res://scripts/world/npc.gd", "res://scripts/world/pickup.gd", "res://scripts/world/door.gd", "res://scripts/world/waiting_station.gd", "res://scripts/world/arcade_table.gd", "res://scripts/world/retirement_station.gd", "res://scripts/ui/floor_map_view.gd", "res://scripts/ui/cutscene_player.gd", "res://scripts/ui/card_table_panel.gd"]:
 		var source := FileAccess.get_file_as_string(path)
 		assert_false(source.contains("KeyBindings.label_for("), path)
 		assert_true(source.contains("KeyBindings.with_key(") or source.contains("KeyBindings.prompt_label("), path)
