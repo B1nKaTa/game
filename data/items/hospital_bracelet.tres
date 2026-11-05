@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "hospital_bracelet"
+display_name = "Hospital Bracelet"
+description = "One more pill. It has your name on it, spelled nearly right."
+rarity = "common"
+tags = PackedStringArray("defence")
+bonus_pills = 1

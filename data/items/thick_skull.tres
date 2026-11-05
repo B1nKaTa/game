@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/thick_skull.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "thick_skull"
+display_name = "Thick Skull"
+description = "Blasts hurt you one pill less, though never not at all. The doctors called it remarkable."
+rarity = "rare"
+tags = PackedStringArray("defence")
+first_clear_path = "furnace_works"
+effect = SubResource("Effect")

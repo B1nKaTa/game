@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/pill_crusher.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "pill_crusher"
+display_name = "Pill Crusher"
+description = "Heals restore half a pill more, but you must stand right on one to take it. Easier to swallow, harder to find."
+rarity = "common"
+tags = PackedStringArray("defence")
+heal_reach_cut = 0.6
+effect = SubResource("Effect")

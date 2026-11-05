@@ -67,7 +67,7 @@ func test_upgrade_prices() -> void:
 
 
 func test_shipped_content_loads() -> void:
-	assert_eq(Content.items().size(), 50)
+	assert_eq(Content.items().size(), 60)
 	assert_eq(Content.upgrades().size(), 10)
 	for upgrade in Content.upgrades():
 		assert_true(upgrade.max_level() > 0, upgrade.id)

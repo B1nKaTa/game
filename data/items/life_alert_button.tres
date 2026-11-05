@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/life_alert_button.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "life_alert_button"
+display_name = "Life Alert Button"
+description = "The first hit in every room is blocked. Help is on the way, eventually."
+rarity = "rare"
+tags = PackedStringArray("defence")
+craft_price = 280
+effect = SubResource("Effect")

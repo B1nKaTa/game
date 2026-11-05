@@ -1,11 +1,14 @@
 extends TestCase
 
-# One test per rule of the hundred items' second batch: the ten dodge and movement items.
+# One test per rule of the hundred items' second batch: the ten dodge and movement items and the first
+# ten defence and health items.
 
 const BadHip := preload("res://scripts/items/bad_hip.gd")
 const Afterimage := preload("res://scripts/items/afterimage.gd")
 const Wheels := preload("res://scripts/items/wheelchair_wheels.gd")
 const Peel := preload("res://scripts/items/banana_peel.gd")
+const Sympathy := preload("res://scripts/items/sympathy_card.gd")
+const Bottle := preload("res://scripts/items/hot_water_bottle.gd")
 
 # id: [rarity, source, first-clear path or "", cursed]
 const BATCH := {
@@ -19,6 +22,16 @@ const BATCH := {
 	"banana_peel": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "last_resort_cruise", false],
 	"bunion_pads": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 	"gravity_boots": [ItemDef.RARE, ItemUnlocks.BOUNTY, "", false],
+	"life_alert_button": [ItemDef.RARE, ItemUnlocks.RECIPE, "", false],
+	"knitted_cardigan": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "furnace_works", false],
+	"casserole_dish": [ItemDef.COMMON, ItemUnlocks.START, "", false],
+	"sympathy_card": [ItemDef.COMMON, ItemUnlocks.START, "", false],
+	"pill_crusher": [ItemDef.COMMON, ItemUnlocks.START, "", false],
+	"hot_water_bottle": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "sunset_shores", false],
+	"bubble_wrap": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "last_resort_cruise", false],
+	"thick_skull": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "furnace_works", false],
+	"second_opinion": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "sunset_shores", false],
+	"hospital_bracelet": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 }
 
 
@@ -250,3 +263,160 @@ func test_gravity_boots_take_the_slide_out_of_every_push_and_roll() -> void:
 	player.free()
 	var source := FileAccess.get_file_as_string("res://scripts/actors/player.gd")
 	assert_true(source.contains("ShipDeck.slide_at(get_tree(), _feet.global_position) * run.slide_mult()"), "nor does a rolling deck")
+
+
+func test_life_alert_button_blocks_the_first_hit_in_every_room() -> void:
+	var kit := ItemKit.new()
+	var run := kit.run_with(["life_alert_button"])
+	run.effects.room_enter(null)
+	assert_eq(run.effects.hurt(2, RunEffects.HURT_ENEMY), 0)
+	assert_eq(kit.fx_of(ItemFx.FxPop).size(), 1, "the block shows")
+	assert_eq(run.effects.hurt(1, RunEffects.HURT_FIRE), 1, "only the first")
+	run.effects.room_enter(null)
+	assert_eq(run.effects.hurt(1, RunEffects.HURT_BLAST), 0, "every room")
+
+
+func test_knitted_cardigan_halves_fire_and_steam() -> void:
+	var run := ItemKit.new().run_with(["knitted_cardigan"])
+	assert_eq(run.effects.hurt(1, RunEffects.HURT_FIRE), 0)
+	assert_eq(run.effects.hurt(1, RunEffects.HURT_FIRE), 1, "two burns cost one pill")
+	assert_eq(run.effects.hurt(2, RunEffects.HURT_FIRE), 1)
+	assert_eq(run.effects.hurt(1, RunEffects.HURT_ENEMY), 1, "nothing else")
+	assert_eq(run.effects.hurt(2, RunEffects.HURT_BLAST), 2)
+
+
+func test_casserole_dish_heals_half_a_pill_on_a_rooms_first_kill() -> void:
+	var kit := ItemKit.new()
+	var run := kit.run_with(["casserole_dish"])
+	run.health.pills = 2
+	var enemy := kit.enemy()
+	run.effects.room_enter(null)
+	run.effects.kill(enemy, RunEffects.SWING)
+	assert_eq(run.health.half_pills, 1)
+	run.effects.kill(enemy, RunEffects.SWING)
+	assert_eq(run.health.half_pills, 1, "only the first kill")
+	run.effects.room_enter(null)
+	run.effects.kill(enemy, RunEffects.BITE)
+	assert_eq(run.health.pills, 3, "two rooms, a whole pill")
+	kit.free_enemies()
+
+
+func test_sympathy_card_leaves_a_one_pill_heal_one_clear_in_four() -> void:
+	var kit := ItemKit.new()
+	var run := kit.run_with(["sympathy_card"])
+	var effect = run.effects.effect_of("sympathy_card")
+	effect.rng.seed = 5
+	for i in 2000:
+		run.effects.room_clear(null)
+	assert_true(absf(kit.drops.size() / 2000.0 - Sympathy.CHANCE) < 0.03, "about one in four, got %d" % kit.drops.size())
+	assert_eq(kit.drops[0][0], RoomRules.DROP_HEAL)
+	var room := FileAccess.get_file_as_string("res://scripts/world/room_view.gd")
+	assert_true(room.contains("elif kind == RoomRules.DROP_HEAL:\r\n\t\t_add_heal(spot, amount)") or room.contains("elif kind == RoomRules.DROP_HEAL:\n\t\t_add_heal(spot, amount)"), "a room lays the heal out")
+
+
+func test_pill_crusher_adds_half_a_pill_and_wants_him_right_on_the_heal() -> void:
+	var run := ItemKit.new().run_with(["pill_crusher"])
+	run.health.pills = 1
+	assert_eq(run.effects.pickup(RunEffects.HEAL, 2), 2)
+	assert_eq(run.health.half_pills, 1, "half a pill waits")
+	assert_eq(run.effects.pickup(RunEffects.HEAL, 2), 3, "the second half comes with the next heal")
+	assert_eq(run.health.half_pills, 0)
+	run.health.pills = run.health.max_pills
+	assert_eq(run.effects.pickup(RunEffects.HEAL, 2), 2, "nothing at full")
+	assert_eq(run.effects.pickup(RunEffects.PENSION, 2), 2)
+	assert_near(run.stats.heal_reach_mult, 0.4)
+	var room := FileAccess.get_file_as_string("res://scripts/world/room_view.gd")
+	assert_true(room.contains("heal.collect_radius = Pickup.COLLECT_RADIUS * _run.stats.heal_reach_mult"), "every heal on the floor")
+
+
+func test_hot_water_bottle_heals_only_when_he_keeps_still_in_a_fight() -> void:
+	var kit := ItemKit.new()
+	var run := kit.run_with(["hot_water_bottle"])
+	var effect = run.effects.effect_of("hot_water_bottle")
+	var ctx := run.effects.ctx
+	run.health.pills = 1
+	run.effects.room_enter(null)
+	for i in 100:
+		assert_false(effect.warm(ctx, true, 0.1), "no fight, no warmth")
+	var enemy := kit.enemy()
+	run.effects.room_enter(null)
+	effect.warm(ctx, true, Bottle.STILL_AFTER - 0.1)
+	assert_near(effect.warmth(), 0.0, "it waits for him to settle")
+	effect.warm(ctx, true, 0.1)
+	effect.warm(ctx, true, Bottle.EVERY - 0.5)
+	effect.warm(ctx, false, 0.1)
+	assert_false(effect.warm(ctx, true, Bottle.STILL_AFTER - 0.1), "settling again first")
+	assert_true(effect.warm(ctx, true, 0.5), "walking keeps the warmth, standing again finishes it")
+	assert_eq(run.health.half_pills, 1)
+	effect.warm(ctx, true, Bottle.EVERY - 1.0)
+	run.effects.hurt(1, RunEffects.HURT_ENEMY)
+	assert_near(effect.warmth(), 0.0, "a hit cools it right down")
+	assert_false(effect.warm(ctx, true, Bottle.STILL_AFTER - 0.1))
+	effect.warm(ctx, true, 0.1)
+	assert_true(effect.warm(ctx, true, Bottle.EVERY))
+	effect.warm(ctx, true, Bottle.EVERY)
+	assert_false(effect.warm(ctx, true, Bottle.EVERY), "a pill a room at most")
+	kit.free_enemies()
+
+
+func test_bubble_wrap_pops_the_first_shot_each_floor() -> void:
+	var kit := ItemKit.new()
+	var run := kit.run_with(["bubble_wrap"])
+	run.effects.floor_start()
+	assert_eq(run.effects.hurt(1, RunEffects.HURT_ENEMY), 1, "a swat is no shot")
+	assert_eq(run.effects.hurt(1, RunEffects.HURT_PROJECTILE), 0)
+	assert_true(kit.fx_of(ItemFx.FxPop).size() == 1 and kit.fx_of(ItemFx.FxPop)[0]["text"] == "POP!")
+	assert_eq(run.effects.hurt(1, RunEffects.HURT_PROJECTILE), 1, "one a floor")
+	run.effects.floor_start()
+	assert_eq(run.effects.hurt(2, RunEffects.HURT_PROJECTILE), 0)
+
+
+func test_thick_skull_takes_a_pill_off_blasts_but_never_all() -> void:
+	var run := ItemKit.new().run_with(["thick_skull"])
+	assert_eq(run.effects.hurt(2, RunEffects.HURT_BLAST), 1)
+	assert_eq(run.effects.hurt(1, RunEffects.HURT_BLAST), 1, "never none")
+	assert_eq(run.effects.hurt(3, RunEffects.HURT_OWN_BLAST), 2, "his own Thermos too")
+	assert_eq(run.effects.hurt(2, RunEffects.HURT_ENEMY), 2)
+
+
+func test_second_opinion_doubles_the_first_heal_of_each_floor() -> void:
+	var run := ItemKit.new().run_with(["second_opinion"])
+	run.effects.floor_start()
+	run.health.pills = run.health.max_pills
+	assert_eq(run.effects.pickup(RunEffects.HEAL, 2), 2, "a heal taken at full is not the one")
+	run.health.pills = 1
+	assert_eq(run.effects.pickup(RunEffects.HEAL, 2), 4)
+	assert_eq(run.effects.pickup(RunEffects.HEAL, 2), 2, "once a floor")
+	run.effects.floor_start()
+	assert_eq(run.effects.pickup(RunEffects.HEAL, 1), 2)
+
+
+func test_hospital_bracelet_adds_a_pill() -> void:
+	var run := ItemKit.new().run_with(["hospital_bracelet"])
+	assert_eq(run.stats.max_pills, PlayerStats.BASE_PILLS + 1)
+
+
+func test_while_the_loop_counts_pills_items_neither_block_nor_heal() -> void:
+	var kit := ItemKit.new()
+	var run := kit.run_with(["life_alert_button", "casserole_dish", "second_opinion", "sympathy_card"])
+	var ctx := run.effects.ctx
+	ctx.counting_pills = true
+	run.effects.room_enter(null)
+	run.effects.floor_start()
+	assert_eq(run.effects.hurt(1, RunEffects.HURT_ENEMY), 1)
+	run.health.pills = 1
+	var enemy := kit.enemy()
+	run.effects.kill(enemy, RunEffects.SWING)
+	ctx.heal_half()
+	ctx.heal(1)
+	assert_eq(run.health.half_pills, 0)
+	assert_eq(run.health.pills, 1)
+	assert_eq(run.effects.pickup(RunEffects.HEAL, 2), 2)
+	run.effects.effect_of("sympathy_card").send(ctx, null)
+	assert_eq(kit.drops.size(), 0, "no heal is dropped")
+	ctx.counting_pills = false
+	assert_eq(run.effects.hurt(1, RunEffects.HURT_ENEMY), 0, "the block was kept for later")
+	var driver := FileAccess.get_file_as_string("res://tools/smoke_driver.gd")
+	assert_true(driver.contains("run.effects.ctx.counting_pills = true"), "the full loop sets it")
+	kit.free_enemies()
+

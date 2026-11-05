@@ -62,6 +62,16 @@ const TIPS := {
 	"banana_peel": "Dodge early in a fight, where they'll walk. Then watch.",
 	"bunion_pads": "Dodge round the furniture all you like. Nothing catches your toes now.",
 	"gravity_boots": "Decks roll, fans blow, you stand there. Plant your feet and swing.",
+	"life_alert_button": "First knock in a room is free. Use it to get in close.",
+	"knitted_cardigan": "Fire's half as bad now. Still bad. Don't stand in it for fun.",
+	"casserole_dish": "Pick off the weakest first in every room. Supper's on.",
+	"sympathy_card": "Clear every room. Someone might send flowers. Or a pill.",
+	"pill_crusher": "Bigger heals, but walk right over them. No reaching.",
+	"hot_water_bottle": "Find a quiet corner mid-fight and stand still. Don't get hit.",
+	"bubble_wrap": "First shot each floor bounces off. Walk into the first one if you must.",
+	"thick_skull": "Blasts hurt less. Less. Still keep your head down, son.",
+	"second_opinion": "Save the first heal of a floor for when you're really hurt.",
+	"hospital_bracelet": "One more pill. Nothing clever. Just don't waste it.",
 }
 
 const DEFAULT_TIP := "Pick something off the rack and I'll tell you what it's good for."

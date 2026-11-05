@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/hot_water_bottle.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "hot_water_bottle"
+display_name = "Hot Water Bottle"
+description = "Standing still in a fight warms you: every 8 s of it heals half a pill, up to a pill a room. Hold still, dear, it's working."
+rarity = "rare"
+tags = PackedStringArray("defence")
+first_clear_path = "sunset_shores"
+effect = SubResource("Effect")
