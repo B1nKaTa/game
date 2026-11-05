@@ -502,6 +502,8 @@ static func from_dict(raw: Variant) -> ProgressData:
 		return null
 	if not raw["upgrades"] is Dictionary or not raw["opening_seen"] is bool:
 		return null
+	# Ids of paths, bosses, posters and departments that were replaced move to their new ones first.
+	raw = PathMigration.migrate_save(raw)
 	var data := ProgressData.new()
 	data.pension = int(raw["pension"])
 	data.opening_seen = raw["opening_seen"]

@@ -51,7 +51,8 @@ static func _read_file(full: String) -> Dictionary:
 		return {}
 	if int(raw["version"]) != VERSION:
 		return {}
-	return raw
+	# A run on a path that was replaced comes back on its replacement (PathMigration).
+	return PathMigration.migrate_checkpoint(raw)
 
 
 static func delete(path: String) -> void:
@@ -237,6 +238,18 @@ static func build_floor(def: FloorDef, seed_text: String, pool: Array[RoomLayout
 	var rng := RandomNumberGenerator.new()
 	rng.seed = int(seed_text)
 	return FloorBuilder.build_from_pool(rng, def, pool if not pool.is_empty() else FloorBuilder.pool_for(def))
+
+
+# A checkpoint moved off a retired path (PathMigration.FLOOR_START) starts its floor again, as walking
+# out of the Crossroads does: he stands in the floor's first room, come in from the Crossroads, with
+# nothing on the floor visited or cleared yet. Items, pills and money are the checkpoint's own.
+static func restart_floor(resume: Dictionary, map: FloorMap, crossroads_id: int) -> void:
+	resume["room"] = map.start_id
+	resume["from"] = crossroads_id
+	resume["visited"] = [crossroads_id]
+	resume["rooms"] = {}
+	resume["is_cleared"] = false
+	resume.erase(PathMigration.FLOOR_START)
 
 
 # Everything that makes two maps the same floor.

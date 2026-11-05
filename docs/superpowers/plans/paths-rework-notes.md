@@ -63,3 +63,22 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
   EnemyDef (the old bosses once Tasks 4 and 5 delete them) shows after the real cells as a known
   history cell: its count, a name made from its id ("Mall Santa"), a grey placeholder chip, no
   floor, and the detail "No longer found on any floor.". The Log already names kills from ids.
+- **Save migration** runs on the raw dict at the top of `ProgressData.from_dict` (after the version
+  checks), on a deep copy, so the file on disk changes only on the next ordinary save; the `.bak`
+  and atomic writes are untouched. It maps `paths_cleared`, `item_paths_seen`, `letters_read`,
+  `path_clears` (summed when both ids are present), `departments_seen`, `bounty_taken` and
+  `bounties_retired`; `bosses_beaten` keeps the old ids and gains the new. Idempotent: no old key
+  is left for a second pass to map.
+- **Not migrated, on purpose:** `enemies_seen` and the run log's kill and met lists keep the old
+  ids as history, and the run log's `floor` and `killer` are display text of what happened, so an
+  old run still reads "Fairway's End Golf Club at Midnight (floor 4)". Endings, cosmetics, upgrades
+  and form choices store no path, boss or department id that changed.
+- **Seeding the Bestiary:** a save with no `enemies_seen` yet is seeded from `bosses_beaten`
+  before the new boss ids join it, so a migrated save never counts the Projectionist as met.
+- **Checkpoint migration** runs in `RunCheckpoint._read_file`, so every reader of run.json (resume,
+  abandon, the slot summary) sees the migrated run. A run that stood on a retired path gets the new
+  floor path and `restart_floor: true`; `FloorScene._resume_map` rebuilds the new floor from the
+  same seed and `RunCheckpoint.restart_floor` puts Harold in its first room, come in from the
+  Crossroads, with nothing visited or cleared. Items, pills, keys, Thermoses, potion, Pension and
+  run earnings are the checkpoint's own. The route (`ending.paths`) is mapped too. A per-floor item
+  state is restored as saved rather than reset, as any resume does.

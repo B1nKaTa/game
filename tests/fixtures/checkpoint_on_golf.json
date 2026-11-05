@@ -1,0 +1,91 @@
+{
+ "version": 1,
+ "depth": 4,
+ "floor": "res://data/floors/fairways_end.tres",
+ "kind": "floor",
+ "seed": "31337",
+ "exit_side": [
+  1,
+  0
+ ],
+ "visited": [
+  0,
+  1,
+  2,
+  7
+ ],
+ "room": 2,
+ "from": 1,
+ "rooms": {
+  "0": {
+   "cleared": true
+  },
+  "1": {
+   "cleared": true
+  }
+ },
+ "run": {
+  "pills": 4,
+  "max_pills": 6,
+  "lethal_saves": 0,
+  "first_heal_bonus": 0,
+  "half_pills": 0,
+  "lost_max_pills": 0,
+  "items": [
+   "bifocals",
+   "alert_bracelet",
+   "brass_topper"
+  ],
+  "effects": {},
+  "keys": 2,
+  "bombs": 3,
+  "potion": "swift_tea",
+  "buff": "",
+  "buff_left": 0.0,
+  "cursed": false,
+  "perks": [],
+  "promised": [],
+  "offered": []
+ },
+ "ending": {
+  "play_time": 1500.2,
+  "pension_earned": 700,
+  "boss_room_pill_lost": false,
+  "paths": {
+   "1": "floor_1",
+   "2": "sunset_shores",
+   "3": "golden_years_mall",
+   "4": "fairways_end"
+  },
+  "table_visits_won": 0,
+  "tally": {
+   "kills": {
+    "mall_cop": 3
+   },
+   "met": [
+    "mall_cop"
+   ],
+   "found": [
+    "bifocals",
+    "alert_bracelet",
+    "brass_topper"
+   ],
+   "hits": 4,
+   "seeds": [
+    "11",
+    "22",
+    "31337"
+   ]
+  }
+ },
+ "rng": {
+  "seed": "987654321",
+  "state": "123456789"
+ },
+ "run_earned": 700,
+ "pension": 512,
+ "bon_voyage": "",
+ "is_cleared": true,
+ "bosses": 4,
+ "run_time": 1500.2
+}

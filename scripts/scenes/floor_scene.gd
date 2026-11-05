@@ -302,8 +302,12 @@ func _resume_map(resume: Dictionary) -> bool:
 			return false
 		var side: Array = resume.get("exit_side", [0, 0])
 		_exit_side = Vector2i(int(side[0]), int(side[1]))
-		if map.attach_crossroads(load(CROSSROADS_LAYOUT), -_exit_side) == null:
+		var crossroads := map.attach_crossroads(load(CROSSROADS_LAYOUT), -_exit_side)
+		if crossroads == null:
 			return false
+		# A run on a retired path comes back at the start of its replacement's floor.
+		if bool(resume.get(PathMigration.FLOOR_START, false)):
+			RunCheckpoint.restart_floor(resume, map, crossroads.id)
 		_floor_seed = str(resume.get("seed", ""))
 	else:
 		return false

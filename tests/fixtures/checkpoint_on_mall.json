@@ -1,0 +1,88 @@
+{
+ "version": 1,
+ "depth": 3,
+ "floor": "res://data/floors/golden_years_mall.tres",
+ "kind": "floor",
+ "seed": "424242",
+ "exit_side": [
+  1,
+  0
+ ],
+ "visited": [
+  0,
+  1,
+  2,
+  7
+ ],
+ "room": 2,
+ "from": 1,
+ "rooms": {
+  "0": {
+   "cleared": true
+  },
+  "1": {
+   "cleared": true
+  }
+ },
+ "run": {
+  "pills": 3,
+  "max_pills": 5,
+  "lethal_saves": 0,
+  "first_heal_bonus": 0,
+  "half_pills": 0,
+  "lost_max_pills": 0,
+  "items": [
+   "bifocals",
+   "coupon_booklet"
+  ],
+  "effects": {},
+  "keys": 2,
+  "bombs": 3,
+  "potion": "swift_tea",
+  "buff": "",
+  "buff_left": 0.0,
+  "cursed": false,
+  "perks": [],
+  "promised": [],
+  "offered": []
+ },
+ "ending": {
+  "play_time": 1500.2,
+  "pension_earned": 700,
+  "boss_room_pill_lost": false,
+  "paths": {
+   "1": "cemetery",
+   "2": "furnace_works",
+   "3": "golden_years_mall"
+  },
+  "table_visits_won": 0,
+  "tally": {
+   "kills": {
+    "mall_cop": 3
+   },
+   "met": [
+    "mall_cop"
+   ],
+   "found": [
+    "bifocals",
+    "coupon_booklet"
+   ],
+   "hits": 4,
+   "seeds": [
+    "11",
+    "22",
+    "424242"
+   ]
+  }
+ },
+ "rng": {
+  "seed": "987654321",
+  "state": "123456789"
+ },
+ "run_earned": 700,
+ "pension": 333,
+ "bon_voyage": "",
+ "is_cleared": false,
+ "bosses": 4,
+ "run_time": 1500.2
+}
