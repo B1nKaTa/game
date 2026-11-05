@@ -11,5 +11,5 @@ depth = 1
 floor_boss = true
 pension = 100
 condolences = 20
-extra_kind = "cosmetic"
-extra_id = "reaper_hood"
+extra_kind = "item"
+extra_id = "reapers_scythe"

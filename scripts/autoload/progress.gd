@@ -79,6 +79,8 @@ func reload() -> void:
 	data = _store.load_progress()
 	# ProgressData loads no defs, so a poster id that matches none is dropped here.
 	BountyBoard.drop_unknown_taken(BountyBoard.all(), data)
+	# A poster retired before it paid an item, as the Regional Reaper's paid a hood, gives its item now.
+	BountyBoard.grant_retired_items(BountyBoard.all(), data)
 	notice = ""
 	if _store.last_status == SaveStore.STATUS_BACKUP:
 		notice = "Your save was damaged, so a backup was restored."

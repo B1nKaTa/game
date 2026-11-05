@@ -8,6 +8,6 @@ id = "reaper_hood"
 display_name = "Reaper's Hood"
 description = "Taken off a Regional Reaper. Still warm."
 slot = "hat"
-price = 0
+price = 35
 color = Color(0.101960784, 0.0862745098, 0.125490196, 1)
 shape = "hood"

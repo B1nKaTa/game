@@ -74,6 +74,17 @@ static func drop_unknown_taken(defs: Array[BountyDef], data: ProgressData) -> bo
 	return true
 
 
+# A poster collected before its reward became an item paid what it paid then, so its item would never
+# join. Every retired poster that now pays an item unlocks it. Returns whether anything changed.
+static func grant_retired_items(defs: Array[BountyDef], data: ProgressData) -> bool:
+	var changed := false
+	for def in defs:
+		if def.extra_kind == BountyDef.EXTRA_ITEM and data.bounties_retired.has(def.id) and not data.is_unlocked(def.extra_id):
+			data.items_unlocked[def.extra_id] = true
+			changed = true
+	return changed
+
+
 # Taking clears any win, so a boss beaten before the poster was taken never counts.
 static func take(def: BountyDef, data: ProgressData) -> bool:
 	if not can_take(def, data):

@@ -8,6 +8,8 @@ const Dabber := preload("res://scripts/items/bingo_dabber.gd")
 const Hinge := preload("res://scripts/items/rusty_hinge.gd")
 const Rocking := preload("res://scripts/items/rocking_chair.gd")
 const Needles := preload("res://scripts/items/knitting_needles.gd")
+const Pin := preload("res://scripts/items/rolling_pin.gd")
+const Scythe := preload("res://scripts/items/reapers_scythe.gd")
 
 # id: [rarity, source, first-clear path or ""]
 const BATCH := {
@@ -21,6 +23,8 @@ const BATCH := {
 	"knitting_needles": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "fairways_end"],
 	"shoe_horn": [ItemDef.COMMON, ItemUnlocks.START, ""],
 	"brass_topper": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "fairways_end"],
+	"rolling_pin": [ItemDef.LEGENDARY, ItemUnlocks.RECIPE, ""],
+	"reapers_scythe": [ItemDef.LEGENDARY, ItemUnlocks.BOUNTY, ""],
 }
 
 
@@ -255,3 +259,41 @@ func test_brass_topper_turns_a_finisher_into_a_ring() -> void:
 	assert_true(finisher.covers(Vector2.ZERO, behind), "it hits behind him")
 	assert_false(plain.covers(Vector2.ZERO, behind))
 	assert_eq(kit.fx_of(ItemFx.FxShockwave).size(), 1)
+
+
+func test_rolling_pin_makes_every_plain_swing_a_slow_smash_both_ways() -> void:
+	var run := ItemKit.new().run_with(["rolling_pin"])
+	assert_near(run.stats.swing_speed, 0.6, "slow")
+	var swing := _swing()
+	run.effects.swing(swing)
+	assert_near(swing.damage, 10.0 * Pin.DAMAGE_MULT)
+	assert_near(swing.reach, Pin.REACH)
+	assert_true(swing.both_ways)
+	assert_eq(swing.style, SwingAttack.STYLE_PIN)
+	assert_near(swing.duration, Pin.DURATION)
+	assert_true(swing.covers(Vector2.ZERO, Rect2(Vector2(-60, -8), Vector2(16, 16))), "and behind him")
+	assert_eq(swing.push_toward(Vector2.ZERO, Vector2(-30, 0)), Vector2.LEFT * swing.push, "pushing what is behind away from him")
+	swing.tick(0.12)
+	assert_true(swing.is_active(), "it hits for as long as it is drawn")
+	var charged := _swing(true)
+	run.effects.swing(charged)
+	assert_eq(charged.style, SwingAttack.STYLE_ARC)
+	assert_false(charged.both_ways)
+
+
+func test_reapers_scythe_makes_a_full_charge_a_spinning_sweep() -> void:
+	var run := ItemKit.new().run_with(["reapers_scythe"])
+	var plain := _swing()
+	run.effects.swing(plain)
+	assert_eq(plain.style, SwingAttack.STYLE_ARC)
+	var charged := _swing(true)
+	run.effects.swing(charged)
+	assert_eq(charged.style, SwingAttack.STYLE_SWEEP)
+	assert_near(charged.half_angle_deg, 180.0)
+	assert_near(charged.reach, Scythe.REACH)
+	assert_near(charged.damage, 10.0 * Scythe.DAMAGE_MULT)
+	assert_true(charged.covers(Vector2.ZERO, Rect2(Vector2(-8, 50), Vector2(16, 16))), "all the way round")
+	charged.tick(Scythe.DURATION - 0.05)
+	assert_true(charged.is_active())
+	var player := FileAccess.get_file_as_string("res://scripts/actors/player.gd")
+	assert_true(player.contains("run.effects.swing(_active_swing)") and player.contains("_draw_sweep(swing)"), "drawn as it hits")
