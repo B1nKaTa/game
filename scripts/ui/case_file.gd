@@ -255,11 +255,7 @@ func _build_harold() -> void:
 	var title := "HAROLD   -   Case no. %d" % _data.run_count
 	_add_head(title, left.position)
 	if _run == null:
-		var none := _label(CaseFileData.NO_CASE, 10, INK_DIM)
-		none.position = left.position + Vector2(0, 30)
-		none.size = Vector2(left.size.x, 40)
-		none.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		_body.add_child(none)
+		_add_wrapped(CaseFileData.NO_CASE, 10, INK_DIM, left.position + Vector2(0, 30), left.size.x)
 		_build_waiting_right()
 		return
 	var rows := CaseFileData.stat_rows(_run)
@@ -273,19 +269,14 @@ func _build_harold() -> void:
 	var form_parts: PackedStringArray = []
 	for row in forms:
 		form_parts.append("%s %s" % [row[0], str(row[1]).trim_prefix("Lv ")])
-	var forms_label := _label("Forms: " + (", ".join(form_parts) if not form_parts.is_empty() else "none"), 8, INK_DIM)
-	forms_label.position = left.position + Vector2(0, y)
-	forms_label.size = Vector2(left.size.x, 22)
-	forms_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var forms_label := _add_wrapped("Forms: " + (", ".join(form_parts) if not form_parts.is_empty() else "none"), 8, INK_DIM, left.position + Vector2(0, y), left.size.x)
 	forms_label.max_lines_visible = 2
-	forms_label.clip_text = true
-	_body.add_child(forms_label)
 	y += 24.0
 	var held := _held()
 	var held_label := _label("Held items: %d" % _run.items.size(), FONT, INK)
 	held_label.position = left.position + Vector2(0, y)
 	_body.add_child(held_label)
-	y += 12.0
+	y += 14.0
 	var grid_at := left.position + Vector2(2, y)
 	_add_grid(held, GRID_COLUMNS * HAROLD_ROWS, grid_at, true)
 	_add_page_row(held.size(), GRID_COLUMNS * HAROLD_ROWS, Vector2(left.position.x, grid_at.y + HAROLD_ROWS * (CELL + CELL_GAP)))
@@ -354,12 +345,7 @@ func _build_stats() -> void:
 	for row in CaseFileData.best_rows(_data):
 		_add_row(row, right.position + Vector2(0, y), right.size.x, 170.0, 10)
 		y += 15.0
-	var note := _label("Counted since this file was opened. Older runs count toward Runs, Endings and Floors only.", 8, INK_DIM)
-	note.position = right.position + Vector2(0, y + 10.0)
-	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	note.custom_minimum_size = Vector2(right.size.x, 0)
-	note.size = Vector2(right.size.x, 30)
-	_body.add_child(note)
+	_add_wrapped("Counted since this file was opened. Older runs count toward Runs, Endings and Floors only.", 8, INK_DIM, right.position + Vector2(0, y + 10.0), right.size.x)
 
 
 # --- Log ---
@@ -477,6 +463,20 @@ func _show_detail(lines: Array) -> void:
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		label.custom_minimum_size.x = _detail.size.x
 		_detail.add_child(label)
+
+
+# A label that wraps within width. A plain Control parent never sizes a wrapping label, so it sits in
+# a column of that width, as the detail box's lines do.
+func _add_wrapped(text: String, font_size: int, color: Color, at: Vector2, width: float) -> Label:
+	var column := VBoxContainer.new()
+	column.position = at
+	column.size = Vector2(width, 0)
+	_body.add_child(column)
+	var label := _label(text, font_size, color)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.custom_minimum_size.x = width
+	column.add_child(label)
+	return label
 
 
 func _add_head(text: String, at: Vector2) -> void:
