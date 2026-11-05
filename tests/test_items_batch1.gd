@@ -25,6 +25,9 @@ const BATCH := {
 	"brass_topper": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "fairways_end"],
 	"rolling_pin": [ItemDef.LEGENDARY, ItemUnlocks.RECIPE, ""],
 	"reapers_scythe": [ItemDef.LEGENDARY, ItemUnlocks.BOUNTY, ""],
+	"glue_gun": [ItemDef.RARE, ItemUnlocks.RECIPE, ""],
+	"spare_set": [ItemDef.RARE, ItemUnlocks.RECIPE, ""],
+	"boomerang_bite": [ItemDef.COMMON, ItemUnlocks.START, ""],
 }
 
 
@@ -297,3 +300,70 @@ func test_reapers_scythe_makes_a_full_charge_a_spinning_sweep() -> void:
 	assert_true(charged.is_active())
 	var player := FileAccess.get_file_as_string("res://scripts/actors/player.gd")
 	assert_true(player.contains("run.effects.swing(_active_swing)") and player.contains("_draw_sweep(swing)"), "drawn as it hits")
+
+
+func test_glue_gun_keeps_the_teeth_biting_for_two_seconds() -> void:
+	var kit := ItemKit.new()
+	var run := kit.run_with(["glue_gun"])
+	assert_near(run.stats.teeth_glue_time, 2.0)
+	var enemy := kit.enemy("intern_reaper", 1000.0)
+	var state := DentureThrow.new()
+	var teeth := _flying(run, state)
+	assert_true(teeth.try_glue(enemy))
+	for i in 4:
+		teeth.hold_glue(0.5)
+	assert_near(enemy.hp, 1000.0 - 4.0 * ThrownDentures.DAMAGE * ThrownDentures.GLUE_SHARE)
+	assert_false(teeth.is_glued(), "the glue gives after two seconds")
+	assert_true(state.is_dropped())
+	assert_false(teeth.try_glue(enemy), "once a throw")
+	teeth.free()
+	kit.free_enemies()
+
+
+func test_spare_set_throws_two_sets_and_the_spare_holds_nothing_back() -> void:
+	var run := ItemKit.new().run_with(["spare_set"])
+	assert_eq(run.stats.teeth_sets, 2)
+	assert_eq(ItemKit.new().make_run().stats.teeth_sets, 1)
+	var state := DentureThrow.new()
+	state.try_throw()
+	state.drop()
+	var spare := ThrownDentures.new()
+	spare.setup(state, null, Vector2.RIGHT, 1.0)
+	spare.spare = true
+	var caught := [0]
+	spare.caught.connect(func(): caught[0] += 1)
+	spare._catch()
+	assert_eq(caught[0], 0, "a spare's catch is no catch of his")
+	spare.free()
+	var player := FileAccess.get_file_as_string("res://scripts/actors/player.gd")
+	assert_true(player.contains("for i in sets - 1:") and player.contains("_free_spares()"), "spares fly and are recalled with the room")
+
+
+func test_boomerang_bite_turns_home_and_bites_on_the_way() -> void:
+	var kit := ItemKit.new()
+	var run := kit.run_with(["boomerang_bite"])
+	assert_true(run.stats.teeth_boomerang)
+	var enemy := kit.enemy("intern_reaper", 1000.0)
+	enemy.position = Vector2(6, 0)
+	var state := DentureThrow.new()
+	var teeth := _flying(run, state)
+	var home := Node2D.new()
+	home.position = Vector2(200, 0)
+	teeth._player = home
+	teeth.end_flight()
+	assert_true(state.is_returning(), "no lying about")
+	teeth._return_to_player(0.001)
+	assert_near(enemy.hp, 1000.0 - ThrownDentures.DAMAGE)
+	teeth._return_to_player(0.001)
+	assert_near(enemy.hp, 1000.0 - ThrownDentures.DAMAGE, "once on the way back")
+	var plain := _flying(ItemKit.new().make_run())
+	plain.effects = run.effects
+	plain._player = home
+	plain.end_flight()
+	plain._state.recall()
+	plain._return_to_player(0.001)
+	assert_near(enemy.hp, 1000.0 - ThrownDentures.DAMAGE, "plain teeth coming home bite nothing")
+	teeth.free()
+	plain.free()
+	home.free()
+	kit.free_enemies()

@@ -44,6 +44,9 @@ const TIPS := {
 	"brass_topper": "Surrounded? Finish a combo. The topper hits all round.",
 	"rolling_pin": "Slow, but it hits both ways. Stand in the middle and let them come.",
 	"reapers_scythe": "Charge it up in a crowd. One sweep, all round, nobody left.",
+	"glue_gun": "Throw at the big one. The teeth hang on while you work.",
+	"spare_set": "Two sets, two lanes. Throw down the middle of a pair.",
+	"boomerang_bite": "Throw past them and step aside. The teeth bite coming home.",
 }
 
 const DEFAULT_TIP := "Pick something off the rack and I'll tell you what it's good for."

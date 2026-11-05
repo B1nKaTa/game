@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "spare_set"
+display_name = "Spare Set"
+description = "Throw two sets of dentures at once, in a small spread. You never know when you'll need a spare."
+rarity = "rare"
+tags = PackedStringArray("bite")
+craft_price = 220
+teeth_sets = 2
