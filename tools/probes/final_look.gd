@@ -112,7 +112,10 @@ func _floor() -> void:
 	# A real combo: Titanium Hip and Wheelchair Wheels make the Mobility Scooter.
 	player.run.add_item(_item("titanium_hip"))
 	player.run.add_item(_item("wheelchair_wheels"))
-	await _wait(0.3)
+	# A few frames, not real time: with --fixed-fps the game runs ahead of the clock, and the banner
+	# lasts 2.5 s of game time.
+	for i in 6:
+		await process_frame
 	print("scooter combo: %s" % player.run.effects.has_combo("mobility_scooter"))
 	await _shot("05_combo_banner")
 
