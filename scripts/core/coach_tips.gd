@@ -72,6 +72,15 @@ const TIPS := {
 	"thick_skull": "Blasts hurt less. Less. Still keep your head down, son.",
 	"second_opinion": "Save the first heal of a floor for when you're really hurt.",
 	"hospital_bracelet": "One more pill. Nothing clever. Just don't waste it.",
+	"do_not_resuscitate": "One pill, triple damage. Don't get hit. That's the whole plan, son.",
+	"eternal_warranty": "Die once and it sends you back to the door. Once. Don't make a habit of it.",
+	"hot_soup_thermos": "Throw it where they're going. Let them walk through the soup.",
+	"second_thermos_strap": "More Thermoses, more walls. Knock on the ones that sound hollow.",
+	"forged_signature": "Spend your Slips. Every so often one comes back for nothing.",
+	"pressure_cooker": "Bigger bang, slower fuse. Drop it early and walk away.",
+	"tea_cosy": "Your own blasts can't touch you. Drop it at your feet and stand your ground.",
+	"rubber_stamps": "Every Slip pays you back. Open every locked thing you find.",
+	"kettle_whistle": "The blast stuns them. Wade in while their ears are still ringing.",
 }
 
 const DEFAULT_TIP := "Pick something off the rack and I'll tell you what it's good for."

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/eternal_warranty.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "eternal_warranty"
+display_name = "Eternal Warranty"
+description = "Once per run, a death puts you back at the room's door with every pill. The warranty outlives the customer."
+rarity = "legendary"
+tags = PackedStringArray("defence")
+craft_price = 380
+effect = SubResource("Effect")

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ComboDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/combo_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "last_rites"
+display_name = "Last Rites"
+description = "The Life Jacket saves you twice on every floor."
+item_a = "do_not_resuscitate"
+item_b = "life_jacket"
+floor_lethal_saves = 1

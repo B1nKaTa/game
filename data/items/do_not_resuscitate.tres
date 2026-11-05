@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/do_not_resuscitate.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "do_not_resuscitate"
+display_name = "Do Not Resuscitate Bracelet"
+description = "All your damage is tripled, but you only ever hold one pill. Nobody argues with the paperwork."
+rarity = "rare"
+cursed = true
+tags = PackedStringArray("defence", "cane")
+max_pills_cap = 1
+effect = SubResource("Effect")
