@@ -212,7 +212,7 @@ func _show_room(file: String, type: String, shot_name: String, stand_side := Roo
 
 func _rooms() -> void:
 	await _new_run()
-	var f := "res://data/rooms/fairways_end/%s.tres"
+	var f := "res://data/rooms/seance_hotline/%s.tres"
 	for entry: Array in [["combat_small_01", "combat"], ["combat_small_02", "combat"], ["combat_01", "combat"], ["combat_04", "combat"], ["combat_large_01", "combat"], ["combat_large_03", "combat"]]:
 		await _show_room(f % entry[0], entry[1], "10_room_" + entry[0])
 	# The large room's far end too, since the camera travels.
@@ -310,7 +310,7 @@ func _enemies() -> void:
 
 func _chip() -> void:
 	await _new_run()
-	var layout := await _enter_quiet("res://data/rooms/fairways_end/mini_boss_01.tres")
+	var layout := await _enter_quiet("res://data/rooms/seance_hotline/mini_boss_01.tres")
 	var center := _middle(layout)
 	_stand(_floor_near(layout, center + Vector2(-100, 20)))
 	var chip: Enemy = view._spawn_enemy(load("res://data/enemies/chip.tres"), center, true)
@@ -353,7 +353,7 @@ func _chip() -> void:
 
 func _president() -> void:
 	await _new_run()
-	var layout := await _enter_quiet("res://data/rooms/fairways_end/floor_boss_01.tres")
+	var layout := await _enter_quiet("res://data/rooms/seance_hotline/floor_boss_01.tres")
 	var center := _middle(layout)
 	_stand(_floor_near(layout, center + Vector2(-120, 10)))
 	var boss: Enemy = view._spawn_enemy(load("res://data/enemies/thaddeus_fairweather.tres"), center, true)

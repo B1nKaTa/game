@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = "chip"
 boss_name = "Chip, Club Pro"
-floor_id = "fairways_end"
+floor_id = "seance_hotline"
 depth = 4
 floor_boss = false
 pension = 160

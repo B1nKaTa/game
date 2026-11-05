@@ -1,13 +1,13 @@
 extends TestCase
 
 const SEEDS := 300
-const DIR := "res://data/rooms/fairways_end/"
+const DIR := "res://data/rooms/seance_hotline/"
 # The symbols the earlier floors' props and hazards use, none of which belong on the golf course.
 const OTHER_FLOORS := ["A", "Y", "O", "Q", "Z", "K", "D", "J", "F", "f", "W", "L", "R", "M", "p", "U", "o", "h", "j", "r", "c", "a", "z", "d", "q", "e", ">", "<", "^", "v"]
 
 
 func _def() -> FloorDef:
-	return load("res://data/floors/fairways_end.tres")
+	return load("res://data/floors/seance_hotline.tres")
 
 
 func _floor(id: String) -> FloorDef:
@@ -28,10 +28,10 @@ func _difference(a: Color, b: Color) -> float:
 
 # --- the path ---
 
-func test_fairways_end_is_the_locked_fourth_floor_path_with_its_own_rooms() -> void:
+func test_seance_hotline_is_the_locked_fourth_floor_path_with_its_own_rooms() -> void:
 	var def := _def()
-	assert_eq(def.id, "fairways_end")
-	assert_eq(def.display_name, "Fairway's End Golf Club at Midnight")
+	assert_eq(def.id, "seance_hotline")
+	assert_eq(def.display_name, "Beyond Calling Psychic Hotline, Night Shift")
 	assert_eq(def.depth, 4)
 	assert_eq(def.open_after_depth, 4)
 	assert_eq(def.clears_to_open, 1, "it opens after a fourth-floor clear")
@@ -95,7 +95,7 @@ func test_enemies_stand_out_from_the_fairway() -> void:
 
 func test_it_looks_like_no_other_floor() -> void:
 	var mine := _def().room_palette()
-	for id in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "golden_years_mall"]:
+	for id in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "flashback_cinema"]:
 		var theirs := _floor(id).room_palette()
 		assert_true(_difference(mine.floor_a, theirs.floor_a) > 0.15, "floor against %s" % id)
 		assert_true(_difference(mine.wall, theirs.wall) > 0.15, "walls against %s" % id)
@@ -251,7 +251,7 @@ func test_the_ground_fog_is_faint_and_shares_no_shape_with_the_sand() -> void:
 	var fog_part := source.substr(start, source.find("TerminalDecor.draw_placeholder") - start)
 	for shape in ["draw_circle", "draw_rect", "draw_arc", "draw_colored_polygon"]:
 		assert_false(fog_part.contains(shape), "fog drawn with %s" % shape)
-	for id in ["floor_1", "cemetery", "golden_years_mall"]:
+	for id in ["floor_1", "cemetery", "flashback_cinema"]:
 		assert_near(_floor(id).room_palette().weight_of(RoomDecor.FOG), 0.0, "no fog on %s" % id)
 
 

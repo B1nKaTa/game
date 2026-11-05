@@ -13,5 +13,5 @@ display_name = "Haggler's Hat"
 description = "Each shop's cheapest item is half price. He hasn't paid full price since rationing."
 rarity = "common"
 tags = PackedStringArray("money")
-first_clear_path = "golden_years_mall"
+first_clear_path = "flashback_cinema"
 effect = SubResource("Effect")

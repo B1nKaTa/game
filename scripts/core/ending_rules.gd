@@ -33,7 +33,7 @@ const TABLE_VISITS := 3
 # How many of endings 2 to 9 make the Eternal Feud due.
 const FEUD_NEEDS := 5
 # The east path of every depth.
-const SCENIC_PATHS := {1: "cemetery", 2: "furnace_works", 3: "golden_years_mall", 4: "fairways_end", 5: "head_office"}
+const SCENIC_PATHS := {1: "cemetery", 2: "furnace_works", 3: "flashback_cinema", 4: "seance_hotline", 5: "head_office"}
 const REPEAT_DEATHS := 5
 const HAT_NOTICE := "Gerald left you his hat. You can wear it from the Decor Office."
 const TOTAL := 11

@@ -75,10 +75,10 @@ func _main() -> void:
 	progress.reload()
 	progress.data.floors_cleared = 1
 	progress.data.record_floor_cleared(1, "")
-	progress.data.record_floor_cleared(2, "golden_years_mall")
+	progress.data.record_floor_cleared(2, "flashback_cinema")
 	progress.data.record_floor_cleared(3, "funeral_parlour")
 	progress.data.record_floor_cleared(4, "last_resort_cruise")
-	progress.data.record_floor_cleared(4, "fairways_end")
+	progress.data.record_floor_cleared(4, "seance_hotline")
 	progress.data.record_floor_cleared(5, "terminal_zero")
 	progress.data.record_floor_cleared(5, "head_office")
 	progress.data.endings_found[EndingRules.ETERNAL_FEUD] = true

@@ -22,19 +22,19 @@ const BATCH := {
 	"tea_cosy": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 	"rubber_stamps": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "floor_1", false],
 	"kettle_whistle": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "furnace_works", false],
-	"coupon_booklet": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "golden_years_mall", false],
+	"coupon_booklet": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "flashback_cinema", false],
 	"penny_jar": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 	"lottery_scratcher": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 	"pension_statement": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "head_office", false],
-	"loaded_dice": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "golden_years_mall", true],
+	"loaded_dice": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "flashback_cinema", true],
 	"expired_coupon": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "terminal_zero", true],
-	"hagglers_hat": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "golden_years_mall", false],
+	"hagglers_hat": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "flashback_cinema", false],
 	"collection_plate": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "head_office", false],
 	"inheritance_letter": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 	"tax_refund": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "terminal_zero", false],
 	"night_light": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 }
-const SHOP_DIRS := ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "golden_years_mall", "last_resort_cruise", "fairways_end", "terminal_zero", "head_office"]
+const SHOP_DIRS := ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "flashback_cinema", "last_resort_cruise", "seance_hotline", "terminal_zero", "head_office"]
 
 
 func _with_combos(kit: ItemKit, ids: Array) -> RunState:

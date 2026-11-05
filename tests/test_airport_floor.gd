@@ -97,7 +97,7 @@ func test_every_enemy_stands_out_from_the_carpet() -> void:
 
 func test_it_looks_like_no_other_floor() -> void:
 	var mine := _def().room_palette()
-	for id in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "golden_years_mall"]:
+	for id in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "flashback_cinema"]:
 		var theirs := _floor(id).room_palette()
 		assert_true(_difference(mine.floor_a, theirs.floor_a) > 0.15, "floor against %s" % id)
 		assert_true(_difference(mine.wall, theirs.wall) > 0.15, "walls against %s" % id)

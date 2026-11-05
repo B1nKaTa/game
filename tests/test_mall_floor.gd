@@ -1,11 +1,11 @@
 extends TestCase
 
 const SEEDS := 300
-const DIR := "res://data/rooms/golden_years_mall/"
+const DIR := "res://data/rooms/flashback_cinema/"
 
 
 func _def() -> FloorDef:
-	return load("res://data/floors/golden_years_mall.tres")
+	return load("res://data/floors/flashback_cinema.tres")
 
 
 func _floor(id: String) -> FloorDef:
@@ -28,7 +28,7 @@ func _difference(a: Color, b: Color) -> float:
 
 func test_the_mall_is_the_unlocked_third_floor_path_with_its_own_rooms() -> void:
 	var def := _def()
-	assert_eq(def.id, "golden_years_mall")
+	assert_eq(def.id, "flashback_cinema")
 	assert_eq(def.depth, 3)
 	assert_eq(def.clears_to_open, 1, "it opens after a third-floor clear")
 	assert_eq(def.rooms_dir, DIR, "no longer Sunset Shores' rooms")

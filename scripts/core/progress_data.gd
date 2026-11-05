@@ -105,7 +105,7 @@ var run_log: Array = []
 const FIRST_PATH_BY_DEPTH := {1: "floor_1", 2: "sunset_shores", 3: "funeral_parlour", 4: "last_resort_cruise", 5: "terminal_zero"}
 # Every path id at each depth. Mirrors floor_scene.gd's PATHS_BY_DEPTH by id, since ProgressData
 # must not load FloorDefs.
-const PATHS_AT_DEPTH := {1: ["floor_1", "cemetery"], 2: ["sunset_shores", "furnace_works"], 3: ["funeral_parlour", "golden_years_mall"], 4: ["last_resort_cruise", "fairways_end"], 5: ["terminal_zero", "head_office"]}
+const PATHS_AT_DEPTH := {1: ["floor_1", "cemetery"], 2: ["sunset_shores", "furnace_works"], 3: ["funeral_parlour", "flashback_cinema"], 4: ["last_resort_cruise", "seance_hotline"], 5: ["terminal_zero", "head_office"]}
 
 
 func level_of(id: String) -> int:

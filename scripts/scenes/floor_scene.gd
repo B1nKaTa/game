@@ -5,8 +5,8 @@ extends Node2D
 const PATHS_BY_DEPTH := {
 	1: ["res://data/floors/floor_1.tres", "res://data/floors/cemetery.tres"],
 	2: ["res://data/floors/sunset_shores.tres", "res://data/floors/furnace_works.tres"],
-	3: ["res://data/floors/funeral_parlour.tres", "res://data/floors/golden_years_mall.tres"],
-	4: ["res://data/floors/last_resort_cruise.tres", "res://data/floors/fairways_end.tres"],
+	3: ["res://data/floors/funeral_parlour.tres", "res://data/floors/flashback_cinema.tres"],
+	4: ["res://data/floors/last_resort_cruise.tres", "res://data/floors/seance_hotline.tres"],
 	5: ["res://data/floors/terminal_zero.tres", "res://data/floors/head_office.tres"],
 }
 # The deepest floor there is. A floor boss falling here ends the run.

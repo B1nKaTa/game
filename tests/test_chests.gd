@@ -278,7 +278,7 @@ func test_a_lunchbox_opens_for_free() -> void:
 
 func test_shipped_rooms_still_hold_chest_cells() -> void:
 	var chests := 0
-	for dir in ["res://data/rooms/floor_1/", "res://data/rooms/cemetery/", "res://data/rooms/sunset_shores/", "res://data/rooms/furnace_works/", "res://data/rooms/funeral_parlour/", "res://data/rooms/golden_years_mall/", "res://data/rooms/head_office/",
+	for dir in ["res://data/rooms/floor_1/", "res://data/rooms/cemetery/", "res://data/rooms/sunset_shores/", "res://data/rooms/furnace_works/", "res://data/rooms/funeral_parlour/", "res://data/rooms/flashback_cinema/", "res://data/rooms/head_office/",
 			"res://data/rooms/terminal_zero/"]:
 		for layout in RoomCatalog.load_valid(dir):
 			chests += layout.cells_of("C").size()
@@ -286,6 +286,6 @@ func test_shipped_rooms_still_hold_chest_cells() -> void:
 	for layout in RoomCatalog.load_valid("res://data/rooms/last_resort_cruise/"):
 		chests += layout.cells_of("C").size()
 	# Fairway's End.
-	for layout in RoomCatalog.load_valid("res://data/rooms/fairways_end/"):
+	for layout in RoomCatalog.load_valid("res://data/rooms/seance_hotline/"):
 		chests += layout.cells_of("C").size()
 	assert_true(chests >= 12, "had %d chest cells" % chests)

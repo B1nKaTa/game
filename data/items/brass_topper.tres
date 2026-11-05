@@ -13,5 +13,5 @@ display_name = "Brass Cane Topper"
 description = "Combo finishers hit in a ring all around you. Polished every Sunday for occasions like this."
 rarity = "rare"
 tags = PackedStringArray("cane")
-first_clear_path = "fairways_end"
+first_clear_path = "seance_hotline"
 effect = SubResource("Effect")

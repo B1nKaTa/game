@@ -7,12 +7,12 @@ const FLOORS: Array[String] = [
 	"res://data/floors/sunset_shores.tres",
 	"res://data/floors/furnace_works.tres",
 	"res://data/floors/funeral_parlour.tres",
-	"res://data/floors/golden_years_mall.tres",
+	"res://data/floors/flashback_cinema.tres",
 	# The Last Resort Cruise
 	"res://data/floors/last_resort_cruise.tres",
 	# Head Office
 	"res://data/floors/head_office.tres",
-	"res://data/floors/fairways_end.tres",
+	"res://data/floors/seance_hotline.tres",
 	"res://data/floors/terminal_zero.tres",
 ]
 

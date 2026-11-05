@@ -64,7 +64,7 @@ func test_earlier_floors_count_as_cleared_and_both_third_floor_paths_open() -> v
 	assert_eq(data.clears_at(3), 1)
 	for path in ["floor_1", "cemetery", "sunset_shores", "furnace_works"]:
 		assert_true(data.has_cleared_path(path), path)
-	for path in ["res://data/floors/funeral_parlour.tres", "res://data/floors/golden_years_mall.tres"]:
+	for path in ["res://data/floors/funeral_parlour.tres", "res://data/floors/flashback_cinema.tres"]:
 		var def: FloorDef = load(path)
 		assert_eq(def.depth, DevStart.START_DEPTH)
 		assert_true(def.is_open_for(data), path)
@@ -147,14 +147,14 @@ func _waiting_data() -> ProgressData:
 
 func test_the_dev_waiting_room_profile_opens_every_department() -> void:
 	var data := _waiting_data()
-	for id in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "golden_years_mall", "last_resort_cruise", "fairways_end", "terminal_zero", "head_office"]:
+	for id in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "flashback_cinema", "last_resort_cruise", "seance_hotline", "terminal_zero", "head_office"]:
 		assert_true(data.has_cleared_path(id), id)
 	assert_eq(DevStart.ALL_PATHS.size(), 10)
 	assert_eq(BountyBoard.showing(data).size(), BountyBoard.all().size(), "every poster shows")
 	for each: Dictionary in Departments.ALL:
 		assert_true(Departments.is_open(each["id"], data), each["id"])
 	assert_eq(data.clears_at(3), _dev_data().clears_at(3), "only path ids are added, not clears")
-	assert_false(_dev_data().has_cleared_path("golden_years_mall"), "the Floor 3 run's profile leaves the Mall uncleared")
+	assert_false(_dev_data().has_cleared_path("flashback_cinema"), "the Floor 3 run's profile leaves the Mall uncleared")
 	assert_true(PROGRESS_SCRIPT.DEV_PATH != PROGRESS_SCRIPT.SAVE_PATH, "the dev profile has its own file")
 
 
@@ -227,7 +227,7 @@ func test_starting_the_floor_3_run_from_the_dev_waiting_room_keeps_the_real_prog
 	progress.add_pension(40)
 	progress.begin_dev_run(_dev_data(), DEV_PATH)
 	assert_true(progress.is_dev_run())
-	assert_false(progress.data.has_cleared_path("golden_years_mall"), "the Floor 3 run's own profile")
+	assert_false(progress.data.has_cleared_path("flashback_cinema"), "the Floor 3 run's own profile")
 	progress.start_run()
 	progress.end_dev_run()
 	assert_eq(_real_save_text(), before)
@@ -270,7 +270,7 @@ func test_a_dev_run_never_writes_the_real_save() -> void:
 	progress.start_run()
 	progress.add_pension(500)
 	progress.buy(Content.upgrades()[0])
-	progress.record_floor_cleared(3, "golden_years_mall")
+	progress.record_floor_cleared(3, "flashback_cinema")
 	progress.find_recipe("anything")
 	progress.retirement_deposit(50)
 	progress.take_brewed_potion()

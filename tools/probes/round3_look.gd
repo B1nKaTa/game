@@ -254,7 +254,7 @@ func _case() -> void:
 
 func _sand() -> void:
 	await _new_run(4, GOLF)
-	var layout := await _enter_quiet("res://data/rooms/fairways_end/floor_boss_large_01.tres")
+	var layout := await _enter_quiet("res://data/rooms/seance_hotline/floor_boss_large_01.tres")
 	var sand := layout.cells_of(RoomLayout.SYMBOL_SAND)
 	if sand.is_empty():
 		print("no sand")

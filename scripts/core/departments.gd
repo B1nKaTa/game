@@ -42,7 +42,7 @@ const ALL: Array[Dictionary] = [
 		"arrival": "Boom Bernard has set up shop in the Boiler Room. Mind the fumes."},
 	{"id": DECOR_OFFICE, "name": "Decor Office", "cell": Vector2i(-2, 0), "layout": LAYOUT_DIR + "decor_office.tres", "opens_on": "funeral_parlour",
 		"arrival": "The Decor Office is open. Condolences accepted, sympathy extra."},
-	{"id": BACK_ROOM, "name": "Back Room", "cell": Vector2i(0, 1), "layout": LAYOUT_DIR + "back_room.tres", "opens_on": "golden_years_mall",
+	{"id": BACK_ROOM, "name": "Back Room", "cell": Vector2i(0, 1), "layout": LAYOUT_DIR + "back_room.tres", "opens_on": "flashback_cinema",
 		"arrival": "A door marked PRIVATE swings open. The Dealer has a back room."},
 	# Two corridors north of the Bounty Office, open from the start and holding nothing. The fourth
 	# floor's departments hang off the first and the fifth floor's off the second.
@@ -50,7 +50,7 @@ const ALL: Array[Dictionary] = [
 	{"id": UPPER_LANDING, "name": "Upper Landing", "cell": Vector2i(0, -3), "layout": LAYOUT_DIR + "upper_landing.tres", "opens_on": "", "arrival": ""},
 	{"id": PURSERS_OFFICE, "name": "Purser's Office", "cell": Vector2i(-1, -2), "layout": LAYOUT_DIR + "pursers_office.tres", "opens_on": "last_resort_cruise",
 		"arrival": "The Purser's Office is open. Every run now sets off with a Bon Voyage Bag."},
-	{"id": PRO_SHOP, "name": "Pro Shop", "cell": Vector2i(1, -2), "layout": LAYOUT_DIR + "pro_shop.tres", "opens_on": "fairways_end",
+	{"id": PRO_SHOP, "name": "Pro Shop", "cell": Vector2i(1, -2), "layout": LAYOUT_DIR + "pro_shop.tres", "opens_on": "seance_hotline",
 		"arrival": "The Pro Shop has opened. Its Golf Glove charges a swing faster."},
 	{"id": DUTY_FREE, "name": "Duty Free", "cell": Vector2i(-1, -3), "layout": LAYOUT_DIR + "duty_free.tres", "opens_on": "terminal_zero",
 		"arrival": "Duty Free is open. Frequent Flyer Miles take a little off every shop."},
@@ -76,9 +76,9 @@ const FLOOR_NAMES := {
 	"sunset_shores": "Sunset Shores Eternal Care",
 	"furnace_works": "The Furnace Works",
 	"funeral_parlour": "Eternal Rest Funeral Parlour",
-	"golden_years_mall": "Golden Years Mall at 7 a.m.",
+	"flashback_cinema": "The Flashback Cinema, Last Showing",
 	"last_resort_cruise": "The Last Resort Cruise",
-	"fairways_end": "Fairway's End Golf Club at Midnight",
+	"seance_hotline": "Beyond Calling Psychic Hotline, Night Shift",
 	"terminal_zero": "Departures, Terminal Zero",
 	"head_office": "Head Office, Eternity Incorporated",
 }
@@ -97,7 +97,7 @@ const MERCHANTS := [
 	{"id": "bomb_merchant", "department": BOILER_ROOM, "paths": ["sunset_shores", "furnace_works"], "legacy_clears": 3, "title": "Boom Bernard, Fuel Dealer", "cell": Vector2i(4, 3), "color": Color("d9822b"), "art": "fuel_dealer"},
 	# The deep floors' counters. Each is a board, since its keeper stands beside it as an NPC (NPCS), a
 	# few cells off so one press never both opens the counter and talks.
-	{"id": "pro_shop", "department": PRO_SHOP, "paths": ["fairways_end"], "title": "Pro Shop. Gloves, Tees and Regrets", "cell": Vector2i(4, 3), "label": "Pro Shop", "size": Vector2(40, 24), "color": Color("3f7a4a")},
+	{"id": "pro_shop", "department": PRO_SHOP, "paths": ["seance_hotline"], "title": "Pro Shop. Gloves, Tees and Regrets", "cell": Vector2i(4, 3), "label": "Pro Shop", "size": Vector2(40, 24), "color": Color("3f7a4a")},
 	{"id": "duty_free", "department": DUTY_FREE, "paths": ["terminal_zero"], "title": "Duty Free. Tax Paid in Full, at Death", "cell": Vector2i(4, 3), "label": "Duty Free", "size": Vector2(40, 24), "color": Color("4a5f8a")},
 	{"id": "severance_desk", "department": EXECUTIVE_SUITE, "paths": ["head_office"], "title": "Severance Desk. Please Take a Seat", "cell": Vector2i(6, 3), "label": "Severance", "size": Vector2(48, 24), "color": Color("8a6a3a")},
 ]

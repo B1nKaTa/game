@@ -23,3 +23,11 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
   the bot, instead of one bot branch per hazard class.
 - **Bot baseline:** round-2's tip is `918d343`, this branch's base, so the Mall Santa and Thaddeus
   baselines are measured on an export of `918d343` in the same session as the new bosses.
+- **Task 1, the id swap:** the floors, room folders and every list move to the new ids in one
+  commit, with the old rooms, enemies and bosses still wired, so the game runs unchanged under the
+  new names until Tasks 2 to 5 replace the content.
+- **Songs for now:** the music catalog's Mall and golf keys are renamed `flashback_cinema` and
+  `seance_hotline` while their tune functions (`places.golden_years_mall`, `places.fairways_end`)
+  keep their names, so the old tunes play under the new ids until Task 5 writes the new ones.
+- **Code comments about the old content** (sand bunkers, golf props, Mall tiles and the like) stay
+  as they are, since that code is retired with its content in Tasks 4 and 5.

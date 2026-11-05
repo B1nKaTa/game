@@ -7,16 +7,16 @@ const WEST := 0
 const EAST := 1
 # Each depth's paths, west then east, as floor_scene.gd's PATHS_BY_DEPTH lists them.
 const PATHS := {
-	4: ["last_resort_cruise", "fairways_end"],
+	4: ["last_resort_cruise", "seance_hotline"],
 	5: ["terminal_zero", "head_office"],
 }
 const NAMES := {
 	"last_resort_cruise": "The Last Resort Cruise",
-	"fairways_end": "Fairway's End Golf Club at Midnight",
+	"seance_hotline": "Beyond Calling Psychic Hotline, Night Shift",
 	"terminal_zero": "Departures, Terminal Zero",
 	"head_office": "Head Office, Eternity Incorporated",
 }
-const DANGER := {"last_resort_cruise": 5, "fairways_end": 6, "terminal_zero": 7, "head_office": 8}
+const DANGER := {"last_resort_cruise": 5, "seance_hotline": 6, "terminal_zero": 7, "head_office": 8}
 const HINTS := {4: "Beat a fourth-floor boss first", 5: "Beat a fifth-floor boss first"}
 const HEALTH_MULT := {4: 2.2, 5: 2.6}
 const PENSION_MULT := {4: 2.5, 5: 3.5}
@@ -56,13 +56,13 @@ func test_each_west_path_is_open_on_arrival_and_each_east_path_waits_for_a_clear
 
 func test_deep_clears_survive_a_save_and_an_old_save_has_none() -> void:
 	var data := ProgressData.new()
-	data.record_floor_cleared(4, "fairways_end")
+	data.record_floor_cleared(4, "seance_hotline")
 	data.record_floor_cleared(5, "head_office")
 	data.record_floor_cleared(5, "terminal_zero")
 	var loaded := ProgressData.from_dict(JSON.parse_string(JSON.stringify(data.to_dict())))
 	assert_eq(loaded.clears_at(4), 1)
 	assert_eq(loaded.clears_at(5), 2)
-	for id in ["fairways_end", "head_office", "terminal_zero"]:
+	for id in ["seance_hotline", "head_office", "terminal_zero"]:
 		assert_true(loaded.has_cleared_path(id), id)
 	var old := ProgressData.from_dict({"version": ProgressData.VERSION, "pension": 0, "upgrades": {}, "opening_seen": true, "floors_cleared": 2, "deep_clears": {"2": 1, "3": 1}})
 	assert_eq(old.clears_at(4), 0)
@@ -74,7 +74,7 @@ func test_a_deep_clear_without_path_ids_is_the_open_paths() -> void:
 	var old := ProgressData.from_dict({"version": ProgressData.VERSION, "pension": 0, "upgrades": {}, "opening_seen": true, "floors_cleared": 1, "deep_clears": {"4": 1, "5": 1}})
 	assert_true(old.has_cleared_path("last_resort_cruise"))
 	assert_true(old.has_cleared_path("terminal_zero"))
-	assert_false(old.has_cleared_path("fairways_end"))
+	assert_false(old.has_cleared_path("seance_hotline"))
 	assert_false(old.has_cleared_path("head_office"))
 
 
@@ -138,7 +138,7 @@ func test_deep_signs_show_one_skull_and_a_number() -> void:
 		assert_eq(PathSign.skulls_for(def), DANGER[id])
 		assert_eq(PathSign.skull_row_for(def), 1, id)
 		assert_eq(PathSign.skull_number_for(def), "x%d" % DANGER[id])
-	for id in ["floor_1", "cemetery", "funeral_parlour", "golden_years_mall"]:
+	for id in ["floor_1", "cemetery", "funeral_parlour", "flashback_cinema"]:
 		var shallow := _def(id)
 		assert_eq(PathSign.skull_row_for(shallow), shallow.danger, "%s draws its skulls in a row" % id)
 		assert_eq(PathSign.skull_number_for(shallow), "", id)

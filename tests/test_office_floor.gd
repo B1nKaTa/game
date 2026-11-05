@@ -44,7 +44,7 @@ func test_its_difficulty_follows_the_spec() -> void:
 	assert_eq(def.treasure_pension, 24)
 	assert_eq(def.chest_weights, {"lunchbox": 20, "locked": 20, "safe": 22, "urn": 19, "mimic": 19})
 	assert_eq(def.clear_pension, _floor("floor_1").clear_pension)
-	assert_eq(def.prop_pension, _floor("golden_years_mall").prop_pension)
+	assert_eq(def.prop_pension, _floor("flashback_cinema").prop_pension)
 	assert_eq(def.vault_stone_level, _floor("floor_1").vault_stone_level)
 
 
@@ -83,7 +83,7 @@ func test_every_enemy_of_the_floor_can_be_told_apart() -> void:
 
 func test_it_looks_like_no_other_floor() -> void:
 	var mine := _def().room_palette()
-	for id in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "golden_years_mall"]:
+	for id in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "flashback_cinema"]:
 		var theirs := _floor(id).room_palette()
 		assert_true(_difference(mine.floor_a, theirs.floor_a) > 0.15, "floor against %s" % id)
 		assert_true(_difference(mine.wall, theirs.wall) > 0.15, "walls against %s" % id)

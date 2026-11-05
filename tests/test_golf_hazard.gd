@@ -128,7 +128,7 @@ func test_sand_is_walkable_floor_kept_two_cells_from_doors() -> void:
 
 
 func test_old_layouts_hold_no_sand() -> void:
-	for path in ["res://data/rooms/floor_1/combat_01.tres", "res://data/rooms/golden_years_mall/combat_01.tres"]:
+	for path in ["res://data/rooms/floor_1/combat_01.tres", "res://data/rooms/flashback_cinema/combat_01.tres"]:
 		var layout: RoomLayout = load(path)
 		assert_true(layout.cells_of(RoomLayout.SYMBOL_SAND).is_empty(), path)
 

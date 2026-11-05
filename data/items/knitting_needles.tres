@@ -13,5 +13,5 @@ display_name = "Knitting Needles"
 description = "Every swing also pokes two needles forward. Knit one, stab two."
 rarity = "rare"
 tags = PackedStringArray("cane")
-first_clear_path = "fairways_end"
+first_clear_path = "seance_hotline"
 effect = SubResource("Effect")

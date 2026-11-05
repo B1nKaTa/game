@@ -6,7 +6,7 @@ func _parlour() -> FloorDef:
 
 
 func _mall() -> FloorDef:
-	return load("res://data/floors/golden_years_mall.tres")
+	return load("res://data/floors/flashback_cinema.tres")
 
 
 func test_the_parlour_is_always_open_and_the_mall_waits_for_a_third_floor_clear() -> void:
@@ -23,10 +23,10 @@ func test_the_parlour_is_always_open_and_the_mall_waits_for_a_third_floor_clear(
 
 func test_third_floor_clears_survive_a_save_and_an_old_save_has_none() -> void:
 	var data := ProgressData.new()
-	data.record_floor_cleared(3, "golden_years_mall")
+	data.record_floor_cleared(3, "flashback_cinema")
 	var loaded := ProgressData.from_dict(JSON.parse_string(JSON.stringify(data.to_dict())))
 	assert_eq(loaded.clears_at(3), 1)
-	assert_true(loaded.has_cleared_path("golden_years_mall"))
+	assert_true(loaded.has_cleared_path("flashback_cinema"))
 	var old := ProgressData.from_dict({"version": ProgressData.VERSION, "pension": 0, "upgrades": {}, "opening_seen": true, "floors_cleared": 2})
 	assert_eq(old.clears_at(3), 0)
 
@@ -50,7 +50,7 @@ func test_the_paths_have_their_names_and_ids() -> void:
 	assert_eq(_parlour().id, "funeral_parlour")
 	assert_eq(_parlour().display_name, "Eternal Rest Funeral Parlour")
 	assert_eq(_parlour().danger, 3)
-	assert_eq(_mall().id, "golden_years_mall")
-	assert_eq(_mall().display_name, "Golden Years Mall at 7 a.m.")
+	assert_eq(_mall().id, "flashback_cinema")
+	assert_eq(_mall().display_name, "The Flashback Cinema, Last Showing")
 	assert_eq(_mall().danger, 4)
 	assert_eq(_mall().open_after_depth, 3)

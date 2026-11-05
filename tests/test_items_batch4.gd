@@ -48,7 +48,7 @@ const POSTERS := {
 	"chip": ["lawyers_card", "golf_visor"],
 	"gloria": ["fortune_card", "fountain_tiara"],
 }
-const PATHS := ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "golden_years_mall", "last_resort_cruise", "fairways_end", "terminal_zero", "head_office"]
+const PATHS := ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "flashback_cinema", "last_resort_cruise", "seance_hotline", "terminal_zero", "head_office"]
 
 
 func _with_combos(kit: ItemKit, ids: Array) -> RunState:

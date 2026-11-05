@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = "gloria"
 boss_name = "Gloria"
-floor_id = "golden_years_mall"
+floor_id = "flashback_cinema"
 depth = 3
 floor_boss = false
 pension = 120

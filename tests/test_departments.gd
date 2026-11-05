@@ -21,8 +21,8 @@ func test_a_fresh_save_opens_only_the_lobby_and_the_corridors() -> void:
 
 
 func test_each_department_opens_on_its_floors_first_clear() -> void:
-	var cases := {"floor_1": Departments.BOUNTY_OFFICE, "cemetery": Departments.TRAINING_YARD, "sunset_shores": Departments.APOTHECARY_WING, "furnace_works": Departments.BOILER_ROOM, "funeral_parlour": Departments.DECOR_OFFICE, "golden_years_mall": Departments.BACK_ROOM,
-		"last_resort_cruise": Departments.PURSERS_OFFICE, "fairways_end": Departments.PRO_SHOP, "terminal_zero": Departments.DUTY_FREE, "head_office": Departments.EXECUTIVE_SUITE}
+	var cases := {"floor_1": Departments.BOUNTY_OFFICE, "cemetery": Departments.TRAINING_YARD, "sunset_shores": Departments.APOTHECARY_WING, "furnace_works": Departments.BOILER_ROOM, "funeral_parlour": Departments.DECOR_OFFICE, "flashback_cinema": Departments.BACK_ROOM,
+		"last_resort_cruise": Departments.PURSERS_OFFICE, "seance_hotline": Departments.PRO_SHOP, "terminal_zero": Departments.DUTY_FREE, "head_office": Departments.EXECUTIVE_SUITE}
 	assert_eq(cases.size(), Departments.ALL.size() - Departments.corridor_ids().size(), "every department that opens is here")
 	for path in cases:
 		assert_true(Departments.is_open(cases[path], _data([path])), path)
@@ -167,7 +167,7 @@ func test_a_keeper_stands_out_of_reach_of_every_counter_in_his_department() -> v
 
 
 func test_the_deep_floors_counters_open_on_their_own_floors() -> void:
-	var cases := {"pro_shop": "fairways_end", "duty_free": "terminal_zero", "severance_desk": "head_office"}
+	var cases := {"pro_shop": "seance_hotline", "duty_free": "terminal_zero", "severance_desk": "head_office"}
 	for id in cases:
 		var merchant := Departments.merchant_entry(id)
 		assert_false(merchant.is_empty(), id)

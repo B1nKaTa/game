@@ -99,7 +99,7 @@ func _main() -> void:
 	progress.data.opening_seen = true
 	progress.data.floors_cleared = 1
 	progress.data.record_floor_cleared(2, "sunset_shores")
-	progress.data.record_floor_cleared(3, "golden_years_mall")
+	progress.data.record_floor_cleared(3, "flashback_cinema")
 	progress.data.pension = 900
 	progress.data.condolences = 40
 	await _title()

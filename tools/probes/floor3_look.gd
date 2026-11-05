@@ -496,7 +496,7 @@ func _mortimer() -> void:
 func _mall() -> void:
 	progress.data.record_floor_cleared(3, "funeral_parlour")
 	await _new_run(3, MALL)
-	var f := "res://data/rooms/golden_years_mall/%s.tres"
+	var f := "res://data/rooms/flashback_cinema/%s.tres"
 	for entry: Array in [["combat_small_01", "combat"], ["combat_01", "combat"], ["combat_large_01", "combat"]]:
 		await _show_room(f % entry[0], entry[1], "60_mall_" + entry[0])
 	# Strips that reverse: running, chiming, reversed.
@@ -602,7 +602,7 @@ func _gloria() -> void:
 func _santa() -> void:
 	progress.data.record_floor_cleared(3, "funeral_parlour")
 	await _new_run(3, MALL)
-	var layout := await _enter_quiet("res://data/rooms/golden_years_mall/floor_boss_01.tres")
+	var layout := await _enter_quiet("res://data/rooms/flashback_cinema/floor_boss_01.tres")
 	var center := _middle(layout)
 	_stand(_floor_near(layout, center + Vector2(-140, 0)))
 	var santa: Enemy = view._spawn_enemy(load("res://data/enemies/mall_santa.tres"), center, true)
