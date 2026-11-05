@@ -19,7 +19,7 @@ const NAMES := {
 const DANGER := {"last_resort_cruise": 5, "fairways_end": 6, "terminal_zero": 7, "head_office": 8}
 const HINTS := {4: "Beat a fourth-floor boss first", 5: "Beat a fifth-floor boss first"}
 const HEALTH_MULT := {4: 2.2, 5: 2.6}
-const PENSION_MULT := {4: 2.5, 5: 3.0}
+const PENSION_MULT := {4: 2.5, 5: 3.5}
 const ROOM_SIZES := {
 	4: {"small": 7, "medium": 9, "large": 14},
 	5: {"small": 8, "medium": 10, "large": 15},

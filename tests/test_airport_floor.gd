@@ -46,7 +46,7 @@ func test_terminal_zero_is_the_open_fifth_floor_path_with_its_own_rooms() -> voi
 func test_its_difficulty_follows_the_spec() -> void:
 	var def := _def()
 	assert_near(def.health_mult, 2.6)
-	assert_near(def.pension_mult, 3.0)
+	assert_near(def.pension_mult, 3.5)
 	assert_eq(def.enemies_by_size, {"small": 8, "medium": 10, "large": 15})
 	assert_eq(def.treasure_pension, ceili(_basement().treasure_pension * 3.0))
 	assert_eq(def.clear_pension, _basement().clear_pension)

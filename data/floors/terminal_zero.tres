@@ -70,7 +70,7 @@ open_after_depth = 4
 clears_to_open = 0
 danger = 7
 health_mult = 2.6
-pension_mult = 3.0
+pension_mult = 3.5
 enemies_by_size = {
 "large": 15,
 "medium": 10,

@@ -39,7 +39,7 @@ func test_head_office_is_the_locked_fifth_floor_path_with_its_own_rooms() -> voi
 func test_its_difficulty_follows_the_spec() -> void:
 	var def := _def()
 	assert_near(def.health_mult, 2.6)
-	assert_near(def.pension_mult, 3.0)
+	assert_near(def.pension_mult, 3.5)
 	assert_eq(def.enemies_by_size, {"small": 8, "medium": 10, "large": 15})
 	assert_eq(def.treasure_pension, 24)
 	assert_eq(def.chest_weights, {"lunchbox": 20, "locked": 20, "safe": 22, "urn": 19, "mimic": 19})

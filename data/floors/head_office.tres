@@ -73,7 +73,7 @@ clears_to_open = 1
 danger = 8
 closed_hint = "Beat a fifth-floor boss first"
 health_mult = 2.6
-pension_mult = 3.0
+pension_mult = 3.5
 enemies_by_size = {
 "large": 15,
 "medium": 10,
