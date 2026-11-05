@@ -181,8 +181,9 @@ func _soup() -> void:
 func _kettle() -> void:
 	_take(["kettle_whistle"])
 	var at := _cell(12, 5)
-	var first := _dummy(at + Vector2(24, 0))
-	_dummy(at + Vector2(-20, 14))
+	# Walking, so their stars are drawn while the stun holds them.
+	var first := _dummy(at + Vector2(24, 0), false)
+	_dummy(at + Vector2(-20, 14), false)
 	view.place_bomb(at)
 	await _until(func(): return first.is_stunned())
 	await _seconds(0.15)
@@ -217,7 +218,7 @@ func _shop_room(ids: Array) -> void:
 	_take(ids)
 	var layout: RoomLayout = load("res://data/rooms/%s/shop_01.tres" % floor_id)
 	await _open_room(layout)
-	_stand(_cell(10, 8))
+	_stand(_cell(4, 8))
 	await _seconds(0.4)
 
 

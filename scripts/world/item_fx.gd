@@ -872,6 +872,8 @@ class FxSoup:
 
 	func _init(at_radius: float, at_color: Color, seconds: float) -> void:
 		super(at_radius, at_color, seconds)
+		# A wide pool, so it lies under the bodies standing in it, above the floor.
+		z_index = -1
 
 	func _draw() -> void:
 		var fade := 1.0 - maxf(progress() - 0.8, 0.0) / 0.2
