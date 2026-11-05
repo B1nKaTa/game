@@ -51,6 +51,7 @@ static func go(parent: Node2D, center: Vector2, radius: float, enemy_damage: flo
 
 
 func _ready() -> void:
+	Sfx.play("small_blast")
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
 

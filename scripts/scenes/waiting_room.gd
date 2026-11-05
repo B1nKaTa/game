@@ -4,6 +4,8 @@ extends Node2D
 # run floors, with nothing to fight. What stands in each department comes from Departments.
 
 const FLOOR_DEF_PATH := "res://data/floors/waiting_room.tres"
+# Arrival news sounds a moment after he walks in, as the first notice shows.
+const ARRIVAL_SOUND_AT := 0.5
 const KEY_BOARD := "key_board"
 const CRAFTER := "crafter"
 const TROPHY_WALL := "trophy_wall"
@@ -95,6 +97,10 @@ func _ready() -> void:
 	Progress.notice = ""
 	_announce_new_departments()
 	_call_ticket()
+	# A boss beaten for the first time on that path hangs a new memento on the trophy wall.
+	if Progress.last_run.get("new_memento", false):
+		Sfx.play_later("trophy_hang", ARRIVAL_SOUND_AT + 1.6)
+		Progress.last_run.erase("new_memento")
 	_refresh_lobby_text()
 	_refresh_noticeboard()
 
@@ -103,6 +109,8 @@ func _ready() -> void:
 func _call_ticket() -> void:
 	var event := Progress.call_ticket()
 	var number := Progress.data.run_count
+	if not event.is_empty():
+		Sfx.play_later("ticket_ding", ARRIVAL_SOUND_AT + 0.9)
 	if event == TicketRules.CLERK_DEAL:
 		_notices.append("Number %d! The clerk slips you a deal on %s." % [number, TicketPanel.form_name(Progress.data.clerk_deal, Content.upgrades())])
 	elif event == TicketRules.NEW_ARRIVAL:
@@ -132,6 +140,7 @@ func _announce_new_departments() -> void:
 	var opened := Departments.newly_opened(Progress.data)
 	if opened.is_empty():
 		return
+	Sfx.play_later("department_open", ARRIVAL_SOUND_AT)
 	_notices.append_array(Departments.opening_notices(opened))
 	for id in opened:
 		var line: String = Departments.entry(id)["arrival"]
@@ -171,6 +180,7 @@ func _on_pause_key() -> void:
 	if _panel != null:
 		_back_out_of_panel()
 		return
+	Sfx.play("pause_open")
 	_pause = PauseMenu.new()
 	_pause.setup(false)
 	_pause.resumed.connect(_close_pause)
@@ -194,6 +204,7 @@ func _back_out_of_panel() -> void:
 func _close_pause() -> void:
 	if _pause == null:
 		return
+	Sfx.play("pause_close")
 	_pause.queue_free()
 	_pause = null
 	_pause_closed_frame = Engine.get_process_frames()
@@ -554,6 +565,7 @@ func _show_panel(panel: CanvasLayer) -> void:
 func _close_panel() -> void:
 	if _panel == null:
 		return
+	Sfx.play("ui_back")
 	_panel.queue_free()
 	_panel = null
 	_panel_closed_frame = Engine.get_process_frames()

@@ -44,6 +44,7 @@ func _ready() -> void:
 	column.add_child(_list)
 	var close := Button.new()
 	close.text = "Leave"
+	close.set_meta("sfx", "")
 	close.pressed.connect(func(): closed.emit())
 	column.add_child(close)
 	_rebuild()
@@ -66,6 +67,8 @@ func _rebuild() -> void:
 		button.tooltip_text = def.option_text(other)
 		button.disabled = Progress.data.pension < price
 		button.add_theme_font_size_override("font_size", ROW_FONT)
+		button.set_meta("sfx", "")
+		button.set_meta("sfx_denied", "form_denied")
 		button.pressed.connect(_refile.bind(def))
 		_list.add_child(button)
 		shown += 1
@@ -78,4 +81,5 @@ func _rebuild() -> void:
 
 func _refile(def: UpgradeDef) -> void:
 	if Progress.refile(def):
+		Sfx.play("refile")
 		_rebuild()

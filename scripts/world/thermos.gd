@@ -33,6 +33,10 @@ func setup(player: Player) -> void:
 	_player = player
 
 
+func _ready() -> void:
+	Sfx.play("fuse_hiss")
+
+
 func blast_damage() -> float:
 	return DAMAGE * damage_mult
 

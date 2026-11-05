@@ -28,3 +28,8 @@ func _draw_placeholder() -> void:
 		draw_rect(Rect2(left + 0.5, -11, 9, 16), BEAM_EDGE, false, 1.0)
 	for x in [-13.0, 12.0]:
 		draw_rect(Rect2(x, 9, 2, 4), BEAM_EDGE)
+
+
+# Furniture, so it splinters like wood.
+func break_sound() -> String:
+	return "wood_break"

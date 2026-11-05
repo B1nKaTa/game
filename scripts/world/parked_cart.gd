@@ -22,3 +22,8 @@ func _draw_placeholder() -> void:
 	draw_rect(Rect2(-14, -11, 28, 22), Color.BLACK, false, 1.0)
 	draw_rect(Rect2(-12, -13, 15, 26), Color(p.golf_cart_roof, 0.9))
 	draw_rect(Rect2(6, -8, 6, 16), Color("6b6f78"))
+
+
+# Furniture, so it splinters like wood.
+func break_sound() -> String:
+	return "wood_break"

@@ -48,6 +48,7 @@ func _ready() -> void:
 	_cards.position = Vector2((GameSettings.VIEW.x - width) / 2.0, CARD_TOP)
 	add_child(_cards)
 	_back = MenuStyle.button(tr("Back"), 12)
+	_back.set_meta("sfx", "ui_back")
 	_back.position = Vector2(24, GameSettings.VIEW.y - 34)
 	_back.pressed.connect(_close)
 	add_child(_back)
@@ -177,6 +178,7 @@ func _pick(slot: int, action: String) -> void:
 	if _done:
 		return
 	_done = true
+	Sfx.play("slot_select")
 	picked.emit(slot, action)
 
 

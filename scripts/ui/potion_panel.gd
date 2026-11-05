@@ -50,6 +50,7 @@ func _ready() -> void:
 	column.add_child(_list)
 	var close := Button.new()
 	close.text = "Leave"
+	close.set_meta("sfx", "")
 	close.add_theme_font_size_override("font_size", BUTTON_FONT_SIZE)
 	close.pressed.connect(func(): closed.emit())
 	column.add_child(close)
@@ -68,6 +69,7 @@ func _rebuild() -> void:
 		button.text = button_text(def)
 		button.add_theme_font_size_override("font_size", BUTTON_FONT_SIZE)
 		button.disabled = not Progress.data.can_brew(def.price)
+		button.set_meta("sfx", "")
 		button.pressed.connect(_brew.bind(def))
 		_list.add_child(button)
 		var note := Label.new()
@@ -78,4 +80,6 @@ func _rebuild() -> void:
 
 func _brew(def: PotionDef) -> void:
 	if Progress.brew(def):
+		Sfx.play("ui_ching")
+		Sfx.play_later("brew", 0.15)
 		_rebuild()

@@ -93,6 +93,7 @@ func _ready() -> void:
 	_scroll.add_child(_list)
 	var close := Button.new()
 	close.text = "Leave"
+	close.set_meta("sfx", "")
 	close.pressed.connect(func(): closed.emit())
 	column.add_child(close)
 	_rebuild()
@@ -132,6 +133,7 @@ func _make_row(def: BountyDef) -> Control:
 	button.custom_minimum_size.x = BUTTON_WIDTH
 	button.disabled = label == TAKEN or label == ONE_AT_A_TIME
 	button.add_theme_font_size_override("font_size", ROW_FONT)
+	button.set_meta("sfx", "")
 	button.pressed.connect(_press.bind(def))
 	line.add_child(button)
 	return line
@@ -141,7 +143,9 @@ func _press(def: BountyDef) -> void:
 	if BountyBoard.can_collect(def, Progress.data):
 		var paid_out := Progress.collect_bounty(def)
 		if not paid_out.is_empty():
+			Sfx.play("bounty_paid")
 			paid.emit(paid_text(def, paid_out))
 	elif Progress.take_bounty(def):
+		Sfx.play("poster_take")
 		taken.emit(def)
 	_rebuild()

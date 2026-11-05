@@ -31,6 +31,8 @@ const SLOW_COLOR := Color(0.62, 0.86, 1.0, 0.9)
 const CANE_COLOR := Color("a8692f")
 const MOVE_AIM_REACH := 40.0
 const SWING_COLOR := Color("ffe58a")
+# How often his feet crunch while he wades through sand.
+const SAND_STEP_TIME := 0.34
 
 var run: RunState
 var show_crosshair := false
@@ -64,6 +66,12 @@ var _push_left := 0.0
 var _fire_shrug_next := false
 # Red tape holds him a moment when he walks into it. See RedTapeRule.
 var _tape := RedTapeRule.new()
+var _was_taped := false
+# The charge's sounds, each once a hold: the hum as it starts to build, the glint once it is full.
+var _hum_played := false
+var _ready_played := false
+# Time to his next step's crunch while he wades through sand.
+var _sand_step_left := 0.0
 
 
 static func arrival_position(cell: Vector2i) -> Vector2:
@@ -205,7 +213,21 @@ func _physics_process(delta: float) -> void:
 	_handle_potion()
 	_handle_movement()
 	_leave_dodge_ghosts(delta)
+	_charge_sounds()
 	queue_redraw()
+
+
+func _charge_sounds() -> void:
+	if not _charge.is_holding():
+		_hum_played = false
+		_ready_played = false
+		return
+	if _charge.is_charging() and not _hum_played:
+		_hum_played = true
+		Sfx.play("charge_hum")
+	if _charge.progress() >= 1.0 and not _ready_played:
+		_ready_played = true
+		Sfx.play("charge_ready")
 
 
 func _aim_point() -> Vector2:
@@ -258,6 +280,7 @@ func _handle_potion() -> void:
 		return
 	var drunk := run.potion
 	if run.drink_potion():
+		Sfx.play("potion_drink")
 		if _visual != null:
 			_visual.flash(drunk.color, 0.25)
 		potion_drunk.emit(drunk)
@@ -350,6 +373,7 @@ func _swing(damage: float, reach: float, angle: float, push: float, heavy: bool,
 	if run.stats.lucky_swing_chance > 0.0:
 		swing_damage = PlayerStats.lucky_damage(swing_damage, run.stats.lucky_swing_chance, randf())
 	_active_swing = SwingAttack.new(_aim, reach, angle, swing_damage, push, heavy, finisher)
+	Sfx.play("charged_swing" if heavy else "cane_swing")
 	_visual.play_once("attack", CaneCombo.LOCK_TIME)
 	_strike_enemies()
 
@@ -400,10 +424,15 @@ func _handle_movement() -> void:
 	var sunk := is_in_sand()
 	if Input.is_action_just_pressed("dodge") and SandRule.can_dodge(sunk) and _dodge.try_start(run.stats.dodge_cooldown, DodgeTimer.DURATION * run.stats.dodge_length):
 		_dodge_direction = input.normalized() if input != Vector2.ZERO else _aim
+		Sfx.play("dodge")
+	_step_in_sand(sunk and input != Vector2.ZERO)
 	on_wet = _feet != null and WetFloor.is_wet_at(get_tree() if is_inside_tree() else null, _feet.global_position)
 	# Walking into red tape holds him a moment, and a dodge cuts through it instead.
 	var on_tape := _feet != null and RedTape.touch(get_tree() if is_inside_tree() else null, _feet.global_position, _dodge.is_active())
 	var taped := _tape.step(on_tape, _dodge.is_active(), get_physics_process_delta_time())
+	if taped and not _was_taped:
+		Sfx.play("tape_snag")
+	_was_taped = taped
 	if _dodge.is_active():
 		# A dodge goes where it is aimed, wet floor or not, and breaks free of any gust.
 		_push_left = 0.0
@@ -428,6 +457,17 @@ func _handle_movement() -> void:
 	if _push_left > 0.0:
 		velocity += _push
 	move_and_slide()
+
+
+# A crunch for each step while he wades through a bunker.
+func _step_in_sand(wading: bool) -> void:
+	if not wading:
+		_sand_step_left = 0.0
+		return
+	_sand_step_left -= get_physics_process_delta_time()
+	if _sand_step_left <= 0.0:
+		_sand_step_left = SAND_STEP_TIME
+		Sfx.play("sand_step")
 
 
 # Walking straight into a corner by a pixel or two steps him round it, sideways only, and only when

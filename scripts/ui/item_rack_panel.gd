@@ -56,6 +56,7 @@ func _ready() -> void:
 	column.add_child(_list)
 	var close := Button.new()
 	close.text = "Leave"
+	close.set_meta("sfx", "")
 	close.pressed.connect(func(): closed.emit())
 	column.add_child(close)
 	_rebuild()

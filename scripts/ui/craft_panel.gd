@@ -36,6 +36,7 @@ func _ready() -> void:
 	column.add_child(_list)
 	var close := Button.new()
 	close.text = "Leave"
+	close.set_meta("sfx", "")
 	close.pressed.connect(func(): closed.emit())
 	column.add_child(close)
 	_rebuild()
@@ -71,10 +72,12 @@ func _make_button(item: ItemDef) -> Button:
 		button.text = "%s  %d Pension" % [item.display_name, item.craft_price]
 	button.tooltip_text = item.description
 	button.disabled = not Progress.data.can_craft(item.id, item.craft_price)
+	button.set_meta("sfx", "")
 	button.pressed.connect(_craft.bind(item))
 	return button
 
 
 func _craft(item: ItemDef) -> void:
 	if Progress.craft(item):
+		Sfx.play("craft")
 		_rebuild()

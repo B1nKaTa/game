@@ -101,6 +101,7 @@ func _ready() -> void:
 	_scroll.add_child(_list)
 	var close := Button.new()
 	close.text = "Leave"
+	close.set_meta("sfx", "")
 	close.pressed.connect(func(): closed.emit())
 	column.add_child(close)
 	_rebuild()
@@ -165,16 +166,20 @@ func _make_row(def: CosmeticDef) -> Control:
 		button.disabled = true
 	elif not Progress.data.owns_cosmetic(def.id):
 		button.disabled = not Progress.data.can_buy_cosmetic(def)
+	button.set_meta("sfx", "")
 	button.pressed.connect(_press.bind(def))
 	line.add_child(button)
 	return line
 
 
+# Condolences are spent with a soft chime; trying a look on or off is a plain press.
 func _press(def: CosmeticDef) -> void:
 	if not Progress.data.owns_cosmetic(def.id):
-		Progress.buy_cosmetic(def)
+		Sfx.play("condolence" if Progress.buy_cosmetic(def) else "ui_denied")
 	elif Progress.data.is_worn(def):
+		Sfx.play("ui_confirm")
 		Progress.take_off(def.slot)
 	elif not def.is_decor():
+		Sfx.play("ui_confirm")
 		Progress.wear(def)
 	_rebuild()

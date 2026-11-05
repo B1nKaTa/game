@@ -39,6 +39,9 @@ func setup(source: Enemy, direction: Vector2, length: float, width: float, warni
 	_left = warning
 	_damage = damage
 	z_index = Projectile.SHOT_Z
+	# With no warning it blows at once.
+	if warning <= 0.0:
+		Sfx.play("steam_hiss")
 
 
 func is_blowing() -> bool:
@@ -72,6 +75,8 @@ func _process(delta: float) -> void:
 			queue_free()
 			return
 		_left -= delta
+		if _left <= 0.0:
+			Sfx.play("steam_hiss")
 		return
 	_blow_left -= delta
 	if _blow_left <= 0.0:

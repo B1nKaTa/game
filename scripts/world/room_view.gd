@@ -262,6 +262,7 @@ func _add_secret_wall(side: Vector2i) -> void:
 func _on_secret_wall_broken(_at: Vector2, side: Vector2i) -> void:
 	var door := _add_door(_room.doors[side], RoomRules.door_icon(RoomLayout.TYPE_SECRET), side)
 	door.locked = not _finished
+	Sfx.play("secret_reveal")
 	doors_opened.emit()
 	notice.emit("You found a secret room!")
 
@@ -280,6 +281,7 @@ func _add_vault_stone(side: Vector2i) -> void:
 func _on_vault_stone_broken(_at: Vector2, side: Vector2i) -> void:
 	var door := _add_door(_room.doors[side], RoomRules.door_icon(RoomLayout.TYPE_VAULT), side)
 	door.locked = not _finished
+	Sfx.play("secret_reveal")
 	doors_opened.emit()
 	notice.emit("The reinforced stone crumbles. A vault!")
 
@@ -316,6 +318,7 @@ func add_stairwell() -> void:
 	add_child(door)
 	door.rearm()
 	_doors.append(door)
+	Sfx.play("stairwell_appear")
 	notice.emit("A stairwell leads down.")
 
 
@@ -684,15 +687,15 @@ func _drop_coin(at: Vector2, base_amount: int, source := "") -> void:
 func _drop_consumable(at: Vector2, kind: String) -> void:
 	match kind:
 		RoomRules.DROP_KEY:
-			var slip := _add_pickup(at, RoomRules.KEY_NAME, KEY_COLOR, func(): _take_consumable(_run.add_key))
+			var slip := _add_pickup(at, RoomRules.KEY_NAME, KEY_COLOR, func(): _take_consumable(_run.add_key), false, "slip_pickup")
 			slip.can_take = _run.can_add_key
 		RoomRules.DROP_BOMB:
-			var thermos := _add_pickup(at, RoomRules.BOMB_NAME, BOMB_COLOR, func(): _take_consumable(_run.add_bomb))
+			var thermos := _add_pickup(at, RoomRules.BOMB_NAME, BOMB_COLOR, func(): _take_consumable(_run.add_bomb), false, "thermos_pickup")
 			thermos.can_take = _run.can_add_bomb
 		RoomRules.DROP_POTION:
 			# It fills the potion slot, and waits on the floor while the slot is full.
 			var small := Content.potion(RoomRules.SMALL_POTION_ID)
-			var potion := _add_pickup(at, RoomRules.POTION_NAME, HEAL_COLOR, func(): _take_consumable(func(): _run.give_potion(small)))
+			var potion := _add_pickup(at, RoomRules.POTION_NAME, HEAL_COLOR, func(): _take_consumable(func(): _run.give_potion(small)), false, "pill_heal")
 			potion.can_take = _run.can_take_potion
 
 
@@ -701,11 +704,14 @@ func _take_consumable(add: Callable) -> void:
 	consumable_taken.emit()
 
 
-func _add_pickup(at: Vector2, label: String, color: Color, on_take: Callable, needs_interact := false) -> Pickup:
+# sound is what taking it sounds like, or "" for one that makes its own (coins, wares).
+func _add_pickup(at: Vector2, label: String, color: Color, on_take: Callable, needs_interact := false, sound := "") -> Pickup:
 	var pickup := Pickup.new()
 	pickup.setup(label, color, _player.feet(), needs_interact)
 	pickup.position = at
 	pickup.collected.connect(on_take)
+	if not sound.is_empty():
+		pickup.collected.connect(func(): Sfx.play(sound))
 	add_child(pickup)
 	return pickup
 
@@ -720,7 +726,7 @@ func _create_rewards() -> void:
 	if not cells.is_empty():
 		_create_item_choice(cells)
 	for cell in _room.layout.cells_of("H"):
-		var heal := _add_pickup(RoomBackdrop.cell_center(cell), "Heal", HEAL_COLOR, func(): _run.health.heal(HEAL_AMOUNT))
+		var heal := _add_pickup(RoomBackdrop.cell_center(cell), "Heal", HEAL_COLOR, func(): _run.health.heal(HEAL_AMOUNT), false, "pill_heal")
 		heal.can_take = _run.can_take_heal
 	for cell in _room.layout.cells_of("T"):
 		_create_treasure(cell)
@@ -908,11 +914,15 @@ func _add_shop_entry(at: Vector2, entry: Dictionary) -> void:
 
 func _buy(price: int, give: Callable) -> void:
 	if _bank.spend(price):
+		Sfx.play("ui_ching")
 		give.call()
 
 
 func _on_deposit_wanted(amount: int) -> void:
+	var before: int = _bank.data.pension
 	var reached: int = _bank.retirement_deposit(amount)
+	if _bank.data.pension < before:
+		Sfx.play("plan_deposit")
 	for i in reached:
 		_award_plan_reward()
 
@@ -941,6 +951,7 @@ func _on_plan_blasted() -> void:
 	var data: ProgressData = _bank.data
 	if data.can_release_retirement():
 		var amount: int = _bank.release_retirement()
+		Sfx.play("plan_withdraw")
 		consumable_taken.emit()
 		notice.emit("Cashed out %d Pension from your Retirement Plan" % amount)
 	elif data.retirement_balance > 0:
@@ -1115,7 +1126,7 @@ func _drop_recipe(at: Vector2) -> bool:
 
 
 func _add_recipe_pickup(at: Vector2, item: ItemDef) -> Pickup:
-	var pickup := _add_pickup(at, "Recipe: %s" % item.display_name, RECIPE_COLOR, func(): _take_recipe(item), true)
+	var pickup := _add_pickup(at, "Recipe: %s" % item.display_name, RECIPE_COLOR, func(): _take_recipe(item), true, "slip_pickup")
 	pickup.prompt = RECIPE_PROMPT
 	pickup.set_meta(KEEP, {"kind": KEEP_RECIPE, "id": item.id})
 	return pickup
@@ -1139,7 +1150,7 @@ func _create_treasure(cell: Vector2i) -> void:
 
 # A left-behind item may be found again elsewhere before the player returns for it.
 func _add_item_pickup(at: Vector2, item: ItemDef) -> Pickup:
-	var pickup := _add_pickup(at, item.display_name, ITEM_COLOR, func(): _run.add_item(item), true)
+	var pickup := _add_pickup(at, item.display_name, ITEM_COLOR, func(): _run.add_item(item), true, "item_fanfare")
 	pickup.can_take = func(): return not _run.has_item(item.id)
 	pickup.set_meta(KEEP, {"kind": KEEP_ITEM, "id": item.id})
 	return pickup

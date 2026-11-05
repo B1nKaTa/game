@@ -41,6 +41,7 @@ var _pending_left := 0.0
 var _forced := -1
 var _forced_left := 0.0
 var _was_up := false
+var _was_chiming := false
 var _body: StaticBody2D
 
 
@@ -80,6 +81,10 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	advance(delta)
+	var chiming := is_chiming()
+	if chiming and not _was_chiming:
+		Sfx.play("barrier_chime")
+	_was_chiming = chiming
 	queue_redraw()
 
 

@@ -129,6 +129,7 @@ func _send_ring(reach: float, damage: int) -> void:
 	var parent := get_parent()
 	if parent == null or not is_inside_tree():
 		return
+	Sfx.play("organ_chord")
 	var ring := PipeRing.new()
 	ring.setup(inward, reach, PipeRing.GROW_TIME * reach / PipeRing.REACH, damage)
 	parent.add_child(ring)

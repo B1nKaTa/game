@@ -20,3 +20,8 @@ func _draw_placeholder() -> void:
 	draw_rect(Rect2(-8, -3, 16, 14), p.armchair.lightened(0.15))
 	for r in [Rect2(-13, -13, 26, 10), Rect2(-14, -5, 6, 18), Rect2(8, -5, 6, 18)]:
 		draw_rect(r, p.armchair_edge, false, 1.0)
+
+
+# Furniture, so it splinters like wood.
+func break_sound() -> String:
+	return "wood_break"

@@ -16,6 +16,8 @@ const STAMP_COLOR := Color("e4524f")
 const STAMP_FONT := 22
 const STAMP_FROM := 1.6
 const STAMP_TIME := 0.15
+const CHING_AFTER_STAMP := 0.12
+const MILESTONE_SOUND_AT := 0.35
 
 var _title := ""
 var _merchant_id := ""
@@ -51,6 +53,7 @@ func _ready() -> void:
 	column.add_child(_list)
 	var close := Button.new()
 	close.text = "Leave"
+	close.set_meta("sfx", "")
 	close.pressed.connect(func(): closed.emit())
 	column.add_child(close)
 	_rebuild()
@@ -100,6 +103,9 @@ func _file_button(label: String, tip: String, enabled: bool, def: UpgradeDef, ch
 	button.tooltip_text = tip
 	button.disabled = not enabled
 	button.add_theme_font_size_override("font_size", ROW_FONT)
+	# A filing makes its own stamp, and one he cannot afford is stamped DENIED.
+	button.set_meta("sfx", "")
+	button.set_meta("sfx_denied", "form_denied")
 	button.pressed.connect(_file.bind(def, choice, form))
 	return button
 
@@ -107,7 +113,23 @@ func _file_button(label: String, tip: String, enabled: bool, def: UpgradeDef, ch
 func _file(def: UpgradeDef, choice: String, form: Control) -> void:
 	if _stamping or not Progress.buy(def, choice):
 		return
+	Sfx.play(filing_sound(def, choice))
+	# The next filing is the milestone's choice: the paper turns over to show both options.
+	var level := Progress.data.level_of(def.id)
+	if def.has_choice() and level + 1 == def.milestone_level and Progress.data.price_of(def) >= 0:
+		Sfx.play_later("form_milestone", MILESTONE_SOUND_AT)
 	_stamp(form)
+
+
+# How a filing sounds once it is paid: the stamp and the till, a plain stamp and the till for an
+# option picked, or the approved fanfare when the form has no levels left.
+func filing_sound(def: UpgradeDef, choice: String) -> String:
+	if Progress.data.price_of(def) < 0:
+		return "form_maxed"
+	if not choice.is_empty():
+		Sfx.play_later("ui_ching", CHING_AFTER_STAMP)
+		return "form_pick"
+	return "form_buy"
 
 
 # A red FILED lands on the row, shrinking from large to its size, and then the list is rebuilt.
