@@ -283,3 +283,120 @@ func test_a_bubble_hung_below_clears_the_talk_prompt() -> void:
 	var rect := Npc.bubble_box(Vector2(320, 40), Vector2.ONE, body, Vector2(120, 16), Vector2(640, 360))
 	# The prompt's baseline is 12 px under his feet, and its text rises about 10 px above that.
 	assert_true(rect.position.y >= body / 2.0 + 12.0 + 4.0, "the bubble starts under the prompt")
+
+
+# --- their art ---
+
+func _npc_defs() -> Array[NpcDef]:
+	var defs: Array[NpcDef] = []
+	for file in DirAccess.get_files_at("res://data/npcs/"):
+		if file.ends_with(".tres"):
+			defs.append(load("res://data/npcs/" + file))
+	return defs
+
+
+func test_every_npc_with_art_loads_his_idle_loop_and_rotations() -> void:
+	var with_art := 0
+	for def in _npc_defs():
+		if not NpcSprite.has_art(def.art()):
+			continue
+		with_art += 1
+		var sprite := NpcSprite.new()
+		assert_true(sprite.setup(def.art()), def.id)
+		assert_eq(sprite.idle_frames(), 4, "%s idles in four frames" % def.id)
+		assert_eq(sprite.rotation_frames(), NpcSprite.DIRECTIONS, "%s turns eight ways" % def.id)
+		assert_true(sprite.height >= 36.0 and sprite.height <= NpcSprite.FRAME, "%s stands about Harold's height" % def.id)
+		sprite.free()
+	assert_eq(with_art, _npc_defs().size(), "everyone has art, the back room's Dealer the Dealer's")
+
+
+func test_npc_art_is_imported_sharp() -> void:
+	for def in _npc_defs():
+		for path in [NpcSprite.idle_path(def.art()), NpcSprite.rotations_path(def.art())]:
+			var settings := FileAccess.get_file_as_string(path + ".import")
+			assert_true(settings.contains("mipmaps/generate=false"), path)
+			assert_true(settings.contains("compress/mode=0"), path)
+
+
+func test_an_npc_with_art_stands_his_feet_on_his_body_box() -> void:
+	var def: NpcDef = load("res://data/npcs/gerald.tres")
+	var npc := Npc.new()
+	npc.setup(def, null)
+	npc._ready()
+	assert_true(npc.has_art(), "Gerald wears his art, not his drawn look")
+	assert_eq(npc.art().position, Vector2(0, def.body_size.y / 2.0), "feet on the box's bottom")
+	assert_eq(def.body_size, Vector2(16, 48), "his reach is as it was")
+	assert_true(npc.head_top() <= -def.body_size.y / 2.0, "his name goes over his head")
+	npc.free()
+
+
+func test_an_npc_with_no_art_falls_back_to_his_drawn_look() -> void:
+	var def := NpcDef.new()
+	def.id = "nobody_drawn_yet"
+	def.display_name = "Nobody"
+	assert_false(NpcSprite.has_art(def.art()))
+	var npc := Npc.new()
+	npc.setup(def, null)
+	npc._ready()
+	assert_false(npc.has_art(), "no art, the colour box")
+	assert_eq(npc.head_top(), -def.body_size.y / 2.0)
+	for child in npc.get_children():
+		assert_false(child is NpcSprite)
+	npc.free()
+	var sprite := NpcSprite.new()
+	assert_false(sprite.setup("nobody_drawn_yet"), "missing art says no rather than failing")
+	assert_false(sprite.setup(""))
+	sprite.free()
+	var gerald: NpcDef = load("res://data/npcs/gerald.tres").duplicate()
+	gerald.art_id = "nobody_drawn_yet"
+	var drawn := Npc.new()
+	drawn.setup(gerald, null)
+	drawn._ready()
+	assert_false(drawn.has_art())
+	var looks := 0
+	for child in drawn.get_children():
+		if child is ActorLook:
+			looks += 1
+	assert_eq(looks, 1, "Gerald without art keeps his drawn look")
+	drawn.free()
+
+
+func test_the_back_rooms_dealer_wears_the_dealers_art() -> void:
+	var def: NpcDef = load("res://data/npcs/dealer_back_room.tres")
+	assert_eq(def.art(), "dealer")
+	assert_eq((load("res://data/npcs/dealer.tres") as NpcDef).art(), "dealer")
+
+
+func test_an_npc_turns_the_eight_ways_toward_harold() -> void:
+	assert_eq(NpcSprite.direction(Vector2(0, 10)), 0, "south")
+	assert_eq(NpcSprite.direction(Vector2(10, 10)), 1, "south-east")
+	assert_eq(NpcSprite.direction(Vector2(10, 0)), 2, "east")
+	assert_eq(NpcSprite.direction(Vector2(10, -10)), 3, "north-east")
+	assert_eq(NpcSprite.direction(Vector2(0, -10)), 4, "north")
+	assert_eq(NpcSprite.direction(Vector2(-10, -10)), 5, "north-west")
+	assert_eq(NpcSprite.direction(Vector2(-10, 0)), 6, "west")
+	assert_eq(NpcSprite.direction(Vector2(-10, 10)), 7, "south-west")
+	assert_eq(NpcSprite.direction(Vector2.ZERO), NpcSprite.SOUTH)
+
+
+func test_the_idle_loop_runs_at_about_eight_frames_a_second() -> void:
+	var frame_ms := 1000.0 / NpcSprite.IDLE_FPS
+	assert_true(frame_ms >= 100.0 and frame_ms <= 150.0)
+	assert_eq(NpcSprite.idle_frame(0.0, 4), 0)
+	assert_eq(NpcSprite.idle_frame(0.13, 4), 1)
+	assert_eq(NpcSprite.idle_frame(0.5, 4), 0, "and round again")
+	var sprite := NpcSprite.new()
+	sprite.setup("dealer")
+	sprite._process(0.13)
+	assert_eq(sprite.frame(), 1)
+	sprite.face(Vector2(10, 0))
+	assert_eq(sprite.frame(), 2, "facing east holds the east rotation")
+	assert_eq(sprite.texture().get_width(), NpcSprite.FRAME * NpcSprite.DIRECTIONS)
+	sprite.set_facing(NpcSprite.SOUTH)
+	assert_eq(sprite.texture().get_width(), NpcSprite.FRAME * 4, "facing out, he idles again")
+	sprite.free()
+
+
+func test_a_bubble_over_art_clears_his_head() -> void:
+	var rect := Npc.bubble_box(Vector2(320, 200), Vector2.ONE, 30.0, Vector2(120, 16), Vector2(640, 360), 40.0)
+	assert_true(rect.end.y <= -40.0 - Npc.BUBBLE_GAP + 0.01)

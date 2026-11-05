@@ -23,6 +23,8 @@ Sprites go in `art/sprites/<id>/<anim>.png` as one horizontal strip per animatio
 
 Open the project in the Godot editor once after adding files, so they get imported.
 
+People you talk to have their own folder, `art/npcs/<id>/`, with `<id>` their NpcDef's id (or its `art_id`). Each is drawn at 48 px in PixelLab's low top-down view, the same scale as Grandpa, and holds two strips of 48 px frames: `idle.png`, four frames standing facing south, and `rotations.png`, the eight ways he faces, from south round through east to south-west. Build both from a PixelLab export with `py tools/art/npc_strips.py <export folder> art/npcs`. The feet stand on the bottom of his body box, and without art he is drawn as before.
+
 ## Prompts
 
 Never use names of other games, studios or artists in prompts. Describe the look directly.

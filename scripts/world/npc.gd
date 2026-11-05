@@ -24,6 +24,8 @@ const BUBBLE_SIDE_MARGIN := 4.0
 const BUBBLE_BELOW_GAP := 28.0
 # Speech draws above the room's props and pickups.
 const BUBBLE_Z := 50
+# A name over art sits this far above the top of his head, so hair and hats clear its letters.
+const ART_NAME_GAP := 6.0
 
 var def: NpcDef
 var _talk: NpcTalk
@@ -32,7 +34,9 @@ var _near := false
 var _bubble: Node2D
 # How many letters of the bubble had typed out last frame, so each new one can blip.
 var _typed := 0
-# Someone with a look of his own, as Gerald, is drawn by an ActorLook standing on his feet.
+# His art, standing on the bottom of his body box, or null when he has none.
+var _art: NpcSprite
+# Someone with no art but a look of his own, as Gerald was, is drawn by an ActorLook on his feet.
 var _actor_look: ActorLook
 
 
@@ -45,7 +49,15 @@ func setup(npc_def: NpcDef, player: Node2D, start := 0) -> void:
 
 func _ready() -> void:
 	add_to_group("npcs")
-	if def != null and not def.look.is_empty():
+	if def != null:
+		var art := NpcSprite.new()
+		if art.setup(def.art()):
+			_art = art
+			_art.position = Vector2(0, def.body_size.y / 2.0)
+			add_child(_art)
+		else:
+			art.free()
+	if def != null and _art == null and not def.look.is_empty():
 		_actor_look = ActorLook.new()
 		_actor_look.id = def.look
 		_actor_look.position = Vector2(0, def.body_size.y / 2.0)
@@ -65,6 +77,24 @@ class BubbleLayer extends Node2D:
 
 func is_near() -> bool:
 	return _near
+
+
+func has_art() -> bool:
+	return _art != null
+
+
+func art() -> NpcSprite:
+	return _art
+
+
+# How far above his origin the top of what is drawn reaches: his head with art, his box without.
+func head_top() -> float:
+	if def == null:
+		return 0.0
+	var box_top := -def.body_size.y / 2.0
+	if _art != null:
+		return minf(box_top, def.body_size.y / 2.0 - _art.height)
+	return box_top
 
 
 func showing() -> String:
@@ -96,6 +126,12 @@ func _process(delta: float) -> void:
 		_bubble.queue_redraw()
 	if not is_instance_valid(_player):
 		return
+	if _art != null:
+		# He turns to Harold while Harold is in reach or a line is up, and stands facing out otherwise.
+		if _near or not showing().is_empty():
+			_art.face(_player.global_position - global_position)
+		else:
+			_art.set_facing(NpcSprite.SOUTH)
 	if _actor_look != null:
 		var facing := -1 if _player.global_position.x < global_position.x else 1
 		if facing != _actor_look.facing:
@@ -149,8 +185,12 @@ func _draw() -> void:
 		return
 	var size := def.body_size
 	var top := -size.y / 2.0
-	if _actor_look != null:
-		_draw_centered(self, def.display_name, Vector2(0, top - 4.0), NAME_COLOR)
+	if _art != null:
+		draw_set_transform(Vector2(0, size.y / 2.0), 0.0, Vector2(1.0, 0.35))
+		draw_circle(Vector2.ZERO, size.x * 0.6, SHADOW_COLOR)
+		draw_set_transform(Vector2.ZERO)
+	if _actor_look != null or _art != null:
+		_draw_centered(self, def.display_name, Vector2(0, head_top() - (ART_NAME_GAP if _art != null else 4.0)), NAME_COLOR)
 		if _near:
 			_draw_centered(self, KeyBindings.with_key("interact", PROMPT), Vector2(0, size.y / 2.0 + 12.0), PROMPT_COLOR)
 		return
@@ -183,7 +223,7 @@ func _draw_bubble(layer: Node2D) -> void:
 	var text_size := font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE)
 	var box_size := Vector2(text_size.x, FONT_SIZE) + BUBBLE_PAD * 2.0
 	var screen := layer.get_global_transform_with_canvas()
-	var box := bubble_box(screen.origin, screen.get_scale(), def.body_size.y, box_size, Vector2(RoomBackdrop.VIEW_SIZE))
+	var box := bubble_box(screen.origin, screen.get_scale(), def.body_size.y, box_size, Vector2(RoomBackdrop.VIEW_SIZE), -head_top())
 	var below := box.position.y > 0.0
 	var tail_y := box.position.y if below else box.end.y
 	var tail_tip := Vector2(0, tail_y - 5.0 if below else tail_y + 5.0)
@@ -196,10 +236,11 @@ func _draw_bubble(layer: Node2D) -> void:
 
 # Where the bubble's box goes, in the speaker's own space: above his head, or below his feet when above
 # would reach into the HUD's band at the top of the screen. at is the speaker's spot on screen and
-# scale the canvas's zoom. The box slides sideways to stay inside the screen.
-static func bubble_box(at: Vector2, scale: Vector2, body_height: float, box_size: Vector2, view: Vector2) -> Rect2:
+# scale the canvas's zoom. head, when given, is how far his drawn head rises above his origin, which
+# his art takes higher than his body box. The box slides sideways to stay inside the screen.
+static func bubble_box(at: Vector2, scale: Vector2, body_height: float, box_size: Vector2, view: Vector2, head := -1.0) -> Rect2:
 	var zoom := scale.y if scale.y > 0.0 else 1.0
-	var above_y := -body_height / 2.0 - BUBBLE_GAP - box_size.y
+	var above_y := -maxf(body_height / 2.0, head) - BUBBLE_GAP - box_size.y
 	var y := above_y
 	if at.y + above_y * zoom < Hud.BAND_BOTTOM:
 		y = body_height / 2.0 + BUBBLE_BELOW_GAP
