@@ -141,15 +141,20 @@ const BARRIER_DOOR_CLEARANCE := 2
 const SYMBOL_LUGGAGE_TROLLEY := "6"
 const SYMBOL_SUITCASES := "7"
 const SYMBOL_SEATS := "8"
+# The Flashback Cinema. A row of seats is solid cover that blocks walkers and shots and breaks like a
+# rock, to blasts and bosses only. A pillar is solid and never broken, like a wall, so no route may
+# need to pass one.
+const SYMBOL_SEAT := "-"
+const SYMBOL_PILLAR := "|"
 # Each new path adds its props at the end of each list: the Last Resort Cruise, Head Office,
-# Fairway's End and Departures, Terminal Zero, in that order.
-const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc><^vazdqe" + "b012" + "x9Ny" + "s345" + "=678"
+# Fairway's End, Departures, Terminal Zero and the Flashback Cinema, in that order.
+const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc><^vazdqe" + "b012" + "x9Ny" + "s345" + "=678" + "-|"
 # Nothing can walk through these, so nothing may be dropped or summoned on them.
-const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGojhazdq" + "b12" + "9N" + "45" + "68"
+const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGojhazdq" + "b12" + "9N" + "45" + "68" + "-|"
 # Routes may not need a hole or a wall, and may not need a bomb for a crate or a rock.
 const WALL_LIKE := "#lo"
-const WALLS := "#lVo" + "1"
-const WALLS_AND_BOMB_ONLY := "#lVXOAYKDMohdq" + "12" + "N" + "5" + "8"
+const WALLS := "#lVo" + "1" + "|"
+const WALLS_AND_BOMB_ONLY := "#lVXOAYKDMohdq" + "12" + "N" + "5" + "8" + "-|"
 const MUST_REACH_WITHOUT_BREAKING := "EBIHSPG"
 # A vault lays this many labeled pickups out in the open, this many cells apart so names never overlap.
 const VAULT_EXTRAS := 3

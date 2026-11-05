@@ -96,3 +96,16 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
   gold rail, fluting, a gold skirting and a gold chevron on every other panel.
 - **Decor:** only cobwebs and potted palms are scattered, thinly (density 0.03); the aisle lights are
   placed by rule with the seat rows, not scattered.
+- **Seat rows (`-`):** each cell is a `CinemaSeat`, a `RockBlock`: solid on the wall layer, so it stops
+  walkers and every shot, breaks only to blasts and bosses (as a chapel pew), and hides a coin at the
+  furniture rate. Breakable rather than wall-like, so a boss's charge and a Thermos can open cover, as
+  on every earlier floor; `WALLS_AND_BOMB_ONLY` keeps every needed route free of them. Neighbouring
+  cells join into one long row when drawn.
+- **Pillars (`|`):** a `CinemaPillar` is a plain `StaticBody2D` on the wall layer, never broken, not
+  even by a boss, and in `WALLS`, so no route may need one. Charges stop at it.
+- **Aisle lights:** placed by rule, not by symbol: the plain floor cell past each open end of a seat
+  row gets a small brass step light with a little warm pool (`AisleLight`, flat at the floor's z), at
+  most 8 to a room, spread evenly, none touching a door. So every layout lights its own aisles.
+- **Symbols:** `-` and `|` because every letter but `i` and every digit is taken; `i` is kept for the
+  life signs. Both are appended with `+ "-|"` to `ALLOWED`, `SOLID_SYMBOLS`, `WALLS_AND_BOMB_ONLY`,
+  and `|` to `WALLS`, as lesson 131 asks.

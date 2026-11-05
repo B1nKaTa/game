@@ -137,3 +137,109 @@ func test_enemies_stand_out_from_the_carpet_under_the_house_lights() -> void:
 		var body := _lit(SpriteVisual.readable(def.color), palette)
 		for tone in _tones(palette):
 			assert_true(_difference(body, _lit(tone, palette)) >= 0.22, "%s against the carpet" % def.id)
+
+
+# --- its props ---
+
+func _room(changes: Dictionary = {}, type := RoomLayout.TYPE_HEALING) -> RoomLayout:
+	var rows := PackedStringArray(["#".repeat(20)])
+	for y in range(1, 10):
+		rows.append("#" + ".".repeat(18) + "#")
+	rows.append("#".repeat(20))
+	for cell: Vector2i in changes:
+		var row := rows[cell.y]
+		rows[cell.y] = row.substr(0, cell.x) + changes[cell] + row.substr(cell.x + 1)
+	var layout := RoomLayout.new()
+	layout.room_type = type
+	layout.rows = rows
+	if type == RoomLayout.TYPE_HEALING:
+		var row := layout.rows[8]
+		layout.rows[8] = row.substr(0, 4) + "H" + row.substr(5)
+	return layout
+
+
+func test_the_props_have_symbols_of_their_own() -> void:
+	for symbol in [RoomLayout.SYMBOL_SEAT, RoomLayout.SYMBOL_PILLAR]:
+		assert_true(RoomLayout.ALLOWED.contains(symbol), symbol)
+		assert_true(RoomLayout.SOLID_SYMBOLS.contains(symbol), symbol)
+		assert_true(RoomLayout.WALLS_AND_BOMB_ONLY.contains(symbol), "%s needs more than the cane" % symbol)
+		assert_false(RoomLayout.DECOR_SYMBOLS.contains(symbol), symbol)
+		assert_false(RoomLayout.WALL_LIKE.contains(symbol), "%s is a prop, not a wall tile" % symbol)
+	assert_false(RoomLayout.WALLS.contains(RoomLayout.SYMBOL_SEAT), "a seat row can be blasted open")
+	assert_true(RoomLayout.WALLS.contains(RoomLayout.SYMBOL_PILLAR), "no route may need a pillar")
+	assert_true(RoomLayout.SYMBOL_SEAT != RoomLayout.SYMBOL_PILLAR)
+
+
+# A row of seats is cover, as crates are: solid on the wall layer, which stops walkers and every shot
+# (Projectile looks only at layer 1), and only blasts and bosses break it.
+func test_seats_are_cover_that_stops_walkers_and_shots() -> void:
+	var seat := CinemaSeat.new()
+	_ready_alone(seat)
+	assert_true(seat.is_solid())
+	assert_eq(seat.collision_layer, 1, "on the wall layer")
+	assert_true(seat.get_child_count() > 0, "with a body")
+	assert_false(seat.can_break_by(BreakableBlock.SOURCE_CANE), "the cane only bounces off")
+	assert_true(seat.can_break_by(BreakableBlock.SOURCE_BLAST))
+	assert_true(seat.can_break_by(BreakableBlock.SOURCE_BOSS))
+	var seat_node: Node = seat
+	assert_true(seat_node is RockBlock, "it can hide a coin, as furniture does")
+	seat.free()
+	var source := FileAccess.get_file_as_string("res://scripts/actors/projectile.gd")
+	assert_true(source.contains("PhysicsRayQueryParameters2D.create(global_position, next, 1)"), "shots stop on layer 1")
+
+
+func test_pillars_are_solid_and_never_break() -> void:
+	var pillar := CinemaPillar.new()
+	_ready_alone(pillar)
+	assert_eq(pillar.collision_layer, 1)
+	var as_node: Node = pillar
+	assert_false(as_node is BreakableBlock, "nothing breaks a pillar")
+	var seat := CinemaSeat.new()
+	assert_false(BossDash.stops_at(seat), "a charge smashes through seats")
+	seat.free()
+	assert_true(BossDash.stops_at(pillar), "but stops at a pillar")
+	pillar.free()
+
+
+func _ready_alone(node: Node2D) -> void:
+	node._ready()
+
+
+func test_a_seat_row_needs_a_blast_and_a_pillar_can_never_be_a_way_through() -> void:
+	# A column of seats cutting the room from top to bottom shuts its east half off without a bomb.
+	var changes := {}
+	for y in range(1, 10):
+		changes[Vector2i(14, y)] = RoomLayout.SYMBOL_SEAT
+	assert_true(str(_room(changes).validate()).contains("needs a bomb"), "seats need a bomb")
+	var walls := {}
+	for y in range(1, 10):
+		walls[Vector2i(14, y)] = RoomLayout.SYMBOL_PILLAR
+	assert_true(str(_room(walls).validate()).contains("cannot be reached"), "a pillar row walls it off")
+	assert_eq(_room({Vector2i(6, 3): "-", Vector2i(7, 3): "-", Vector2i(12, 6): "|"}).validate().size(), 0, "loose rows and pillars are fine")
+	assert_true(_room({Vector2i(9, 2): "-"}).validate().size() > 0, "but not beside a door")
+
+
+func test_aisle_lights_stand_at_the_open_ends_of_seat_rows() -> void:
+	var layout := _room({Vector2i(5, 3): "-", Vector2i(6, 3): "-", Vector2i(7, 3): "-", Vector2i(3, 7): "-", Vector2i(2, 7): "|"})
+	var ends := CinemaProps.aisle_light_cells(layout)
+	var cells := []
+	for end in ends:
+		cells.append(end["cell"])
+	assert_true(cells.has(Vector2i(4, 3)) and cells.has(Vector2i(8, 3)), "both ends of the row %s" % str(cells))
+	assert_true(cells.has(Vector2i(4, 7)), "the open end beside a pillar")
+	assert_false(cells.has(Vector2i(2, 7)), "never on the pillar")
+	assert_eq(cells.size(), 3)
+	var spot: Vector2 = CinemaProps.aisle_light_spots(layout)[0]
+	assert_true(spot.distance_to(RoomBackdrop.cell_center(ends[0]["cell"])) < RoomBackdrop.TILE, "a spot in its cell")
+	assert_true(spot.x > RoomBackdrop.cell_center(ends[0]["cell"]).x, "leaning towards the row it lights")
+	assert_true(CinemaProps.aisle_light_spots(_room({})).is_empty(), "no rows, no lights")
+
+
+func test_a_room_never_has_more_than_a_few_aisle_lights() -> void:
+	var changes := {}
+	for x in range(3, 17, 2):
+		for y in [3, 5, 7]:
+			changes[Vector2i(x, y)] = RoomLayout.SYMBOL_SEAT
+	var layout := _room(changes)
+	assert_true(CinemaProps.aisle_light_cells(layout).size() > CinemaProps.MAX_AISLE_LIGHTS)
+	assert_eq(CinemaProps.aisle_light_spots(layout).size(), CinemaProps.MAX_AISLE_LIGHTS)

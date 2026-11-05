@@ -605,6 +605,8 @@ func _create_props(palette: RoomPalette) -> void:
 	GolfProps.build(self, layout, palette)
 	# Departures, Terminal Zero: its stock and its queue barriers.
 	TerminalProps.build(self, layout, palette)
+	# The Flashback Cinema: seat rows, pillars and aisle lights.
+	CinemaProps.build(self, layout, palette)
 
 
 func _place_prop(prop: BreakableBlock, cell: Vector2i) -> void:
