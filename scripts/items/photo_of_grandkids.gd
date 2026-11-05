@@ -4,7 +4,7 @@ extends ItemEffect
 # what it lands on now and then. The full loop measures damage exactly, so there it hits as usual.
 
 const MULT := 2.0
-const COLOR := Color("ff9ec4")
+const COLOR := Color("ff4f8b")
 const TEXT := "x2"
 # The "x2" shows at most this often, so a sweep through a crowd is not a cloud of words.
 const POP_EVERY := 0.35

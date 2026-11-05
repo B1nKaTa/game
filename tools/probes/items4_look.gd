@@ -6,7 +6,7 @@ extends SceneTree
 # Clock ringing, and the Photo of the Grandkids' doubled hits.
 # Run only from an exported copy whose config/name is renamed.
 # Args after --: <floor id> [part]. Parts: stamp boss_stamp complaint plan names both wreath harmonica
-# glint alarm photo all
+# glint alarm photo all, or several joined by commas
 
 const OUT := "D:/grandpa-look-items4/"
 const WALL_LIMIT_MS := 300000
@@ -92,7 +92,7 @@ func _main() -> void:
 	floor_id = args[0] if args.size() > 0 else "floor_1"
 	var which: String = args[1] if args.size() > 1 else "all"
 	for part in PARTS:
-		if which == "all" or which == part:
+		if which == "all" or which.split(",").has(part):
 			hold = Callable()
 			await _new_run(part in ["plan", "names", "both"])
 			await call("_" + part)

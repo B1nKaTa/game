@@ -38,7 +38,7 @@ const FLAME_COLOR := Color("ff8a2a")
 const SOUP_COLOR := Color("d9772b")
 # The fourth batch: the Magnifying Glass's glint, the Bureaucrat's Stamp's red ink, the Complaint Form's
 # paper, the Wreath of Thorns' leaves, the Harmonica's notes and the Alarm Clock's bell.
-const GLINT_COLOR := Color("fff3a8")
+const GLINT_COLOR := Color("ffcf3a")
 const STAMP_RED := Color("e0262f")
 const FORM_PAPER := Color("f2ecd8")
 const WREATH_GREEN := Color("3f8a3a")
@@ -178,7 +178,7 @@ static func make_soup(ctx: EffectContext, radius: float, seconds: float, damage:
 
 # The Magnifying Glass: a star that glints on a secret wall now and then, for as long as the wall stands.
 static func make_glint(wall: Node2D) -> Fx:
-	var glint := FxGlint.new(9.0, GLINT_COLOR, RIDE_TIME)
+	var glint := FxGlint.new(12.0, GLINT_COLOR, RIDE_TIME)
 	if wall != null:
 		glint.ride(wall)
 	return glint
@@ -202,7 +202,7 @@ static func make_meter(boss: Enemy, above: float) -> FxMeter:
 
 # The Wreath of Thorns: a ring of thorny leaves round his feet, riding on him for the room.
 static func make_wreath(follow: Node2D) -> Fx:
-	var wreath := FxWreath.new(16.0, WREATH_GREEN, RIDE_TIME)
+	var wreath := FxWreath.new(18.0, WREATH_GREEN, RIDE_TIME)
 	if follow != null:
 		wreath.ride(follow)
 	return wreath
@@ -976,8 +976,10 @@ class FxGlint:
 		if bright <= 0.01:
 			return
 		var spokes := PackedVector2Array([Vector2(0, -size), Vector2(0, size), Vector2(-size, 0), Vector2(size, 0)])
-		draw_multiline(spokes, Color(Color.BLACK, 0.7 * bright), 4.0)
-		draw_multiline(spokes, Color(color, bright), 2.0)
+		draw_multiline(spokes, Color(Color.BLACK, 0.8 * bright), 5.5)
+		draw_multiline(spokes, Color(color, bright), 3.0)
+		draw_arc(Vector2.ZERO, size * 0.7, 0.0, TAU, 20, Color(Color.BLACK, 0.6 * bright), 3.0)
+		draw_arc(Vector2.ZERO, size * 0.7, 0.0, TAU, 20, Color(color, 0.8 * bright), 1.5)
 		var small := size * 0.45
 		var diagonal := PackedVector2Array([Vector2(-small, -small), Vector2(small, small), Vector2(-small, small), Vector2(small, -small)])
 		draw_multiline(diagonal, Color(Color.WHITE, bright), 1.0)
@@ -1020,7 +1022,7 @@ class FxStamp:
 class FxMeter:
 	extends Fx
 
-	const SIZE := Vector2(46, 14)
+	const SIZE := Vector2(58, 14)
 	const FONT_SIZE := 8
 
 	var fill := 0.0
@@ -1058,8 +1060,9 @@ class FxWreath:
 
 	func _draw() -> void:
 		draw_set_transform(FEET, 0.0, Vector2(1.0, 0.5))
-		draw_arc(Vector2.ZERO, radius, 0.0, TAU, 32, Color.BLACK, 6.0)
-		draw_arc(Vector2.ZERO, radius, 0.0, TAU, 32, color, 3.5)
+		draw_arc(Vector2.ZERO, radius, 0.0, TAU, 32, Color.BLACK, 8.0)
+		draw_arc(Vector2.ZERO, radius, 0.0, TAU, 32, color, 5.0)
+		draw_arc(Vector2.ZERO, radius, 0.0, TAU, 32, color.lightened(0.35), 1.5)
 		var turn := age * 0.6
 		for i in THORNS:
 			var way := Vector2.from_angle(turn + TAU * i / THORNS)

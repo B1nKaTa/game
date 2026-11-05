@@ -262,6 +262,10 @@ func _draw_boss_name(room: FloorRoom, panel: Rect2, origin: Vector2, spacing: Ve
 	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, BOSS_NAME_FONT).x
 	var x := clampf(rect.get_center().x - width / 2.0, panel.position.x + 4.0, panel.end.x - width - 4.0)
 	var at := Vector2(x, rect.end.y + font.get_ascent(BOSS_NAME_FONT) + 1.0)
+	# A dark tag behind it, since the name can run over the room below.
+	var tag := Rect2(x - 3.0, rect.end.y + 1.0, width + 6.0, font.get_height(BOSS_NAME_FONT) + 1.0)
+	draw_rect(tag, Color(0.05, 0.04, 0.07, 0.95))
+	draw_rect(tag, Color(BOSS_NAME_COLOR, 0.6), false, 1.0)
 	draw_string_outline(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, BOSS_NAME_FONT, 4, Color.BLACK)
 	draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, BOSS_NAME_FONT, BOSS_NAME_COLOR)
 
@@ -280,6 +284,8 @@ func _draw_room(room: FloorRoom, panel: Rect2, origin: Vector2, spacing: Vector2
 	# A boss room the Fortune Teller's Card shows before it is found: an outline in its colour, with its letter.
 	if not _progress.is_visited(room.id) and boss_names.has(room.room_type):
 		var boss_color: Color = ROOM_COLORS.get(room.room_type, Color.WHITE)
+		# Opaque first, so the links behind it never show through.
+		draw_rect(rect, BIG_PANEL_COLOR)
 		draw_rect(rect, Color(boss_color, 0.25))
 		draw_rect(rect, boss_color, false, 1.0)
 		var letter_size := BIG_FONT if _is_big else MINI_FONT
@@ -290,6 +296,7 @@ func _draw_room(room: FloorRoom, panel: Rect2, origin: Vector2, spacing: Vector2
 		return
 	# A room the Floor Plan shows but he has not walked into: a plain outline, nothing of what it holds.
 	if not _progress.is_visited(room.id) and room.room_type != RoomLayout.TYPE_SECRET:
+		draw_rect(rect, BIG_PANEL_COLOR)
 		draw_rect(rect, Color(PLAN_COLOR, 0.18))
 		draw_rect(rect, PLAN_COLOR, false, 1.0)
 		return
