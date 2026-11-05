@@ -43,6 +43,12 @@ func is_asleep() -> bool:
 	return _state == State.ASLEEP
 
 
+# He lies as a chair from his first frame, through the moment a room waits before anyone moves.
+func on_ready(enemy: Enemy) -> void:
+	if is_asleep():
+		_lie_down(enemy)
+
+
 func tick(enemy: Enemy, delta: float) -> void:
 	match _state:
 		State.ASLEEP:
@@ -59,15 +65,19 @@ func tick(enemy: Enemy, delta: float) -> void:
 func _sleep(enemy: Enemy) -> void:
 	# A chair stays put on a rolling deck, so he does too.
 	enemy.hold_lane()
-	if _look == null:
-		_look = ChairLook.new()
-		_look.z_index = 1
-		enemy.add_child(_look)
+	_lie_down(enemy)
 	if should_wake(enemy.distance_to_target(), enemy.hp < enemy.max_hp()):
 		_state = State.SNAP
 		_telegraph.start(SNAP_WINDUP)
 		enemy.set_warning(_telegraph, SNAP_RADIUS, true)
 		enemy.say(WAKE_TEXT, SAY_TIME)
+
+
+func _lie_down(enemy: Enemy) -> void:
+	if _look == null:
+		_look = ChairLook.new()
+		_look.z_index = 1
+		enemy.add_child(_look)
 
 
 func _wake_fully(enemy: Enemy) -> void:

@@ -14,6 +14,10 @@ const BUOY_SPEED := 300.0
 const CONGA_ROW := 54.0
 const BUOY_ROW := 26.0
 const DANCERS: Array[Color] = [Color("f2c230"), Color("4fc3d9"), Color("e86a9a")]
+const DANCER_RADIUS := 6.0
+# Files of dancers stand side by side across the lane, no further apart than this, so the row shows the
+# whole width it hurts.
+const DANCER_GAP := 16.0
 const SKIN := Color("f0c9a0")
 const BUOY_WHITE := Color("fbfbff")
 const BUOY_RED := Color("d9453b")
@@ -47,6 +51,19 @@ static func row_for(look: String) -> float:
 
 static func speed_for(look: String) -> float:
 	return BUOY_SPEED if look == LOOK_LIFEBUOY else CONGA_SPEED
+
+
+# Where each file of dancers stands across a lane of this width, from one edge to the other.
+static func dancer_offsets(width: float) -> Array[float]:
+	var span := width - DANCER_RADIUS * 2.0
+	if span <= 0.0:
+		var middle: Array[float] = [0.0]
+		return middle
+	var count := ceili(span / DANCER_GAP) + 1
+	var offsets: Array[float] = []
+	for i in count:
+		offsets.append(-span / 2.0 + span * i / float(count - 1))
+	return offsets
 
 
 # The lane starts where the row enters and runs length along direction.
@@ -102,7 +119,7 @@ func _draw() -> void:
 	var row := row_for(_look)
 	var back := clampf(_front - row, 0.0, _length)
 	var front := clampf(_front, 0.0, _length)
-	draw_rect(Rect2(back, -_width / 2.0, front - back, _width), Color(COLOR, 0.12))
+	draw_rect(Rect2(back, -_width / 2.0, front - back, _width), Color(COLOR, 0.12 if _look == LOOK_LIFEBUOY else 0.25))
 	if _look == LOOK_LIFEBUOY:
 		_draw_buoy(_front - row / 2.0)
 	else:
@@ -110,17 +127,19 @@ func _draw() -> void:
 	draw_set_transform(Vector2.ZERO)
 
 
-# Three dancers in a line, each holding the hips of the one in front, kicking out in turn.
+# Files of three dancers side by side across the lane, each holding the hips of the one in front,
+# kicking out in turn.
 func _draw_dancers(middle: float) -> void:
-	for i in DANCERS.size():
-		var x := middle + 16.0 - i * 16.0
-		if x < 0.0 or x > _length:
-			continue
-		var kick := 4.0 if (int(_front / 12.0) + i) % 2 == 0 else -4.0
-		draw_line(Vector2(x - 3.0, 4.0), Vector2(x - 6.0, 4.0 + kick), DANCERS[i].darkened(0.4), 2.0)
-		draw_circle(Vector2(x, 0.0), 6.0, DANCERS[i])
-		draw_circle(Vector2(x + 2.0, -1.0), 3.0, SKIN)
-		draw_arc(Vector2(x, 0.0), 6.0, 0.0, TAU, 12, Color.BLACK, 1.0)
+	for side in dancer_offsets(_width):
+		for i in DANCERS.size():
+			var x := middle + 16.0 - i * 16.0
+			if x < 0.0 or x > _length:
+				continue
+			var kick := 4.0 if (int(_front / 12.0) + i) % 2 == 0 else -4.0
+			draw_line(Vector2(x - 3.0, side + 4.0), Vector2(x - 6.0, side + 4.0 + kick), DANCERS[i].darkened(0.4), 2.0)
+			draw_circle(Vector2(x, side), DANCER_RADIUS, DANCERS[i])
+			draw_circle(Vector2(x + 2.0, side - 1.0), 3.0, SKIN)
+			draw_arc(Vector2(x, side), DANCER_RADIUS, 0.0, TAU, 12, Color.BLACK, 1.0)
 
 
 # A red and white ring rolling on its edge, turning as it goes.
