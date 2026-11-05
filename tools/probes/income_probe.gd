@@ -1,5 +1,7 @@
 extends SceneTree
 # Measures Pension per full clear with real rooms: kills everything, collects, breaks props.
+# Args after --: <path index> [depth]. Each path and depth keeps its own probe save, so several can
+# run at once.
 
 const RUNS := 30
 const WALL_LIMIT_MS := 900000
@@ -26,12 +28,18 @@ func _wait(seconds: float) -> void:
 func _main() -> void:
 	await process_frame
 	var progress = root.get_node("Progress")
-	progress._store = SaveStore.new("user://probe_save.json")
+	var args := OS.get_cmdline_user_args()
+	var tag := "%s_%s" % [args[0] if args.size() > 0 else "0", args[1] if args.size() > 1 else "1"]
+	progress._store = SaveStore.new("user://probe_save_%s.json" % tag)
 	progress._store.delete_all()
 	progress.reload()
 	progress.data.floors_cleared = 1
 	progress.data.record_floor_cleared(2, "sunset_shores")
 	progress.data.record_floor_cleared(3, "funeral_parlour")
+	# The deep paths open on clears at depths 4 and 5, which only deep runs record.
+	if args.size() > 1 and int(args[1]) >= 4:
+		progress.data.record_floor_cleared(4, "last_resort_cruise")
+		progress.data.record_floor_cleared(5, "terminal_zero")
 	var totals := {"fights": [], "chests": [], "cane": [], "bomb": [], "combat_rooms": [], "enemies": []}
 	for run in RUNS:
 		var r: Dictionary = await _one_run(progress)

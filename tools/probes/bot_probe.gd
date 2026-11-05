@@ -1,9 +1,17 @@
 extends SceneTree
 # A simple simulated player runs real floors through real scenes with simulated input.
-# Args after --: <fresh|some|max> <average|good> <runs> <path> <depth> [bosses]
+# Args after --: <fresh|some|max> <average|good> <runs> <path> <depth> [bosses|mini|boss|haul]
+# "bosses" fights the mini boss and then the floor boss, "mini" and "boss" fight only one of them, so a
+# floor boss is measured 20 times even when the mini boss wins some runs. "haul" plays the whole floor
+# with what a run has picked up above: two items per floor already cleared, two Slips and a Thermos.
 # Estimates only. It walks teleport-free inside rooms but changes rooms directly.
 # Version 4 reads the third floor too: extra warned lanes, processions, the collection plate,
 # presents, the closing ring, the crescendo's safe spot and perfume clouds.
+# Version 5 reads floors 4 and 5: it walks against the ship's roll (and dodges, which holds), never
+# counts on a dodge in sand, treats raised or chiming queue barriers as walls (they block only him),
+# dodges through red tape it cannot walk round, steps out of every new lane, ring, sweep, roll and
+# mat to the nearest clear spot, stands on marked gaps unless a heavy strike falls there, and dodges
+# to snap the Chairman's tether.
 
 const WALL_LIMIT_MS := 1700000
 const SKILLS := {
@@ -57,13 +65,19 @@ func _main() -> void:
 	progress.data.floors_cleared = 1
 	progress.data.record_floor_cleared(2, "sunset_shores")
 	progress.data.record_floor_cleared(3, "funeral_parlour")
+	# Every deep path opens: the cruise counts for the fourth floor, the terminal for the fifth. Only
+	# for deep runs, so a floor-3 run keeps the save its numbers were measured on.
+	if args.size() > 4 and int(args[4]) >= 4:
+		progress.data.record_floor_cleared(4, "last_resort_cruise")
+		progress.data.record_floor_cleared(5, "terminal_zero")
 	for key in SAVES[save_name]:
 		progress.data.upgrades[key] = SAVES[save_name][key]
-	var bosses_only := args.size() > 5 and args[5] == "bosses"
+	var mode: String = args[5] if args.size() > 5 else ""
+	var bosses_only := mode == "bosses" or mode == "mini" or mode == "boss"
 	for i in runs:
 		var result: Dictionary = {}
 		if bosses_only:
-			result = await _run_bosses(progress)
+			result = await _run_bosses(progress, mode)
 		else:
 			result = await _run(progress)
 		_results.append(result)
@@ -75,6 +89,7 @@ func _main() -> void:
 
 func _print_summary() -> void:
 	print("hits by source: %s" % str(_sources))
+	print("attacks seen: %s" % str(_kinds))
 	var n := _results.size()
 	if n == 0:
 		return
@@ -119,15 +134,17 @@ func _run(progress) -> Dictionary:
 	await create_timer(0.05).timeout
 	var bot := Bot.new()
 	bot.setup(scene, _skill, _rng)
+	bot.kinds = _kinds
 	scene.add_child(bot)
-	# A typical haul from two floors: four items, two Slips and a Thermos.
+	# A typical haul: two items for each floor above (four on the third floor, as v4 used), two Slips
+	# and a Thermos.
 	if OS.get_cmdline_user_args().size() > 5 and OS.get_cmdline_user_args()[5] == "haul":
 		var run: RunState = scene.player.run
 		var pool: Array = []
 		for item in Content.items():
 			if run.can_offer(item):
 				pool.append(item)
-		for i in 4:
+		for i in 2 * (scene._depth - 1):
 			if pool.is_empty():
 				break
 			run.add_item(pool.pop_at(_rng.randi_range(0, pool.size() - 1)))
@@ -138,7 +155,7 @@ func _run(progress) -> Dictionary:
 	var pension_before: int = progress.data.pension
 	var map: FloorMap = scene.debug_map()
 	var r := {"reached_mini": false, "beat_mini": false, "reached_boss": false, "beat_boss": false, "income": 0, "time": 0.0, "rooms": 0, "stuck": 0, "hits": 0, "boss_ttk": 0.0, "mini_ttk": 0.0, "boss_hits": 0, "mini_hits": 0, "death_in": ""}
-	scene.player.hurt.connect(func(): r["hits"] += 1; _attribute(scene))
+	scene.player.hurt.connect(func(): r["hits"] += 1; _attribute(scene); _trace(bot))
 	while true:
 		var at: int = scene.debug_current_id()
 		var kind: String = map.room(at).room_type
@@ -182,6 +199,9 @@ func _run(progress) -> Dictionary:
 
 
 var _sources := {}
+# How many of each attack node appeared in rooms, so a fight with no hits can be told from one with no
+# attacks.
+var _kinds := {}
 
 
 func _attribute(scene) -> void:
@@ -224,6 +244,28 @@ func _attribute(scene) -> void:
 		elif child is PresentDrop and d < 30.0:
 			name = "present"
 			d = 0.0
+		elif child is AnchorDrop or child is QuoitRing or child is WriteUpMark or child is GroundStrike:
+			if d < 60.0:
+				name = child.get_class() if child.get_script() == null else str(child.get_script().get_global_name())
+				d = 0.0
+		elif child is DeckLane and child.is_moving() and DeckLane.row_hits(child.global_position, child._direction, child._width + 16.0, minf(child._front, child._length) + 8.0, DeckLane.row_for(child.look()) + 16.0, scene.player.feet().global_position):
+			name = "deck_lane_" + child.look()
+			d = 1.0
+		elif child is RunwayLane and child.is_lit():
+			name = "runway"
+			d = 0.0
+		elif child is LaneDrop and child.has_landed() and child.strip().grow(14.0).has_point(scene.player.feet().global_position):
+			name = "lane_drop_" + child.look()
+			d = 0.0
+		elif child is XRaySweep and child.is_sweeping() and absf((scene.player.feet().global_position.x if child._along_x else scene.player.feet().global_position.y) - child.beam_at()) < 30.0:
+			name = "xray"
+			d = 2.0
+		elif child is SprinklerSweep and child.is_sweeping() and SprinklerSweep.swept_over(child.global_position, child.sweep_start(), child.sweep_turn(), maxf(child._swept_for - 0.1, 0.0), child._swept_for, scene.player.feet().global_position):
+			name = "sprinkler"
+			d = 1.0
+		elif ((child is PuttRoll and child.is_rolling()) or (child is ShuffleboardPuck and child.is_sliding())) and scene.player.feet().global_position.distance_to(child.global_position + CollectionPlate.point_along(child._path, child._travelled)) < 30.0:
+			name = "putt" if child is PuttRoll else "puck"
+			d = 1.0
 		elif child is Enemy:
 			name = child.def.id
 		if name != "" and d < best_d:
@@ -232,9 +274,16 @@ func _attribute(scene) -> void:
 	_sources[best] = _sources.get(best, 0) + 1
 
 
+# With "trace" after the mode, every hit prints what the bot was doing and what it saw.
+func _trace(bot) -> void:
+	var args := OS.get_cmdline_user_args()
+	if args.size() > 6 and args[6] == "trace":
+		print("HIT " + bot.debug_state())
+
+
 # Straight into the mini boss and then the floor boss, each with full pills, so a boss fight is
 # measured on its own and not by how often the bot survives the rooms before it.
-func _run_bosses(progress) -> Dictionary:
+func _run_bosses(_progress, mode := "bosses") -> Dictionary:
 	change_scene_to_file("res://scenes/floor.tscn")
 	await create_timer(0.1).timeout
 	var scene = current_scene
@@ -243,11 +292,17 @@ func _run_bosses(progress) -> Dictionary:
 	await create_timer(0.05).timeout
 	var bot := Bot.new()
 	bot.setup(scene, _skill, _rng)
+	bot.kinds = _kinds
 	scene.add_child(bot)
 	var map: FloorMap = scene.debug_map()
-	var r := {"reached_mini": true, "beat_mini": false, "reached_boss": true, "beat_boss": false, "income": 0, "time": 0.0, "rooms": 2, "stuck": 0, "hits": 0, "boss_ttk": 0.0, "mini_ttk": 0.0, "boss_hits": 0, "mini_hits": 0, "death_in": ""}
-	scene.player.hurt.connect(func(): r["hits"] += 1; _attribute(scene))
-	for kind in [RoomLayout.TYPE_MINI_BOSS, RoomLayout.TYPE_FLOOR_BOSS]:
+	var kinds: Array = [RoomLayout.TYPE_MINI_BOSS, RoomLayout.TYPE_FLOOR_BOSS]
+	if mode == "mini":
+		kinds = [RoomLayout.TYPE_MINI_BOSS]
+	elif mode == "boss":
+		kinds = [RoomLayout.TYPE_FLOOR_BOSS]
+	var r := {"reached_mini": kinds.has(RoomLayout.TYPE_MINI_BOSS), "beat_mini": false, "reached_boss": kinds.has(RoomLayout.TYPE_FLOOR_BOSS), "beat_boss": false, "income": 0, "time": 0.0, "rooms": kinds.size(), "stuck": 0, "hits": 0, "boss_ttk": 0.0, "mini_ttk": 0.0, "boss_hits": 0, "mini_hits": 0, "death_in": ""}
+	scene.player.hurt.connect(func(): r["hits"] += 1; _attribute(scene); _trace(bot))
+	for kind in kinds:
 		var target := -1
 		for room in map.rooms:
 			if room.room_type == kind:
@@ -324,6 +379,17 @@ class Bot extends Node:
 	var _last_hp_total := 0.0
 	var _since_progress := 0.0
 	var _fighting := false
+	# Floors 4 and 5: where he is stepping to out of a new hazard, how long a dodge he wants has waited
+	# for him to leave sand, and the cells raised or chiming barriers block this frame.
+	var _deep_goal := Vector2.INF
+	var _sand_wait := 0.0
+	var _barrier_cells := {}
+	var _soft_cells := {}
+	var _dodge_against := Vector2.ZERO
+	var _zones: Array = []
+	var _kept_goal := Vector2.INF
+	var _kept_left := 0.0
+	var _threat := Vector2.ZERO
 
 	func setup(s, sk: Dictionary, r: RandomNumberGenerator) -> void:
 		scene = s
@@ -390,8 +456,11 @@ class Bot extends Node:
 		if not _fighting or scene.is_over or not is_instance_valid(_player):
 			return
 		_track_progress(delta)
+		_count_kinds()
 		_move = Vector2.ZERO
+		_read_cells()
 		var threat := _read_threats(delta)
+		_threat = threat
 		var target := _pick_target()
 		if target != null:
 			_aim_at = _aimed(target)
@@ -399,12 +468,65 @@ class Bot extends Node:
 			_move = threat
 		elif target != null:
 			_move = _around_fire(_player.feet().global_position, _approach(target, delta))
+		if _deep_goal != Vector2.INF:
+			var to_goal: Vector2 = _deep_goal - _player.feet().global_position
+			_move = to_goal.normalized() if to_goal.length() > 2.0 else Vector2.ZERO
+		elif threat == Vector2.ZERO and _steps_into_hit(_player.feet().global_position, _move):
+			# He waits at the edge of a warned spot or lane rather than walking into it.
+			_move = Vector2.ZERO
+		elif threat == Vector2.ZERO and _boss_here() and _player.is_in_sand():
+			var dry := _out_of_sand(_player.feet().global_position)
+			if dry != Vector2.INF:
+				_move = _player.feet().global_position.direction_to(dry)
 		var safe := safe_spot()
 		if safe != Vector2.INF:
 			_move = _walk_to(safe)
+		_cut_tape_ahead()
+		if _dodge_against != Vector2.ZERO and _dodge_wish:
+			_move = _dodge_against
 		_press_move(_move)
 		_handle_dodge()
 		_handle_attack(target, delta)
+
+	var _counted := {}
+
+	func debug_state() -> String:
+		var feet: Vector2 = _player.feet().global_position
+		var parts: Array[String] = []
+		parts.append("t=%.2f feet=%s move=%s goal=%s safe=%s dodging=%s sand=%s taped=%s cool=%.2f" % [clock, str(feet.round()), str(_move.snapped(Vector2(0.01, 0.01))), str(_deep_goal.round()) if _deep_goal != Vector2.INF else "-", str(safe_spot().round()) if safe_spot() != Vector2.INF else "-", str(_player.is_dodging()), str(_player.is_in_sand()), str(_player.is_taped()), _player._dodge._cooldown])
+		for child in scene.debug_room_view().get_children():
+			if child.is_queued_for_deletion():
+				continue
+			if _is_deep(child) or child is GroundStrike or child is SafeSpotMark or child is XRaySweep or child is TakeoverTether:
+				var seen: String = "%.2f" % (clock - _seen[child.get_instance_id()]) if _seen.has(child.get_instance_id()) else "unseen"
+				var zone := _deep_zone(child, feet) if _is_deep(child) else -1
+				parts.append("  %s at %s d=%.0f zone=%d seen=%s left=%s" % [str(child.get_script().get_global_name()), str(child.global_position.round()), feet.distance_to(child.global_position), zone, seen, str(child.get("_left"))])
+		for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
+			if enemy.global_position.distance_to(feet) < 120.0:
+				var shows: bool = enemy._warning != null and enemy._warning.shows_warning(enemy._warning_share() if enemy.has_method("_warning_share") else enemy._warning_fraction)
+				parts.append("  enemy %s d=%.0f warn=%s lane=%.0f radius=%.0f vel=%s" % [enemy.def.id, enemy.global_position.distance_to(feet), str(shows), enemy._lane_length, enemy._warning_radius, str(enemy.velocity.round())])
+		return "\n".join(parts)
+	var kinds := {}
+
+	func _count_kinds() -> void:
+		for child in scene.debug_room_view().get_children():
+			var id: int = child.get_instance_id()
+			if _counted.has(id):
+				continue
+			_counted[id] = true
+			var script: Script = child.get_script()
+			if script == null or child is Enemy or child is Pickup or child is BreakableBlock:
+				continue
+			var kind := str(script.get_global_name())
+			if kind != "":
+				kinds[kind] = kinds.get(kind, 0) + 1
+		for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
+			if enemy._warning != null:
+				var wid: int = enemy._warning.get_instance_id()
+				if not _counted.has(wid):
+					_counted[wid] = true
+					var wk := "warn_" + enemy.def.id
+					kinds[wk] = kinds.get(wk, 0) + 1
 
 	func _track_progress(delta: float) -> void:
 		var total := 0.0
@@ -501,6 +623,7 @@ class Bot extends Node:
 				_want_dodge(strike_id)
 		escape += _read_furnace(enemy_free_feet(), me)
 		escape += _read_floor3(enemy_free_feet())
+		_read_deep(enemy_free_feet())
 		return escape.normalized() if escape != Vector2.ZERO else Vector2.ZERO
 
 	func _seen_for(node: Node) -> bool:
@@ -514,8 +637,33 @@ class Bot extends Node:
 	func safe_spot() -> Vector2:
 		for child in scene.debug_room_view().get_children():
 			if child is SafeSpotMark and not child.is_queued_for_deletion() and _seen_for(child):
+				if _heavy_strike_on(child.global_position) or (scene.debug_floor_def().depth >= 4 and _spot_hurts(child.global_position, _zones, false)):
+					continue
+				if scene.debug_floor_def().depth >= 4 and (not _gap_attack_on() or _threat != Vector2.ZERO):
+					continue
 				return child.global_position
 		return Vector2.INF
+
+	# The deep attacks that leave a marked gap: conga rows, the X-ray beam and the Chairman's bars.
+	func _gap_attack_on() -> bool:
+		for child in scene.debug_room_view().get_children():
+			if child.is_queued_for_deletion():
+				continue
+			if child is DeckLane and child.look() == DeckLane.LOOK_CONGA:
+				return true
+			if child is XRaySweep or (child is LaneDrop and child.look() == LaneDrop.LOOK_BAR and not child.is_finished()):
+				return true
+		return false
+
+	# Whether one of the deep floors' heavy strikes (an anchor, a stamp, a gavel, a giant ball) is
+	# falling on a spot, so a marked gap there is no longer safe.
+	func _heavy_strike_on(spot: Vector2) -> bool:
+		for child in scene.debug_room_view().get_children():
+			if child is AnchorDrop and not child._landed and spot.distance_to(child.global_position) < AnchorDrop.RADIUS + 12.0:
+				return true
+			if (child is GavelStrike or child is TerminalStrike or child is GiantBallDrop) and not child._landed and child._delay <= 0.0 and spot.distance_to(child.global_position) < child._radius + 12.0:
+				return true
+		return false
 
 	# Processions, plates, presents, the closing ring, hurting organ rings and perfume clouds.
 	func _read_floor3(feet: Vector2) -> Vector2:
@@ -583,6 +731,333 @@ class Bot extends Node:
 				if clear:
 					return across * way if step > 0 else Vector2.ZERO
 		return Vector2.ZERO
+
+	# Floors 4 and 5. Cells the walk avoids or cannot use this frame: raised or chiming barriers block
+	# only him, and sand and strung tape are walked round when there is another way.
+	func _read_cells() -> void:
+		_barrier_cells.clear()
+		_soft_cells.clear()
+		var tree := get_tree()
+		for barrier in QueueBarrier.barriers_in(tree):
+			if is_instance_valid(barrier) and (barrier.is_up() or barrier.is_chiming()):
+				_barrier_cells[barrier._cell] = true
+		for trap in tree.get_nodes_in_group(SandTrap.GROUP):
+			if is_instance_valid(trap):
+				_soft_cells[_cell(trap.global_position)] = true
+		for tape in tree.get_nodes_in_group(RedTape.GROUP):
+			if is_instance_valid(tape) and tape.is_strung() and not tape.is_cut():
+				_soft_cells[_cell(tape.global_position)] = true
+
+	func _is_deep(child: Node) -> bool:
+		return child is DeckLane or child is RunwayLane or child is LaneDrop or child is SprinklerSweep or child is PuttRoll or child is ShuffleboardPuck or child is AnchorDrop or child is QuoitRing or child is WriteUpMark or child is PaperTrail or child is BunkerPatch or child is TapeSpread or _is_deep_strike(child)
+
+	# The deep floors' own marks on the ground: a giant ball, a gavel, a stamp or tray, a chipped ball.
+	func _is_deep_strike(child: Node) -> bool:
+		return child is GiantBallDrop or child is GavelStrike or child is TerminalStrike or child is GolfBallLob
+
+	# 0 for clear, 1 for somewhere better avoided (it slows or will warn soon), 2 for a coming hit.
+	func _deep_zone(child: Node, p: Vector2, strict := false) -> int:
+		if child is DeckLane:
+			var off: Vector2 = p - child.global_position
+			var along: float = off.dot(child._direction)
+			var side: float = absf(off.dot(child._direction.orthogonal()))
+			if side > child._width / 2.0 + 12.0 or along < -12.0 or along > child._length + 12.0:
+				return 0
+			if not strict and child.is_moving() and along < child._front - DeckLane.row_for(child.look()) - 12.0:
+				return 0
+			return 2
+		if child is RunwayLane:
+			if child.is_over():
+				return 0
+			var off2: Vector2 = p - child.global_position
+			var along2: float = off2.dot(child._direction)
+			if along2 < -10.0 or along2 > child._length + 10.0 or absf(off2.dot(child._direction.orthogonal())) > child._width / 2.0 + 12.0:
+				return 0
+			return 1 if child.is_waiting() else 2
+		if child is LaneDrop:
+			if child.is_finished() or not child.strip().grow(12.0).has_point(p):
+				return 0
+			if child.is_waiting():
+				return 1
+			if not child.has_landed():
+				return 2
+			return 2 if child._stand_left > 0.0 else 0
+		if child is SprinklerSweep:
+			var center: Vector2 = child.global_position
+			var dist := p.distance_to(center)
+			if dist > SprinklerSweep.REACH + 20.0:
+				return 0
+			var angle := SprinklerSweep.swept_angle_of(center, child.sweep_start(), child.sweep_turn(), p)
+			var margin := clampf(16.0 / maxf(dist, 1.0), 0.05, 1.0)
+			if dist > SprinklerSweep.ARM_WIDTH and angle > SprinklerSweep.SWEEP + margin and angle < TAU - margin:
+				return 0
+			if child.is_sweeping() and not strict:
+				var now := SprinklerSweep.SWEEP * clampf(child._swept_for / SprinklerSweep.SWEEP_TIME, 0.0, 1.0)
+				if angle < now - margin:
+					return 0
+			return 2
+		if child is PuttRoll or child is ShuffleboardPuck:
+			var from: float = child._travelled
+			var d := from
+			while d <= child._total:
+				if p.distance_to(child.global_position + CollectionPlate.point_along(child._path, d)) < 13.0 + 12.0:
+					return 2
+				d += 8.0
+			return 0
+		if _is_deep_strike(child):
+			return 2 if not child._landed and child._delay <= 0.0 and not child.is_following() and p.distance_to(child.global_position) < child._radius + 12.0 else 0
+		if child is AnchorDrop:
+			return 2 if not child._landed and p.distance_to(child.global_position) < AnchorDrop.RADIUS + 12.0 else 0
+		if child is QuoitRing:
+			var dq := p.distance_to(child.global_position)
+			if not child._landed:
+				return 2 if dq < QuoitRing.RADIUS + 12.0 else 0
+			return 1 if child.is_lying() and dq < QuoitRing.RADIUS + 4.0 else 0
+		if child is WriteUpMark:
+			var dw := p.distance_to(child.global_position)
+			if not child.has_landed():
+				return 2 if dw < WriteUpMark.RADIUS + 12.0 else 0
+			return 2 if child.covers(p) or (child._linger > 0.0 and dw < WriteUpMark.RADIUS + 4.0) else 0
+		if child is PaperTrail:
+			return 1 if child.covers(p) else 0
+		if child is BunkerPatch:
+			return 1 if not child.is_laid() and child.cells().has(_cell(p)) else 0
+		if child is TapeSpread:
+			return 1 if not child.is_strung() and child._cells.has(_cell(p)) else 0
+		return 0
+
+	# Whether a hit is a moment away, when a dodge's own cover helps.
+	func _deep_imminent(child: Node, p: Vector2) -> bool:
+		if child is DeckLane:
+			if not child.is_moving():
+				return false
+			var ahead: float = (p - child.global_position).dot(child._direction) - child._front
+			return ahead < 40.0 and ahead > -DeckLane.row_for(child.look())
+		if child is RunwayLane:
+			return not child.is_waiting() and (child._left < 0.12 or child.is_lit())
+		if child is LaneDrop:
+			return not child.is_waiting() and not child.has_landed() and child._left < 0.12
+		if child is SprinklerSweep:
+			if not child.is_sweeping():
+				return child._left < 0.1
+			var now := SprinklerSweep.SWEEP * clampf(child._swept_for / SprinklerSweep.SWEEP_TIME, 0.0, 1.0)
+			return SprinklerSweep.swept_angle_of(child.global_position, child.sweep_start(), child.sweep_turn(), p) - now < 0.5
+		if child is PuttRoll or child is ShuffleboardPuck:
+			var moving: bool = child.is_rolling() if child is PuttRoll else child.is_sliding()
+			return moving and p.distance_to(child.global_position + CollectionPlate.point_along(child._path, child._travelled)) < 40.0
+		if child is AnchorDrop or child is QuoitRing or child is WriteUpMark or _is_deep_strike(child):
+			return not child._landed and child._left < 0.12
+		return false
+
+	# Steps out of the deep floors' lanes, rings, sweeps, rolls and mats to the nearest clear spot, and
+	# dodges when a hit is a moment away. Also snaps the Chairman's tether, dodges an X-ray beam with no
+	# gap to stand in, and dodges uphill when a forced roll carries him into a hit.
+	func _read_deep(feet: Vector2) -> void:
+		_deep_goal = Vector2.INF
+		if _kept_goal != Vector2.INF and _kept_left <= 0.0:
+			_kept_goal = Vector2.INF
+		_kept_left -= get_physics_process_delta_time()
+		_dodge_against = Vector2.ZERO
+		var view: RoomView = scene.debug_room_view()
+		var zones: Array = []
+		var hard: Array = []
+		for child in view.get_children():
+			if child.is_queued_for_deletion():
+				continue
+			if child is TakeoverTether:
+				if not child.is_snapped() and _seen_for(child):
+					_want_dodge(child.get_instance_id())
+				continue
+			if child is XRaySweep:
+				if _seen_for(child) and child.is_sweeping() and not XRaySweep.spared(feet, child._safe):
+					var mine: float = feet.x if child._along_x else feet.y
+					var gap: float = (mine - child.beam_at()) * signf(child._to - child._from)
+					if gap > -XRaySweep.WIDTH and gap < 36.0:
+						_want_dodge(child.get_instance_id() + 1)
+				continue
+			if not _is_deep(child) or not _seen_for(child):
+				continue
+			zones.append(child)
+			if _deep_zone(child, feet) == 2:
+				hard.append(child)
+		var slide: Vector2 = ShipDeck.slide_at(get_tree(), feet)
+		if slide.length() > ShipRoll.SPEED + 1.0:
+			var down := feet + slide.normalized() * 60.0
+			if _spot_hurts(down, zones):
+				_dodge_against = -slide.normalized()
+				_want_dodge(900000 + int(clock * 2.0))
+		_zones = zones
+		if hard.is_empty():
+			return
+		# He keeps to the spot he chose while it stays clear, as a player commits to a way out.
+		if _kept_goal != Vector2.INF and feet.distance_to(_kept_goal) < 260.0 and feet.distance_to(_kept_goal) > 6.0 and not _spot_hurts(_kept_goal, zones):
+			_deep_goal = _kept_goal
+		else:
+			_deep_goal = _nearest_clear(feet, zones)
+			if _deep_goal == Vector2.INF:
+				# Nowhere is clear of everything: he gets clear of what falls or lands in place and
+				# leaves the passing rows and lanes to a dodge.
+				var fixed: Array = zones.filter(func(z): return is_instance_valid(z) and not (z is DeckLane or z is RunwayLane or z is LaneDrop))
+				_deep_goal = _nearest_clear(feet, fixed)
+		_kept_goal = _deep_goal
+		_kept_left = 0.3
+		if OS.get_cmdline_user_args().size() > 6 and OS.get_cmdline_user_args()[6] == "trace": print("DEEP t=%.2f feet=%s goal=%s hard=%s" % [clock, str(feet.round()), str(_deep_goal), str(hard.map(func(h): return h.get_script().get_global_name()))])
+		for child in hard:
+			# A dodge out of a mark that falls in place helps; out of a sweep or a moving row it is
+			# better kept for the moment it arrives.
+			var sweeps: bool = child is SprinklerSweep or child is DeckLane or child is PuttRoll or child is ShuffleboardPuck
+			if not sweeps and _deep_goal != Vector2.INF and feet.distance_to(_deep_goal) > 30.0:
+				_want_dodge(child.get_instance_id())
+			if _deep_imminent(child, feet):
+				_want_dodge(child.get_instance_id() + 1)
+
+	func _spot_hurts(p: Vector2, zones: Array, with_enemies := true) -> bool:
+		if with_enemies and _enemy_warning_at(p):
+			return true
+		for zone in zones:
+			if is_instance_valid(zone) and _deep_zone(zone, p, true) == 2:
+				return true
+		for strike in scene.debug_room_view().get_children():
+			if strike is GroundStrike and not strike._landed and strike._delay <= 0.0 and p.distance_to(strike.global_position) < strike._radius + 10.0:
+				return true
+		return false
+
+	# Whether a shown enemy warning (a lane, a fan, a ring or a cone) covers a spot.
+	func _enemy_warning_at(p: Vector2) -> bool:
+		for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
+			var telegraph: Telegraph = enemy._warning
+			if telegraph == null or not telegraph.shows_warning(enemy._warning_share() if enemy.has_method("_warning_share") else enemy._warning_fraction):
+				continue
+			var from: Vector2 = enemy.global_position
+			var body := p - Player.FEET_OFFSET
+			if enemy._lane_length > 0.0:
+				var off := body - from
+				var forward := off.dot(enemy._lane_direction)
+				var side := off - enemy._lane_direction * forward
+				if forward > -30.0 and forward < enemy._lane_length + 30.0 and side.length() < enemy._lane_width / 2.0 + 14.0:
+					return true
+			for lane in enemy._extra_lanes:
+				var way: Vector2 = lane[0]
+				var off2 := body - from
+				var ahead := off2.dot(way)
+				var aside := off2 - way * ahead
+				if ahead > -30.0 and ahead < float(lane[1]) + 30.0 and aside.length() < float(lane[2]) / 2.0 + 14.0:
+					return true
+			if enemy._warning_radius > 0.0 and body.distance_to(from) < enemy._warning_radius + 10.0:
+				return true
+			if enemy.warning_cone_length() > 0.0 and ChiefStokerBehavior.in_cone(from, enemy.warning_cone_direction(), enemy.warning_cone_angle() + 20.0, enemy.warning_cone_length() + 20.0, p):
+				return true
+		return false
+
+	# The nearest open spot clear of every hit coming, preferring spots off sand, tape and slowing mats.
+	func _nearest_clear(feet: Vector2, zones: Array) -> Vector2:
+		var layout: RoomLayout = scene.debug_map().room(scene.debug_current_id()).layout
+		var size := layout.size_in_cells()
+		var best := Vector2.INF
+		var best_score := INF
+		for step in range(1, 31):
+			var r := step * 8.0
+			if r > best_score:
+				break
+			for k in 16:
+				var p: Vector2 = feet + Vector2.from_angle(TAU * k / 16.0 + step * 0.4) * r
+				var cell := _cell(p)
+				if cell.x < 1 or cell.y < 1 or cell.x >= size.x - 1 or cell.y >= size.y - 1 or _solid(layout, cell):
+					continue
+				if _spot_hurts(p, zones) or _through_boss(feet, p):
+					continue
+				var score := r
+				if _soft_cells.has(cell):
+					score += 40.0
+				for zone in zones:
+					if is_instance_valid(zone) and _deep_zone(zone, p) == 1:
+						score += 40.0
+				if score < best_score and _way_clear(feet, p, zones):
+					best_score = score
+					best = p
+		return best
+
+	# Whether the straight walk to a spot stays out of every coming hit he is not already standing in.
+	func _way_clear(feet: Vector2, to: Vector2, zones: Array) -> bool:
+		var inside: Array = []
+		for zone in zones:
+			if is_instance_valid(zone) and _deep_zone(zone, feet, true) == 2:
+				inside.append(zone)
+		var length := feet.distance_to(to)
+		var layout: RoomLayout = scene.debug_map().room(scene.debug_current_id()).layout
+		var step := 8.0
+		while step < length + 8.0:
+			var p := feet.lerp(to, minf(step / length, 1.0))
+			if _solid(layout, _cell(p)):
+				return false
+			for zone in zones:
+				if is_instance_valid(zone) and not inside.has(zone) and _deep_zone(zone, p, true) == 2:
+					return false
+			step += 8.0
+		return true
+
+	func _through_boss(from: Vector2, to: Vector2) -> bool:
+		for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
+			if not enemy.def.is_boss:
+				continue
+			var reach := maxf(enemy.def.body_size.x, enemy.def.body_size.y) / 2.0 + 12.0
+			if from.distance_to(enemy.global_position) < reach:
+				# Already beside him: only spots on his far side are through him.
+				if from.direction_to(to).dot(from.direction_to(enemy.global_position)) > 0.3:
+					return true
+				continue
+			var closest := Geometry2D.get_closest_point_to_segment(enemy.global_position, from, to)
+			if closest.distance_to(enemy.global_position) < reach:
+				return true
+		return false
+
+	func _boss_here() -> bool:
+		for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
+			if enemy.def.is_boss:
+				return true
+		return false
+
+	# The nearest open spot off sand, for a player who knows he cannot dodge there.
+	func _out_of_sand(feet: Vector2) -> Vector2:
+		var layout: RoomLayout = scene.debug_map().room(scene.debug_current_id()).layout
+		for step in range(1, 14):
+			for k in 12:
+				var p: Vector2 = feet + Vector2.from_angle(TAU * k / 12.0) * step * 8.0
+				if not _solid(layout, _cell(p)) and not SandTrap.is_sand_at(get_tree(), p) and _way_clear(feet, p, _zones):
+					return p
+		return Vector2.INF
+
+	# Whether a step from here walks into a deep floor's coming hit he is not already standing in.
+	func _steps_into_hit(feet: Vector2, way: Vector2) -> bool:
+		if way == Vector2.ZERO:
+			return false
+		var ahead := feet + way.normalized() * 16.0
+		if _boss_here() and not _player.is_in_sand() and SandTrap.is_sand_at(get_tree(), ahead):
+			return true
+		if _zones.is_empty():
+			return false
+		for zone in _zones:
+			if is_instance_valid(zone) and _deep_zone(zone, ahead, true) == 2 and _deep_zone(zone, feet, true) != 2:
+				return true
+		return false
+
+	# Strung tape just ahead with no way round: a dodge cuts it rather than being held. Held already, a
+	# dodge frees him when something is coming.
+	func _cut_tape_ahead() -> void:
+		if _player.is_dodging() or _move == Vector2.ZERO:
+			return
+		var feet: Vector2 = _player.feet().global_position
+		var tapes := get_tree().get_nodes_in_group(RedTape.GROUP)
+		if tapes.is_empty():
+			return
+		var can_dodge: bool = _player._dodge._cooldown <= 0.0
+		if _player.is_taped():
+			if can_dodge and _deep_goal != Vector2.INF:
+				_dodge_wish = true
+			return
+		var ahead := feet + _move.normalized() * 14.0
+		if can_dodge and RedTape.any_holds(tapes, ahead) and not RedTape.any_holds(tapes, feet):
+			_dodge_wish = true
 
 	# The nearest spot straight across every warned lane, searched both ways, as a player reads lanes.
 	func _clear_of_jets(view: Node, feet: Vector2, across: Vector2) -> Vector2:
@@ -696,6 +1171,8 @@ class Bot extends Node:
 		return Vector2i(floori(at.x / RoomBackdrop.TILE), floori(at.y / RoomBackdrop.TILE))
 
 	func _solid(layout: RoomLayout, cell: Vector2i) -> bool:
+		if _barrier_cells.has(cell):
+			return true
 		if not layout.is_solid_at(cell):
 			return false
 		var symbol := layout.symbol_at(cell)
@@ -705,7 +1182,15 @@ class Bot extends Node:
 		var view: RoomView = scene.debug_room_view()
 		return not view._broken_cells.has(cell)
 
+	# Round sand and tape when there is a way round, through them when there is not.
 	func _find_path(layout: RoomLayout, from: Vector2i, to: Vector2i) -> Array[Vector2i]:
+		if not _soft_cells.is_empty():
+			var around := _find_path_avoiding(layout, from, to, true)
+			if not around.is_empty():
+				return around
+		return _find_path_avoiding(layout, from, to, false)
+
+	func _find_path_avoiding(layout: RoomLayout, from: Vector2i, to: Vector2i, avoid_soft: bool) -> Array[Vector2i]:
 		var size := layout.size_in_cells()
 		var goal := to
 		if _solid(layout, goal):
@@ -722,6 +1207,8 @@ class Bot extends Node:
 				var next: Vector2i = cell + step
 				if came.has(next) or next.x < 0 or next.y < 0 or next.x >= size.x or next.y >= size.y or _solid(layout, next):
 					continue
+				if avoid_soft and next != goal and _soft_cells.has(next):
+					continue
 				came[next] = cell
 				open.append(next)
 		var path: Array[Vector2i] = []
@@ -735,6 +1222,14 @@ class Bot extends Node:
 		return path
 
 	func _press_move(direction: Vector2) -> void:
+		# On a rolling deck he walks against the slide, so he goes where he means to or stands still.
+		var slide: Vector2 = ShipDeck.slide_at(get_tree(), _player.feet().global_position) * _player.run.slide_mult()
+		if slide != Vector2.ZERO and not _player.is_dodging():
+			var speed := _player.run.move_speed()
+			var want: Vector2 = direction.normalized() * speed if direction != Vector2.ZERO else Vector2.ZERO
+			direction = (want - slide) / speed
+			if direction.length() > 1.0:
+				direction = direction.normalized()
 		_set_axis("move_left", "move_right", direction.x)
 		_set_axis("move_up", "move_down", direction.y)
 
@@ -753,10 +1248,18 @@ class Bot extends Node:
 		if _dodge_pressed:
 			Input.action_release("dodge")
 			_dodge_pressed = false
+		if _dodge_wish and _player.is_in_sand():
+			# No dodge starts in sand: he keeps the wish a moment and walks out first.
+			_sand_wait += get_physics_process_delta_time()
+			if _sand_wait > 0.5:
+				_dodge_wish = false
+			return
+		_sand_wait = 0.0
 		if _dodge_wish:
 			_dodge_wish = false
 			if _move != Vector2.ZERO:
 				Input.action_press("dodge")
+				if OS.get_cmdline_user_args().size() > 6 and OS.get_cmdline_user_args()[6] == "trace": print("DODGE t=%.2f move=%s cool=%.2f" % [clock, str(_move), _player._dodge._cooldown])
 				_dodge_pressed = true
 
 	func _handle_attack(target: Enemy, delta: float) -> void:
