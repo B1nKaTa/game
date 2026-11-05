@@ -3,7 +3,7 @@ extends ItemEffect
 # Mobility Scooter, the combo of the Titanium Hip and Wheelchair Wheels: the roll leaves a short trail of
 # small fires behind it, one every STEP pixels, each burning what stands in it for a while.
 
-const STEP := 14.0
+const STEP := 18.0
 const RADIUS := 10.0
 const TIME := 1.5
 const DAMAGE := 3.0

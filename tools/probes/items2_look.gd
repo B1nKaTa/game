@@ -191,6 +191,11 @@ func _wheels() -> void:
 	await _until(func(): return not player.is_dodging())
 	await _frames(2)
 	await _shot("wheels_after")
+	await _seconds(1.4)
+	_dummy(player.global_position + Vector2(4, 44))
+	player.start_dodge(Vector2.DOWN)
+	await _frames(6)
+	await _shot("wheels_roll_down")
 
 
 func _peel() -> void:

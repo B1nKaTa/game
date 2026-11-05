@@ -20,7 +20,7 @@ func on_dodge(ctx: EffectContext, direction: Vector2) -> void:
 	_struck.clear()
 	_direction = direction.normalized() if not direction.is_zero_approx() else Vector2.RIGHT
 	var run := ctx.run()
-	var seconds := DodgeTimer.DURATION * (run.stats.dodge_length if run != null else 1.0) + 0.1
+	var seconds := DodgeTimer.DURATION * (run.stats.dodge_length if run != null else 1.0) + 0.05
 	var follow: Node2D = ctx.player if ctx.has_player() else null
 	var at := follow.global_position if follow != null else ctx.feet()
 	ctx.add_fx(ItemFx.make_wheels(follow, _direction, seconds), at)

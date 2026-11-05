@@ -30,8 +30,8 @@ const FIZZ_COLOR := Color("8fe6f2")
 const STEEL_COLOR := Color("dfe6ee")
 # The second batch: Bad Hip's cough, the Afterimage's pale copy, the wheels' steel, the Banana Peel's
 # yellow and the Mobility Scooter's flames.
-const COUGH_COLOR := Color("aebb6e")
-const GHOST_TINT := Color("9fdcff")
+const COUGH_COLOR := Color("9ccf5a")
+const GHOST_TINT := Color("6cc4ff")
 const WHEEL_STEEL := Color("c9ced8")
 const PEEL_YELLOW := Color("ffd84a")
 const FLAME_COLOR := Color("ff8a2a")
@@ -562,9 +562,9 @@ class FxCough:
 				var at: Vector2 = puffs[i] * radius * swell + drift
 				var size := radius * (0.5 if i == 0 else 0.38) * swell
 				if pass_index == 0:
-					draw_circle(at, size + 1.5, Color(Color.BLACK, 0.45 * fade))
+					draw_circle(at, size + 2.0, Color(Color.BLACK, 0.6 * fade))
 				else:
-					draw_circle(at, size, Color(color, 0.8 * fade))
+					draw_circle(at, size, Color(color, 0.85 * fade))
 		for i in 3:
 			var at := Vector2(-radius * 0.35 + i * radius * 0.35, -2.0 + sin(age * 3.0 + i) * 2.0)
 			draw_circle(at, 1.6, Color(color.darkened(0.45), fade))
@@ -598,7 +598,7 @@ class FxAfterimage:
 		_player_ref = weakref(player) if player != null else null
 		_sprite = sprite
 		if _sprite != null:
-			_sprite.modulate = Color(color, 0.7)
+			_sprite.modulate = Color(color, 0.6)
 			add_child(_sprite)
 
 	# Where enemies aim ground attacks, as Player.feet.
@@ -665,7 +665,7 @@ class FxAfterimage:
 		super(delta)
 		if _sprite != null:
 			var t := progress()
-			_sprite.modulate = Color(color, (0.75 - 0.15 * sin(age * 18.0)) * (1.0 - maxf(t - 0.75, 0.0) / 0.25))
+			_sprite.modulate = Color(color, (0.6 - 0.12 * sin(age * 18.0)) * (1.0 - maxf(t - 0.75, 0.0) / 0.25))
 
 	func _draw() -> void:
 		var t := progress()
@@ -681,13 +681,16 @@ class FxAfterimage:
 			draw_rect(body, Color(color, 0.45 * fade))
 
 
-# Wheelchair Wheels: a wheel at each side of him, spokes turning, and a dark rim on each.
+# Wheelchair Wheels: rolling across, one big wheel seen side on over his legs, spokes turning, with a
+# small caster ahead; rolling up or down, a wheel edge on at each side. Each has a dark rim.
 class FxWheels:
 	extends Fx
 
+	const RADIUS := 13.0
 	const SIDE := 12.0
-	const HEIGHT := 11.0
+	const HEIGHT := 12.0
 	const WIDTH := 4.0
+	const SPIN := 20.0
 
 	var direction := Vector2.RIGHT
 
@@ -696,13 +699,35 @@ class FxWheels:
 		z_index = Z
 
 	func _draw() -> void:
-		var fade := 1.0 - maxf(progress() - 0.8, 0.0) / 0.2
-		var across := Vector2(-direction.y, direction.x)
+		var fade := 1.0 - maxf(progress() - 0.85, 0.0) / 0.15
 		if absf(direction.x) >= absf(direction.y):
-			across = Vector2(0, 1)
-		var center := Vector2(0, 8)
+			_draw_side_on(signf(direction.x), fade)
+		else:
+			_draw_edge_on(fade)
+		# Dust kicked up behind the roll.
+		for i in 3:
+			var back := -direction * (16.0 + i * 7.0) + Vector2(0, 16 + (i - 1) * 3.0)
+			draw_circle(back, 3.4 - i * 0.7, Color(Color.BLACK, 0.35 * fade))
+			draw_circle(back, 2.6 - i * 0.6, Color(0.78, 0.72, 0.6, 0.7 * fade))
+
+	func _draw_side_on(way: float, fade: float) -> void:
+		var hub := Vector2(-3.0 * way, 7.0)
+		draw_arc(hub, RADIUS, 0.0, TAU, 32, Color(Color.BLACK, 0.9 * fade), 6.0)
+		draw_arc(hub, RADIUS, 0.0, TAU, 32, Color(0.22, 0.22, 0.25, fade), 3.5)
+		draw_arc(hub, RADIUS - 3.0, 0.0, TAU, 28, Color(color, fade), 1.5)
+		for k in 4:
+			var spoke := Vector2.from_angle(age * SPIN * way + k * PI / 4.0) * (RADIUS - 3.0)
+			draw_line(hub - spoke, hub + spoke, Color(Color.BLACK, 0.8 * fade), 2.5)
+			draw_line(hub - spoke, hub + spoke, Color(color, fade), 1.2)
+		draw_circle(hub, 2.6, Color(Color.BLACK, fade))
+		draw_circle(hub, 1.6, Color(color, fade))
+		var caster := hub + Vector2(15.0 * way, 9.0)
+		draw_circle(caster, 3.6, Color(Color.BLACK, fade))
+		draw_circle(caster, 2.4, Color(color, fade))
+
+	func _draw_edge_on(fade: float) -> void:
 		for side: float in [-1.0, 1.0]:
-			var hub := center + Vector2(SIDE * side, 0.0)
+			var hub := Vector2(SIDE * side, 8.0)
 			var rim := PackedVector2Array()
 			for i in 17:
 				var a := TAU * i / 16.0
@@ -710,17 +735,11 @@ class FxWheels:
 			draw_polyline(rim, Color(Color.BLACK, 0.9 * fade), 5.0)
 			draw_polyline(rim, Color(color, fade), 2.5)
 			for k in 3:
-				var turn := age * 22.0 + k * TAU / 3.0
-				var y := sin(turn) * HEIGHT
+				var turn := age * SPIN + k * TAU / 3.0
 				if cos(turn) < 0.0:
 					continue
-				draw_line(hub + Vector2(-WIDTH, y * 0.9), hub + Vector2(WIDTH, y * 0.9), Color(Color.BLACK, fade), 2.0)
-			draw_circle(hub, 2.0, Color(Color.BLACK, fade))
-			draw_circle(hub, 1.2, Color(color, fade))
-		# Dust kicked up behind the roll.
-		for i in 3:
-			var back := -direction * (14.0 + i * 7.0) + across * (i - 1) * 4.0 + Vector2(0, 14)
-			draw_circle(back, 3.0 - i * 0.6, Color(0.55, 0.5, 0.42, 0.55 * fade))
+				var y := sin(turn) * HEIGHT * 0.9
+				draw_line(hub + Vector2(-WIDTH, y), hub + Vector2(WIDTH, y), Color(Color.BLACK, fade), 2.0)
 
 
 # The Banana Peel: a yellow peel flat on the floor, flaps out, with a dark rim. The first enemy whose
