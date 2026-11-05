@@ -11,5 +11,5 @@ depth = 5
 floor_boss = false
 pension = 200
 condolences = 10
-extra_kind = "cosmetic"
-extra_id = "aviator_sunglasses"
+extra_kind = "item"
+extra_id = "complaint_form"

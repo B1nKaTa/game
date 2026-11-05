@@ -11,5 +11,5 @@ depth = 3
 floor_boss = false
 pension = 120
 condolences = 10
-extra_kind = "cosmetic"
-extra_id = "fountain_tiara"
+extra_kind = "item"
+extra_id = "fortune_card"

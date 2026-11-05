@@ -84,3 +84,28 @@ extends Resource
 @export var steady_feet: bool = false
 # How much nearer he must stand to a heal on the floor to take it, as a fraction (Pill Crusher).
 @export var heal_reach_cut: float = 0.0
+# The third batch. The most pills he may hold, whatever else adds them. Zero for no cap (Do Not
+# Resuscitate Bracelet).
+@export var max_pills_cap: int = 0
+# Seconds added to a Thermos's fuse (Pressure Cooker).
+@export var fuse_bonus: float = 0.0
+# Items a shop sells on top of its usual ones (Coupon Booklet).
+@export var shop_extra_items: int = 0
+# How much dearer everything in a shop is, as a fraction of its price (Loaded Dice).
+@export var shop_markup: float = 0.0
+# How much more an Arcade win pays of its winnings, as a fraction, at every table (Loaded Dice) and
+# at the poker table alone (Card Shark).
+@export var arcade_win_bonus: float = 0.0
+@export var poker_win_bonus: float = 0.0
+# How much further coins fly to him, as a fraction of their usual reach (Penny Jar).
+@export var coin_reach_bonus: float = 0.0
+# How much further the light around him reaches in the dark, as a fraction (Night Light), and whether
+# rooms never go dark at all (Night Shift).
+@export var dark_light_bonus: float = 0.0
+@export var never_dark: bool = false
+# The fourth batch. Whether the map shows every room of a floor on arrival, not what is in them (Floor
+# Plan), and whether it shows the boss rooms and their bosses' names (Fortune Teller's Card).
+@export var shows_floor_plan: bool = false
+@export var names_bosses: bool = false
+# Pixels the camera looks ahead of him, the way he aims (Telescope Cane).
+@export var look_ahead_bonus: float = 0.0

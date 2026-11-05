@@ -1,12 +1,15 @@
 extends SceneTree
 # Measures Pension per full clear with real rooms: kills everything, collects, breaks props.
-# Args after --: <path index> [depth]. Each path and depth keeps its own probe save, so several can
-# run at once.
+# Args after --: <path index> [depth] [item ids, comma separated, or "none"] [runs]. Each path and depth
+# keeps its own probe save, so several can run at once. Given the third argument, the run holds those
+# items from its start and his kills go through the item hooks, as a swing's do, so items that pay on
+# kills, clears or floors are counted. Compare against "none".
 
 const RUNS := 30
 const WALL_LIMIT_MS := 900000
 
 var _start := 0
+var _through_hooks := false
 
 
 func _initialize() -> void:
@@ -40,8 +43,9 @@ func _main() -> void:
 	if args.size() > 1 and int(args[1]) >= 4:
 		progress.data.record_floor_cleared(4, "last_resort_cruise")
 		progress.data.record_floor_cleared(5, "terminal_zero")
-	var totals := {"fights": [], "chests": [], "cane": [], "bomb": [], "combat_rooms": [], "enemies": []}
-	for run in RUNS:
+	var totals := {"fights": [], "chests": [], "cane": [], "bomb": [], "combat_rooms": [], "enemies": [], "total": []}
+	var runs := int(args[3]) if args.size() > 3 else RUNS
+	for run in runs:
 		var r: Dictionary = await _one_run(progress)
 		for key in r:
 			totals[key].append(r[key])
@@ -66,10 +70,17 @@ func _one_run(progress) -> Dictionary:
 	var args := OS.get_cmdline_user_args()
 	if args.size() > 1:
 		scene._depth = int(args[1])
+	_through_hooks = args.size() > 2
+	if _through_hooks:
+		for id in args[2].split(",", false):
+			for item in Content.items():
+				if item.id == id:
+					scene.player.run.add_item(item)
+	var bank_start: int = progress.data.pension
 	scene.debug_choose_path(int(args[0]))
 	await _wait(0.1)
 	var map: FloorMap = scene.debug_map()
-	var out := {"fights": 0, "chests": 0, "cane": 0, "bomb": 0, "combat_rooms": 0, "enemies": 0}
+	var out := {"fights": 0, "chests": 0, "cane": 0, "bomb": 0, "combat_rooms": 0, "enemies": 0, "total": 0}
 	var order: Array = []
 	for room in map.rooms:
 		if room.id != map.boss_id and room.id != map.start_id and room.room_type != RoomLayout.TYPE_CROSSROADS:
@@ -99,13 +110,14 @@ func _one_run(progress) -> Dictionary:
 			await _break(view, BreakableBlock.SOURCE_BLAST, scene)
 			out["bomb"] += progress.data.pension - bank_last
 			bank_last = progress.data.pension
-		out["enemies"] += _kill_all()
+		out["enemies"] += _kill_all(scene)
 		await _wait(0.08)
 		if not is_boss:
 			await _collect(view, scene)
 		out["fights"] += progress.data.pension - bank_last
 		bank_last = progress.data.pension
 		if is_boss:
+			out["total"] = progress.data.pension - bank_start
 			break
 		await _open_chests(view, scene)
 		out["chests"] += progress.data.pension - bank_last
@@ -119,11 +131,14 @@ func _one_run(progress) -> Dictionary:
 	return out
 
 
-func _kill_all() -> int:
+func _kill_all(scene) -> int:
 	var n := 0
 	for enemy in get_nodes_in_group("enemies"):
 		n += 1
-		enemy.take_damage(INF, Vector2.ZERO)
+		if _through_hooks:
+			scene.player.run.effects.land(enemy, INF, RunEffects.SWING)
+		else:
+			enemy.take_damage(INF, Vector2.ZERO)
 	return n
 
 

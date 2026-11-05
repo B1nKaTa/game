@@ -38,6 +38,26 @@ static func shade_at(age: float, warning: float, dark: float, darkness: float) -
 	return darkness * clampf(1.0 - (age - warning - dark) / FADE_OUT, 0.0, 1.0)
 
 
+# How far the light around him reaches, as a multiple, from his run's stats: twice as far with the
+# Night Light. Anything without a run keeps the usual light.
+static func light_scale(target: Node) -> float:
+	var stats := _stats_of(target)
+	return stats.dark_light_mult if stats != null else 1.0
+
+
+# Whether his run keeps every room lit, so no dark falls at all (Night Shift).
+static func kept_lit(target: Node) -> bool:
+	var stats := _stats_of(target)
+	return stats != null and stats.never_dark
+
+
+static func _stats_of(target: Node) -> PlayerStats:
+	if target == null or not is_instance_valid(target) or not "run" in target:
+		return null
+	var run = target.get("run")
+	return run.stats if run is RunState else null
+
+
 func setup(source: Enemy, target: Node2D, warning: float, dark: float, darkness := DARK) -> void:
 	_source = source
 	_target = target
@@ -92,13 +112,13 @@ func _draw() -> void:
 	if not is_instance_valid(_target):
 		return
 	var shade := current_shade()
-	if shade <= 0.0:
+	if shade <= 0.0 or kept_lit(_target):
 		return
 	var feet: Vector2 = _target.feet().global_position if _target.has_method("feet") else _target.global_position
 	var center := to_local(feet)
 	var tint := Color(1, 1, 1, shade)
 	# The light's edges scale with its radius, so a smaller dark keeps the same soft rim.
-	var edge := EDGE_RADIUS * light_radius / LIGHT_RADIUS
+	var edge := EDGE_RADIUS * light_radius * light_scale(_target) / LIGHT_RADIUS
 	var square := Rect2(center - Vector2(edge, edge), Vector2(edge, edge) * 2.0)
 	draw_texture_rect(_hole, square, false, tint)
 	var black := Color(0, 0, 0, shade)

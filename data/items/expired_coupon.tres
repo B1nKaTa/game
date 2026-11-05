@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/expired_coupon.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "expired_coupon"
+display_name = "Expired Coupon"
+description = "The first shop on every floor is free, but each new floor takes a pill off your maximum for good, never the last. The small print was very small."
+rarity = "rare"
+cursed = true
+tags = PackedStringArray("money", "defence")
+first_clear_path = "terminal_zero"
+effect = SubResource("Effect")

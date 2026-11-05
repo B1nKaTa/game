@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "coupon_booklet"
+display_name = "Coupon Booklet"
+description = "Shops sell one more item. Most of the coupons ran out in 1987, but not this one."
+rarity = "common"
+tags = PackedStringArray("money")
+first_clear_path = "golden_years_mall"
+shop_extra_items = 1

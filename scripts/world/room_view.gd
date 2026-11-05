@@ -65,6 +65,8 @@ const BOSS_CHOICE_OFFSETS: Array[Vector2i] = [Vector2i(-2, 1), Vector2i(2, 1)]
 const STAIRWELL_ID := -2
 const STAIRWELL_ICON := "v"
 const FLOOR_SIGN_COLOR := Color("ece9e0")
+# A small potion has no shop price, so the Moving Boxes count it dearer than a Slip.
+const POTION_WORTH := 30
 
 var _room: FloorRoom
 var _map: FloorMap
@@ -77,6 +79,8 @@ var _bank: Node
 var _reward_cells: Array[Vector2i] = []
 var _alive := 0
 var _finished := false
+# Wares bought here, for the Tax Refund, which pays only for a shop left without buying.
+var shop_purchases := 0
 var _had_enemies := false
 var _doors: Array[Door] = []
 var _coins: Array[Pickup] = []
@@ -117,6 +121,64 @@ func drop_for_item(kind: String, at: Vector2, amount := 1) -> void:
 # Where the room's last enemy fell, for what an item leaves after a clear.
 func last_death_spot() -> Vector2:
 	return _last_death_at
+
+
+# The secret walls still standing in the room, for the Magnifying Glass's glint.
+func secret_walls() -> Array[SecretWall]:
+	var walls: Array[SecretWall] = []
+	for child in get_children():
+		if child is SecretWall and not child.is_queued_for_deletion():
+			walls.append(child)
+	return walls
+
+
+# What the Moving Boxes value each small pickup at, to carry the cheapest: its shop price.
+static func carry_worth(kind: String) -> int:
+	match kind:
+		RoomRules.DROP_HEAL:
+			return ShopRules.HEAL_PRICE
+		RoomRules.DROP_BOMB:
+			return ShopRules.BOMB_PRICE
+		RoomRules.DROP_KEY:
+			return ShopRules.KEY_PRICE
+	return POTION_WORTH
+
+
+# The cheapest of these small pickups still lying untaken, or null. Ties go to the first laid out.
+static func cheapest_waiting(pickups: Array) -> Pickup:
+	var best: Pickup = null
+	for node in pickups:
+		var pickup := node as Pickup
+		if pickup == null or pickup.carry_kind.is_empty() or not pickup.is_waiting():
+			continue
+		if best == null or carry_worth(pickup.carry_kind) < carry_worth(best.carry_kind):
+			best = pickup
+	return best
+
+
+# Takes the cheapest small pickup left on the floor away with him (Moving Boxes): it is gone from this
+# room, and the result says what to lay out in the next, {"kind", "amount"}, or is empty.
+func take_leftover() -> Dictionary:
+	var best := cheapest_waiting(get_children())
+	if best == null:
+		return {}
+	var taken := {"kind": best.carry_kind, "amount": best.carry_amount}
+	best.queue_free()
+	return taken
+
+
+# Two cells into the room from where he stands, toward its middle, on open floor clear of the doors,
+# for a pickup he brought along.
+func spot_inside(from: Vector2) -> Vector2:
+	var middle := Vector2(_room.layout.size_in_cells()) * RoomBackdrop.TILE / 2.0
+	var at := from + from.direction_to(middle) * RoomBackdrop.TILE * 2.0
+	var cell := _room.layout.nearest_floor_cell(_cell_of(at))
+	for i in 4:
+		if not _room.layout.touches_a_door(cell):
+			break
+		at += from.direction_to(middle) * RoomBackdrop.TILE
+		cell = _room.layout.nearest_floor_cell(_cell_of(at))
+	return RoomBackdrop.cell_center(cell)
 
 
 # The floor's palette, for anything a boss lays down in the room later, such as a wet patch.
@@ -187,11 +249,16 @@ func is_fighting() -> bool:
 
 
 func refresh_doors() -> void:
-	for door in _doors:
-		door.rearm()
+	rearm_doors()
 	# Each Arcade game plays once per visit, so coming back fills them again.
 	for table in _tables:
 		table.refill()
+
+
+# Every door waits until he has stepped off it, as on arriving.
+func rearm_doors() -> void:
+	for door in _doors:
+		door.rearm()
 
 
 func arcade_tables() -> Array[ArcadeTable]:
@@ -239,6 +306,9 @@ func place_bomb(at: Vector2) -> void:
 	thermos.level = _run.stats.thermos_level
 	thermos.damage_mult = _run.stats.thermos_damage_mult
 	thermos.radius = _run.stats.blast_radius
+	# The Pressure Cooker's longer fuse. The full loop times its Thermoses by the plain fuse.
+	if not _run.effects.ctx.counting_exact:
+		thermos.fuse_time = Thermos.FUSE_TIME + _run.stats.fuse_bonus
 	thermos.position = at
 	thermos.exploded.connect(bomb_exploded.emit)
 	thermos.exploded.connect(_run.effects.bomb.bind(at))
@@ -708,6 +778,8 @@ func _drop_coin(at: Vector2, base_amount: int, source := "") -> void:
 	if not _room.layout.coin_can_fly_from(_cell_of(at)):
 		return
 	coin.flies = true
+	# The Penny Jar calls coins from further off.
+	coin.magnet_radius = Pickup.MAGNET_RADIUS * _run.stats.coin_reach_mult
 	_coins.append(coin)
 	if _finished:
 		coin.fly()
@@ -718,14 +790,17 @@ func _drop_consumable(at: Vector2, kind: String) -> void:
 		RoomRules.DROP_KEY:
 			var slip := _add_pickup(at, RoomRules.KEY_NAME, KEY_COLOR, func(): _take_consumable(_run.add_key, RunEffects.SLIP), false, "slip_pickup")
 			slip.can_take = _run.can_add_key
+			slip.carry_kind = kind
 		RoomRules.DROP_BOMB:
 			var thermos := _add_pickup(at, RoomRules.BOMB_NAME, BOMB_COLOR, func(): _take_consumable(_run.add_bomb, RunEffects.BOMB), false, "thermos_pickup")
 			thermos.can_take = _run.can_add_bomb
+			thermos.carry_kind = kind
 		RoomRules.DROP_POTION:
 			# It fills the potion slot, and waits on the floor while the slot is full.
 			var small := Content.potion(RoomRules.SMALL_POTION_ID)
 			var potion := _add_pickup(at, RoomRules.POTION_NAME, HEAL_COLOR, func(): _take_consumable(func(): _run.give_potion(small)), false, "pill_heal")
 			potion.can_take = _run.can_take_potion
+			potion.carry_kind = kind
 
 
 # kind is the RunEffects pickup kind the items hear, or "" for one they do not.
@@ -757,6 +832,8 @@ func _add_heal(at: Vector2, pills: int) -> Pickup:
 	var heal := _add_pickup(at, "Heal", HEAL_COLOR, func(): _take_heal(pills), false, "pill_heal")
 	heal.can_take = _can_take_heal
 	heal.collect_radius = Pickup.COLLECT_RADIUS * _run.stats.heal_reach_mult
+	heal.carry_kind = RoomRules.DROP_HEAL
+	heal.carry_amount = pills
 	return heal
 
 
@@ -865,6 +942,14 @@ func arcade_settled(payout: int, bet_amount: int) -> void:
 		arcade_won.emit()
 
 
+# How much more a win at this game pays of its winnings: Loaded Dice, and Card Shark at the poker
+# table. Never while the full loop counts every payout.
+func arcade_win_bonus(game: String) -> float:
+	if _run == null or _run.effects.ctx.counting_exact:
+		return 0.0
+	return ArcadeOdds.win_bonus(game, _run.stats.arcade_win_bonus, _run.stats.poker_win_bonus)
+
+
 # Winnings go straight into his Pension, exactly as the game's rules pay them.
 func arcade_pay(amount: int) -> void:
 	if amount > 0:
@@ -908,15 +993,19 @@ func _create_shop() -> void:
 	var stock := ShopRules.stock(Content.items(), _run, _rng, _floor_def.pension_mult)
 	_run.effects.shop_open(stock)
 	var cells := _room.layout.cells_of("S")
-	for i in stock.size():
+	# A Coupon Booklet's extra ware lies on open floor near the others.
+	var extra := extra_shop_cells(_room.layout, stock.size() - cells.size())
+	cells.append_array(extra)
+	for i in mini(stock.size(), cells.size()):
 		_add_shop_entry(RoomBackdrop.cell_center(cells[i]), stock[i])
-	_create_shop_keeper()
+	_create_shop_keeper(extra)
 
 
 # The merchant and the Retirement Plan's station, which a resumed shop needs as well as its stock.
-func _create_shop_keeper() -> void:
-	# The merchant stands first, so the plan's reward spots keep clear of him.
+# The merchant stands first, so the plan's reward spots keep clear of him and of any extra ware.
+func _create_shop_keeper(extra: Array[Vector2i] = []) -> void:
 	var merchant_at := _add_merchant()
+	merchant_at.append_array(extra)
 	_reward_cells = _room.layout.plan_reward_cells(ProgressData.RETIREMENT_TIERS.size(), merchant_at)
 	var station := RetirementStation.new()
 	station.setup(_bank, _player.feet())
@@ -924,6 +1013,51 @@ func _create_shop_keeper() -> void:
 	station.deposit_wanted.connect(_on_deposit_wanted)
 	station.blasted.connect(_on_plan_blasted)
 	add_child(station)
+
+
+# Spots for wares beyond a shop's own S cells: plain floor nearest the last of them, off the doors,
+# spaced from every ware, the merchant and the plan, clear of the plan's own text, and far enough from
+# the side walls for a long name and price to fit.
+static func extra_shop_cells(layout: RoomLayout, count: int) -> Array[Vector2i]:
+	var found: Array[Vector2i] = []
+	var wares := layout.cells_of("S")
+	if count <= 0 or wares.is_empty():
+		return found
+	var taken: Array[Vector2i] = wares.duplicate()
+	var plans := layout.cells_of(RoomLayout.SYMBOL_PLAN)
+	taken.append_array(plans)
+	if layout.merchant_cell() != Vector2i(-1, -1):
+		taken.append(layout.merchant_cell())
+	for i in count:
+		var wanted := wares[wares.size() - 1 - (i % wares.size())]
+		# The full label spacing first; a crowded shop (Fairway's End) settles for the plan's loose one.
+		var best := Vector2i(-1, -1)
+		for loose in [false, true]:
+			var best_distance := INF
+			for cell in layout.cells_of(RoomLayout.SYMBOL_FLOOR):
+				if not shop_label_fits(layout, cell) or layout.touches_a_door(cell):
+					continue
+				if not (layout._spaced_loosely(cell, taken) if loose else layout._spaced_from(cell, taken)):
+					continue
+				if not plans.is_empty() and not RoomLayout.clear_of_the_plan_text(cell, plans[0]):
+					continue
+				var distance := Vector2(cell - wanted).length_squared()
+				if distance < best_distance:
+					best_distance = distance
+					best = cell
+			if best != Vector2i(-1, -1):
+				break
+		if best == Vector2i(-1, -1):
+			break
+		taken.append(best)
+		found.append(best)
+	return found
+
+
+# A ware's name and price are drawn centred over it, so it keeps LABEL_CELLS from either side wall and
+# off the HUD's row.
+static func shop_label_fits(layout: RoomLayout, cell: Vector2i) -> bool:
+	return layout._label_fits(cell) and cell.x >= RoomLayout.LABEL_CELLS
 
 
 # He stands near his wares, which stay on the floor, and talks when Grandpa asks. Returns his cell.
@@ -968,18 +1102,25 @@ func _add_shop_entry(at: Vector2, entry: Dictionary) -> void:
 			color = BOMB_COLOR
 			give = func(): _take_consumable(_run.add_bomb, RunEffects.BOMB)
 			allowed = _run.can_add_bomb
-	var pickup := _add_pickup(at, "%s: %d" % [label, price], color, func(): _buy(price, give), true)
+	var text := "%s: %d" % [label, price]
+	if price <= 0:
+		text = "Free: %s" % label
+	elif entry.get("half", false):
+		text = "%s: %d, half" % [label, price]
+	var pickup := _add_pickup(at, text, color, func(): _buy(price, give), true)
 	pickup.prompt = SHOP_PROMPT
 	var item_id: String = entry["item"].id if entry.get("item") != null else ""
-	pickup.set_meta(KEEP, {"kind": KEEP_SHOP, "shop": entry["kind"], "price": price, "id": item_id})
+	pickup.set_meta(KEEP, {"kind": KEEP_SHOP, "shop": entry["kind"], "price": price, "id": item_id,
+			"half": entry.get("half", false)})
 	if entry["kind"] == ShopRules.KIND_ITEM:
 		_mark_item(pickup, entry["item"])
 	pickup.can_take = func(): return _bank.data.pension >= price and allowed.call()
 
 
 func _buy(price: int, give: Callable) -> void:
-	if _bank.spend(price):
+	if price <= 0 or _bank.spend(price):
 		Sfx.play("ui_ching")
+		shop_purchases += 1
 		give.call()
 
 
@@ -1279,13 +1420,32 @@ func snapshot() -> Dictionary:
 		var cell := _cell_of(child.position)
 		entry["cell"] = [cell.x, cell.y]
 		keep.append(entry)
-	return {"cleared": _finished, "keep": keep}
+	var shot := {"cleared": _finished, "keep": keep}
+	if _room.room_type == RoomLayout.TYPE_SHOP:
+		shot["purchases"] = shop_purchases
+	return shot
+
+
+# The cells of a snapshot's wares that lie off the shop's own S cells (a Coupon Booklet's extra ware),
+# so a resumed shop's plan rewards keep clear of them as they did before.
+static func restored_extra_cells(layout: RoomLayout, shot: Dictionary) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	var wares := layout.cells_of("S")
+	for entry in shot.get("keep", []):
+		if not entry is Dictionary or str(entry.get("kind", "")) != KEEP_SHOP:
+			continue
+		var raw: Array = entry.get("cell", [0, 0])
+		var cell := Vector2i(int(raw[0]), int(raw[1]))
+		if not wares.has(cell):
+			cells.append(cell)
+	return cells
 
 
 # Builds a cleared room again from its snapshot. The floor scene only restores rooms that were cleared.
 func _restore_contents() -> void:
 	if _room.room_type == RoomLayout.TYPE_SHOP:
-		_create_shop_keeper()
+		_create_shop_keeper(restored_extra_cells(_room.layout, restore))
+		shop_purchases = int(restore.get("purchases", 0))
 	if _room.room_type == RoomLayout.TYPE_ARCADE:
 		_create_arcade()
 	for entry: Dictionary in restore.get("keep", []):
@@ -1320,7 +1480,8 @@ func _restore_entry(entry: Dictionary) -> void:
 			var kind := str(entry.get("shop", ""))
 			if kind == ShopRules.KIND_ITEM and item == null:
 				return
-			_add_shop_entry(at, {"kind": kind, "price": int(entry.get("price", 0)), "item": item})
+			_add_shop_entry(at, {"kind": kind, "price": int(entry.get("price", 0)), "item": item,
+					"half": bool(entry.get("half", false))})
 		KEEP_RECIPE:
 			if item != null:
 				_add_recipe_pickup(at, item)

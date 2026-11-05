@@ -24,6 +24,8 @@ const BASE_BLAST_RADIUS := 56.0
 # this share of its usual reach.
 const MIN_NOTICE_MULT := 0.25
 const MIN_HEAL_REACH := 0.25
+# The camera never looks further ahead of him than this, so he always stays well inside the view.
+const MAX_LOOK_AHEAD := 64.0
 
 var max_pills: int = BASE_PILLS
 var move_speed: float = BASE_SPEED
@@ -91,6 +93,20 @@ var notice_mult := 1.0
 var dodge_rounds_corners := false
 var steady_feet := false
 var heal_reach_mult := 1.0
+# The third batch's items. See StatEffect. max_pills_cap is 0 for no cap; RunState applies it.
+var max_pills_cap := 0
+var fuse_bonus := 0.0
+var shop_extra_items := 0
+var shop_markup := 0.0
+var arcade_win_bonus := 0.0
+var poker_win_bonus := 0.0
+var coin_reach_mult := 1.0
+var dark_light_mult := 1.0
+var never_dark := false
+# The fourth batch's items. See StatEffect. look_ahead is in pixels.
+var shows_floor_plan := false
+var names_bosses := false
+var look_ahead := 0.0
 
 
 # choices maps a form id to its milestone option. A form at or past its milestone with no entry
@@ -143,6 +159,18 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 	var corners := false
 	var steady := false
 	var reach_cut := 0.0
+	var pill_cap := 0
+	var fuse := 0.0
+	var shop_extra := 0
+	var markup := 0.0
+	var arcade_win := 0.0
+	var poker_win := 0.0
+	var coin_reach := 0.0
+	var dark_light := 0.0
+	var lit := false
+	var plan := false
+	var bosses_named := false
+	var look := 0.0
 	var effects: Array = []
 	for upgrade in upgrades:
 		var level := int(levels.get(upgrade.id, 0))
@@ -185,6 +213,20 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 		charges += effect.bonus_dodge_charges * count
 		notice += effect.notice_bonus * count
 		reach_cut += effect.heal_reach_cut * count
+		fuse += effect.fuse_bonus * count
+		shop_extra += effect.shop_extra_items * count
+		markup += effect.shop_markup * count
+		arcade_win += effect.arcade_win_bonus * count
+		poker_win += effect.poker_win_bonus * count
+		coin_reach += effect.coin_reach_bonus * count
+		dark_light += effect.dark_light_bonus * count
+		look += effect.look_ahead_bonus * count
+		if count > 0 and effect.max_pills_cap > 0:
+			pill_cap = effect.max_pills_cap if pill_cap == 0 else mini(pill_cap, effect.max_pills_cap)
+		if count > 0:
+			lit = lit or effect.never_dark
+			plan = plan or effect.shows_floor_plan
+			bosses_named = bosses_named or effect.names_bosses
 		if count > 0:
 			bites = maxi(bites, effect.bites_through)
 		if effect is UpgradeDef and effect.thermos_damage_bonus > 0.0:
@@ -258,6 +300,18 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 	stats.dodge_rounds_corners = corners
 	stats.steady_feet = steady
 	stats.heal_reach_mult = clampf(1.0 - reach_cut, MIN_HEAL_REACH, 1.0)
+	stats.max_pills_cap = pill_cap
+	stats.fuse_bonus = maxf(fuse, 0.0)
+	stats.shop_extra_items = maxi(shop_extra, 0)
+	stats.shop_markup = maxf(markup, 0.0)
+	stats.arcade_win_bonus = maxf(arcade_win, 0.0)
+	stats.poker_win_bonus = maxf(poker_win, 0.0)
+	stats.coin_reach_mult = maxf(1.0 + coin_reach, 1.0)
+	stats.dark_light_mult = maxf(1.0 + dark_light, 1.0)
+	stats.never_dark = lit
+	stats.shows_floor_plan = plan
+	stats.names_bosses = bosses_named
+	stats.look_ahead = clampf(look, 0.0, MAX_LOOK_AHEAD)
 	return stats
 
 

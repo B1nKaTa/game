@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/mothball_pockets.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "mothball_pockets"
+display_name = "Mothball Pockets"
+description = "After a hit costs you a pill, ghosts keep away from you for 2 seconds. Even the dead can't stand the smell."
+rarity = "rare"
+tags = PackedStringArray("vision", "defence")
+first_clear_path = "cemetery"
+effect = SubResource("Effect")

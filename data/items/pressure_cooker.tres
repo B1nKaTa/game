@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "pressure_cooker"
+display_name = "Pressure Cooker"
+description = "Thermos blasts reach 35% further, but the fuse burns 0.3 seconds longer. Good things come to those who wait."
+rarity = "rare"
+tags = PackedStringArray("thermos")
+craft_price = 210
+blast_radius_bonus = 0.35
+fuse_bonus = 0.3

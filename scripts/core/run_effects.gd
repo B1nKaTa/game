@@ -38,6 +38,8 @@ var _combo_defs: Array[ComboDef] = []
 var _combos: Array[ComboDef] = []
 var _combo_effects: Array[ItemEffect] = []
 var _hit_depth := 0
+# The effect whose on_lethal said yes to the hit landing now.
+var _saver: ItemEffect
 var _damage_this_room := 0
 
 
@@ -178,6 +180,30 @@ func room_enter(room: Node) -> void:
 		effect.on_room_enter(ctx, room)
 
 
+func room_leave(room: Node) -> void:
+	for effect in _all():
+		effect.on_room_leave(ctx, room)
+
+
+# What his walk and his swings are sped up by. The full loop times both, so there they stay as they are.
+func move_pace() -> float:
+	var pace := 1.0
+	if ctx.counting_exact:
+		return pace
+	for effect in _all():
+		pace *= effect.move_pace(ctx)
+	return pace
+
+
+func swing_pace() -> float:
+	var pace := 1.0
+	if ctx.counting_exact:
+		return pace
+	for effect in _all():
+		pace *= effect.swing_pace(ctx)
+	return pace
+
+
 func room_clear(room: Node) -> void:
 	for effect in _all():
 		effect.on_room_clear(ctx, room, _damage_this_room)
@@ -213,12 +239,37 @@ func hurt(pills: int, source: String) -> int:
 	return pills
 
 
-# The first effect that saves him is the only one asked.
+# The first effect that saves him is the only one asked, and the only one told once the hit lands.
 func lethal() -> bool:
+	_saver = null
 	for effect in _all():
 		if effect.on_lethal(ctx):
+			_saver = effect
 			return true
 	return false
+
+
+# The hit lethal() saved him from has landed.
+func saved() -> void:
+	var saver := _saver
+	_saver = null
+	if saver != null:
+		saver.on_saved(ctx)
+
+
+# Whether the Slip about to be handed over stays in his pocket. Never while the full loop counts.
+func keeps_slip() -> bool:
+	if ctx.counting_exact:
+		return false
+	for effect in _all():
+		if effect.keeps_slip(ctx):
+			return true
+	return false
+
+
+func slip_spent(kept: bool) -> void:
+	for effect in _all():
+		effect.on_slip_spent(ctx, kept)
 
 
 func throw() -> void:

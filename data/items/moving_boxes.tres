@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/moving_boxes.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "moving_boxes"
+display_name = "Moving Boxes"
+description = "Leaving a room carries the cheapest heal, Slip, Thermos or potion left on its floor into the next. Fragile, this way up."
+rarity = "common"
+tags = PackedStringArray("room")
+effect = SubResource("Effect")

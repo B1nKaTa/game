@@ -26,6 +26,13 @@ var enemy_source := Callable()
 # gives: while it is set, items neither block, soften, nor soak a hit, heal, nor drop a heal. Each of
 # those rules has its own unit test.
 var counting_pills := false
+# Set by the full loop too, whose checks count Pension, Slips, damage and Thermos fuses exactly: while
+# it is set, items pay nothing, keep no Slip, change no damage, fuse, shop or Arcade table, and lay no
+# burning puddle. Each of those rules has its own unit test.
+var counting_exact := false
+# Where he stood on walking into the room he is in, by its door. FloorScene sets it on every arrival.
+var arrival := Vector2.ZERO
+var has_arrival := false
 var _run_ref: WeakRef
 
 
@@ -74,7 +81,7 @@ func event(event_name: String) -> void:
 
 # Pension straight into the save, counted as the run's earnings, as a coin would be.
 func pay(amount: int) -> void:
-	if amount > 0 and pay_pension.is_valid():
+	if amount > 0 and not counting_exact and pay_pension.is_valid():
 		pay_pension.call(amount)
 
 
@@ -129,6 +136,8 @@ func stun(enemy: Enemy, seconds: float) -> void:
 func drop(kind: String, at: Vector2, amount := 1) -> void:
 	if counting_pills and kind == RoomRules.DROP_HEAL:
 		return
+	if counting_exact and kind == RoomRules.DROP_COIN:
+		return
 	if on_drop.is_valid():
 		on_drop.call(kind, at)
 	if has_room():
@@ -169,6 +178,16 @@ func play_sound(sound_name: String) -> void:
 		on_sound.call(sound_name)
 	if is_instance_valid(feedback):
 		feedback.play(sound_name)
+
+
+# Puts him back where he walked into this room, by its door, and makes the room's doors wait until he
+# steps off them again, so standing on one does not walk him through it.
+func return_to_door() -> void:
+	if has_player() and has_arrival:
+		player.global_position = arrival
+		player.end_push()
+	if has_room():
+		room.rearm_doors()
 
 
 func is_landing() -> bool:

@@ -51,7 +51,7 @@ func test_the_extras_are_six_items_six_recipes_and_eight_cosmetics_and_all_real(
 			assert_true(Content.items().any(func(i): return i.id == def.extra_id and i.from_bounty), def.id)
 		if def.extra_kind == BountyDef.EXTRA_COSMETIC:
 			assert_true(CosmeticDef.find(def.extra_id, CosmeticDef.all()) != null, def.id)
-	assert_eq(counts, {BountyDef.EXTRA_ITEM: 8, BountyDef.EXTRA_RECIPE: 6, BountyDef.EXTRA_COSMETIC: 6})
+	assert_eq(counts, {BountyDef.EXTRA_ITEM: 12, BountyDef.EXTRA_RECIPE: 6, BountyDef.EXTRA_COSMETIC: 2})
 
 
 func test_a_fresh_save_sees_only_the_first_floors_posters() -> void:
@@ -256,18 +256,19 @@ func test_progress_drops_an_unknown_poster_on_load() -> void:
 func test_the_deep_floors_posters_pay_what_the_spec_says() -> void:
 	var wanted := {
 		"lorraine": "gravity_boots", "commodore_wellington": "life_jacket",
-		"chip": "golf_visor", "thaddeus_fairweather": "lucky_tee",
-		"sergeant_wanda": "aviator_sunglasses", "augustine": "neck_pillow",
-		"doreen": "power_tie", "chairman_of_the_board": "golden_parachute",
+		"chip": "lawyers_card", "thaddeus_fairweather": "lucky_tee",
+		"sergeant_wanda": "complaint_form", "augustine": "neck_pillow",
+		"doreen": "bureaucrats_stamp", "chairman_of_the_board": "golden_parachute",
 	}
+	# These mini bosses' posters pay an item now, and the looks they paid moved to the Decor Office.
+	var item_posters := ["lorraine", "chip", "sergeant_wanda", "doreen"]
 	for id in wanted:
 		var def := _poster(id)
 		assert_true(def != null, id)
 		if def == null:
 			continue
 		assert_eq(def.extra_id, wanted[id], id)
-		# Lorraine's poster pays the Gravity Boots now, and her hat moved to the Decor Office.
-		if id != "lorraine":
+		if not item_posters.has(id):
 			assert_eq(def.extra_kind == BountyDef.EXTRA_COSMETIC, not def.floor_boss, id)
 
 

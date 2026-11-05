@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/wreath_of_thorns.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "wreath_of_thorns"
+display_name = "Wreath of Thorns"
+description = "Enemies that touch you take a small hit. In loving memory of personal space."
+rarity = "rare"
+tags = PackedStringArray("room", "defence")
+first_clear_path = "cemetery"
+effect = SubResource("Effect")

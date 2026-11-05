@@ -8,6 +8,6 @@ id = "aviator_sunglasses"
 display_name = "Aviator Sunglasses"
 description = "Confiscated by Sergeant Wanda. Cleared for departure."
 slot = "hat"
-price = 0
+price = 35
 color = Color(0.784313725, 0.62745098, 0.250980392, 1)
 shape = "aviators"

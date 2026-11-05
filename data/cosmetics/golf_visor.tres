@@ -8,6 +8,6 @@ id = "golf_visor"
 display_name = "Golf Visor"
 description = "Chip's own. Keeps the sun off a head that won't see it again."
 slot = "hat"
-price = 0
+price = 35
 color = Color(0.207843137, 0.560784314, 0.352941176, 1)
 shape = "visor"

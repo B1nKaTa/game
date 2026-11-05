@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/lottery_scratcher.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "lottery_scratcher"
+display_name = "Lottery Scratcher"
+description = "Each new floor pays a random 0 to 60 Pension. Scratch it with someone else's coin."
+rarity = "common"
+tags = PackedStringArray("money")
+effect = SubResource("Effect")

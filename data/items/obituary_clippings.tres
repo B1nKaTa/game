@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/obituary_clippings.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "obituary_clippings"
+display_name = "Obituary Clippings"
+description = "Each kill in a room makes your hits there 4% harder, up to 40%. He reads them to keep score."
+rarity = "common"
+tags = PackedStringArray("room", "cane")
+first_clear_path = "funeral_parlour"
+effect = SubResource("Effect")

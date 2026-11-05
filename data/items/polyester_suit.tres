@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/polyester_suit.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "polyester_suit"
+display_name = "Polyester Suit"
+description = "Your cane hits 25% harder, but each swing has a 10% chance to shock you still for a moment. Wash at thirty, never iron."
+rarity = "common"
+cursed = true
+tags = PackedStringArray("cane")
+first_clear_path = "head_office"
+damage_bonus = 0.25
+effect = SubResource("Effect")

@@ -36,9 +36,12 @@ var cursed := false
 # The Game tab's Pick up heals at full pills. Off, a heal on the floor waits there while pills are full.
 var heals_at_full := false
 # What the ending is chosen from (EndingRules), kept for this run only and never saved. Play time
-# counts only while the run is unpaused and on a floor; Pension is what the rooms paid.
+# counts only while the run is unpaused and on a floor; Pension is what the rooms paid. The Pension
+# Fund Statement also pays a share of pension_earned; FloorScene adds to it as it pays.
 var play_time := 0.0
 var pension_earned := 0
+# Pills of his maximum lost for good this run, as the Expired Coupon takes. Never below one pill left.
+var lost_max_pills := 0
 # Whether a pill was lost in a floor boss's room; FloorScene resets it on entering one, so at the
 # Chairman's fall it tells of his room alone.
 var boss_room_pill_lost := false
@@ -60,6 +63,7 @@ func _init(upgrades: Array[UpgradeDef], levels: Dictionary, choices: Dictionary 
 	_choices = choices
 	effects = RunEffects.new(self)
 	stats = PlayerStats.compute(_upgrades, _levels, items, _choices)
+	_apply_pill_rules()
 	health = Health.new(stats.max_pills)
 	health.changed.connect(changed.emit)
 	health.heal_bonus = stats.heal_bonus
@@ -137,11 +141,12 @@ func was_recipe_offered(id: String) -> bool:
 
 
 func add_item(item: ItemDef) -> void:
+	var saves_before := stats.floor_lethal_saves
 	items.append(item)
 	effects.add(item)
 	refresh_stats()
-	# A Life Jacket picked up mid-floor works on this floor already.
-	health.lethal_saves += item.floor_lethal_saves
+	# A Life Jacket picked up mid-floor works on this floor already, as does a combo that adds a save.
+	health.lethal_saves += maxi(stats.floor_lethal_saves - saves_before, 0)
 
 
 # A new floor fills the Life Jacket's saves again.
@@ -161,6 +166,7 @@ func parachute_pay(earned: int) -> int:
 func clear_items() -> void:
 	items.clear()
 	effects.clear()
+	lost_max_pills = 0
 	refresh_stats()
 	health.lethal_saves = mini(health.lethal_saves, stats.floor_lethal_saves)
 
@@ -171,12 +177,32 @@ func clear_items() -> void:
 # and a lower one never leaves him holding more pills than it allows (Health.raise_max).
 func refresh_stats() -> void:
 	stats = PlayerStats.compute(_upgrades, _levels, items, _choices, effects.active_combos())
+	_apply_pill_rules()
 	health.heal_bonus = stats.heal_bonus
 
 	if stats.max_pills != health.max_pills:
 		health.raise_max(stats.max_pills)
 	else:
 		changed.emit()
+
+
+# The items that take pills off his maximum: a cap (Do Not Resuscitate Bracelet), then any lost for
+# good (Expired Coupon). He always keeps one. The full loop counts his pills, so it keeps them all.
+func _apply_pill_rules() -> void:
+	if effects.ctx.counting_pills:
+		return
+	if stats.max_pills_cap > 0:
+		stats.max_pills = mini(stats.max_pills, stats.max_pills_cap)
+	stats.max_pills = maxi(stats.max_pills - lost_max_pills, 1)
+
+
+# Takes one pill off his maximum for good, never his last. Returns whether one was taken.
+func lose_max_pill() -> bool:
+	if stats.max_pills <= 1:
+		return false
+	lost_max_pills += 1
+	refresh_stats()
+	return true
 
 
 func has_item(id: String) -> bool:
@@ -226,10 +252,14 @@ func add_key() -> void:
 	changed.emit()
 
 
+# Hands a Slip over. An item may let him keep it (Forged Signature); either way it counts as spent.
 func use_key() -> bool:
 	if keys <= 0:
 		return false
-	keys -= 1
+	var kept := effects.keeps_slip()
+	if not kept:
+		keys -= 1
+	effects.slip_spent(kept)
 	changed.emit()
 	return true
 
@@ -299,7 +329,13 @@ func tick_buff(delta: float) -> void:
 
 
 func move_speed() -> float:
-	return stats.move_speed * (1.0 + (buff.speed_bonus if buff != null else 0.0))
+	return stats.move_speed * (1.0 + (buff.speed_bonus if buff != null else 0.0)) * effects.move_pace()
+
+
+# How fast the cane combo swings, as a multiple of its usual pace: the forms' and items' stats, and any
+# item that speeds it for a while (Early Bird Special, Dentures in a Glass).
+func swing_speed() -> float:
+	return stats.swing_speed * effects.swing_pace()
 
 
 # What the cane multiplies its damage by. The dentures and a Thermos have their own stats.

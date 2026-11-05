@@ -24,6 +24,22 @@ func on_room_enter(_ctx: EffectContext, _room: Node) -> void:
 	pass
 
 
+# Grandpa is about to leave this room for another (Moving Boxes). ctx.room is still the room he leaves.
+func on_room_leave(_ctx: EffectContext, _room: Node) -> void:
+	pass
+
+
+# What his walking speed is multiplied by at this moment (Early Bird Special). 1.0 for no change.
+func move_pace(_ctx: EffectContext) -> float:
+	return 1.0
+
+
+# What his swing pace is multiplied by at this moment: above 1 the combo swings come quicker (Early Bird
+# Special, Dentures in a Glass). 1.0 for no change.
+func swing_pace(_ctx: EffectContext) -> float:
+	return 1.0
+
+
 # A fight room's last enemy falls. damage_taken_here counts the pills he lost since he walked in.
 func on_room_clear(_ctx: EffectContext, _room: Node, _damage_taken_here: int) -> void:
 	pass
@@ -65,6 +81,22 @@ func on_hurt(_ctx: EffectContext, pills: int, _source: String) -> int:
 # A hit would finish him and no Life Jacket is left. Return true and he is left on one pill.
 func on_lethal(_ctx: EffectContext) -> bool:
 	return false
+
+
+# The hit that this effect's on_lethal saved him from has landed, leaving him on one pill. Only the
+# effect that saved him hears it, so it can finish its rescue (Eternal Warranty).
+func on_saved(_ctx: EffectContext) -> void:
+	pass
+
+
+# A Slip is about to be handed over. Return true and it stays in his pocket (Forged Signature).
+func keeps_slip(_ctx: EffectContext) -> bool:
+	return false
+
+
+# A Slip has been handed over to open something. kept says whether it stayed in his pocket.
+func on_slip_spent(_ctx: EffectContext, _kept: bool) -> void:
+	pass
 
 
 # The dentures leave his mouth.

@@ -11,5 +11,5 @@ depth = 4
 floor_boss = false
 pension = 160
 condolences = 10
-extra_kind = "cosmetic"
-extra_id = "golf_visor"
+extra_kind = "item"
+extra_id = "lawyers_card"

@@ -18,10 +18,16 @@ var requires_interact := false
 var collect_radius := COLLECT_RADIUS
 var can_take := Callable()
 var flies := false
+# How near a flying coin must be to set off toward him. The Penny Jar widens it.
+var magnet_radius := MAGNET_RADIUS
 var prompt := PROMPT_TEXT
 # What the name is drawn in, and whether a skull sits before it, as a cursed item's does.
 var label_color := Color.WHITE
 var skull := false
+# A small pickup the Moving Boxes may carry to the next room: its RoomRules.DROP_ kind and amount, or ""
+# for anything that stays (coins, items, shop wares).
+var carry_kind := ""
+var carry_amount := 1
 var _label := ""
 var _color := Color.WHITE
 var _player: Node2D
@@ -38,8 +44,8 @@ static func should_collect(needs_interact: bool, in_range: bool, interact_presse
 	return in_range and (interact_pressed or not needs_interact)
 
 
-static func should_magnet(can_fly: bool, distance: float) -> bool:
-	return can_fly and distance <= MAGNET_RADIUS
+static func should_magnet(can_fly: bool, distance: float, reach := MAGNET_RADIUS) -> bool:
+	return can_fly and distance <= reach
 
 
 static func fly_speed(time: float) -> float:
@@ -89,7 +95,7 @@ func _process(delta: float) -> void:
 		_fly_toward_player(delta)
 		return
 	var distance := global_position.distance_to(_player.global_position)
-	if should_magnet(flies, distance):
+	if should_magnet(flies, distance, magnet_radius):
 		fly()
 		return
 	var in_range := distance <= collect_radius
@@ -113,6 +119,11 @@ func _fly_toward_player(delta: float) -> void:
 
 # The reward is paid when the coin starts flying, so leaving the room, dying or
 # ending the run mid-flight can never lose it. The flight is only for show.
+# Whether it still lies in the room, untaken.
+func is_waiting() -> bool:
+	return not _done and not _flying and not is_queued_for_deletion()
+
+
 func fly() -> void:
 	if _done or _flying or is_queued_for_deletion():
 		return
