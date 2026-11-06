@@ -300,10 +300,19 @@ func _regulars() -> void:
 	await _wait(0.8)
 	await _attack_shot("usher_torch_patrol")
 	var b = usher._behavior
-	b._look = usher.global_position.direction_to(player.feet().global_position)
-	b._patrol = usher.global_position
-	b._seen = UsherBehavior.SPOT_TIME * 0.9
+	# Aim his torch at Grandpa and walk him that way every frame until he hushes, so his patrol never
+	# turns the beam away before the shot (a patrol spot on himself would be re-picked at once).
+	_hold = func():
+		if not is_instance_valid(usher) or b._telegraph.is_active() or b._charge_left > 0.0:
+			return
+		b._look = usher.global_position.direction_to(player.feet().global_position)
+		b._patrol = player.feet().global_position
+		b._patrol_left = 99.0
+		b._cooldown = minf(b._cooldown, 0.0)
+		b._seen = maxf(b._seen, UsherBehavior.SPOT_TIME * 0.9)
 	await _until(func(): return _warned(usher, 0.5), 3.0)
+	_hold = Callable()
+	print("usher warned: %s" % str(_warned(usher, 0.0)))
 	await _attack_shot("usher_shh_lane")
 	await _until(func(): return b._charge_left > 0.0 and b._charged_for > 0.1, 2.0)
 	await _attack_shot("usher_charge")
