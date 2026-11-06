@@ -22,7 +22,7 @@ const ARTED := ["intern_reaper", "stoker", "mall_cop", "hr_representative", "reg
 const WORN_BY := {"mall_cop": "airport_mall_cop"}
 # Floor variants wearing a base's art, recoloured or not: variant -> base.
 const VARIANTS := {"furnace_intern_reaper": "intern_reaper", "cinema_intern_reaper": "intern_reaper",
-	"seance_bingo_caller": "bingo_caller", "seance_soot_ghost": "soot_ghost",
+	"cinema_notary_public": "notary_public", "seance_bingo_caller": "bingo_caller", "seance_soot_ghost": "soot_ghost",
 	"cruise_stoker": "stoker", "airport_mall_cop": "mall_cop", "airport_weeping_mourner": "weeping_mourner",
 	"cruise_orderly": "orderly", "furnace_burnt_out_auditor": "burnt_out_auditor", "office_florist": "florist",
 	"parlour_plot_holder": "plot_holder", "parlour_seasonal_temp": "seasonal_temp",

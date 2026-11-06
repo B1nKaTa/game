@@ -12,6 +12,7 @@ speed = 72.0
 pension_drop = 1
 body_size = Vector2(18, 26)
 color = Color(0.35, 0.7, 0.95, 1)
+art_id = "notary_public"
 behavior_script = ExtResource("2")
 max_per_room = 3
 mark = "stamp"
