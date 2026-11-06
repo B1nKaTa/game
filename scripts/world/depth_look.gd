@@ -404,9 +404,10 @@ static func _make_decals() -> Array[Texture2D]:
 
 static func _puddle(w: int, h: int, seed_value: int) -> Texture2D:
 	var image := Image.create(w, h, false, Image.FORMAT_RGBA8)
-	var deep := Color(0.07, 0.08, 0.1, 0.62)
-	var wet := Color(0.13, 0.15, 0.18, 0.5)
-	var shine := Color(0.62, 0.66, 0.72, 0.55)
+	# Standing water, not a hole or a shadow: a blue-grey sheen, a lighter rim and a few bright glints.
+	var deep := Color(0.16, 0.22, 0.3, 0.6)
+	var wet := Color(0.3, 0.36, 0.44, 0.42)
+	var shine := Color(0.72, 0.8, 0.88, 0.75)
 	for y in h:
 		for x in w:
 			var d := pow((x + 0.5 - w / 2.0) / (w / 2.0), 2) + pow((y + 0.5 - h / 2.0) / (h / 2.0), 2)
@@ -415,12 +416,12 @@ static func _puddle(w: int, h: int, seed_value: int) -> Texture2D:
 				image.set_pixel(x, y, deep)
 			elif d < 1.0:
 				image.set_pixel(x, y, wet)
-	for i in 3:
-		var sx := int(w * (0.3 + 0.12 * i))
-		var sy := int(h * 0.35)
+	for i in 4:
+		var sx := int(w * (0.26 + 0.13 * i))
+		var sy := int(h * (0.32 + 0.1 * (i % 2)))
 		if image.get_pixel(sx, sy).a > 0.0:
 			image.set_pixel(sx, sy, shine)
-			if i == 1 and sx + 1 < w:
+			if i % 2 == 0 and sx + 1 < w and image.get_pixel(sx + 1, sy).a > 0.0:
 				image.set_pixel(sx + 1, sy, shine)
 	return ImageTexture.create_from_image(image)
 
