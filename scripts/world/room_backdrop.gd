@@ -104,6 +104,9 @@ func _draw() -> void:
 				# The Flashback Cinema: dark panels with gold trim.
 				if _palette.wall_pattern == CinemaLook.DECO_WALL:
 					CinemaLook.draw_wall_tile(self, tile, Vector2i(x, y), _palette)
+				# The Seance Hotline: dark teal panels under a thin teal rail, with small stars.
+				if _palette.wall_pattern == SeanceLook.STAR_WALL:
+					SeanceLook.draw_wall_tile(self, tile, Vector2i(x, y), _palette)
 				continue
 			draw_rect(tile, _palette.floor_color(Vector2i(x, y), _seed))
 			# A patterned floor lays carpet on its middle tone, woven and seamless, and tiles the rest.
@@ -148,6 +151,10 @@ func _draw() -> void:
 			# The Flashback Cinema: teal carpet with runners through the doors, and no speckles.
 			if _palette.floor_pattern == CinemaLook.CARPET:
 				CinemaLook.draw_floor_tile(self, tile, Vector2i(x, y), Vector2i(_rows[0].length(), _rows.size()), _palette)
+				continue
+			# The Seance Hotline: violet carpet with faint stars and moons, and no seams or speckles.
+			if _palette.floor_pattern == SeanceLook.CARPET:
+				SeanceLook.draw_floor_tile(self, tile, Vector2i(x, y), _palette)
 				continue
 			draw_line(tile.position, tile.position + Vector2(TILE, 0), _palette.grout, 1.0)
 			draw_line(tile.position, tile.position + Vector2(0, TILE), _palette.grout, 1.0)

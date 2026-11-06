@@ -160,6 +160,26 @@ extends Resource
 @export var screen_glow := Color(0.7, 0.8, 1.0)
 @export var projector_beam := Color(1.0, 0.86, 0.62)
 @export var screen := false
+# The Seance Hotline. The wall trim (SeanceLook.STAR_WALL), the violet cubicle partitions in their teal
+# frames, the psychics' desks with a phone whose display glows green and a crystal ball, the draped
+# seance table, the lava lamps' glass, wax and soft light, the beaded curtains' two bead colours, and the
+# ectoplasm, a deep dark green kept well away from the safe-spot mint.
+@export_group("Seance Hotline")
+@export var seance_trim := Color("4fa8a3")
+@export var partition_fabric := Color("6b4d8f")
+@export var partition_frame := Color("3e8c88")
+@export var desk_wood := Color("54433a")
+@export var desk_top := Color("6e5a4c")
+@export var phone_glow := Color("8ce64d")
+@export var crystal_ball := Color(0.76, 0.86, 1.0, 0.9)
+@export var table_cloth := Color("3a1f4d")
+@export var table_fringe := Color("c9a24a")
+@export var lava_glass := Color(0.32, 0.72, 0.78, 0.85)
+@export var lava_wax := Color("e85fc8")
+@export var lava_light := Color(0.85, 0.5, 0.95)
+@export var beads_warm := Color("e0a84a")
+@export var beads_cool := Color("4fb3b0")
+@export var ectoplasm := Color("1f6b45")
 
 
 func weight_of(kind: String) -> float:

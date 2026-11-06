@@ -300,3 +300,28 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
   runs the bot against the Mall Santa's baseline on `918d343` (the Projectionist keeps the Santa's
   numbers until then); the `escalator_hum` sound is unplayed; the Mall Cop's art folder stays for the
   airport's recolour.
+
+## Task 5: the Seance Hotline
+
+- **Palette (Phase A):** a deep violet carpet (0.23, 0.13, 0.37) in three close tones with almost no
+  jitter, dark teal wall panels (0.04, 0.23, 0.25), a violet ambient (0.46, 0.36, 0.52), candle-warm
+  wall lights (0.85, 0.62, 0.36) and lanterns, a cool teal fill (0.56, 0.72, 0.86) and a slight flicker
+  (0.05). The carpet is a little bluer and darker than a plain violet so the warning red still stands
+  0.43 apart on it under the fill; nothing large is red or green, and the ectoplasm colour kept for the
+  summon (0.12, 0.42, 0.27) is far darker than the safe-spot mint. Phone displays are a lime of their own.
+- **Patterns 15:** `SeanceLook.CARPET` scatters faint four-point stars (two short strokes, upright and
+  level) and thin crescent moons (two arcs) by a per-cell roll, about a quarter of the cells, at a spot of
+  their own in each cell; no fills, no seams, no grid, no diagonals, so it shares nothing with the
+  ectoplasm's blobs, the Ouija board's letter grid, a film strip or a wet floor. `SeanceLook.STAR_WALL`
+  draws a thin teal rail, a dado line, a skirting and a small star on every other panel.
+- **Decor:** cobwebs, office chairs (the cubicles' own) and a few cracks, thinly (0.035), no scattered
+  lights, no plants (no green near the mint). Golf's grass, fog, benches, plants and lanterns are gone
+  from the palette, and so are the fairway stripe, hedge, cart, flag and ball-washer colours (defaults
+  until the golf props retire).
+- **No ectoplasm-drip decor:** a green drip on the carpet would read as the summon's sticky trail, which
+  is a hazard, so the drips are left to the summon itself.
+- **Sand stays in the palette:** the Club President still spreads bunkers here until his room is taken,
+  so the moonlit sand colours stay and test_golf_floor's sand tests now read them on the carpet.
+- **Golf look tests:** the fairway, night-light, enemies-on-grass and prop-debris tests left
+  test_golf_floor (the debris of the golf props no longer matters on a floor that will not hold them);
+  the palette tests now live in the new test_seance_floor.gd.

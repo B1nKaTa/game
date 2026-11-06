@@ -79,33 +79,7 @@ func test_every_enemy_of_the_floor_can_be_told_apart() -> void:
 			assert_true(_difference(a, b) >= 0.25 or size_gap >= 12.0, "%s and %s look alike" % [defs[i].id, defs[j].id])
 
 
-func test_enemies_stand_out_from_the_fairway() -> void:
-	var palette := _def().room_palette()
-	var defs: Array[EnemyDef] = []
-	defs.assign(_def().enemies)
-	defs.append(_def().mini_boss)
-	defs.append(_def().floor_boss)
-	for def in defs:
-		var body := SpriteVisual.readable(def.color)
-		for tone in [palette.floor_a, palette.floor_b, palette.floor_c]:
-			assert_true(_difference(body, tone) >= 0.25, "%s against the grass" % def.id)
-
-
 # --- its look ---
-
-func test_it_looks_like_no_other_floor() -> void:
-	var mine := _def().room_palette()
-	for id in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "flashback_cinema"]:
-		var theirs := _floor(id).room_palette()
-		assert_true(_difference(mine.floor_a, theirs.floor_a) > 0.15, "floor against %s" % id)
-		assert_true(_difference(mine.wall, theirs.wall) > 0.15, "walls against %s" % id)
-	assert_eq(mine.floor_pattern, GolfLook.FAIRWAY, "mown fairway")
-	assert_eq(mine.wall_pattern, GolfLook.HEDGE_WALL, "clipped hedges")
-	for kind in [RoomDecor.GRASS, RoomDecor.BENCH, RoomDecor.PLANT, RoomDecor.LANTERN, RoomDecor.FOG]:
-		assert_true(mine.weight_of(kind) > 0.0, kind)
-	for kind in [RoomDecor.BONES, RoomDecor.IV_STAND, RoomDecor.FURNACE, RoomDecor.GAUGE, RoomDecor.STAINED_GLASS, RoomDecor.COFFIN_STAND, RoomDecor.FLUORESCENT, RoomDecor.FOOD_TABLE, RoomDecor.COBWEB]:
-		assert_near(mine.weight_of(kind), 0.0, kind)
-
 
 func test_the_patterns_stand_clear_of_the_shared_ones() -> void:
 	for value in [0, 1, 2, 3]:
@@ -127,11 +101,11 @@ func test_the_fairway_is_striped_and_never_dotted_as_sand_is() -> void:
 	assert_near(_def().room_palette().speckle.a, 0.0, "and the floor's speckle is clear")
 
 
-func test_sand_reads_against_the_palest_fairway() -> void:
+# The Club President still spreads his bunkers on the hotline's carpet until the floor's own bosses
+# take his room, so the sand must read there.
+func test_sand_reads_against_the_hotlines_carpet() -> void:
 	var palette := _def().room_palette()
 	for tone: Color in [palette.floor_a, palette.floor_b, palette.floor_c]:
-		var stripe := tone.lerp(Color(palette.fairway_stripe, 1.0), palette.fairway_stripe.a)
-		assert_true(_difference(palette.sand, stripe) > 0.3, "sand against %s" % str(stripe))
 		assert_true(_difference(palette.sand, tone) > 0.3, "sand against %s" % str(tone))
 	assert_true(_difference(palette.sand, palette.sand_grain) > 0.25, "the grains show on the sand")
 
@@ -144,7 +118,7 @@ func test_sand_is_cool_enough_that_red_warnings_show_on_it() -> void:
 	assert_true(sand.b >= sand.r * 0.8, "sand %s is too warm" % str(sand))
 
 
-# --- its midnight light ---
+# --- sand under the hotline's light ---
 
 # A colour as the room's light leaves it: the ambient plus a fill light at its centre, clipped at
 # white. Far from every fill it is darker still, and a wall light or lantern adds to it.
@@ -163,33 +137,9 @@ func _darkest_grass(palette: RoomPalette) -> Color:
 	return darkest
 
 
-# Midnight: a blue-black sky, cold moonlight from the walls and a cold fill, and the lanterns the only
-# warm light on the course.
-func test_the_night_is_cold_and_only_the_lanterns_are_warm() -> void:
-	var palette := _def().room_palette()
-	for light: Color in [palette.ambient, palette.torch, palette.fill_light]:
-		assert_true(light.b > light.r and light.b > light.g, "cold light %s" % str(light))
-	assert_true(palette.darkness.get_luminance() < 0.05, "a blue-black sky")
-	assert_true(palette.lantern_light.r > palette.lantern_light.b + 0.3, "a warm lantern")
-	assert_true(palette.weight_of(RoomDecor.TORCH) <= 0.0, "no warm torches in the scatter")
-
-
-# The palest tile is a light mown stripe right under a wall light, with the fill on it too (the Head
-# Office rule). Moonlight must not burn it white, or the HUD and pale bodies vanish there.
-func test_the_palest_fairway_under_the_moonlight_stays_below_white() -> void:
-	var palette := _def().room_palette()
-	var light := Color(palette.ambient.r + palette.torch.r + palette.fill_light.r * Lighting.FILL_ENERGY,
-		palette.ambient.g + palette.torch.g + palette.fill_light.g * Lighting.FILL_ENERGY,
-		palette.ambient.b + palette.torch.b + palette.fill_light.b * Lighting.FILL_ENERGY)
-	for tone: Color in [palette.floor_a, palette.floor_b, palette.floor_c]:
-		var stripe := tone.lerp(Color(palette.fairway_stripe, 1.0), palette.fairway_stripe.a)
-		var peak := maxf(stripe.r * light.r, maxf(stripe.g * light.g, stripe.b * light.b))
-		assert_true(peak < 1.0, "the stripe near a wall light burns to white (%.2f)" % peak)
-
-
-# Every red warning on the course lies on sand or on grass, and the blue light takes most of its red.
-# Lit as the room lights it, it must still stand apart from both.
-func test_red_warnings_show_on_the_sand_and_the_darkest_grass_at_night() -> void:
+# A red warning over spread sand, lit as the room lights it, must still stand apart from it, and from
+# the darkest carpet round it.
+func test_red_warnings_show_on_the_sand_and_the_darkest_carpet() -> void:
 	var palette := _def().room_palette()
 	var warning := _night_lit(Enemy.WARNING_COLOR, palette)
 	assert_true(_difference(warning, _night_lit(palette.sand, palette)) >= 0.4, "a warning on sand")
@@ -211,18 +161,6 @@ func test_the_sand_under_a_wall_light_stays_dim_and_warnings_show_on_it() -> voi
 	var warning_clipped := Color(minf(warning.r, 1.0), minf(warning.g, 1.0), minf(warning.b, 1.0))
 	assert_true(_difference(warning_clipped, clipped) >= 0.4, "a warning on sand at a wall light")
 	assert_true(_night_lit(palette.sand, palette).get_luminance() < 0.4, "the sand at a fill stays dim")
-
-
-func test_enemies_stand_out_from_the_grass_under_the_night_light() -> void:
-	var palette := _def().room_palette()
-	var defs: Array[EnemyDef] = []
-	defs.assign(_def().enemies)
-	defs.append(_def().mini_boss)
-	defs.append(_def().floor_boss)
-	for def in defs:
-		var body := _night_lit(SpriteVisual.readable(def.color), palette)
-		for tone: Color in [palette.floor_a, palette.floor_b, palette.floor_c]:
-			assert_true(_difference(body, _night_lit(tone, palette)) >= 0.22, "%s against the grass at night" % def.id)
 
 
 # Two pale bodies read as one under a single light (the cruise's lesson), so only one of the course's
@@ -369,16 +307,6 @@ func test_the_courses_props_break_as_the_spec_says() -> void:
 	for symbol in [RoomLayout.SYMBOL_SAND, RoomLayout.SYMBOL_FLAG, RoomLayout.SYMBOL_BALL_WASHER, RoomLayout.SYMBOL_HEDGE]:
 		assert_true(RoomLayout.ALLOWED.contains(symbol), symbol)
 	assert_eq(RoomLayout.SYMBOL_FLAG + RoomLayout.SYMBOL_BALL_WASHER + RoomLayout.SYMBOL_HEDGE, "345", "only the path's own symbols")
-
-
-# Debris is a few small dots, so it must stand well apart from the grass it falls on.
-func test_every_props_debris_shows_on_the_fairway() -> void:
-	var palette := _def().room_palette()
-	for prop: BreakableBlock in [FlagPin.new(), BallWasher.new(), Hedge.new(), ParkedCart.new()]:
-		prop.palette = palette
-		for tone: Color in [palette.floor_a, palette.floor_b, palette.floor_c]:
-			assert_true(_difference(prop.debris_color(), tone) > 0.4, "%s debris against %s" % [prop.art_id(), str(tone)])
-		prop.free()
 
 
 # --- whole floors ---
