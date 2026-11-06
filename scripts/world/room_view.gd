@@ -493,6 +493,8 @@ func _add_floor_sign() -> void:
 func _add_door(target_id: int, icon: String, side: Vector2i) -> Door:
 	var door := Door.new()
 	door.setup(target_id, icon, _player.feet(), side)
+	door.palette = _palette
+	door.depth = _depth
 	door.position = RoomBackdrop.cell_center(_room.layout.door_cell(side))
 	door.entered.connect(func(id: int): door_entered.emit(id))
 	add_child(door)
