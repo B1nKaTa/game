@@ -21,17 +21,20 @@ const BEAM_SHOWN_WHOLE := true
 # The arcs he tries, as turns of their middle away from Grandpa, in degrees.
 const BEAM_SHIFTS: Array[float] = [0.0, 30.0, -30.0, 60.0, -60.0, 95.0, -95.0]
 const SPLICE_WINDUP := 0.5
-const SPLICE_WARNING := 1.0
-const PHASE_TWO_SPLICE_WARNING := 0.85
+const SPLICE_WARNING := 0.8
+const PHASE_TWO_SPLICE_WARNING := 0.7
 # How far apart the middles of neighbouring splice lanes lie, and how far a pattern may be moved off him.
 const SPLICE_PITCH := 96.0
 const SPLICE_SHIFTS: Array[float] = [0.0, 0.5, -0.5, 1.0, -1.0, 1.5, -1.5]
 const REEL_WINDUP := 0.7
 const FIRST_REEL := 3.0
-const REEL_EVERY := 14.0
-const PHASE_TWO_REEL_EVERY := 10.0
-const PIE_EVERY := 1.0
-const TUMBLEWEED_EVERY := 1.3
+# A reel runs 8 s, so one is nearly always on, and in the second phase the next comes as soon as the
+# last ends (never two at once). Task 6's tuning: at 14 s and 10 s the bot, which reads the beam and the
+# splice perfectly, won about 12 fights in 20 against the Mall Santa's none.
+const REEL_EVERY := 9.0
+const PHASE_TWO_REEL_EVERY := 6.5
+const PIE_EVERY := 0.8
+const TUMBLEWEED_EVERY := 1.0
 # Below half health the reel's lanes come this much sooner.
 const PHASE_TWO_LANE_PACE := 0.8
 const FIRST_LANE := 0.4
