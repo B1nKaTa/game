@@ -16,6 +16,9 @@ const SLOW_EVERY := 0.2
 const GOO := Color("1f6b45")
 const GOO_SHINE := Color(0.45, 0.75, 0.55, 0.5)
 const GOO_EDGE := Color(0.04, 0.16, 0.1)
+# Each blob's picture (art/props/ectoplasm.png, 16 px), drawn 1:1 and fading; the drawing stays for when
+# it is missing.
+const ART := "ectoplasm"
 const Z := -8
 
 # Each piece is [where, its age].
@@ -90,6 +93,10 @@ func _draw() -> void:
 	for piece: Array in _pieces:
 		var at: Vector2 = piece[0] - global_position
 		var fade := clampf((LINGER - float(piece[1])) / FADE, 0.0, 1.0)
+		var art := PropArt.texture(ART)
+		if art != null:
+			draw_texture(art, PropArt.centred(art, at), Color(1, 1, 1, fade))
+			continue
 		draw_circle(at, RADIUS + 1.0, Color(GOO_EDGE, 0.8 * fade))
 		draw_circle(at, RADIUS, Color(GOO, 0.9 * fade))
 		draw_circle(at + Vector2(-2.0, -2.0), 2.0, Color(GOO_SHINE, GOO_SHINE.a * fade))

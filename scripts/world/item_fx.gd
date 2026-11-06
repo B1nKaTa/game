@@ -601,7 +601,13 @@ class FxNeedle:
 	func hit_points() -> PackedVector2Array:
 		return PackedVector2Array([global_position, global_position - direction * LENGTH / 2.0])
 
+	# Its picture (art/props/fx_needle.png, in Harold's pale ring), its tip on the node; the drawing stays
+	# for when it is missing.
 	func _draw() -> void:
+		var art := PropArt.texture("fx_needle")
+		if art != null:
+			draw_texture(art, Vector2(1.0 - art.get_width(), -floorf(art.get_height() / 2.0)))
+			return
 		draw_line(Vector2(-LENGTH, 0), Vector2(0, 0), Color.BLACK, 4.0)
 		draw_line(Vector2(-LENGTH, 0), Vector2(0, 0), color, 2.0)
 		draw_circle(Vector2(-LENGTH, 0), 2.6, Color.BLACK)
@@ -853,7 +859,12 @@ class FxPeel:
 			return enemy
 		return null
 
+	# Its picture (art/props/fx_peel.png, in Harold's pale ring); the drawing stays for when it is missing.
 	func _draw() -> void:
+		var art := PropArt.texture("fx_peel")
+		if art != null:
+			draw_texture(art, PropArt.centred(art))
+			return
 		var flaps := [Vector2(-1.0, -0.35), Vector2(1.0, -0.25), Vector2(-0.25, 0.9), Vector2(0.6, 0.75)]
 		for flap: Vector2 in flaps:
 			draw_line(Vector2.ZERO, flap * radius, Color.BLACK, 6.0)

@@ -16,6 +16,9 @@ const SLOW := 0.5
 # Each moment inside slows him for this long, so stepping out frees him almost at once.
 const SLOW_REFRESH := 0.3
 const DROP_HEIGHT := 50.0
+# The rope ring's picture (art/props/quoit.png), drawn 1:1 as it drops and lies; the drawing stays for
+# when it is missing.
+const ART := "quoit"
 
 var _source: Enemy
 var _target: Node2D
@@ -101,5 +104,9 @@ func _draw() -> void:
 
 
 func _draw_rope(at: Vector2) -> void:
+	var art := PropArt.texture(ART)
+	if art != null:
+		draw_texture(art, PropArt.centred(art, at))
+		return
 	draw_arc(at, RADIUS * 0.6, 0.0, TAU, 20, ROPE_DARK, 6.0)
 	draw_arc(at, RADIUS * 0.6, 0.0, TAU, 20, ROPE, 4.0)

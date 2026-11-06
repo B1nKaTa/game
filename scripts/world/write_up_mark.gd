@@ -19,6 +19,10 @@ const FORM := Color("f6d3dc")
 const FORM_EDGE := Color("9a3a52")
 const STAMP := Color("c8202c")
 const MEMO := Color("f4efe0")
+# The memo in flight is the plain shot's sheet (art/props/shot_paper.png), turning as it flies, and the
+# form it leaves is art/props/write_up.png, both 1:1; each keeps its drawing when the picture is missing.
+const MEMO_ART := "shot_paper"
+const FORM_ART := "write_up"
 
 var _source: Enemy
 var _target: Node2D
@@ -120,7 +124,12 @@ func _draw() -> void:
 		if _thrown_from != Vector2.INF:
 			var start := _thrown_from - global_position
 			var at := start.lerp(Vector2.ZERO, filled) + Vector2(0.0, -sin(filled * PI) * THROW_ARC)
-			draw_set_transform(at, filled * TAU)
+			draw_set_transform(at.round(), filled * TAU)
+			var memo := PropArt.texture(MEMO_ART)
+			if memo != null:
+				draw_texture(memo, -memo.get_size() / 2.0)
+				draw_set_transform(Vector2.ZERO)
+				return
 			draw_rect(Rect2(-4, -5, 8, 10), MEMO)
 			draw_rect(Rect2(-4, -5, 8, 10), Color.BLACK, false, 1.0)
 			draw_set_transform(Vector2.ZERO)
@@ -128,11 +137,15 @@ func _draw() -> void:
 	var fade := clampf(_linger / FADE, 0.0, 1.0)
 	# A pink form, a ring round the reach of its sting, and a red stamp across it.
 	draw_arc(Vector2.ZERO, RADIUS, 0.0, TAU, 24, Color(FORM_EDGE, 0.8 * fade), 2.0)
-	draw_rect(Rect2(-8, -10, 16, 20), Color(FORM, 0.9 * fade))
-	draw_rect(Rect2(-8, -10, 16, 20), Color(FORM_EDGE, fade), false, 1.0)
-	for row in 3:
-		draw_line(Vector2(-5, -6 + row * 4), Vector2(5, -6 + row * 4), Color(FORM_EDGE, 0.6 * fade), 1.0)
-	draw_rect(Rect2(-7, 3, 14, 5), Color(STAMP, 0.85 * fade), false, 2.0)
+	var form := PropArt.texture(FORM_ART)
+	if form != null:
+		draw_texture(form, PropArt.centred(form), Color(1, 1, 1, fade))
+	else:
+		draw_rect(Rect2(-8, -10, 16, 20), Color(FORM, 0.9 * fade))
+		draw_rect(Rect2(-8, -10, 16, 20), Color(FORM_EDGE, fade), false, 1.0)
+		for row in 3:
+			draw_line(Vector2(-5, -6 + row * 4), Vector2(5, -6 + row * 4), Color(FORM_EDGE, 0.6 * fade), 1.0)
+		draw_rect(Rect2(-7, 3, 14, 5), Color(STAMP, 0.85 * fade), false, 2.0)
 	var warmth := clampf(_stood / STING_AFTER, 0.0, 1.0)
 	if warmth > 0.0:
 		draw_arc(Vector2.ZERO, RADIUS - 3.0, -PI / 2.0, -PI / 2.0 + TAU * warmth, 20, Color(STAMP, fade), 2.0)

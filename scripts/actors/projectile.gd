@@ -37,6 +37,12 @@ const OBJECT_GLOW := Color(1.0, 0.95, 0.85, 0.4)
 # a kernel at 0.5. A look without art keeps its drawing.
 const LOOK_ART := {LOOK_KERNEL: ["kernel", 16.0], LOOK_STAPLER: ["stapler", OBJECT_ART_SIZE],
 	LOOK_MUG: ["mug", OBJECT_ART_SIZE], LOOK_FAX: ["fax_machine", OBJECT_ART_SIZE]}
+# The plain shot, the dart and the note, drawn 1:1 (tools/art/shot_art.py): a warm or bright core in a
+# dark outline, so an enemy's shot reads as hostile on every floor. The dart's points east and turns
+# with the node. A missing picture keeps the drawing.
+const PAPER_ART := "shot_paper"
+const DART_ART := "shot_dart"
+const NOTE_ART := "shot_note"
 # A chrome arm over a dark base: a grey arm vanished on the hotline's violet carpet in the real window.
 const STAPLER_DARK := Color("231929")
 const STAPLER_GREY := Color("bdb8c8")
@@ -105,6 +111,10 @@ static func star_frame(age: float, frames: int) -> int:
 
 func _draw() -> void:
 	if is_dart():
+		var dart := PropArt.texture(DART_ART)
+		if dart != null:
+			draw_texture(dart, PropArt.centred(dart))
+			return
 		draw_rect(Rect2(-7, -2.5, 10, 5), DART_BARREL)
 		draw_rect(Rect2(-7, -2.5, 10, 5), Color.BLACK, false, 1.0)
 		draw_rect(Rect2(-10, -1.5, 3, 3), DART_PLUNGER)
@@ -120,6 +130,10 @@ func _draw() -> void:
 			draw_texture_rect(art, Rect2(-size / 2.0, -size / 2.0, size, size), false)
 			return
 	if look == LOOK_NOTE:
+		var note := PropArt.texture(NOTE_ART)
+		if note != null:
+			draw_texture(note, PropArt.centred(note))
+			return
 		# A pale glow behind, so a black note reads on dark carpet as well as pale.
 		draw_circle(Vector2(0.0, 1.0), 6.0, NOTE_GLOW)
 		draw_circle(Vector2(-1.0, 3.0), 3.0, NOTE_INK)
@@ -175,6 +189,10 @@ func _draw() -> void:
 		for i in 4:
 			draw_rect(Rect2(-7 + i * 4, 2, 2, 2), FAX_KEY)
 		draw_rect(Rect2(-10, -5, 20, 13), Color.BLACK, false, 1.0)
+		return
+	var paper := PropArt.texture(PAPER_ART)
+	if paper != null:
+		draw_texture(paper, PropArt.centred(paper))
 		return
 	draw_rect(Rect2(-4, -5, 8, 10), Color("efe8d2"))
 	draw_rect(Rect2(-4, -5, 8, 10), Color.BLACK, false, 1.0)

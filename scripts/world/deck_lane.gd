@@ -21,6 +21,9 @@ const DANCER_GAP := 16.0
 const SKIN := Color("f0c9a0")
 const BUOY_WHITE := Color("fbfbff")
 const BUOY_RED := Color("d9453b")
+# The lifebuoy's picture (art/props/lifebuoy.png, orange and white, 26 px), turned as it rolls, as the
+# Projectionist's pie is; the drawing stays for when it is missing.
+const BUOY_ART := "lifebuoy"
 
 var _source: Enemy
 var _target: Node2D
@@ -152,6 +155,12 @@ func _draw_buoy(middle: float) -> void:
 	if middle < 0.0 or middle > _length:
 		return
 	var turn := _front / 11.0
+	var art := PropArt.texture(BUOY_ART)
+	if art != null:
+		draw_set_transform_matrix(Transform2D(_direction.angle(), Vector2.ZERO) * Transform2D(turn, Vector2(roundf(middle), 0.0)))
+		draw_texture(art, -art.get_size() / 2.0)
+		draw_set_transform(Vector2.ZERO, _direction.angle())
+		return
 	for i in 4:
 		var start := turn + i * PI / 2.0
 		draw_arc(Vector2(middle, 0.0), 10.0, start, start + PI / 2.0, 6, BUOY_RED if i % 2 == 0 else BUOY_WHITE, 6.0)

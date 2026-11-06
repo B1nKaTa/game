@@ -7,6 +7,9 @@ extends Node2D
 const COLOR := Color("e4524f")
 const PLATE := Color("c9a25a")
 const PLATE_RIM := Color("6e5228")
+# The plate's picture (art/props/collection_plate.png, a brass dish 1:1), turned as it spins, as the
+# Projectionist's pie is; the drawing stays for when it is missing.
+const ART := "collection_plate"
 const HIT_RANGE := 14.0
 const SPEED := 320.0
 const MARK_RADIUS := 6.0
@@ -91,6 +94,12 @@ func _draw() -> void:
 		return
 	var at := point_along(_path, _travelled)
 	var spin := _travelled / 12.0
+	var art := PropArt.texture(ART)
+	if art != null:
+		draw_set_transform(at.round(), spin)
+		draw_texture(art, -art.get_size() / 2.0)
+		draw_set_transform(Vector2.ZERO)
+		return
 	draw_set_transform(at, spin, Vector2(1.0, 0.6))
 	draw_circle(Vector2.ZERO, 7.0, PLATE_RIM)
 	draw_circle(Vector2.ZERO, 5.5, PLATE)

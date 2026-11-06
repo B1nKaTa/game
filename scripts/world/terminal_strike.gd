@@ -10,6 +10,9 @@ const LOOK_STAMP := "stamp"
 const STAMP_RING_GAP := 8.0
 const TRAY := Color("9aa0a8")
 const TRAY_EDGE := Color("3c4048")
+# The falling security tray's picture (art/props/security_tray.png, 24x18), drawn 1:1 and coming clear
+# as the mark fills; the drawing stays for when it is missing.
+const TRAY_ART := "security_tray"
 const STAMP_SHADOW := Color(0.05, 0.03, 0.08)
 const STAMP_HANDLE := Color("7a2f3a")
 const INK := Color("c4161c")
@@ -79,6 +82,10 @@ func _draw() -> void:
 		draw_rect(Rect2(-r * 0.7 * size, -r * 0.45 * size, r * 1.4 * size, r * 0.9 * size), Color(STAMP_SHADOW, alpha))
 		draw_rect(Rect2(-r * 0.15 * size, -r * 0.9 * size, r * 0.3 * size, r * 0.45 * size), Color(STAMP_HANDLE, alpha))
 	else:
+		var art := PropArt.texture(TRAY_ART)
+		if art != null:
+			draw_texture(art, PropArt.centred(art), Color(1, 1, 1, 0.35 + 0.65 * filled))
+			return
 		var size := 0.4 + 0.6 * filled
 		var tray := Rect2(-12.0 * size, -8.0 * size, 24.0 * size, 16.0 * size)
 		draw_rect(tray, Color(TRAY, 0.35 + 0.5 * filled))

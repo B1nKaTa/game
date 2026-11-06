@@ -12,6 +12,9 @@ const HIT_TIME := 0.05
 const SHOW_TIME := 0.3
 const COLOR := Color("e4524f")
 const SPIRIT := Color(0.85, 0.8, 1.0, 0.85)
+# The spirit's picture (art/props/spirit_orb.png, 12 px), drawn 1:1 at the head of its trail; the drawing
+# stays for when it is missing.
+const ART := "spirit_orb"
 
 var _source: Enemy
 var _circle: SeanceCircle
@@ -108,8 +111,12 @@ func _draw() -> void:
 		draw_arc(at, RADIUS, 0.0, TAU, 24, COLOR, 2.0)
 		# The spirit flying in from its place round the light.
 		var spirit := (_from - global_position).lerp(at, progress * progress)
-		draw_circle(spirit, 6.0, SPIRIT)
 		draw_line(spirit, spirit.lerp(_from - global_position, 0.25), Color(SPIRIT, 0.4), 3.0)
+		var art := PropArt.texture(ART)
+		if art != null:
+			draw_texture(art, PropArt.centred(art, spirit))
+		else:
+			draw_circle(spirit, 6.0, SPIRIT)
 		return
 	var shown := clampf(_show_left / SHOW_TIME, 0.0, 1.0)
 	draw_circle(at, RADIUS, Color(SPIRIT, 0.45 * shown))

@@ -9,6 +9,9 @@ const COLOR := Color("e4524f")
 const PUCK := Color("2b3550")
 const PUCK_TOP := Color("e8c04a")
 const PUCK_RADIUS := 7.0
+# The puck's picture (art/props/puck.png, 16 px), drawn 1:1 over its shadow; the drawing stays for when
+# it is missing.
+const ART := "puck"
 const HIT_RANGE := 13.0
 # A bounce starts this far off the wall, so the way back never begins inside it.
 const WALL_BACKOFF := 4.0
@@ -116,6 +119,10 @@ func _draw() -> void:
 		return
 	var at := CollectionPlate.point_along(_path, _travelled)
 	draw_circle(at + Vector2(1, 2), PUCK_RADIUS, Color(0, 0, 0, 0.35))
+	var art := PropArt.texture(ART)
+	if art != null:
+		draw_texture(art, PropArt.centred(art, at))
+		return
 	draw_circle(at, PUCK_RADIUS, PUCK)
 	draw_arc(at, PUCK_RADIUS, 0.0, TAU, 16, Color.BLACK, 1.0)
 	draw_circle(at, PUCK_RADIUS * 0.5, PUCK_TOP)

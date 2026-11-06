@@ -41,6 +41,13 @@ const WREATH := Color("3f6b34")
 const WREATH_BLOOM := Color("d9576b")
 const THORN := Color("2c4a24")
 const THORN_TIP := Color("a7c48a")
+# What flies and what is left, drawn 1:1 (tools/art/shot_art.py), each keeping its drawing when the
+# picture is missing: the lump of coal, two frames of its glow flickering (COAL_FRAME s each), the
+# thorny wreath in flight, and the ring of thorns it leaves, drawn for the florists' 26 px strike.
+const COAL_ART := "shot_coal"
+const COAL_FRAME := 0.1
+const WREATH_ART := "shot_wreath"
+const THORNS_ART := "thorns_lying"
 
 var _source: Enemy
 var _radius := 20.0
@@ -254,9 +261,21 @@ func _draw() -> void:
 		var start := _thrown_from - global_position
 		var at := start.lerp(Vector2.ZERO, filled) + Vector2(0.0, -sin(filled * PI) * THROW_ARC)
 		if _look == LOOK_THORNS:
+			var wreath := PropArt.texture(WREATH_ART)
+			if wreath != null:
+				draw_texture(wreath, PropArt.centred(wreath, at))
+				return
 			draw_arc(at, 5.0, 0.0, TAU, 12, WREATH, 3.0)
 			draw_circle(at + Vector2(0, -5), 1.5, WREATH_BLOOM)
 		else:
+			var coal := PropArt.texture(COAL_ART)
+			if coal != null:
+				var side := coal.get_height()
+				var frames := maxi(coal.get_width() / side, 1)
+				var frame := int(Time.get_ticks_msec() / 1000.0 / COAL_FRAME) % frames
+				var corner := (at - Vector2(side, side) / 2.0).floor()
+				draw_texture_rect_region(coal, Rect2(corner, Vector2(side, side)), Rect2(frame * side, 0, side, side))
+				return
 			draw_circle(at, 4.0, COAL_GLOW)
 			draw_circle(at, 3.0, COAL)
 
@@ -273,6 +292,10 @@ func _draw_coffin(size: float, color: Color, alpha: float) -> void:
 func _draw_thorns() -> void:
 	var fade := clampf(_burn_left / BURN_FADE, 0.0, 1.0)
 	draw_circle(Vector2.ZERO, _radius, Color(THORN, 0.25 * fade))
+	var ring := PropArt.texture(THORNS_ART)
+	if ring != null:
+		draw_texture(ring, PropArt.centred(ring), Color(1, 1, 1, fade))
+		return
 	draw_arc(Vector2.ZERO, _radius * 0.85, 0.0, TAU, 28, Color(THORN, 0.9 * fade), 4.0)
 	for i in 14:
 		var way := Vector2.from_angle(TAU * i / 14.0 + 0.2 * (i % 2))

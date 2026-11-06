@@ -8,12 +8,19 @@ const RING_GAP := 8.0
 const SHADOW := Color(0.04, 0.03, 0.06)
 const HEAD := Color("5a3423")
 const BAND := Color("e8c04a")
+# The gavel that lands (art/props/gavel.png), drawn 1:1 over the dust; its growing shadow in the
+# warning stays drawn, and so does the gavel when the picture is missing.
+const ART := "gavel"
 
 
 func _draw() -> void:
 	if _landed:
 		var progress := 1.0 - maxf(_show_left, 0.0) / SHOW_TIME
 		draw_circle(Vector2.ZERO, _radius * minf(0.6 + progress, 1.0), Color(DUST_COLOR, 0.7 * (1.0 - progress)))
+		var art := PropArt.texture(ART)
+		if art != null:
+			draw_texture(art, PropArt.centred(art), Color(1, 1, 1, 1.0 - progress))
+			return
 		_draw_gavel(1.0, HEAD, 1.0 - progress)
 		return
 	if _delay > 0.0:

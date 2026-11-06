@@ -14,6 +14,9 @@ const IRON_EDGE := Color("12151c")
 const CHAIN := Color("8a8f98")
 const DROP_HEIGHT := 90.0
 const SPLASH_SHOW := 0.3
+# The anchor's picture (art/props/anchor.png, pale steel in a dark outline), drawn 1:1 at every height,
+# with the drawing kept for when it is missing.
+const ART := "anchor"
 
 var _source: Enemy
 var _warning := 1.2
@@ -85,6 +88,10 @@ func _draw() -> void:
 
 
 func _draw_anchor(at: Vector2, size: float) -> void:
+	var art := PropArt.texture(ART)
+	if art != null:
+		draw_texture(art, PropArt.centred(art, at))
+		return
 	var s := 16.0 * size
 	draw_line(at + Vector2(0.0, -s), at + Vector2(0.0, s * 0.8), IRON, 4.0)
 	draw_line(at + Vector2(-s * 0.5, -s * 0.55), at + Vector2(s * 0.5, -s * 0.55), IRON, 3.0)

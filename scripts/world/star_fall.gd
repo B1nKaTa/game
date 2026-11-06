@@ -12,6 +12,9 @@ const FLASH := 0.3
 const COLOR := Color("e4524f")
 const LIGHT := Color(1.0, 0.95, 0.7)
 const LIGHT_EDGE := Color("8a6a1c")
+# The falling star is the critic's star picture (art/props/star.png), drawn 1:1 at the head of its
+# streak; the drawing stays for when it is missing.
+const ART := "star"
 # The spots as a plan sees them: each this much wider, hurting this long after it lands.
 const ROUTE_SPARE := 3.0
 const ROUTE_HIT_TIME := 0.05
@@ -167,5 +170,9 @@ func _draw() -> void:
 			var drop := (1.0 - filled) / 0.6 * 70.0
 			var star_at := at - Vector2(drop * 0.35, drop)
 			draw_line(star_at, star_at - Vector2(7.0, 20.0), Color(LIGHT, 0.5), 2.0)
+			var art := PropArt.texture(ART)
+			if art != null:
+				draw_texture(art, PropArt.centred(art, star_at))
+				continue
 			_star(star_at, 6.0, LIGHT)
 			_star(star_at, 3.0, LIGHT_EDGE)

@@ -36,6 +36,11 @@ const OUTLINE_COLOR := Color("3a1c20")
 const GLUE_COLOR := Color("f3e58c")
 const KEY_COLOR := Color("e8b84a")
 const JAW_WIDTH := 12.0
+# The two jaws' pictures (art/props/dentures_upper.png and dentures_lower.png), in Harold's pale ring so
+# they never read as an enemy's shot, opened and shut here as the drawing is; it stays for when either
+# is missing.
+const UPPER_ART := "dentures_upper"
+const LOWER_ART := "dentures_lower"
 const JAW_OPEN := 3.0
 const CHATTER_SPEED := 26.0
 const REST_CHATTER_SPEED := 10.0
@@ -313,7 +318,17 @@ func _draw() -> void:
 		_draw_glue()
 	if spin != 0.0:
 		_draw_whirl()
-	draw_set_transform(Vector2(0.0, hop), spin, Vector2(flip, 1.0))
+	draw_set_transform(Vector2(0.0, roundf(hop)), spin, Vector2(flip, 1.0))
+	var upper_art := PropArt.texture(UPPER_ART)
+	var lower_art := PropArt.texture(LOWER_ART)
+	if upper_art != null and lower_art != null:
+		var gap := roundf(open / 2.0)
+		draw_texture(upper_art, Vector2(-floorf(upper_art.get_width() / 2.0), 1.0 - gap - upper_art.get_height()))
+		draw_texture(lower_art, Vector2(-floorf(lower_art.get_width() / 2.0), gap - 1.0))
+		if resting and floor_bite:
+			_draw_key(-gap - upper_art.get_height() + 2.0)
+		draw_set_transform(Vector2.ZERO)
+		return
 	var half := JAW_WIDTH / 2.0
 	var upper := Rect2(-half, -4.0 - open / 2.0, JAW_WIDTH, 3.0)
 	var lower := Rect2(-half, 1.0 + open / 2.0, JAW_WIDTH, 3.0)
