@@ -109,6 +109,10 @@ var _dealer: Npc
 var restore := {}
 # Choice groups put back from a checkpoint, kept here since a Callable holds no reference to them.
 var _restored_groups := {}
+# The floor's depth look, or null when its rooms keep the flat tiles (DepthLook, FloorDef.art_style).
+var _depth: DepthLook
+# The palette the room was built with, for the doors' jambs and the floor beyond them.
+var _palette: RoomPalette
 
 
 # The room's id on its floor's map.
@@ -243,12 +247,18 @@ func _ready() -> void:
 	PropArt.art_set = _floor_def.art()
 	# An Arcade Room keeps its neon patterns, so it never passes for one of the floor's own rooms.
 	var tile_set := _floor_def.art()
+	_depth = DepthLook.for_floor(_floor_def)
 	if _room.room_type == RoomLayout.TYPE_ARCADE:
 		palette = arcade_palette(palette)
 		tile_set = ""
-	backdrop.setup(_room.layout.rows, palette, _room.decor_seed, tile_set)
+		_depth = null
+	_palette = palette
+	DepthLook.active = _depth != null
+	if _depth != null:
+		child_entered_tree.connect(_on_child_entered)
+	backdrop.setup(_room.layout.rows, palette, _room.decor_seed, tile_set, _depth)
 	add_child(backdrop)
-	Lighting.add_room_mood(self, _room.layout.size_in_cells(), palette)
+	Lighting.add_room_mood(self, _room.layout.size_in_cells(), palette, _depth, _room.layout.rows)
 	_create_decor(palette)
 	if _room.room_type == RoomLayout.TYPE_LANDING:
 		_add_floor_sign()
@@ -262,6 +272,18 @@ func _ready() -> void:
 	_spawn_enemies()
 	if _alive == 0:
 		_finish_room()
+
+
+# A stored room comes back into the tree when he returns; the depth look's switch follows the room.
+func _enter_tree() -> void:
+	if _floor_def != null and is_node_ready():
+		DepthLook.active = _depth != null
+
+
+# Shots, ground marks and warnings added to a depth room keep their full colour in its dark. Their z is
+# set in their own _ready, so the check waits a frame's moment.
+func _on_child_entered(node: Node) -> void:
+	DepthLook.keep_vivid.call_deferred(node)
 
 
 # Call each time the player arrives, so the door he stands on waits until he steps away.
@@ -614,6 +636,13 @@ func _place_prop(prop: BreakableBlock, cell: Vector2i) -> void:
 
 func _create_decor(palette: RoomPalette) -> void:
 	var items := RoomDecor.plan(_room.layout, palette, _room.decor_seed)
+	# The depth look lays its own puddles and cracks into the ground, so the code ones stay out.
+	if _depth != null:
+		var kept: Array[Dictionary] = []
+		for item in items:
+			if item["kind"] != RoomDecor.PUDDLE and item["kind"] != RoomDecor.CRACK:
+				kept.append(item)
+		items = kept
 	var layer := DecorLayer.new()
 	layer.setup(items, palette)
 	add_child(layer)

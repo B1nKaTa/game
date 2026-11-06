@@ -173,6 +173,8 @@ func _ready() -> void:
 	_warning_layer.enemy = self
 	_warning_layer.z_index = WARNING_Z
 	add_child(_warning_layer)
+	# In the depth look's dark, warnings keep their full colour (DepthLook.keep_vivid).
+	DepthLook.keep_vivid(_warning_layer)
 	_behavior.on_ready(self)
 
 

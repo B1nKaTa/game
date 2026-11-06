@@ -17,6 +17,11 @@ const SPECIAL_FALLBACK := "attack"
 const SHADER_CODE := """
 shader_type canvas_item;
 uniform vec3 flash_color = vec3(1.0);
+// The light a body is shown in when the room's own light does not reach it (the depth look's bodies
+// draw unshaded, so a dark corner never swallows them). White leaves it as drawn.
+uniform vec3 body_light = vec3(1.0);
+// Lifts the darks of that even light (1 leaves the art as drawn), so a dark suit keeps its shape.
+uniform float body_gamma = 1.0;
 uniform float amount = 0.0;
 uniform float alpha = 1.0;
 uniform vec3 tint = vec3(1.0);
@@ -53,9 +58,13 @@ void fragment() {
 			rgb = to_rgb(vec3(fract(hsv.x + hue_shift), hsv.y, min(hsv.z * value_gain, 1.0)));
 		}
 	}
-	COLOR = vec4(mix(rgb * tint, flash_color, amount), c.a * alpha);
+	rgb = pow(rgb, vec3(body_gamma));
+	COLOR = vec4(mix(rgb * tint * body_light, flash_color, amount), c.a * alpha);
 }
 """
+# The same, drawn unshaded: in the depth look (DepthLook.active) bodies keep one even light wherever they
+# stand, so the dark room never hides an enemy or Harold.
+const UNSHADED_MODE := "render_mode unshaded;"
 
 var _art_id := ""
 var _size := Vector2(20, 24)
@@ -83,6 +92,20 @@ var _feet_y := 0.0
 
 # Strip path -> its lowest used row, end exclusive, so each strip is read once.
 static var _feet_rows := {}
+# One shader for every body (and one unshaded), so a spawn compiles nothing new.
+static var _shader: Shader
+static var _unshaded_shader: Shader
+# Whether this body is shown in the depth look's even light now.
+var _depth_lit := false
+
+
+static func shared_shader(unshaded: bool) -> Shader:
+	if _shader == null:
+		_shader = Shader.new()
+		_shader.code = SHADER_CODE
+		_unshaded_shader = Shader.new()
+		_unshaded_shader.code = SHADER_CODE.replace("shader_type canvas_item;", "shader_type canvas_item; " + UNSHADED_MODE)
+	return _unshaded_shader if unshaded else _shader
 
 
 static func frame_count(texture_width: int, frame_width: int) -> int:
@@ -196,10 +219,9 @@ func play(anim: String) -> void:
 		return
 	if _sprite == null:
 		_sprite = Sprite2D.new()
-		var shader := Shader.new()
-		shader.code = SHADER_CODE
 		_material = ShaderMaterial.new()
-		_material.shader = shader
+		_depth_lit = DepthLook.active
+		_material.shader = shared_shader(_depth_lit)
 		_sprite.material = _material
 		add_child(_sprite)
 		move_child(_sprite, 0)
@@ -337,10 +359,21 @@ func _apply_look() -> void:
 		_material.set_shader_parameter("hue_width", _recolor.y)
 		_material.set_shader_parameter("hue_shift", _recolor.z)
 		_material.set_shader_parameter("value_gain", _value_gain)
+		var lit := DepthLook.BODY_LIGHT if _depth_lit else Color.WHITE
+		_material.set_shader_parameter("body_light", Vector3(lit.r, lit.g, lit.b))
+		_material.set_shader_parameter("body_gamma", DepthLook.BODY_GAMMA if _depth_lit else 1.0)
 	queue_redraw()
 
 
 func _process(delta: float) -> void:
+	if _material != null and DepthLook.active != _depth_lit:
+		_depth_lit = DepthLook.active
+		_material.shader = shared_shader(_depth_lit)
+		_apply_look()
+		# What is worn over the art (GrandpaLook, EnemyMarks) keeps the same light as the body.
+		for child in get_children():
+			if child != _sprite and child is CanvasItem:
+				child.material = DepthLook.unshaded() if _depth_lit else null
 	if _flash_left > 0.0:
 		_flash_left = maxf(_flash_left - delta, 0.0)
 		_apply_look()

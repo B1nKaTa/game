@@ -17,6 +17,10 @@ var _palette: RoomPalette
 var _seed := 0
 # The path's floor and wall pictures, or null to draw the patterns below (TileArt).
 var _tiles: TileArt
+# The depth look's ground, walls and mass (DepthLook), or null for the flat tiles or the patterns.
+var _depth: DepthLook
+# The depth look painted once into one texture (DepthLook.bake), and where it goes.
+var _baked := {}
 
 
 # Reaches past the view and the room by more than the biggest screen shake, so
@@ -36,12 +40,17 @@ static func cell_center(cell: Vector2i) -> Vector2:
 	return Vector2(cell.x * TILE + TILE / 2.0, cell.y * TILE + TILE / 2.0)
 
 
-func setup(rows: PackedStringArray, palette: RoomPalette = null, seed_value := 0, tile_set := "") -> void:
+func setup(rows: PackedStringArray, palette: RoomPalette = null, seed_value := 0, tile_set := "", depth: DepthLook = null) -> void:
 	_rows = rows
 	_palette = palette if palette != null else RoomPalette.new()
 	_seed = seed_value
 	_tiles = TileArt.for_set(tile_set)
+	_depth = depth
 	z_index = -10
+
+
+func has_depth_look() -> bool:
+	return _depth != null
 
 
 func has_tile_art() -> bool:
@@ -103,6 +112,11 @@ func _add_wall(cell: Vector2i) -> void:
 
 func _draw() -> void:
 	var room_size := Vector2(_rows[0].length(), _rows.size()) * TILE
+	if _depth != null:
+		if _baked.is_empty():
+			_baked = _depth.bake(_rows, _seed, _palette.darkness)
+		draw_texture(_baked["texture"], _baked["at"])
+		return
 	if _tiles != null:
 		_draw_tiles(room_size)
 		return

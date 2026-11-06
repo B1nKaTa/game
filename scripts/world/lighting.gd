@@ -36,26 +36,38 @@ static func torch_cells(room_cells: Vector2i) -> Array[Vector2i]:
 	return cells
 
 
+# Every light shares one radial texture, so a room or an enemy coming in builds no new gradient.
+static var _shared_texture: GradientTexture2D
+
+
+static func _light_texture() -> GradientTexture2D:
+	if _shared_texture == null:
+		var gradient := Gradient.new()
+		gradient.set_color(0, Color.WHITE)
+		gradient.set_color(1, Color(1, 1, 1, 0))
+		_shared_texture = GradientTexture2D.new()
+		_shared_texture.gradient = gradient
+		_shared_texture.width = 256
+		_shared_texture.height = 256
+		_shared_texture.fill = GradientTexture2D.FILL_RADIAL
+		_shared_texture.fill_from = Vector2(0.5, 0.5)
+		_shared_texture.fill_to = Vector2(1.0, 0.5)
+	return _shared_texture
+
+
 static func make_light(color: Color, energy: float, scale_factor: float) -> PointLight2D:
-	var gradient := Gradient.new()
-	gradient.set_color(0, Color.WHITE)
-	gradient.set_color(1, Color(1, 1, 1, 0))
-	var texture := GradientTexture2D.new()
-	texture.gradient = gradient
-	texture.width = 256
-	texture.height = 256
-	texture.fill = GradientTexture2D.FILL_RADIAL
-	texture.fill_from = Vector2(0.5, 0.5)
-	texture.fill_to = Vector2(1.0, 0.5)
 	var light := PointLight2D.new()
-	light.texture = texture
+	light.texture = _light_texture()
 	light.color = color
 	light.energy = energy
 	light.texture_scale = scale_factor
 	return light
 
 
-static func add_room_mood(parent: Node, room_cells: Vector2i, palette: RoomPalette) -> void:
+static func add_room_mood(parent: Node, room_cells: Vector2i, palette: RoomPalette, depth: DepthLook = null, rows: PackedStringArray = PackedStringArray()) -> void:
+	if depth != null:
+		add_depth_mood(parent, room_cells, depth, rows)
+		return
 	var modulate := CanvasModulate.new()
 	modulate.color = palette.ambient
 	parent.add_child(modulate)
@@ -68,6 +80,24 @@ static func add_room_mood(parent: Node, room_cells: Vector2i, palette: RoomPalet
 		light.position = RoomBackdrop.cell_center(cell)
 		parent.add_child(light)
 		add_flicker(light, palette.flicker)
+
+
+# The depth look's light (DepthLook): a dark ambient, a warm sconce on the north wall's faces, a faint
+# wide fill so no corner goes black, and a vignette over the view. Fewer lights than the flat look.
+static func add_depth_mood(parent: Node, room_cells: Vector2i, depth: DepthLook, rows: PackedStringArray) -> void:
+	var modulate := CanvasModulate.new()
+	modulate.color = DepthLook.AMBIENT
+	parent.add_child(modulate)
+	for cell in fill_cells(room_cells, DepthLook.FILL_SPACING):
+		var fill := make_light(DepthLook.FILL_LIGHT, DepthLook.FILL_ENERGY, DepthLook.FILL_SCALE)
+		fill.position = RoomBackdrop.cell_center(cell)
+		parent.add_child(fill)
+	for cell in DepthLook.sconce_cells(rows):
+		var light := make_light(DepthLook.SCONCE_LIGHT, DepthLook.SCONCE_ENERGY, DepthLook.SCONCE_SCALE)
+		light.position = depth.sconce_flame(cell) + Vector2(0, 10)
+		parent.add_child(light)
+		add_flicker(light, DepthLook.FLICKER)
+	parent.add_child(Vignette.new())
 
 
 # Torches and lanterns from the layout or the scatter give real pools of warm light.
@@ -99,10 +129,10 @@ static func add_flicker(light: PointLight2D, amount: float) -> void:
 
 # Faint wide lights spread through a room, so no part of a big room is pitch dark
 # even a long way from every wall torch.
-static func fill_cells(room_cells: Vector2i) -> Array[Vector2i]:
+static func fill_cells(room_cells: Vector2i, spacing := FILL_SPACING) -> Array[Vector2i]:
 	var cells: Array[Vector2i] = []
-	var columns := maxi(1, roundi(room_cells.x / FILL_SPACING))
-	var rows := maxi(1, roundi(room_cells.y / FILL_SPACING))
+	var columns := maxi(1, roundi(room_cells.x / spacing))
+	var rows := maxi(1, roundi(room_cells.y / spacing))
 	for row in rows:
 		for column in columns:
 			cells.append(Vector2i(int((column + 0.5) * room_cells.x / columns), int((row + 0.5) * room_cells.y / rows)))

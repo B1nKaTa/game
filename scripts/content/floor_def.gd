@@ -19,6 +19,10 @@ extends Resource
 # The folder under art/tiles and art/props that the floor's rooms draw their pictures from. Empty means
 # the floor's own id. The landings share the Crossroads' set.
 @export var art_set: String = ""
+# The art direction the floor's rooms are drawn in. Empty keeps the flat tiles and their light;
+# DepthLook.STYLE ("depth") draws one continuous ground, walls with height, dark light with sconces and
+# a vignette, and unshaded warnings (docs/art/art-direction-notes.md). Only floors with the art made set it.
+@export var art_style: String = ""
 @export_group("Path")
 # How many floor bosses at open_after_depth must have fallen, on any path there, before this path
 # opens. Zero means always open.
