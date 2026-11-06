@@ -205,3 +205,104 @@ afterwards; no line was deduplicated outside LESSONS.md.
   item line and past the room's left edge.
 - The real save's MD5s matched before and after every Godot session: save.json
   f4a62baf2984c99a2fc54ebd6dc1e308, save.json.bak ec5412ad4aa142699213a24ad7563c92.
+
+---
+
+# Round-2 integration: env-art and paths-rework (2026-11-06)
+
+The user was asleep and delegated every decision; each is logged here with its reason.
+
+## What was merged
+
+- **env-art at `ebc1600`** (merge `f3b455a`): tiles and props for eight paths, the Waiting Room, chests,
+  doors and pickups, plus the Cinema and Seance tile and prop files. Only LESSONS.md clashed (both sides
+  kept).
+- **paths-rework at `45b4e3e`** (merge `351861f`): the Flashback Cinema and the Seance Hotline replace
+  the Mall and Fairway's End, with save migration, the Crystal Counter and Esme, and the new bosses.
+  Clashes: LESSONS.md, the art inventory's section 1.9, `Enemy._update_anim`, `tests/test_enemy_art.gd`
+  and `tools/art/enemy_strips.py`.
+
+## Decisions
+
+- **The no-flip flag is `art_flips`.** round-2 is the trunk, so paths-rework's `EnemyDef.flips` went:
+  the film reel and the Ectoplasm set `art_flips = false`, `Enemy._update_anim` keeps round-2's form,
+  and the tool, the seance enemy test and the art inventory say `art_flips`.
+- **test_enemy_art keeps both branches' checks.** ARTED is round-2's list less the three retired
+  exports (club_golfer, mall_santa, thaddeus_fairweather) plus the new-path ones; mall_cop's art is
+  read through `WORN_BY` (airport_mall_cop), since mall_cop.tres is retired. Both "never mirrored"
+  tests stay: round-2's over all five south-drawn objects, and paths-rework's, renamed, over the two
+  halved ones with its box-size check. The two boss-anim tests became one (paths-rework's, which also
+  accepts `_anim(enemy, ...)`) over both branches' bosses. Both "own anim plays through the windup"
+  tests stay (the Undertaker's and Zara's).
+- **No Mall or golf art to delete.** env-art never drew `golden_years_mall` or `fairways_end` tiles or
+  props, and the retired enemies' strips went with paths-rework.
+- **film_reel `roll` and Ectoplasm `wobble`: nothing to do.** paths-rework had already built them into
+  `idle` and `walk`, and no code plays `roll` or `wobble`.
+- **No `art_set` for the Cinema and Seance.** `FloorDef.art()` falls back to the floor's id, and the
+  tile folders are named `flashback_cinema` and `seance_hotline`, so the floors load them as they are.
+  A test now checks both floors resolve to a complete set.
+- **The Cinema and Seance tiles were rebuilt onto their real palettes.** env-art drew them before the
+  floors existed, on tones of its own (`EXTRA_TONES`), which differed a lot from paths-rework's palettes
+  (the hotline's walls were indigo in the art, teal in the palette). paths-rework's lit-contrast checks
+  are all against the palette, so the tiles now take the palette's tones.
+- **Prop mapping** (code class -> picture in `art/props/<set>/`):
+  - `CinemaSeat` -> `seat_row`, one per cell;
+  - `CinemaPillar` -> `pillar`, standing on the code plinth so the whole solid cell shows;
+  - `AisleLight` -> `aisle_light`;
+  - `LifeSign` (the lobby easel) -> `lobby_card`;
+  - `PsychicDesk` -> `psychic_desk` for both sizes. The art is one desk a cell wide, so a wide desk
+    shows two side by side rather than one stretched;
+  - `SeanceTable` (large) -> `seance_table`, on a dark rug of its cloth colour. The 44x39 picture is
+    smaller than the 64x64 body, and the rug shows what is solid. The small table keeps its drawing;
+  - `LavaLamp` -> `lava_lamp`, already named so;
+  - `BeadedCurtain` -> `beaded_curtain`, drawn by columns so the strands still part round Grandpa.
+- **Left in code.**
+  - The hotline's partition (`SeancePartition`): env-art's `seance_hotline/cubicle_wall.png` came out a
+    10x16 framed poster, not a partition, so the file and its manifest line were deleted.
+  - The Cinema's screen (`CinemaScreen`): the memory-scene pictures fill the screen wall, and the 101x59
+    `screen_frame.png` fits neither. The file stays for a later pass.
+
+## The newpaths2 art (arrived during the merge)
+
+- **The three returning enemies get their own art ids.** round-2 already wears `bingo_caller`,
+  `soot_ghost` and `notary_public` strips on the older floors, so building the new exports under those
+  ids would have redrawn reviewed enemies. They were built from a scratch copy whose folders were
+  renamed `seance_bingo_caller`, `seance_soot_ghost` and `cinema_notary_public`, and those three .tres
+  files dropped their `art_id`, so each wears its own art with no recolour. Before the drop,
+  `cinema_notary_public` briefly wore the base notary's art.
+- **No scaling.** The figures stand 44, 28 and 47 px tall, against round-2's 42 to 43 for the same
+  bodies. The soot ghost is a low blob, which suits its 18x24 box.
+- **Cuts**, read from contact sheets: the bingo caller's windup 1-3 and attack 5-7 (frame 4's ball in
+  flight would double the game's own thrown ball); the soot ghost's 1-3 and 4-6; the notary's 2-4 (the
+  stamp overhead) and 5-7 (the slam).
+- **Crabtree's star** spins through `star_spin.png`, a frame every 0.08 s, else the still `star.png`,
+  else the drawn star. A star projectile now redraws each physics frame; nothing else in its flight
+  changed.
+- **The tumbleweed** rolls through `tumbleweed_roll.png`, a quarter turn every 14 px and backwards going
+  west, on whole pixels. The newpaths2 `tumbleweed.png` (24x24) replaced paths-rework's 32x32 one, and
+  the rotated picture and then the drawing remain the fallbacks.
+
+## Verification
+
+- **Suite:** 2205 tests, 0 failed, no script error on the merged tree; 2206 after the prop wiring; 2207 on
+  the final tree (`7aeae08`), each in a `git archive` copy (GrandpaIntT). One failure on the way: the
+  hotline's returning-enemy test still expected the base art ids, updated to the new own ids.
+- **Full loops** of `df5c378` (the merges, tiles, props and probe) in `D:\grandpa-verify-int-1` and `-2`
+  (GrandpaInt1, GrandpaInt2), run together: both exited 0 with both SMOKE PASS lines, 10 paths cleared
+  each, no SCRIPT ERROR in either log. One more loop of `7aeae08`, since a star projectile now redraws
+  in `_physics_process`, in `D:\grandpa-verify-int-1` (GrandpaInt1): exit 0, both SMOKE PASS
+  lines, no SCRIPT ERROR.
+- **Screenshots** in `D:\grandpa-shots-int\` (`env_art_look.gd` for the Cinema, the Seance Hotline, the
+  Records Basement and the Waiting Room; `enemy_art_look.gd` in `enemies\`; `cinema_look.gd attacks` in
+  `cinema_attacks\`; `tumbleweed_and_star_check.png` from a throwaway probe). Seen:
+  - env-art tiles show on all four (teal Cinema carpet, violet hotline carpet with teal walls, stone
+    basement, brown lobby carpet); props read, warnings stay red on every floor, no red floods;
+  - the mint safe-spot ring shows only as the mark by Harold, never in a floor tile;
+  - lit floor and Harold, sampled: Cinema 0.39 / 0.53, hotline 0.21 / 0.55, basement 0.44 / 0.71;
+  - the new enemies' body luminance: notary 0.41, bingo caller 0.59 (the probe's diff); the soot ghost
+    hides in smoke when idle, so the probe's diff found nothing, and its walking body samples 0.49 from
+    the shot;
+  - the star spins (its flying shot happened to catch the thin edge-on frame); the tumbleweed rolls on
+    its lane both ways (the Cinema probe's own flying shot had its lane off camera).
+- **Left open:** the Cinema's `screen_frame.png` and a hotline partition picture, if wanted, need art at
+  the sizes the code draws; the small seance table could use a picture of its own.
