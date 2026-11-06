@@ -10,6 +10,7 @@ decor_density = 0.0
 [resource]
 script = ExtResource("1")
 id = "waiting_room"
+art_style = "depth"
 display_name = "The Waiting Room"
 rooms_dir = "res://data/rooms/waiting_room/"
 enemies = []
