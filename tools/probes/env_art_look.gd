@@ -4,17 +4,19 @@ extends SceneTree
 # pickup, and the boss room; then the Waiting Room's lobby with all its decor and two departments.
 # Prints the lit luminance of the floor, of the warning over it and of Harold, sampled from each shot.
 # Run only from an exported copy whose config/name is renamed.
-# Args after --: <path id> | waiting | all
+# Args after --: <path id> | waiting | all, then optionally the folder to save into.
 
-const OUT := "D:/grandpa-shots-env/"
+const DEFAULT_OUT := "D:/grandpa-shots-env/"
 const WALL_LIMIT_MS := 560000
 const FLOORS := {
 	"floor_1": [1, 0], "cemetery": [1, 1], "sunset_shores": [2, 0], "furnace_works": [2, 1],
-	"funeral_parlour": [3, 0], "last_resort_cruise": [4, 0], "terminal_zero": [5, 0], "head_office": [5, 1],
+	"funeral_parlour": [3, 0], "flashback_cinema": [3, 1], "last_resort_cruise": [4, 0], "seance_hotline": [4, 1],
+	"terminal_zero": [5, 0], "head_office": [5, 1],
 }
-const ORDER := ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "last_resort_cruise",
-	"terminal_zero", "head_office"]
+const ORDER := ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "flashback_cinema",
+	"last_resort_cruise", "seance_hotline", "terminal_zero", "head_office"]
 
+var OUT := DEFAULT_OUT
 var _start := 0
 var scene
 var view: RoomView
@@ -24,6 +26,9 @@ var progress
 
 func _initialize() -> void:
 	_start = Time.get_ticks_msec()
+	var user_args := OS.get_cmdline_user_args()
+	if user_args.size() > 1:
+		OUT = user_args[1].trim_suffix("/") + "/"
 	DirAccess.make_dir_recursive_absolute(OUT)
 	_main.call_deferred()
 
