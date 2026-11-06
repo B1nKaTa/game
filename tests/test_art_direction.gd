@@ -4,15 +4,13 @@ extends TestCase
 # door openings with signs, and the HUD's clear middle.
 
 
-func test_only_the_records_basement_is_drawn_in_the_depth_look() -> void:
+func test_every_area_is_drawn_in_the_depth_look_with_its_art_there() -> void:
 	for file in DirAccess.get_files_at("res://data/floors"):
 		if not file.ends_with(".tres"):
 			continue
 		var def: FloorDef = load("res://data/floors/" + file)
-		var wanted := DepthLook.STYLE if def.id == "floor_1" else ""
-		assert_eq(def.art_style, wanted, def.id)
-	assert_true(DepthLook.for_floor(load("res://data/floors/floor_1.tres")) != null, "its depth art is all there")
-	assert_eq(DepthLook.for_floor(load("res://data/floors/cemetery.tres")), null)
+		assert_eq(def.art_style, DepthLook.STYLE, def.id)
+		assert_true(DepthLook.for_floor(def) != null, "%s has its depth art (art/tiles/%s/depth)" % [def.id, def.art()])
 
 
 func test_the_ground_picks_its_wang_tile_from_the_four_corners() -> void:
