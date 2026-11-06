@@ -53,13 +53,17 @@ CUTS = {
     # The regenerated, lighter robe (2026-11-06): the scythe drawn back over his shoulder, then swept low.
     'regional_reaper': {'windup': ('attack', [1, 2, 3, 4], '436d18dc'), 'attack': ('attack', [5, 6, 7, 8], '436d18dc')},
     # The second batch (2026-11-06), picked off labelled contact sheets of each attack.
-    'filing_clerk': {'windup': ('attack', [2, 3, 4, 5], '72d5a1a2'), 'attack': ('attack', [6, 7, 8], '72d5a1a2')},
+    # The basement's redraw (2026-11-06, D:/grandpa-art/direction/enemies): the stack lowered and the arm
+    # drawn back, then the sheet thrown.
+    'filing_clerk': {'windup': ('attack', [5, 6, 7], '35c6f414'), 'attack': ('attack', [8], '35c6f414')},
     'debt_ghost': {'windup': ('attack', [2, 3, 4, 5, 6], '4a29e87f'), 'attack': ('attack', [7, 8], '4a29e87f')},
-    'seasonal_temp': {'windup': ('attack', [1, 2, 3], '427669fc'), 'attack': ('attack', [4, 5, 6, 7], '427669fc')},
+    # The skeleton temp crouches, then leaps and bites.
+    'seasonal_temp': {'windup': ('attack', [1, 2, 3, 4], '8ed37757'), 'attack': ('attack', [5, 6, 7, 8], '8ed37757')},
     'notary_public': {'windup': ('attack', [1, 2, 3, 4, 5], '56314993'), 'attack': ('attack', [6, 7, 8], '56314993')},
     # His windup is the lit fuse, which he crawls through; the blast is code and he is gone after it.
-    'burnt_out_auditor': {'windup': ('attack', [3, 4, 5, 6, 7, 8], '0cb59401'), 'attack': ('attack', [8], '0cb59401')},
-    'denial_officer': {'windup': ('attack', [2, 3, 4], '3861f270'), 'attack': ('attack', [5, 6, 7, 8], '3861f270')},
+    'burnt_out_auditor': {'windup': ('attack', [2, 3, 4, 5, 6, 7], '07de8230'), 'attack': ('attack', [8], '07de8230')},
+    # The claims clerk raises his rubber stamp high behind the drawer, then slams it down.
+    'denial_officer': {'windup': ('attack', [3, 4, 5, 6], 'e3c13db4'), 'attack': ('attack', [7, 8], 'e3c13db4')},
     'senior_adjuster': {'windup': ('attack', [1, 2, 3, 4], '041ecf4f'), 'attack': ('attack', [5, 6, 7, 8], '041ecf4f')},
     'plot_holder': {'windup': ('attack', [1, 2], '6d2d20b4'), 'attack': ('attack', [3, 4, 5, 6, 7], '6d2d20b4')},
     'head_groundskeeper': {'windup': ('attack', [3, 4, 5, 6, 7], 'ca1f2154'), 'attack': ('attack', [8], 'ca1f2154')},
