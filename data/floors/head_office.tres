@@ -55,6 +55,7 @@ scatter_lights = 4
 [resource]
 script = ExtResource("1")
 id = "head_office"
+art_style = "depth"
 display_name = "Head Office, Eternity Incorporated"
 rooms_dir = "res://data/rooms/head_office/"
 enemies = [ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7")]
