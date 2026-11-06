@@ -122,17 +122,17 @@ func test_he_alternates_his_two_attacks() -> void:
 	assert_true(first == ClubProBehavior.Attack.CHIP or first == ClubProBehavior.Attack.PUTT)
 
 
-func test_chip_is_at_least_as_hard_as_the_reverend_and_gloria() -> void:
+func test_chip_is_at_least_as_hard_as_the_reverend_and_crabtree() -> void:
 	var def := _load("chip")
 	assert_true(def.is_boss)
 	assert_true(absf(def.max_hp * GOLF_HEALTH - 760.0) < 0.5, str(def.max_hp * GOLF_HEALTH))
 	assert_eq(def.pension_drop, 8)
-	for id in ["reverend", "gloria"]:
+	for id in ["reverend", "crabtree"]:
 		assert_true(def.max_hp * GOLF_HEALTH >= _load(id).max_hp * FLOOR_THREE_HEALTH, id)
-	assert_true(def.speed >= _load("gloria").speed)
+	assert_true(def.speed >= _load("crabtree").speed)
 	assert_true(ClubProBehavior.COOLDOWN <= ReverendBehavior.COOLDOWN, "rests no longer than the Reverend")
-	assert_true(ClubProBehavior.COOLDOWN <= FountainDivaBehavior.COOLDOWN, "or Gloria")
-	var longest := maxf(maxf(ReverendBehavior.EULOGY_WINDUP, ReverendBehavior.PLATE_WINDUP), maxf(FountainDivaBehavior.COIN_WINDUP, FountainDivaBehavior.SPLASH_WINDUP))
+	assert_true(ClubProBehavior.COOLDOWN <= CrabtreeBehavior.COOLDOWN, "or Crabtree")
+	var longest := maxf(maxf(ReverendBehavior.EULOGY_WINDUP, ReverendBehavior.PLATE_WINDUP), maxf(CrabtreeBehavior.STAR_WINDUP, CrabtreeBehavior.THUMB_WINDUP))
 	for windup in [ClubProBehavior.CHIP_WINDUP, ClubProBehavior.PUTT_WINDUP]:
 		assert_true(windup <= longest, "no slower to wind up than they are, %f" % windup)
 	assert_eq(ClubProBehavior.MAX_ENEMIES, ReverendBehavior.MAX_ENEMIES)

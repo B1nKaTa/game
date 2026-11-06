@@ -193,11 +193,11 @@ func test_wanda_is_at_least_as_hard_as_the_last_depths_mini_bosses() -> void:
 	var final := def.max_hp * TERMINAL_HEALTH
 	assert_true(absf(final - 880.0) < 0.5, str(final))
 	assert_true(final > FLOOR_FOUR_MINI, "the spec's fourth-floor mini bosses end at about 760")
-	for id in ["reverend", "gloria"]:
+	for id in ["reverend", "crabtree"]:
 		assert_true(final >= _load(id).max_hp * FLOOR_THREE_HEALTH * 1.3, id)
 	assert_eq(def.pension_drop, 8)
 	assert_true(Wanda.COOLDOWN <= ReverendBehavior.COOLDOWN)
-	assert_true(Wanda.COOLDOWN <= FountainDivaBehavior.COOLDOWN)
+	assert_true(Wanda.COOLDOWN <= CrabtreeBehavior.COOLDOWN)
 	assert_true(Wanda.SUMMON_COUNT >= ReverendBehavior.SUMMON_COUNT)
 
 

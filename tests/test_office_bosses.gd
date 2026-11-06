@@ -5,7 +5,7 @@ extends TestCase
 const Doreen := preload("res://scripts/actors/behaviors/doreen_behavior.gd")
 const Chairman := preload("res://scripts/actors/behaviors/chairman_behavior.gd")
 const Reverend := preload("res://scripts/actors/behaviors/reverend_behavior.gd")
-const Diva := preload("res://scripts/actors/behaviors/fountain_diva_behavior.gd")
+const Critic := preload("res://scripts/actors/behaviors/crabtree_behavior.gd")
 const Thrower := preload("res://scripts/actors/behaviors/thrower_behavior.gd")
 # Head Office scales health by this, and its bosses hold their final health divided by it.
 const OFFICE_HEALTH := 2.6
@@ -23,7 +23,7 @@ func _load(id: String) -> EnemyDef:
 
 
 func _near_a_door(cell: Vector2i, cells: Vector2i, reach: int) -> bool:
-	for door in FountainDivaBehavior.door_cells(cells):
+	for door in SplashJets.door_cells(cells):
 		if absi(cell.x - door.x) <= reach and absi(cell.y - door.y) <= reach:
 			return true
 	return false
@@ -169,14 +169,14 @@ func test_doreen_is_at_least_as_hard_as_the_mini_bosses_before_her() -> void:
 	assert_true(def.is_boss)
 	assert_true(absf(def.max_hp * OFFICE_HEALTH - 880.0) < 0.5, str(def.max_hp * OFFICE_HEALTH))
 	assert_true(def.max_hp * OFFICE_HEALTH >= FLOOR_FOUR_MINI, "the fourth floor's minis, about 760 by the spec")
-	for id in ["reverend", "gloria"]:
+	for id in ["reverend", "crabtree"]:
 		assert_true(def.max_hp * OFFICE_HEALTH >= _load(id).max_hp * FLOOR_THREE_HEALTH, id)
 	assert_true(Doreen.COOLDOWN <= Reverend.COOLDOWN, "rests no longer than the Reverend's")
-	assert_true(Doreen.COOLDOWN <= Diva.COOLDOWN, "or Gloria's")
+	assert_true(Doreen.COOLDOWN <= Critic.COOLDOWN, "or Crabtree's")
 	assert_true(Doreen.MEMO_WINDUP <= Reverend.EULOGY_WINDUP + 0.001, "windups no slower")
-	assert_true(Doreen.MUSIC_WINDUP <= Diva.COIN_WINDUP + 0.001)
+	assert_true(Doreen.MUSIC_WINDUP <= Critic.STAR_WINDUP + 0.001)
 	assert_true(Doreen.SUMMON_COUNT >= Reverend.SUMMON_COUNT)
-	assert_true(def.speed >= _load("gloria").speed)
+	assert_true(def.speed >= _load("crabtree").speed)
 	var body := def.body_size * 0.8
 	assert_true(body.x <= RoomBackdrop.TILE and body.y <= RoomBackdrop.TILE, "her box fits one cell")
 

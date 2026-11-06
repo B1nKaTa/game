@@ -172,19 +172,19 @@ func test_she_never_summons_over_the_cap_and_her_diners_pay_nothing() -> void:
 	diner.free()
 
 
-func test_lorraine_is_at_least_as_hard_as_the_reverend_and_gloria() -> void:
+func test_lorraine_is_at_least_as_hard_as_the_reverend_and_crabtree() -> void:
 	var def := _load("lorraine")
 	assert_true(def.is_boss)
 	assert_eq(def.id, "lorraine")
 	assert_eq(def.display_name, "Lorraine, Cruise Director")
 	assert_true(absf(def.max_hp * CRUISE_HEALTH - 760.0) < 0.5, str(def.max_hp * CRUISE_HEALTH))
 	assert_eq(def.pension_drop, 8)
-	for id in ["reverend", "gloria"]:
+	for id in ["reverend", "crabtree"]:
 		assert_true(def.max_hp * CRUISE_HEALTH >= _load(id).max_hp * FLOOR_THREE_HEALTH, id)
 	assert_true(Director.COOLDOWN <= ReverendBehavior.COOLDOWN)
-	assert_true(Director.COOLDOWN <= FountainDivaBehavior.COOLDOWN)
+	assert_true(Director.COOLDOWN <= CrabtreeBehavior.COOLDOWN)
 	assert_true(Director.SUMMON_COUNT >= ReverendBehavior.SUMMON_COUNT)
-	assert_true(Director.SUMMON_COUNT >= FountainDivaBehavior.SUMMON_COUNT)
+	assert_true(Director.SUMMON_COUNT >= CrabtreeBehavior.MOST_HECKLERS)
 
 
 # --- Commodore Wellington ---
@@ -314,3 +314,66 @@ func test_the_cruises_effects_are_cleared_from_a_stored_room() -> void:
 	for kept: Node in [Pickup.new(), ShipDeck.new()]:
 		assert_false(RoomView.is_passing_effect(kept), "%s is kept" % kept.get_script().get_global_name())
 		kept.free()
+
+
+# --- the deck wash's jets (SplashJets, which the Mall's fountain diva first had) ---
+
+func _jet_doors(cells: Vector2i) -> Array[Vector2i]:
+	return [Vector2i(cells.x / 2, 1), Vector2i(cells.x / 2, cells.y - 2), Vector2i(1, cells.y / 2), Vector2i(cells.x - 2, cells.y / 2)]
+
+
+func _near_a_jet_door(cell: Vector2i, cells: Vector2i) -> bool:
+	for door in _jet_doors(cells):
+		if absi(cell.x - door.x) <= 1 and absi(cell.y - door.y) <= 1:
+			return true
+	return false
+
+
+func test_splash_spots_lie_near_him_on_open_floor_away_from_doors() -> void:
+	var cells := Vector2i(20, 11)
+	assert_eq(SplashJets.door_cells(cells), _jet_doors(cells))
+	# A pillar of blocked cells in the room, as props would make.
+	var is_open := func(spot: Vector2) -> bool:
+		var cell := WalkGrid.cell_of(spot)
+		return not (cell.x >= 6 and cell.x <= 7 and cell.y >= 3 and cell.y <= 6)
+	for seed_value in 200:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = seed_value
+		var target := Vector2i(rng.randi_range(1, cells.x - 2), rng.randi_range(1, cells.y - 2))
+		var spots := SplashJets.splash_cells(target, 3, rng, cells, is_open)
+		assert_true(spots.size() >= 1, "seed %d: at least one jet" % seed_value)
+		var seen := {}
+		for spot in spots:
+			assert_false(seen.has(spot), "seed %d: each spot once" % seed_value)
+			seen[spot] = true
+			assert_true(spot.x >= 1 and spot.y >= 1 and spot.x <= cells.x - 2 and spot.y <= cells.y - 2, "seed %d: off the walls" % seed_value)
+			assert_false(_near_a_jet_door(spot, cells), "seed %d: off the doors at %s" % [seed_value, str(spot)])
+			assert_true(is_open.call(RoomBackdrop.cell_center(spot)), "seed %d: on open floor" % seed_value)
+			assert_true(maxi(absi(spot.x - target.x), absi(spot.y - target.y)) <= SplashJets.SPLASH_REACH, "seed %d: near him" % seed_value)
+		for patch_spot in spots:
+			for cell in SplashJets.splash_patch(patch_spot, cells, is_open):
+				assert_true(maxi(absi(cell.x - patch_spot.x), absi(cell.y - patch_spot.y)) <= 1, "a 3 by 3 patch")
+				assert_false(_near_a_jet_door(cell, cells), "no wet door")
+				assert_true(is_open.call(RoomBackdrop.cell_center(cell)), "no wet prop")
+
+
+func test_in_an_open_room_all_three_jets_come_and_each_patch_is_whole() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 4
+	var spots := SplashJets.splash_cells(Vector2i(6, 4), 3, rng, Vector2i(20, 11))
+	assert_eq(spots.size(), 3)
+	assert_eq(spots[0], Vector2i(6, 4), "the first jet is right under him")
+	assert_eq(SplashJets.splash_patch(Vector2i(6, 4), Vector2i(20, 11)).size(), 9)
+	assert_eq(SplashJets.splash_patch(Vector2i(1, 1), Vector2i(20, 11)).size(), 4, "a patch in a corner keeps off the walls")
+
+
+func test_a_splash_puts_wet_floor_down_for_a_while_then_takes_it_up() -> void:
+	var cells: Array[Vector2i] = [Vector2i(3, 3), Vector2i(4, 3)]
+	var splash := WetSplash.new()
+	splash.setup(cells, 4.0)
+	splash._ready()
+	assert_eq(splash.wet_floors().size(), 2)
+	assert_true(WetFloor.any_covers(splash.wet_floors(), RoomBackdrop.cell_center(Vector2i(3, 3))))
+	assert_false(splash.advance(3.9))
+	assert_true(splash.advance(0.2), "dried out")
+	splash.free()

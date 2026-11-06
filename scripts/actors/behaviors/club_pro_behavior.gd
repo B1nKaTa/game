@@ -20,7 +20,7 @@ const PUTT_PAST := 80.0
 const PUTT_BEND := 70.0
 const PUTT_STEPS := 14
 const WARNING_RADIUS := 34.0
-# As short as the Reverend's rest, and shorter than Gloria's.
+# As short as the Reverend's rest, and shorter than Crabtree's.
 const COOLDOWN := 0.35
 const KEEP_NEAR := 110.0
 const FIRST_SUMMON := 5.0

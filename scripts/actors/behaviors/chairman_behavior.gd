@@ -393,7 +393,7 @@ static func centered_in_gap(route: OverlapRoute, spot: Vector2, gaps: Array[Rect
 static func can_be_taped(cell: Vector2i, room_cells: Vector2i, is_open := Callable()) -> bool:
 	if cell.x < 1 or cell.y < 1 or cell.x > room_cells.x - 2 or cell.y > room_cells.y - 2:
 		return false
-	for door in FountainDivaBehavior.door_cells(room_cells):
+	for door in SplashJets.door_cells(room_cells):
 		if absi(cell.x - door.x) <= RoomLayout.RED_TAPE_DOOR_CLEARANCE and absi(cell.y - door.y) <= RoomLayout.RED_TAPE_DOOR_CLEARANCE:
 			return false
 	return not is_open.is_valid() or is_open.call(RoomBackdrop.cell_center(cell))

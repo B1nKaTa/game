@@ -213,3 +213,13 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
   eyeshade and hand projector).
 - **Retired tests moved:** the Mall Cop's charge, whistle and rally tests went to the airport's enemy
   tests and the Perfume Sprayer's to the office's, each now pinning the numbers the Mall's def had.
+- **Crabtree:** 640 final health (355.556 in the .tres), 72 px/s, 8 Pension, Gloria's 0.6 s rest. The
+  star rating says its number ("Three stars.") and never repeats the last one; a fan of 1 to 5 stars
+  down warned lanes after a 0.6 s windup, spread (stars - 1) x 18 degrees (0 to 72) and flying
+  260 - (stars - 1) x 30 px/s (260 to 140). The thumbs down winds up 0.8 s and sends a Klaus-style
+  ring from 24 to 130 px over 0.7 s ("Thumbs down."). The bad review comes every 10 s (first at 4 s):
+  2 or 3 Extras, as the roll says, on summon marks across his way, never past 5 enemies in the room
+  ("A dreadful show!").
+- **Gloria's shared rules:** the fountain jets' spot and patch rules, which the Commodore's deck wash
+  and the Chairman still use, moved to `SplashJets` with their tests (now in the cruise's boss tests);
+  the comparisons against Gloria in the later floors' tests now name Crabtree.

@@ -23,7 +23,7 @@ const QUOIT_SPREAD := 72.0
 const QUOIT_APART := 50.0
 const QUOIT_TRIES := 30
 const WARNING_RADIUS := 34.0
-# As short as the Reverend's rest, and shorter than Gloria's, so she is at least as hard as either.
+# As short as the Reverend's rest, and shorter than Crabtree's, so she is at least as hard as either.
 const COOLDOWN := 0.5
 const KEEP_NEAR := 110.0
 const FIRST_SUMMON := 5.0

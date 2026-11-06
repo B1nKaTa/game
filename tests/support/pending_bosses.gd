@@ -6,7 +6,7 @@ extends RefCounted
 # golf club's bosses, while their posters and mementos already name the bosses that replace them, so
 # the tests that match a floor's boss to its poster or memento read the floor's boss through here.
 
-const BY_OLD := {"gloria": "crabtree", "mall_santa": "projectionist", "chip": "celestine", "thaddeus_fairweather": "madame_zara"}
+const BY_OLD := {"mall_santa": "projectionist", "chip": "celestine", "thaddeus_fairweather": "madame_zara"}
 
 
 static func id_of(boss_id: String) -> String:

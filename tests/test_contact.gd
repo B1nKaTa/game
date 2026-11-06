@@ -48,14 +48,11 @@ func test_ghosts_pass_through_him_unless_a_def_opts_in() -> void:
 		assert_eq(Mothball.is_ghost(_def(id)), ContactRule.is_ghost(_def(id)), "the mothballs keep off the same ghosts")
 
 
-func test_a_def_can_opt_out_and_the_dummy_and_walkers_do() -> void:
+func test_a_def_can_opt_out_and_the_dummy_does() -> void:
 	var soft: EnemyDef = _def("intern_reaper").duplicate()
 	soft.contact_damage = 0
 	assert_eq(ContactRule.damage_of(soft), 0)
 	assert_eq(ContactRule.damage_of(_def("training_dummy")), 0, "the Training Yard dummy")
-	assert_eq(ContactRule.damage_of(_def("mall_walker")), 0, "the Mall Walkers hurt on touch by their own clock")
-	var walker := FileAccess.get_file_as_string("res://scripts/actors/behaviors/mall_walker_behavior.gd")
-	assert_true(walker.contains("if _contact.touch(delta,"), "and that clock still runs")
 
 
 func test_its_moment_can_make_a_body_harmless() -> void:

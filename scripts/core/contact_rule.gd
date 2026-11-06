@@ -10,8 +10,7 @@ extends RefCounted
 # A touch costs nothing from:
 # - a ghost (the Soot Ghosts, the Debt Collector Ghost, the Weeping Mourners), unless its def sets
 #   ghost_contact;
-# - a def whose contact_damage is 0: the Training Yard's dummy, and the Mall Walkers, whose line hurts on
-#   touch by its own clock;
+# - a def whose contact_damage is 0, such as the Training Yard's dummy;
 # - an enemy that is dead, dying, dismissed or queued to go;
 # - one still waiting out the room's start, which is also how a mimic that has just woken out of its chest
 #   gets its moment, since it waits as a room's enemies do;
