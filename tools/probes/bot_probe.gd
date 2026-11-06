@@ -16,6 +16,8 @@ extends SceneTree
 # Version 9 reads any hazard node that answers threat_at(p, strict) (0 clear, 1 better avoided, 2 a
 # coming hit) and threat_imminent(p), as every hazard of the Flashback Cinema does, with no branch of
 # its own: the beam, splice lanes, reel lanes, the burn, the popcorn tub and the film trail.
+# Version 10 leaves a marked safe spot on the third floor too once such a hazard covers it (it stood
+# on the beam's mark under a reel's pie lane), and names those hazards in the hits by source.
 # Version 6 reads the floor-5 bosses' overlaps: the Chairman's desk slam is a warned spot like any
 # deep strike, and Augustine's runway mark is honoured while his lanes light, as a gap is while a
 # chart or a sweep runs (the mark is skipped whenever a lane or strike covers it, as before).
@@ -279,6 +281,10 @@ func _attribute(scene) -> void:
 		elif child is ShuffleboardPuck and child.is_sliding() and scene.player.feet().global_position.distance_to(child.global_position + CollectionPlate.point_along(child._path, child._travelled)) < 30.0:
 			name = "puck"
 			d = 1.0
+		elif child.has_method("threat_at") and not (child is LineTether or child is SeanceCircle) and (child.threat_imminent(scene.player.feet().global_position) or child.threat_at(scene.player.feet().global_position, false) >= 2):
+			# Version 9's hazards name themselves when his feet are under a coming hit.
+			name = str(child.get_script().get_global_name())
+			d = 0.5
 		elif child is Enemy:
 			name = child.def.id
 		if name != "" and d < best_d:
@@ -669,6 +675,10 @@ class Bot extends Node:
 			if child is SafeSpotMark and not child.is_queued_for_deletion() and _seen_for(child):
 				if _heavy_strike_on(child.global_position) or (scene.debug_floor_def().depth >= 4 and _spot_hurts(child.global_position, _zones, false)):
 					continue
+				# Version 10: on any floor, a mark a later hazard covers (a reel's lane over the beam's
+				# mark) is no longer safe.
+				if _threat_hurts(child.global_position):
+					continue
 				if scene.debug_floor_def().depth >= 4 and (not _gap_attack_on() or _threat != Vector2.ZERO):
 					continue
 				return child.global_position
@@ -908,6 +918,13 @@ class Bot extends Node:
 				_want_dodge(child.get_instance_id())
 			if _deep_imminent(child, feet):
 				_want_dodge(child.get_instance_id() + 1)
+
+	# Whether a hazard read through threat_at has a coming hit on a spot.
+	func _threat_hurts(p: Vector2) -> bool:
+		for zone in _zones:
+			if is_instance_valid(zone) and zone.has_method("threat_at") and int(zone.threat_at(p, true)) == 2:
+				return true
+		return false
 
 	func _spot_hurts(p: Vector2, zones: Array, with_enemies := true) -> bool:
 		if with_enemies and _enemy_warning_at(p):
