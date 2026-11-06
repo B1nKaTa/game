@@ -122,7 +122,7 @@ func _shops() -> Array[RoomLayout]:
 	for layout in RoomCatalog.load_valid("res://data/rooms/last_resort_cruise/"):
 		if layout.room_type == RoomLayout.TYPE_SHOP:
 			shops.append(layout)
-	# Fairway's End.
+	# The Seance Hotline.
 	for layout in RoomCatalog.load_valid("res://data/rooms/seance_hotline/"):
 		if layout.room_type == RoomLayout.TYPE_SHOP:
 			shops.append(layout)

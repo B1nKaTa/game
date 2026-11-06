@@ -342,3 +342,22 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
 - **The table's candles** give a small flickering candle light; the desks give none, the wall lights
   being the candle-warm desk lights.
 - **`SeanceProps.is_passing_effect`** returns false until the hotline's attacks add their effects.
+- **The 33 layouts (Phase A):** the same file names, types, sizes and mix as Fairway's End's, drawn over
+  the old shapes: hedgerows became cubicle banks (a run of partitions with a run of desks against it,
+  forming lanes), the dogleg and the staircases stayed as stepped banks, the round hedge became a ring
+  of partitions with desks, sand traps and flags became lava lamps, beaded curtains and filing trays,
+  and ball washers became lamps and trays. Fighters were placed from the printed legal-cell maps and
+  every room checked with a py port of `validate()` and the hotline's rules before Godot ran.
+- **Counts across the folder:** 341 partition cells, 276 desk cells (138 desks), 48 table cells (12
+  tables), 44 lava lamps, 16 curtains, 16 filing trays, 60 wall lanterns, 3 chests (combat_02,
+  combat_05, combat_large_02, as golf had), 132 `E`, 4 `B`. That is 491 coin rolls at the furniture
+  rate (each partition cell, each desk and each table once), under the Cinema's 785 seats and Head
+  Office's 754 partitions, so no coin rate changes; a test keeps the count under the Cinema's seats.
+- **Seance tables** stand in all 8 large rooms (two in some) and in no other, since a 2x2 table needs
+  the room; the boss rooms flank the `B` with them. Every `B` keeps its 3x3 clear and fits a 32x40, a
+  44x52 and the Club President's 46x52 box.
+- **Lanterns** stay where golf hung them: wall lanterns, lit candle-warm by the palette.
+- **Tests moved:** the floor's path, difficulty, layout, mix, combat numbers, room types, whole-floor,
+  crossroads, vault and shop tests moved from test_golf_floor.gd to test_seance_floor.gd against the new
+  rooms; test_golf_floor keeps only the golf enemies, bosses, patterns, sand, fog and golf-prop tests for
+  the later phases to retire. The chest and shop loops over the folder now say "The Seance Hotline".

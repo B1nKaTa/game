@@ -1,5 +1,14 @@
 extends TestCase
 
+const DIR := "res://data/rooms/seance_hotline/"
+const SEEDS := 300
+const BossSpawn := preload("res://tests/test_boss_spawn_room.gd")
+# Madame Zara and Sister Celestine, who take the floor's boss rooms later in Task 5.
+const ZARA_BODY := Vector2(44, 52)
+const CELESTINE_BODY := Vector2(32, 40)
+# Every symbol a hotline room may hold: walls and floor, what the rules place, wall lanterns, and the
+# hotline's desks, tables, partitions, lamps, curtains and filing trays.
+const HOTLINE_SYMBOLS := "#.EIHTBCSPl" + "dqzaey"
 # Every other path a palette must stand apart from.
 const OTHER_PATHS := ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "flashback_cinema", "last_resort_cruise", "terminal_zero", "head_office"]
 
@@ -429,3 +438,224 @@ func test_every_props_debris_shows_on_the_carpet() -> void:
 	for tone in _tones(palette):
 		assert_true(_difference(tray.debris_color(), tone) > 0.25, "filing tray debris")
 	tray.free()
+
+
+# --- the path ---
+
+func _basement() -> FloorDef:
+	return _floor("floor_1")
+
+
+func _pool() -> Array[RoomLayout]:
+	return RoomCatalog.load_valid(_def().rooms_dir)
+
+
+func _layouts() -> Array[RoomLayout]:
+	var found: Array[RoomLayout] = []
+	for resource in Content.load_dir(DIR):
+		found.append(resource)
+	return found
+
+
+func _name(layout: RoomLayout) -> String:
+	return layout.resource_path.get_file()
+
+
+func test_the_hotline_is_the_locked_fourth_floor_path_with_its_own_rooms() -> void:
+	var def := _def()
+	assert_eq(def.id, "seance_hotline")
+	assert_eq(def.display_name, "Beyond Calling Psychic Hotline, Night Shift")
+	assert_eq(def.depth, 4)
+	assert_eq(def.open_after_depth, 4)
+	assert_eq(def.clears_to_open, 1, "it opens after a fourth-floor clear")
+	assert_eq(def.danger, 6)
+	assert_eq(def.closed_hint, "Beat a fourth-floor boss first")
+	assert_eq(def.rooms_dir, DIR)
+
+
+func test_its_difficulty_follows_the_fourth_floor() -> void:
+	var def := _def()
+	assert_near(def.health_mult, 2.2)
+	assert_near(def.pension_mult, 2.5)
+	assert_eq(def.enemies_by_size, {"small": 7, "medium": 9, "large": 14})
+	assert_eq(def.treasure_pension, 20)
+	assert_eq(def.clear_pension, _basement().clear_pension)
+	assert_eq(def.prop_pension, _basement().prop_pension)
+	assert_eq(def.vault_stone_level, _basement().vault_stone_level)
+	assert_eq(def.chest_weights, {"lunchbox": 26, "locked": 22, "safe": 20, "urn": 16, "mimic": 16})
+
+
+# --- its rooms ---
+
+func test_every_layout_in_the_folder_is_valid() -> void:
+	var count := 0
+	for layout in _layouts():
+		count += 1
+		assert_eq(layout.validate().size(), 0, "%s: %s" % [_name(layout), str(layout.validate())])
+	assert_eq(count, 33)
+
+
+func test_the_rooms_keep_the_old_paths_mix() -> void:
+	var mix := {}
+	for layout in _layouts():
+		var key := "%s %s" % [layout.room_type, layout.size_class()]
+		mix[key] = int(mix.get(key, 0)) + 1
+	assert_eq(mix, {
+		"combat medium": 7, "combat large": 3, "combat small": 3,
+		"mini_boss medium": 1, "mini_boss large": 1, "floor_boss medium": 1, "floor_boss large": 1,
+		"item medium": 1, "item large": 1, "item small": 1, "healing medium": 1, "healing small": 1,
+		"treasure medium": 1, "treasure small": 1, "side medium": 1, "side large": 1, "side small": 1,
+		"secret medium": 1, "secret small": 1, "vault medium": 1, "vault large": 1, "vault small": 1,
+		"shop medium": 1})
+
+
+func test_combat_rooms_hold_the_fourth_floors_numbers() -> void:
+	var combat := 0
+	for layout in _pool():
+		if layout.room_type == RoomLayout.TYPE_COMBAT:
+			combat += 1
+			assert_eq(_def().room_size_errors(layout).size(), 0, "%s %s" % [_name(layout), str(_def().room_size_errors(layout))])
+	assert_eq(combat, 13)
+
+
+func test_every_room_type_a_floor_uses_is_covered() -> void:
+	var types := {}
+	for layout in _pool():
+		types[layout.room_type] = true
+	for room_type: String in RoomLayout.REQUIRED:
+		if not room_type in [RoomLayout.TYPE_CROSSROADS, RoomLayout.TYPE_LANDING, RoomLayout.TYPE_ARCADE, RoomLayout.TYPE_DEPARTMENT]:
+			assert_true(types.has(room_type), room_type)
+
+
+# Cubicle rows of partitions and desks, filing trays, lava lamps and curtains, a seance table in every
+# large room, chests in a few fighting rooms, and nothing of the golf course: no sand, flags, ball
+# washers or hedges.
+func test_rooms_hold_the_hotlines_props_and_nothing_of_the_golf_course() -> void:
+	var counts := {}
+	var chest_rooms := 0
+	for layout in _layouts():
+		for row in layout.rows:
+			for symbol in row:
+				assert_true(HOTLINE_SYMBOLS.contains(symbol), "'%s' in %s" % [symbol, _name(layout)])
+				counts[symbol] = int(counts.get(symbol, 0)) + 1
+		if layout.room_type == RoomLayout.TYPE_COMBAT and not layout.cells_of("C").is_empty():
+			chest_rooms += 1
+		assert_false(layout.ship_rolls, _name(layout))
+	for symbol in [RoomLayout.SYMBOL_SAND, RoomLayout.SYMBOL_FLAG, RoomLayout.SYMBOL_BALL_WASHER, RoomLayout.SYMBOL_HEDGE]:
+		assert_eq(int(counts.get(symbol, 0)), 0, "no %s" % symbol)
+	assert_true(int(counts.get(RoomLayout.SYMBOL_PARTITION, 0)) >= 200, "partition cells %d" % int(counts.get("z", 0)))
+	assert_true(int(counts.get(RoomLayout.SYMBOL_DESK, 0)) >= 150, "desk cells %d" % int(counts.get("d", 0)))
+	assert_true(int(counts.get(RoomLayout.SYMBOL_LAVA_LAMP, 0)) >= 20, "lava lamps %d" % int(counts.get("a", 0)))
+	assert_true(int(counts.get(RoomLayout.SYMBOL_BEADED_CURTAIN, 0)) >= 10, "curtains %d" % int(counts.get("e", 0)))
+	assert_true(int(counts.get(RoomLayout.SYMBOL_IN_TRAY, 0)) >= 10, "filing trays %d" % int(counts.get("y", 0)))
+	assert_true(chest_rooms >= 3, "fighting rooms with a chest %d" % chest_rooms)
+
+
+# Desks pair up along a row and tables fill a square, so every piece is whole: no desk run of odd
+# length, every table cell in a square, and a seance table in every large room and only there.
+func test_every_desk_and_table_is_whole_and_every_large_room_has_a_table() -> void:
+	for layout in _layouts():
+		for desk: Array in SeanceProps.desk_groups(layout):
+			assert_eq(desk.size(), 2, "%s: a narrow desk at %s" % [_name(layout), str(desk[0])])
+		var tables := SeanceProps.table_groups(layout)
+		for table: Array in tables:
+			assert_eq(table.size(), 4, "%s: a small table at %s" % [_name(layout), str(table[0])])
+		if layout.size_class() == RoomLayout.SIZE_LARGE:
+			assert_true(tables.size() >= 1, "%s has a seance table" % _name(layout))
+		else:
+			assert_eq(tables.size(), 0, "%s is too small for a seance table" % _name(layout))
+
+
+# A partition, a desk or a table can hide a coin at the furniture rate, so the floor holds no more such
+# pieces than the Cinema has seats (lesson: count a coin prop across the folder before wiring it).
+func test_the_coin_props_are_counted_against_the_cinemas_seats() -> void:
+	var pieces := 0
+	for layout in _layouts():
+		pieces += layout.cells_of(RoomLayout.SYMBOL_PARTITION).size()
+		pieces += SeanceProps.desk_groups(layout).size() + SeanceProps.table_groups(layout).size()
+	var seats := 0
+	for resource in Content.load_dir("res://data/rooms/flashback_cinema/"):
+		seats += resource.cells_of(RoomLayout.SYMBOL_SEAT).size()
+	assert_true(pieces >= 200, "coin pieces %d" % pieces)
+	assert_true(pieces <= seats, "%d coin pieces against the Cinema's %d seats" % [pieces, seats])
+
+
+# Celestine (32x40) and Madame Zara (44x52) take these rooms later, so their real collision boxes must
+# start clear of every desk, table and partition, with the cells all round the B open, as
+# test_boss_spawn_room checks for whoever holds them now.
+func test_the_boss_rooms_fit_the_hotlines_own_bosses() -> void:
+	var checked := 0
+	for layout in _layouts():
+		if layout.room_type != RoomLayout.TYPE_FLOOR_BOSS and layout.room_type != RoomLayout.TYPE_MINI_BOSS:
+			continue
+		for cell in layout.cells_of("B"):
+			checked += 1
+			for body in [CELESTINE_BODY, ZARA_BODY]:
+				assert_eq(BossSpawn.solid_cells_under(layout, cell, body).size(), 0, "%s at %s for %s" % [_name(layout), str(cell), str(body)])
+			for offset in [Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1), Vector2i(-1, 0), Vector2i(1, 0), Vector2i(-1, 1), Vector2i(0, 1), Vector2i(1, 1)]:
+				assert_false(layout.is_solid_at(cell + offset), "%s: room round the boss at %s" % [_name(layout), str(cell + offset)])
+	assert_eq(checked, 4)
+
+
+func test_props_go_into_a_fighting_room() -> void:
+	var layout: RoomLayout = load(DIR + "combat_large_01.tres")
+	var view := _bare_room(layout, RoomLayout.TYPE_COMBAT)
+	SeanceProps.build(view, layout, _def().room_palette())
+	var counts := {}
+	for child: Variant in view.get_children():
+		var kind: String = child.get_script().get_global_name()
+		counts[kind] = int(counts.get(kind, 0)) + 1
+	assert_eq(int(counts.get("SeancePartition", 0)), layout.cells_of(RoomLayout.SYMBOL_PARTITION).size())
+	assert_eq(int(counts.get("PsychicDesk", 0)), layout.cells_of(RoomLayout.SYMBOL_DESK).size() / 2)
+	assert_eq(int(counts.get("SeanceTable", 0)), layout.cells_of(RoomLayout.SYMBOL_SEANCE_TABLE).size() / 4)
+	assert_eq(int(counts.get("LavaLamp", 0)), layout.cells_of(RoomLayout.SYMBOL_LAVA_LAMP).size())
+	assert_eq(int(counts.get("BeadedCurtain", 0)), layout.cells_of(RoomLayout.SYMBOL_BEADED_CURTAIN).size())
+	view.free()
+
+
+# --- whole floors ---
+
+func test_every_built_floor_follows_the_same_rules_as_the_first() -> void:
+	var pool := _pool()
+	var vaults := 0
+	var sizes := {}
+	for seed_value in SEEDS:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = seed_value
+		var map := FloorBuilder.build_from_pool(rng, _def(), pool)
+		assert_true(map != null, "seed %d" % seed_value)
+		if map == null:
+			continue
+		for room in map.rooms:
+			sizes[room.layout.size_class()] = true
+			vaults += 1 if room.room_type == RoomLayout.TYPE_VAULT else 0
+		assert_true(map.only_hidden_rooms_need_a_bomb(), "seed %d" % seed_value)
+		assert_true(map.hidden_rooms_are_dead_ends(), "seed %d" % seed_value)
+		assert_eq(map.room(map.boss_id).room_type, RoomLayout.TYPE_FLOOR_BOSS)
+		assert_eq(map.room(map.main_path[map.main_path.size() / 2]).room_type, RoomLayout.TYPE_MINI_BOSS)
+	assert_eq(sizes.size(), 3)
+	assert_true(vaults > 250, "most floors have a vault, %d" % vaults)
+
+
+func test_every_floor_keeps_a_free_cell_beside_its_start_for_the_crossroads() -> void:
+	var crossroads: RoomLayout = load("res://data/rooms/crossroads/crossroads.tres")
+	var pool := _pool()
+	for seed_value in 100:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = seed_value
+		var map := FloorBuilder.build_from_pool(rng, _def(), pool)
+		var room := map.attach_crossroads(crossroads, RoomLayout.EAST)
+		assert_true(room != null, "seed %d" % seed_value)
+
+
+func test_vault_extras_find_their_spots_here_too() -> void:
+	for layout in _pool():
+		if layout.room_type == RoomLayout.TYPE_VAULT:
+			assert_eq(layout.vault_extra_cells(RoomLayout.VAULT_EXTRAS).size(), RoomLayout.VAULT_EXTRAS, _name(layout))
+
+
+func test_every_shop_plan_tier_has_a_spot() -> void:
+	for layout in _pool():
+		if layout.room_type == RoomLayout.TYPE_SHOP:
+			assert_eq(layout.plan_reward_cells(ProgressData.RETIREMENT_TIERS.size()).size(), ProgressData.RETIREMENT_TIERS.size(), _name(layout))
+			assert_true(layout.merchant_cell() != Vector2i(-1, -1), _name(layout))

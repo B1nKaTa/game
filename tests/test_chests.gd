@@ -285,7 +285,7 @@ func test_shipped_rooms_still_hold_chest_cells() -> void:
 	# The Last Resort Cruise
 	for layout in RoomCatalog.load_valid("res://data/rooms/last_resort_cruise/"):
 		chests += layout.cells_of("C").size()
-	# Fairway's End.
+	# The Seance Hotline.
 	for layout in RoomCatalog.load_valid("res://data/rooms/seance_hotline/"):
 		chests += layout.cells_of("C").size()
 	assert_true(chests >= 12, "had %d chest cells" % chests)
