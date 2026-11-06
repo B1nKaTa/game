@@ -672,3 +672,15 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
   beside Harold's own glow but stays apart from the red; the Wheel's warning tints its whole band, since
   the blades sweep all of it in their 2 s spin; the office chairs on the carpet read as decor. Desks and
   partitions on the second row of medium rooms sit clear of the HUD band.
+- **Verified (Phase F):** the suite passed in `git archive` copies of both Phase F commits (2168 tests
+  with the probe, 2172, 0 failed, with the four new tests); the 200-seed plan results are Phase C's and
+  D's above. A first run of the final copy failed `test_game_settings`' round trip only because a second
+  copy's suite ran at the same moment and wrote the same settings file in the OS temp folder; alone it
+  passed. A 3-run bot smoke (`max good 3 1 4 bosses`, path index 1 is the hotline at depth 4, version 9
+  from its own copy) beat Celestine 3 of 3 and Madame Zara 2 of 3 (boss_left 5.8, the loss with 17% of
+  her health left; most hits were touches of her and of the Ectoplasm), with no script error: it plays
+  the floor, and Task 6 tunes. One full loop from a copy of `d387bcb` (10 minutes, nothing else
+  running) exited 0 with both SMOKE PASS lines, every flag true, 10 paths cleared and no SCRIPT ERROR in
+  the whole log; its second run takes every east path, so it cleared the Seance Hotline, Celestine and
+  Madame Zara included (the "seance_hotline's clear is remembered" check held), with no change to the
+  driver. The real save's MD5 stayed 510284fa2ead4647c94fee44f99ca787 throughout.
