@@ -638,12 +638,20 @@ func _place_prop(prop: BreakableBlock, cell: Vector2i) -> void:
 
 func _create_decor(palette: RoomPalette) -> void:
 	var items := RoomDecor.plan(_room.layout, palette, _room.decor_seed)
-	# The depth look lays its own puddles and cracks into the ground, so the code ones stay out.
+	# The depth look lays its own cracks into the ground, so the code puddles and cracks stay out, and
+	# so do the little bone scatters, too small to name at 1x.
 	if _depth != null:
 		var kept: Array[Dictionary] = []
+		var papers := 0
 		for item in items:
-			if item["kind"] != RoomDecor.PUDDLE and item["kind"] != RoomDecor.CRACK:
-				kept.append(item)
+			if [RoomDecor.PUDDLE, RoomDecor.CRACK, RoomDecor.BONES].has(item["kind"]):
+				continue
+			# Its grass is paper here: half as many stacks, so fewer, clearer things lie about.
+			if item["kind"] == RoomDecor.GRASS:
+				papers += 1
+				if papers % 2 == 0:
+					continue
+			kept.append(item)
 		items = kept
 	var layer := DecorLayer.new()
 	layer.setup(items, palette)

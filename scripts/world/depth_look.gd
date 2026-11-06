@@ -6,8 +6,8 @@ extends RefCounted
 #
 # Ground. One continuous base terrain over the whole room, with patches of a second terrain laid over it
 # by a smooth noise on the cell corners, drawn with the 16 Wang tiles of res://art/tiles/<set>/depth/
-# ground.png (index NW*8 + NE*4 + SW*2 + SE, a set bit being the patch). Puddles, cracks and grit are
-# baked once into small textures and scattered at pixel offsets that ignore the grid.
+# ground.png (index NW*8 + NE*4 + SW*2 + SE, a set bit being the patch). Cracks are baked once into
+# small textures and scattered at pixel offsets that ignore the grid.
 # Walls. A wall cell with open floor south of it shows a front face (face_N.png), every other wall cell
 # its top (cap.png), with a rim where a top meets the floor and a banded shadow cast on the floor south
 # and east of each wall. Outside the room the tops run on a ragged distance into darkness, so the room
@@ -22,7 +22,7 @@ const FACES := 8
 const FACE_ODDS: Array[float] = [5.0, 5.0, 3.0, 3.0, 2.0, 0.6, 0.6, 0.4]
 # The patches: corner noise above this lays the second terrain, and the noise's scale in cells.
 const PATCH_LEVEL := 0.67
-const PATCH_SCALE := 3.2
+const PATCH_SCALE := 4.6
 # Ambient light and the light sources (CanvasModulate multiplies every lit thing by AMBIENT).
 const AMBIENT := Color(0.33, 0.30, 0.38)
 const SCONCE_LIGHT := Color(1.0, 0.64, 0.34)
@@ -59,7 +59,7 @@ const EDGE_DARK := Color(0.03, 0.02, 0.03, 0.85)
 # The mass outside the room: how far the wall tops reach past the border, in pixels.
 const MASS_MIN := 6
 const MASS_MAX := 20
-const DECAL_DENSITY := 0.09
+const DECAL_DENSITY := 0.05
 const JAMB := Color("4a4038")
 const JAMB_LIGHT := Color("6e6152")
 const JAMB_DARK := Color("221c18")
@@ -389,41 +389,14 @@ func _draw_decals(canvas, rows: PackedStringArray, seed_value: int) -> void:
 			canvas.draw_texture(pick, (Vector2(cell * TILE) + Vector2(TILE / 2.0, TILE / 2.0) + offset * 0.8).floor())
 
 
-# Puddles, cracks and grit, baked once as small textures with hard pixel edges.
+# Cracks, baked once as small textures with hard pixel edges.
 static func _make_decals() -> Array[Texture2D]:
 	var made: Array[Texture2D] = []
-	made.append(_puddle(22, 12, 1))
-	made.append(_puddle(30, 15, 2))
-	made.append(_puddle(16, 9, 3))
+	# Only cracks: puddles and grit read as dark blobs with dots at 1x, which nobody could name, so they
+	# went (a scatter that cannot be named from a screenshot is noise).
 	made.append(_crack(24, 4))
 	made.append(_crack(18, 5))
-	made.append(_grit(14, 6))
-	made.append(_grit(18, 7))
 	return made
-
-
-static func _puddle(w: int, h: int, seed_value: int) -> Texture2D:
-	var image := Image.create(w, h, false, Image.FORMAT_RGBA8)
-	# Standing water, not a hole or a shadow: a blue-grey sheen, a lighter rim and a few bright glints.
-	var deep := Color(0.16, 0.22, 0.3, 0.6)
-	var wet := Color(0.3, 0.36, 0.44, 0.42)
-	var shine := Color(0.72, 0.8, 0.88, 0.75)
-	for y in h:
-		for x in w:
-			var d := pow((x + 0.5 - w / 2.0) / (w / 2.0), 2) + pow((y + 0.5 - h / 2.0) / (h / 2.0), 2)
-			d += (RoomDecor.noise(Vector2i(x / 3, y / 2), seed_value + 491) - 0.5) * 0.5
-			if d < 0.55:
-				image.set_pixel(x, y, deep)
-			elif d < 1.0:
-				image.set_pixel(x, y, wet)
-	for i in 4:
-		var sx := int(w * (0.26 + 0.13 * i))
-		var sy := int(h * (0.32 + 0.1 * (i % 2)))
-		if image.get_pixel(sx, sy).a > 0.0:
-			image.set_pixel(sx, sy, shine)
-			if i % 2 == 0 and sx + 1 < w and image.get_pixel(sx + 1, sy).a > 0.0:
-				image.set_pixel(sx + 1, sy, shine)
-	return ImageTexture.create_from_image(image)
 
 
 static func _crack(length: int, seed_value: int) -> Texture2D:
@@ -436,20 +409,6 @@ static func _crack(length: int, seed_value: int) -> Texture2D:
 		image.set_pixel(x + 1, y, dark)
 		if RoomDecor.noise(Vector2i(x, 2), seed_value + 503) > 0.86:
 			image.set_pixel(x + 1, clampi(y + 1, 0, 9), dark)
-	return ImageTexture.create_from_image(image)
-
-
-static func _grit(size: int, seed_value: int) -> Texture2D:
-	var image := Image.create(size, size, false, Image.FORMAT_RGBA8)
-	var dark := Color(0.08, 0.06, 0.05, 0.6)
-	var light := Color(0.62, 0.56, 0.48, 0.55)
-	for i in 9:
-		var x := int(RoomDecor.noise(Vector2i(i, 0), seed_value + 509) * (size - 2))
-		var yy := int(RoomDecor.noise(Vector2i(i, 1), seed_value + 509) * (size - 2))
-		image.set_pixel(x, yy + 1, dark)
-		image.set_pixel(x, yy, light if i % 3 == 0 else dark)
-		if i % 4 == 0:
-			image.set_pixel(x + 1, yy + 1, dark)
 	return ImageTexture.create_from_image(image)
 
 

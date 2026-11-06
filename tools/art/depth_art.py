@@ -4,7 +4,7 @@
 # Usage: py tools/art/depth_art.py <export folder> <game root> [set]
 #
 # The export folder (D:/grandpa-art/direction) holds, as saved from PixelLab:
-#   tiles/ground1.png + ground1.json   a create_topdown_tileset sheet (16 Wang tiles) and its metadata,
+#   tiles/ground2.png + ground2.json   a create_topdown_tileset sheet (16 Wang tiles) and its metadata,
 #                                      lower terrain = the base ground, upper = the patches laid over it
 #   tiles/cap1.png + cap1.json         a tileset whose lower base tile is the top of a wall
 #   tiles/walls1/tile_N.png            create_tiles_pro wall faces (FACES picks them)
@@ -24,6 +24,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from env_art import fit, load, luma, save  # noqa: E402
 
 TILE = 32
+# The ground tileset: ground2 has smaller, rounder cobbles and a softer edge than ground1, whose large
+# flagstones made blotchy stepped patches.
+GROUND = 'ground2'
 # The tiles_pro sheet's wall fronts, plain first: the game picks the plain ones most (DepthLook.FACE_ODDS).
 FACES = [0, 15, 1, 3, 2, 4, 14, 5]
 # (multiplier per channel) for the base ground and the patches. The flagstones came out a pale grey that
@@ -34,12 +37,13 @@ CAP_TONE = (0.72, 0.68, 0.66)
 # game id: (export file, max width, max height, recolour)
 PROPS = {
     'barrel': ('barrel.png', 24, 28, None),
-    'crate': ('boxes.png', 30, 30, None),
-    'rock': ('rubble.png', 28, 28, 'brick'),
-    'hole': ('hole.png', 32, 32, 'exact'),
-    'bone_pile': ('bones.png', 26, 20, None),
-    # The basement has no grass: its tufts are loose sheets of paper, and a cut one a few torn scraps.
-    'grass': ('papers_flat.png', 22, 20, 'paper'),
+    # Archive boxes, toned down: at full brightness the torches lit them like lamps.
+    'crate': ('boxes.png', 30, 30, 'dim'),
+    # A fallen block of masonry, big enough to name; the small heap of pink rubble was not.
+    'rock': ('masonry.png', 30, 26, 'dim'),
+    'bone_pile': ('skull_pile.png', 24, 22, 'dim'),
+    # The basement has no grass: its tufts are tied stacks of files, and a cut one a few torn scraps.
+    'grass': ('paper_stack.png', 20, 24, 'dim'),
     'grass_cut': ('papers_flat.png', 14, 10, 'scrap'),
     'decor_lantern': ('lantern.png', 16, 22, None),
 }
@@ -69,8 +73,8 @@ def recolour_brick(pixels):
 
 
 def ground_strip(export):
-    sheet = load(os.path.join(export, 'tiles', 'ground1.png'))
-    meta = json.load(open(os.path.join(export, 'tiles', 'ground1.json'), encoding='utf-8'))
+    sheet = load(os.path.join(export, 'tiles', GROUND + '.png'))
+    meta = json.load(open(os.path.join(export, 'tiles', GROUND + '.json'), encoding='utf-8'))
     strip = [[(0, 0, 0, 0)] * (16 * TILE) for _ in range(TILE)]
     for tile in meta['tileset_data']['tiles']:
         c = tile['corners']
@@ -90,6 +94,40 @@ def _is_upper(p):
     return spread < 26 and luma(p) > 0.22
 
 
+# A pit: a broken rim of the wall top round the edge, the brick of its far (north) side going down into
+# the dark, and black at the bottom, so it reads as a hole with depth and not a flat black square.
+def pit(face, cap):
+    size = TILE
+    out = [[(0, 0, 0, 0)] * size for _ in range(size)]
+    for y in range(size):
+        for x in range(size):
+            out[y][x] = (6, 5, 7, 255)
+    # The far wall: the face's brick, darker the deeper it goes.
+    for y in range(3, 15):
+        shade = 0.62 - (y - 3) * 0.045
+        for x in range(3, size - 3):
+            p = face[(y + 6) % size][x]
+            out[y][x] = (int(p[0] * shade), int(p[1] * shade), int(p[2] * shade), 255)
+    # The side walls, in shadow, narrowing toward the bottom.
+    for y in range(3, size - 3):
+        depth = max(1, 4 - (y - 3) // 6)
+        for x in range(3, 3 + depth):
+            q = out[y][x]
+            out[y][x] = (q[0] // 2 + 10, q[1] // 2 + 9, q[2] // 2 + 8, 255)
+    # The rim: wall top along every edge, ragged on the inside, with a lit lip and a dark edge.
+    for y in range(size):
+        for x in range(size):
+            edge = min(x, y, size - 1 - x, size - 1 - y)
+            ragged = 3 + ((x * 7 + y * 13) % 5 == 0) - ((x * 3 + y * 5) % 7 == 0)
+            if edge < ragged:
+                p = cap[y][x]
+                lift = 2.1 if edge == ragged - 1 else 1.5
+                out[y][x] = (min(255, int(p[0] * lift)), min(255, int(p[1] * lift)), min(255, int(p[2] * lift)), 255)
+            if edge == 0:
+                out[y][x] = (14, 11, 10, 255)
+    return out
+
+
 def build(export, game, art_set):
     out = os.path.join(game, 'art', 'tiles', art_set, 'depth')
     os.makedirs(out, exist_ok=True)
@@ -102,6 +140,10 @@ def build(export, game, art_set):
     for n, index in enumerate(FACES):
         face = load(os.path.join(export, 'tiles', 'walls1', 'tile_%d.png' % index))
         save(os.path.join(out, 'face_%d.png' % n), tone(face, FACE_TONE))
+    props_dir = os.path.join(game, 'art', 'props', art_set)
+    os.makedirs(props_dir, exist_ok=True)
+    cap_tile = load(os.path.join(out, 'cap.png'))
+    save(os.path.join(props_dir, 'hole.png'), pit(load(os.path.join(out, 'face_0.png')), cap_tile))
     sconce = fit(load(os.path.join(export, 'props', 'sconce.png')), 16, 26)
     save(os.path.join(out, 'sconce.png'), sconce)
     props = os.path.join(game, 'art', 'props', art_set)
@@ -112,6 +154,8 @@ def build(export, game, art_set):
             print('missing', name)
             continue
         pixels = fit(load(path), w, h, exact=recolour == 'exact', main=game_id not in ('grass', 'grass_cut', 'hole'))
+        if recolour == 'dim':
+            pixels = tone(pixels, (0.74, 0.71, 0.68))
         if recolour == 'paper':
             pixels = tone(pixels, (0.82, 0.78, 0.7))
         if recolour == 'scrap':
