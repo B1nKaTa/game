@@ -51,6 +51,7 @@ screen = true
 [resource]
 script = ExtResource("1")
 id = "flashback_cinema"
+art_style = "depth"
 display_name = "The Flashback Cinema, Last Showing"
 rooms_dir = "res://data/rooms/flashback_cinema/"
 enemies = [ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7")]
