@@ -58,6 +58,7 @@ scatter_lights = 2
 [resource]
 script = ExtResource("1")
 id = "cemetery"
+art_style = "depth"
 display_name = "The Unkempt Cemetery"
 rooms_dir = "res://data/rooms/cemetery/"
 enemies = [ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10")]
