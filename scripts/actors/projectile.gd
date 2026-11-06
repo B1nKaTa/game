@@ -27,6 +27,7 @@ const LOOK_STAPLER := "stapler"
 const LOOK_MUG := "mug"
 const LOOK_FAX := "fax"
 const OBJECT_ART_SIZE := 24.0
+const OBJECT_GLOW := Color(1.0, 0.95, 0.85, 0.4)
 # Each look's art, res://art/props/<id>.png (32x32), and the size it is drawn at: the office at 0.75,
 # a kernel at 0.5. A look without art keeps its drawing.
 const LOOK_ART := {LOOK_KERNEL: ["kernel", 16.0], LOOK_STAPLER: ["stapler", OBJECT_ART_SIZE],
@@ -101,6 +102,9 @@ func _draw() -> void:
 		var art := PropArt.texture(LOOK_ART[look][0])
 		if art != null:
 			var size: float = LOOK_ART[look][1]
+			# The office art is dark grey and black, so it flies on a faint pale glow, as the note does.
+			if look != LOOK_KERNEL:
+				draw_circle(Vector2.ZERO, size * 0.45, OBJECT_GLOW)
 			draw_texture_rect(art, Rect2(-size / 2.0, -size / 2.0, size, size), false)
 			return
 	if look == LOOK_NOTE:
