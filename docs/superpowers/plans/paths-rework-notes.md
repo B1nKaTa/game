@@ -361,3 +361,81 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
   crossroads, vault and shop tests moved from test_golf_floor.gd to test_seance_floor.gd against the new
   rooms; test_golf_floor keeps only the golf enemies, bosses, patterns, sand, fog and golf-prop tests for
   the later phases to retire. The chest and shop loops over the folder now say "The Seance Hotline".
+- **Enemies (Phase B), one commit:** the hotline's three regulars, the Ectoplasm and the returning pair
+  go in with the floor wired and golf's regulars retired, as lesson 288 asks. The slots keep golf's
+  roles and numbers: the Phone Psychic the Gopher's (44 health, 58 px/s, weight 3, against the Plot
+  Holder), the Crystal Gazer the Club Golfer's (30, 66, weight 4, the Filing Clerk's thrower role) and
+  the Poltergeist on Hold the Caddie's (36, 64, weight 3, the Debt Collector Ghost's), then the Bingo
+  Caller (3) and the Soot Ghost (2). One Pension each, at most 3 a room.
+- **The Phone Psychic:** keeps 80 to 150 px off; every 3.2 s (first at 1.2 s), with his feet 40 to 170 px
+  from it and in view, it holds still, says "I sense you..." and lays a `PhoneCordLash` where it stands:
+  a red ring (14 px) on his feet's spot and the band the cord sweeps, an arc round the psychic through
+  that spot, 22 px across and 40 degrees either side, both shown and filling for the whole 0.7 s. Then
+  the coiled cord whips along the arc, and feet in the band cost a pill once. A step 22 px in or out
+  clears it (he walks 48 px in 0.4 s). The psychic's own windup ring (12 px) runs with it, so its art's
+  windup and attack anims play through Enemy's anim driver. No wall test on the arc: it is a cord.
+- **The Crystal Gazer:** keeps 110 to 220 px off; a 0.6 s windup (warning ring 16 px) over her ball, then
+  a `CrystalBall` goes, one at a time (the next windup waits until the last ball is gone, then 2.4 s).
+  The ball homes on his feet at 75 px/s, turning at most 110 degrees a second, for 3 s; then it stops
+  and a 28 px red ring fills round it for 0.6 s and it bursts (feet in it cost a pill unless a wall
+  stands between, as with a blast). Meeting cover (a ray on the wall layer, which holds the desks and
+  partitions, as a shot's) stops it there and starts the same warned burst at once, so no burst is ever
+  unwarned. Touching his feet on the way (10 px) costs a pill and pops it with no burst after. It comes
+  to nothing if she falls.
+- **The Poltergeist on Hold:** keeps 100 to 200 px off; every 2.8 s (first at 1.4 s) a 0.6 s windup with
+  its lane warned (260 px, 20 px wide, ending at walls and props), then it hurls a stapler, a mug and a
+  fax machine in turn (190 px/s), plain `Projectile`s with three new looks, so they stop at cover and a
+  stored room clears them already. It says "Please hold..." on every third throw.
+- **The Poltergeist is a ghost through `ContactRule.is_ghost`,** which knows ghosts by id ("ghost",
+  "mourner"), so "poltergeist" was added there; `ghost_contact` stays false, since that flag opts a
+  ghost back into hurting by touch. The Mothball Pockets keep it off as any ghost. It is drawn at 0.6
+  alpha (`SpriteVisual.set_alpha` in `on_ready`, so it reaches art and placeholder alike).
+- **The Poltergeist walks round cover** (`ignores_walls` false), as the Soot Ghosts and the Weeping
+  Mourners do; only the charging Debt Collector Ghost passes through walls. A thrower inside a partition
+  would be out of his reach, and `Enemy._clear_length` skips the wall test for a wall-ignorer, so its
+  warned lane would run through walls its objects stop at.
+- **The Ectoplasm** (Madame Zara's summon): 14 health, 42 px/s, 22x18, the palette's deep green
+  (0.12, 0.42, 0.27); it oozes after him and hurts by touch only. Its `EctoplasmTrail` lays a blob (r 7)
+  every 10 px oozed, at most 10 (a 100 px trail), each fading 2.5 s after it was laid, and slows him by
+  0.35 for 0.4 s every 0.2 s while his feet are on it, as the film does. The goo is `#1f6b45`, tested
+  equal to `RoomPalette.ectoplasm`.
+- **A body that never flips:** the film reel has no special handling (it is drawn east and flips like
+  every enemy), so the Ectoplasm's south-only art got a new `EnemyDef.flips` (true by default); with it
+  false, `Enemy._update_anim` never mirrors the look. A test runs it on real art.
+- **The Ectoplasm is on no floor yet:** the case file's test allows two enemies on no floor and none was
+  missing, so it waits there for Phase D to make it Zara's summon, and the Caddie stays the Club
+  President's summon (his cart charge still uses `CaddieBehavior.Cart`).
+- **`test_enemy_types` BEHAVIORS** gains the psychic, gazer and poltergeist behaviors, but not the
+  Ectoplasm's: that test wants a WINDUP constant in every behavior it lists, and the blob has no attack.
+- **Colours:** the psychic gold (0.98, 0.88, 0.32), the gazer cornflower (0.4, 0.58, 1), the poltergeist a
+  pale ghost blue (0.75, 0.9, 1, the floor's one low-saturation body), the Bingo Caller magenta pink
+  (0.95, 0.42, 0.8), the Soot Ghost cyan (0.35, 0.92, 0.95) and the Ectoplasm deep green. Checked in py
+  as lit by the hotline's light: each stands 0.25 or more off the carpet, 0.44 or more off the warning
+  red and 0.36 or more off the mint, and each pair of the floor's bodies, the golf bosses and their
+  summons included, is 0.25 apart or 12 px apart in size. Tests keep the red, mint and carpet-hue gaps.
+- **The returning pair:** `golf_bingo_caller` and `golf_soot_ghost` were renamed to `seance_bingo_caller`
+  and `seance_soot_ghost` with the same numbers (the bases'), new colours and `art_id` "bingo_caller" and
+  "soot_ghost". Neither base has an art folder, so no `art_hue` fields: the art pass sets them if its
+  colours need turning.
+- **Placeholders sized for the art:** the crystal ball is drawn r 10 (about 21x24, its 32x32 art at 1:1);
+  the stapler, mug and fax fill 24x24 (their 32x32 art at 0.75: about 20x16, 15x16, 20x18), small
+  enough to read as thrown office things beside an 18x24 body. No PNG is wired.
+- **Marks:** `SeanceMarks` draws a headset with a mic and a green-lit desk phone on its coiled cord, a
+  coin-hung veil with a pink jewel and a crystal ball held out, a ghost's hollow eyes and wisps with a
+  receiver off the hook, and the blob's shine, eyes and drips; EnemyMarks hands them over after the
+  Cinema's.
+- **Hazards answer the bot:** `PhoneCordLash`, `CrystalBall` and `EctoplasmTrail` answer `threat_at` and
+  `threat_imminent`; the lash's `route_circles` samples its band as circles 10 px apart along the arc
+  (14 px radius, hurting at the lash), and the ball gives its warned ring, or while it flies its reach
+  until it stops and the ring wherever it could stop. All three are in `SeanceProps.is_passing_effect`.
+- **Retired with golf's regulars:** the Club Golfer (def, behavior, `GolfBallShot`, its "golf_cap" mark,
+  its art folder `art/sprites/club_golfer`, its strips-tool cut and art-look probe entry; the Bestiary's
+  history cell names him from his id), `golf_bingo_caller` and `golf_soot_ghost`, and their tests. The
+  Caddie and the Gopher keep their defs, behaviors, marks and tests as the golf bosses' summons until
+  Phases C and D retire Chip and the Club President. The golf look probe lost its golfer shots, and
+  round2_look and round3_look now warn with a Crystal Gazer where they used the golfer.
+- **Tests moved:** the floor's enemy list and the told-apart test moved from test_golf_floor to
+  test_seance_floor (now with the bosses' summons and the Ectoplasm); test_golf_floor keeps only a check
+  that Chip and the Club President still hold the boss rooms with their summons. A headless live check
+  (each new enemy in a tree beside a stand-in Grandpa for 7 s) saw every attack fire and land, with no
+  script error.

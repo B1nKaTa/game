@@ -171,10 +171,55 @@ func test_enemies_stand_out_from_the_carpet_under_the_hotlines_light() -> void:
 	defs.assign(_def().enemies)
 	defs.append(_def().mini_boss)
 	defs.append(_def().floor_boss)
+	defs.append(load("res://data/enemies/ectoplasm.tres"))
 	for def in defs:
 		var body := _lit(SpriteVisual.readable(def.color), palette)
 		for tone in _tones(palette):
 			assert_true(_difference(body, _lit(tone, palette)) >= 0.22, "%s against the carpet" % def.id)
+
+
+# --- its enemies ---
+
+func test_its_own_enemies() -> void:
+	var def := _def()
+	var ids: Array[String] = []
+	for enemy: EnemyDef in def.enemies:
+		ids.append(enemy.id)
+	assert_eq(ids, ["phone_psychic", "crystal_gazer", "poltergeist", "seance_bingo_caller", "seance_soot_ghost"])
+	assert_eq(def.enemy_weights, PackedInt32Array([3, 4, 3, 3, 2]), "the fourth floor's weights, by the golf roles")
+	assert_eq(def.mimic.id, "mimic")
+	assert_near(def.health_mult, 2.2)
+
+
+# Its regulars, its bosses and their summons, each told apart from all the others by colour or size.
+func test_every_enemy_of_the_floor_can_be_told_apart() -> void:
+	var defs: Array[EnemyDef] = []
+	defs.assign(_def().enemies)
+	for boss in [_def().mini_boss, _def().floor_boss]:
+		defs.append(boss)
+		if boss.summon != null:
+			defs.append(boss.summon)
+	defs.append(load("res://data/enemies/ectoplasm.tres"))
+	for i in defs.size():
+		for j in range(i + 1, defs.size()):
+			var a := SpriteVisual.readable(defs[i].color)
+			var b := SpriteVisual.readable(defs[j].color)
+			var size_gap := (defs[i].body_size - defs[j].body_size).length()
+			assert_true(_difference(a, b) >= 0.25 or size_gap >= 12.0, "%s and %s look alike" % [defs[i].id, defs[j].id])
+
+
+# No body of the floor is near the warning red or the safe-spot mint, and none sinks into the violet
+# carpet: each keeps its own hue well away from the carpet's.
+func test_no_body_is_red_mint_or_violet() -> void:
+	var carpet := _def().room_palette().floor_a
+	var defs: Array[EnemyDef] = []
+	defs.assign(_def().enemies)
+	defs.append(load("res://data/enemies/ectoplasm.tres"))
+	for def in defs:
+		var body := SpriteVisual.readable(def.color)
+		assert_true(_difference(body, Enemy.WARNING_COLOR) >= 0.4, "%s is near the warning red" % def.id)
+		assert_true(_difference(body, SafeSpotMark.COLOR) >= 0.3, "%s is near the mint" % def.id)
+		assert_true(_hue_gap(body.h, carpet.h) >= 0.1 or body.s < 0.3, "%s is violet like the carpet" % def.id)
 
 
 # --- its props ---

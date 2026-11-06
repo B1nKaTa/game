@@ -5,7 +5,7 @@ extends TestCase
 # for an enemy with none, and the order bodies are drawn in.
 
 const ART_DIR := "res://art/sprites/"
-const ARTED := ["intern_reaper", "stoker", "mall_cop", "club_golfer", "hr_representative", "regional_reaper",
+const ARTED := ["intern_reaper", "stoker", "mall_cop", "hr_representative", "regional_reaper",
 	"old_smokey", "thaddeus_fairweather", "chairman_of_the_board"]
 const ANIMS := ["idle", "walk", "windup", "attack", "whistle"]
 # Art whose own enemy is retired, and the enemy who wears it now.
@@ -121,6 +121,23 @@ func test_without_an_attack_strip_the_windup_end_goes_back_to_walking() -> void:
 	assert_eq(enemy.visual().shown_anim(), "walk", "his charge walks")
 	enemy.play_anim("whistle", 0.6)
 	assert_eq(enemy.visual().shown_anim(), "whistle")
+	enemy.free()
+
+
+# An object drawn from one side only, as the Ectoplasm's blob, never mirrors, whichever way it goes.
+func test_an_object_that_never_flips_keeps_its_one_look() -> void:
+	assert_false((load("res://data/enemies/ectoplasm.tres") as EnemyDef).flips)
+	assert_true((load("res://data/enemies/intern_reaper.tres") as EnemyDef).flips, "people turn")
+	# Worn on art that exists, so the anim driver runs.
+	var def: EnemyDef = (load("res://data/enemies/ectoplasm.tres") as EnemyDef).duplicate()
+	def.art_id = "intern_reaper"
+	var enemy := Enemy.new()
+	enemy.setup(def, null, 0.5)
+	enemy._ready()
+	enemy.desired_velocity = Vector2(-60, 0)
+	enemy._update_anim(0.016)
+	assert_eq(enemy.visual().shown_anim(), "walk")
+	assert_false(enemy.visual().is_facing_left(), "going west, it is not mirrored")
 	enemy.free()
 
 

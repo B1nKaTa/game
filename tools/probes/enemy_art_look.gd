@@ -22,7 +22,7 @@ const ENEMIES := [
 	["intern_reaper", "floor_1"], ["regional_reaper", "floor_1"],
 	["stoker", "furnace_works"], ["old_smokey", "furnace_works"], ["furnace_intern_reaper", "furnace_works"],
 	["cinema_intern_reaper", "flashback_cinema"],
-	["club_golfer", "seance_hotline"], ["thaddeus_fairweather", "seance_hotline"],
+	["thaddeus_fairweather", "seance_hotline"],
 	["cruise_stoker", "last_resort_cruise"], ["airport_mall_cop", "terminal_zero"],
 	["hr_representative", "head_office"], ["chairman_of_the_board", "head_office"],
 ]

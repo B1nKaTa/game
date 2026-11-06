@@ -5,7 +5,7 @@ extends TestCase
 
 const Mothball := preload("res://scripts/items/mothball_pockets.gd")
 const Wreath := preload("res://scripts/items/wreath_of_thorns.gd")
-const GHOSTS := ["soot_ghost", "golf_soot_ghost", "debt_ghost", "weeping_mourner", "airport_weeping_mourner"]
+const GHOSTS := ["soot_ghost", "seance_soot_ghost", "poltergeist", "debt_ghost", "weeping_mourner", "airport_weeping_mourner"]
 
 
 func _def(id: String) -> EnemyDef:

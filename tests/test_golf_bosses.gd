@@ -344,7 +344,7 @@ func test_fairweather_is_clearly_harder_than_mortimer_and_the_projectionist() ->
 
 
 func test_every_lingering_attack_of_the_floor_is_cleared_from_a_stored_room() -> void:
-	var effects: Array[Node] = [BunkerPatch.new(), PuttRoll.new(), SprinklerSweep.new(), GolfBallLob.new(), GiantBallDrop.new(), GolfBallShot.new()]
+	var effects: Array[Node] = [BunkerPatch.new(), PuttRoll.new(), SprinklerSweep.new(), GolfBallLob.new(), GiantBallDrop.new()]
 	for effect in effects:
 		assert_true(RoomView.is_passing_effect(effect), "%s is cleared" % effect.get_script().get_global_name())
 		effect.free()

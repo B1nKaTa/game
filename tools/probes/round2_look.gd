@@ -209,7 +209,7 @@ func _contact() -> void:
 func _contact_shots(tag: String) -> void:
 	await _enter(_rows(20, 11))
 	var center := _cell(10, 6)
-	var grunt := _spawn("intern_reaper" if tag == "c1" else "club_golfer", center)
+	var grunt := _spawn("intern_reaper" if tag == "c1" else "crystal_gazer", center)
 	await _wait(0.8)
 	grunt.set_physics_process(false)
 	grunt._wake_left = 0.0
@@ -406,9 +406,9 @@ func _golf() -> void:
 	await _shot("g4_dark_corner_gopher_ring")
 	await _clear()
 	_stand(_cell(3, 13))
-	var golfer := _spawn("club_golfer", _cell(8, 14))
-	await _until(func(): return _warned(golfer, 0.45), 8.0)
-	await _shot("g5_dark_corner_golfer_fan")
+	var gazer := _spawn("crystal_gazer", _cell(8, 14))
+	await _until(func(): return _warned(gazer, 0.45), 8.0)
+	await _shot("g5_dark_corner_gazer_windup")
 	await _clear()
 	_stand(_cell(27, 2))
 	var caddie := _spawn("caddie", _cell(21, 2))

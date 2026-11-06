@@ -16,33 +16,16 @@ func _difference(a: Color, b: Color) -> float:
 	return Vector3(a.r - b.r, a.g - b.g, a.b - b.b).length()
 
 
-# --- its enemies ---
+# --- its bosses ---
 
-func test_its_own_enemies_and_bosses() -> void:
+# The hotline's own regulars hold the floor now (test_seance_floor.gd); Chip and the Club President keep
+# its boss rooms, with the Gopher and the Caddie as their summons, until their phases retire them.
+func test_the_golf_bosses_still_hold_its_boss_rooms() -> void:
 	var def := _def()
-	var ids := {}
-	for enemy: EnemyDef in def.enemies:
-		ids[enemy.id] = true
-	for id in ["caddie", "club_golfer", "gopher", "golf_bingo_caller", "golf_soot_ghost"]:
-		assert_true(ids.has(id), id)
-	assert_eq(ids.size(), 5)
-	assert_eq(def.enemy_weights, PackedInt32Array([3, 4, 3, 3, 2]))
 	assert_eq(def.mini_boss.id, "chip")
 	assert_eq(def.floor_boss.id, "thaddeus_fairweather")
-	assert_eq(def.mimic.id, "mimic")
-
-
-func test_every_enemy_of_the_floor_can_be_told_apart() -> void:
-	var defs: Array[EnemyDef] = []
-	defs.assign(_def().enemies)
-	defs.append(_def().mini_boss)
-	defs.append(_def().floor_boss)
-	for i in defs.size():
-		for j in range(i + 1, defs.size()):
-			var a := SpriteVisual.readable(defs[i].color)
-			var b := SpriteVisual.readable(defs[j].color)
-			var size_gap := (defs[i].body_size - defs[j].body_size).length()
-			assert_true(_difference(a, b) >= 0.25 or size_gap >= 12.0, "%s and %s look alike" % [defs[i].id, defs[j].id])
+	assert_eq(def.mini_boss.summon.id, "gopher")
+	assert_eq(def.floor_boss.summon.id, "caddie")
 
 
 # --- its look ---

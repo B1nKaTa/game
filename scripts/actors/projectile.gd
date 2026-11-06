@@ -20,6 +20,24 @@ const KERNEL := Color("fff4c0")
 const KERNEL_HULL := Color("c9a24a")
 const LOOK_STAR := "star"
 const STAR_GOLD := Color("ffd24a")
+# The Seance Hotline: a Poltergeist on Hold hurls the office. Each art (stapler.png, mug.png,
+# fax_machine.png) is a 32x32 canvas to be shown at 0.75, so each placeholder fills the 24x24 its art
+# will: the stapler about 20x16, the mug 15x16 and the fax machine 20x18.
+const LOOK_STAPLER := "stapler"
+const LOOK_MUG := "mug"
+const LOOK_FAX := "fax"
+const OBJECT_ART_SIZE := 24.0
+const STAPLER_DARK := Color("231929")
+const STAPLER_GREY := Color("544e59")
+const STAPLER_SHINE := Color("98949e")
+const MUG := Color("e1ddb6")
+const MUG_SHADE := Color("a8a27e")
+const MUG_LOGO := Color("4a1775")
+const COFFEE := Color("3a2416")
+const FAX := Color("3a3741")
+const FAX_TOP := Color("b29782")
+const FAX_PAPER := Color("ecddbd")
+const FAX_KEY := Color("f5f3d9")
 
 # A sedative dart slows Grandpa by this much for this long when it lands. Zero means a plain shot.
 var slow_fraction := 0.0
@@ -94,6 +112,31 @@ func _draw() -> void:
 		draw_colored_polygon(star, STAR_GOLD)
 		star.append(star[0])
 		draw_polyline(star, Color.BLACK, 1.0)
+		return
+	if look == LOOK_STAPLER:
+		# Side on: a dark base, the grey arm over it and the hinge at the back.
+		draw_rect(Rect2(-10, 2, 20, 5), STAPLER_DARK)
+		draw_colored_polygon(PackedVector2Array([Vector2(-10, 1), Vector2(9, -5), Vector2(10, -2), Vector2(-9, 3)]), STAPLER_GREY)
+		draw_line(Vector2(-8, 0), Vector2(8, -5), STAPLER_SHINE, 1.0)
+		draw_circle(Vector2(-9, 2), 2.5, STAPLER_DARK)
+		draw_rect(Rect2(-10, -5, 20, 12), Color.BLACK, false, 1.0)
+		return
+	if look == LOOK_MUG:
+		# A cream mug with a purple logo band, its handle out to the side and coffee at the top.
+		draw_arc(Vector2(6, 0), 4.0, -PI / 2.0, PI / 2.0, 10, MUG_SHADE, 2.5)
+		draw_rect(Rect2(-7, -7, 13, 15), MUG)
+		draw_rect(Rect2(-7, -1, 13, 4), MUG_LOGO)
+		draw_rect(Rect2(-7, -7, 13, 2), COFFEE)
+		draw_rect(Rect2(-7, -7, 13, 15), Color.BLACK, false, 1.0)
+		return
+	if look == LOOK_FAX:
+		# A dark machine with a tan top, a sheet of paper curling out and a row of pale keys.
+		draw_rect(Rect2(-6, -10, 12, 6), FAX_PAPER)
+		draw_rect(Rect2(-10, -5, 20, 13), FAX)
+		draw_rect(Rect2(-10, -5, 20, 4), FAX_TOP)
+		for i in 4:
+			draw_rect(Rect2(-7 + i * 4, 2, 2, 2), FAX_KEY)
+		draw_rect(Rect2(-10, -5, 20, 13), Color.BLACK, false, 1.0)
 		return
 	draw_rect(Rect2(-4, -5, 8, 10), Color("efe8d2"))
 	draw_rect(Rect2(-4, -5, 8, 10), Color.BLACK, false, 1.0)

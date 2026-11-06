@@ -254,7 +254,8 @@ func _update_anim(delta: float) -> void:
 		_anim_once_left = maxf(_anim_once_left - delta, 0.0)
 	elif not winding:
 		_visual.play(EnemyAnim.pick(false, desired_velocity))
-	_visual.set_facing_left(EnemyAnim.faces_left(_visual.is_facing_left(), busy, desired_velocity, to_target))
+	if def.flips:
+		_visual.set_facing_left(EnemyAnim.faces_left(_visual.is_facing_left(), busy, desired_velocity, to_target))
 
 
 # A few words over its head, such as a called-out bingo number.

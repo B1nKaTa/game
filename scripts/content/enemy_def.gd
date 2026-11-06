@@ -42,6 +42,9 @@ extends Resource
 @export var wall_mounted: bool = false
 # What shows of it while it hides underground or in smoke: "mound" or "smoke".
 @export var hidden_look: String = "mound"
+# Whether its art turns to face the way it goes, mirrored from the east-drawn strips. An object drawn
+# from one side only, a single south-facing look such as the Ectoplasm's blob, never mirrors.
+@export var flips: bool = true
 # Drops a Permission Slip when it falls, as a mimic does. Summons never drop one.
 @export var drops_key: bool = false
 

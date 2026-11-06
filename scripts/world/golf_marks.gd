@@ -3,13 +3,10 @@ extends RefCounted
 
 # The placeholder signs drawn on Fairway's End's own enemies, so each reads without art. EnemyMarks
 # hands these marks over, with the body's half size.
-const MARKS: Array[String] = ["caddie_bib", "golf_cap", "gopher_teeth", "pro_visor", "boater"]
+const MARKS: Array[String] = ["caddie_bib", "gopher_teeth", "pro_visor", "boater"]
 const BIB := Color("fbfbf4")
 const BIB_NUMBER := Color("2f5a2c")
 const CAP := Color("2f5a2c")
-const CAP_PEAK := Color("1c3a1a")
-const CLUB_SHAFT := Color("c9cdd6")
-const CLUB_HEAD := Color("4a4d55")
 const TOOTH := Color("fbf7ef")
 const NOSE := Color("2a1c14")
 const EAR := Color("8a6440")
@@ -35,12 +32,6 @@ static func draw_mark(canvas: CanvasItem, mark: String, half: Vector2) -> void:
 			canvas.draw_rect(Rect2(-half.x * 0.7, -half.y * 0.4, half.x * 1.4, half.y * 1.0), Color.BLACK, false, 1.0)
 			canvas.draw_string(ThemeDB.fallback_font, Vector2(-4.0, half.y * 0.45), "7", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, BIB_NUMBER)
 			canvas.draw_rect(Rect2(-half.x * 0.6, -half.y - 4.0, half.x * 1.2, 5.0), CAP)
-		"golf_cap":
-			# A flat cap with a peak, and a driver held over the shoulder.
-			canvas.draw_rect(Rect2(-half.x * 0.7, -half.y - 4.0, half.x * 1.4, 5.0), CAP)
-			canvas.draw_rect(Rect2(-half.x * 0.2, -half.y - 1.0, half.x * 1.2, 2.0), CAP_PEAK)
-			canvas.draw_line(Vector2(-half.x + 1.0, half.y * 0.4), Vector2(half.x + 4.0, -half.y - 2.0), CLUB_SHAFT, 1.5)
-			canvas.draw_rect(Rect2(half.x + 2.0, -half.y - 5.0, 5.0, 4.0), CLUB_HEAD)
 		"gopher_teeth":
 			# Round ears, a dark nose and two big front teeth.
 			canvas.draw_circle(Vector2(-half.x * 0.6, -half.y + 1.0), 2.5, EAR)

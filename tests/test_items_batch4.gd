@@ -256,7 +256,7 @@ func test_fortune_teller_names_the_bosses_and_slows_each_ones_first_attack_once(
 
 
 func test_mothball_pockets_push_ghosts_off_for_two_seconds_after_a_hit() -> void:
-	for id: String in ["soot_ghost", "golf_soot_ghost", "debt_ghost", "weeping_mourner", "airport_weeping_mourner"]:
+	for id: String in ["soot_ghost", "seance_soot_ghost", "poltergeist", "debt_ghost", "weeping_mourner", "airport_weeping_mourner"]:
 		assert_true(Mothball.is_ghost(load("res://data/enemies/%s.tres" % id)), id)
 	for id: String in ["intern_reaper", "orderly", "regional_reaper"]:
 		assert_false(Mothball.is_ghost(load("res://data/enemies/%s.tres" % id)), id)

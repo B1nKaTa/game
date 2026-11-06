@@ -134,8 +134,8 @@ All of these are code; Section 2 lists each piece by path.
   - `make_dart()`: a 10x5 syringe;
   - `coin`: r5;
   - `ornament`: r5;
-  - `note`: a quaver.
-- `golf_ball_shot.gd` extends it.
+  - `note`: a quaver;
+  - `stapler`, `mug`, `fax`: a Poltergeist on Hold's thrown objects, each filling 24x24 (its 32x32 art at 0.75).
 - **There is no texture hook.**
 
 **Hazards** (`floor_vent`, `organ_pipe`, `red_tape`, `sand_trap`, `queue_barrier`, `wet_floor`, `steam_jet`, `perfume_cloud` and the others): all `_draw`, with no hook. Many have states (idle, warning, active, held).
@@ -197,7 +197,7 @@ No font file or Theme exists. Everything uses Godot's fallback font with outline
 | H5 | **Tile textures** | `room_backdrop.gd`, `golf_look.gd` | Load `res://art/tiles/<floor_id>/floor_*.png` and `wall_*.png` per cell, keeping the a/b/c patch choice and leaving the pattern code as the fallback. |
 | H6 | **Stateful props** | `prop_art.gd` / `breakable_block.gd` | Allow `res://art/props/<id>_<state>.png` or a strip: grass cut/uncut, reinforced glow, fountain, pool, organ pipe, vents, conveyor and barrier. |
 | H7 | **Doors, chests, pickups, Thermos, Retirement Plan** | `door.gd`, `chest.gd`, `pickup.gd`, `thermos.gd`, `retirement_station.gd` | None loads art. Keep the door's letter icon and the pickup's name label in code over the art. |
-| H8 | **Projectile looks** | `projectile.gd`, `golf_ball_shot.gd`, `shuffleboard_puck.gd`, `collection_plate.gd`, `ground_strike.gd` (coal, thorns, casket) | e.g. `res://art/fx/<look>.png`, rotated to flight where it matters. |
+| H8 | **Projectile looks** | `projectile.gd`, `shuffleboard_puck.gd`, `collection_plate.gd`, `ground_strike.gd` (coal, thorns, casket) | e.g. `res://art/fx/<look>.png`, rotated to flight where it matters. |
 | H9 | **Enemy overlays** | trolley, golf cart, sleigh, coffin carry, coffin shell, guide flag | One top-down sprite each, rotated as today. |
 | H10 | **Hub** | `waiting_station.gd`, `lobby_decor.gd`, `trophy_wall.gd`, `poster_board.gd`, `arcade_table.gd`, `department_sign.gd` | Move the five station people to NpcSprite (48 px, like the other NPCs), and boards to PropArt. |
 | H11 | **Cutscenes** | `actor_look.gd`, `cutscene_stage.gd` | Actors get an NPC-style east frame or SpriteVisual. Stages get one backdrop PNG each, with props over it. |
@@ -206,7 +206,7 @@ No font file or Theme exists. Everything uses Godot's fallback font with outline
 
 ### 1.9 Enemy art as built (H1 to H4, 2026-11-05)
 
-H1 to H4 are in. The first ten enemies had art: intern_reaper, stoker, mall_cop, club_golfer, hr_representative, regional_reaper, old_smokey, mall_santa, thaddeus_fairweather and chairman_of_the_board. The Mall Santa's was retired with him (it stays on PixelLab), and the Mall Cop's is worn by the airport's.
+H1 to H4 are in. The first ten enemies had art: intern_reaper, stoker, mall_cop, club_golfer, hr_representative, regional_reaper, old_smokey, mall_santa, thaddeus_fairweather and chairman_of_the_board. The Mall Santa's and the Club Golfer's were retired with them (they stay on PixelLab), and the Mall Cop's is worn by the airport's.
 
 - **Folders.** `res://art/sprites/<art_id>/<anim>.png`, one row of square frames per anim. `EnemyDef.art()` is `art_id`, or the id when that is empty.
 - **Building strips.** Run `py tools/art/enemy_strips.py D:/grandpa-art/enemies art/sprites [id ...]`. It reads `<id>/<state>/animations/<anim>/east/frame_###.png` and writes every anim folder it finds as `<anim>.png`. idle and walk keep every frame. Every other anim drops frame 000, the reference pose. All frames of one enemy go on one square canvas, a multiple of 4 wide, centred on the source canvas's middle column, with each frame's lowest row on one feet row.
@@ -547,18 +547,34 @@ The pallbearers' coffin carry uses the dropped_coffin art below.
 
 **Cruise total: 73**
 
-### 2.8 Floor 4: Fairway's End Golf Club at Midnight (`data/floors/fairways_end.tres`)
+### 2.8 Floor 4: Beyond Calling Psychic Hotline, Night Shift (`data/floors/seance_hotline.tres`)
+
+It replaces Fairway's End, whose characters stay on PixelLab unused. Every new id wears its own art
+(`art_id` = its id) but the returning pair, which wear their bases' (`bingo_caller`, `soot_ghost`).
+The golf bosses, their summons and props below stay until the hotline's own bosses take their rooms.
 
 **Enemies**
 
 | id | file | body | anims (from the code) | facing | tool | gens |
 |---|---|---|---|---|---|---|
-| caddie | caddie.tres | 22x22 | idle, walk, climb out (rest) | E+flip | C48 + 3A | 5 |
+| phone_psychic | phone_psychic.tres | 18x24 | idle, walk, windup ("I sense you...", phone held up), attack (the cord lash) | E+flip | C48 + 3A | 5 |
+| crystal_gazer | crystal_gazer.tres | 18x24 | idle, walk, windup (hands over the ball), attack (the release) | E+flip | C48 + 3A | 5 |
+| poltergeist | poltergeist.tres | 18x22 | idle (floating), walk, windup, attack (the throw); drawn at 0.6 alpha by the code | E+flip | C48 + 3A | 5 |
+| seance_bingo_caller | seance_bingo_caller.tres | 18x24 | as bingo_caller | E+flip | base art | 0 |
+| seance_soot_ghost | seance_soot_ghost.tres | 18x24 | as soot_ghost | E+flip | base art | 0 |
+| ectoplasm (Madame Zara's summon) | ectoplasm.tres | 22x18 | an object: idle and walk (oozing), south only, never flipped (`flips = false`) | S only | MO + AO | 3 |
+
+**Projectiles and hazards:** the crystal ball (`crystal_ball.gd`, 32x32 art at 1:1, the ball about
+21x24), the stapler, mug and fax machine (`Projectile` looks, 32x32 art at 0.75), the ectoplasm's
+trail blobs (`ectoplasm_trail.gd`, r7, PX 1). The phone cord's lash (`phone_cord_lash.gd`) stays code.
+
+**Left from Fairway's End**
+
+| id | file | body | anims (from the code) | facing | tool | gens |
+|---|---|---|---|---|---|---|
+| caddie (Thaddeus's summon) | caddie.tres | 22x22 | idle, walk, climb out (rest) | E+flip | C48 + 3A | 5 |
 | golf cart overlay | `CaddieBehavior.Cart`, also the Club President's and the parked cart | about 30x22, rotated | | top-down | MO | 1 |
-| club_golfer | club_golfer.tres | 18x26 | idle, walk, drive swing ("FORE!") | E+flip | C48 + 3A | 5 |
-| gopher | gopher.tres | 16x16 | idle, emerge, bite. The mound is code. | E+flip | C32 + 3A (or the quadruped template, T) | 5 |
-| golf_bingo_caller | golf_bingo_caller.tres | 18x24 | as bingo_caller | E+flip | recolour | 0 |
-| golf_soot_ghost | golf_soot_ghost.tres | 18x24 | as soot_ghost | E+flip | recolour | 0 |
+| gopher (Chip's summon) | gopher.tres | 16x16 | idle, emerge, bite. The mound is code. | E+flip | C32 + 3A (or the quadruped template, T) | 5 |
 
 **Bosses**
 
@@ -573,7 +589,6 @@ The pallbearers' coffin carry uses the dropped_coffin art below.
 
 | id | gens |
 |---|---|
-| golf ball (r4) | PX 1 |
 | giant ball (`giant_ball_drop.gd`) | PX 1 |
 | sprinkler head (`sprinkler_sweep.gd`). The sector warning stays code. | PX 1 |
 

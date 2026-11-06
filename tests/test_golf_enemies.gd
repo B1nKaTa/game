@@ -1,5 +1,8 @@
 extends TestCase
 
+# What is left of Fairway's End's enemies: the Caddie and the Gopher, still the golf bosses' summons
+# until their own phases retire them. The hotline's regulars are in test_seance_enemies.gd.
+
 const FRAME := 1.0 / 60.0
 
 
@@ -89,46 +92,6 @@ func test_a_cart_shows_past_its_driver_and_fits_its_lane() -> void:
 	assert_true(president.y <= ClubPresidentBehavior.CART_LANE_WIDTH, "and fits his lane, got %s" % str(president))
 
 
-# --- the Club Golfer ---
-
-func test_the_golfer_keeps_a_driving_distance() -> void:
-	assert_eq(ClubGolferBehavior.step(60.0), ClubGolferBehavior.BACK_OFF)
-	assert_eq(ClubGolferBehavior.step(160.0), ClubGolferBehavior.HOLD)
-	assert_eq(ClubGolferBehavior.step(ClubGolferBehavior.TOO_FAR + 1.0), ClubGolferBehavior.CLOSE_IN)
-
-
-func test_a_drive_is_three_balls_in_a_thirty_degree_fan() -> void:
-	assert_eq(ClubGolferBehavior.BALLS, 3)
-	for aim: Vector2 in [Vector2.RIGHT, Vector2.UP, Vector2(-1, 1).normalized()]:
-		var lanes := ClubGolferBehavior.drive_lanes(aim)
-		assert_eq(lanes.size(), 3)
-		assert_true(lanes[1].is_equal_approx(aim), "the middle ball goes at him")
-		assert_near(rad_to_deg(absf(lanes[0].angle_to(lanes[2]))), 30.0, "thirty degrees edge to edge")
-
-
-func test_he_shouts_fore_and_shows_every_lane_before_he_drives() -> void:
-	assert_eq(ClubGolferBehavior.SHOUT, "FORE!")
-	var walk := PlayerStats.BASE_SPEED * (ClubGolferBehavior.WINDUP - 0.3)
-	assert_true(walk > ClubGolferBehavior.LANE_WIDTH, "time to step out of a lane")
-	var grandpa := _grandpa(Vector2(330, 160))
-	var golfer := _enemy("club_golfer", Vector2(170, 160), grandpa)
-	var behavior := ClubGolferBehavior.new()
-	var time := 0.0
-	while time < ClubGolferBehavior.FIRST_DRIVE + 0.05:
-		_step(behavior, golfer)
-		time += FRAME
-	assert_eq(golfer.warning_lane_count(), ClubGolferBehavior.BALLS, "a lane for every ball")
-	golfer.free()
-	grandpa.free()
-
-
-func test_a_driven_ball_is_a_shot_that_a_room_clears() -> void:
-	var ball := GolfBallShot.new()
-	assert_true(ball is Projectile)
-	assert_true(RoomView.is_passing_effect(ball))
-	ball.free()
-
-
 # --- the Gopher ---
 
 func test_the_gopher_burrows_rises_and_sits_up_in_turn() -> void:
@@ -172,29 +135,10 @@ func test_it_rises_right_where_he_stands_under_a_whole_warning() -> void:
 	grandpa.free()
 
 
-# --- the returning pair ---
-
-func test_returning_enemies_keep_their_numbers_and_take_the_floors_colors() -> void:
-	for id in ["bingo_caller", "soot_ghost"]:
-		var mine := _load("golf_" + id)
-		var theirs := _load(id)
-		assert_near(mine.max_hp, theirs.max_hp, id)
-		assert_near(mine.speed, theirs.speed, id)
-		assert_eq(mine.pension_drop, theirs.pension_drop, id)
-		assert_eq(mine.behavior_script, theirs.behavior_script, id)
-		assert_eq(mine.display_name, theirs.display_name, id)
-		assert_eq(mine.max_per_room, theirs.max_per_room, id)
-		assert_eq(mine.group_size, theirs.group_size, id)
-		assert_eq(mine.mark, theirs.mark, id)
-		assert_eq(mine.hidden_look, theirs.hidden_look, id)
-		assert_eq(mine.body_size, theirs.body_size, id)
-		assert_true(mine.id != theirs.id and mine.color != theirs.color, id)
-
-
 # --- the numbers ---
 
 func test_new_enemies_match_the_first_floor_role_they_fill() -> void:
-	var pairs := {"caddie": "debt_ghost", "club_golfer": "filing_clerk", "gopher": "plot_holder"}
+	var pairs := {"caddie": "debt_ghost", "gopher": "plot_holder"}
 	for id: String in pairs:
 		var def := _load(id)
 		var theirs := _load(pairs[id])
@@ -209,5 +153,4 @@ func test_new_enemies_match_the_first_floor_role_they_fill() -> void:
 
 func test_each_behavior_says_what_it_is() -> void:
 	assert_true(_load("caddie").behavior_script.new() is CaddieBehavior)
-	assert_true(_load("club_golfer").behavior_script.new() is ClubGolferBehavior)
 	assert_true(_load("gopher").behavior_script.new() is GopherBehavior)

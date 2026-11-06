@@ -37,8 +37,6 @@ CUTS = {
     'stoker': {'windup': ('attack', [1, 2, 3], 'a40730c4'), 'attack': ('attack', [5, 6, 7, 8], 'a40730c4')},
     # His export is a whistle, which he blows after a charge (MallCopBehavior._stop); the charge itself walks.
     'mall_cop': {'whistle': ('attack', [2, 3, 4, 5, 6, 7, 8], '5c2ee994'), 'attack': ('attack', [], '5c2ee994')},
-    # The backswing to the top, then impact and follow-through as the balls fly.
-    'club_golfer': {'windup': ('attack', [3, 4, 5, 6], 'b990c9bf'), 'attack': ('attack', [7, 8], 'b990c9bf')},
     # The memo raised back, then thrown.
     'hr_representative': {'windup': ('attack', [4, 5, 6, 7], '06a0adcd'), 'attack': ('attack', [8], '06a0adcd')},
     'regional_reaper': {'windup': ('attack', [1, 2], 'cc7370db'), 'attack': ('attack', [3, 4, 5, 6, 7], 'cc7370db')},

@@ -262,7 +262,7 @@ func _enemies() -> void:
 	await _enter(rows)
 	# The whole roster side by side.
 	_stand(_cell(3, 8))
-	var ids := ["caddie", "club_golfer", "gopher", "golf_bingo_caller", "golf_soot_ghost"]
+	var ids := ["caddie", "gopher"]
 	for i in ids.size():
 		var e := _spawn(ids[i], _cell(4 + i * 3, 4))
 		e.set_physics_process(false)
@@ -279,15 +279,6 @@ func _enemies() -> void:
 	await _shot("32_caddie_cart_charge")
 	await _wait(0.6)
 	await _shot("33_caddie_rest")
-	await _clear()
-	# The Club Golfer: the fan, then the balls.
-	_stand(_cell(4, 5))
-	var golfer := _spawn("club_golfer", _cell(10, 5))
-	await _until(func(): return _warned(golfer, 0.45), 8.0)
-	await _shot("34_golfer_fan")
-	await _until(func(): return not _of(GolfBallShot).is_empty(), 2.0)
-	await _wait(0.2)
-	await _shot("35_golfer_balls")
 	await _clear()
 	# The Gopher: the mound, the ring, and the bite.
 	_stand(_cell(5, 5))
@@ -509,13 +500,6 @@ func _pale() -> void:
 	await _shot("78_pale_putt_rolling")
 	chip.dismiss()
 	await _wait(0.2)
-	var golfer := _spawn("club_golfer", _cell(17, 5))
-	await _until(func(): return _warned(golfer, 0.45), 8.0)
-	await _shot("79_pale_golfer_fan")
-	await _until(func(): return not _of(GolfBallShot).is_empty(), 2.0)
-	await _wait(0.15)
-	await _shot("80_pale_golfer_balls")
-	golfer.dismiss()
 	var gopher := _spawn("gopher", _cell(20, 8))
 	await _wait(0.3)
 	await _shot("81_pale_gopher_mound")

@@ -263,8 +263,8 @@ func _sand() -> void:
 	_stand(spot + Vector2(0, 4))
 	await _wait(0.3)
 	await _shot("s1_sand")
-	var golfer := _spawn("club_golfer", spot + Vector2(70, 0))
-	await _until(func(): return _warned(golfer, 0.45), 8.0)
+	var gazer := _spawn("crystal_gazer", spot + Vector2(70, 0))
+	await _until(func(): return _warned(gazer, 0.45), 8.0)
 	await _shot("s2_warning_on_sand")
 	await _clear()
 	# The sand nearest the top wall, under the wall lights.
