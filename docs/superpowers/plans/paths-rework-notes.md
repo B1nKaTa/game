@@ -289,3 +289,14 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
   wet floor (a splice over it).
 - **Look hooks:** `CrabtreeBehavior.forced_rating` and `ProjectionistBehavior.forced_reel` let a probe
   pick the next rating or reel; 0 and -1 leave the choice to them.
+- **The bot's generic reader is in** (`tools/probes/bot_probe.gd`, version 9): any room child with
+  `threat_at` and `threat_imminent` counts as a deep hazard, read through those two methods. Not yet
+  run in a batch: Task 6 measures and tunes. The Usher's torch beam is no hazard (it hangs on him) and
+  answers nothing.
+- **Verified:** the suite passed at every commit in `git archive` copies (2124 tests, 0 failed at the
+  end), and one full loop from a copy of `3d02faf` printed both SMOKE PASS lines with no script error
+  (the usual exit-time leak lines only, as before).
+- **Left for later:** Task 5 retires `tests/support/pending_bosses.gd` with Chip and Thaddeus; Task 6
+  runs the bot against the Mall Santa's baseline on `918d343` (the Projectionist keeps the Santa's
+  numbers until then); the `escalator_hum` sound is unplayed; the Mall Cop's art folder stays for the
+  airport's recolour.
