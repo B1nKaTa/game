@@ -88,6 +88,69 @@ Each area's export is in `D:/grandpa-art/direction/sets/<set>/` (one pro Wang gr
 3. Set `art_style = "depth"` on its FloorDef.
 4. Shoot it with `tools/probes/art_direction_look.gd` and check the body luminance, the warnings and the doors in the shots before keeping it.
 
+## 13. The areas' props
+
+Every prop and decor picture of the rollout areas has its own copy in `res://art/props/<set>/`, built by `py tools/art/area_props.py D:/grandpa-art/direction . [set ...]` from `D:/grandpa-art/direction/props2/` (`AREA_PROPS` lists each area's pictures, sources and boxes).
+
+- **New drawings** for what could not be named at 1x, at the size of the picture they replace, outlined again after shrinking and toned (`TONE`, `DIM` for pale or loud ones). Nothing is ever stretched up; a drawing only shrinks into its box.
+- **Kept pictures** that already read are only toned onto the look (`KEPT`), so the whole area sits at one brightness.
+- **Left out in the depth look** (`RoomView.DEPTH_LEFT_OUT`): moss and coal dust, which read as dark blobs, with the puddles, cracks and bone scatters as before. A fluorescent panel keeps only its light (`DEPTH_UNSEEN`).
+- **Run pieces.** The hotline's partition is drawn as two panels and built into a west end, a middle, an east end and a lone panel, 32x26 each at the drawing's own scale (`SeancePartition.art_state`).
+- **Code shapes given art.** The Cinema screen's gold frame is a 7x7 nine-slice (`screen_trim.png`, `CinemaScreen.FRAME_ART`) drawn round the picture at the size the code uses; the hotline's partition and small side table (`seance_table_small.png`) have pictures now; the deck bench and cafe table decor have pictures. Each keeps its code drawing as the fallback.
+- **What each area got:**
+  - Waiting Room: a lobby lamp, a slot machine, the basement's lantern; every station board, the trophy frame and lobby decor toned.
+  - Crossroads and landings: dry weeds and their stubble for grass, the basement's lantern; path signs toned.
+  - Cemetery: gravestone, weeds and stubble, a dead shrub for the saplings, the basement's skull pile and lantern; barrel, rock, dead tree, stump and torch toned. Moss is gone.
+  - Sunset Shores: care bed, meal trolley, wet-floor sign, drip stand, lantern; vase, armchair, wheelchair and plant toned.
+  - Furnace Works: coal heap, valve, gauge, pipe, lantern; sack, crate, vent and furnace toned. Coal dust is gone.
+  - Funeral Parlour: candelabra, wreath, hymn cart, coffin stand, lantern; pew, organ pipe (toned further), dropped coffin and stained glass toned.
+  - Flashback Cinema: the lobby card (an easel with a framed photograph), the screen's frame; plant toned. Seats, pillars and aisle lights keep their pictures; the screen scenes are unchanged.
+  - Last Resort Cruise: buffet cloche, lifeboat davit, deck bench, cafe table, lantern; deck chair and plant toned, pool water toned deep.
+  - Seance Hotline: partition pieces, small side table, in-tray, office chair, lantern.
+  - Terminal Zero: airport seats, lantern; suitcases, trolley, departure board and plant toned. The fluorescent glare is gone.
+  - Head Office: cubicle wall, water cooler, in-tray, office chair; ficus and plant toned. The fluorescent glare is gone.
+
+## 14. Shots and thrown things
+
+Built by `py tools/art/shot_art.py D:/grandpa-art/direction .` into `res://art/props/`. The smallest are drawn by hand in the tool; the rest come from `create_map_object` exports in `D:/grandpa-art/direction/projectiles/`.
+
+- **Readability.** An enemy's shot has a warm or bright core in a dark outline (`ENEMY_LINE`), so it stands out on every floor and reads as hostile. Harold's own things wear a pale ring inside a dark one (`HAROLD_RING`), so they never look like an enemy's. No shot uses the warning red or the safe-spot mint: the lifebuoy's red is orange and the collection plate's velvet is brass.
+- **1:1.** Every picture is drawn at its own size, never scaled. Rolling or spinning things (the plate, the lifebuoy, the memo) turn their picture, as the pie and tumbleweed already did; the coal flickers through a two-frame strip.
+- **Telegraphs stay code.** Every warning fill and ring, the casket's and gavel's growing shadows, and every safe-spot mark are drawn as before.
+- **Every shot and thrown thing, with its code size and what it has now:**
+
+| What | Where (script) | Who | Code size | Art |
+|---|---|---|---|---|
+| Plain shot (paper) | projectile.gd | every thrower and burst shooter, the floor bosses' rings, the undertaker | 8x10 | `shot_paper` 10x12 |
+| Sedative dart | projectile.gd | orderly, cruise orderly | 10x5 + needle | `shot_dart` 13x5, turns with flight |
+| Hold-music note | projectile.gd, hold_music.gd | Doreen | about 10x12 on a glow | `shot_note` 10x12 |
+| Popcorn kernel | projectile.gd | popcorn tub | 9 | `kernel` (had art) |
+| Critic's star | projectile.gd | Crabtree | 13 | `star_spin` (had art) |
+| Stapler, mug, fax | projectile.gd | poltergeist | 24 | had art |
+| Lump of coal | ground_strike.gd | stoker, cruise stoker, Old Smokey | 8 | `shot_coal` 2 frames of 9x9 |
+| Thorny wreath in flight | ground_strike.gd | florist, office florist | 13 | `shot_wreath` 13x13 |
+| Ring of thorns left | ground_strike.gd | florist, office florist | about 56 | `thorns_lying` 38x38 |
+| Collection plate | collection_plate.gd | Reverend | 14x8, spins | `collection_plate` 16x16, turns |
+| Anchor | anchor_drop.gd | Commodore | about 26x30 | `anchor` 22x30 |
+| Lifebuoy | deck_lane.gd | Commodore | 26, rolls | `lifebuoy` 26x26, turns |
+| Quoit | quoit_ring.gd | Lorraine | 32 | `quoit` 22x22 |
+| Shuffleboard puck | shuffleboard_puck.gd | shuffleboard shark | 14 | `puck` 16x16 |
+| Falling star | star_fall.gd | Celestine | 12 | `star` (Crabtree's) |
+| Security tray | terminal_strike.gd | Sergeant Wanda | 24x16 | `security_tray` 24x18 |
+| Gavel (landed) | gavel_strike.gd | Chairman | about 42x21 | `gavel` 41x23 |
+| Memo in flight | write_up_mark.gd | HR representative | 8x10, spins | `shot_paper`, turns |
+| Write-up form left | write_up_mark.gd | HR representative | 16x20 | `write_up` 14x20 |
+| Seance spirit | spirit_swoop.gd | seance circle | 12 | `spirit_orb` 12x12 |
+| Ectoplasm blob | ectoplasm_trail.gd | ectoplasm | 16 | `ectoplasm` 16x15 |
+| Thrown dentures | thrown_dentures.gd | Harold | 12x11, two jaws | `dentures_upper` / `_lower` 16x7, opened in code |
+| Knitting needle | item_fx.gd FxNeedle | Harold | 14x5 | `fx_needle` 17x7 |
+| Banana peel | item_fx.gd FxPeel | Harold | 16 | `fx_peel` 18x17 |
+| Tarot cards, planchette, crystal ball, popcorn tub, pie, tumbleweed, dropped coffin | their own scripts | hotline, Cinema, parlour | | had art |
+| Casket slam, procession, conga line, baggage cart, pallbearers' coffin | ground_strike.gd, procession_lane.gd, deck_lane.gd, behaviours | parlour, cruise, terminal | | still code |
+| Wheel blades, scythe, phone cord, stamp and its ink, memos, bar and drawers, desk papers, film pieces, paper scraps, red tape, wet tiles, perfume mist | their own scripts | hotline, terminal, office, Cinema, cruise | | still code |
+| Fire breath, steam, shockwaves, pipe rings, burn rings, beams, foghorn, blasts | their own scripts | | effects | still code |
+| Harold's cane wave, rolling pin, soup, scooter flames, fizz, cough, clouds | item_fx.gd | Harold | effects | still code |
+
 ## To verify when testing resumes
 
 Testing was paused on 2026-11-06 by the user ("don't test anything until further notice"). Everything below was built but not yet run.
@@ -108,6 +171,10 @@ Testing was paused on 2026-11-06 by the user ("don't test anything until further
   - the light (its palette's ambient times `AREA_AMBIENT` 0.72, its torch and fill colours) and body luminance against 0.4;
   - every hazard and its warning against the new ground: the cruise's wet deck and rolling deck, the furnace vents against the riveted plates, the office's red tape on the grey carpet tiles, the terminal's queue barriers and runway lanes on the terrazzo, the parlour's wine carpet against the warning red, the hotline's checked tiles against the seance marks;
   - the code floor patterns (the Cinema's runners, the hotline's stars) are no longer drawn; check nothing relied on them;
-  - each area's props against the nameable rule (they keep their env-art pictures; none was redrawn in the rollout);
+  - each area's props against the nameable rule (redrawn or toned since, section 13);
   - test_art_direction's every-area check (each area must have its depth art).
 - **Rollout enemies**: the care home's Claims Denial Officer (a stern administrator behind a serving tray), the Cinema's Intern Reaper (a reaper usher) and the parlour's Seasonal Temp (a skeleton altar server) have their own art now; check them as for floor 1, and that the Denial Officer's shield arc sits over the tray.
+- **Area props** (32315e1, e6bdeea): in each rollout area's combat, shop and treasure rooms at 1x, every prop nameable and none lit like a lamp; the new pictures' outlines after shrinking; the toned station boards and lobby decor in the Waiting Room; the cemetery's weeds (halved, as the basement's paper) and stubble once cut; the deep pool water against the deck; the partition runs joining post to post, and a lone panel; the small seance table on its rug; the contact shadows under the new pictures (the care bed, now wider). Moss, coal dust and the fluorescent glare must be gone with their lights kept.
+- **Tests touched without a run**: test_env_art (the partition now has art, its pieces), test_seance_floor (`SeancePartition.ART_SIZE` 32x26). The new PNGs have no .import files yet.
+- **Cinema screen frame** (9f5b4d3): the nine-slice frame round a full and a trimmed picture, a cut to black and a flash, and test_cinema_screen.
+- **Shots** (6db2026): every shot in the table of section 14 in flight on its floor, beside its warning: the paper shot on every floor, the dart turning with its flight, the coal's flicker, the wreath and the thorns ring it leaves (drawn for a 26 px strike), the plate and lifebuoy turning, the anchor falling and landing, the quoit lying, the tray coming clear, the gavel landing, the memo turning and the form fading, the spirit, the ectoplasm fading; Harold's dentures opening and shutting, flipped, spinning home, glued and with the wind-up key, his needle and banana peel. Check each reads against the warning red lane or ring it flies over, and that Harold's pale ring tells his apart.

@@ -134,7 +134,7 @@ All of these are code; Section 2 lists each piece by path.
   - `note`: a quaver;
   - `stapler`, `mug`, `fax`: a Poltergeist on Hold's thrown objects, each filling 24x24 (its 32x32 art at 0.75).
 - **A hook for some looks:** `Projectile.LOOK_ART` draws `kernel` (at 16 px), `stapler`, `mug` and `fax_machine` (at 24 px, on a faint pale glow) from `res://art/props/<id>.png`. Every other look is drawn.
-- **The new paths' other thrown things and cards** load `res://art/props/<id>.png` through `PropArt.texture`, each keeping its drawing as the fallback: `TarotCard` (`tarot_card_back`, `tarot_tower`, `tarot_death`, `tarot_wheel`, `tarot_star`, 32x48, one to one), `OuijaPlanchette` (`planchette`), `CrystalBall` (`crystal_ball`, its glow and warning still drawn), `PopcornTub` (`popcorn_tub`) and `ReelLane` (`pie` upright, `tumbleweed` turning), all 32x32 at 1:1. Crabtree's thrown star has no art.
+- **The new paths' other thrown things and cards** load `res://art/props/<id>.png` through `PropArt.texture`, each keeping its drawing as the fallback: `TarotCard` (`tarot_card_back`, `tarot_tower`, `tarot_death`, `tarot_wheel`, `tarot_star`, 32x48, one to one), `OuijaPlanchette` (`planchette`), `CrystalBall` (`crystal_ball`, its glow and warning still drawn), `PopcornTub` (`popcorn_tub`) and `ReelLane` (`pie` upright, `tumbleweed` turning), all 32x32 at 1:1. Crabtree's thrown star spins through `star_spin.png`. Every other shot and thrown thing that now has a picture is listed in `docs/art/art-direction-notes.md` section 14.
 
 **Hazards** (`floor_vent`, `organ_pipe`, `red_tape`, `queue_barrier`, `wet_floor`, `steam_jet`, `perfume_cloud` and the others): all `_draw`, with no hook. Many have states (idle, warning, active, held).
 
