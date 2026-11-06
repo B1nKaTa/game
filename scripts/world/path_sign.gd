@@ -97,7 +97,7 @@ func _draw() -> void:
 	if art != null:
 		var at := PropArt.standing(art, ART_FEET)
 		if _side.x < 0:
-			draw_texture_rect(art, Rect2(at + Vector2(art.get_width(), 0), Vector2(-art.get_width(), art.get_height())), false)
+			draw_texture_rect(art, Rect2(at, Vector2(-art.get_width(), art.get_height())), false)
 		else:
 			draw_texture(art, at)
 	else:

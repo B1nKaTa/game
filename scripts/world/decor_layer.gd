@@ -29,7 +29,7 @@ func _draw() -> void:
 		if art != null:
 			var corner := PropArt.centred(art, at)
 			if int(item["variant"]) % 2 == 1:
-				draw_texture_rect(art, Rect2(corner + Vector2(art.get_width(), 0), Vector2(-art.get_width(), art.get_height())), false)
+				draw_texture_rect(art, Rect2(corner, Vector2(-art.get_width(), art.get_height())), false)
 			else:
 				draw_texture(art, corner)
 			continue

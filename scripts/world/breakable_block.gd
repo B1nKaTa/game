@@ -128,7 +128,7 @@ func _draw() -> void:
 		draw_set_transform(Vector2.ZERO, art_angle())
 		var at := PropArt.centred(art)
 		if art_flipped():
-			draw_texture_rect(art, Rect2(at + Vector2(art.get_width(), 0), Vector2(-art.get_width(), art.get_height())), false)
+			draw_texture_rect(art, Rect2(at, Vector2(-art.get_width(), art.get_height())), false)
 		else:
 			draw_texture(art, at)
 		draw_set_transform(Vector2.ZERO)
