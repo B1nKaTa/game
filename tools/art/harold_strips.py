@@ -15,11 +15,13 @@ SIZE = 60
 # Row 52 of a centred 60 px frame ends 23 px below the middle: Player.SPRITE_FEET_Y, his feet box's bottom.
 FEET_ROW = 52
 FRAMES = {
-    'idle': ('idle', range(4)),
+    # The 2026-11-06 chunky redraw (D:/grandpa-art/direction/harold/harold_v4): frame 0 of every export
+    # is the reference pose, so the idle loops its four breathing frames.
+    'idle': ('idle', range(1, 5)),
     'walk': ('walk', range(1, 9)),
-    # The swing hits at once and for its first half, so it opens on the cane coming forward (7), holds
-    # it level (3) while the arc shows, then follows through low (2) and back to the rest pose (1).
-    'attack': ('attack', [7, 3, 2, 1]),
+    # The swing hits at once and for its first half, so it opens on the cane thrust level (7), holds it
+    # out low (8) while the arc shows, then draws it back down (2) to the rest pose (1).
+    'attack': ('attack', [7, 8, 2, 1]),
 }
 
 

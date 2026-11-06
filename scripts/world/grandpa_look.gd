@@ -6,15 +6,15 @@ extends Node2D
 # drawn in code until the art pass. Nothing here touches a stat.
 
 # Relative to the Player's origin, for the 60 pixel frame (tools/art/harold_strips.py), facing right:
-# his hair tops out at y = -17 (-18 mid-stride) and his chin ends near y = -3, so a hat's crown sits on
-# the hair, and the band goes on the cardigan under the chin, which runs from about x = -5 to 3.
-# Anything off the middle across is mirrored when he faces left.
-const HEAD := Vector2(0, -11)
+# the 2026-11-06 chunky redraw's hair tops out at y = -19 (-20 at the top of his breath) and his beard
+# ends near y = -2, so a hat's crown sits on the hair, and the band goes on the cardigan under the beard,
+# which runs from about x = -5 to 3. Anything off the middle across is mirrored when he faces left.
+const HEAD := Vector2(0, -13)
 const CHEST := Vector2(-1, 1)
 const BAND_SIZE := Vector2(11, 4)
-# His face runs from x = 0 to 6 with his own glasses at y = -11, level with HEAD, so aviator lenses
+# His face runs from x = 0 to 7 with his own glasses at y = -9, 4 px under HEAD, so aviator lenses
 # sit over them.
-const EYES := Vector2(0, 0)
+const EYES := Vector2(0, 4)
 const LENS_NEAR := 2.0
 const LENS_FAR := 5.5
 const LENS_RADIUS := 1.8
