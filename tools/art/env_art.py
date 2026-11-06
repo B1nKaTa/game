@@ -52,8 +52,9 @@ WALL_SPREAD = 0.07
 # Bright floors show the same spread as louder speckle, so theirs is quieter.
 QUIET_FLOORS = {'head_office': 0.025, 'terminal_zero': 0.025}
 
-# Tones that override the palette's for the tiles only, as hex: sets with no .tres on this branch (new
-# paths drawn ahead of their floor), and a tone moved to keep a path's three within 10% of each other.
+# Tones that override the palette's for the tiles only, as hex: a set whose palette keeps another look
+# in code, and a tone moved to keep a path's three within 10% of each other. The Cinema and the Seance
+# Hotline, drawn ahead of their floors, now build onto their own palettes' tones.
 EXTRA_TONES = {
     # The palette's iron-plate tone (0.30 value) sits 0.12 under the rust; lifted to 0.36, still the
     # darkest of the three, so the plate patches read without a dark checkerboard.
@@ -62,10 +63,6 @@ EXTRA_TONES = {
     # torches, and the brown third tone sits 0.09 under it. Darker wine and a matching brown keep every
     # warning lighter than the carpet.
     'funeral_parlour': {'floor_a': '561528', 'floor_b': '4c1223', 'floor_c': '553a27'},
-    # Deep teal carpet under plum walls, kept dark and cool so warnings and gold read.
-    'flashback_cinema': {'floor_a': '2f5a5e', 'floor_b': '2a5357', 'floor_c': '345f62', 'wall': '3a2440'},
-    # Violet carpet under dusky violet walls; no mint near the floor.
-    'seance_hotline': {'floor_a': '54466e', 'floor_b': '4e4167', 'floor_c': '584a71', 'wall': '2e2540'},
     # The Waiting Room's palette keeps the stone defaults for its code look; its art is warmer, a brown
     # lobby carpet and parquet under olive wallpaper, as the inventory allows (section 4.4).
     'waiting_room': {'floor_a': '6b5946', 'floor_b': '645341', 'floor_c': '6f5c48', 'wall': '46462f'},
