@@ -63,7 +63,7 @@ The code is in `scripts/world/npc_sprite.gd` and is used by `scripts/world/npc.g
 - `res://art/npcs/<art_id>/rotations.png` holds 8 frames in the order S, SE, E, NE, N, NW, W, SW (`direction()`). South plays the idle loop; every other way holds a rotation.
 - The feet go on the node origin. Each strip is placed by its own lowest used row (`used_rows`), because PixelLab's idle frames stand 1 to 5 px higher than its rotations.
 - The strips are built by `py tools/art/npc_strips.py <export> art/npcs`.
-- 8 art ids have art: coach_bertram, dealer, deputy_dolores, duty_free_clerk, gerald, purser, severance_clerk, shop_merchant. `dealer_back_room` uses `dealer`. Esme (`esme`, the Crystal Counter's keeper) waits for hers and is drawn as a placeholder.
+- 9 art ids have art: coach_bertram, dealer, deputy_dolores, duty_free_clerk, esme, gerald, purser, severance_clerk, shop_merchant. `dealer_back_room` uses `dealer`.
 
 ### 1.3 Case-file icons
 
@@ -120,7 +120,7 @@ All of these are code; Section 2 lists each piece by path.
 **Breakable props** (`scripts/world/breakable_block.gd` and its about 40 subclasses).
 - **A hook exists:** `PropArt.texture(art_id())` (`scripts/world/prop_art.gd`) loads `res://art/props/<art_id>.png`. It is drawn at native size, centred, as one still image.
 - `hole.gd` uses `res://art/props/hole.png` and `pool_water.gd` uses `res://art/props/pool_water.png`.
-- `art/props/` does not exist yet.
+- `art/props/` holds the new paths' thrown things and cards (below, 1.5); the room props' art is on the env-art branch.
 - **Limit:** one PNG, no states. Cut grass, the reinforced stone's glow, fountain and pool ripples and the mimic's breathing are drawn only in placeholder code, so a still PNG would hide them.
 
 ### 1.5 Projectiles, hazards and telegraphs
@@ -133,7 +133,8 @@ All of these are code; Section 2 lists each piece by path.
   - `ornament`: r5;
   - `note`: a quaver;
   - `stapler`, `mug`, `fax`: a Poltergeist on Hold's thrown objects, each filling 24x24 (its 32x32 art at 0.75).
-- **There is no texture hook.**
+- **A hook for some looks:** `Projectile.LOOK_ART` draws `kernel` (at 16 px), `stapler`, `mug` and `fax_machine` (at 24 px, on a faint pale glow) from `res://art/props/<id>.png`. Every other look is drawn.
+- **The new paths' other thrown things and cards** load `res://art/props/<id>.png` through `PropArt.texture`, each keeping its drawing as the fallback: `TarotCard` (`tarot_card_back`, `tarot_tower`, `tarot_death`, `tarot_wheel`, `tarot_star`, 32x48, one to one), `OuijaPlanchette` (`planchette`), `CrystalBall` (`crystal_ball`, its glow and warning still drawn), `PopcornTub` (`popcorn_tub`) and `ReelLane` (`pie` upright, `tumbleweed` turning), all 32x32 at 1:1. Crabtree's thrown star has no art.
 
 **Hazards** (`floor_vent`, `organ_pipe`, `red_tape`, `queue_barrier`, `wet_floor`, `steam_jet`, `perfume_cloud` and the others): all `_draw`, with no hook. Many have states (idle, warning, active, held).
 
@@ -207,7 +208,8 @@ H1 to H4 are in. The first ten enemies had art: intern_reaper, stoker, mall_cop,
 
 - **Folders.** `res://art/sprites/<art_id>/<anim>.png`, one row of square frames per anim. `EnemyDef.art()` is `art_id`, or the id when that is empty.
 - **Building strips.** Run `py tools/art/enemy_strips.py D:/grandpa-art/enemies art/sprites [id ...]`. It reads `<id>/<state>/animations/<anim>/east/frame_###.png` and writes every anim folder it finds as `<anim>.png`. idle and walk keep every frame. Every other anim drops frame 000, the reference pose. All frames of one enemy go on one square canvas, a multiple of 4 wide, centred on the source canvas's middle column, with each frame's lowest row on one feet row.
-- **Anim names the game asks for.** `idle`, `walk`, `windup` and `attack`, plus any name a behavior plays through `Enemy.play_anim(name, seconds)` (the Mall Cop's `whistle`, the Usher's `shush`, Crabtree's `review`, the Projectionist's `crank`, Celestine's `deal_cards` and Madame Zara's `tether_call` and `possession`). Put a new one in the export as `animations/<name>/east/` and rerun the tool.
+- **Anim names the game asks for.** `idle`, `walk`, `windup` and `attack`, plus any name a behavior plays through `Enemy.play_anim(name, seconds)` (the Mall Cop's `whistle`, Crabtree's `star_rating`, `thumbs_down` and `attack` for the bad review, the Projectionist's `reel_change`, `splice` and `attack` through the lens beam, Celestine's `deal_cards` and Madame Zara's `tether_call` and `possession`). A behavior's own anim plays on through the windup and the hit. Put a new one in the export as `animations/<name>/east/` and rerun the tool.
+- **The new paths (2026-11-06).** The Cinema's usher, popcorn_vendor, extra, film_reel, crabtree and projectionist and the hotline's phone_psychic, crystal_gazer, poltergeist, ectoplasm, celestine and madame_zara have art, from `D:/grandpa-art/newpaths` (built from a scratch copy, the reel's `roll` and the blob's `wobble` copied to `idle` and `walk`). The film reel and the Ectoplasm are drawn facing south (`EnemyDef.flips` false) and halved by the tool (`HALVED`), since their 48 px art was about twice their bodies. The bingo_caller and soot_ghost art ids the hotline's returning pair name have no art on this branch.
 - **Cuts.** `CUTS` in the tool picks frames for one export, matched by the hash of its frames: the windup is cut from the first frames of the attack, and the attack is trimmed to open on the strike. A newer export of the same anim gets the default (every frame but 000), and a real `windup` folder always wins over a cut.
 - **H1, the driver** (`EnemyAnim`, `Enemy._update_anim`, run every frame).
   - `windup` plays once over the warning's windup and holds its last frame.
@@ -741,7 +743,7 @@ One PX per item at 32 px, scaled down for the HUD, would be about 100 gens plus 
 
 There are 14 departments: Lobby, Hallway, Bounty Office, Training Yard, Apothecary Wing, Boiler Room, Decor Office, Back Room, Annexe, Upper Landing, Purser's Office, Crystal Counter, Duty Free, Executive Suite.
 
-**People.** The NPCs with art are Gerald, Deputy Dolores, Coach Bertram, the Dealer, the Purser, the Duty Free clerk and the Severance clerk. They need no new art. Esme, the Crystal Counter's keeper, needs hers.
+**People.** The NPCs with art are Gerald, Deputy Dolores, Coach Bertram, the Dealer, the Purser, the Duty Free clerk and the Severance clerk. They need no new art. Esme, the Crystal Counter's keeper, has hers too (2026-11-06).
 
 The five station people need art, after moving them to NpcSprite (H10). Each is C48 plus an idle facing south (1 A); the 8 rotations come with the character.
 

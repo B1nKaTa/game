@@ -684,3 +684,48 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
   the whole log; its second run takes every east path, so it cleared the Seance Hotline, Celestine and
   Madame Zara included (the "seance_hotline's clear is remembered" check held), with no change to the
   driver. The real save's MD5 stayed 510284fa2ead4647c94fee44f99ca787 throughout.
+
+## Art wiring
+
+- **Strip tool:** round-2's `tools/art/enemy_strips.py` (39dab89) came across whole but for the retired
+  Club Golfer's, Mall Santa's and Thaddeus's cuts; round-2's `art_flips` is this branch's `flips`, which a
+  merge must settle on one name. Built from a scratch copy of `D:/grandpa-art/newpaths`, with the film
+  reel's `roll` and the Ectoplasm's `wobble` copied to `idle` and `walk` (both south, never flipped).
+- **Cuts:** the regulars' windup and attack are cut from their attack export by its hash (labelled contact
+  sheets): the Usher shushes and raises his torch, then lunges; the Vendor draws back, then throws; the Extra
+  spreads his arms, then shoves; the Psychic gathers the cord, then whips it; the Gazer raises the ball,
+  then lets go; the Poltergeist throws up an arm, then hurls. The bosses keep every frame but 000.
+- **Anim names:** the art has no `shush`, `review` or `crank`. The Usher's "Shh!" now shows the cut windup
+  (its first frames are the finger to the lips); Crabtree's bad review plays his `attack` (the notebook
+  thrust out), the star fan `star_rating` and the stamp `thumbs_down`, each a little past its windup so the
+  throw and the stamp show as they land; the Projectionist's beam plays his `attack` (the projector case
+  raised and held) through the windup and the sweep, a splice `splice` over its lanes' warning and a reel
+  change `reel_change` over its windup and cut. Celestine and Zara already named the art's anims.
+- **Own anims through the windup:** `Enemy._update_anim` started the plain windup on the frame a warning
+  began, which overrode a behavior's own anim played in the same tick (Zara's `tether_call` never showed),
+  so a behavior's own anim now plays on through the windup and the hit, as round-2 does.
+- **Sizes:** the people's figures stand about 1.8 times their box tall and their box wide, as the earlier
+  enemies; the film reel's and the Ectoplasm's art was about twice their box both ways, so the tool halves
+  them (each 2x2 block its commonest opaque colour, darkest on a tie). No recolour: the Crystal Gazer's
+  violet robe reads on the violet carpet by its teal turban, pale ball and outline, so no art_value lift.
+- **Esme:** `npc_strips.py` from her south idle and 8 rotations; she stands on her shadow beside Harold
+  (`D:\grandpa-shots-r4\w_crystal_counter_esme_*.png`).
+- **Screen scenes:** the art's ids win (`hedge_1974`, `biscuit_walk`, `first_car`, `works_do`,
+  `family_christmas`, `fence_fix`, `retirement_cake`, `seaside_day`, `lost_umbrella`, `dance_lesson`,
+  `burnt_roast`, `pigeon_bench`, `shed_painting`, `bike_lesson`); the prize marrow, fishing trip and tandem
+  went, and the three new ones are described from their pictures. Frames are 160x64, two a strip. The
+  64 px screen wall leaves 58 px inside its margins, so the picture shows a frame at 1:1 across and its
+  middle 58 rows (3 trimmed top and bottom, `CinemaScreen.shown_rows`) rather than shrinking it to an
+  uneven 0.9; a wall far too small (a one-row wall) still shrinks it whole. The placeholder is 2 frames of
+  160x64 now.
+- **Props:** the room props (seat rows, pillars, aisle lights, lobby cards, the screen frame, desks,
+  tables, partitions, lava lamps, beaded curtains) are left alone, since the env-art branch has their art
+  in `art/props/flashback_cinema` and `art/props/seance_hotline`. Wired here, in `art/props/<id>.png`
+  through `PropArt.texture`: the tarot cards, the planchette, the crystal ball, the popcorn tub, the
+  kernel, the pie, the tumbleweed, the stapler, the mug and the fax machine. Crabtree's star has no art.
+- **Looked at** (`cinema_look.gd all`, `seance_look.gd all`, overwriting `D:\grandpa-shots-pr\cinema_*.png`
+  and `seance_*.png`): every enemy stands on its feet and faces Harold or its walk, warnings show over
+  every body. Fixed after looking: the reel and blob sat at twice their size (halved), and the stapler's
+  dark art vanished on the violet carpet (the office things fly on a faint pale glow, as the note does).
+  The probe's `usher_shh_lane` shot can miss the warning when his patrol turns the torch away before the
+  3 s wait ends; the charge shot shows the lunge.
