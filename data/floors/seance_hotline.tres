@@ -51,6 +51,7 @@ scatter_lights = 0
 [resource]
 script = ExtResource("1")
 id = "seance_hotline"
+art_style = "depth"
 display_name = "Beyond Calling Psychic Hotline, Night Shift"
 rooms_dir = "res://data/rooms/seance_hotline/"
 enemies = [ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7")]
