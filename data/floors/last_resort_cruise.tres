@@ -56,6 +56,7 @@ scatter_lights = 5
 [resource]
 script = ExtResource("1")
 id = "last_resort_cruise"
+art_style = "depth"
 display_name = "The Last Resort Cruise"
 rooms_dir = "res://data/rooms/last_resort_cruise/"
 enemies = [ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7")]
