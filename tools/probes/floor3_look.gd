@@ -1,8 +1,9 @@
 extends SceneTree
 # Opens a real window and saves screenshots of the third floor: the landing and Crossroads, the Arcade
-# Room and its overlays, the Funeral Parlour and the Mall with their hazards, enemies and bosses.
+# Room and its overlays, and the Funeral Parlour with its hazard, enemies and bosses. The Flashback
+# Cinema, which took the Mall's place, has its own probe (cinema_look.gd).
 # Run only from an exported copy whose config/name is renamed.
-# Args after --: landing | arcade | parlour | reverend | mortimer | mall | gloria | santa | all
+# Args after --: landing | arcade | parlour | reverend | mortimer | all
 
 const OUT := "D:/grandpa-verify/shots/floor3/"
 const WALL_LIMIT_MS := 280000
@@ -62,7 +63,7 @@ func _main() -> void:
 	progress.data.record_floor_cleared(2, "sunset_shores")
 	var args := OS.get_cmdline_user_args()
 	var which: String = args[0] if args.size() > 0 else "all"
-	for part in ["pipes", "landing", "arcade", "parlour", "reverend", "mortimer", "mall", "gloria", "santa"]:
+	for part in ["pipes", "landing", "arcade", "parlour", "reverend", "mortimer"]:
 		if part == "pipes" and which != "pipes":
 			continue
 		if which == "all" or which == part:
@@ -488,186 +489,4 @@ func _mortimer() -> void:
 	await _shot("49_mortimer_phase2_charge_lane")
 	await _wait(FuneralDirectorBehavior.CHARGE_WINDUP * 0.4 + 0.25)
 	await _shot("50_mortimer_phase2_charging")
-	await _clear()
-
-
-# --- the Golden Years Mall ---
-
-func _mall() -> void:
-	progress.data.record_floor_cleared(3, "funeral_parlour")
-	await _new_run(3, MALL)
-	var f := "res://data/rooms/flashback_cinema/%s.tres"
-	for entry: Array in [["combat_small_01", "combat"], ["combat_01", "combat"], ["combat_large_01", "combat"]]:
-		await _show_room(f % entry[0], entry[1], "60_mall_" + entry[0])
-	# Strips that reverse: running, chiming, reversed.
-	var rows := _rows(20, 11)
-	for x in range(4, 16):
-		_put(rows, Vector2i(x, 4), ">")
-	for x in range(4, 16):
-		_put(rows, Vector2i(x, 7), "<")
-	for y in range(3, 9):
-		_put(rows, Vector2i(17, y), "v")
-	await _enter(rows, true)
-	_stand(_cell(10, 6))
-	await _wait(0.4)
-	await _shot("61_strips_running")
-	var strips: Array = _of(ConveyorStrip)
-	await _until(func(): return strips.any(func(s): return s.is_chiming()), 7.0)
-	await _wait(0.3)
-	await _shot("62_strips_chiming")
-	await _until(func(): return not strips.any(func(s): return s.is_chiming()), 2.0)
-	await _wait(0.3)
-	await _shot("63_strips_reversed")
-	# The Mall Walkers: the whistle on every member.
-	_stand(_cell(4, 9))
-	var walkers: Array[Enemy] = []
-	for i in 3:
-		walkers.append(_spawn("mall_walker", _cell(12 + i, 2)))
-	await _until(func(): return walkers.any(func(w): return _warned(w, 0.5)), 12.0)
-	await _shot("64_walkers_whistle")
-	await _wait(0.6)
-	await _shot("65_walkers_break")
-	await _clear()
-	# The Mall Cop: the scooter lane, then the charge.
-	_stand(_cell(4, 5))
-	var cop := _spawn("mall_cop", _cell(14, 5))
-	await _until(func(): return _warned(cop, 0.5), 8.0)
-	await _shot("66_cop_lane")
-	await _wait(0.5)
-	await _shot("67_cop_charge")
-	await _clear()
-	# The Perfume Sprayer: the warned spot, the cloud, and the haze with his feet in it.
-	_stand(_cell(5, 5))
-	_spawn("perfume_sprayer", _cell(16, 5))
-	await _until(func(): return _of(PerfumeCloud).any(func(c): return not c.has_landed()), 8.0)
-	await _wait(0.5)
-	await _shot("68_sprayer_cloud_warning")
-	await _until(func(): return _of(PerfumeCloud).any(func(c): return c.has_landed()), 3.0)
-	var cloud = _of(PerfumeCloud)[0] if not _of(PerfumeCloud).is_empty() else null
-	if cloud != null:
-		_stand(cloud.global_position)
-	await _wait(0.8)
-	await _shot("69_sprayer_haze")
-	await _clear()
-	_stand(_cell(3, 7))
-	var ids := ["mall_walker", "mall_cop", "perfume_sprayer", "mall_intern_reaper", "mall_notary_public"]
-	for i in ids.size():
-		var e := _spawn(ids[i], _cell(6 + i * 3, 3))
-		e.set_physics_process(false)
-	await _wait(0.1)
-	await _shot("70_mall_roster")
-	await _clear()
-
-
-func _gloria() -> void:
-	progress.data.record_floor_cleared(3, "funeral_parlour")
-	await _new_run(3, MALL)
-	await _enter(_rows(30, 17))
-	var center := _cell(16, 8)
-	_stand(center + Vector2(-110, 10))
-	var diva: Enemy = view._spawn_enemy(load("res://data/enemies/gloria.tres"), center, true)
-	var b = diva._behavior
-	b._summon_timer = 99.0
-	await _wait(0.1)
-	diva.global_position = center
-	b._cooldown = 99.0
-	b._begin(diva, FountainDivaBehavior.Attack.COINS)
-	await _wait(FountainDivaBehavior.COIN_WINDUP * 0.7)
-	await _shot("71_gloria_coin_lanes")
-	await _wait(FountainDivaBehavior.COIN_WINDUP * 0.3 + 0.25)
-	b._cooldown = 99.0
-	await _shot("72_gloria_coins_flying")
-	await _wait(1.0)
-	b._cooldown = 99.0
-	b._begin(diva, FountainDivaBehavior.Attack.SPLASH)
-	await _until(func(): return _of(GroundStrike).any(func(s): return s.fill() > 0.5), 3.0)
-	b._cooldown = 99.0
-	await _shot("73_gloria_splash_marks")
-	await _until(func(): return _of(WetFloor).size() > 0, 3.0)
-	await _wait(0.3)
-	b._cooldown = 99.0
-	await _shot("74_gloria_wet_floor")
-	await _wait(1.0)
-	b._cooldown = 99.0
-	b._summon_timer = 0.0
-	await _wait(0.4)
-	await _shot("75_gloria_summon_marks")
-	await _wait(1.0)
-	for e in get_nodes_in_group("enemies"):
-		e.set_physics_process(false)
-	await _shot("76_gloria_walkers")
-	await _clear()
-
-
-func _santa() -> void:
-	progress.data.record_floor_cleared(3, "funeral_parlour")
-	await _new_run(3, MALL)
-	var layout := await _enter_quiet("res://data/rooms/flashback_cinema/floor_boss_01.tres")
-	var center := _middle(layout)
-	_stand(_floor_near(layout, center + Vector2(-140, 0)))
-	var santa: Enemy = view._spawn_enemy(load("res://data/enemies/mall_santa.tres"), center, true)
-	var b = santa._behavior
-	b._elf_timer = 99.0
-	b._since_conveyor = -99.0
-	await _wait(0.1)
-	santa.global_position = center
-	b._cooldown = 99.0
-	b._begin(santa, MallSantaBehavior.Attack.SLEIGH, false)
-	await _wait(0.3)
-	await _shot("80_santa_sleigh_lane_early")
-	await _wait(0.6)
-	await _shot("81_santa_sleigh_lane_late")
-	await _wait(0.45)
-	await _shot("82_santa_sleigh_run")
-	await _wait(1.0)
-	b._cooldown = 99.0
-	b._next = MallSantaBehavior.Attack.NONE
-	santa.global_position = center
-	_stand(_floor_near(layout, center + Vector2(-100, 20)))
-	await _wait(0.1)
-	b._begin(santa, MallSantaBehavior.Attack.PRESENTS, false)
-	await _wait(0.5)
-	await _shot("83_santa_presents_warned")
-	await _wait(0.55)
-	b._cooldown = 99.0
-	await _shot("84_santa_presents_burst")
-	await _wait(1.0)
-	b._cooldown = 99.0
-	b._begin(santa, MallSantaBehavior.Attack.RING, false)
-	await _wait(MallSantaBehavior.RING_WINDUP * 0.7)
-	await _shot("85_santa_ring_warned")
-	await _wait(MallSantaBehavior.RING_WINDUP * 0.3 + 0.7)
-	b._cooldown = 99.0
-	await _shot("86_santa_ring_closing")
-	await _wait(0.6)
-	await _shot("87_santa_ring_shut")
-	await _wait(0.6)
-	b._cooldown = 99.0
-	b._begin(santa, MallSantaBehavior.Attack.CONVEYOR, false)
-	await _wait(MallSantaBehavior.CONVEYOR_WINDUP + 0.4)
-	b._cooldown = 99.0
-	await _shot("88_santa_conveyor_chime")
-	await _wait(1.0)
-	await _shot("89_santa_conveyor_after")
-	# The second phase: elves, then a sleigh run that chains into presents.
-	santa.hp = santa.max_hp() * 0.4
-	b._elf_timer = 0.0
-	await _wait(0.5)
-	b._cooldown = 99.0
-	await _shot("90_santa_phase2_elf_marks")
-	await _wait(1.0)
-	b._cooldown = 99.0
-	await _shot("91_santa_phase2_elves")
-	for e in get_nodes_in_group("enemies"):
-		if e != santa:
-			e.dismiss()
-	b._elf_timer = 99.0
-	santa.global_position = center
-	_stand(_floor_near(layout, center + Vector2(-140, 0)))
-	await _wait(0.1)
-	b._begin(santa, MallSantaBehavior.Attack.SLEIGH, true)
-	await _wait(MallSantaBehavior.SLEIGH_WINDUP + 0.6)
-	await _shot("92_santa_phase2_after_sleigh")
-	await _wait(0.5)
-	await _shot("93_santa_phase2_presents_followup")
 	await _clear()

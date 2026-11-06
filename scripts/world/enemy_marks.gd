@@ -292,6 +292,8 @@ func _draw_mark(half: Vector2) -> void:
 			GolfMarks.draw_mark(self, _def.mark, half)
 	# Departures, Terminal Zero draws its own marks.
 	TerminalMarks.draw_mark(self, _def.mark, half)
+	# The Flashback Cinema
+	CinemaMarks.draw_mark(self, _def.mark, half)
 
 
 func _draw_shield(half: Vector2) -> void:

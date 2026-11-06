@@ -149,7 +149,7 @@ func test_ghosts_mounds_and_wall_fixtures_are_not_carried() -> void:
 
 func test_a_running_charge_is_not_carried_off_its_warned_lane() -> void:
 	var cop := Enemy.new()
-	cop.setup(_load("mall_cop"), null, 0.5)
+	cop.setup(_load("airport_mall_cop"), null, 0.5)
 	assert_true(cop.rides_strips(), "walking, a strip carries him")
 	cop.hold_lane()
 	assert_false(cop.rides_strips(), "charging, it never does")

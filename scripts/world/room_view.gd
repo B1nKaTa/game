@@ -296,6 +296,9 @@ static func is_passing_effect(child: Node) -> bool:
 	# The items' shared visuals
 	if ItemFx.is_passing_effect(child):
 		return true
+	# The Flashback Cinema
+	if child is PopcornTub or child is FilmTrail:
+		return true
 
 	return (child is Projectile or child is DeathBurst or child is Thermos or child is EnemyBlast
 		or child is SummonMark or child is GroundStrike or child is LightsOut or child is SteamJet

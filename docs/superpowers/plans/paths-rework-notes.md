@@ -175,3 +175,41 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
   `test_mall_hazard.gd`, and `tools/probes/floor3_look.gd` (it still shoots strips in the Cinema's
   rooms, which no longer have any). No layout uses any of them now. The Projectionist reaches the
   screen through `CinemaScreen.in_room(room_view)`.
+
+## Tasks 2 and 4: the Cinema's enemies and bosses
+
+- **Commits fold the wiring and the retiring in:** the case file's test wants every enemy on a floor, so
+  each commit that adds the Cinema's enemies or a boss also puts them on the floor and deletes the Mall
+  data it leaves on no floor (the regulars with their pair, then Gloria with the Mall Walkers, then the
+  Mall Santa with his elves), and the Mall's props, strips and tests go in a commit of their own after.
+- **Roles from the Mall's:** the Film Reel takes the Mall Walkers' slot (weight 3, 16 health against
+  the Seasonal Temp's 13), the Usher the Mall Cop's (weight 4, the cop's 36 health and charge, as the
+  Debt Collector Ghost's role), the Popcorn Vendor the Perfume Sprayer's (weight 3, 30 health, keeps
+  110 to 210 px away, as the Filing Clerk's thrower role), then the Intern Reaper (3) and the Notary (2).
+- **The Usher:** a torch beam 150 px long and 44 degrees wide, swinging 18 degrees either side of the
+  way he walks; 0.6 s of Grandpa in it (with nothing solid between) spots him, and the notice ebbs as
+  fast while he is out of it, so stepping out sets it back. Spotted, he says "Shh!", turns the beam
+  onto Grandpa and winds up 0.7 s with the lane warned (28 px wide), then charges 240 px at 300 px/s,
+  stopping at anything solid, and rests 2.4 s. He patrols to spots 90 px round Grandpa, re-picked every
+  2.2 s, so the beam keeps passing near him. The beam (`UsherTorch`) is pale cream, never red, flat on
+  the floor under the bodies, and brightens as he takes notice.
+- **The Popcorn Vendor:** a 0.5 s windup ("Popcorn!"), then a tub lobbed onto his feet give or take
+  24 px; its mark fills for 0.9 s while the striped tub flies in, costs a pill under it (18 px), and
+  bursts into 6 kernels at 120 px/s along spokes warned with it. Every 3.4 s. The tub breaks nothing,
+  as a regular is no boss.
+- **The Film Reel:** rolls 130 px/s along rows and columns only, first toward Grandpa's side; at each
+  hit on a wall or seat it rattles 0.45 s with its next 200 px lane warned, then turns 90 degrees to
+  Grandpa's side (the other side if that is blocked, back if both are). It hurts by touch only. Its
+  film (`FilmTrail`) is a piece 12 px square every 12 px rolled, dark with sprocket holes, slowing him
+  by 0.35 for 0.4 s every 0.2 s while his feet are on it, each piece fading 4 s after it was laid.
+- **The Extra:** 10 health, 125 px/s, 16x22, grey; a 0.4 s windup and a shove that costs a pill and
+  pushes him 200 px/s for 0.16 s (only when it lands, so a dodge passes both). It heckles ("Boo!") as
+  it steps in. It is the only summon, Crabtree's.
+- **Colours:** Usher violet (0.5, 0.3, 0.8), Vendor popcorn yellow, Reel steel grey, Extra light grey,
+  the Intern Reaper pink (art hue 275 to 325) and the Notary sky blue, so no body is red and each is
+  told apart on the teal carpet.
+- **Placeholder marks** are drawn by `CinemaMarks` (a cap and torch, a popcorn tray, a reel's spokes and
+  hub, a flat cap with film scratches, a critic's beret, monocle and notebook, a projectionist's
+  eyeshade and hand projector).
+- **Retired tests moved:** the Mall Cop's charge, whistle and rally tests went to the airport's enemy
+  tests and the Perfume Sprayer's to the office's, each now pinning the numbers the Mall's def had.

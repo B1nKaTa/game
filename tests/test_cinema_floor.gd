@@ -294,6 +294,33 @@ func test_its_difficulty_follows_the_third_floor() -> void:
 	assert_eq(def.chest_weights, _floor("funeral_parlour").chest_weights, "the same chest odds as the other third floor")
 
 
+# --- its enemies ---
+
+func test_its_own_enemies_and_bosses() -> void:
+	var def := _def()
+	var ids: Array[String] = []
+	for enemy: EnemyDef in def.enemies:
+		ids.append(enemy.id)
+	assert_eq(ids, ["film_reel", "usher", "popcorn_vendor", "cinema_intern_reaper", "cinema_notary_public"])
+	assert_eq(def.enemy_weights, PackedInt32Array([3, 4, 3, 3, 2]), "the third floor's weights, by the Mall's roles")
+	assert_eq(def.mimic.id, "mimic")
+
+
+func test_every_enemy_of_the_floor_can_be_told_apart() -> void:
+	var defs: Array[EnemyDef] = []
+	defs.assign(_def().enemies)
+	for boss in [_def().mini_boss, _def().floor_boss]:
+		defs.append(boss)
+		if boss.summon != null:
+			defs.append(boss.summon)
+	for i in defs.size():
+		for j in range(i + 1, defs.size()):
+			var a := SpriteVisual.readable(defs[i].color)
+			var b := SpriteVisual.readable(defs[j].color)
+			var size_gap := (defs[i].body_size - defs[j].body_size).length()
+			assert_true(_difference(a, b) >= 0.25 or size_gap >= 12.0, "%s and %s look alike" % [defs[i].id, defs[j].id])
+
+
 # --- its rooms ---
 
 func test_every_layout_in_the_folder_is_valid() -> void:

@@ -8,6 +8,8 @@ const ART_DIR := "res://art/sprites/"
 const ARTED := ["intern_reaper", "stoker", "mall_cop", "club_golfer", "hr_representative", "regional_reaper",
 	"old_smokey", "mall_santa", "thaddeus_fairweather", "chairman_of_the_board"]
 const ANIMS := ["idle", "walk", "windup", "attack", "whistle"]
+# Art whose own enemy is retired, and the enemy who wears it now.
+const WORN_BY := {"mall_cop": "airport_mall_cop"}
 
 
 func _has(names: Array) -> Callable:
@@ -105,7 +107,7 @@ func test_a_real_enemy_walks_winds_up_strikes_and_flips() -> void:
 
 
 func test_without_an_attack_strip_the_windup_end_goes_back_to_walking() -> void:
-	var enemy := _enemy("mall_cop")
+	var enemy := _enemy("airport_mall_cop")
 	assert_false(SpriteVisual.has_anim("mall_cop", "attack"), "his export is a whistle")
 	var telegraph := Telegraph.new()
 	telegraph.start(0.4)
@@ -147,7 +149,7 @@ func test_every_strip_is_square_frames_with_the_feet_on_one_row() -> void:
 
 func test_every_strip_puts_the_feet_on_the_body_box_bottom() -> void:
 	for id in ARTED:
-		var def: EnemyDef = load("res://data/enemies/%s.tres" % id)
+		var def: EnemyDef = load("res://data/enemies/%s.tres" % WORN_BY.get(id, id))
 		var visual := SpriteVisual.new()
 		visual.set_feet(def.body_size.y / 2.0)
 		visual.setup(def.art(), def.body_size, def.color, def.frame_width)
@@ -165,7 +167,7 @@ func test_every_strip_puts_the_feet_on_the_body_box_bottom() -> void:
 
 
 func test_a_floor_variant_wears_its_bases_art_recoloured() -> void:
-	for pair in [["furnace_intern_reaper", "intern_reaper"], ["mall_intern_reaper", "intern_reaper"], ["cruise_stoker", "stoker"], ["airport_mall_cop", "mall_cop"]]:
+	for pair in [["furnace_intern_reaper", "intern_reaper"], ["cinema_intern_reaper", "intern_reaper"], ["cruise_stoker", "stoker"], ["airport_mall_cop", "mall_cop"]]:
 		var def: EnemyDef = load("res://data/enemies/%s.tres" % pair[0])
 		assert_eq(def.art(), pair[1], pair[0])
 	var base: EnemyDef = load("res://data/enemies/intern_reaper.tres")

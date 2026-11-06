@@ -1,7 +1,7 @@
 extends TestCase
 
-# What is left of the Golden Years Mall on the Flashback Cinema floor: its enemies, bosses and props,
-# which Task 4 of the paths rework retires. The Cinema's own floor tests are in test_cinema_floor.gd.
+# What is left of the Golden Years Mall: its decor kinds and props, which Task 4 of the paths rework
+# retires. The Cinema's own floor tests are in test_cinema_floor.gd.
 
 
 func _def() -> FloorDef:
@@ -14,36 +14,6 @@ func _floor(id: String) -> FloorDef:
 
 func _difference(a: Color, b: Color) -> float:
 	return Vector3(a.r - b.r, a.g - b.g, a.b - b.b).length()
-
-
-# --- the Mall's enemies and bosses, which still hold the floor until Task 4 swaps them ---
-
-func test_its_own_enemies_and_bosses() -> void:
-	var def := _def()
-	var ids := {}
-	for enemy: EnemyDef in def.enemies:
-		ids[enemy.id] = true
-	for id in ["mall_walker", "mall_cop", "perfume_sprayer", "mall_intern_reaper", "mall_notary_public"]:
-		assert_true(ids.has(id), id)
-	assert_eq(ids.size(), 5)
-	assert_eq(def.enemy_weights.size(), 5)
-	assert_eq(def.mini_boss.id, "gloria")
-	assert_eq(def.floor_boss.id, "mall_santa")
-	assert_eq(def.mimic.id, "mimic")
-
-
-func test_every_enemy_of_the_floor_can_be_told_apart() -> void:
-	var defs: Array[EnemyDef] = []
-	defs.assign(_def().enemies)
-	defs.append(_def().mini_boss)
-	defs.append(_def().floor_boss)
-	defs.append(_def().floor_boss.summon)
-	for i in defs.size():
-		for j in range(i + 1, defs.size()):
-			var a := SpriteVisual.readable(defs[i].color)
-			var b := SpriteVisual.readable(defs[j].color)
-			var size_gap := (defs[i].body_size - defs[j].body_size).length()
-			assert_true(_difference(a, b) >= 0.25 or size_gap >= 12.0, "%s and %s look alike" % [defs[i].id, defs[j].id])
 
 
 # --- its look ---

@@ -19,6 +19,12 @@ const ORNAMENT_RED := Color("d93a3a")
 const LOOK_NOTE := "note"
 const NOTE_INK := Color("15131a")
 const NOTE_GLOW := Color(1.0, 0.95, 0.75, 0.8)
+# The Flashback Cinema: a popped kernel from a burst tub, and a critic's gold star.
+const LOOK_KERNEL := "kernel"
+const KERNEL := Color("fff4c0")
+const KERNEL_HULL := Color("c9a24a")
+const LOOK_STAR := "star"
+const STAR_GOLD := Color("ffd24a")
 
 # A sedative dart slows Grandpa by this much for this long when it lands. Zero means a plain shot.
 var slow_fraction := 0.0
@@ -90,6 +96,20 @@ func _draw() -> void:
 		draw_circle(Vector2(-1.0, 3.0), 3.0, NOTE_INK)
 		draw_line(Vector2(1.5, 3.0), Vector2(1.5, -6.0), NOTE_INK, 1.5)
 		draw_line(Vector2(1.5, -6.0), Vector2(5.0, -3.0), NOTE_INK, 1.5)
+		return
+	if look == LOOK_KERNEL:
+		draw_circle(Vector2.ZERO, 4.5, Color.BLACK)
+		draw_circle(Vector2(-1.0, -0.5), 3.0, KERNEL)
+		draw_circle(Vector2(1.5, 0.5), 2.5, KERNEL)
+		draw_circle(Vector2(0.5, 2.0), 1.2, KERNEL_HULL)
+		return
+	if look == LOOK_STAR:
+		var star := PackedVector2Array()
+		for i in 10:
+			star.append(Vector2.from_angle(-PI / 2.0 + TAU * i / 10.0) * (6.5 if i % 2 == 0 else 2.8))
+		draw_colored_polygon(star, STAR_GOLD)
+		star.append(star[0])
+		draw_polyline(star, Color.BLACK, 1.0)
 		return
 	draw_rect(Rect2(-4, -5, 8, 10), Color("efe8d2"))
 	draw_rect(Rect2(-4, -5, 8, 10), Color.BLACK, false, 1.0)
