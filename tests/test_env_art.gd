@@ -228,7 +228,7 @@ func test_a_floors_art_set_is_its_id_unless_it_shares_one() -> void:
 
 
 # The Cinema and the Seance Hotline load their own tiles by their ids, and their room props find their
-# own pictures while their path's rooms are built. The partition keeps its code look.
+# own pictures while their path's rooms are built. The partition shows the piece of its run it is.
 func test_the_new_paths_wear_their_own_tiles_and_props() -> void:
 	for id in ["flashback_cinema", "seance_hotline"]:
 		var def: FloorDef = load("res://data/floors/%s.tres" % id)
@@ -251,6 +251,11 @@ func test_the_new_paths_wear_their_own_tiles_and_props() -> void:
 	assert_true(PropArt.texture(curtain.art_id()) != null, "the curtain's beads")
 	curtain.free()
 	var partition := SeancePartition.new()
-	assert_eq(partition.art_texture(), null, "the partition keeps its code look")
+	assert_true(partition.art_texture().resource_path.ends_with("seance_hotline/cubicle_partition.png"), "a lone panel")
+	partition.joins_east = true
+	assert_eq(partition.art_state(), "west", "the west end of a run")
+	partition.joins_west = true
+	assert_eq(partition.art_state(), "mid")
+	assert_true(partition.art_texture() != null, "every piece has its picture")
 	partition.free()
 	_reset_art_set()

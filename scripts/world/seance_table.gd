@@ -40,14 +40,15 @@ func _ready() -> void:
 
 
 # The picture (art/props/seance_hotline/seance_table.png) is 44x40, smaller than the four cells the
-# table blocks, so a dark rug of the cloth's colour under it shows the whole of what is solid.
+# table blocks, so a dark rug of the cloth's colour under it shows the whole of what is solid. The small
+# table's picture (seance_table_small.png) nearly fills its one cell and stands on a rug of its size.
 func _draw() -> void:
 	var art := art_texture()
 	if art == null:
 		super._draw()
 		return
 	var p := look()
-	var radius := LARGE_SIZE.x / 2.0 - 3.0
+	var radius := body_size().x / 2.0 - 3.0
 	draw_circle(Vector2.ZERO, radius, p.table_cloth.darkened(0.35))
 	draw_arc(Vector2.ZERO, radius - 2.0, 0.0, TAU, 32, p.table_fringe.darkened(0.3), 1.0)
 	draw_arc(Vector2.ZERO, radius, 0.0, TAU, 32, Color.BLACK, 1.0)

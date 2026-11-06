@@ -7,6 +7,8 @@ extends Node2D
 # variants show it mirrored, so two of a kind side by side never look stamped.
 var _items: Array[Dictionary] = []
 var _palette: RoomPalette
+# Kinds kept for their light but not drawn (RoomView.DEPTH_UNSEEN in the depth look).
+var unseen: Array = []
 
 
 func setup(items: Array[Dictionary], palette: RoomPalette) -> void:
@@ -22,7 +24,7 @@ func _ready() -> void:
 func _draw() -> void:
 	for item in _items:
 		var kind: String = item["kind"]
-		if kind == RoomDecor.GRASS:
+		if kind == RoomDecor.GRASS or unseen.has(kind):
 			continue
 		var at: Vector2 = RoomBackdrop.cell_center(item["cell"]) + item["offset"]
 		var art := PropArt.texture("decor_" + kind)

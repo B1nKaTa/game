@@ -46,6 +46,10 @@ const ARCADE_MAGENTA := Color(1.0, 0.3, 0.85)
 const ARCADE_CYAN := Color(0.3, 0.95, 1.0)
 const RECIPE_COLOR := Color("ffd65c")
 const RECIPE_PROMPT := "Take recipe"
+# Decor the depth look leaves out, since none of it can be named at 1x, and decor it keeps only as a
+# light (_create_decor).
+const DEPTH_LEFT_OUT := [RoomDecor.PUDDLE, RoomDecor.CRACK, RoomDecor.BONES, RoomDecor.MOSS, RoomDecor.COAL_DUST]
+const DEPTH_UNSEEN := [RoomDecor.FLUORESCENT]
 const FREE_COLOR := Color("67f0d0")
 const KEY_COLOR := Color("ece9e0")
 const BOMB_COLOR := Color("ff9a3c")
@@ -639,12 +643,13 @@ func _place_prop(prop: BreakableBlock, cell: Vector2i) -> void:
 func _create_decor(palette: RoomPalette) -> void:
 	var items := RoomDecor.plan(_room.layout, palette, _room.decor_seed)
 	# The depth look lays its own cracks into the ground, so the code puddles and cracks stay out, and
-	# so do the little bone scatters, too small to name at 1x.
+	# so do the little bone scatters, too small to name at 1x, and the moss and coal dust, which read as
+	# dark blobs.
 	if _depth != null:
 		var kept: Array[Dictionary] = []
 		var papers := 0
 		for item in items:
-			if [RoomDecor.PUDDLE, RoomDecor.CRACK, RoomDecor.BONES].has(item["kind"]):
+			if DEPTH_LEFT_OUT.has(item["kind"]):
 				continue
 			# Its grass is paper here: half as many stacks, so fewer, clearer things lie about.
 			if item["kind"] == RoomDecor.GRASS:
@@ -655,6 +660,10 @@ func _create_decor(palette: RoomPalette) -> void:
 		items = kept
 	var layer := DecorLayer.new()
 	layer.setup(items, palette)
+	# A fluorescent panel's glare on the floor is a pale strip no one can name; in the depth look only
+	# its light is left.
+	if _depth != null:
+		layer.unseen = DEPTH_UNSEEN
 	add_child(layer)
 	for item in items:
 		var at: Vector2 = RoomBackdrop.cell_center(item["cell"]) + item["offset"]

@@ -371,7 +371,7 @@ func test_each_prop_is_named_and_sized_for_its_art() -> void:
 	table.free()
 	var partition := SeancePartition.new()
 	assert_eq(partition.art_id(), "cubicle_partition")
-	assert_eq(SeancePartition.ART_SIZE, Vector2(32, 48))
+	assert_eq(SeancePartition.ART_SIZE, Vector2(32, 36))
 	partition.free()
 	var lamp := LavaLamp.new()
 	assert_eq(lamp.art_id(), "lava_lamp")

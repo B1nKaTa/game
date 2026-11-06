@@ -4,8 +4,8 @@ extends CubicleWall
 # A length of the hotline's cubicle partition: violet fabric in a teal frame, standing a little taller
 # than its cell. Solid, and only blasts and bosses break it, like the office's partitions, and it can hide
 # a coin at the furniture rate. A partition beside another one joins it, so a run reads as one wall, and
-# the 64x48 art of two cells cuts into two 32x48 halves for it.
-const ART_SIZE := Vector2(32, 48)
+# a 64x36 drawing of two cells is cut into 32x36 pieces for it (art_state).
+const ART_SIZE := Vector2(32, 36)
 
 var joins_west := false
 var joins_east := false
@@ -13,6 +13,19 @@ var joins_east := false
 
 func art_id() -> String:
 	return "cubicle_partition"
+
+
+# Which piece of the run this cell shows (art/props/seance_hotline/cubicle_partition[_<state>].png, cut
+# from one drawing two cells wide by tools/art/area_props.py): the west end, a middle, the east end, or
+# a lone panel with both ends. A state with no picture draws the placeholder (PropArt).
+func art_state() -> String:
+	if joins_west and joins_east:
+		return "mid"
+	if joins_east:
+		return "west"
+	if joins_west:
+		return "east"
+	return ""
 
 
 func debris_color() -> Color:
