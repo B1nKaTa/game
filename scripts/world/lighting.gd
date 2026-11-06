@@ -86,14 +86,18 @@ static func add_room_mood(parent: Node, room_cells: Vector2i, palette: RoomPalet
 # wide fill so no corner goes black, and a vignette over the view. Fewer lights than the flat look.
 static func add_depth_mood(parent: Node, room_cells: Vector2i, depth: DepthLook, rows: PackedStringArray) -> void:
 	var modulate := CanvasModulate.new()
-	modulate.color = DepthLook.AMBIENT
+	modulate.color = depth.ambient
 	parent.add_child(modulate)
 	for cell in fill_cells(room_cells, DepthLook.FILL_SPACING):
-		var fill := make_light(DepthLook.FILL_LIGHT, DepthLook.FILL_ENERGY, DepthLook.FILL_SCALE)
+		var fill := make_light(depth.fill_light, DepthLook.FILL_ENERGY, DepthLook.FILL_SCALE)
 		fill.position = RoomBackdrop.cell_center(cell)
 		parent.add_child(fill)
-	for cell in DepthLook.sconce_cells(rows):
-		var light := make_light(DepthLook.SCONCE_LIGHT, DepthLook.SCONCE_ENERGY, DepthLook.SCONCE_SCALE)
+	# A set with no sconce picture hangs no sconce lights, so no light shines from a bare wall.
+	var sconces: Array[Vector2i] = []
+	if depth.sconce != null:
+		sconces = DepthLook.sconce_cells(rows)
+	for cell in sconces:
+		var light := make_light(depth.sconce_light, DepthLook.SCONCE_ENERGY, DepthLook.SCONCE_SCALE)
 		light.position = depth.sconce_flame(cell) + Vector2(0, 10)
 		parent.add_child(light)
 		add_flicker(light, DepthLook.FLICKER)

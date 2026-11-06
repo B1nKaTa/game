@@ -54,7 +54,7 @@ func _darkness() -> Color:
 
 func _jamb_colors() -> Array[Color]:
 	if door.depth != null:
-		return [DepthLook.JAMB, DepthLook.JAMB_LIGHT, DepthLook.JAMB_DARK]
+		return [door.depth.jamb, door.depth.jamb_light, door.depth.jamb_dark]
 	var wall := door.palette.wall if door.palette != null else Color("3a3547")
 	return [wall.lightened(0.12), wall.lightened(0.32), wall.darkened(0.45)]
 

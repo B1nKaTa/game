@@ -21,7 +21,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from env_art import fit, load, luma, save  # noqa: E402
+from env_art import fit, key_background, load, luma, save  # noqa: E402
 
 TILE = 32
 # The ground tileset: ground2 has smaller, rounder cobbles and a softer edge than ground1, whose large
@@ -167,5 +167,83 @@ def build(export, game, art_set):
     print('built', out)
 
 
+# ---------------------------------------------------------------- the other areas
+#
+# Every other area's export lives in <export>/sets/<set>/: ground.png + ground.json (one pro Wang
+# tileset), walls/tile_N.png (one tiles_pro sheet of wall fronts) and props/<name>.png. Its wall top is
+# its plainest front, darkened and with the courses softened, so the top always reads darker than the
+# front. Its sconce is the basement's torch for stone places and a brass lamp (<export>/sets/_shared/
+# lamp.png) indoors. Tones keep the ground under the bodies; a red or bright floor is pulled further.
+# set: faces (tiles_pro indices, plain first), ground tone, face tone, sconce, props {game id: (file, w, h)}
+AREAS = {
+    'waiting_room': {'faces': [0, 1, 7, 2, 5, 6, 3, 1], 'ground': (0.82, 0.8, 0.78), 'face': (0.9, 0.88, 0.84), 'sconce': 'lamp'},
+    'crossroads': {'faces': [0, 1, 7, 5, 4, 2, 3, 6], 'ground': (0.8, 0.78, 0.76), 'face': (0.9, 0.88, 0.86), 'sconce': 'torch'},
+    'cemetery': {'faces': [0, 1, 7, 2, 5, 3, 6, 4], 'ground': (0.78, 0.8, 0.76), 'face': (0.88, 0.9, 0.86), 'sconce': 'torch'},
+    'sunset_shores': {'faces': [0, 1, 7, 2, 3, 4, 5, 6], 'ground': (0.78, 0.76, 0.74), 'face': (0.86, 0.84, 0.82), 'sconce': 'lamp'},
+    'furnace_works': {'faces': [0, 1, 7, 2, 3, 4, 5, 6], 'ground': (0.78, 0.74, 0.72), 'face': (0.86, 0.82, 0.8), 'sconce': 'torch'},
+    'funeral_parlour': {'faces': [0, 1, 7, 2, 3, 4, 5, 6], 'ground': (0.72, 0.66, 0.66), 'face': (0.86, 0.82, 0.8), 'sconce': 'lamp'},
+    'flashback_cinema': {'faces': [0, 1, 7, 2, 3, 4, 5, 6], 'ground': (0.76, 0.76, 0.78), 'face': (0.86, 0.84, 0.84), 'sconce': 'lamp'},
+    'last_resort_cruise': {'faces': [0, 1, 7, 2, 3, 4, 5, 6], 'ground': (0.8, 0.78, 0.76), 'face': (0.86, 0.86, 0.88), 'sconce': 'lamp'},
+    'seance_hotline': {'faces': [0, 1, 7, 2, 3, 4, 5, 6], 'ground': (0.76, 0.74, 0.78), 'face': (0.86, 0.84, 0.88), 'sconce': 'lamp'},
+    'terminal_zero': {'faces': [0, 1, 7, 2, 3, 4, 5, 6], 'ground': (0.74, 0.74, 0.76), 'face': (0.82, 0.82, 0.84), 'sconce': 'lamp'},
+    'head_office': {'faces': [0, 1, 7, 2, 3, 4, 5, 6], 'ground': (0.72, 0.7, 0.68), 'face': (0.82, 0.8, 0.78), 'sconce': 'lamp'},
+}
+
+
+def area_ground(folder, mult):
+    sheet = load(os.path.join(folder, 'ground.png'))
+    meta = json.load(open(os.path.join(folder, 'ground.json'), encoding='utf-8'))
+    strip = [[(0, 0, 0, 0)] * (16 * TILE) for _ in range(TILE)]
+    for tile in meta['tileset_data']['tiles']:
+        c = tile['corners']
+        index = (c['NW'] == 'upper') * 8 + (c['NE'] == 'upper') * 4 + (c['SW'] == 'upper') * 2 + (c['SE'] == 'upper')
+        pixels = tone(crop(sheet, tile['bounding_box']), mult)
+        for y in range(TILE):
+            strip[y][index * TILE:(index + 1) * TILE] = pixels[y]
+    return strip
+
+
+# A wall top from a wall front: darker, and each pixel pulled toward its row's mean so the courses blur.
+def cap_from(face):
+    out = []
+    for row in face:
+        mean = [sum(p[c] for p in row) / len(row) for c in range(3)]
+        out.append([(int((p[0] * 0.4 + mean[0] * 0.6) * 0.62), int((p[1] * 0.4 + mean[1] * 0.6) * 0.6),
+                     int((p[2] * 0.4 + mean[2] * 0.6) * 0.6), 255) for p in row])
+    return out
+
+
+def build_area(export, game, art_set):
+    spec = AREAS[art_set]
+    folder = os.path.join(export, 'sets', art_set)
+    out = os.path.join(game, 'art', 'tiles', art_set, 'depth')
+    os.makedirs(out, exist_ok=True)
+    save(os.path.join(out, 'ground.png'), area_ground(folder, spec['ground']))
+    faces = []
+    for n, index in enumerate(spec['faces']):
+        face = tone(load(os.path.join(folder, 'walls', 'tile_%d.png' % index)), spec['face'])
+        faces.append(face)
+        save(os.path.join(out, 'face_%d.png' % n), face)
+    cap = cap_from(faces[0])
+    save(os.path.join(out, 'cap.png'), cap)
+    sconce_file = os.path.join(export, 'props', 'sconce.png') if spec['sconce'] == 'torch' else os.path.join(export, 'sets', '_shared', 'lamp.png')
+    if os.path.exists(sconce_file):
+        # The lamp came back on a flat white canvas, so its background is keyed out first.
+        save(os.path.join(out, 'sconce.png'), fit(key_background(load(sconce_file)), 16, 26))
+    props = os.path.join(game, 'art', 'props', art_set)
+    os.makedirs(props, exist_ok=True)
+    save(os.path.join(props, 'hole.png'), pit(faces[0], cap))
+    for game_id, (name, w, h) in spec.get('props', {}).items():
+        path = os.path.join(folder, 'props', name)
+        if os.path.exists(path):
+            save(os.path.join(props, game_id + '.png'), tone(fit(load(path), w, h, main=True), (0.78, 0.76, 0.74)))
+            print(art_set, game_id)
+    print('built', out)
+
+
 if __name__ == '__main__':
-    build(sys.argv[1], sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else 'floor_1')
+    which = sys.argv[3] if len(sys.argv) > 3 else 'floor_1'
+    if which in AREAS:
+        build_area(sys.argv[1], sys.argv[2], which)
+    else:
+        build(sys.argv[1], sys.argv[2], which)

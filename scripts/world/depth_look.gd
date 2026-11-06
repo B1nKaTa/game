@@ -34,6 +34,8 @@ const FILL_SCALE := 3.6
 # One wide fill every this many cells: fewer, larger lights than the flat look.
 const FILL_SPACING := 12.0
 const FLICKER := 0.06
+# Another area's ambient is its palette's, times this: darker, so its light sources make pools.
+const AREA_AMBIENT := 0.72
 # The even light bodies are shown in (SpriteVisual draws them unshaded in this look): a warm dim, so
 # they sit in the torchlight yet never drop into a dark corner.
 const BODY_LIGHT := Color(1.12, 1.07, 1.0)
@@ -75,12 +77,46 @@ var sconce: Texture2D
 var decals: Array[Texture2D] = []
 # The mean colour of the base ground, for things that continue it (a door's opening).
 var ground_color := Color("3b3029")
+# The set's light and jamb colours (tune); the basement keeps the constants.
+var ambient := AMBIENT
+var sconce_light := SCONCE_LIGHT
+var fill_light := FILL_LIGHT
+var jamb := JAMB
+var jamb_light := JAMB_LIGHT
+var jamb_dark := JAMB_DARK
 
 
 static func for_floor(floor_def: FloorDef) -> DepthLook:
 	if floor_def == null or floor_def.art_style != STYLE:
 		return null
-	return for_set(floor_def.art())
+	var look := for_set(floor_def.art())
+	if look != null:
+		look.tune(floor_def.art(), floor_def.room_palette())
+	return look
+
+
+# The light of a set: the basement's own values, or else the floor palette's ambient dimmed and its
+# torch and fill colours, so each area keeps its mood in the dark. Jambs take the wall front's colours.
+func tune(set_id: String, palette: RoomPalette) -> void:
+	if set_id == "floor_1" or palette == null:
+		return
+	ambient = Color(palette.ambient.r * AREA_AMBIENT, palette.ambient.g * AREA_AMBIENT, palette.ambient.b * AREA_AMBIENT)
+	sconce_light = palette.torch
+	fill_light = palette.fill_light
+	var face: Image = faces[0].get_image() if not faces.is_empty() else null
+	if face != null and not face.is_empty():
+		var sum := Color(0, 0, 0, 0)
+		for y in range(0, face.get_height(), 2):
+			for x in range(0, face.get_width(), 2):
+				sum += face.get_pixel(x, y)
+		var n := float(face.get_width() * face.get_height()) / 4.0
+		var mean := Color(sum.r / n, sum.g / n, sum.b / n)
+		jamb = mean
+		jamb_light = mean.lightened(0.3)
+		jamb_dark = mean.darkened(0.5)
+	var tile: Image = ground.get_image() if ground != null else null
+	if tile != null and not tile.is_empty():
+		ground_color = tile.get_pixel(TILE / 2, TILE / 2)
 
 
 static func for_set(set_id: String) -> DepthLook:
