@@ -24,6 +24,8 @@ const LINE_COLOR := Color("c9c5d6")
 const CURRENT_COLOR := Color.WHITE
 # The floor's name sits on the row above it, at the top of the screen.
 const NAME_FONT := 9
+# A long name is written smaller over the mini map, but never below this.
+const MIN_NAME_FONT := 7
 const NAME_BASELINE := 10.0
 const NAME_COLOR := Color("ece9e0")
 const MINI_RECT := Rect2(528, 13, 108, 58)
@@ -250,12 +252,27 @@ static func combos_line(names: PackedStringArray) -> String:
 
 
 func _draw_floor_name() -> void:
-
 	var font := ThemeDB.fallback_font
-	var width := font.get_string_size(_floor_name, HORIZONTAL_ALIGNMENT_LEFT, -1, NAME_FONT).x
+	var shown := mini_name(_floor_name)
+	var text: String = shown[0]
+	var size: int = shown[1]
+	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
 	var at := Vector2(MINI_RECT.end.x - width, NAME_BASELINE)
-	draw_string_outline(font, at, _floor_name, HORIZONTAL_ALIGNMENT_LEFT, -1, NAME_FONT, 3, Color.BLACK)
-	draw_string(font, at, _floor_name, HORIZONTAL_ALIGNMENT_LEFT, -1, NAME_FONT, NAME_COLOR)
+	draw_string_outline(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, 3, Color.BLACK)
+	draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, NAME_COLOR)
+
+
+# What the mini map writes over itself, and at what size: the whole name when it fits the map's
+# width, else smaller, else the part before its comma, so it never runs left over the potion slot
+# beside it. Returns [text, font size]. The big map always shows the whole name.
+static func mini_name(full: String) -> Array:
+	var font := ThemeDB.fallback_font
+	var short := full.get_slice(",", 0).strip_edges()
+	var tries: Array = [[full, NAME_FONT], [full, NAME_FONT - 1], [short, NAME_FONT], [short, NAME_FONT - 1], [full, MIN_NAME_FONT], [short, MIN_NAME_FONT]]
+	for attempt: Array in tries:
+		if font.get_string_size(attempt[0], HORIZONTAL_ALIGNMENT_LEFT, -1, attempt[1]).x <= MINI_RECT.size.x:
+			return attempt
+	return [short, MIN_NAME_FONT]
 
 
 # Only between two visited rooms, so a link never gives away a room or a secret not yet found.

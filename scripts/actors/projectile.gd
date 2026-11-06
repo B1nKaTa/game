@@ -27,9 +27,10 @@ const LOOK_STAPLER := "stapler"
 const LOOK_MUG := "mug"
 const LOOK_FAX := "fax"
 const OBJECT_ART_SIZE := 24.0
+# A chrome arm over a dark base: a grey arm vanished on the hotline's violet carpet in the real window.
 const STAPLER_DARK := Color("231929")
-const STAPLER_GREY := Color("544e59")
-const STAPLER_SHINE := Color("98949e")
+const STAPLER_GREY := Color("bdb8c8")
+const STAPLER_SHINE := Color("f2f0f6")
 const MUG := Color("e1ddb6")
 const MUG_SHADE := Color("a8a27e")
 const MUG_LOGO := Color("4a1775")

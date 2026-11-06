@@ -171,6 +171,24 @@ func test_the_floor_name_fits_above_the_mini_map_without_touching_it() -> void:
 		assert_true(width <= FloorMapView.MINI_RECT.size.x, "%s is %f wide" % [def.display_name, width])
 
 
+# The Seance Hotline's long name ran left over the potion slot's "[H] Swift Tea" in the real window, as
+# the Cinema's and Head Office's would: what the mini map writes must stay right of the slot.
+func test_every_floor_name_on_the_mini_map_stays_clear_of_the_potion_slot() -> void:
+	var slot_end := Hud.POTION_SLOT_AT.x + PotionSlot.SIZE.x
+	assert_true(FloorMapView.MINI_RECT.position.x >= slot_end)
+	for file in DirAccess.get_files_at("res://data/floors"):
+		if not file.ends_with(".tres"):
+			continue
+		var def: FloorDef = load("res://data/floors/" + file)
+		var shown := FloorMapView.mini_name(def.display_name)
+		var width := ThemeDB.fallback_font.get_string_size(shown[0], HORIZONTAL_ALIGNMENT_LEFT, -1, shown[1]).x
+		assert_true(FloorMapView.MINI_RECT.end.x - width >= slot_end, "%s: '%s' is %f wide" % [def.display_name, shown[0], width])
+		assert_true(shown[1] >= FloorMapView.MIN_NAME_FONT)
+	# A name that fits is written whole at the usual size; the hotline's keeps its first part.
+	assert_eq(FloorMapView.mini_name("The Records Basement"), ["The Records Basement", FloorMapView.NAME_FONT])
+	assert_eq(FloorMapView.mini_name("Beyond Calling Psychic Hotline, Night Shift")[0], "Beyond Calling Psychic Hotline")
+
+
 # --- the signs ---
 
 func test_a_sign_shows_its_details_only_nearby() -> void:

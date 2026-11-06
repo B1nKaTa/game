@@ -152,6 +152,21 @@ func test_the_cards_are_sized_and_named_for_the_tarot_art() -> void:
 	tarot.free()
 
 
+# In a column the next card lies closer than a card and its tag, so in the real window the card below
+# hid "The Star"; the tag is drawn on a node of its own, above every card.
+func test_a_cards_name_tag_draws_above_the_card_dealt_below_it() -> void:
+	var tag_bottom := TarotCard.SIZE.y / 2.0 + 2.0 + TarotCard.TAG_FONT + 4.0
+	assert_true(Reader.COLUMN_STEP - TarotCard.SIZE.y / 2.0 < tag_bottom, "the tag reaches into the next card's face")
+	var tarot := TarotCard.new()
+	tarot.setup(Reader.Card.STAR, null)
+	tarot._ready()
+	var tag := tarot.tag_node()
+	assert_true(tag != null and tag.get_parent() == tarot)
+	assert_true(tag.z_as_relative and tag.z_index > 0, "above the cards, still under the bodies")
+	assert_true(tarot.z_index + tag.z_index < 0, "flat on the floor under the bodies")
+	tarot.free()
+
+
 func test_the_cards_lie_on_open_floor_in_front_of_her() -> void:
 	# In an open room, a row toward him, between them.
 	var room := ForemanBehavior.room_rect(Vector2i(20, 11))

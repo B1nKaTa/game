@@ -644,3 +644,31 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
   and now lists patterns 14 and 15; its history tables and totals stay, as Task 4 left the Mall's.
   The add-floor layouts guide named the deleted `test_mall_hazard.gd`; it now points at the cruise's
   slide test.
+- **Looked at in a real window (Phase F):** `tools/probes/seance_look.gd` (parts rooms, regulars,
+  celestine, zara, hud, scarf; 58 shots in `D:\grandpa-shots-pr\seance_*.png`), each attack shot timed by
+  its own state (a lash's `fill` and `has_lashed`, the ball's `state` and `fill`, a card's
+  `shows_symbol`, each card attack's `fill` and fallen, sweeping, spinning or landed state, the line's
+  `is_warning` and `is_held`, the planchette's and the copy's `fill` and slide or walk), the bosses held
+  between the probe's attacks by a per-frame callable, Celestine's cards picked with `forced_hand`,
+  Zara's attacks started through `_begin` and her circle with `forced_phase_two`. Harold is kept alive
+  by setting his pills directly (8, with `changed` emitted so the HUD shows them), walked to and fro by
+  a per-frame callable for the possession's trail, and stepped onto her safe-spot marks once a warning
+  is shot.
+- **Fixed after looking:** the floor's long name ran left over the potion slot's "[H] Swift Tea" on the
+  HUD's top row (the Cinema's, Head Office's, the Funeral Parlour's and Departures' did too, with a long
+  enough potion), so the mini map now writes a name that does not fit its 108 px smaller (8, then 7 at
+  the least) or only the part before its comma (`FloorMapView.mini_name`: the hotline shows "Beyond
+  Calling Psychic Hotline" at 7); the big map and `floor_name()` keep the whole name, and a test holds
+  every floor's mini name right of the potion slot. A card dealt in a column lies 8 px below the one
+  above, so it covered the turned card's name tag ("The Star"); the tag is now drawn on a child node one
+  z above the cards (`TarotCard.tag_node`). The stapler's grey arm vanished on the violet carpet (now
+  chrome, with a test that every thrown thing's main colour stands 0.5 off each carpet tone). A lava
+  lamp in `healing_01` stood on a beaded curtain's rail, which reaches 12 px into the cell above, so it
+  moved two cells west, with a test that no lamp or filing tray stands right above a curtain. The
+  Tarot Headscarf's flat top read as a box hat on Harold, so it is rounded over the crown.
+- **Left as they read:** the planchette's path can run on toward the board's far rows under the HUD's
+  top band or the small map when he stands in the south half of the large room (the camera cannot show
+  a 30x17 room, and every part near him shows whole and outlined twice); the safe-spot mint pales
+  beside Harold's own glow but stays apart from the red; the Wheel's warning tints its whole band, since
+  the blades sweep all of it in their 2 s spin; the office chairs on the carpet read as decor. Desks and
+  partitions on the second row of medium rooms sit clear of the HUD band.

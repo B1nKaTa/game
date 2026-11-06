@@ -677,6 +677,15 @@ func test_every_desk_and_table_is_whole_and_every_large_room_has_a_table() -> vo
 			assert_eq(tables.size(), 0, "%s is too small for a seance table" % _name(layout))
 
 
+# A curtain is drawn 64 px tall over its 32 px cell, so its rail reaches into the cell above; in the
+# real window a lava lamp there stood on the rail. Nothing drawn standing up sits right above one.
+func test_no_lamp_or_tray_stands_on_a_curtains_rail() -> void:
+	for layout in _layouts():
+		for cell in layout.cells_of(RoomLayout.SYMBOL_BEADED_CURTAIN):
+			var above := layout.symbol_at(cell + Vector2i.UP)
+			assert_false(above in [RoomLayout.SYMBOL_LAVA_LAMP, RoomLayout.SYMBOL_IN_TRAY], "%s: %s above the curtain at %s" % [_name(layout), above, str(cell)])
+
+
 # A partition, a desk or a table can hide a coin at the furniture rate, so the floor holds no more such
 # pieces than the Cinema has seats (lesson: count a coin prop across the folder before wiring it).
 func test_the_coin_props_are_counted_against_the_cinemas_seats() -> void:

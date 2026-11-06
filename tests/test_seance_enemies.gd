@@ -277,6 +277,15 @@ func test_the_poltergeist_hurls_a_stapler_a_mug_and_a_fax_in_turn() -> void:
 	assert_eq(looks.size(), 4, "each object looks like itself, never a plain sheet")
 
 
+# The first stapler was a grey arm on a dark base and all but vanished on the violet carpet in the real
+# window: what each thrown thing shows most of stands well off every carpet tone.
+func test_each_thrown_thing_stands_off_the_carpet() -> void:
+	var palette: RoomPalette = (load("res://data/floors/seance_hotline.tres") as FloorDef).room_palette()
+	for tone: Color in [palette.floor_a, palette.floor_b, palette.floor_c]:
+		for shown: Color in [Projectile.STAPLER_GREY, Projectile.MUG, Projectile.FAX_TOP, Projectile.FAX_PAPER]:
+			assert_true(_difference(shown, tone) > 0.5, "%s on %s" % [str(shown), str(tone)])
+
+
 func test_the_poltergeist_is_a_faint_ghost_that_never_hurts_by_touch() -> void:
 	var def := _load("poltergeist")
 	assert_true(ContactRule.is_ghost(def))

@@ -26,6 +26,9 @@ const INK := Color("2a2430")
 const TAG := Color(0.08, 0.05, 0.12, 0.85)
 const TAG_TEXT := Color("f6efe0")
 const TAG_FONT := 8
+# The name tag is drawn on a node of its own, this far above the cards (relative), so a card dealt
+# just below in a column never covers the tag of the one above it.
+const TAG_Z := 1
 # The symbols' own colours.
 const TOWER_STONE := Color("8a7f9a")
 const BOLT := Color("f2c64a")
@@ -43,6 +46,7 @@ var _from := Vector2.ZERO
 var _spent := false
 var _vanishing := false
 var _fade_left := FADE
+var _tag: Node2D
 
 
 static func art_id_of(which: int, face_up: bool) -> String:
@@ -121,8 +125,22 @@ func advance(delta: float) -> void:
 		_fade_left -= delta
 
 
+func _ready() -> void:
+	_tag = Node2D.new()
+	_tag.z_index = TAG_Z
+	add_child(_tag)
+	_tag.draw.connect(_draw_tag_now)
+
+
+# The node its name tag is drawn on, above every card.
+func tag_node() -> Node2D:
+	return _tag
+
+
 func _process(delta: float) -> void:
 	queue_redraw()
+	if _tag != null:
+		_tag.queue_redraw()
 	advance(delta)
 	if (_vanishing and _fade_left <= 0.0) or not is_instance_valid(_source) or (_source is Enemy and (_source as Enemy).is_dead()):
 		queue_free()
@@ -150,8 +168,22 @@ func _draw() -> void:
 	else:
 		_draw_back(rect, alpha)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	if shows_symbol() and not _vanishing:
-		_draw_tag(offset + Vector2(0.0, SIZE.y / 2.0 + 2.0), alpha)
+
+
+func _alpha() -> float:
+	var alpha := 1.0
+	if _vanishing:
+		alpha = clampf(_fade_left / FADE, 0.0, 1.0)
+	if _spent:
+		alpha *= SPENT_ALPHA
+	return alpha
+
+
+func _draw_tag_now() -> void:
+	if _deal_delay > 0.0 or not shows_symbol() or _vanishing:
+		return
+	var offset := _from * clampf(_deal_left / DEAL_TIME, 0.0, 1.0)
+	_draw_tag(_tag, offset + Vector2(0.0, SIZE.y / 2.0 + 2.0), _alpha())
 
 
 func _draw_back(rect: Rect2, alpha: float) -> void:
@@ -215,10 +247,10 @@ func _draw_face(rect: Rect2, alpha: float) -> void:
 	draw_string(ThemeDB.fallback_font, rect.position + Vector2(3.0, rect.size.y - 3.0), numeral, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, Color(INK, alpha))
 
 
-func _draw_tag(at: Vector2, alpha: float) -> void:
+func _draw_tag(canvas: CanvasItem, at: Vector2, alpha: float) -> void:
 	var font := ThemeDB.fallback_font
 	var text := card_name()
 	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, TAG_FONT).x
 	var box := Rect2(at - Vector2(width / 2.0 + 3.0, 0.0), Vector2(width + 6.0, TAG_FONT + 4.0))
-	draw_rect(box, Color(TAG, TAG.a * alpha))
-	draw_string(font, Vector2(box.position.x + 3.0, box.position.y + TAG_FONT + 1.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, TAG_FONT, Color(TAG_TEXT, alpha))
+	canvas.draw_rect(box, Color(TAG, TAG.a * alpha))
+	canvas.draw_string(font, Vector2(box.position.x + 3.0, box.position.y + TAG_FONT + 1.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, TAG_FONT, Color(TAG_TEXT, alpha))
