@@ -729,3 +729,72 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
   dark art vanished on the violet carpet (the office things fly on a faint pale glow, as the note does).
   The probe's `usher_shh_lane` shot can miss the warning when his patrol turns the torch away before the
   3 s wait ends; the charge shot shows the lunge.
+
+## Task 6: verification and tuning
+
+- **Yardstick:** each new boss against its slot's boss on round-2's `918d343` (this branch's base), in
+  the same session, every batch `max good 20 1 <depth> boss` (or `mini`), the case the round-2 and
+  round-3 notes measured the deep bosses with. Path index 1 is the new path at both depths (the
+  hits by source named `mall_santa`, `thaddeus_fairweather`, `projectionist` and `madame_zara`).
+- **Each build runs its own bot:** the baseline copies run `918d343`'s bot (v8, which still reads
+  the Mall's strips and the golf sand), this branch's copies run v9 and later. The bots differ only
+  in what each build has on its floors.
+- **Copies:** one `git archive` export per build, imported once, then copied per batch with its own
+  config/name (`GrandpaPrBotb1..4`, `GrandpaPrBoth0..9`) under `D:\grandpa-verify-prbot`, each batch
+  its own run_in_background call (lessons 246, 247); tuning variants were tried by editing files in
+  the copies, and only the kept values went into commits.
+- **The target:** a new boss's bot win share within 20 points of its yardstick's, pooled over all
+  batches of a setting (lesson 172), with boss_left read beside it. A relative "within 20% of the
+  base rate" cannot be met when the base is 0 of 80, as the Mall Santa's is.
+- **Baselines (918d343):** the Mall Santa won 0, 0, 0 and 0 of 20 (boss left 49, 50, 52 and 51%,
+  fights lost in about 30 s; hits mostly touching him 58 to 69 a batch, the closing ring 34 to 46,
+  presents 16 to 28, his shots 11 to 18). Thaddeus won 0, 1, 1 and 2 (left 29, 26, 32 and 26%; the
+  sprinkler 51 to 60, touching him 35 to 54, his caddies' touches 26 to 44).
+- **First numbers on this branch (ea4cefd, bot v9):** the Projectionist won 4, 3, 2 and 1 (left 30,
+  29, 36 and 33%); Madame Zara won 18, 16 and 18 (left 3, 7 and 4%), with nearly every hit a touch.
+- **A misread, not a hard boss (lesson 165):** 73 to 84 of the bot's hits against the Projectionist
+  came from reel lanes. A trace showed it standing still on the beam's or splice's safe-spot mark
+  with a clear spot a few steps off, because only the deep floors checked a mark against the hazards
+  laid over it later. Bot v10 skips a mark any `threat_at` hazard covers on any floor (no change on
+  floors 4 and 5) and names those hazards in the hits by source. With it the Projectionist won 12
+  and 11 of 20: too easy.
+- **The Projectionist's tuning:** health did nothing (1800 won 6 and 5, 1750 won 5, 4 and 1), and
+  his rests may not drop under the Commodore's and the Chairman's, so the reels come faster: a reel
+  change every 9 s (14), 6.5 s in phase two (10; never two at once, so the next follows the last),
+  pies every 0.8 s (1.0), tumbleweeds every 1.0 s (1.3), and a splice warns 0.8 s (1.0), 0.7 s in
+  phase two (0.85), after its 0.5 s windup. The lens beam keeps its whole 1.2 s; 120 px/s for the
+  0.7 s less a 0.3 s reaction still crosses a 36 px splice lane. Final: 4, 3, 4 and 7 of 20 (left
+  30, 37, 36 and 22%), 22 points over the Santa's 0, accepted as "about 20"; over all reel-tuned
+  batches at 1650 to 1800 health he won 49 of 220 (22%). Hits: touching him 41 to 53, the beam 14
+  to 24, reel lanes 18 to 26, splices (named after him) 16 to 31.
+- **Madame Zara's tuning:** her attacks are planned round a pure way out, which the bot reads
+  perfectly, so the fix is overlap and pressure (lesson 245):
+  - a board or a possession she starts brings the other along, planned over it, 75% of the time and
+    always in her second phase (`ALONGSIDE_CHANCE`, `_alongside`); only the first winds her up and
+    speaks;
+  - she holds still through each windup only, not through the line's 3 s hold or the planchette's
+    slide, which had given the bot several seconds of free swings;
+  - rests 0.5 s and 0.35 s (0.6 and 0.42; still under the Projectionist's, at or under the
+    Commodore's), Ectoplasm every 8 s (12), the seance circle's light 120 px (132, the bottom of its
+    tested range);
+  - 2300 final health (1950). At 1950 the rest won 8, 10 and 4 of 20; at 2300, 5, 3, 7 and 2 (left
+    22, 28, 19 and 22%), 16 points over Thaddeus's 5% with boss_left about his. Hits: touching her
+    57 to 75, the copy 16 to 29, the planchette 12 to 20, Ectoplasm 17 to 20.
+  - So she is no longer the Commodore's equal in health: the test now holds her at least as tough as
+    the Commodore and under the fifth floor's Augustine (2400) and Chairman (2500). Rounds tried on
+    the way: alongside 50% / 80% alone won 17 and 15; with the rests, Ectoplasm and light, 14 and 13.
+- **Mini bosses:** Celestine won 20 and 20 of 20 (1.1 and 1.5 hits, 25 s) against Chip's 20 and 20
+  (1.1 and 1.1, 33 to 36 s): left as it is. Crabtree won 3 of 20 against Gloria's 16 and 17, 81 of
+  his 156 hits from Extras, who are as quick as Grandpa and cornered him. A slower Extra (105 px/s)
+  changed nothing (4 of 40 at a 10 s review, 12 of 40 at 16 s), so it stayed 125. Kept: a bad review
+  every 16 s (10), an Extra's shove winding up 0.5 s (0.4) and resting 1.4 s (0.8), and his rest
+  0.75 s (0.6, under Barbara's and Klaus's 0.825). Final: 12, 16 and 16 of 20, 9 points under Gloria.
+  Reviews every 20 s did no better than 16 (13, 9, 12). His fights still run 70 to 80 s to Gloria's
+  42: his fans and rings keep the bot moving.
+- **The usher shot:** the look probe now holds his torch on Grandpa every frame (`_hold`) until he
+  hushes, so `cinema_attack_usher_shh_lane` shows the cone, the lane and the windup ring.
+- **Fixed after looking:** the Usher's torch cone ran on over the south wall and, in a small room,
+  out past it into the dark; it now stops at the floor inside the walls (`UsherTorch.reach_in`).
+- **Looked at and left:** the possession shot now shows a planchette's path alongside the copy's
+  dotted trail, busier but every part warned and the mint mark clear; a lane warning in the top
+  right of a large room can lie under the small map, as before.
