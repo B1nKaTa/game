@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1")
 id = "golf_visor"
-display_name = "Golf Visor"
-description = "Chip's own. Keeps the sun off a head that won't see it again."
+display_name = "Tarot Headscarf"
+description = "Sister Celestine's spare. The cards said it would suit you. The cards lie."
 slot = "hat"
 price = 35
-color = Color(0.207843137, 0.560784314, 0.352941176, 1)
-shape = "visor"
+color = Color(0.419607843, 0.243137255, 0.619607843, 1)
+shape = "headscarf"

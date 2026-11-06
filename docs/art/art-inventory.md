@@ -36,7 +36,7 @@ The code is in `scripts/world/sprite_visual.gd`.
 - Hurt is only the 0.08 s white shader flash. A stun shows code-drawn stars.
 - Death has no animation. `room_view.gd:758` spawns `DeathBurst` (`scripts/world/death_burst.gd`): squares in `def.color`, bigger for a boss.
 - A submerged enemy hides its sprite, and `enemy.gd:_draw` draws a dirt mound (or 3 grey smoke circles for `hidden_look = "smoke"`).
-- `EnemyMarks` (`scripts/world/enemy_marks.gd`, plus `cruise_marks.gd`, `golf_marks.gd` and `terminal_marks.gd`) draws each type's hat or held prop over the box, chosen by `def.mark`. The art should absorb these. EnemyMarks also draws the shield arc of the Claims Denial Officer, and that arc must stay.
+- `EnemyMarks` (`scripts/world/enemy_marks.gd`, plus `cruise_marks.gd`, `terminal_marks.gd`, `cinema_marks.gd` and `seance_marks.gd`) draws each type's hat or held prop over the box, chosen by `def.mark`. The art should absorb these. EnemyMarks also draws the shield arc of the Claims Denial Officer, and that arc must stay.
 
 **Harold** (`scripts/actors/player.gd`).
 - The call is `setup("grandpa", Vector2(20, 28), ..., SPRITE_FRAME_WIDTH = 68)`.
@@ -90,15 +90,16 @@ All of these are code; Section 2 lists each piece by path.
   - 2 iron tread plate;
   - 10 teak deck;
   - 12 office carpet tile;
-  - 13 mown fairway stripes (`golf_look.gd`).
+  - 14 cinema carpet with runners (`cinema_look.gd`);
+  - 15 hotline carpet with stars and moons (`seance_look.gd`).
 - `wall_pattern` values:
   - 0 line;
   - 1 brick;
   - 2 wood panels;
-  - 3 shop shutters;
   - 10 ship rail;
   - 12 office plaster and dado;
-  - 13 hedge.
+  - 14 art-deco panels with gold trim (`cinema_look.gd`);
+  - 15 dark teal panels with stars (`seance_look.gd`).
 - **There is no texture hook.**
 
 **Palettes** (`scripts/content/room_palette.gd`): one `RoomPalette` sub-resource in each `data/floors/*.tres`. It holds the room tones (floor, wall, darkness, ambient, torch, fill_light), the colours of every prop family, the patterns, the decor weights and `scatter_lights`.
@@ -122,10 +123,6 @@ All of these are code; Section 2 lists each piece by path.
 - `art/props/` does not exist yet.
 - **Limit:** one PNG, no states. Cut grass, the reinforced stone's glow, fountain and pool ripples and the mimic's breathing are drawn only in placeholder code, so a still PNG would hide them.
 
-**Golf hedge and pennants.**
-- `scripts/world/hedge.gd` is a breakable that has the hook (`5` cell). The hedge **walls** are `GolfLook.draw_wall_tile`, which has none.
-- The pennants are the flag cloth on `flag_pin.gd` (breakable, has the hook) and on `ball_washer.gd`.
-
 ### 1.5 Projectiles, hazards and telegraphs
 
 **Projectiles** (`scripts/actors/projectile.gd`, z 55, hit radius 12).
@@ -138,7 +135,7 @@ All of these are code; Section 2 lists each piece by path.
   - `stapler`, `mug`, `fax`: a Poltergeist on Hold's thrown objects, each filling 24x24 (its 32x32 art at 0.75).
 - **There is no texture hook.**
 
-**Hazards** (`floor_vent`, `organ_pipe`, `red_tape`, `sand_trap`, `queue_barrier`, `wet_floor`, `steam_jet`, `perfume_cloud` and the others): all `_draw`, with no hook. Many have states (idle, warning, active, held).
+**Hazards** (`floor_vent`, `organ_pipe`, `red_tape`, `queue_barrier`, `wet_floor`, `steam_jet`, `perfume_cloud` and the others): all `_draw`, with no hook. Many have states (idle, warning, active, held).
 
 **Telegraphs**, all code, which is right (see section 5):
 - `enemy._draw_warning` on a WarningLayer at z 60: circle, lane and cone fills in `#e4524f`;
@@ -194,11 +191,11 @@ No font file or Theme exists. Everything uses Godot's fallback font with outline
 | H2 | **Feet offset in SpriteVisual** | `sprite_visual.gd` | The sprite is centred today. Place each strip by its lowest used row, as `NpcSprite.used_rows` does, so the feet land on `+body_size.y / 2` for enemies and on `SPRITE_FEET_Y` for Harold. |
 | H3 | **`EnemyDef.art_id` and recolour** | `enemy_def.gd`, `sprite_visual.gd` | 16 enemy ids are floor variants of another (section 2). They should share one art folder, plus a palette swap or a hue-shift uniform in the existing shader. The shader `tint` only multiplies, which cannot turn purple into green. |
 | H4 | **`frame_width` in the data** | `data/enemies/*.tres` | A data change, not code: 32/48/64 become the real canvas sizes (section 4.3). |
-| H5 | **Tile textures** | `room_backdrop.gd`, `golf_look.gd` | Load `res://art/tiles/<floor_id>/floor_*.png` and `wall_*.png` per cell, keeping the a/b/c patch choice and leaving the pattern code as the fallback. |
+| H5 | **Tile textures** | `room_backdrop.gd`, `cinema_look.gd`, `seance_look.gd` | Load `res://art/tiles/<floor_id>/floor_*.png` and `wall_*.png` per cell, keeping the a/b/c patch choice and leaving the pattern code as the fallback. |
 | H6 | **Stateful props** | `prop_art.gd` / `breakable_block.gd` | Allow `res://art/props/<id>_<state>.png` or a strip: grass cut/uncut, reinforced glow, fountain, pool, organ pipe, vents, conveyor and barrier. |
 | H7 | **Doors, chests, pickups, Thermos, Retirement Plan** | `door.gd`, `chest.gd`, `pickup.gd`, `thermos.gd`, `retirement_station.gd` | None loads art. Keep the door's letter icon and the pickup's name label in code over the art. |
 | H8 | **Projectile looks** | `projectile.gd`, `shuffleboard_puck.gd`, `collection_plate.gd`, `ground_strike.gd` (coal, thorns, casket) | e.g. `res://art/fx/<look>.png`, rotated to flight where it matters. |
-| H9 | **Enemy overlays** | trolley, golf cart, sleigh, coffin carry, coffin shell, guide flag | One top-down sprite each, rotated as today. |
+| H9 | **Enemy overlays** | trolley, coffin carry, coffin shell, guide flag | One top-down sprite each, rotated as today. |
 | H10 | **Hub** | `waiting_station.gd`, `lobby_decor.gd`, `trophy_wall.gd`, `poster_board.gd`, `arcade_table.gd`, `department_sign.gd` | Move the five station people to NpcSprite (48 px, like the other NPCs), and boards to PropArt. |
 | H11 | **Cutscenes** | `actor_look.gd`, `cutscene_stage.gd` | Actors get an NPC-style east frame or SpriteVisual. Stages get one backdrop PNG each, with props over it. |
 | H12 | **UI** | `hud.gd`, `consumable_icon.gd`, `potion_slot.gd`, `menu_style.gd`, `title_screen.gd`, `title_scene_art.gd`, `card_table_panel.gd`, `case_file.gd` | TextureRects and StyleBoxTexture in place of the drawn shapes and ■ □ text. |
@@ -226,7 +223,7 @@ H1 to H4 are in. The first ten enemies had art: intern_reaper, stoker, mall_cop,
 - **Draw order.** Floor scenes, the Waiting Room, the sandbox and every RoomView sort by y.
   - Enemies, NPCs and Harold stand their looks on their feet, so they sort by where their feet are. Props sort by their middles.
   - Harold's own drawing (swing, cane skin, crosshair) sits at z 1, over every body.
-  - Holes, pool water and laid sand sit at z -8, under the bodies.
+  - Holes and pool water sit at z -8, under the bodies.
   - Warnings stay at z 60.
 
 ---
@@ -551,8 +548,8 @@ The pallbearers' coffin carry uses the dropped_coffin art below.
 
 It replaces Fairway's End, whose characters stay on PixelLab unused. Every new id wears its own art
 (`art_id` = its id) but the returning pair, which wear their bases' (`bingo_caller`, `soot_ghost`).
-Sister Celestine holds the mini boss rooms and Madame Zara the boss rooms; the golf props below stay
-until the golf look is retired.
+Sister Celestine holds the mini boss rooms and Madame Zara the boss rooms. The golf course's props,
+sand, fog and patterns 13 are retired too.
 
 **Enemies**
 
@@ -590,27 +587,7 @@ Harold's own frame tinted and faded), the seance circle and its spirits (`seance
 
 **Summons:** ectoplasm (Madame Zara).
 
-**Left from Fairway's End** (its enemies and bosses are retired; their art stays on PixelLab)
-
-| id | file | body | anims (from the code) | facing | tool | gens |
-|---|---|---|---|---|---|---|
-| golf cart | the parked cart (a lone `5`) | about 30x22 | | top-down | MO | 1 |
-
-**Props**
-
-| id | type | size | gens |
-|---|---|---|---|
-| flag_pin (pennant) | `3`, with flutter | 14x26 | MO + AO 2 |
-| ball_washer | `4` | 22x31 | MO 1 |
-| hedge | `5` | 32x28 | MO 1 |
-| sand | `s` (`sand_trap.gd`); the bunker patch reuses it | 32 | MO 1 |
-| decor_fog | | | MO 1 |
-
-Grass, bench and plant are shared.
-
-**Tiles:** mown fairway (pattern 13) and hedge wall (pattern 13): TS 25.
-
-**Fairway's End total: 72**. **Floor 4 total: 145.**
+**Floor 4 total: 145** (counted with Fairway's End, before the hotline).
 
 ### 2.9 Floor 5: Departures, Terminal Zero (`data/floors/terminal_zero.tres`)
 
@@ -794,7 +771,7 @@ The five station people need art, after moving them to NpcSprite (H10). Each is 
 | employee_plaque | Executive Suite | 30x20 | MO 1 |
 | ending-archive filing cabinet | Executive Suite | 22x34 | MO 1 |
 
-**Trophy wall** (`trophy_wall.gd`). The frame is 22x22, MO 1. The 10 mementos are PX 1 each: name badge, bent shovel, bedpan, coal shovel, top hat, empty sack, anchor, golf trophy, boarding pass and gold gavel. **11** in all.
+**Trophy wall** (`trophy_wall.gd`). The frame is 22x22, MO 1. The 10 mementos are PX 1 each: name badge, bent shovel, bedpan, coal shovel, top hat, film reel, anchor, crystal ball, boarding pass and gold gavel. **11** in all.
 
 **Poster board** (`poster_board.gd`): the cork board 104x30 and a wanted paper 8x11. MO + PX, **2**.
 
@@ -1016,7 +993,7 @@ Use the guide's base prompt, then a subject line per enemy built from its `displ
   - the airport Mall Cop recolour (0.85, 0.3, 0.3): shift it to maroon or blue;
   - Parlour carpet tiles: keep them wine, darker than the warning.
 - A windup must read from the pose as well as the red. The windup frames should show a clear wind-back of the arm or weapon, since `is_winding_up()` drives them (H1).
-- Safe spots are green (#7fe0a0). Keep strong mint green off Fairway props near the floor.
+- Safe spots are green (#7fe0a0). Keep strong mint green off props near the floor.
 - Harold's hurt flash is #e4524f through the shader. His sprite must not be mostly red, or the flash vanishes.
 
 ### 5.2 Hitbox-to-sprite alignment
@@ -1035,11 +1012,11 @@ Use the guide's base prompt, then a subject line per enemy built from its `displ
 
 - **Placeholders are never darker than 0.55 brightness** (`SpriteVisual.MIN_BRIGHTNESS`). Hold the art to the same rule: the main body value, once lit, should stay above about 0.4 luminance on the Records Basement and Fairway's End. Check it by sampling a screenshot, not by the raw colour (LESSONS 2026-11-05).
 - **Records Basement:** ambient #52527a and torches only on walls. Dark-robed reapers (intern_reaper is (0.23, 0.2, 0.35)) need a light face, bone hands, a lanyard or a pale scythe blade. The small enemy read glow (energy 0.3) helps only up close.
-- **Fairway's End at midnight:** blue fill, red channel about 0.49. Golf colours shift blue, so test warm pinks and yellows in a screenshot. The fog decor and the sprinkler's green safe quarter must stay apart in value.
+- **The Seance Hotline:** a violet ambient (0.46, 0.36, 0.52) under a cool teal fill. Keep strong green off bodies and props near the floor, since the safe-spot mint and the ectoplasm are green.
 - **Lights Out** (Matron): everything outside a 70 px hole round Harold goes black. Enemies there are seen only by their warnings. That is by design, so do not add glow to enemy art to fight it.
 - **Perfume haze** (Mall, Head Office) darkens to a 55 px window in the same way.
 - **No baked glow, no baked shadow, no light source painted on a sprite** (STYLE_GUIDE). Torches, lanterns, candles, furnaces, stained glass, fluorescents and vents already carry engine lights. A prop with a flame shows only the flame shape, flat, and the light comes from code.
-- When a floor's light changes, re-check the lit contrast of the debris and props, such as ball-washer debris against grass at 0.4 or more (LESSONS).
+- When a floor's light changes, re-check the lit contrast of the debris and props, such as prop debris against the floor at 0.4 or more (LESSONS).
 
 ---
 

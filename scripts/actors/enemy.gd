@@ -383,9 +383,6 @@ func _physics_process(delta: float) -> void:
 		_knockback = Vector2.ZERO
 		desired_velocity = Vector2.ZERO
 	velocity = desired_velocity + _knockback
-	# Sand slows its own walk, never a knockback (Fairway's End).
-	if SandTrap.slows(self):
-		velocity -= desired_velocity * (1.0 - SandRule.SPEED_FACTOR)
 	if _push_left > 0.0:
 		_push_left -= delta
 		velocity += _push

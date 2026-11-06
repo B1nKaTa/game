@@ -550,12 +550,6 @@ def ship_horn(rng, v):
     return pts(x, [(0, 0), (0.08, 1.0), (1.2, 0.9), (d, 0)])
 
 
-def sand_step(rng, v):
-    d = 0.13
-    grains = shape(bp(noise(d, rng), 1300 + 150 * v, 0.8), [abs(g) for g in lp(noise(d, rng), 300)])
-    return pts(lp(grains, 3500), [(0, 0), (0.008, 1.0), (0.04, 0.7), (d, 0)])
-
-
 def barrier_chime(rng, v):
     d = 0.75
     return mix(d, (bell(0.5, hz(81), 0.3), 0, 0.5), (bell(0.55, hz(77), 0.35), 0.2, 0.5))
@@ -588,16 +582,6 @@ def organ_chord(rng, v):
     x = mix(d, *layers)
     chiff = ad(bp(noise(d, rng), 1800, 1.2), 0.004, 0.03)
     return pts(mix(d, (x, 0, 1.0), (chiff, 0, 0.3)), [(0, 0), (0.04, 1.0), (0.7, 0.85), (d, 0)])
-
-
-def escalator_hum(rng, v):
-    d = 0.8
-    w = TAU * 60 / RATE
-    hum = [math.sin(w * i) + 0.5 * math.sin(2 * w * i) + 0.3 * math.sin(3 * w * i) for i in range(n(d))]
-    layers = [(lp(hum, 400), 0, 0.6)]
-    for k in range(int(d * 8)):
-        layers.append((click(rng, 1500, 0.015, 3.0), k / 8.0, 0.5))
-    return pts(mix(d, *layers), [(0, 0), (0.08, 1.0), (0.65, 1.0), (d, 0)])
 
 
 def steam_hiss(rng, v):
@@ -1106,12 +1090,10 @@ SOUNDS = {
     "summon": (summon, 1, "sfx", 0.45),
     # hazards
     "ship_horn": (ship_horn, 1, "sfx", 0.7),
-    "sand_step": (sand_step, 3, "hit", 0.25),
     "barrier_chime": (barrier_chime, 1, "sfx", 0.4),
     "tape_snag": (tape_snag, 2, "sfx", 0.45),
     "tape_cut": (tape_cut, 2, "hit", 0.5),
     "organ_chord": (organ_chord, 1, "sfx", 0.55),
-    "escalator_hum": (escalator_hum, 1, "sfx", 0.35),
     "steam_hiss": (steam_hiss, 2, "sfx", 0.35),
     # the Thermos
     "fuse_hiss": (fuse_hiss, 1, "sfx", 0.3),

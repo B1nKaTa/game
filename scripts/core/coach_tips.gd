@@ -29,7 +29,7 @@ const TIPS := {
 	"prune_juice": "Dodge all you like. Just know every one costs you. Mind the purse.",
 	"senior_discount": "A quarter off in every shop. Spend it, that's what it's for.",
 	"slippers": "Wet floor? Not for you. Fight on the wet, let them slide.",
-	"support_stockings": "Sand and sedatives can't stop you now. Walk right through.",
+	"support_stockings": "Sedatives and sticky trails can't stop you now. Walk right through.",
 	"titanium_hip": "Dodge through them, not around them. The hip does the rest.",
 	"undertakers_gloves": "What you finish stays finished. No bangs, no boxes. Go in close.",
 	"walker_tennis_balls": "Knock them back and keep them back. Space is your friend, son.",

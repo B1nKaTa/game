@@ -35,8 +35,6 @@ const SLOW_COLOR := Color(0.62, 0.86, 1.0, 0.9)
 const CANE_COLOR := Color("a8692f")
 const MOVE_AIM_REACH := 40.0
 const SWING_COLOR := Color("ffe58a")
-# How often his feet crunch while he wades through sand.
-const SAND_STEP_TIME := 0.34
 # The Spare Set: how far apart, in degrees, the two sets of dentures fly.
 const SPARE_SPREAD := 14.0
 # Grandma's Rolling Pin and The Reaper's Other Scythe draw their swings in these. The pin itself is an
@@ -90,8 +88,6 @@ var _was_taped := false
 # The charge's sounds, each once a hold: the hum as it starts to build, the glint once it is full.
 var _hum_played := false
 var _ready_played := false
-# Time to his next step's crunch while he wades through sand.
-var _sand_step_left := 0.0
 # Whether this dodge has had its close call yet, and whether he was dodging last frame, for the items.
 var _close_call_spent := false
 var _was_dodging := false
@@ -326,9 +322,6 @@ func camera_focus() -> Vector2:
 func ease_look_ahead(delta: float) -> void:
 	var wanted := Vector2.ZERO if run.effects.ctx.counting_exact else _aim * run.stats.look_ahead
 	_look_ahead = _look_ahead.lerp(wanted, minf(LOOK_EASE * delta, 1.0))
-# Whether his feet stand in a sand bunker, where he wades slower and cannot dodge.
-func is_in_sand() -> bool:
-	return _feet != null and is_inside_tree() and SandTrap.is_sand_at(get_tree(), _feet.global_position)
 
 
 func _physics_process(delta: float) -> void:
@@ -645,11 +638,8 @@ func _handle_movement() -> void:
 	var input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	if input != Vector2.ZERO:
 		_last_move = input
-	# Feet sunk in a sand bunker cannot dodge, and wade slower (Fairway's End).
-	var sunk := is_in_sand()
-	if Input.is_action_just_pressed("dodge") and SandRule.can_dodge(sunk):
+	if Input.is_action_just_pressed("dodge"):
 		start_dodge(input.normalized() if input != Vector2.ZERO else _aim)
-	_step_in_sand(sunk and input != Vector2.ZERO)
 	on_wet = _feet != null and WetFloor.is_wet_at(get_tree() if is_inside_tree() else null, _feet.global_position)
 	# Orthopedic Slippers keep his feet on a wet floor.
 	var slides := on_wet and not run.stats.wet_grip
@@ -668,7 +658,7 @@ func _handle_movement() -> void:
 			velocity = _round_corners(velocity, straightened(_dodge_direction), DODGE_SPEED, DODGE_CORNER_REACH)
 	else:
 		# Support Stockings: no slow takes him below their share of his speed.
-		var speed := run.move_speed() * maxf(SandRule.slowed(_slow.speed_factor(), sunk), run.stats.min_slow_factor)
+		var speed := run.move_speed() * maxf(_slow.speed_factor(), run.stats.min_slow_factor)
 		# The Levitation Slippers keep his full walk while he charges.
 		if _charge.is_charging() and not run.stats.charge_full_speed:
 			speed *= CHARGE_SLOWDOWN
@@ -689,17 +679,6 @@ func _handle_movement() -> void:
 	if is_leashed() and _feet != null:
 		velocity = LeashRule.held_velocity(_feet.global_position, velocity, _leash_center, _leash_radius, get_physics_process_delta_time())
 	move_and_slide()
-
-
-# A crunch for each step while he wades through a bunker.
-func _step_in_sand(wading: bool) -> void:
-	if not wading:
-		_sand_step_left = 0.0
-		return
-	_sand_step_left -= get_physics_process_delta_time()
-	if _sand_step_left <= 0.0:
-		_sand_step_left = SAND_STEP_TIME
-		Sfx.play("sand_step")
 
 
 # Starts a dodge that way if the cooldown allows, and tells the items. Returns whether it started.

@@ -405,10 +405,9 @@ class Bot extends Node:
 	var _last_hp_total := 0.0
 	var _since_progress := 0.0
 	var _fighting := false
-	# Floors 4 and 5: where he is stepping to out of a new hazard, how long a dodge he wants has waited
-	# for him to leave sand, and the cells raised or chiming barriers block this frame.
+	# Floors 4 and 5: where he is stepping to out of a new hazard, and the cells raised or chiming
+	# barriers block this frame.
 	var _deep_goal := Vector2.INF
-	var _sand_wait := 0.0
 	var _barrier_cells := {}
 	var _soft_cells := {}
 	var _dodge_against := Vector2.ZERO
@@ -500,10 +499,6 @@ class Bot extends Node:
 		elif threat == Vector2.ZERO and _steps_into_hit(_player.feet().global_position, _move):
 			# He waits at the edge of a warned spot or lane rather than walking into it.
 			_move = Vector2.ZERO
-		elif threat == Vector2.ZERO and _boss_here() and _player.is_in_sand():
-			var dry := _out_of_sand(_player.feet().global_position)
-			if dry != Vector2.INF:
-				_move = _player.feet().global_position.direction_to(dry)
 		var safe := safe_spot()
 		if safe != Vector2.INF:
 			_move = _walk_to(safe)
@@ -526,7 +521,7 @@ class Bot extends Node:
 	func debug_state() -> String:
 		var feet: Vector2 = _player.feet().global_position
 		var parts: Array[String] = []
-		parts.append("t=%.2f feet=%s move=%s goal=%s safe=%s dodging=%s sand=%s taped=%s cool=%.2f" % [clock, str(feet.round()), str(_move.snapped(Vector2(0.01, 0.01))), str(_deep_goal.round()) if _deep_goal != Vector2.INF else "-", str(safe_spot().round()) if safe_spot() != Vector2.INF else "-", str(_player.is_dodging()), str(_player.is_in_sand()), str(_player.is_taped()), _player._dodge._cooldown])
+		parts.append("t=%.2f feet=%s move=%s goal=%s safe=%s dodging=%s taped=%s cool=%.2f" % [clock, str(feet.round()), str(_move.snapped(Vector2(0.01, 0.01))), str(_deep_goal.round()) if _deep_goal != Vector2.INF else "-", str(safe_spot().round()) if safe_spot() != Vector2.INF else "-", str(_player.is_dodging()), str(_player.is_taped()), _player._dodge._cooldown])
 		for child in scene.debug_room_view().get_children():
 			if child.is_queued_for_deletion():
 				continue
@@ -756,7 +751,7 @@ class Bot extends Node:
 		return Vector2.ZERO
 
 	# Floors 4 and 5. Cells the walk avoids or cannot use this frame: raised or chiming barriers block
-	# only him, and sand and strung tape are walked round when there is another way.
+	# only him, and strung tape is walked round when there is another way.
 	func _read_cells() -> void:
 		_barrier_cells.clear()
 		_soft_cells.clear()
@@ -764,9 +759,6 @@ class Bot extends Node:
 		for barrier in QueueBarrier.barriers_in(tree):
 			if is_instance_valid(barrier) and (barrier.is_up() or barrier.is_chiming()):
 				_barrier_cells[barrier._cell] = true
-		for trap in tree.get_nodes_in_group(SandTrap.GROUP):
-			if is_instance_valid(trap):
-				_soft_cells[_cell(trap.global_position)] = true
 		for tape in tree.get_nodes_in_group(RedTape.GROUP):
 			if is_instance_valid(tape) and tape.is_strung() and not tape.is_cut():
 				_soft_cells[_cell(tape.global_position)] = true
@@ -955,7 +947,7 @@ class Bot extends Node:
 				return true
 		return false
 
-	# The nearest open spot clear of every hit coming, preferring spots off sand, tape and slowing mats.
+	# The nearest open spot clear of every hit coming, preferring spots off tape and slowing mats.
 	func _nearest_clear(feet: Vector2, zones: Array) -> Vector2:
 		var layout: RoomLayout = scene.debug_map().room(scene.debug_current_id()).layout
 		var size := layout.size_in_cells()
@@ -1017,29 +1009,11 @@ class Bot extends Node:
 				return true
 		return false
 
-	func _boss_here() -> bool:
-		for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
-			if enemy.def.is_boss:
-				return true
-		return false
-
-	# The nearest open spot off sand, for a player who knows he cannot dodge there.
-	func _out_of_sand(feet: Vector2) -> Vector2:
-		var layout: RoomLayout = scene.debug_map().room(scene.debug_current_id()).layout
-		for step in range(1, 14):
-			for k in 12:
-				var p: Vector2 = feet + Vector2.from_angle(TAU * k / 12.0) * step * 8.0
-				if not _solid(layout, _cell(p)) and not SandTrap.is_sand_at(get_tree(), p) and _way_clear(feet, p, _zones):
-					return p
-		return Vector2.INF
-
 	# Whether a step from here walks into a deep floor's coming hit he is not already standing in.
 	func _steps_into_hit(feet: Vector2, way: Vector2) -> bool:
 		if way == Vector2.ZERO:
 			return false
 		var ahead := feet + way.normalized() * 16.0
-		if _boss_here() and not _player.is_in_sand() and SandTrap.is_sand_at(get_tree(), ahead):
-			return true
 		if _zones.is_empty():
 			return false
 		for zone in _zones:
@@ -1211,7 +1185,7 @@ class Bot extends Node:
 		var view: RoomView = scene.debug_room_view()
 		return not view._broken_cells.has(cell)
 
-	# Round sand and tape when there is a way round, through them when there is not.
+	# Round tape when there is a way round, through it when there is not.
 	func _find_path(layout: RoomLayout, from: Vector2i, to: Vector2i) -> Array[Vector2i]:
 		if not _soft_cells.is_empty():
 			var around := _find_path_avoiding(layout, from, to, true)
@@ -1277,13 +1251,6 @@ class Bot extends Node:
 		if _dodge_pressed:
 			Input.action_release("dodge")
 			_dodge_pressed = false
-		if _dodge_wish and _player.is_in_sand():
-			# No dodge starts in sand: he keeps the wish a moment and walks out first.
-			_sand_wait += get_physics_process_delta_time()
-			if _sand_wait > 0.5:
-				_dodge_wish = false
-			return
-		_sand_wait = 0.0
 		if _dodge_wish:
 			_dodge_wish = false
 			if _move != Vector2.ZERO:

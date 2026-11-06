@@ -47,9 +47,6 @@ decor_weights = {
 "office_chair": 1.2
 }
 scatter_lights = 0
-sand = Color(0.55, 0.5, 0.76, 1)
-sand_grain = Color(0.32, 0.29, 0.3, 1)
-sand_shine = Color(0.7, 0.68, 0.78, 1)
 
 [resource]
 script = ExtResource("1")

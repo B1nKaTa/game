@@ -81,10 +81,10 @@ rules. Any door can be the way in, so this applies to all four sides of every ro
   `RoomView.is_passing_effect`, or it freezes mid-way and resumes on return. Extend
   `tests/test_stage2_props.gd` `test_the_third_floors_effects_are_cleared_from_a_stored_room`.
 - **Hazards must not carry a charging enemy off its warned lane.** A dash or charge calls
-  `enemy.hold_lane()` every frame it runs, and `Enemy.rides_strips()` then says no
-  (`tests/test_mall_hazard.gd` `test_a_running_charge_is_not_carried_off_its_warned_lane`). Any new
-  hazard that moves bodies needs the same rule. Strips, vents and wet floor stay 2 cells off doors so
-  nobody is carried through one.
+  `enemy.hold_lane()` every frame it runs, and `Enemy.slides_with_roll()` then says no
+  (`tests/test_cruise_hazard.gd` `test_walkers_slide_but_bosses_and_running_charges_never_do`). Any new
+  hazard that moves bodies needs the same rule. Vents and wet floor stay 2 cells off doors so nobody
+  is carried through one.
 - **Leave a free cell beside the start** for every built floor (`tests/test_crossroads.gd`
   `test_every_built_floor_keeps_a_free_cell_beside_its_start`).
 - **A floor pattern shares no shape with the hazard**, and a hazard tile no shape with any floor

@@ -128,23 +128,6 @@ extends Resource
 }
 # The most lanterns and torches the scatter adds to a room. Ones the layout places don't count.
 @export var scatter_lights := 3
-# Fairway's End. Sand bunkers are a pale bed of grains, dark ones and a few bright ones.
-@export_group("Fairway's End")
-@export var sand := Color("d9c48c")
-@export var sand_grain := Color("8a7344")
-@export var sand_shine := Color("fff4d2")
-# The fairway's lighter mown stripe, laid over every other pair of columns (GolfLook.FAIRWAY).
-@export var fairway_stripe := Color(1.0, 1.0, 0.85, 0.08)
-# Flag pins break to anything, ball washers like barrels, hedges and parked carts like rocks.
-@export var hedge := Color("2f6a32")
-@export var hedge_leaf := Color("3f8a40")
-@export var golf_cart := Color("ece8da")
-@export var golf_cart_roof := Color("3f7a4a")
-@export var flag_cloth := Color("d9453b")
-@export var flag_pole := Color("f4f1e6")
-@export var ball_washer := Color("3b6fb0")
-# Thin ground fog (RoomDecor.FOG): faint flat wisps, kept see-through so nothing under them hides.
-@export var fog := Color(0.75, 0.82, 0.95, 0.14)
 # The Flashback Cinema. The carpet runners (CinemaLook.CARPET), the gold of the art-deco trim, the plum
 # velvet seat rows, the pillars, the little aisle lights in the floor, and the screen on the north wall
 # of every fighting room with the projector's beam from the south, when screen is on.

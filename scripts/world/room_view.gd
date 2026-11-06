@@ -586,8 +586,6 @@ func _create_props(palette: RoomPalette) -> void:
 	# The Last Resort Cruise: its deck props and, in a room that rolls, the rolling deck.
 	CruiseProps.build(self, layout, palette)
 	_create_office_props(layout, palette)
-	# Fairway's End: sand bunkers and the course's props.
-	GolfProps.build(self, layout, palette)
 	# Departures, Terminal Zero: its stock and its queue barriers.
 	TerminalProps.build(self, layout, palette)
 	# The Flashback Cinema: seat rows, pillars and aisle lights.
@@ -1030,7 +1028,7 @@ static func extra_shop_cells(layout: RoomLayout, count: int) -> Array[Vector2i]:
 		taken.append(layout.merchant_cell())
 	for i in count:
 		var wanted := wares[wares.size() - 1 - (i % wares.size())]
-		# The full label spacing first; a crowded shop (Fairway's End) settles for the plan's loose one.
+		# The full label spacing first; a crowded shop settles for the plan's loose one.
 		var best := Vector2i(-1, -1)
 		for loose in [false, true]:
 			var best_distance := INF

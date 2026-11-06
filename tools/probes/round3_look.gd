@@ -1,14 +1,12 @@
 extends SceneTree
 # Opens a real window and saves screenshots of round 3: the HUD's item row with many items, Harold's
 # case file on every tab (40 items held, page 1 and a later page, and the Waiting Room's empty case),
-# the Chairman's new attack, the darker midnight sand with a warning on it, the thicker desk slam
-# ring, and a speech bubble near the top wall.
+# the Chairman's new attack, the thicker desk slam ring, and a speech bubble near the top wall.
 # Run only from an exported copy whose config/name is renamed.
-# Args after --: hud | case | chairman | sand | ring | bubble | all
+# Args after --: hud | case | chairman | ring | bubble | all
 
 const OUT := "D:/grandpa-shots-r3/"
 const WALL_LIMIT_MS := 280000
-const GOLF := 1
 const OFFICE := 1
 
 var _start := 0
@@ -75,7 +73,7 @@ func _main() -> void:
 	progress.data.record_floor_cleared(5, "terminal_zero")
 	var args := OS.get_cmdline_user_args()
 	var which: String = args[0] if args.size() > 0 else "all"
-	for part in ["hud", "case", "sand", "ring", "bubble", "chairman"]:
+	for part in ["hud", "case", "ring", "bubble", "chairman"]:
 		if which == "all" or which == part:
 			await call("_" + part)
 	progress._store.delete_all()
@@ -248,33 +246,6 @@ func _case() -> void:
 	await _shot("c8_waiting_room_no_case")
 	current_scene.open_panel().close()
 	await _wait(0.2)
-
-
-# --- the midnight sand ---
-
-func _sand() -> void:
-	await _new_run(4, GOLF)
-	var layout := await _enter_quiet("res://data/rooms/seance_hotline/floor_boss_large_01.tres")
-	var sand := layout.cells_of(RoomLayout.SYMBOL_SAND)
-	if sand.is_empty():
-		print("no sand")
-		return
-	var spot := RoomBackdrop.cell_center(sand[sand.size() / 2])
-	_stand(spot + Vector2(0, 4))
-	await _wait(0.3)
-	await _shot("s1_sand")
-	var gazer := _spawn("crystal_gazer", spot + Vector2(70, 0))
-	await _until(func(): return _warned(gazer, 0.45), 8.0)
-	await _shot("s2_warning_on_sand")
-	await _clear()
-	# The sand nearest the top wall, under the wall lights.
-	var top := sand[0]
-	for cell in sand:
-		if cell.y < top.y:
-			top = cell
-	_stand(RoomBackdrop.cell_center(top) + Vector2(0, 24))
-	await _wait(0.3)
-	await _shot("s3_sand_by_the_wall")
 
 
 # --- the desk slam ring ---

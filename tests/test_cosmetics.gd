@@ -162,6 +162,17 @@ func test_the_deep_floors_looks_have_their_slots_and_drawings() -> void:
 		assert_true(source.contains("\"%s\"" % def.shape), "%s's %s is drawn" % [id, def.shape])
 
 
+# Sister Celestine's poster look keeps the old golf visor's id, since saves may own it, but it is the
+# hotline's now: a tarot reader's headscarf with nothing of the golf course left in it.
+func test_celestines_headscarf_keeps_the_old_visors_id() -> void:
+	var def := _cosmetic("golf_visor")
+	assert_eq(def.display_name, "Tarot Headscarf")
+	assert_eq(def.shape, "headscarf")
+	assert_eq(def.slot, CosmeticDef.SLOT_HAT)
+	for word in ["Chip", "golf", "Golf", "sun"]:
+		assert_false(def.description.contains(word) or def.display_name.contains(word), word)
+
+
 func test_every_hat_shape_is_drawn() -> void:
 	var source := FileAccess.get_file_as_string("res://scripts/world/grandpa_look.gd")
 	for def in CosmeticDef.all():

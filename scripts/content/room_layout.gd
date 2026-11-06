@@ -70,11 +70,11 @@ const SYMBOL_CRACK := "k"
 const SYMBOL_TORCH := "t"
 const SYMBOL_LANTERN := "l"
 const SYMBOL_STUMP := "m"
-# The Last Resort Cruise adds its buffet tray, Head Office its in-tray, Fairway's End its flag
-# pin and Departures, Terminal Zero its suitcase stack, which block nothing.
+# The Last Resort Cruise adds its buffet tray, Head Office its in-tray and Departures, Terminal Zero
+# its suitcase stack, which block nothing.
 # The Flashback Cinema adds its lobby cards.
 # The Seance Hotline adds its lava lamps and beaded curtains.
-const DECOR_SYMBOLS := "gnwuktlmfprc" + "0" + "y" + "3" + "7" + "i" + "ae"
+const DECOR_SYMBOLS := "gnwuktlmfprc" + "0" + "y" + "7" + "i" + "ae"
 # A freshly mopped cell: everyone walks on it, Grandpa and chargers slide. Kept well clear of doors.
 const SYMBOL_WET := "W"
 const WET_DOOR_CLEARANCE := 2
@@ -108,15 +108,6 @@ const RED_TAPE_DOOR_CLEARANCE := 2
 const SYMBOL_WATER_COOLER := "9"
 const SYMBOL_CUBICLE := "N"
 const SYMBOL_IN_TRAY := "y"
-# Fairway's End. Sand bunkers lie in the fairway: walkable, never harmful, slow to wade through, and kept
-# well clear of doors. See SandRule. A flag pin blocks nothing and breaks to anything, like grass. A ball
-# washer breaks like a barrel. A hedge is solid and breaks like a rock, and a hedge cell with no hedge
-# beside it is a parked golf cart instead (GolfProps.is_parked_cart).
-const SYMBOL_SAND := "s"
-const SAND_DOOR_CLEARANCE := 2
-const SYMBOL_FLAG := "3"
-const SYMBOL_BALL_WASHER := "4"
-const SYMBOL_HEDGE := "5"
 # Departures, Terminal Zero: a queue barrier line marked on the carpet. While it is down it is plain
 # floor. On a timer, after a chime and a flash, its rope rises, and while it is up it blocks Grandpa
 # and his dentures only: staff duck under the rope, so enemies and their shots pass and the walk grid
@@ -148,14 +139,14 @@ const SYMBOL_PARTITION := "z"
 const SYMBOL_LAVA_LAMP := "a"
 const SYMBOL_BEADED_CURTAIN := "e"
 # Each new path adds its props at the end of each list: the Last Resort Cruise, Head Office,
-# Fairway's End, Departures, Terminal Zero, the Flashback Cinema and the Seance Hotline, in that order.
-const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc" + "b012" + "x9Ny" + "s345" + "=678" + "-|i" + "dqzae"
+# Departures, Terminal Zero, the Flashback Cinema and the Seance Hotline, in that order.
+const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc" + "b012" + "x9Ny" + "=678" + "-|i" + "dqzae"
 # Nothing can walk through these, so nothing may be dropped or summoned on them.
-const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGojh" + "b12" + "9N" + "45" + "68" + "-|" + "dqz"
+const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGojh" + "b12" + "9N" + "68" + "-|" + "dqz"
 # Routes may not need a hole or a wall, and may not need a bomb for a crate or a rock.
 const WALL_LIKE := "#lo"
 const WALLS := "#lVo" + "1" + "|"
-const WALLS_AND_BOMB_ONLY := "#lVXOAYKDMoh" + "12" + "N" + "5" + "8" + "-|" + "dqz"
+const WALLS_AND_BOMB_ONLY := "#lVXOAYKDMoh" + "12" + "N" + "8" + "-|" + "dqz"
 const MUST_REACH_WITHOUT_BREAKING := "EBIHSPG"
 # A vault lays this many labeled pickups out in the open, this many cells apart so names never overlap.
 const VAULT_EXTRAS := 3
@@ -251,8 +242,6 @@ func validate() -> PackedStringArray:
 				errors.append("vent at %s is within %d cells of a door" % [str(cell), VENT_DOOR_CLEARANCE])
 			if symbol == SYMBOL_RED_TAPE and _within_of_a_door(cell, RED_TAPE_DOOR_CLEARANCE):
 				errors.append("red tape at %s is within %d cells of a door" % [str(cell), RED_TAPE_DOOR_CLEARANCE])
-			if symbol == SYMBOL_SAND and _within_of_a_door(cell, SAND_DOOR_CLEARANCE):
-				errors.append("sand at %s is within %d cells of a door" % [str(cell), SAND_DOOR_CLEARANCE])
 			# Departures, Terminal Zero.
 			if symbol == SYMBOL_BARRIER and _within_of_a_door(cell, BARRIER_DOOR_CLEARANCE):
 				errors.append("barrier at %s is within %d cells of a door" % [str(cell), BARRIER_DOOR_CLEARANCE])

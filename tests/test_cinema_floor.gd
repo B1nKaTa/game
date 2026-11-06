@@ -54,14 +54,14 @@ func test_it_looks_like_no_other_floor() -> void:
 	assert_eq(mine.floor_pattern, CinemaLook.CARPET, "teal carpet with runners")
 	assert_eq(mine.wall_pattern, CinemaLook.DECO_WALL, "deco panels with gold trim")
 	assert_true(mine.screen, "its fighting rooms show a film")
-	for kind in [RoomDecor.GRASS, RoomDecor.BONES, RoomDecor.IV_STAND, RoomDecor.FURNACE, RoomDecor.GAUGE, RoomDecor.STAINED_GLASS, RoomDecor.COFFIN_STAND, RoomDecor.FLUORESCENT, RoomDecor.FOOD_TABLE, RoomDecor.BENCH, RoomDecor.FOG, RoomDecor.PUDDLE]:
+	for kind in [RoomDecor.GRASS, RoomDecor.BONES, RoomDecor.IV_STAND, RoomDecor.FURNACE, RoomDecor.GAUGE, RoomDecor.STAINED_GLASS, RoomDecor.COFFIN_STAND, RoomDecor.FLUORESCENT, RoomDecor.FOOD_TABLE, RoomDecor.BENCH, RoomDecor.PUDDLE]:
 		assert_near(mine.weight_of(kind), 0.0, kind)
 
 
 func test_the_patterns_stand_clear_of_every_other_one() -> void:
-	for value in [0, 1, 2, 3, RoomBackdrop.FLOOR_TEAK_DECK, RoomBackdrop.FLOOR_OFFICE_CARPET, GolfLook.FAIRWAY]:
+	for value in [0, 1, 2, 3, RoomBackdrop.FLOOR_TEAK_DECK, RoomBackdrop.FLOOR_OFFICE_CARPET]:
 		assert_true(CinemaLook.CARPET != value, str(value))
-	for value in [0, 1, 2, 3, RoomBackdrop.WALL_SHIP_RAIL, RoomBackdrop.WALL_OFFICE_PLASTER, GolfLook.HEDGE_WALL]:
+	for value in [0, 1, 2, 3, RoomBackdrop.WALL_SHIP_RAIL, RoomBackdrop.WALL_OFFICE_PLASTER]:
 		assert_true(CinemaLook.DECO_WALL != value, str(value))
 
 

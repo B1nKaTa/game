@@ -1,7 +1,7 @@
 class_name CrystalGazerBehavior
 extends EnemyBehavior
 
-# A Crystal Gazer keeps her distance, as the Club Golfer did. She winds up over her ball, then lets it go
+# A Crystal Gazer keeps her distance. She winds up over her ball, then lets it go
 # (CrystalBall): it homes on Grandpa's feet for 3 s, turning slowly, and bursts in a small warned ring,
 # or sooner where it meets cover. She sends one ball at a time, the next only once the last is gone.
 const TOO_CLOSE := 110.0

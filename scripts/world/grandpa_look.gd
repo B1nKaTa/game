@@ -125,14 +125,18 @@ static func draw_hat(canvas: CanvasItem, shape: String, head: Vector2, color: Co
 			canvas.draw_colored_polygon(visor, OUTLINE)
 			canvas.draw_circle(head + Vector2(facing_dir, -8), 1.5, Color("ffd24a"))
 			canvas.draw_rect(top, OUTLINE, false, 1.0)
-		"visor":
-			# A band with no crown, so his white hair shows over it, and a long bill the way he faces.
-			var strap := Rect2(head + Vector2(-7, -7), Vector2(14, 3))
-			canvas.draw_rect(strap, color)
-			var bill := PackedVector2Array([head + Vector2(4 * facing_dir, -7), head + Vector2(13 * facing_dir, -5), head + Vector2(13 * facing_dir, -4), head + Vector2(4 * facing_dir, -4)])
-			canvas.draw_colored_polygon(bill, color.darkened(0.2))
-			canvas.draw_polyline(PackedVector2Array([bill[0], bill[1], bill[2], bill[3]]), OUTLINE, 1.0)
-			canvas.draw_rect(strap, OUTLINE, false, 1.0)
+		"headscarf":
+			# A tarot reader's scarf over the crown, knotted behind with two short tails, and a small
+			# gold star at the front, the way he faces.
+			var scarf := PackedVector2Array([head + Vector2(-7, -4), head + Vector2(-6, -10), head + Vector2(6, -10), head + Vector2(7, -4)])
+			canvas.draw_colored_polygon(scarf, color)
+			canvas.draw_line(head + Vector2(-7, -5), head + Vector2(7, -5), color.darkened(0.3), 2.0)
+			var knot := head + Vector2(-7 * facing_dir, -6)
+			canvas.draw_line(knot, knot + Vector2(-4 * facing_dir, 5), color.darkened(0.2), 2.0)
+			canvas.draw_line(knot, knot + Vector2(-2 * facing_dir, 6), color.darkened(0.2), 2.0)
+			canvas.draw_circle(knot, 1.5, color.darkened(0.2))
+			canvas.draw_polyline(PackedVector2Array([scarf[0], scarf[1], scarf[2], scarf[3]]), OUTLINE, 1.0)
+			canvas.draw_circle(head + Vector2(3 * facing_dir, -7), 1.5, Color("ffd24a"))
 		"aviators":
 			# Two dark lenses in gold frames over his eyes, and an arm back to the ear.
 			var eyes := head + EYES

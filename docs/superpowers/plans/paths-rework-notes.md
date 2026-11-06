@@ -603,3 +603,44 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
   (20 refused, the circle already shut), dropped 3 at the lock, ran an attack alongside in all other 177,
   each with a marked spot inside the circle, slowest call and plan 24 ms; a possession was cast in 199 of
   199, slowest 12 ms. Not looked at in a real window yet (Task 6 shoots it).
+- **Phase E, one commit:** the golf course's sand, props and looks go together, as the Mall's did in
+  Task 4, since no layout has used any of them since Phase A and nothing else reads them.
+- **Retired with the sand:** `SandTrap`, `SandRule`, the symbol `s` and its door check, the player's
+  wade and no-dodge in sand (`is_in_sand`, the crunching steps), the enemy's wade, and the bot's sand
+  branches (its wait for a dodge, its step out of sand near a boss, its walk round bunkers); the bot's
+  version stays 9, since no other reading changed. The dodge line is a plain
+  `Input.is_action_just_pressed("dodge")`, so the Polyester Suit's check stays inside `start_dodge`
+  (lesson 215); test_reworked_items now reads the walk line without the sand.
+- **Sounds:** `sand_step` and the Cinema's unplayed `escalator_hum` both left the sound bank, the
+  pool's gaps, jitter and volumes, `tools/sfx/sfx.py` and `audio/sfx`, rather than waiting for the
+  sound pass: nothing plays either, and sfx.py can make them again from history if a later floor wants
+  a crunch or a hum.
+- **Retired with the props and looks:** `GolfProps`, `GolfLook` (floor and wall patterns 13 and their
+  backdrop branches), `FlagPin`, `BallWasher`, `Hedge`, `ParkedCart`, the symbols `3 4 5` from every
+  list, `RoomView`'s golf build line, the golf palette group (sand, grains, shine, fairway stripe,
+  hedge, cart, flag and ball-washer colours) with the hotline's sand values, and the ground fog decor
+  (`RoomDecor.FOG`, its palette colour and its decor-layer branch), since no floor's decor weights
+  name it. `s 3 4 5` are free again; a test keeps them out of every list and the palette.
+- **Tests and probes:** `test_golf_floor.gd` and `test_golf_hazard.gd` are gone; the only rule still
+  meaningful, one pale body a floor, moved to test_seance_floor, beside a new test that the golf
+  symbols are free. `tools/probes/golf_look.gd` is deleted; round3_look lost its midnight-sand shots
+  and round2_look's golf part is now `seance` (same shots, the hotline's sign and maps).
+- **Items:** no item's effect named sand or golf. The Support Stockings now read "Sedatives, sticky
+  trails, quoits and paper never slow you below 70% speed" (the film and the ectoplasm slow through the
+  same rule), with the coach's tip to match; their 0.7 floor is unchanged. The Incense Sticks' sandalwood
+  is no sand, so it stays.
+- **The Golf Visor** keeps its id `golf_visor` (saves and the Decor Office may own it, and Celestine's
+  poster names it by path) and becomes the Tarot Headscarf: Sister Celestine's spare, violet, drawn as
+  a scarf over the crown knotted behind with two tails and a small gold star (`GrandpaLook` shape
+  `headscarf`, which replaces `visor`). Drawn at the other hats' offsets; not yet looked at in a window.
+- **Left as they are:** the Golf Glove's id (the Charging Crystal since Task 1); the path-migration
+  map, its fixtures and tests, which still name the golf ids old saves hold; Harold's "That's me on a
+  golf course" in the Scenic Route ending, which is his own life, not the retired floor; Gerald's hedge
+  in the letters, life signs, Cinema scenes and Ouija words, which is the neighbours' feud; the
+  Bestiary's history cells; history docs (night report, playtest notes, plans) and the bot's version
+  history comment.
+- **Docs:** the art inventory lost its "Left from Fairway's End" rows and its code paths to deleted
+  files (golf marks, golf look, hedge and pennant hooks, laid sand, the golf cart and sleigh overlays),
+  and now lists patterns 14 and 15; its history tables and totals stay, as Task 4 left the Mall's.
+  The add-floor layouts guide named the deleted `test_mall_hazard.gd`; it now points at the cruise's
+  slide test.

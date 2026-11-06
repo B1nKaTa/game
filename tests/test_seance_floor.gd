@@ -62,14 +62,14 @@ func test_it_looks_like_no_other_floor() -> void:
 	assert_false(mine.screen, "no film on the hotline")
 	for kind in [RoomDecor.COBWEB, RoomDecor.OFFICE_CHAIR]:
 		assert_true(mine.weight_of(kind) > 0.0, kind)
-	for kind in [RoomDecor.GRASS, RoomDecor.FOG, RoomDecor.BONES, RoomDecor.IV_STAND, RoomDecor.FURNACE, RoomDecor.GAUGE, RoomDecor.STAINED_GLASS, RoomDecor.COFFIN_STAND, RoomDecor.FLUORESCENT, RoomDecor.FOOD_TABLE, RoomDecor.BENCH, RoomDecor.PUDDLE, RoomDecor.MOSS, RoomDecor.PLANT, RoomDecor.FICUS]:
+	for kind in [RoomDecor.GRASS, RoomDecor.BONES, RoomDecor.IV_STAND, RoomDecor.FURNACE, RoomDecor.GAUGE, RoomDecor.STAINED_GLASS, RoomDecor.COFFIN_STAND, RoomDecor.FLUORESCENT, RoomDecor.FOOD_TABLE, RoomDecor.BENCH, RoomDecor.PUDDLE, RoomDecor.MOSS, RoomDecor.PLANT, RoomDecor.FICUS]:
 		assert_near(mine.weight_of(kind), 0.0, kind)
 
 
 func test_the_patterns_stand_clear_of_every_other_one() -> void:
-	for value in [0, 1, 2, 3, RoomBackdrop.FLOOR_TEAK_DECK, RoomBackdrop.FLOOR_OFFICE_CARPET, GolfLook.FAIRWAY, CinemaLook.CARPET]:
+	for value in [0, 1, 2, 3, RoomBackdrop.FLOOR_TEAK_DECK, RoomBackdrop.FLOOR_OFFICE_CARPET, CinemaLook.CARPET]:
 		assert_true(SeanceLook.CARPET != value, str(value))
-	for value in [0, 1, 2, 3, RoomBackdrop.WALL_SHIP_RAIL, RoomBackdrop.WALL_OFFICE_PLASTER, GolfLook.HEDGE_WALL, CinemaLook.DECO_WALL]:
+	for value in [0, 1, 2, 3, RoomBackdrop.WALL_SHIP_RAIL, RoomBackdrop.WALL_OFFICE_PLASTER, CinemaLook.DECO_WALL]:
 		assert_true(SeanceLook.STAR_WALL != value, str(value))
 
 
@@ -258,6 +258,20 @@ func test_no_body_is_red_mint_or_violet() -> void:
 		assert_true(_hue_gap(body.h, carpet.h) >= 0.1 or body.s < 0.3, "%s is violet like the carpet" % def.id)
 
 
+# Two pale bodies read as one under a single light (the cruise's lesson), so only one of the floor's
+# people is pale: the Poltergeist on Hold.
+func test_only_one_of_the_floors_people_is_pale() -> void:
+	var defs: Array[EnemyDef] = []
+	defs.assign(_def().enemies)
+	defs.append(_def().mini_boss)
+	defs.append(_def().floor_boss)
+	var pale: Array[String] = []
+	for enemy in defs:
+		if enemy.color.s < 0.4:
+			pale.append(enemy.id)
+	assert_true(pale.size() <= 1, "pale bodies: %s" % str(pale))
+
+
 # --- its props ---
 
 func _room(changes: Dictionary = {}, type := RoomLayout.TYPE_HEALING) -> RoomLayout:
@@ -297,6 +311,21 @@ func test_the_props_have_symbols_of_their_own() -> void:
 		assert_false(RoomLayout.WALLS_AND_BOMB_ONLY.contains(symbol), symbol)
 	for symbol in "dqzae":
 		assert_eq(RoomLayout.ALLOWED.count(symbol), 1, "%s is used once" % symbol)
+
+
+# The golf course's sand, flag pins, ball washers and hedges are retired, so their symbols are free for
+# a later path and no layout may use them.
+func test_the_golf_courses_symbols_are_free_again() -> void:
+	for symbol in "s345":
+		assert_false(RoomLayout.ALLOWED.contains(symbol), symbol)
+		assert_false(RoomLayout.SOLID_SYMBOLS.contains(symbol), symbol)
+		assert_false(RoomLayout.WALLS_AND_BOMB_ONLY.contains(symbol), symbol)
+		assert_false(RoomLayout.DECOR_SYMBOLS.contains(symbol), symbol)
+	assert_true(_room({Vector2i(5, 3): "s"}).validate().size() > 0, "a sand cell is no longer a symbol")
+	assert_true(_room({Vector2i(5, 3): "5"}).validate().size() > 0, "nor is a hedge")
+	var palette := RoomPalette.new()
+	for field in ["sand", "hedge", "fog", "ball_washer", "fairway_stripe"]:
+		assert_false(field in palette, "%s left the palette" % field)
 
 
 # A desk, a table and a partition are cover, as the Cinema's seats are: solid on the wall layer, which
@@ -622,7 +651,8 @@ func test_rooms_hold_the_hotlines_props_and_nothing_of_the_golf_course() -> void
 		if layout.room_type == RoomLayout.TYPE_COMBAT and not layout.cells_of("C").is_empty():
 			chest_rooms += 1
 		assert_false(layout.ship_rolls, _name(layout))
-	for symbol in [RoomLayout.SYMBOL_SAND, RoomLayout.SYMBOL_FLAG, RoomLayout.SYMBOL_BALL_WASHER, RoomLayout.SYMBOL_HEDGE]:
+	# The golf course's old symbols: sand, a flag pin, a ball washer and a hedge.
+	for symbol in ["s", "3", "4", "5"]:
 		assert_eq(int(counts.get(symbol, 0)), 0, "no %s" % symbol)
 	assert_true(int(counts.get(RoomLayout.SYMBOL_PARTITION, 0)) >= 200, "partition cells %d" % int(counts.get("z", 0)))
 	assert_true(int(counts.get(RoomLayout.SYMBOL_DESK, 0)) >= 150, "desk cells %d" % int(counts.get("d", 0)))
