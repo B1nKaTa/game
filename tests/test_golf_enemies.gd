@@ -1,7 +1,7 @@
 extends TestCase
 
-# What is left of Fairway's End's enemies: the Caddie and the Gopher, still the golf bosses' summons
-# until their own phases retire them. The hotline's regulars are in test_seance_enemies.gd.
+# What is left of Fairway's End's enemies: the Caddie, still the Club President's summon until his
+# phase retires him. The hotline's regulars are in test_seance_enemies.gd.
 
 const FRAME := 1.0 / 60.0
 
@@ -92,53 +92,10 @@ func test_a_cart_shows_past_its_driver_and_fits_its_lane() -> void:
 	assert_true(president.y <= ClubPresidentBehavior.CART_LANE_WIDTH, "and fits his lane, got %s" % str(president))
 
 
-# --- the Gopher ---
-
-func test_the_gopher_burrows_rises_and_sits_up_in_turn() -> void:
-	var burrow := GopherBehavior.State.BURROW
-	var rising := GopherBehavior.State.RISING
-	var up := GopherBehavior.State.UP
-	assert_eq(GopherBehavior.next_state(burrow), rising)
-	assert_eq(GopherBehavior.next_state(rising), up)
-	assert_eq(GopherBehavior.next_state(up), burrow)
-
-
-func test_its_bite_reaches_only_its_ring() -> void:
-	assert_true(GopherBehavior.bite_hits(Vector2(100, 100), Vector2(120, 100)))
-	assert_false(GopherBehavior.bite_hits(Vector2(100, 100), Vector2(100 + GopherBehavior.BITE_RADIUS + 1.0, 100)))
-	var walk := PlayerStats.BASE_SPEED * (GopherBehavior.RISE_WINDUP - 0.2)
-	assert_true(walk > GopherBehavior.BITE_RADIUS + Player.FEET_BOX_SIZE.x, "time to walk out of the ring")
-	var wading := walk * SandRule.SPEED_FACTOR
-	assert_true(wading > GopherBehavior.BITE_RADIUS, "even wading out of a bunker")
-
-
-func test_it_rises_right_where_he_stands_under_a_whole_warning() -> void:
-	var grandpa := _grandpa(Vector2(300, 200))
-	var gopher := _enemy("gopher", Vector2(100, 100), grandpa)
-	# Its puff of earth needs a room to land in.
-	var room := Node2D.new()
-	room.add_child(gopher)
-	var behavior := GopherBehavior.new()
-	var time := 0.0
-	while time < GopherBehavior.FIRST_BURROW + 0.05:
-		_step(behavior, gopher)
-		time += FRAME
-	assert_true(gopher.submerged, "it tunnels while it comes")
-	assert_true(gopher.global_position.distance_to(grandpa.global_position) < 1.0, "it comes up under him")
-	assert_near(gopher._warning_share(), 1.0, "its ring shows for the whole windup")
-	time = 0.0
-	while time < GopherBehavior.RISE_WINDUP + 0.05:
-		_step(behavior, gopher)
-		time += FRAME
-	assert_false(gopher.submerged, "then it is up and can be hit")
-	room.free()
-	grandpa.free()
-
-
 # --- the numbers ---
 
 func test_new_enemies_match_the_first_floor_role_they_fill() -> void:
-	var pairs := {"caddie": "debt_ghost", "gopher": "plot_holder"}
+	var pairs := {"caddie": "debt_ghost"}
 	for id: String in pairs:
 		var def := _load(id)
 		var theirs := _load(pairs[id])
@@ -153,4 +110,3 @@ func test_new_enemies_match_the_first_floor_role_they_fill() -> void:
 
 func test_each_behavior_says_what_it_is() -> void:
 	assert_true(_load("caddie").behavior_script.new() is CaddieBehavior)
-	assert_true(_load("gopher").behavior_script.new() is GopherBehavior)

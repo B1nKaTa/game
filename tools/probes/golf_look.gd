@@ -1,9 +1,10 @@
 extends SceneTree
 # Opens a real window and saves screenshots of Fairway's End Golf Club: its rooms with enemies in them,
-# the sand beside the striped fairway, every prop, every enemy and every attack of Chip and the Club
-# President, and the lingering effects and the HUD over the palest tile in a large room.
+# the sand beside the striped fairway, every prop, every enemy and every attack of the Club President,
+# and the lingering effects and the HUD over the palest tile in a large room. Sister Celestine, who
+# took Chip's room, is left to the hotline's own look shots.
 # Run only from an exported copy whose config/name is renamed.
-# Args after --: rooms | props | enemies | chip | president | pale | all
+# Args after --: rooms | props | enemies | president | pale | all
 
 const OUT := "D:/grandpa-look-golf/shots/"
 const WALL_LIMIT_MS := 280000
@@ -70,7 +71,7 @@ func _main() -> void:
 	progress.data.record_floor_cleared(4, "last_resort_cruise")
 	var args := OS.get_cmdline_user_args()
 	var which: String = args[0] if args.size() > 0 else "all"
-	for part in ["rooms", "props", "enemies", "chip", "president", "pale"]:
+	for part in ["rooms", "props", "enemies", "president", "pale"]:
 		if which == "all" or which == part:
 			await call("_" + part)
 	progress._store.delete_all()
@@ -262,7 +263,7 @@ func _enemies() -> void:
 	await _enter(rows)
 	# The whole roster side by side.
 	_stand(_cell(3, 8))
-	var ids := ["caddie", "gopher"]
+	var ids := ["caddie"]
 	for i in ids.size():
 		var e := _spawn(ids[i], _cell(4 + i * 3, 4))
 		e.set_physics_process(false)
@@ -279,64 +280,6 @@ func _enemies() -> void:
 	await _shot("32_caddie_cart_charge")
 	await _wait(0.6)
 	await _shot("33_caddie_rest")
-	await _clear()
-	# The Gopher: the mound, the ring, and the bite.
-	_stand(_cell(5, 5))
-	var gopher := _spawn("gopher", _cell(15, 5))
-	await _wait(0.3)
-	await _shot("36_gopher_mound")
-	await _until(func(): return _warned(gopher, 0.45), 6.0)
-	await _shot("37_gopher_ring")
-	await _until(func(): return is_instance_valid(gopher) and not gopher.submerged, 2.0)
-	await _wait(0.1)
-	await _shot("38_gopher_bite")
-	# And the same rise on sand.
-	_stand(_cell(13, 7))
-	await _until(func(): return _warned(gopher, 0.45), 8.0)
-	await _shot("39_gopher_ring_on_sand")
-	await _clear()
-
-
-# --- Chip, Club Pro ---
-
-func _chip() -> void:
-	await _new_run()
-	var layout := await _enter_quiet("res://data/rooms/seance_hotline/mini_boss_01.tres")
-	var center := _middle(layout)
-	_stand(_floor_near(layout, center + Vector2(-100, 20)))
-	var chip: Enemy = view._spawn_enemy(load("res://data/enemies/chip.tres"), center, true)
-	var b = chip._behavior
-	held.append(b)
-	b._summon_timer = 99.0
-	await _wait(0.1)
-	chip.global_position = center
-	b._cooldown = 99.0
-	b._begin(chip, ClubProBehavior.Attack.CHIP)
-	await _wait(ClubProBehavior.CHIP_WARNING * 0.5)
-	await _shot("40_chip_chip_spots")
-	await _until(func(): return _of(GolfBallLob).any(func(s): return s._landed), 2.0)
-	await _shot("41_chip_chip_landing")
-	await _wait(0.8)
-	b._cooldown = 99.0
-	chip.global_position = center
-	_stand(_floor_near(layout, center + Vector2(-110, -10)))
-	await _wait(0.1)
-	b._begin(chip, ClubProBehavior.Attack.PUTT)
-	await _wait(ClubProBehavior.PUTT_WINDUP * 0.5)
-	await _shot("42_chip_putt_curve")
-	await _until(func(): return _of(PuttRoll).any(func(p): return p.is_rolling()), 2.0)
-	await _wait(0.2)
-	b._cooldown = 99.0
-	await _shot("43_chip_putt_rolling")
-	await _wait(1.0)
-	b._cooldown = 99.0
-	b._summon_timer = 0.0
-	await _wait(0.4)
-	await _shot("44_chip_summon_marks")
-	await _wait(1.0)
-	b._cooldown = 99.0
-	_freeze_all()
-	await _shot("45_chip_gophers")
 	await _clear()
 
 
@@ -448,8 +391,8 @@ func _pale() -> void:
 	_stand(_cell(14, 3))
 	await _wait(0.4)
 	await _shot("70_pale_hud_over_sand")
-	# Every effect over the sand: the hole in one, the chip spots, the putt, the bunker warning, the
-	# sprinkler, the golfer's fan and the gopher's ring.
+	# Every effect over the sand: the hole in one, the bunker warning, the sprinkler and the caddie's
+	# lane.
 	_stand(_cell(10, 6))
 	var boss: Enemy = view._spawn_enemy(load("res://data/enemies/thaddeus_fairweather.tres"), _cell(18, 6), true)
 	var b = boss._behavior
@@ -480,32 +423,6 @@ func _pale() -> void:
 	await _shot("75_pale_bunker_laid_on_sand")
 	boss.dismiss()
 	await _wait(0.2)
-	var chip: Enemy = view._spawn_enemy(load("res://data/enemies/chip.tres"), _cell(18, 6), true)
-	var c = chip._behavior
-	held.append(c)
-	c._summon_timer = 99.0
-	await _wait(0.1)
-	c._cooldown = 99.0
-	c._begin(chip, ClubProBehavior.Attack.CHIP)
-	await _wait(ClubProBehavior.CHIP_WARNING * 0.5)
-	await _shot("76_pale_chip_spots")
-	await _wait(1.2)
-	c._cooldown = 99.0
-	chip.global_position = _cell(18, 6)
-	c._begin(chip, ClubProBehavior.Attack.PUTT)
-	await _wait(ClubProBehavior.PUTT_WINDUP * 0.5)
-	await _shot("77_pale_putt_curve")
-	await _wait(0.6)
-	c._cooldown = 99.0
-	await _shot("78_pale_putt_rolling")
-	chip.dismiss()
-	await _wait(0.2)
-	var gopher := _spawn("gopher", _cell(20, 8))
-	await _wait(0.3)
-	await _shot("81_pale_gopher_mound")
-	await _until(func(): return _warned(gopher, 0.45), 6.0)
-	await _shot("82_pale_gopher_ring")
-	gopher.dismiss()
 	var caddie := _spawn("caddie", _cell(17, 6))
 	await _until(func(): return _warned(caddie, 0.45), 8.0)
 	await _shot("83_pale_caddie_lane")

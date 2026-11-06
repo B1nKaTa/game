@@ -191,6 +191,15 @@ func test_its_own_enemies() -> void:
 	assert_near(def.health_mult, 2.2)
 
 
+# Its own mini boss holds the mini boss rooms, calling no one; the golf club's floor boss waits for his
+# phase.
+func test_its_own_mini_boss() -> void:
+	var def := _def()
+	assert_eq(def.mini_boss.id, "celestine")
+	assert_eq(def.mini_boss.summon, null)
+	assert_eq(def.mini_boss.art_id, "celestine")
+
+
 # Its regulars, its bosses and their summons, each told apart from all the others by colour or size.
 func test_every_enemy_of_the_floor_can_be_told_apart() -> void:
 	var defs: Array[EnemyDef] = []

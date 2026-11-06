@@ -439,3 +439,67 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
   that Chip and the Club President still hold the boss rooms with their summons. A headless live check
   (each new enemy in a tree beside a stand-in Grandpa for 7 s) saw every attack fire and land, with no
   script error.
+- **Sister Celestine (Phase C), one commit:** she takes Chip's slot and numbers (760 final health,
+  345.455 in the `.tres`, 75 px/s, 8 Pension, 32x40) with the floor wired and Chip retired in the same
+  commit. Ochre (0.65, 0.5, 0), the floor's one ochre: 0.25 or more off every hotline body, 0.4 off the
+  warning red, off the mint and the carpet's violet (checked in py, then tested). Mark `tarot_shawl`: a
+  dark headscarf with a gold star, a fringed violet shawl and three card backs fanned in her hand.
+- **Her hand:** she deals 3 cards face down (0.6 s, "Let us see your cards...", `deal_cards` anim, the
+  cards landing 0.15 s apart and sliding out of her hand), then turns them one at a time. A turned card
+  flips (0.16 s) and shows its symbol with a name tag under it, and she says its name, for 0.6 s
+  (`TURN_WINDUP`, `attack` anim) before its attack starts. Each card's attack is its own node with a
+  whole warning of its own; she sets no windup ring on herself, since the deal hurts no one.
+- **One attack at a time:** she turns the next card only once the last card's attack can hurt no more
+  (`is_spent`), then waits 0.25 s, so no two cards' hits are ever under way together; that spacing is
+  the overlap rule rather than an OverlapRoute plan, and a test plays out every hand to check at most
+  one attack is live at any frame. The hotline's regulars can still overlap her, as any room's can.
+- **She holds still from the deal to her last card** (as the Projectionist holds for his beam), so the
+  Wheel and Death, which reach round and ahead of her, are what punish standing beside her.
+  Between hands she rests Chip's slot's 0.5 s (the Reverend's), keeps within 110 px and chases at the
+  catch-up speed while her body is off screen; a hand starts only with her body in view.
+- **The deal rule:** `CelestineBehavior.deal(rolls)` draws the first two cards freely (a quarter each)
+  and, when they match, the third from the other three, so three of a kind never comes and two alike
+  do (5 hands in 8; the rest are three different cards). `is_valid_hand` says 3 cards of the deck, not all alike. `forced_hand` (a
+  valid hand) lets a look probe pick her cards.
+- **Where the cards lie:** a row of three 40 px apart, 52 px above or below her, or a column 56 px
+  apart, 40 px beside her, on the side facing Grandpa's feet first, then the others by how much they
+  face him, each tried slid 0, 24 or 48 px along its line; the first that lies wholly in the room on
+  open floor (each card's middle and both ends) wins, else each card goes to the nearest open cell clear of her body and the others. Cards are
+  flat decor (z -8), harmless, and fade when the hand ends or vanish when she falls.
+- **The cards' art hook:** `TarotCard.SIZE` is 32x48, the size of the tarot PNGs, and `art_id()` names
+  the stem it shows now (`tarot_card_back` face down, then `tarot_tower`, `tarot_death`,
+  `tarot_wheel`, `tarot_star`); no PNG is wired. Placeholders: a dark violet back with a gold border,
+  a diamond lattice and a crescent; a cream face with the symbol and its number (XVI, XIII, X, XVII).
+- **The Tower:** 5 cell-sized squares (32x32, on whole cells): his feet's cell and 4 more at most 2 cells
+  from it, on open floor inside the walls, never every open cell beside his own; then `tower_plan`
+  checks them with OverlapRoute (walls, props, her body) and drops the last tile picked, never his
+  own, until he has a way out (the cell rule alone left 4 of 200 states shut in her rooms). Warned 0.9 s by red
+  squares filling from the middle with a growing tile shadow; then the tiles fall at once and feet in a
+  square (2 px spare) cost 1 pill. Plaster bits lie 0.45 s.
+- **Death:** a 90 degree sector (45 either side of Grandpa's feet), 110 px from her, tinted, filling
+  from the edge the blade starts on and outlined twice, for 1.0 s; then the scythe sweeps it edge to
+  edge in 0.3 s, either way round, and feet it passes over cost 2 pills (`Enemy.HEAVY_DAMAGE`), once.
+  Two, not three: a mini boss keeps the heaviest hit for the floor bosses, as Crabtree and Chip did.
+  No wall test (it is a spirit's scythe), so the warning is the whole sector.
+- **The Wheel:** a band from 36 to 84 px round her with 3 blades of 70 degrees and 50 degree gaps,
+  outlined and filling for 1.0 s without turning, then spinning 2.0 s at 2 rad/s either way; a blade
+  over his feet costs 1 pill, once. Her body fits inside the clear inner ring (36 px), and outside the
+  band is always clear, so a step of half the band's width out is the readable way out.
+- **The Star:** 5 spots (r 16), the first on his feet and the rest 38 px or more apart within 90 px of
+  him, on open floor; all show at once, each filling for its own warning, the first landing at 0.8 s
+  and each other 0.15 s later, a star streaking down onto each. Feet in a spot as it lands cost 1 pill.
+- **Every hazard answers the bot** (`threat_at`, `threat_imminent`, `is_spent`) and shows a planner its
+  shapes: the Tower's squares as `route_rects`, the scythe's sector as circles 14 px apart (r 13) over
+  the sweep, the wheel's band as circles round its middle (half the band plus 3) for the whole spin, and
+  each star at its landing. A 200-seed test in her two rooms finds a way out of every card with
+  OverlapRoute (200 of 200 for each). All five nodes (the card too) are in `SeanceProps.is_passing_effect`.
+- **No summons:** Chip's Gophers are not replaced, as the Ectoplasm is Madame Zara's.
+- **Retired with Chip:** `chip.tres` (renamed to `celestine.tres` in git), `club_pro_behavior.gd`, the
+  Gopher (`gopher.tres`, `gopher_behavior.gd`), `golf_ball_lob.gd` and `putt_roll.gd` (only Chip used
+  them), the `pro_visor` and `gopher_teeth` marks, Chip's and the Gopher's tests, the bot's `PuttRoll` and
+  `GolfBallLob` branches (the puck's stay), the golf look probe's Chip and Gopher shots, and round2_look's
+  Gopher shots (its dark-corner chip shot now shows Celestine's Star). `PendingBosses` keeps only
+  Thaddeus. `test_golf_floor` now checks only the Club President's room. Old saves keep `chip` and
+  `gopher` as history (`path_migration.gd` still maps `chip` to `celestine` for posters and beaten bosses).
+- **Left as it is:** the Golf Visor cosmetic (Celestine's poster extra) still says "Chip's own"; its
+  text is the item audit's to retheme with the other poster looks.

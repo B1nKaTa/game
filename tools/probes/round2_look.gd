@@ -4,7 +4,7 @@ extends SceneTree
 # gavel planned during a chart with the gap mark moved, the same in phase two with the tape, the desk
 # slam's ring, burst and shove; Augustine's runway with the ropes up and its mark, a stamp and a gate
 # change during a pattern), and the midnight golf course's risky spots (warnings far from any light,
-# a Gopher on the grass, the Crossroads sign and both maps with the long name).
+# the Crossroads sign and both maps with the long name).
 # Run only from an exported copy whose config/name is renamed.
 # Args after --: contact | chairman | augustine | golf | all
 
@@ -400,11 +400,6 @@ func _golf() -> void:
 	await _wait(0.2)
 	# Warnings far from any fill light, in the corners of a large room.
 	await _enter(_rows(30, 17))
-	_stand(_cell(2, 14))
-	var gopher := _spawn("gopher", _cell(5, 14))
-	await _until(func(): return _warned(gopher, 0.45), 8.0)
-	await _shot("g4_dark_corner_gopher_ring")
-	await _clear()
 	_stand(_cell(3, 13))
 	var gazer := _spawn("crystal_gazer", _cell(8, 14))
 	await _until(func(): return _warned(gazer, 0.45), 8.0)
@@ -416,15 +411,12 @@ func _golf() -> void:
 	await _shot("g6_dark_corner_caddie_lane")
 	await _clear()
 	_stand(_cell(3, 3))
-	var chip: Enemy = _spawn("chip", _cell(8, 4))
-	var c = chip._behavior
-	_held = c
-	await _wait(0.1)
-	c._begin(chip, ClubProBehavior.Attack.CHIP)
-	await _wait(ClubProBehavior.CHIP_WARNING * 0.5)
-	await _shot("g7_dark_corner_chip_spots")
-	await _wait(1.2)
-	_held = null
+	var reader: Enemy = _spawn("celestine", _cell(8, 4))
+	var c = reader._behavior
+	c.forced_hand = [CelestineBehavior.Card.STAR, CelestineBehavior.Card.TOWER, CelestineBehavior.Card.STAR]
+	await _until(func(): return is_instance_valid(reader) and c.effect() is StarFall, 8.0)
+	await _wait(CelestineBehavior.STAR_WINDUP * 0.5)
+	await _shot("g7_dark_corner_star_spots")
 	await _clear()
 	_stand(_cell(26, 14))
 	var boss: Enemy = _spawn("thaddeus_fairweather", _cell(21, 13))
@@ -444,12 +436,4 @@ func _golf() -> void:
 	await _wait(0.4)
 	await _shot("g9_president_phase2_navy")
 	_held = null
-	await _clear()
-	# A Gopher up on the grass in the middle of the room.
-	_stand(_cell(12, 8))
-	var up := _spawn("gopher", _cell(15, 8))
-	await _until(func(): return is_instance_valid(up) and not up.submerged, 8.0)
-	up.set_physics_process(false)
-	await _wait(0.1)
-	await _shot("g10_gopher_on_grass")
 	await _clear()

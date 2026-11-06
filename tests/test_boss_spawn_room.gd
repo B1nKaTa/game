@@ -97,3 +97,21 @@ func test_the_cinemas_bosses_start_clear_in_their_rooms() -> void:
 	assert_eq(checked.get("crabtree", 0), 2, "both of Crabtree's rooms")
 	assert_eq(checked.get("projectionist", 0), 2, "both of the Projectionist's rooms")
 
+
+# Sister Celestine's 32 by 40 box must start clear of every desk, table and partition in her own rooms.
+func test_the_hotlines_mini_boss_starts_clear_in_her_rooms() -> void:
+	var floor_def: FloorDef = load(FLOORS_DIR + "seance_hotline.tres")
+	assert_eq(floor_def.mini_boss.id, "celestine")
+	assert_eq(floor_def.mini_boss.body_size, Vector2(32, 40))
+	var checked := 0
+	for room_file in DirAccess.get_files_at(floor_def.rooms_dir):
+		var room_name := room_file.trim_suffix(".remap")
+		if not room_name.ends_with(".tres"):
+			continue
+		var layout: RoomLayout = load(floor_def.rooms_dir + room_name)
+		if layout.room_type != RoomLayout.TYPE_MINI_BOSS:
+			continue
+		for cell in layout.cells_of("B"):
+			checked += 1
+			assert_eq(solid_cells_under(layout, cell, floor_def.mini_boss.body_size).size(), 0, "celestine in %s" % room_name)
+	assert_eq(checked, 2, "both of her rooms")

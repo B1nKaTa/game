@@ -279,8 +279,8 @@ func _attribute(scene) -> void:
 		elif child is SprinklerSweep and child.is_sweeping() and SprinklerSweep.swept_over(child.global_position, child.sweep_start(), child.sweep_turn(), maxf(child._swept_for - 0.1, 0.0), child._swept_for, scene.player.feet().global_position):
 			name = "sprinkler"
 			d = 1.0
-		elif ((child is PuttRoll and child.is_rolling()) or (child is ShuffleboardPuck and child.is_sliding())) and scene.player.feet().global_position.distance_to(child.global_position + CollectionPlate.point_along(child._path, child._travelled)) < 30.0:
-			name = "putt" if child is PuttRoll else "puck"
+		elif child is ShuffleboardPuck and child.is_sliding() and scene.player.feet().global_position.distance_to(child.global_position + CollectionPlate.point_along(child._path, child._travelled)) < 30.0:
+			name = "puck"
 			d = 1.0
 		elif child is Enemy:
 			name = child.def.id
@@ -775,11 +775,11 @@ class Bot extends Node:
 				_soft_cells[_cell(tape.global_position)] = true
 
 	func _is_deep(child: Node) -> bool:
-		return child.has_method("threat_at") or child is DeckLane or child is RunwayLane or child is LaneDrop or child is SprinklerSweep or child is PuttRoll or child is ShuffleboardPuck or child is AnchorDrop or child is QuoitRing or child is WriteUpMark or child is PaperTrail or child is BunkerPatch or child is TapeSpread or _is_deep_strike(child)
+		return child.has_method("threat_at") or child is DeckLane or child is RunwayLane or child is LaneDrop or child is SprinklerSweep or child is ShuffleboardPuck or child is AnchorDrop or child is QuoitRing or child is WriteUpMark or child is PaperTrail or child is BunkerPatch or child is TapeSpread or _is_deep_strike(child)
 
-	# The deep floors' own marks on the ground: a giant ball, a gavel, a stamp or tray, a chipped ball.
+	# The deep floors' own marks on the ground: a giant ball, a gavel, a stamp or tray.
 	func _is_deep_strike(child: Node) -> bool:
-		return child is GiantBallDrop or child is GavelStrike or child is TerminalStrike or child is GolfBallLob or child is DeskSlam
+		return child is GiantBallDrop or child is GavelStrike or child is TerminalStrike or child is DeskSlam
 
 	# 0 for clear, 1 for somewhere better avoided (it slows or will warn soon), 2 for a coming hit.
 	func _deep_zone(child: Node, p: Vector2, strict := false) -> int:
@@ -824,7 +824,7 @@ class Bot extends Node:
 				if angle < now - margin:
 					return 0
 			return 2
-		if child is PuttRoll or child is ShuffleboardPuck:
+		if child is ShuffleboardPuck:
 			var from: float = child._travelled
 			var d := from
 			while d <= child._total:
@@ -872,8 +872,8 @@ class Bot extends Node:
 				return child._left < 0.1
 			var now := SprinklerSweep.SWEEP * clampf(child._swept_for / SprinklerSweep.SWEEP_TIME, 0.0, 1.0)
 			return SprinklerSweep.swept_angle_of(child.global_position, child.sweep_start(), child.sweep_turn(), p) - now < 0.5
-		if child is PuttRoll or child is ShuffleboardPuck:
-			var moving: bool = child.is_rolling() if child is PuttRoll else child.is_sliding()
+		if child is ShuffleboardPuck:
+			var moving: bool = child.is_sliding()
 			return moving and p.distance_to(child.global_position + CollectionPlate.point_along(child._path, child._travelled)) < 40.0
 		if child is AnchorDrop or child is QuoitRing or child is WriteUpMark or _is_deep_strike(child):
 			return not child._landed and child._left < 0.12
@@ -935,7 +935,7 @@ class Bot extends Node:
 		for child in hard:
 			# A dodge out of a mark that falls in place helps; out of a sweep or a moving row it is
 			# better kept for the moment it arrives.
-			var sweeps: bool = child is SprinklerSweep or child is DeckLane or child is PuttRoll or child is ShuffleboardPuck
+			var sweeps: bool = child is SprinklerSweep or child is DeckLane or child is ShuffleboardPuck
 			if not sweeps and _deep_goal != Vector2.INF and feet.distance_to(_deep_goal) > 30.0:
 				_want_dodge(child.get_instance_id())
 			if _deep_imminent(child, feet):

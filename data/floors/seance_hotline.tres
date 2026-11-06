@@ -7,7 +7,7 @@
 [ext_resource type="Resource" path="res://data/enemies/poltergeist.tres" id="5"]
 [ext_resource type="Resource" path="res://data/enemies/seance_bingo_caller.tres" id="6"]
 [ext_resource type="Resource" path="res://data/enemies/seance_soot_ghost.tres" id="7"]
-[ext_resource type="Resource" path="res://data/enemies/chip.tres" id="8"]
+[ext_resource type="Resource" path="res://data/enemies/celestine.tres" id="8"]
 [ext_resource type="Resource" path="res://data/enemies/thaddeus_fairweather.tres" id="9"]
 [ext_resource type="Resource" path="res://data/enemies/mimic.tres" id="10"]
 

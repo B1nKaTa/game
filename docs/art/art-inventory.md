@@ -551,7 +551,8 @@ The pallbearers' coffin carry uses the dropped_coffin art below.
 
 It replaces Fairway's End, whose characters stay on PixelLab unused. Every new id wears its own art
 (`art_id` = its id) but the returning pair, which wear their bases' (`bingo_caller`, `soot_ghost`).
-The golf bosses, their summons and props below stay until the hotline's own bosses take their rooms.
+Sister Celestine holds the mini boss rooms; the Club President, his summon and the golf props below stay
+until Madame Zara takes his room.
 
 **Enemies**
 
@@ -568,22 +569,32 @@ The golf bosses, their summons and props below stay until the hotline's own boss
 21x24), the stapler, mug and fax machine (`Projectile` looks, 32x32 art at 0.75), the ectoplasm's
 trail blobs (`ectoplasm_trail.gd`, r7, PX 1). The phone cord's lash (`phone_cord_lash.gd`) stays code.
 
+**Bosses**
+
+| id | file | body | anims (from the code) | facing | tool | gens |
+|---|---|---|---|---|---|---|
+| celestine (mini) | celestine.tres | 32x40 | idle, walk, deal_cards (as she deals), attack (as each card is turned) | E+flip | C64 + 4A | 6 |
+
+**Her cards and attacks:** the tarot cards (`tarot_card.gd`, drawn 32x48, the size of the art:
+`tarot_card_back`, `tarot_tower`, `tarot_death`, `tarot_wheel`, `tarot_star`, already made, not yet
+wired; `TarotCard.art_id()` names the stem it shows). The Tower's falling tiles (`tower_tiles.gd`), the
+scythe (`scythe_sweep.gd`), the wheel's blades (`wheel_ring.gd`) and the falling stars (`star_fall.gd`)
+stay code.
+
 **Left from Fairway's End**
 
 | id | file | body | anims (from the code) | facing | tool | gens |
 |---|---|---|---|---|---|---|
 | caddie (Thaddeus's summon) | caddie.tres | 22x22 | idle, walk, climb out (rest) | E+flip | C48 + 3A | 5 |
 | golf cart overlay | `CaddieBehavior.Cart`, also the Club President's and the parked cart | about 30x22, rotated | | top-down | MO | 1 |
-| gopher (Chip's summon) | gopher.tres | 16x16 | idle, emerge, bite. The mound is code. | E+flip | C32 + 3A (or the quadruped template, T) | 5 |
 
 **Bosses**
 
 | id | file | body | anims (from the code) | facing | tool | gens |
 |---|---|---|---|---|---|---|
-| chip (mini) | chip.tres | 32x40 | idle, walk, windup, chip shot, putt, summon | E+flip | C64 + 6A | 8 |
 | thaddeus_fairweather (boss) | thaddeus_fairweather.tres | 46x52 | idle, walk, windup, hole-in-one swing, cart drive (uses the cart overlay), sprinkler call | E+flip | C88 + 6A@2 | 14 |
 
-**Summons:** gopher (Chip), caddie (Thaddeus).
+**Summons:** caddie (Thaddeus).
 
 **Projectiles and hazards**
 
@@ -961,11 +972,11 @@ A canvas is about 1.6 to 2 times the body height, rounded to a multiple of 4.
 
 | Body height (`body_size.y`) | Who | Canvas | Figure height in canvas |
 |---|---|---|---|
-| 14-15 | seasonal temps, mall elf, gopher | 32 | about 24 |
+| 14-15 | seasonal temps, mall elf | 32 | about 24 |
 | 18-20 | mourners, diners, walkers, yes-men, tour group, auditor | 36 | about 30 |
 | 22-32 | most regulars and the denial officer | 48 | about 38-42 |
 | 28 (Harold) | Harold | 44 | about 38 |
-| 38-40 | mini bosses (Senior Adjuster, Gus, Barbara, Klaus, Gloria, Reverend, Lorraine, Chip, Wanda, Doreen) | **64** | about 54 |
+| 38-40 | mini bosses (Senior Adjuster, Gus, Barbara, Klaus, Gloria, Reverend, Lorraine, Celestine, Wanda, Doreen) | **64** | about 54 |
 | 48-52 | floor bosses (Regional Reaper 48, Undertaker 48, Matron 48, Santa 50, Old Smokey 50, Mortimer 50, Commodore 52, Thaddeus 52, Augustine 52, Chairman 52) | **88** (largest at 2 gens; 96 costs 3) | about 72-76 |
 
 A boss must be at least 1.6 times Harold's height on screen, and its feet go on its body box bottom like everyone else's. Scythes, gavels and clubs may reach outside the body box, but **the body itself** should fill about the box's width, so a hit that lands on the art lands on the box.

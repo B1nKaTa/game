@@ -18,13 +18,11 @@ func _difference(a: Color, b: Color) -> float:
 
 # --- its bosses ---
 
-# The hotline's own regulars hold the floor now (test_seance_floor.gd); Chip and the Club President keep
-# its boss rooms, with the Gopher and the Caddie as their summons, until their phases retire them.
-func test_the_golf_bosses_still_hold_its_boss_rooms() -> void:
+# The hotline's own regulars and Sister Celestine hold the floor now (test_seance_floor.gd); the Club
+# President keeps its floor boss room, with the Caddie as his summon, until his phase retires him.
+func test_the_golf_floor_boss_still_holds_its_boss_room() -> void:
 	var def := _def()
-	assert_eq(def.mini_boss.id, "chip")
 	assert_eq(def.floor_boss.id, "thaddeus_fairweather")
-	assert_eq(def.mini_boss.summon.id, "gopher")
 	assert_eq(def.floor_boss.summon.id, "caddie")
 
 
