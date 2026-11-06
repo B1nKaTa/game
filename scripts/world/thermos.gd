@@ -13,6 +13,8 @@ const PLAYER_DAMAGE := 1
 const BODY_COLOR := Color("a8692f")
 const WARNING_COLOR := Color("e4524f")
 const BLAST_COLOR := Color("ffd24a")
+# The same picture as the Thermos lying on the floor to be picked up (RoomView.ART_THERMOS).
+const ART := "pickup_thermos"
 
 # Upgrades from the bomb merchant. Damage is for enemies only, and the level decides what stone breaks.
 var level := 0
@@ -106,6 +108,11 @@ func _draw() -> void:
 	var urgency := 1.0 - _fuse / fuse_time
 	var blink_on := int(_fuse * (6.0 + 14.0 * urgency)) % 2 == 0
 	draw_arc(Vector2.ZERO, radius, 0.0, TAU, 32, Color(WARNING_COLOR, 0.25 + 0.45 * urgency), 1.0)
+	# With a picture, the fuse blinks it warning red, as the placeholder's body blinks.
+	var art := PropArt.texture(ART)
+	if art != null:
+		PropArt.draw(self, art, Vector2(0, -2), WARNING_COLOR.lightened(0.2) if blink_on else Color.WHITE)
+		return
 	draw_rect(Rect2(-5, -9, 10, 15), WARNING_COLOR if blink_on else BODY_COLOR)
 	draw_rect(Rect2(-5, -9, 10, 15), Color.BLACK, false, 1.0)
 	draw_rect(Rect2(-3, -12, 6, 3), Color("625e6f"))

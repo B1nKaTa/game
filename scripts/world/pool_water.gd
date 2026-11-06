@@ -20,14 +20,20 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	var art := PropArt.texture("pool_water")
 	if art != null:
-		draw_texture(art, -art.get_size() / 2.0)
+		# The ripples still move over the picture, so the pool never reads as a still floor.
+		PropArt.draw(self, art)
+		_draw_ripples()
 		return
 	var half := RoomBackdrop.TILE / 2.0
 	draw_rect(Rect2(-half, -half, half * 2.0, half * 2.0), WATER)
 	draw_rect(Rect2(-half + 4, -half + 4, half * 2.0 - 8.0, half * 2.0 - 8.0), WATER_DEEP)
+	_draw_ripples()
+	draw_rect(Rect2(-half, -half, half * 2.0, half * 2.0), RIM, false, 2.0)
+
+
+func _draw_ripples() -> void:
 	for i in 2:
 		var sway := sin(_time * 1.6 + i * 2.3 + position.x * 0.05) * 4.0
 		var y := -6.0 + i * 11.0
 		draw_line(Vector2(-10 + sway, y), Vector2(-2 + sway, y - 1.5), SHINE, 1.0)
 		draw_line(Vector2(2 + sway, y + 1.0), Vector2(9 + sway, y), SHINE, 1.0)
-	draw_rect(Rect2(-half, -half, half * 2.0, half * 2.0), RIM, false, 2.0)

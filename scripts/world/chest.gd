@@ -100,6 +100,7 @@ func collect() -> void:
 			if can_take.is_valid() and not can_take.call():
 				return
 			Sfx.play("chest_open")
+			_leave_opened()
 			super.collect()
 
 
@@ -118,6 +119,7 @@ func blast_open() -> bool:
 		return false
 	_opened = true
 	Sfx.play("chest_open")
+	_leave_opened()
 	blasted_open.emit(position)
 	queue_free()
 	return true
@@ -129,7 +131,39 @@ func _draw() -> void:
 		draw_string(ThemeDB.fallback_font, Vector2(-18, 22), ChestRules.SAFE_HINT, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, HINT_COLOR)
 
 
+# A mimic wears the Locked Chest's picture, so only its breathing gives it away.
+func art_id_for(state := "") -> String:
+	var shown := ChestRules.LOCKED if kind == ChestRules.MIMIC else kind
+	return "chest_" + shown + ("" if state.is_empty() else "_" + state)
+
+
+# The opened box stays where it stood, as a picture only: it blocks nothing, holds nothing and is not a
+# pickup. With no opened picture the chest just goes, as it always has.
+func _leave_opened() -> PropPicture:
+	var art := PropArt.texture(art_id_for("open"))
+	var parent := get_parent()
+	if art == null or parent == null:
+		return null
+	var opened := PropPicture.new()
+	opened.texture = art
+	opened.feet = BASE
+	opened.position = position
+	parent.add_child(opened)
+	return opened
+
+
+func _breath() -> float:
+	return (0.5 - 0.5 * cos(_time * TAU / BREATH_PERIOD)) * BREATH_SWELL
+
+
 func _draw_body() -> void:
+	var art := PropArt.texture(art_id_for())
+	if art != null:
+		var swell := _breath() if kind == ChestRules.MIMIC else 0.0
+		draw_set_transform(BASE, 0.0, Vector2(1.0 + swell * 0.5, 1.0 + swell))
+		draw_texture(art, PropArt.standing(art, Vector2.ZERO))
+		draw_set_transform(Vector2.ZERO)
+		return
 	match kind:
 		ChestRules.LUNCHBOX:
 			_draw_lunchbox()
@@ -139,7 +173,7 @@ func _draw_body() -> void:
 			_draw_urn()
 		ChestRules.MIMIC:
 			# Its one tell: the lid rises and falls as it breathes, slowly enough to miss.
-			_draw_locked_chest((0.5 - 0.5 * cos(_time * TAU / BREATH_PERIOD)) * BREATH_SWELL)
+			_draw_locked_chest(_breath())
 		_:
 			_draw_locked_chest(0.0)
 

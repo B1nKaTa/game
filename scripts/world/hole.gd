@@ -27,7 +27,7 @@ func _ready() -> void:
 func _draw() -> void:
 	var art := PropArt.texture("hole")
 	if art != null:
-		draw_texture(art, -art.get_size() / 2.0)
+		PropArt.draw(self, art)
 		return
 	var p := palette if palette != null else RoomPalette.new()
 	var half := RoomBackdrop.TILE / 2.0

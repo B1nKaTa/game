@@ -6,6 +6,7 @@ extends Node2D
 # A dodge passes through it, as with any hit. Bosses work the furnace and never feel it.
 # Neighbouring vents take turns, and a floor boss can set every vent of its room to a pattern.
 const GROUP := "floor_vents"
+const ART := "floor_vent"
 const PERIOD := 3.0
 const WARN := 0.8
 const FLARE := 0.5
@@ -174,6 +175,11 @@ func _burn() -> void:
 
 func _draw() -> void:
 	# A round grille with embers glowing through, so a vent never passes for the floor's iron plate.
+	# A picture (PropArt floor_vent) replaces the grille; its warning and flare stay code, on the overlay.
+	var art := PropArt.texture(ART)
+	if art != null:
+		PropArt.draw(self, art)
+		return
 	var half := RoomBackdrop.TILE / 2.0 - 3.0
 	draw_rect(Rect2(-half, -half, half * 2.0, half * 2.0), GRATE)
 	draw_rect(Rect2(-half, -half, half * 2.0, half * 2.0), GRATE_EDGE, false, 2.0)

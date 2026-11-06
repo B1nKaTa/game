@@ -15,6 +15,8 @@ const WALL_OFFICE_PLASTER := 12
 var _rows: PackedStringArray = []
 var _palette: RoomPalette
 var _seed := 0
+# The path's floor and wall pictures, or null to draw the patterns below (TileArt).
+var _tiles: TileArt
 
 
 # Reaches past the view and the room by more than the biggest screen shake, so
@@ -34,11 +36,48 @@ static func cell_center(cell: Vector2i) -> Vector2:
 	return Vector2(cell.x * TILE + TILE / 2.0, cell.y * TILE + TILE / 2.0)
 
 
-func setup(rows: PackedStringArray, palette: RoomPalette = null, seed_value := 0) -> void:
+func setup(rows: PackedStringArray, palette: RoomPalette = null, seed_value := 0, tile_set := "") -> void:
 	_rows = rows
 	_palette = palette if palette != null else RoomPalette.new()
 	_seed = seed_value
+	_tiles = TileArt.for_set(tile_set)
 	z_index = -10
+
+
+func has_tile_art() -> bool:
+	return _tiles != null
+
+
+func is_wall(cell: Vector2i) -> bool:
+	if cell.y < 0 or cell.y >= _rows.size() or cell.x < 0 or cell.x >= _rows[cell.y].length():
+		return false
+	return RoomLayout.WALL_LIKE.contains(_rows[cell.y][cell.x])
+
+
+# The picture a cell shows, or null when the room draws its patterns. Floor cells keep their patch's
+# tone; a wall with open floor just south shows its face.
+func tile_texture(cell: Vector2i) -> Texture2D:
+	if _tiles == null:
+		return null
+	if is_wall(cell):
+		var below := cell + Vector2i.DOWN
+		var faces := below.y < _rows.size() and not is_wall(below)
+		return _tiles.wall_tile(cell, _seed, faces)
+	return _tiles.floor_tile(_palette.patch_of(cell, _seed), cell, _seed)
+
+
+# Each cell's picture, a little lighter or darker by the palette's jitter so the patches never read
+# as a grid of stamps. The jitter only darkens, so a tile never shows brighter than it was drawn.
+func _draw_tiles(room_size: Vector2) -> void:
+	draw_rect(overdraw_rect(room_size), _palette.darkness)
+	draw_rect(wall_rim_rect(room_size), _palette.wall)
+	for y in _rows.size():
+		for x in _rows[y].length():
+			var cell := Vector2i(x, y)
+			var shade := 1.0
+			if not is_wall(cell):
+				shade = 1.0 - RoomDecor.noise(cell, _seed) * _palette.floor_jitter * 2.0
+			draw_texture(tile_texture(cell), Vector2(x * TILE, y * TILE), Color(shade, shade, shade))
 
 
 func _ready() -> void:
@@ -64,6 +103,9 @@ func _add_wall(cell: Vector2i) -> void:
 
 func _draw() -> void:
 	var room_size := Vector2(_rows[0].length(), _rows.size()) * TILE
+	if _tiles != null:
+		_draw_tiles(room_size)
+		return
 	draw_rect(overdraw_rect(room_size), _palette.darkness)
 	draw_rect(wall_rim_rect(room_size), _palette.wall)
 	for y in _rows.size():

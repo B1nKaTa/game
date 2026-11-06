@@ -11,6 +11,7 @@ const FILL_COLOR := Color("5d4a8c")
 const TEXT_COLOR := Color("ece9e0")
 const PROMPT_COLOR := Color("ffd24a")
 const PROMPT := "Pay in 10 (hold)"
+const ART := "retirement_station"
 
 var _bank: Node
 var _feet: Node2D
@@ -55,9 +56,13 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	var half := RoomBackdrop.TILE / 2.0
-	draw_rect(Rect2(-half, -half, half * 2.0, half * 2.0), FILL_COLOR)
-	draw_rect(Rect2(-half, -half, half * 2.0, half * 2.0), Color.BLACK, false, 2.0)
-	draw_string(ThemeDB.fallback_font, Vector2(-6, 7), "$", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, TEXT_COLOR)
+	var art := PropArt.texture(ART)
+	if art != null:
+		PropArt.draw(self, art)
+	else:
+		draw_rect(Rect2(-half, -half, half * 2.0, half * 2.0), FILL_COLOR)
+		draw_rect(Rect2(-half, -half, half * 2.0, half * 2.0), Color.BLACK, false, 2.0)
+		draw_string(ThemeDB.fallback_font, Vector2(-6, 7), "$", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, TEXT_COLOR)
 	if _bank == null:
 		return
 	var data: ProgressData = _bank.data

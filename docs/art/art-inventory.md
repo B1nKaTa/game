@@ -232,6 +232,14 @@ H1 to H4 are in. The first ten enemies have art: intern_reaper, stoker, mall_cop
   - Holes, pool water and laid sand sit at z -8, under the bodies.
   - Warnings stay at z 60.
 
+### 1.10 Room art as built (H5 to H7, 2026-11-06)
+
+H5, H6 and H7 are in.
+- **Tiles.** `res://art/tiles/<set>/floor_a_N.png`, `floor_b_N.png`, `floor_c_N.png`, `wall_N.png` and `wall_face_N.png`, chosen per cell by `TileArt`. The set is `FloorDef.art()`.
+- **Props.** `res://art/props/[<set>/]<id>[_<state>].png` through `PropArt`, covering breakables, decor, doors, chests (with open states), pickups, the Waiting Room boards and the hazards' resting looks.
+
+Every hook, state and choice is in `docs/art/env-art-notes.md`. Build with `py tools/art/env_art.py tiles|props D:/grandpa-art/env .`.
+
 ---
 
 ## 2. Every visual entity, by floor and path

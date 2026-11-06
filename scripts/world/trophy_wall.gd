@@ -7,6 +7,8 @@ extends Node2D
 # cells between the north door and the next lantern (test_mementos).
 
 const FRAME_SIZE := Vector2(22, 22)
+# An empty frame with a pale mat, its middle left plain for the memento drawn in code (PropArt).
+const FRAME_ART := "trophy_frame"
 const FRAME_STEP := 25.0
 const MAT_INSET := 3.0
 const WOOD := Color("4a2f1c")
@@ -62,9 +64,13 @@ func _draw() -> void:
 		var entry: Dictionary = Mementos.ALL[i]
 		var at := frame_center(i)
 		var frame := Rect2(at - FRAME_SIZE / 2.0, FRAME_SIZE)
-		draw_rect(frame, WOOD)
-		draw_rect(frame, WOOD_EDGE, false, 1.0)
-		draw_rect(frame.grow(-MAT_INSET), MAT)
+		var frame_art := PropArt.texture(FRAME_ART)
+		if frame_art != null:
+			PropArt.draw(self, frame_art, at)
+		else:
+			draw_rect(frame, WOOD)
+			draw_rect(frame, WOOD_EDGE, false, 1.0)
+			draw_rect(frame.grow(-MAT_INSET), MAT)
 		if _hung.has(entry["boss"]):
 			_draw_memento(entry["perk"], at)
 		else:

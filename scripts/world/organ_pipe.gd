@@ -6,6 +6,7 @@ extends Node2D
 # wall. The ring does no damage, and neighbouring pipes take turns. A floor boss can make every pipe
 # of his room glow and chord at once in a pattern of his own, with rings of his chosen reach.
 const PERIOD := 3.2
+const ART := "organ_pipe"
 const GLOW := 0.8
 const WOOD := Color("3b2418")
 const WOOD_EDGE := Color("1a0f0a")
@@ -140,6 +141,13 @@ func _draw() -> void:
 	# Three pipes of a rank, longest in the middle, standing in a dark wooden case.
 	var half := RoomBackdrop.TILE / 2.0
 	draw_set_transform(Vector2.ZERO, inward.angle() - PI / 2.0)
+	# A picture (PropArt organ_pipe) is drawn for the north wall, pipes rising from the case's foot, and
+	# turned with the case. The glow and its ring stay code, on the overlay.
+	var art := PropArt.texture(ART)
+	if art != null:
+		PropArt.draw(self, art)
+		draw_set_transform(Vector2.ZERO)
+		return
 	draw_rect(Rect2(-half, -half, half * 2.0, half * 2.0), WOOD)
 	draw_rect(Rect2(-half, -half, half * 2.0, half * 2.0), WOOD_EDGE, false, 2.0)
 	var lengths := [20.0, 26.0, 20.0]

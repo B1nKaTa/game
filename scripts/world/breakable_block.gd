@@ -103,12 +103,43 @@ func _break() -> void:
 	queue_free()
 
 
+# Which picture of the prop shows now: "" for its usual one, or a state such as "cut" (PropArt).
+func art_state() -> String:
+	return ""
+
+
+func art_texture() -> Texture2D:
+	return PropArt.state_texture(art_id(), art_state())
+
+
+# A mirrored picture, so props of one kind side by side do not look stamped.
+func art_flipped() -> bool:
+	return false
+
+
+# How far the picture is turned, for a prop that lies either way (a dropped coffin).
+func art_angle() -> float:
+	return 0.0
+
+
 func _draw() -> void:
-	var art := PropArt.texture(art_id())
+	var art := art_texture()
 	if art != null:
-		draw_texture(art, -art.get_size() / 2.0)
+		draw_set_transform(Vector2.ZERO, art_angle())
+		var at := PropArt.centred(art)
+		if art_flipped():
+			draw_texture_rect(art, Rect2(at + Vector2(art.get_width(), 0), Vector2(-art.get_width(), art.get_height())), false)
+		else:
+			draw_texture(art, at)
+		draw_set_transform(Vector2.ZERO)
+		_draw_over_art()
 		return
 	_draw_placeholder()
+
+
+# What still draws in code over a picture, such as a glow that pulses.
+func _draw_over_art() -> void:
+	pass
 
 
 func _draw_placeholder() -> void:

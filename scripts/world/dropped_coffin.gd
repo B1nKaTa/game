@@ -45,6 +45,11 @@ func art_id() -> String:
 	return "dropped_coffin"
 
 
+# The picture lies east to west, so a coffin dropped along a column is turned upright.
+func art_angle() -> float:
+	return 0.0 if horizontal else PI / 2.0
+
+
 func debris_color() -> Color:
 	return WOOD
 

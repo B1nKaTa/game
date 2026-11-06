@@ -61,19 +61,32 @@ func _draw() -> void:
 	if not entry.has("art") and entry.get("board", true):
 		var size: Vector2 = entry.get("size", DEFAULT_BOARD_SIZE)
 		var box := Rect2(-size / 2.0, size)
-		draw_rect(box, entry.get("color", Color.GRAY))
-		draw_rect(box, BOARD_EDGE, false, 2.0)
+		# A picture at res://art/props/station_<id>.png replaces the board and its look; the label is
+		# still drawn over it, outlined so it reads on the picture.
+		var art := PropArt.texture(art_id())
+		if art != null:
+			PropArt.draw(self, art)
+		else:
+			draw_rect(box, entry.get("color", Color.GRAY))
+			draw_rect(box, BOARD_EDGE, false, 2.0)
 		var label: String = entry.get("label", "")
 		if not label.is_empty():
 			var width := ThemeDB.fallback_font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x
+			if art != null:
+				draw_string_outline(ThemeDB.fallback_font, Vector2(-width / 2.0, 5), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, 3, Color.BLACK)
 			draw_string(ThemeDB.fallback_font, Vector2(-width / 2.0, 5), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, LABEL_COLOR)
-		_draw_look(entry.get("look", ""), size)
+		if art == null:
+			_draw_look(entry.get("look", ""), size)
 		if not badge.is_empty():
 			var at := Vector2(size.x / 2.0 - 6.0, -size.y / 2.0 - 2.0)
 			draw_string_outline(ThemeDB.fallback_font, at, badge, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, 3, Color.BLACK)
 			draw_string(ThemeDB.fallback_font, at, badge, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, BADGE_COLOR)
 	if highlighted:
 		draw_string(ThemeDB.fallback_font, entry.get("prompt_offset", PROMPT_OFFSET), KeyBindings.with_key("interact", prompt), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, PROMPT_COLOR)
+
+
+func art_id() -> String:
+	return "station_" + str(entry.get("id", ""))
 
 
 # The few boards with more to them than a coloured box. Placeholders, drawn in code.

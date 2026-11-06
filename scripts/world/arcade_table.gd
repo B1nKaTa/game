@@ -95,17 +95,26 @@ func _process(_delta: float) -> void:
 		play_wanted.emit(game)
 
 
+# arcade_table_slot for the slot machine, arcade_table_cards for both card games (PropArt).
+func art_id() -> String:
+	return "arcade_table_slot" if game == SLOT else "arcade_table_cards"
+
+
 func _draw() -> void:
 	var half := RoomBackdrop.TILE / 2.0
-	var top := Rect2(-half, -half, half * 2.0, half * 2.0)
-	draw_rect(top, RIM)
-	draw_rect(top.grow(-3.0), FELT)
-	draw_rect(top, FELT_EDGE, false, 2.0)
-	match game:
-		SLOT:
-			_draw_slot_top()
-		_:
-			_draw_cards_top()
+	var art := PropArt.texture(art_id())
+	if art != null:
+		PropArt.draw(self, art)
+	else:
+		var top := Rect2(-half, -half, half * 2.0, half * 2.0)
+		draw_rect(top, RIM)
+		draw_rect(top.grow(-3.0), FELT)
+		draw_rect(top, FELT_EDGE, false, 2.0)
+		match game:
+			SLOT:
+				_draw_slot_top()
+			_:
+				_draw_cards_top()
 	_draw_centered(display_name(game), Vector2(0, -half - 4.0), TEXT_COLOR)
 	if _near:
 		var prompt := KeyBindings.with_key("interact", PROMPT) if plays_left > 0 else USED_UP

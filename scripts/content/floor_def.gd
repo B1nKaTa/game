@@ -16,6 +16,9 @@ extends Resource
 # What a coin found in a barrel, a rock, a crate or a pile of bones is worth.
 @export var prop_pension: int = 2
 @export var palette: RoomPalette
+# The folder under art/tiles and art/props that the floor's rooms draw their pictures from. Empty means
+# the floor's own id. The landings share the Crossroads' set.
+@export var art_set: String = ""
 @export_group("Path")
 # How many floor bosses at open_after_depth must have fallen, on any path there, before this path
 # opens. Zero means always open.
@@ -81,6 +84,10 @@ func chest_odds() -> Dictionary:
 	if mimic == null:
 		odds[ChestRules.MIMIC] = 0.0
 	return odds
+
+
+func art() -> String:
+	return art_set if not art_set.is_empty() else id
 
 
 func room_palette() -> RoomPalette:

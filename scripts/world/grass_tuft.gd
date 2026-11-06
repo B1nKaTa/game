@@ -19,6 +19,14 @@ func art_id() -> String:
 	return "grass"
 
 
+func art_state() -> String:
+	return "cut" if cut else ""
+
+
+func art_flipped() -> bool:
+	return variant % 2 == 1
+
+
 func debris_color() -> Color:
 	return look().grass
 
