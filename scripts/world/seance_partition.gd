@@ -4,8 +4,8 @@ extends CubicleWall
 # A length of the hotline's cubicle partition: violet fabric in a teal frame, standing a little taller
 # than its cell. Solid, and only blasts and bosses break it, like the office's partitions, and it can hide
 # a coin at the furniture rate. A partition beside another one joins it, so a run reads as one wall, and
-# a 64x36 drawing of two cells is cut into 32x36 pieces for it (art_state).
-const ART_SIZE := Vector2(32, 36)
+# a drawing of two panels gives it 32x26 pieces at its own scale (art_state).
+const ART_SIZE := Vector2(32, 26)
 
 var joins_west := false
 var joins_east := false

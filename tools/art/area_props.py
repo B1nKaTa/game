@@ -14,7 +14,7 @@
 #   'lift'           a dark picture, left at its own brightness
 #   'deep'           a floor piece that fills its box exactly, toned deep (pool water)
 #   'stub'           grass cut down: the bottom rows of the tuft
-#   'split'          a run piece: <id>.png alone and <id>_west/_mid/_east.png cut from one wide drawing
+#   'split'          a run piece: <id>.png alone and <id>_west/_mid/_east.png built from one wide drawing
 # The box is the size the prop was drawn at before, so no footprint grows; collision is code and never
 # changes.
 import os
@@ -103,7 +103,7 @@ AREA_PROPS = {
         'pool_water': ('game', 32, 32, 'deep'),
     },
     'seance_hotline': {
-        'cubicle_partition': ('cubicle_partition', 64, 36, 'split'),
+        'cubicle_partition': ('cubicle_partition', 64, 48, 'split'),
         'seance_table_small': ('seance_table_small', 28, 28),
         'in_tray': ('in_tray_hand', 18, 16, 'dim'),
         'decor_office_chair': ('office_chair', 18, 24, 'lift'),
@@ -184,19 +184,36 @@ def stub(pixels, w, h):
     return outline_again(fit(keep, w, h))
 
 
-# A run piece from one drawing two cells wide: the west end, a middle and the east end, each one cell
-# wide, and a lone piece of both ends.
+# A run piece from one drawing of two panels: its end posts (POST columns each), its middle post (POST
+# columns, split in two at a cell edge) and a panel between. Each piece is one cell wide and keeps the
+# drawing's own scale; a panel is widened by repeating a plain column of its fabric. The west end, a
+# middle and the east end of a run, and a lone panel with both ends.
+POST = 4
+CELL = 32
+
+
 def split(pixels):
     w = len(pixels[0])
-    cell = w // 2
-    q = cell // 2
-    rows = len(pixels)
-    west = [row[0:cell] for row in pixels]
-    east = [row[w - cell:w] for row in pixels]
-    mid = [row[q:q + cell] for row in pixels]
-    alone = [row[0:q] + row[w - q:w] for row in pixels]
-    assert all(len(r) == cell for r in west + east + mid + alone) and rows
-    return {'': alone, '_west': west, '_mid': mid, '_east': east}
+    half = w // 2
+    cols = lambda a, b: [row[a:b] for row in pixels]  # noqa: E731
+    left, right = cols(0, POST), cols(w - POST, w)
+    seam_a, seam_b = cols(half - POST // 2, half), cols(half, half + POST // 2)
+    panel = cols(POST, half - POST // 2)
+    plain = len(panel[0]) * 2 // 3
+
+    def fill(n):
+        return [row[:plain] + [row[plain]] * (n - len(row)) + row[plain:] for row in panel]
+
+    def join(*parts):
+        return [sum((part[y] for part in parts), []) for y in range(len(pixels))]
+    pieces = {
+        '': join(left, fill(CELL - 2 * POST), right),
+        '_west': join(left, fill(CELL - POST - POST // 2), seam_a),
+        '_east': join(seam_b, fill(CELL - POST - POST // 2), right),
+        '_mid': join(seam_b, fill(CELL - POST), seam_a),
+    }
+    assert all(len(row) == CELL for piece in pieces.values() for row in piece)
+    return pieces
 
 
 def build(export, game, art_set):
@@ -224,8 +241,8 @@ def build(export, game, art_set):
             elif mode == 'split':
                 raw = load(path)
                 line = _darkest_edge(raw)
-                # Outlined whole before the cut, so no piece gets a dark seam where it joins the next.
-                whole = outline_again(fit(raw, w, h, exact=True, main=True), line)
+                # At the drawing's own scale (never stretched), and outlined by the drawing itself.
+                whole = fit(raw, w, h, main=True)
                 for suffix, piece in split(whole).items():
                     piece = tone(piece, mult)
                     save(os.path.join(out_dir, game_id + suffix + '.png'), piece)
