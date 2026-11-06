@@ -798,3 +798,12 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
 - **Looked at and left:** the possession shot now shows a planchette's path alongside the copy's
   dotted trail, busier but every part warned and the mint mark clear; a lane warning in the top
   right of a large room can lie under the small map, as before.
+- **Verified (Task 6):** the suite passed in a `git archive` copy of `b2f0df9`, the last code commit
+  (2182 tests, 0 failed, no script error; 2181 on `d7db516` before the torch test). Two full loops
+  of `44a4649` in `D:\grandpa-verify-pr-1` and `-2` (GrandpaPr1, GrandpaPr2), run together with nothing
+  else running, both exited 0 in 10.4 and 10.1 minutes with both SMOKE PASS lines and no SCRIPT
+  ERROR in the whole log. Each cleared all 10 paths: the first run every west path, the second every
+  east one, the Flashback Cinema (Crabtree, the Projectionist) and the Seance Hotline (Celestine,
+  Madame Zara) included. An earlier pair on `f547d50` was stopped by hand when the torch fix came in.
+  Shots: `cinema_look.gd all` and `seance_look.gd all` from a copy of the final code, in
+  `D:\grandpa-shots-pr\`. The real save's MD5 stayed 510284fa2ead4647c94fee44f99ca787 throughout.
