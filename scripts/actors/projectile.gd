@@ -39,7 +39,8 @@ const LOOK_ART := {LOOK_KERNEL: ["kernel", 16.0], LOOK_STAPLER: ["stapler", OBJE
 	LOOK_MUG: ["mug", OBJECT_ART_SIZE], LOOK_FAX: ["fax_machine", OBJECT_ART_SIZE]}
 # The plain shot, the dart and the note, drawn 1:1 (tools/art/shot_art.py): a warm or bright core in a
 # dark outline, so an enemy's shot reads as hostile on every floor. The dart's points east and turns
-# with the node. A missing picture keeps the drawing.
+# with the node; the sheet is the first of its pre-drawn turns (shot_paper.png is a strip). A missing
+# picture keeps the drawing.
 const PAPER_ART := "shot_paper"
 const DART_ART := "shot_dart"
 const NOTE_ART := "shot_note"
@@ -192,7 +193,7 @@ func _draw() -> void:
 		return
 	var paper := PropArt.texture(PAPER_ART)
 	if paper != null:
-		draw_texture(paper, PropArt.centred(paper))
+		PropArt.draw_frame(self, paper, 0)
 		return
 	draw_rect(Rect2(-4, -5, 8, 10), Color("efe8d2"))
 	draw_rect(Rect2(-4, -5, 8, 10), Color.BLACK, false, 1.0)

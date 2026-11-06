@@ -51,5 +51,24 @@ static func draw(canvas: CanvasItem, art: Texture2D, at := Vector2.ZERO, tint :=
 	canvas.draw_texture(art, centred(art, at), tint)
 
 
+# A strip of square frames side by side (a flicker, or a spinning thing's pre-drawn turns): how many
+# frames it holds, and one of them drawn centred on `at` on a whole pixel. The index wraps.
+static func frame_count(art: Texture2D) -> int:
+	return maxi(art.get_width() / maxi(art.get_height(), 1), 1)
+
+
+static func draw_frame(canvas: CanvasItem, art: Texture2D, index: int, at := Vector2.ZERO, tint := Color.WHITE) -> void:
+	var side := float(art.get_height())
+	var frame := posmod(index, frame_count(art))
+	var corner := (at - Vector2(side, side) / 2.0).floor()
+	canvas.draw_texture_rect_region(art, Rect2(corner, Vector2(side, side)), Rect2(frame * side, 0.0, side, side), tint)
+
+
+# Which of `frames` pre-drawn turns, spread evenly over `span` radians (a quarter turn for a plate, a
+# half for a sheet), shows a thing turned by `angle`.
+static func turn_frame(angle: float, frames: int, span: float) -> int:
+	return int(floorf(fposmod(angle, span) / span * frames + 0.5)) % frames
+
+
 static func clear_cache() -> void:
 	_cache.clear()

@@ -13,6 +13,11 @@ const COLOR := Color("e4524f")
 const BLADE := Color("e9e4dc")
 const BLADE_EDGE := Color("3a3540")
 const SNATH := Color("5b4334")
+# The scythe's picture (art/props/scythe.png): butt at its left, blade at its right curving down, its
+# shaft along its middle row, drawn along the sweep line from the centre and mirrored to bend the way
+# it sweeps. It must turn to any angle, so it is the one picture drawn turned; the drawing stays for
+# when it is missing.
+const ART := "scythe"
 # The heavier attack's second outline stands this far outside the first.
 const SECOND_RING_GAP := 6.0
 # How far beside the blade's line feet still count as passed over.
@@ -214,6 +219,12 @@ func _draw() -> void:
 
 
 func _draw_blade(angle: float, alpha: float) -> void:
+	var art := PropArt.texture(ART)
+	if art != null:
+		draw_set_transform(Vector2.ZERO, angle, Vector2(1.0, -1.0 if _clockwise else 1.0))
+		draw_texture(art, Vector2(0.0, -floorf(art.get_height() / 2.0)), Color(1, 1, 1, alpha))
+		draw_set_transform(Vector2.ZERO)
+		return
 	var way := Vector2.from_angle(angle)
 	var side := way.orthogonal() * (1.0 if _clockwise else -1.0)
 	draw_line(Vector2.ZERO, way * RADIUS, Color(SNATH, alpha), 3.0)

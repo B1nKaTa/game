@@ -13,6 +13,11 @@ const TRAY_EDGE := Color("3c4048")
 # The falling security tray's picture (art/props/security_tray.png, 24x18), drawn 1:1 and coming clear
 # as the mark fills; the drawing stays for when it is missing.
 const TRAY_ART := "security_tray"
+# The stamp itself (art/props/rubber_stamp.png), coming down over its shadow in the warning's last part;
+# the shadow and the ink stay drawn.
+const STAMP_ART := "rubber_stamp"
+const STAMP_SHOWS := 0.5
+const STAMP_DROP := 40.0
 const STAMP_SHADOW := Color(0.05, 0.03, 0.08)
 const STAMP_HANDLE := Color("7a2f3a")
 const INK := Color("c4161c")
@@ -80,7 +85,12 @@ func _draw() -> void:
 		var size := 0.3 + 0.7 * filled
 		var alpha := 0.25 + 0.5 * filled
 		draw_rect(Rect2(-r * 0.7 * size, -r * 0.45 * size, r * 1.4 * size, r * 0.9 * size), Color(STAMP_SHADOW, alpha))
-		draw_rect(Rect2(-r * 0.15 * size, -r * 0.9 * size, r * 0.3 * size, r * 0.45 * size), Color(STAMP_HANDLE, alpha))
+		var stamp := PropArt.texture(STAMP_ART) if filled > STAMP_SHOWS else null
+		if stamp != null:
+			var lower := (filled - STAMP_SHOWS) / (1.0 - STAMP_SHOWS)
+			draw_texture(stamp, PropArt.centred(stamp, Vector2(0.0, -STAMP_DROP * (1.0 - lower))), Color(1, 1, 1, lower))
+		else:
+			draw_rect(Rect2(-r * 0.15 * size, -r * 0.9 * size, r * 0.3 * size, r * 0.45 * size), Color(STAMP_HANDLE, alpha))
 	else:
 		var art := PropArt.texture(TRAY_ART)
 		if art != null:

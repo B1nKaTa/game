@@ -19,6 +19,10 @@ const FILM := Color(0.07, 0.06, 0.05)
 const FILM_EDGE := Color(0.32, 0.28, 0.2)
 const SPROCKET := Color(0.78, 0.74, 0.62)
 const Z := -8
+# Each piece's picture (art/props/film_piece.png): a strip of PIECE_TURNS pre-drawn turns over half a
+# turn, the one nearest the way it rolled drawn upright; the drawing stays for when it is missing.
+const ART := "film_piece"
+const PIECE_TURNS := 4
 
 # Each piece is [where, the way it runs, its age].
 var _pieces: Array = []
@@ -106,6 +110,10 @@ func _draw() -> void:
 		var at: Vector2 = piece[0] - global_position
 		var way: Vector2 = piece[1]
 		var fade := clampf((LINGER - float(piece[2])) / FADE, 0.0, 1.0)
+		var art := PropArt.texture(ART)
+		if art != null:
+			PropArt.draw_frame(self, art, PropArt.turn_frame(way.angle(), PIECE_TURNS, PI), at, Color(1, 1, 1, fade))
+			continue
 		draw_set_transform(at, way.angle())
 		draw_rect(Rect2(-PIECE / 2.0 - 0.5, -WIDTH / 2.0, PIECE + 1.0, WIDTH), Color(FILM, 0.92 * fade))
 		draw_line(Vector2(-PIECE / 2.0, -WIDTH / 2.0), Vector2(PIECE / 2.0, -WIDTH / 2.0), Color(FILM_EDGE, fade), 1.0)

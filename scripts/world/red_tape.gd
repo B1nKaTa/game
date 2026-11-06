@@ -13,6 +13,9 @@ const SLACK := Color(0.82, 0.13, 0.18, 0.55)
 const WARN := Color("e4524f")
 const BAND_WIDTH := 8.0
 const HATCH_EVERY := 6.0
+# The strung band's picture (art/props/red_tape.png, one cell along x, BAND_WIDTH tall), turned a
+# quarter for a tape that runs down; the drawing stays for when it is missing.
+const ART := "red_tape"
 const HOLD_LOOPS := Color("d0212e")
 const HOLD_RADIUS := 13.0
 # The loop is seen at a slant, flattened like the ring a sedative leaves at his feet.
@@ -146,6 +149,11 @@ func _draw() -> void:
 		# Two slack ends hang down from where it was cut.
 		draw_line(Vector2(-half, 0.0), Vector2(-5.0, 5.0), SLACK, 3.0)
 		draw_line(Vector2(half, 0.0), Vector2(5.0, 6.0), SLACK, 3.0)
+		draw_set_transform(Vector2.ZERO)
+		return
+	var art := PropArt.texture(ART)
+	if art != null:
+		draw_texture(art, PropArt.centred(art))
 		draw_set_transform(Vector2.ZERO)
 		return
 	var band := Rect2(-half, -BAND_WIDTH / 2.0, RoomBackdrop.TILE, BAND_WIDTH)

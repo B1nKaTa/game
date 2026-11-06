@@ -48,6 +48,9 @@ const COAL_ART := "shot_coal"
 const COAL_FRAME := 0.1
 const WREATH_ART := "shot_wreath"
 const THORNS_ART := "thorns_lying"
+# The casket that lands (art/props/casket.png, 40 px across as the drawing's), fading; its growing shadow
+# in the warning stays drawn.
+const CASKET_ART := "casket"
 
 var _source: Enemy
 var _radius := 20.0
@@ -233,7 +236,11 @@ func _draw() -> void:
 				var way := Vector2.from_angle(TAU * i / 6.0 + 0.3)
 				draw_line(way * _radius * 0.3, way * _radius * (0.5 + progress), Color(SPLASH_COLOR, 1.0 - progress), 2.0)
 		if _look == LOOK_CASKET:
-			_draw_coffin(1.0, CASKET_WOOD, 1.0 - progress)
+			var casket := PropArt.texture(CASKET_ART)
+			if casket != null:
+				draw_texture(casket, PropArt.centred(casket), Color(1, 1, 1, 1.0 - progress))
+			else:
+				_draw_coffin(1.0, CASKET_WOOD, 1.0 - progress)
 		return
 	var hidden := _source != null and is_instance_valid(_source) and not _source.shows_warnings()
 	if _delay > 0.0:

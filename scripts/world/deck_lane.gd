@@ -21,9 +21,11 @@ const DANCER_GAP := 16.0
 const SKIN := Color("f0c9a0")
 const BUOY_WHITE := Color("fbfbff")
 const BUOY_RED := Color("d9453b")
-# The lifebuoy's picture (art/props/lifebuoy.png, orange and white, 26 px), turned as it rolls, as the
-# Projectionist's pie is; the drawing stays for when it is missing.
+# The lifebuoy's picture (art/props/lifebuoy.png, orange and white): a strip of BUOY_TURNS pre-drawn
+# turns over a quarter turn, drawn upright wherever the lane runs; the drawing stays for when it is
+# missing.
 const BUOY_ART := "lifebuoy"
+const BUOY_TURNS := 4
 
 var _source: Enemy
 var _target: Node2D
@@ -157,8 +159,8 @@ func _draw_buoy(middle: float) -> void:
 	var turn := _front / 11.0
 	var art := PropArt.texture(BUOY_ART)
 	if art != null:
-		draw_set_transform_matrix(Transform2D(_direction.angle(), Vector2.ZERO) * Transform2D(turn, Vector2(roundf(middle), 0.0)))
-		draw_texture(art, -art.get_size() / 2.0)
+		draw_set_transform(Vector2.ZERO)
+		PropArt.draw_frame(self, art, PropArt.turn_frame(turn, BUOY_TURNS, PI / 2.0), Vector2(middle, 0.0).rotated(_direction.angle()))
 		draw_set_transform(Vector2.ZERO, _direction.angle())
 		return
 	for i in 4:

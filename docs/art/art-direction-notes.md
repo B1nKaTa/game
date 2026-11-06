@@ -114,40 +114,45 @@ Every prop and decor picture of the rollout areas has its own copy in `res://art
 
 Built by `py tools/art/shot_art.py D:/grandpa-art/direction .` into `res://art/props/`. The smallest are drawn by hand in the tool; the rest come from `create_map_object` exports in `D:/grandpa-art/direction/projectiles/`.
 
-- **Readability.** An enemy's shot has a warm or bright core in a dark outline (`ENEMY_LINE`), so it stands out on every floor and reads as hostile. Harold's own things wear a pale ring inside a dark one (`HAROLD_RING`), so they never look like an enemy's. No shot uses the warning red or the safe-spot mint: the lifebuoy's red is orange and the collection plate's velvet is brass.
-- **1:1.** Every picture is drawn at its own size, never scaled. Rolling or spinning things (the plate, the lifebuoy, the memo) turn their picture, as the pie and tumbleweed already did; the coal flickers through a two-frame strip.
+- **Readability.** Everything an enemy throws has a warm or bright body, a dark outline (`ENEMY_LINE`) and a pale warm rim outside it (`ENEMY_RIM`). The rim's luminance is 0.90, at least 0.75 over every floor's base ground (the parlour's is 0.06), measured on the contact sheets. Harold's own things wear a cool pale ring inside a dark one (`HAROLD_RING`), so they never look like an enemy's. What lies on the floor (the thorns, the write-up, goo, film, red tape) and the scythe keep their outline only. No shot uses the warning red or the safe-spot mint: the lifebuoy's red is orange, the plate's velvet pale brass, the puck's navy orange and the anchor pale steel.
+- **1:1.** Every picture is drawn at its own size, never scaled, and the smallest shot is 13 px across. Spinning things use pre-drawn turns (`ROTATIONS`, drawn by `PropArt.draw_frame` and `turn_frame`): the plate and lifebuoy four over a quarter turn, the paper sheet eight over a half turn (the memo in flight; a plain shot shows the first), the film pieces four. Only the scythe, which sweeps to any angle, is drawn turned. The coal flickers through a two-frame strip.
 - **Telegraphs stay code.** Every warning fill and ring, the casket's and gavel's growing shadows, and every safe-spot mark are drawn as before.
 - **Every shot and thrown thing, with its code size and what it has now:**
 
 | What | Where (script) | Who | Code size | Art |
 |---|---|---|---|---|
-| Plain shot (paper) | projectile.gd | every thrower and burst shooter, the floor bosses' rings, the undertaker | 8x10 | `shot_paper` 10x12 |
-| Sedative dart | projectile.gd | orderly, cruise orderly | 10x5 + needle | `shot_dart` 13x5, turns with flight |
-| Hold-music note | projectile.gd, hold_music.gd | Doreen | about 10x12 on a glow | `shot_note` 10x12 |
+| Plain shot (paper) | projectile.gd | every thrower and burst shooter, the floor bosses' rings, the undertaker | 8x10 | `shot_paper` 14x15, in 8 turns of 20x20 |
+| Sedative dart | projectile.gd | orderly, cruise orderly | 10x5 + needle | `shot_dart` 19x9, turns with flight |
+| Hold-music note | projectile.gd, hold_music.gd | Doreen | about 10x12 on a glow | `shot_note` 14x16 |
 | Popcorn kernel | projectile.gd | popcorn tub | 9 | `kernel` (had art) |
 | Critic's star | projectile.gd | Crabtree | 13 | `star_spin` (had art) |
 | Stapler, mug, fax | projectile.gd | poltergeist | 24 | had art |
-| Lump of coal | ground_strike.gd | stoker, cruise stoker, Old Smokey | 8 | `shot_coal` 2 frames of 9x9 |
-| Thorny wreath in flight | ground_strike.gd | florist, office florist | 13 | `shot_wreath` 13x13 |
-| Ring of thorns left | ground_strike.gd | florist, office florist | about 56 | `thorns_lying` 38x38 |
-| Collection plate | collection_plate.gd | Reverend | 14x8, spins | `collection_plate` 16x16, turns |
-| Anchor | anchor_drop.gd | Commodore | about 26x30 | `anchor` 22x30 |
-| Lifebuoy | deck_lane.gd | Commodore | 26, rolls | `lifebuoy` 26x26, turns |
-| Quoit | quoit_ring.gd | Lorraine | 32 | `quoit` 22x22 |
-| Shuffleboard puck | shuffleboard_puck.gd | shuffleboard shark | 14 | `puck` 16x16 |
+| Lump of coal | ground_strike.gd | stoker, cruise stoker, Old Smokey | 8 | `shot_coal` 2 frames of 13x13 |
+| Thorny wreath in flight | ground_strike.gd | florist, office florist | 13 | `shot_wreath` 15x15 |
+| Ring of thorns left | ground_strike.gd | florist, office florist | about 56 | `thorns_lying` 56x54 |
+| Collection plate | collection_plate.gd | Reverend | 14x8, spins | `collection_plate` 4 turns of 22x22 |
+| Anchor | anchor_drop.gd | Commodore | about 26x30 | `anchor` 25x32 |
+| Lifebuoy | deck_lane.gd | Commodore | 26, rolls | `lifebuoy` 4 turns, 26 px in 36x36 |
+| Quoit | quoit_ring.gd | Lorraine | 32 | `quoit` 31x32 |
+| Shuffleboard puck | shuffleboard_puck.gd | shuffleboard shark | 14 | `puck` 16x16, orange |
 | Falling star | star_fall.gd | Celestine | 12 | `star` (Crabtree's) |
-| Security tray | terminal_strike.gd | Sergeant Wanda | 24x16 | `security_tray` 24x18 |
+| Security tray | terminal_strike.gd | Sergeant Wanda | 24x16 | `security_tray` 26x20 |
+| Rubber stamp | terminal_strike.gd | Augustine | 64x41 shadow and handle | `rubber_stamp` 38x40, coming down in the warning's last half |
 | Gavel (landed) | gavel_strike.gd | Chairman | about 42x21 | `gavel` 41x23 |
-| Memo in flight | write_up_mark.gd | HR representative | 8x10, spins | `shot_paper`, turns |
+| Memo in flight | write_up_mark.gd | HR representative | 8x10, spins | `shot_paper`, its 8 turns |
 | Write-up form left | write_up_mark.gd | HR representative | 16x20 | `write_up` 14x20 |
-| Seance spirit | spirit_swoop.gd | seance circle | 12 | `spirit_orb` 12x12 |
+| Seance spirit | spirit_swoop.gd | seance circle | 12 | `spirit_orb` 14x13 |
+| Casket (landed) | ground_strike.gd | Mortimer | about 40x80 | `casket` 39x82 |
+| Scythe | scythe_sweep.gd | Celestine | 110 px snath and blade | `scythe` 107x37, turned to the sweep |
+| Film pieces | film_trail.gd | film reel | 12x12, turned | `film_piece` 4 turns of 17x17 |
+| Red tape (strung) | red_tape.gd | Chairman, office rooms | 32x8 | `red_tape` 32x8 |
 | Ectoplasm blob | ectoplasm_trail.gd | ectoplasm | 16 | `ectoplasm` 16x15 |
 | Thrown dentures | thrown_dentures.gd | Harold | 12x11, two jaws | `dentures_upper` / `_lower` 16x7, opened in code |
 | Knitting needle | item_fx.gd FxNeedle | Harold | 14x5 | `fx_needle` 17x7 |
 | Banana peel | item_fx.gd FxPeel | Harold | 16 | `fx_peel` 18x17 |
 | Tarot cards, planchette, crystal ball, popcorn tub, pie, tumbleweed, dropped coffin | their own scripts | hotline, Cinema, parlour | | had art |
-| Casket slam, procession, conga line, baggage cart, pallbearers' coffin | ground_strike.gd, procession_lane.gd, deck_lane.gd, behaviours | parlour, cruise, terminal | | still code |
-| Wheel blades, scythe, phone cord, stamp and its ink, memos, bar and drawers, desk papers, film pieces, paper scraps, red tape, wet tiles, perfume mist | their own scripts | hotline, terminal, office, Cinema, cruise | | still code |
+| Procession, conga line, baggage cart, pallbearers' coffin | ground_strike.gd, procession_lane.gd, deck_lane.gd, behaviours | parlour, cruise, terminal | | still code |
+| Wheel blades, phone cord, the stamp's ink, memos, bar and drawers, desk papers, paper scraps, cut tape, wet tiles, perfume mist | their own scripts | hotline, terminal, office, Cinema, cruise | | still code |
 | Fire breath, steam, shockwaves, pipe rings, burn rings, beams, foghorn, blasts | their own scripts | | effects | still code |
 | Harold's cane wave, rolling pin, soup, scooter flames, fizz, cough, clouds | item_fx.gd | Harold | effects | still code |
 
@@ -178,3 +183,4 @@ Testing was paused on 2026-11-06 by the user ("don't test anything until further
 - **Tests touched without a run**: test_env_art (the partition now has art, its pieces), test_seance_floor (`SeancePartition.ART_SIZE` 32x26). The new PNGs have no .import files yet.
 - **Cinema screen frame** (9f5b4d3): the nine-slice frame round a full and a trimmed picture, a cut to black and a flash, and test_cinema_screen.
 - **Shots** (6db2026): every shot in the table of section 14 in flight on its floor, beside its warning: the paper shot on every floor, the dart turning with its flight, the coal's flicker, the wreath and the thorns ring it leaves (drawn for a 26 px strike), the plate and lifebuoy turning, the anchor falling and landing, the quoit lying, the tray coming clear, the gavel landing, the memo turning and the form fading, the spirit, the ectoplasm fading; Harold's dentures opening and shutting, flipped, spinning home, glued and with the wind-up key, his needle and banana peel. Check each reads against the warning red lane or ring it flies over, and that Harold's pale ring tells his apart.
+- **Shots, second pass** (the rim and turns commit): every enemy shot's warm rim against the darkest floors in a window (parlour, terminal, hotline) and the palest (shores, office, cruise deck); the pre-drawn turns of the plate, lifebuoy, memo and film against their old smooth spin; the scythe drawn turned and mirrored the way it sweeps; the stamp coming down over its shadow; the casket on landing; red tape across and down a corridor; the thorns ring (now 56 px) and quoit (31 px) against their reach rings. `PropArt.draw_frame` and `turn_frame` are new and untested.

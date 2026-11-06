@@ -19,10 +19,12 @@ const FORM := Color("f6d3dc")
 const FORM_EDGE := Color("9a3a52")
 const STAMP := Color("c8202c")
 const MEMO := Color("f4efe0")
-# The memo in flight is the plain shot's sheet (art/props/shot_paper.png), turning as it flies, and the
-# form it leaves is art/props/write_up.png, both 1:1; each keeps its drawing when the picture is missing.
+# The memo in flight is the plain shot's sheet (art/props/shot_paper.png, a strip of MEMO_TURNS turns
+# over half a turn), and the form it leaves is art/props/write_up.png, both 1:1; each keeps its drawing
+# when the picture is missing.
 const MEMO_ART := "shot_paper"
 const FORM_ART := "write_up"
+const MEMO_TURNS := 8
 
 var _source: Enemy
 var _target: Node2D
@@ -124,12 +126,11 @@ func _draw() -> void:
 		if _thrown_from != Vector2.INF:
 			var start := _thrown_from - global_position
 			var at := start.lerp(Vector2.ZERO, filled) + Vector2(0.0, -sin(filled * PI) * THROW_ARC)
-			draw_set_transform(at.round(), filled * TAU)
 			var memo := PropArt.texture(MEMO_ART)
 			if memo != null:
-				draw_texture(memo, -memo.get_size() / 2.0)
-				draw_set_transform(Vector2.ZERO)
+				PropArt.draw_frame(self, memo, PropArt.turn_frame(filled * TAU, MEMO_TURNS, PI), at)
 				return
+			draw_set_transform(at.round(), filled * TAU)
 			draw_rect(Rect2(-4, -5, 8, 10), MEMO)
 			draw_rect(Rect2(-4, -5, 8, 10), Color.BLACK, false, 1.0)
 			draw_set_transform(Vector2.ZERO)
