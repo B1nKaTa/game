@@ -13,6 +13,9 @@ extends SceneTree
 # mat to the nearest clear spot, stands on marked gaps unless a heavy strike falls there, and dodges
 # to snap the Chairman's tether.
 # Version 8 counts the Chairman's restructuring rows as a gap attack, so it honours their mark.
+# Version 9 reads any hazard node that answers threat_at(p, strict) (0 clear, 1 better avoided, 2 a
+# coming hit) and threat_imminent(p), as every hazard of the Flashback Cinema does, with no branch of
+# its own: the beam, splice lanes, reel lanes, the burn, the popcorn tub and the film trail.
 # Version 6 reads the floor-5 bosses' overlaps: the Chairman's desk slam is a warned spot like any
 # deep strike, and Augustine's runway mark is honoured while his lanes light, as a gap is while a
 # chart or a sweep runs (the mark is skipped whenever a lane or strike covers it, as before).
@@ -772,7 +775,7 @@ class Bot extends Node:
 				_soft_cells[_cell(tape.global_position)] = true
 
 	func _is_deep(child: Node) -> bool:
-		return child is DeckLane or child is RunwayLane or child is LaneDrop or child is SprinklerSweep or child is PuttRoll or child is ShuffleboardPuck or child is AnchorDrop or child is QuoitRing or child is WriteUpMark or child is PaperTrail or child is BunkerPatch or child is TapeSpread or _is_deep_strike(child)
+		return child.has_method("threat_at") or child is DeckLane or child is RunwayLane or child is LaneDrop or child is SprinklerSweep or child is PuttRoll or child is ShuffleboardPuck or child is AnchorDrop or child is QuoitRing or child is WriteUpMark or child is PaperTrail or child is BunkerPatch or child is TapeSpread or _is_deep_strike(child)
 
 	# The deep floors' own marks on the ground: a giant ball, a gavel, a stamp or tray, a chipped ball.
 	func _is_deep_strike(child: Node) -> bool:
@@ -780,6 +783,8 @@ class Bot extends Node:
 
 	# 0 for clear, 1 for somewhere better avoided (it slows or will warn soon), 2 for a coming hit.
 	func _deep_zone(child: Node, p: Vector2, strict := false) -> int:
+		if child.has_method("threat_at"):
+			return int(child.threat_at(p, strict))
 		if child is DeckLane:
 			var off: Vector2 = p - child.global_position
 			var along: float = off.dot(child._direction)
@@ -851,6 +856,8 @@ class Bot extends Node:
 
 	# Whether a hit is a moment away, when a dodge's own cover helps.
 	func _deep_imminent(child: Node, p: Vector2) -> bool:
+		if child.has_method("threat_imminent"):
+			return bool(child.threat_imminent(p))
 		if child is DeckLane:
 			if not child.is_moving():
 				return false
