@@ -162,6 +162,23 @@ static func feet_row(texture: Texture2D) -> int:
 	return row
 
 
+# How tall the art stands above its feet: the idle strip's used rows, top to feet, read once per art.
+# The placeholder box's height when there is no art. A health bar or a tag goes above this.
+static var _heights := {}
+
+
+func idle_height() -> float:
+	if _heights.has(_art_id):
+		return _heights[_art_id]
+	var height := _size.y
+	if has_anim(_art_id, "idle"):
+		var rows := NpcSprite.used_rows(load(art_path(_art_id, "idle")))
+		if rows.y > rows.x:
+			height = float(rows.y - rows.x)
+	_heights[_art_id] = height
+	return height
+
+
 # Where a centred sprite of this height must sit so its feet row lands on y 0.
 static func feet_offset(texture_height: int, row: int) -> float:
 	return texture_height / 2.0 - row

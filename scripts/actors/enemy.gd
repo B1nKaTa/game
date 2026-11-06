@@ -12,6 +12,8 @@ const BOSS_KNOCKBACK_SCALE := 0.2
 const SUMMON_SPREAD := 40.0
 const BAR_WIDTH := 20.0
 const BAR_HEIGHT := 2.0
+# Gap between the top of the art and the bar.
+const BAR_GAP := 3.0
 const READ_GLOW_COLOR := Color(1.0, 0.95, 0.9)
 const READ_GLOW_ENERGY := 0.3
 const READ_GLOW_SCALE := 0.6
@@ -62,6 +64,9 @@ var open_ground: Callable
 # Underground it is only a moving mound: nothing can hit it and it crosses anything. See set_submerged.
 var submerged := false
 var _shadow: ContactShadow
+# The health bar, drawn over the enemy's own art at its top (BarLayer), and the share it last showed.
+var _bar_layer: Node2D
+var _bar_shown := -1.0
 # The room's walkable cells, shared by its enemies. Without one, an enemy walks straight at Grandpa.
 var walk_grid: WalkGrid
 var _warning_fraction := 0.5
@@ -174,6 +179,9 @@ func _ready() -> void:
 	_warning_layer.enemy = self
 	_warning_layer.z_index = WARNING_Z
 	add_child(_warning_layer)
+	_bar_layer = BarLayer.new()
+	_bar_layer.enemy = self
+	add_child(_bar_layer)
 	# In the depth look's dark, warnings keep their full colour (DepthLook.keep_vivid).
 	DepthLook.keep_vivid(_warning_layer)
 	# Its feet touch the ground: a wall-mounted one hangs on the wall instead.
@@ -375,6 +383,11 @@ func _physics_process(delta: float) -> void:
 	_say_left = maxf(_say_left - delta, 0.0)
 	if _warning_layer != null:
 		_warning_layer.queue_redraw()
+	if _bar_layer != null and shows_health_bar():
+		var share := clampf(hp / max_hp(), 0.0, 1.0)
+		if not is_equal_approx(share, _bar_shown):
+			_bar_shown = share
+			_bar_layer.queue_redraw()
 	if _wake_left > 0.0:
 		_wake_left -= delta
 		return
@@ -773,11 +786,38 @@ func _draw() -> void:
 		var mound := PackedVector2Array([Vector2(-11, 7), Vector2(-7, 0), Vector2(-2, -4), Vector2(4, -3), Vector2(9, 2), Vector2(12, 7)])
 		draw_colored_polygon(mound, MOUND_COLOR)
 		draw_polyline(mound, MOUND_EDGE, 1.0)
-	if def != null and shows_health_bar():
-		var top := -def.body_size.y / 2.0 - 6.0
-		var fraction := clampf(hp / max_hp(), 0.0, 1.0)
-		draw_rect(Rect2(-BAR_WIDTH / 2.0, top, BAR_WIDTH, BAR_HEIGHT), Color.BLACK)
-		draw_rect(Rect2(-BAR_WIDTH / 2.0, top, BAR_WIDTH * fraction, BAR_HEIGHT), Color("e4524f"))
+
+
+# Where the health bar's top goes, in the enemy's own space: a few pixels over the top of its drawn art
+# (SpriteVisual.idle_height above its feet), not over the hit box, which is shorter than most art.
+func bar_top() -> float:
+	if def == null:
+		return 0.0
+	var feet := def.body_size.y / 2.0
+	var art := _visual.idle_height() if _visual != null else def.body_size.y
+	return feet - maxf(art, def.body_size.y) - BAR_GAP - BAR_HEIGHT
+
+
+func _draw_bar(layer: Node2D) -> void:
+	if def == null or not shows_health_bar() or submerged:
+		return
+	var top := bar_top()
+	var fraction := clampf(hp / max_hp(), 0.0, 1.0)
+	var back := Rect2(-BAR_WIDTH / 2.0 - 1.0, top - 1.0, BAR_WIDTH + 2.0, BAR_HEIGHT + 2.0)
+	layer.draw_rect(back, Color.BLACK)
+	layer.draw_rect(Rect2(-BAR_WIDTH / 2.0, top, BAR_WIDTH, BAR_HEIGHT), Color("3a1414"))
+	layer.draw_rect(Rect2(-BAR_WIDTH / 2.0, top, BAR_WIDTH * fraction, BAR_HEIGHT), Color("e4524f"))
+
+
+# The health bar, drawn one z over the bodies so no sprite, its own or a neighbour's, hides it.
+class BarLayer extends Node2D:
+	var enemy: Node2D
+
+	func _ready() -> void:
+		z_index = 1
+
+	func _draw() -> void:
+		enemy._draw_bar(self)
 
 
 func _draw_warning(layer: Node2D) -> void:
