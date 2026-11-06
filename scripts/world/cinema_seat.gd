@@ -9,8 +9,9 @@ var joins_west := false
 var joins_east := false
 
 
+# The Cinema's own picture (art/props/flashback_cinema/seat_row.png), one per cell.
 func art_id() -> String:
-	return "cinema_seat"
+	return "seat_row"
 
 
 func debris_color() -> Color:

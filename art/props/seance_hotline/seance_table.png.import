@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dgxvfmef5w0vh"
-path="res://.godot/imported/cubicle_wall.png-4583cc658908f9568846f00026c4bd35.ctex"
+uid="uid://b6k1td8f1jkfp"
+path="res://.godot/imported/seance_table.png-8b0d4b396158125110c6c048cdb0a5d8.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/props/seance_hotline/cubicle_wall.png"
-dest_files=["res://.godot/imported/cubicle_wall.png-4583cc658908f9568846f00026c4bd35.ctex"]
+source_file="res://art/props/seance_hotline/seance_table.png"
+dest_files=["res://.godot/imported/seance_table.png-8b0d4b396158125110c6c048cdb0a5d8.ctex"]
 
 [params]
 

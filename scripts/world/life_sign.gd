@@ -119,9 +119,10 @@ static func bubble_box(at: Vector2, scale: Vector2, box_size: Vector2, view: Vec
 
 
 func _draw() -> void:
-	var art := PropArt.texture("life_sign")
+	# The Cinema's own picture (art/props/flashback_cinema/lobby_card.png), standing where the legs end.
+	var art := PropArt.texture("lobby_card")
 	if art != null:
-		draw_texture(art, -art.get_size() / 2.0)
+		draw_texture(art, PropArt.standing(art, Vector2(0, 12)))
 		return
 	# An easel's three legs, and the card on it: a gold frame round a sepia still.
 	draw_line(Vector2(-7, 12), Vector2(-3, -6), EASEL, 2.0)

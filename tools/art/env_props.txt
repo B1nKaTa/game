@@ -131,7 +131,6 @@ flashback_cinema  pillar         pillar.png               24 40
 flashback_cinema  lobby_card     lobby_card.png           20 26
 flashback_cinema  screen_frame   screen_frame.png         160 80
 flashback_cinema  aisle_light    aisle_light.png          12 10
-seance_hotline    cubicle_wall   cubicle_wall.png         32 29
 seance_hotline    psychic_desk   psychic_desk_r.png       30 26
 seance_hotline    lava_lamp      lava_lamp.png            12 24
 seance_hotline    beaded_curtain beaded_curtain_r.png     30 32

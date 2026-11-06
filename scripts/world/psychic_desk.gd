@@ -5,7 +5,9 @@ extends RockBlock
 # on its stand and a few call slips. Solid, it stops walkers and shots, and only blasts and bosses break
 # it, as a chapel pew does. It can hide a coin at the furniture rate: a tip left by a caller.
 # Two desk cells side by side are one wide desk (SeanceProps.desk_groups), drawn over both cells and up
-# into the cell above, so the 64x48 art fits it; a desk cell left on its own is a narrow desk.
+# into the cell above; a desk cell left on its own is a narrow desk. The picture
+# (art/props/seance_hotline/psychic_desk.png) is one desk a cell wide, so a wide desk shows two side by
+# side, one over each cell, and the sizes below are the placeholder's.
 const WIDE_SIZE := Vector2(64, 48)
 const NARROW_SIZE := Vector2(32, 48)
 
@@ -22,7 +24,23 @@ func art_size() -> Vector2:
 
 
 func art_id() -> String:
-	return "psychic_desk" if wide else "psychic_desk_narrow"
+	return "psychic_desk"
+
+
+# Where each desk's picture is centred: one per cell it covers.
+func art_spots() -> Array[Vector2]:
+	if wide:
+		return [Vector2(-RoomBackdrop.TILE / 2.0, 0), Vector2(RoomBackdrop.TILE / 2.0, 0)]
+	return [Vector2.ZERO]
+
+
+func _draw() -> void:
+	var art := art_texture()
+	if art == null:
+		super._draw()
+		return
+	for at in art_spots():
+		draw_texture(art, PropArt.centred(art, at))
 
 
 func debris_color() -> Color:

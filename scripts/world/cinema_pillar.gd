@@ -5,6 +5,7 @@ extends StaticBody2D
 # shots as a wall does, and nothing breaks it: not the cane, a blast or a charging boss. Routes never
 # need to pass through one (RoomLayout.WALLS).
 const SIZE := Vector2(RoomBackdrop.TILE, RoomBackdrop.TILE)
+const ART_ID := "pillar"
 
 var palette: RoomPalette
 
@@ -22,11 +23,16 @@ func _ready() -> void:
 
 
 func _draw() -> void:
-	var art := PropArt.texture("cinema_pillar")
-	if art != null:
-		draw_texture(art, -art.get_size() / 2.0)
-		return
 	var p := palette if palette != null else RoomPalette.new()
+	# The Cinema's own picture (art/props/flashback_cinema/pillar.png) is a narrow shaft, so the plinth
+	# under it still shows the whole cell it blocks.
+	var art := PropArt.texture(ART_ID)
+	if art != null:
+		draw_rect(Rect2(-15, 4, 30, 11), p.pillar_edge)
+		draw_rect(Rect2(-14, 5, 28, 9), p.pillar.darkened(0.2))
+		draw_rect(Rect2(-15, 4, 30, 11), Color.BLACK, false, 1.0)
+		draw_texture(art, PropArt.standing(art, Vector2(0, 12)))
+		return
 	# A square plinth on the carpet, the round shaft seen from a little above, and its gold bands.
 	draw_rect(Rect2(-15, 4, 30, 11), p.pillar_edge)
 	draw_rect(Rect2(-14, 5, 28, 9), p.pillar.darkened(0.2))

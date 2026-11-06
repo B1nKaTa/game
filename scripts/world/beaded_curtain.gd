@@ -13,6 +13,9 @@ const BOTTOM := 26.0
 const NEAR := Vector2(26, 34)
 const PART := 9.0
 const ALPHA := 0.8
+# The picture's rail, the rows at its top that never swing, and how many bands its strands swing in.
+const ART_RAIL_ROWS := 3
+const ART_BANDS := 4
 
 var palette: RoomPalette
 var toucher: Node2D
@@ -55,6 +58,10 @@ func _process(_delta: float) -> void:
 
 
 func _draw() -> void:
+	var art := PropArt.texture(art_id())
+	if art != null:
+		_draw_art(art)
+		return
 	var p := palette if palette != null else RoomPalette.new()
 	var half := ART_SIZE.x / 2.0 - 2.0
 	draw_rect(Rect2(-half, TOP - 3, half * 2.0, 3), p.desk_wood)
@@ -69,3 +76,21 @@ func _draw() -> void:
 			draw_rect(Rect2(x + sway - 1.0, y, 2, 3), Color(color, ALPHA))
 			y += 5.0
 			bead += 1
+
+
+# The picture (art/props/seance_hotline/beaded_curtain.png): its rail stays put, and below it each column
+# of beads is drawn in a few bands, each swung aside a little more the lower it hangs, so the strands
+# still part round Grandpa.
+func _draw_art(art: Texture2D) -> void:
+	var at := PropArt.centred(art)
+	var size := Vector2i(art.get_size())
+	var tint := Color(1, 1, 1, ALPHA)
+	draw_texture_rect_region(art, Rect2(at, Vector2(size.x, ART_RAIL_ROWS)), Rect2(0, 0, size.x, ART_RAIL_ROWS), tint)
+	var hang := size.y - ART_RAIL_ROWS
+	for column in size.x:
+		var shift := 0.0 if _parted_at == INF else strand_shift(at.x + column + 0.5, _parted_at)
+		for band in ART_BANDS:
+			var top := ART_RAIL_ROWS + band * hang / ART_BANDS
+			var bottom := ART_RAIL_ROWS + (band + 1) * hang / ART_BANDS
+			var sway := roundf(shift * (band + 1.0) / ART_BANDS)
+			draw_texture_rect_region(art, Rect2(at + Vector2(column + sway, top), Vector2(1, bottom - top)), Rect2(column, top, 1, bottom - top), tint)

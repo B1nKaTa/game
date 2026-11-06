@@ -356,9 +356,10 @@ func test_each_prop_is_named_and_sized_for_its_art() -> void:
 	assert_eq(desk.art_id(), "psychic_desk")
 	assert_eq(desk.art_size(), Vector2(64, 48))
 	assert_eq(desk.body_size(), Vector2(64, 32), "two cells wide")
+	assert_eq(desk.art_spots(), [Vector2(-16, 0), Vector2(16, 0)], "two one-cell desk pictures, one per cell")
 	desk.wide = false
 	assert_eq(desk.body_size(), Vector2(32, 32), "a narrow desk fills one cell")
-	assert_true(desk.art_id() != "psychic_desk", "and never stretches the wide art")
+	assert_eq(desk.art_spots(), [Vector2.ZERO], "and shows one desk, never a stretched one")
 	desk.free()
 	var table := SeanceTable.new()
 	assert_eq(table.art_id(), "seance_table")

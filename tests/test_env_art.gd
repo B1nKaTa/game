@@ -6,7 +6,7 @@ extends TestCase
 # and no picture changes a prop's body.
 
 const PATHS := ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "last_resort_cruise",
-	"terminal_zero", "head_office", "waiting_room", "crossroads"]
+	"terminal_zero", "head_office", "waiting_room", "crossroads", "flashback_cinema", "seance_hotline"]
 const ROWS := ["#####", "#...#", "#...#", "#####"]
 
 
@@ -225,3 +225,32 @@ func test_a_floors_art_set_is_its_id_unless_it_shares_one() -> void:
 	for landing in ["landing", "landing_3", "landing_4", "landing_5"]:
 		var def: FloorDef = load("res://data/floors/%s.tres" % landing)
 		assert_eq(def.art(), "crossroads", landing)
+
+
+# The Cinema and the Seance Hotline load their own tiles by their ids, and their room props find their
+# own pictures while their path's rooms are built. The partition keeps its code look.
+func test_the_new_paths_wear_their_own_tiles_and_props() -> void:
+	for id in ["flashback_cinema", "seance_hotline"]:
+		var def: FloorDef = load("res://data/floors/%s.tres" % id)
+		assert_eq(def.art(), id)
+		assert_true(TileArt.for_set(def.art()) != null, id + " has its tiles")
+	PropArt.art_set = "flashback_cinema"
+	var seat := CinemaSeat.new()
+	var ids: Array[String] = [seat.art_id(), CinemaPillar.ART_ID, AisleLight.ART_ID, "lobby_card"]
+	seat.free()
+	for id in ids:
+		var art := PropArt.texture(id)
+		assert_true(art != null and art.resource_path.begins_with("res://art/props/flashback_cinema/"), "the Cinema's " + id)
+	_reset_art_set()
+	PropArt.art_set = "seance_hotline"
+	for piece: BreakableBlock in [PsychicDesk.new(), SeanceTable.new(), LavaLamp.new()]:
+		var art := piece.art_texture()
+		assert_true(art != null and art.resource_path.begins_with("res://art/props/seance_hotline/"), "the hotline's " + piece.art_id())
+		piece.free()
+	var curtain := BeadedCurtain.new()
+	assert_true(PropArt.texture(curtain.art_id()) != null, "the curtain's beads")
+	curtain.free()
+	var partition := SeancePartition.new()
+	assert_eq(partition.art_texture(), null, "the partition keeps its code look")
+	partition.free()
+	_reset_art_set()
