@@ -103,6 +103,12 @@ CUTS = {
     'popcorn_vendor': {'windup': ('attack', [3, 4, 5, 6], '86176168'), 'attack': ('attack', [7, 8], '86176168')},
     # Arms out to heckle, then the shove.
     'extra': {'windup': ('attack', [3, 4, 5, 6, 7], 'd589017a'), 'attack': ('attack', [8], 'd589017a')},
+    # The cord gathered up, then whipped round.
+    'phone_psychic': {'windup': ('attack', [1, 2, 3, 4], '81d81a91'), 'attack': ('attack', [5, 6, 7, 8], '81d81a91')},
+    # The ball raised to her eye, then let go.
+    'crystal_gazer': {'windup': ('attack', [1, 2, 3, 4, 5], '1f8a98aa'), 'attack': ('attack', [6, 7, 8], '1f8a98aa')},
+    # The arm thrown up, then the hurl.
+    'poltergeist': {'windup': ('attack', [3, 4, 5, 6], 'fb8cba67'), 'attack': ('attack', [7, 8], 'fb8cba67')},
 }
 
 

@@ -8,17 +8,20 @@ const ART_DIR := "res://art/sprites/"
 const ARTED := ["intern_reaper", "stoker", "mall_cop", "hr_representative", "regional_reaper",
 	"old_smokey", "chairman_of_the_board",
 	# The Cinema's and the Seance Hotline's (D:/grandpa-art/newpaths).
-	"usher", "popcorn_vendor", "film_reel", "extra", "crabtree", "projectionist"]
+	"usher", "popcorn_vendor", "film_reel", "extra", "crabtree", "projectionist",
+	"phone_psychic", "crystal_gazer", "poltergeist", "ectoplasm", "celestine", "madame_zara"]
 # Art whose own enemy is retired, and the enemy who wears it now.
 const WORN_BY := {"mall_cop": "airport_mall_cop"}
 # Objects drawn facing south, which never turn and so are never mirrored.
-const UNFLIPPED := ["film_reel"]
+const UNFLIPPED := ["film_reel", "ectoplasm"]
 # The new paths' regulars, whose windup and attack are cut from their attack export.
-const CUT_REGULARS := ["usher", "popcorn_vendor", "extra"]
+const CUT_REGULARS := ["usher", "popcorn_vendor", "extra", "phone_psychic", "crystal_gazer", "poltergeist"]
 # A boss's own anims, each played by its behavior through Enemy.play_anim: id -> [behavior, anims].
 const BOSS_ANIMS := {
 	"crabtree": ["crabtree_behavior.gd", ["star_rating", "thumbs_down", "attack"]],
 	"projectionist": ["projectionist_behavior.gd", ["reel_change", "splice", "attack"]],
+	"celestine": ["celestine_behavior.gd", ["deal_cards", "attack"]],
+	"madame_zara": ["madame_zara_behavior.gd", ["tether_call", "possession", "attack"]],
 }
 
 
@@ -190,17 +193,17 @@ func test_each_new_boss_plays_its_own_anims() -> void:
 
 
 func test_a_behaviors_own_anim_plays_through_the_windup_and_the_hit() -> void:
-	var enemy := _enemy("projectionist")
+	var enemy := _enemy("madame_zara")
 	var telegraph := Telegraph.new()
 	telegraph.start(0.6)
 	enemy.set_warning(telegraph, 40.0)
-	enemy.play_anim("splice", 0.9)
+	enemy.play_anim("tether_call", 0.9)
 	enemy._update_anim(0.016)
-	assert_eq(enemy.visual().shown_anim(), "splice", "not the plain windup")
+	assert_eq(enemy.visual().shown_anim(), "tether_call", "not the plain windup")
 	telegraph.tick(1.0)
 	enemy.clear_warning()
 	enemy._update_anim(0.016)
-	assert_eq(enemy.visual().shown_anim(), "splice", "not the plain attack")
+	assert_eq(enemy.visual().shown_anim(), "tether_call", "not the plain attack")
 	for i in 70:
 		enemy._update_anim(0.016)
 	assert_eq(enemy.visual().shown_anim(), "idle")
