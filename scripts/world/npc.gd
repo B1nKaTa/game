@@ -68,6 +68,8 @@ func _ready() -> void:
 	_bubble.npc = self
 	_bubble.z_index = BUBBLE_Z
 	add_child(_bubble)
+	if def != null and (_art != null or _actor_look != null):
+		ContactShadow.add_to(self, def.body_size.x, Vector2(0.0, def.body_size.y / 2.0))
 
 
 class BubbleLayer extends Node2D:

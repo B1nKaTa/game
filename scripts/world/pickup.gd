@@ -84,7 +84,21 @@ func set_label(label: String, color: Color) -> void:
 
 func _ready() -> void:
 	add_to_group("pickups")
+	_add_shadow()
 	queue_redraw()
+
+
+# A contact shadow the width of its picture under its bottom row, or of the disc without one.
+func _add_shadow() -> void:
+	var art := shadow_art()
+	if art != null:
+		ContactShadow.add_to(self, art.get_width() * 0.9, Vector2(0.0, art.get_height() / 2.0 - 1.0))
+	else:
+		ContactShadow.add_to(self, 14.0, Vector2(0.0, 7.0))
+
+
+func shadow_art() -> Texture2D:
+	return PropArt.texture(art_id) if not art_id.is_empty() else null
 
 
 func is_flying() -> bool:

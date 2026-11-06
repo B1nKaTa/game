@@ -61,6 +61,7 @@ var summon_spot: Callable
 var open_ground: Callable
 # Underground it is only a moving mound: nothing can hit it and it crosses anything. See set_submerged.
 var submerged := false
+var _shadow: ContactShadow
 # The room's walkable cells, shared by its enemies. Without one, an enemy walks straight at Grandpa.
 var walk_grid: WalkGrid
 var _warning_fraction := 0.5
@@ -175,6 +176,9 @@ func _ready() -> void:
 	add_child(_warning_layer)
 	# In the depth look's dark, warnings keep their full colour (DepthLook.keep_vivid).
 	DepthLook.keep_vivid(_warning_layer)
+	# Its feet touch the ground: a wall-mounted one hangs on the wall instead.
+	if not def.wall_mounted:
+		_shadow = ContactShadow.add_to(self, def.body_size.x * 0.95, Vector2(0.0, def.body_size.y / 2.0))
 	_behavior.on_ready(self)
 
 
@@ -299,6 +303,8 @@ func set_submerged(value: bool) -> void:
 	if _visual != null:
 		_visual.visible = not value
 		_marks.visible = not value
+		if _shadow != null:
+			_shadow.visible = not value
 	queue_redraw()
 
 

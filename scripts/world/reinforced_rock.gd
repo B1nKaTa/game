@@ -86,3 +86,8 @@ func _draw_placeholder() -> void:
 	draw_line(Vector2(-3, 2), Vector2(2, -3), glow, 1.5)
 	draw_line(Vector2(2, -3), Vector2(12, 3), glow, 1.5)
 	draw_rect(body.grow(-1.0), Color(p.reinforced_glow, 0.12 * pulse), false, 1.0)
+
+
+# Set into a wall, so it casts no contact shadow on the floor.
+func casts_shadow() -> bool:
+	return false

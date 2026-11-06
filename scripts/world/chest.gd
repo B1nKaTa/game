@@ -131,6 +131,10 @@ func _draw() -> void:
 		draw_string(ThemeDB.fallback_font, Vector2(-18, 22), ChestRules.SAFE_HINT, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, HINT_COLOR)
 
 
+func shadow_art() -> Texture2D:
+	return PropArt.texture(art_id_for())
+
+
 # A mimic wears the Locked Chest's picture, so only its breathing gives it away.
 func art_id_for(state := "") -> String:
 	var shown := ChestRules.LOCKED if kind == ChestRules.MIMIC else kind

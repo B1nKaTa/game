@@ -43,7 +43,18 @@ func _ready() -> void:
 		rect.size = body_size()
 		shape.shape = rect
 		add_child(shape)
+	if casts_shadow():
+		var art := art_texture()
+		var width := art.get_width() * 0.9 if art != null else body_size().x * 0.85
+		var bottom := art.get_height() / 2.0 - 1.0 if art != null else body_size().y / 2.0 - 2.0
+		ContactShadow.add_to(self, width, Vector2(0.0, bottom))
 	queue_redraw()
+
+
+# Whether it stands on the floor and so gets a contact shadow (ContactShadow). Things set into a wall
+# say no.
+func casts_shadow() -> bool:
+	return true
 
 
 func look() -> RoomPalette:

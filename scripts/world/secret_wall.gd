@@ -43,3 +43,8 @@ func _draw() -> void:
 # The room plays the reveal itself when the crack opens.
 func break_sound() -> String:
 	return ""
+
+
+# Set into a wall, so it casts no contact shadow on the floor.
+func casts_shadow() -> bool:
+	return false

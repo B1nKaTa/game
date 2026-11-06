@@ -27,6 +27,8 @@ const SPRITE_FRAME_WIDTH := 60
 const SPRITE_FEET_Y := 23.0
 const FEET_BOX_SIZE := Vector2(14, 12)
 const FEET_OFFSET := Vector2(0, 17)
+# The contact shadow under his shoes and cane (ContactShadow).
+const SHADOW_WIDTH := 20.0
 const CROSSHAIR_GAP := 3.0
 const CROSSHAIR_REACH := 8.0
 const CROSSHAIR_COLOR := Color(1.0, 0.9, 0.55, 0.95)
@@ -142,6 +144,7 @@ func _ready() -> void:
 	add_child(_visual)
 	_visual.set_feet(SPRITE_FEET_Y)
 	_visual.setup("grandpa", Vector2(20, 28), Color("7d9a5c"), SPRITE_FRAME_WIDTH)
+	ContactShadow.add_to(self, SHADOW_WIDTH, Vector2(0.0, SPRITE_FEET_Y - 1.0))
 	if not run.look.is_empty():
 		refresh_look()
 	run.health.died.connect(died.emit)
