@@ -6,7 +6,7 @@ extends TestCase
 
 const ART_DIR := "res://art/sprites/"
 # Every enemy with a PixelLab export, built into art/sprites/<id>/ (D:/grandpa-art/enemies, and the
-# Cinema's and the Seance Hotline's from D:/grandpa-art/newpaths).
+# Cinema's and the Seance Hotline's from D:/grandpa-art/newpaths and newpaths2).
 const ARTED := ["intern_reaper", "stoker", "mall_cop", "hr_representative", "regional_reaper",
 	"old_smokey", "chairman_of_the_board",
 	"filing_clerk", "debt_ghost", "seasonal_temp", "notary_public", "burnt_out_auditor", "denial_officer",
@@ -17,12 +17,13 @@ const ARTED := ["intern_reaper", "stoker", "mall_cop", "hr_representative", "reg
 	"early_bird_diner", "shuffleboard_shark", "sunburnt_sunbather", "lorraine", "commodore_wellington",
 	"tour_group", "baggage_handler", "lost_luggage", "sergeant_wanda", "augustine", "yes_man", "paper_shredder", "doreen",
 	"usher", "popcorn_vendor", "film_reel", "extra", "crabtree", "projectionist",
-	"phone_psychic", "crystal_gazer", "poltergeist", "ectoplasm", "celestine", "madame_zara"]
+	"phone_psychic", "crystal_gazer", "poltergeist", "ectoplasm", "celestine", "madame_zara",
+	# The returning pairs' own looks (D:/grandpa-art/newpaths2).
+	"seance_bingo_caller", "seance_soot_ghost", "cinema_notary_public"]
 # Art whose own enemy is retired, and the enemy who wears it now.
 const WORN_BY := {"mall_cop": "airport_mall_cop"}
 # Floor variants wearing a base's art, recoloured or not: variant -> base.
 const VARIANTS := {"furnace_intern_reaper": "intern_reaper", "cinema_intern_reaper": "intern_reaper",
-	"cinema_notary_public": "notary_public", "seance_bingo_caller": "bingo_caller", "seance_soot_ghost": "soot_ghost",
 	"cruise_stoker": "stoker", "airport_mall_cop": "mall_cop", "airport_weeping_mourner": "weeping_mourner",
 	"cruise_orderly": "orderly", "furnace_burnt_out_auditor": "burnt_out_auditor", "office_florist": "florist",
 	"parlour_plot_holder": "plot_holder", "parlour_seasonal_temp": "seasonal_temp",

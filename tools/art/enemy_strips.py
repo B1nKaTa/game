@@ -112,6 +112,15 @@ CUTS = {
     'crystal_gazer': {'windup': ('attack', [1, 2, 3, 4, 5], '1f8a98aa'), 'attack': ('attack', [6, 7, 8], '1f8a98aa')},
     # The arm thrown up, then the hurl.
     'poltergeist': {'windup': ('attack', [3, 4, 5, 6], 'fb8cba67'), 'attack': ('attack', [7, 8], 'fb8cba67')},
+    # The returning pairs' own looks (2026-11-06, D:/grandpa-art/newpaths2, each export's folder renamed
+    # to the variant's id, since the base ids already wear round-2's art on the older floors).
+    # The ball raised over his shoulder, then the follow-through (frame 4's ball in flight is left out,
+    # since the game throws its own ball).
+    'seance_bingo_caller': {'windup': ('attack', [1, 2, 3], '655789ce'), 'attack': ('attack', [5, 6, 7], '655789ce')},
+    # The squash with the soot rising, then the lunge and its puff.
+    'seance_soot_ghost': {'windup': ('attack', [1, 2, 3], 'ef978010'), 'attack': ('attack', [4, 5, 6], 'ef978010')},
+    # The stamp lifted overhead, then the slam.
+    'cinema_notary_public': {'windup': ('attack', [2, 3, 4], 'c85d6dd3'), 'attack': ('attack', [5, 6, 7], 'c85d6dd3')},
 }
 
 

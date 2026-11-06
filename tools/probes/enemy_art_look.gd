@@ -1,6 +1,7 @@
 extends SceneTree
 # The enemy art pass's look probe. Run only from an exported copy whose config/name is renamed.
-# Args after --: audit | shots | sort | all
+# Args after --: audit | shots | sort | all, then optionally floors or ids (comma separated) and the
+# folder to save into.
 #  audit  lists what stands at z 0 in every room of every floor (headless is fine), since the room
 #         now sorts by y and a flat floor thing at z 0 would cover feet.
 #  shots  opens each art enemy on its own floor: idle, walking, winding up and attacking, with Harold
@@ -8,7 +9,7 @@ extends SceneTree
 #         against its body box.
 #  sort   Harold behind and in front of an NPC and an enemy.
 
-const OUT := "D:/grandpa-shots-r9/"
+const DEFAULT_OUT := "D:/grandpa-shots-r9/"
 const WALL_LIMIT_MS := 1500000
 const CROP := Vector2i(160, 120)
 const WARNING_RED := Color("e4524f")
@@ -43,6 +44,8 @@ const ENEMIES := [
 	["tour_group", "terminal_zero"], ["baggage_handler", "terminal_zero"], ["lost_luggage", "terminal_zero"],
 	["sergeant_wanda", "terminal_zero"], ["augustine", "terminal_zero"], ["airport_weeping_mourner", "terminal_zero"],
 	["yes_man", "head_office"], ["paper_shredder", "head_office"], ["doreen", "head_office"], ["office_florist", "head_office"],
+	# The returning pairs' own looks (newpaths2).
+	["cinema_notary_public", "flashback_cinema"], ["seance_bingo_caller", "seance_hotline"], ["seance_soot_ghost", "seance_hotline"],
 ]
 # A boss's own anims, shot by playing each once (the behaviors' play_anim calls are tested).
 const OWN_ANIMS := {
@@ -54,6 +57,7 @@ const OWN_ANIMS := {
 # Small-bodied enemies redrawn on 32 to 36 px canvases (2026-11-06), shot beside Harold like the bosses.
 const BESIDE_HAROLD := ["seasonal_temp", "tour_group", "yes_man", "weeping_mourner", "early_bird_diner"]
 
+var OUT := DEFAULT_OUT
 var _start := 0
 var scene
 var view: RoomView
@@ -62,6 +66,9 @@ var progress
 
 
 func _initialize() -> void:
+	var user_args := OS.get_cmdline_user_args()
+	if user_args.size() > 2:
+		OUT = user_args[2].trim_suffix("/") + "/"
 	_start = Time.get_ticks_msec()
 	DirAccess.make_dir_recursive_absolute(OUT)
 	_main.call_deferred()
