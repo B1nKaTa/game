@@ -64,6 +64,8 @@ CUTS = {
     'burnt_out_auditor': {'windup': ('attack', [2, 3, 4, 5, 6, 7], '07de8230'), 'attack': ('attack', [8], '07de8230')},
     # The claims clerk raises his rubber stamp high behind the drawer, then slams it down.
     'denial_officer': {'windup': ('attack', [3, 4, 5, 6], 'e3c13db4'), 'attack': ('attack', [7, 8], 'e3c13db4')},
+    # The care home's own Denial Officer (2026-11-06): the serving tray raised overhead, then brought down.
+    'shores_denial_officer': {'windup': ('attack', [3, 4, 5, 6], 'c3169a31'), 'attack': ('attack', [7, 8], 'c3169a31')},
     'senior_adjuster': {'windup': ('attack', [1, 2, 3, 4], '041ecf4f'), 'attack': ('attack', [5, 6, 7, 8], '041ecf4f')},
     'plot_holder': {'windup': ('attack', [1, 2], '6d2d20b4'), 'attack': ('attack', [3, 4, 5, 6, 7], '6d2d20b4')},
     'head_groundskeeper': {'windup': ('attack', [3, 4, 5, 6, 7], 'ca1f2154'), 'attack': ('attack', [8], 'ca1f2154')},
