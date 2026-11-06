@@ -79,6 +79,8 @@ func on_ready(enemy: Enemy) -> void:
 
 func tick(enemy: Enemy, delta: float) -> void:
 	_clock += delta
+	if _torch != null:
+		_torch.bounds = ForemanBehavior.room_rect(enemy.room_cells)
 	if _charge_left > 0.0:
 		_charge(enemy, delta)
 		_show_torch(0.0)

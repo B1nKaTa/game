@@ -72,6 +72,14 @@ func test_his_torch_is_on_him_from_his_first_frame() -> void:
 	usher.free()
 
 
+func test_his_torch_stops_at_the_rooms_walls() -> void:
+	var room := Rect2(32, 32, 320, 192)
+	assert_near(UsherTorch.reach_in(Vector2(100, 100), Vector2.RIGHT, room, 150.0), 150.0, "whole inside the room")
+	assert_near(UsherTorch.reach_in(Vector2(300, 100), Vector2.RIGHT, room, 150.0), 52.0, "cut at the east wall")
+	assert_near(UsherTorch.reach_in(Vector2(100, 200), Vector2.DOWN, room, 150.0), 24.0, "cut at the south wall")
+	assert_near(UsherTorch.reach_in(Vector2(100, 100), Vector2.LEFT, Rect2(), 150.0), 150.0, "no room, no cut")
+
+
 # --- the Popcorn Vendor ---
 
 func test_the_vendor_keeps_her_distance() -> void:
