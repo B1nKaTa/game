@@ -53,6 +53,7 @@ scatter_lights = 4
 [resource]
 script = ExtResource("1")
 id = "terminal_zero"
+art_style = "depth"
 display_name = "Departures, Terminal Zero"
 rooms_dir = "res://data/rooms/terminal_zero/"
 enemies = [ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7")]

@@ -185,7 +185,7 @@ AREAS = {
     'flashback_cinema': {'faces': [0, 1, 7, 2, 3, 4, 5, 6], 'ground': (0.76, 0.76, 0.78), 'face': (0.86, 0.84, 0.84), 'sconce': 'lamp'},
     'last_resort_cruise': {'faces': [0, 1, 7, 2, 3, 4, 5, 6], 'ground': (0.8, 0.78, 0.76), 'face': (0.86, 0.86, 0.88), 'sconce': 'lamp'},
     'seance_hotline': {'faces': [0, 1, 7, 2, 3, 4, 5, 6], 'ground': (0.76, 0.74, 0.78), 'face': (0.86, 0.84, 0.88), 'sconce': 'lamp'},
-    'terminal_zero': {'faces': [0, 1, 7, 2, 3, 4, 5, 6], 'ground': (0.74, 0.74, 0.76), 'face': (0.82, 0.82, 0.84), 'sconce': 'lamp'},
+    'terminal_zero': {'faces': [0, 1, 7, 2, 3, 4, 5, 6], 'ground': (0.62, 0.62, 0.66), 'face': (0.82, 0.82, 0.84), 'sconce': 'lamp'},
     'head_office': {'faces': [0, 1, 7, 2, 3, 4, 5, 6], 'ground': (0.72, 0.7, 0.68), 'face': (0.82, 0.8, 0.78), 'sconce': 'lamp'},
 }
 
