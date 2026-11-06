@@ -172,6 +172,10 @@ func test_objects_drawn_facing_south_are_never_mirrored() -> void:
 		enemy._update_anim(0.016)
 		assert_eq(enemy.visual().shown_anim(), "walk", id)
 		assert_false(enemy.visual().is_facing_left(), id + " walking west stays as drawn")
+		# Halved by the strip tool, so the art covers about the box a touch tests.
+		var image := _image(ART_DIR + id + "/idle.png")
+		var used := image.get_region(Rect2i(0, 0, image.get_height(), image.get_height())).get_used_rect()
+		assert_true(absf(used.size.x - enemy.def.body_size.x) <= 4.0, "%s art %d wide on a %d box" % [id, used.size.x, enemy.def.body_size.x])
 		enemy.free()
 
 

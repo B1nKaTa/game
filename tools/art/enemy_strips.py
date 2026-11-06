@@ -27,6 +27,9 @@ from npc_strips import join, load  # noqa: E402
 # Rows left empty under the feet.
 FOOT_MARGIN = 1
 KEEP_FIRST = ('idle', 'walk')
+# Objects drawn on a 48 px canvas about twice their body box (the film reel's 18x18, the Ectoplasm's
+# 22x18), halved so the art covers the box a hit tests.
+HALVED = ('film_reel', 'ectoplasm')
 # The way an anim was drawn: east, mirrored in the game, or south for an object that never turns
 # (EnemyDef.flips false: the Ectoplasm, the film reel, the mimic, the Lost Luggage and the steam valve).
 DIRECTIONS = ('east', 'south')
@@ -159,6 +162,26 @@ def place(frame, size):
     return size, size, out
 
 
+# Half size: each 2x2 block takes its most common opaque colour when at least two of its pixels
+# are opaque, and the darkest on a tie, so the black outline survives.
+def halve(frame):
+    width, height, rows = frame
+    w, h = width // 2, height // 2
+    out = [bytearray(w * 4) for _ in range(h)]
+    for y in range(h):
+        for x in range(w):
+            seen = {}
+            for dy in (0, 1):
+                for dx in (0, 1):
+                    px = bytes(rows[y * 2 + dy][(x * 2 + dx) * 4:(x * 2 + dx) * 4 + 4])
+                    if px[3]:
+                        seen[px] = seen.get(px, 0) + 1
+            if sum(seen.values()) >= 2:
+                best = max(seen, key=lambda c: (seen[c], -(c[0] + c[1] + c[2])))
+                out[y][x * 4:x * 4 + 4] = best
+    return w, h, out
+
+
 def export_anims(base):
     anims = {}
     folder = os.path.join(base, 'animations')
@@ -215,6 +238,8 @@ def build(source, target, enemy):
         print(enemy, 'has no idle, so it would show its placeholder; skipped')
         return
     loaded = {name: [load(f) for f in files] for name, files in strips.items()}
+    if enemy in HALVED:
+        loaded = {name: [halve(f) for f in frames] for name, frames in loaded.items()}
     size = canvas_size([f for frames in loaded.values() for f in frames])
     out = os.path.join(target, enemy)
     os.makedirs(out, exist_ok=True)
