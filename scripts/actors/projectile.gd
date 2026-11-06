@@ -27,6 +27,10 @@ const LOOK_STAPLER := "stapler"
 const LOOK_MUG := "mug"
 const LOOK_FAX := "fax"
 const OBJECT_ART_SIZE := 24.0
+# Each look's art, res://art/props/<id>.png (32x32), and the size it is drawn at: the office at 0.75,
+# a kernel at 0.5. A look without art keeps its drawing.
+const LOOK_ART := {LOOK_KERNEL: ["kernel", 16.0], LOOK_STAPLER: ["stapler", OBJECT_ART_SIZE],
+	LOOK_MUG: ["mug", OBJECT_ART_SIZE], LOOK_FAX: ["fax_machine", OBJECT_ART_SIZE]}
 # A chrome arm over a dark base: a grey arm vanished on the hotline's violet carpet in the real window.
 const STAPLER_DARK := Color("231929")
 const STAPLER_GREY := Color("bdb8c8")
@@ -93,6 +97,12 @@ func _draw() -> void:
 		draw_rect(Rect2(-10, -1.5, 3, 3), DART_PLUNGER)
 		draw_line(Vector2(3, 0), Vector2(9, 0), DART_NEEDLE, 1.0)
 		return
+	if LOOK_ART.has(look):
+		var art := PropArt.texture(LOOK_ART[look][0])
+		if art != null:
+			var size: float = LOOK_ART[look][1]
+			draw_texture_rect(art, Rect2(-size / 2.0, -size / 2.0, size, size), false)
+			return
 	if look == LOOK_NOTE:
 		# A pale glow behind, so a black note reads on dark carpet as well as pale.
 		draw_circle(Vector2(0.0, 1.0), 6.0, NOTE_GLOW)

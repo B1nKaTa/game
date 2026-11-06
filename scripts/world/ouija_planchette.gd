@@ -257,8 +257,16 @@ func _draw_band(a: Vector2, b: Vector2, tint: Color) -> void:
 	draw_set_transform(Vector2.ZERO)
 
 
-# A heart-shaped wooden planchette with a round glass window, about its art's 32x32.
+# A heart-shaped wooden planchette with a round glass window, about its art's 32x32
+# (res://art/props/planchette.png, drawn at 1:1 when it is there).
+const ART_ID := "planchette"
+
+
 func _draw_planchette(at: Vector2, alpha: float) -> void:
+	var art := PropArt.texture(ART_ID)
+	if art != null:
+		draw_texture_rect(art, Rect2((at - art.get_size() / 2.0).round(), art.get_size()), false, Color(1, 1, 1, alpha))
+		return
 	var points := PackedVector2Array()
 	for i in 24:
 		var t := TAU * i / 24.0

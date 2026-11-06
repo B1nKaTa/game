@@ -142,6 +142,11 @@ func _draw() -> void:
 	# The tub flies in on its arc, striped and heaped with popcorn.
 	var start := (_from - global_position) if _from != Vector2.INF else Vector2(0.0, -60.0)
 	var at := start.lerp(Vector2.ZERO, filled) + Vector2(0.0, -sin(filled * PI) * ARC)
+	# Its art, res://art/props/popcorn_tub.png (32x32), at 1:1 when it is there.
+	var art := PropArt.texture("popcorn_tub")
+	if art != null:
+		draw_texture_rect(art, Rect2((at - art.get_size() / 2.0).round(), art.get_size()), false)
+		return
 	var tub := PackedVector2Array([at + Vector2(-6, -5), at + Vector2(6, -5), at + Vector2(4, 6), at + Vector2(-4, 6)])
 	draw_colored_polygon(tub, TUB)
 	for x in [-3.0, 1.0]:

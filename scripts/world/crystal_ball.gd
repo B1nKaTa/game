@@ -17,6 +17,8 @@ const BURST_RADIUS := 28.0
 # How near his feet it must come to strike him on the way.
 const HIT_RADIUS := 10.0
 const BALL_RADIUS := 10.0
+# Its art, res://art/props/crystal_ball.png (32x32, the ball about 21x24), drawn at 1:1.
+const ART_ID := "crystal_ball"
 const BURST_SHOW := 0.3
 const COLOR := Color("e4524f")
 const GLASS := Color("ad9bf3")
@@ -209,6 +211,10 @@ func _draw() -> void:
 		draw_arc(Vector2.ZERO, BURST_RADIUS, 0.0, TAU, 32, COLOR, 2.0)
 	# A soft glow, the glass with a deeper rim and a bright shine, and a little dark stand.
 	draw_circle(Vector2.ZERO, BALL_RADIUS + 4.0, GLOW)
+	var art := PropArt.texture(ART_ID)
+	if art != null:
+		draw_texture_rect(art, Rect2(-art.get_size() / 2.0, art.get_size()), false)
+		return
 	draw_rect(Rect2(-6.0, BALL_RADIUS - 3.0, 12.0, 4.0), STAND)
 	draw_circle(Vector2.ZERO, BALL_RADIUS, GLASS_DEEP)
 	draw_circle(Vector2(-1.0, -1.0), BALL_RADIUS - 2.0, GLASS)

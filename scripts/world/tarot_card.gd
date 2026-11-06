@@ -163,7 +163,11 @@ func _draw() -> void:
 		width = maxf(absf(cos((1.0 - _flip_left / FLIP_TIME) * PI)), 0.08)
 	draw_set_transform(offset, 0.0, Vector2(width, 1.0))
 	var rect := Rect2(-SIZE / 2.0, SIZE)
-	if shows_symbol() or (_face_up and _flip_left <= 0.0):
+	var face := shows_symbol() or (_face_up and _flip_left <= 0.0)
+	var art := PropArt.texture(art_id_of(card, face))
+	if art != null:
+		draw_texture_rect(art, rect, false, Color(1, 1, 1, alpha))
+	elif face:
 		_draw_face(rect, alpha)
 	else:
 		_draw_back(rect, alpha)

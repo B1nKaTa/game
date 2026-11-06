@@ -195,6 +195,15 @@ func _draw() -> void:
 		draw_rect(Rect2(ahead, -WIDTH / 2.0, _length - ahead, WIDTH), Color(COLOR, 0.12))
 		draw_rect(Rect2(ahead, -WIDTH / 2.0, _length - ahead, WIDTH), Color(COLOR, 0.6), false, 1.0)
 	var at := Vector2(minf(_travelled, _length), 0.0)
+	# Their art, res://art/props/pie.png and tumbleweed.png (32x32) at 1:1: the pie upright as it
+	# flies, the tumbleweed turning as it rolls.
+	var art := PropArt.texture(_look)
+	if art != null:
+		var turn := _travelled / 9.0 if _look == LOOK_TUMBLEWEED else 0.0
+		draw_set_transform(at.rotated(_direction.angle()), turn)
+		draw_texture_rect(art, Rect2(-art.get_size() / 2.0, art.get_size()), false)
+		draw_set_transform(Vector2.ZERO)
+		return
 	if _look == LOOK_TUMBLEWEED:
 		var spin := _travelled / 9.0
 		draw_circle(at, 12.0, Color(WEED, 0.8))
