@@ -13,6 +13,9 @@ const SHADER := preload("res://scripts/world/cinema_screen.gdshader")
 # A frame a little taller than the wall leaves room for keeps its width and loses a few rows top and
 # bottom (at most MAX_CROP of its height); a wall much too small shrinks the picture instead.
 const FRAME_WIDTH := 3.0
+# The frame's picture (art/props/flashback_cinema/screen_trim.png): a 7x7 nine-slice, FRAME_WIDTH px
+# corners round 1 px middles, which stretch along the picture's edges. Without it the frame is drawn.
+const FRAME_ART := "screen_trim"
 const MAX_CROP := 0.15
 const DRAPE_GAP := 2.0
 # On a wall one cell thick, as an old layout has, the picture shrinks to fit it.
@@ -199,6 +202,32 @@ func _draw() -> void:
 		draw_line(Vector2(x, drape.position.y + 1.0), Vector2(x, drape.end.y - 1.0), p.seat_velvet.darkened(0.25), 1.0)
 	draw_rect(Rect2(drape.position, Vector2(drape.size.x, 3.0)), p.deco_gold_dim)
 	var frame := _picture_rect.grow(FRAME_WIDTH)
+	var trim := PropArt.texture(FRAME_ART)
+	if trim != null:
+		draw_rect(_picture_rect, Color.BLACK)
+		_draw_trim(trim, frame)
+		return
 	draw_rect(frame, p.deco_gold)
 	draw_rect(frame, Color.BLACK, false, 1.0)
 	draw_rect(_picture_rect.grow(1.0), Color.BLACK)
+
+
+# The frame as a nine-slice round `frame`: the corners at 1:1, the 1 px middles stretched along each
+# edge, so it fits a picture of any size on whole pixels.
+func _draw_trim(trim: Texture2D, frame: Rect2) -> void:
+	var b := FRAME_WIDTH
+	var side := trim.get_width() - b
+	var inner := frame.grow(-b)
+	var xs := [frame.position.x, inner.position.x, inner.end.x]
+	var ys := [frame.position.y, inner.position.y, inner.end.y]
+	var widths := [b, inner.size.x, b]
+	var heights := [b, inner.size.y, b]
+	var sources := [0.0, b, side]
+	var spans := [b, 1.0, b]
+	for row in 3:
+		for column in 3:
+			if row == 1 and column == 1:
+				continue
+			var to := Rect2(xs[column], ys[row], widths[column], heights[row])
+			var from := Rect2(sources[column], sources[row], spans[column], spans[row])
+			draw_texture_rect_region(trim, to, from)
