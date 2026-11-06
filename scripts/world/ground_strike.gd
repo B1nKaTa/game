@@ -228,8 +228,12 @@ func _draw() -> void:
 		if _look == LOOK_CASKET:
 			_draw_coffin(1.0, CASKET_WOOD, 1.0 - progress)
 		return
+	var hidden := _source != null and is_instance_valid(_source) and not _source.shows_warnings()
 	if _delay > 0.0:
-		draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 24, Color(COLOR, WAITING_ALPHA), 1.0)
+		if not hidden:
+			draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 24, Color(COLOR, WAITING_ALPHA), 1.0)
+		return
+	if is_following() and hidden:
 		return
 	if is_following():
 		draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 24, FOLLOW_COLOR, 2.0)
@@ -237,9 +241,13 @@ func _draw() -> void:
 		draw_line(Vector2(0, -6), Vector2(0, 6), FOLLOW_COLOR, 1.0)
 		return
 	var filled := fill()
-	draw_circle(Vector2.ZERO, _radius * filled, Color(COLOR, 0.15 + 0.3 * filled))
-	draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 24, COLOR, 2.0)
-	if _look == LOOK_CASKET:
+	# A regular enemy's mark is not drawn unless Attack warnings is on (AttackWarnings); what it throws
+	# still flies.
+	var marked := _source == null or not is_instance_valid(_source) or _source.shows_warnings()
+	if marked:
+		draw_circle(Vector2.ZERO, _radius * filled, Color(COLOR, 0.15 + 0.3 * filled))
+		draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 24, COLOR, 2.0)
+	if _look == LOOK_CASKET and marked:
 		draw_arc(Vector2.ZERO, _radius + CASKET_RING_GAP, 0.0, TAU, 32, COLOR, 2.0)
 		_draw_coffin(0.3 + 0.7 * filled, CASKET_SHADOW, 0.25 + 0.5 * filled)
 	if _thrown_from != Vector2.INF:

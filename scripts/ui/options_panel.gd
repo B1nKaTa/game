@@ -56,13 +56,14 @@ const LABELS := {
 	"hide_minimap_in_combat": "Hide minimap during combat",
 	"minimap_opacity": "Minimap opacity",
 	"run_timer": "Show run timer",
+	"attack_warnings": "Attack warnings",
 	"language": "Language",
 }
 const LANGUAGE_NAMES := {"en": "English"}
 const TAB_KEYS := {
 	GameSettings.VIDEO: ["brightness", "contrast", "gamma", "resolution", "fullscreen", "vsync", "confine_mouse", "pixel_perfect"],
 	GameSettings.AUDIO: ["master", "effects", "music", "ambience"],
-	GameSettings.GAME: ["screen_shake", "hit_stop", "vibration", "heal_at_full", "mouse_aim", "hide_minimap_in_combat", "minimap_opacity", "run_timer", "language"],
+	GameSettings.GAME: ["screen_shake", "hit_stop", "vibration", "heal_at_full", "mouse_aim", "hide_minimap_in_combat", "minimap_opacity", "run_timer", "attack_warnings", "language"],
 }
 # A line under a tab's rows, where something on it does not do anything yet.
 const TAB_NOTES := {

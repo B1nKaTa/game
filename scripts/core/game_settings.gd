@@ -46,6 +46,8 @@ const DEFAULTS := {
 		"hide_minimap_in_combat": false,
 		"minimap_opacity": [100, 20, 100],
 		"run_timer": false,
+		# Regular enemies' red attack warnings (AttackWarnings). Bosses always show theirs.
+		"attack_warnings": false,
 		"language": "en",
 	},
 }

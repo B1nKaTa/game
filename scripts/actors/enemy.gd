@@ -12,6 +12,9 @@ const BOSS_KNOCKBACK_SCALE := 0.2
 const SUMMON_SPREAD := 40.0
 const BAR_WIDTH := 20.0
 const BAR_HEIGHT := 2.0
+# The windup's tell when its warning is not drawn: a short pale flash, softer than a hit's.
+const WINDUP_CUE := Color(1.0, 0.96, 0.82)
+const WINDUP_CUE_TIME := 0.07
 # Gap between the top of the art and the bar.
 const BAR_GAP := 3.0
 const READ_GLOW_COLOR := Color(1.0, 0.95, 0.9)
@@ -195,7 +198,8 @@ class WarningLayer extends Node2D:
 	var enemy: Enemy
 
 	func _draw() -> void:
-		enemy._draw_warning(self)
+		if enemy.shows_warnings():
+			enemy._draw_warning(self)
 
 
 # Stars circle its head while it is stunned.
@@ -248,6 +252,12 @@ func visual() -> SpriteVisual:
 	return _visual
 
 
+# Whether its attack warnings are drawn: a boss's or mini boss's always, a regular enemy's only with the
+# Attack warnings setting on (AttackWarnings). The timing behind them never changes.
+func shows_warnings() -> bool:
+	return AttackWarnings.drawn_for(def)
+
+
 # Picks its anim and the way it faces from what it does (EnemyAnim). Looks only.
 func _update_anim(delta: float) -> void:
 	if _visual == null or not _visual.has_art():
@@ -261,6 +271,9 @@ func _update_anim(delta: float) -> void:
 		if not own:
 			_visual.play_once(EnemyAnim.WINDUP, _warning.remaining())
 			_anim_once_left = 0.0
+		# With no shape on the floor, a pale flash marks the moment the windup starts.
+		if not shows_warnings():
+			_visual.flash(WINDUP_CUE, WINDUP_CUE_TIME)
 	elif _was_winding and not winding and not _dead and not own:
 		# The hit lands as the windup ends. Without an attack strip it carries on as it would.
 		if SpriteVisual.has_anim(def.art(), EnemyAnim.ATTACK):
