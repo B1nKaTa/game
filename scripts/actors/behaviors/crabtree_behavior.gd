@@ -44,6 +44,8 @@ var _cooldown := 1.0
 var _review_timer := FIRST_REVIEW
 var _aim := Vector2.RIGHT
 var _rating := 0
+# A look probe's pick for his next rating; 0 lets him choose.
+var forced_rating := 0
 var _rng := RandomNumberGenerator.new()
 
 
@@ -124,7 +126,7 @@ func _begin(enemy: Enemy, attack: int) -> void:
 	match attack:
 		Attack.STARS:
 			_telegraph.start(STAR_WINDUP)
-			_rating = next_rating(_rating, _rng.randf())
+			_rating = forced_rating if forced_rating > 0 else next_rating(_rating, _rng.randf())
 			_aim = enemy.direction_to_target()
 			enemy.set_warning(_telegraph, WARNING_RADIUS)
 			for way in star_lanes(_aim, _rating):

@@ -293,7 +293,7 @@ func test_every_lens_beam_leaves_a_way_out_and_a_marked_spot() -> void:
 		assert_true(route.escape(feet)["safe"], "seed %d: it leaves a way out" % seed_value)
 		var mark: Vector2 = plan["mark"]
 		assert_true(mark != Vector2.INF, "seed %d: and a mark" % seed_value)
-		assert_false(body.grow(SafeSpotMark.RADIUS).has_point(mark), "seed %d: off his body" % seed_value)
+		assert_false(body.grow(SafeSpotMark.RADIUS + Projector.MARK_CLEARANCE).has_point(mark), "seed %d: well off his body" % seed_value)
 		assert_false(route.is_blocked_at(mark), "seed %d: on open floor" % seed_value)
 		assert_near(route.danger_end_at(mark), 0.0, "seed %d: the mark is never under the beam" % seed_value)
 		# The arc's middle aimed at him: the beam sweeps right over where he stands.
@@ -409,7 +409,7 @@ func test_every_splice_leaves_a_way_out_over_what_is_under_way() -> void:
 		assert_true(route.escape(feet)["safe"], "seed %d: it leaves a way out" % seed_value)
 		var mark: Vector2 = plan["mark"]
 		assert_true(mark != Vector2.INF, "seed %d: and a mark" % seed_value)
-		assert_false(body.grow(SafeSpotMark.RADIUS).has_point(mark), "seed %d: off his body" % seed_value)
+		assert_false(body.grow(SafeSpotMark.RADIUS + Projector.MARK_CLEARANCE).has_point(mark), "seed %d: well off his body" % seed_value)
 		for lane: Rect2 in lanes:
 			assert_false(lane.has_point(mark), "seed %d: the mark is off every lane" % seed_value)
 	print("splice: %d planned, %d lost before it, slowest %d us" % [planned, lost, slowest])

@@ -12,6 +12,8 @@ const SHOVE := 200.0
 const SHOVE_TIME := 0.16
 const HECKLES: Array[String] = ["Boo!", "Rubbish!", "Hiss!"]
 const SAY_TIME := 0.9
+# Two hecklers nearer than this never call out together.
+const HECKLE_APART := 120.0
 
 var _telegraph := Telegraph.new()
 var _cooldown := 0.0
@@ -26,10 +28,21 @@ static func shove_for(from: Vector2, to: Vector2) -> Vector2:
 	return away.normalized() * SHOVE
 
 
+# Whether another Extra close by is calling out already.
+func _neighbour_heckling(enemy: Enemy) -> bool:
+	if not enemy.is_inside_tree():
+		return false
+	for other: Enemy in enemy.get_tree().get_nodes_in_group("enemies"):
+		if other != enemy and other.def == enemy.def and other._say_left > 0.0 and other.global_position.distance_to(enemy.global_position) < HECKLE_APART:
+			return true
+	return false
+
+
 func tick(enemy: Enemy, delta: float) -> void:
 	if not _heckled:
 		_heckled = true
-		enemy.say(HECKLES[enemy.spawn_index % HECKLES.size()], SAY_TIME)
+		if not _neighbour_heckling(enemy):
+			enemy.say(HECKLES[enemy.get_instance_id() % HECKLES.size()], SAY_TIME)
 	var distance := enemy.global_position.distance_to(enemy.target_ground())
 	if _telegraph.is_active():
 		if _telegraph.tick(delta):

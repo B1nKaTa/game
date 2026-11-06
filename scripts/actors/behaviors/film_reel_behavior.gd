@@ -16,6 +16,8 @@ const WALL_GRACE := 0.05
 const LAY_EVERY := 12.0
 # How far ahead a new way must be open for the reel to roll it.
 const LOOK_AHEAD := 20.0
+# How squarely it must meet a surface for that to count as a bounce (the cosine against its way).
+const HEAD_ON := 0.5
 
 var _telegraph := Telegraph.new()
 var _way := Vector2.ZERO
@@ -66,10 +68,22 @@ func tick(enemy: Enemy, delta: float) -> void:
 	enemy.set_warning_lane(_way, LANE_LENGTH, LANE_WIDTH, false)
 
 
+# Whether it ran into something head on, rather than brushing a wall it rolls along.
+static func ran_into(way: Vector2, normals: Array[Vector2]) -> bool:
+	for normal in normals:
+		if normal.dot(way) < -HEAD_ON:
+			return true
+	return false
+
+
 func _roll(enemy: Enemy, delta: float) -> void:
-	if _rolled_for > WALL_GRACE and enemy.get_slide_collision_count() > 0:
-		_rolling = false
-		return
+	if _rolled_for > WALL_GRACE:
+		var normals: Array[Vector2] = []
+		for i in enemy.get_slide_collision_count():
+			normals.append(enemy.get_slide_collision(i).get_normal())
+		if ran_into(_way, normals):
+			_rolling = false
+			return
 	_rolled_for += delta
 	enemy.hold_lane()
 	enemy.desired_velocity = _way * ROLL_SPEED

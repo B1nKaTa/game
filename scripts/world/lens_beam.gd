@@ -229,10 +229,10 @@ func _draw() -> void:
 	# All it has still to cross shows, so the warning reads wherever he stands.
 	if absf(end - now) > 0.01:
 		var sector := _sector(now, end, LENGTH)
-		draw_colored_polygon(sector, Color(COLOR, 0.1 + (0.12 * fill() if is_warning() else 0.06)))
+		draw_colored_polygon(sector, Color(COLOR, 0.16 + (0.14 * fill() if is_warning() else 0.06)))
 		var edge := _sector(now, end, LENGTH)
 		edge.append(Vector2.ZERO)
-		draw_polyline(edge, Color(COLOR, 0.55), 1.0)
+		draw_polyline(edge, Color(COLOR, 0.8), 2.0)
 	if is_warning():
 		# The line it starts on fills as any warned lane, with the heaviest attack's second outline.
 		var progress := fill()

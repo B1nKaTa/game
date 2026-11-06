@@ -205,9 +205,9 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
 - **The Extra:** 10 health, 125 px/s, 16x22, grey; a 0.4 s windup and a shove that costs a pill and
   pushes him 200 px/s for 0.16 s (only when it lands, so a dodge passes both). It heckles ("Boo!") as
   it steps in. It is the only summon, Crabtree's.
-- **Colours:** Usher violet (0.5, 0.3, 0.8), Vendor popcorn yellow, Reel steel grey, Extra light grey,
-  the Intern Reaper pink (art hue 275 to 325) and the Notary sky blue, so no body is red and each is
-  told apart on the teal carpet.
+- **Colours:** Usher royal blue (0.25, 0.4, 0.95), Vendor popcorn yellow, Reel copper (0.72, 0.5, 0.28),
+  Extra mid grey (0.5), the Intern Reaper pink (art hue 275 to 325), the Notary sky blue, Crabtree olive
+  tweed and the Projectionist khaki, so no body is red and each is told apart on the teal carpet.
 - **Placeholder marks** are drawn by `CinemaMarks` (a cap and torch, a popcorn tray, a reel's spokes and
   hub, a flat cap with film scratches, a critic's beret, monocle and notebook, a projectionist's
   eyeshade and hand projector).
@@ -274,3 +274,18 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
   food-court table and fluorescent panel stay, as the cruise, the airport and the office hang them.
   No layout in any folder used a retired symbol. The `escalator_hum` sound stays in the sound bank,
   unplayed, for the music and sound pass to drop with the golf path's.
+- **Looked at in a real window** (`tools/probes/cinema_look.gd attacks`, 34 shots in
+  `D:\grandpa-shots-pr\cinema_attack_*.png`, each timed by the attack's own state, the boss held each
+  frame between the probe's attacks). Fixed after looking: the violet Usher read as one more plum seat
+  (now royal blue); the light-grey Extras burned to white under the read glow (now mid grey in a dark
+  suit with a pale collar, drawn by its mark, with the reel moved to copper so the two stay apart); the reel stopped and turned on a wall it was only rolling
+  along, so it now bounces only off what it meets head on (`FilmReelBehavior.ran_into`); hecklers side
+  by side printed their calls over one another, so one stays quiet while a neighbour calls; the
+  tumbleweed was small and dark on the seats (now bigger, sandy, outlined); the beam's arc still to
+  cross was a faint tint (now stronger, with a 2 px edge); the splice's lanes filled a little stronger;
+  and the beam's safe spot sat right against his body, where touching him costs a pill, so his marks
+  keep 16 px more clear (`ProjectionistBehavior.MARK_CLEARANCE`). The reel-change shots stand Harold near
+  the north wall so the black screen and the flash are in view; red warnings read on the rain reel's
+  wet floor (a splice over it).
+- **Look hooks:** `CrabtreeBehavior.forced_rating` and `ProjectionistBehavior.forced_reel` let a probe
+  pick the next rating or reel; 0 and -1 leave the choice to them.

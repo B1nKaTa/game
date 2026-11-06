@@ -45,6 +45,8 @@ const PHASE_TWO_COOLDOWN := 0.45
 const PHASE_TWO_SPEED := 1.2
 const PHASE_TWO_WINDUP_SCALE := 0.8
 const KEEP_NEAR := 110.0
+# How far past a mark's own width his body keeps a safe-spot mark.
+const MARK_CLEARANCE := 16.0
 # When nothing he would start leaves a way out, he waits this long and tries again.
 const RETRY := 0.25
 const SAY_TIME := 1.0
@@ -64,6 +66,8 @@ var _beam_left := 0.0
 var _phase_two_seen := false
 var _burn: BurnRing
 var _mark: SafeSpotMark
+# A look probe's pick for his next reel; -1 lets him choose.
+var forced_reel := -1
 var _rng := RandomNumberGenerator.new()
 
 
@@ -173,6 +177,12 @@ static func route_with(room: Rect2, shapes: Dictionary, body: Rect2, is_open: Ca
 	return route
 
 
+# A mark may not go on his body or within a step of it, since touching him costs a pill.
+static func keep_off_body(body: Rect2) -> Callable:
+	var avoid := body.grow(SafeSpotMark.RADIUS + MARK_CLEARANCE)
+	return func(spot: Vector2) -> bool: return avoid.has_area() and avoid.has_point(spot)
+
+
 static func _with(base: Dictionary, rects: Array, circles: Array) -> Dictionary:
 	var shapes := {"rects": base.get("rects", []).duplicate(), "circles": base.get("circles", []).duplicate()}
 	shapes["rects"].append_array(rects)
@@ -184,7 +194,7 @@ static func _with(base: Dictionary, rects: Array, circles: Array) -> Dictionary:
 # him, each way round, until one leaves him a way out over everything under way. Returns {start, turn,
 # mark}, with start INF when none does.
 static func beam_plan(room: Rect2, origin: Vector2, feet: Vector2, base: Dictionary, body := Rect2(), is_open := Callable(), clockwise_first := true) -> Dictionary:
-	var keep_off := HeadOfDeparturesBehavior.keep_off_body(body)
+	var keep_off := keep_off_body(body)
 	var aim := (feet - origin).angle()
 	var arc := deg_to_rad(LensBeam.ARC_DEG)
 	var floor_route: OverlapRoute = null
@@ -207,7 +217,7 @@ static func beam_plan(room: Rect2, origin: Vector2, feet: Vector2, base: Diction
 # a pitch at a time, until one leaves him a way out over everything under way. Returns {lanes, mark},
 # lanes empty when none does.
 static func splice_plan(room: Rect2, feet: Vector2, count: int, warning: float, across_rows_first: bool, base: Dictionary, body := Rect2(), is_open := Callable()) -> Dictionary:
-	var keep_off := HeadOfDeparturesBehavior.keep_off_body(body)
+	var keep_off := keep_off_body(body)
 	var floor_route: OverlapRoute = null
 	for across_rows: bool in [across_rows_first, not across_rows_first]:
 		var axis := Vector2(0, 1) if across_rows else Vector2(1, 0)
@@ -232,7 +242,7 @@ static func splice_plan(room: Rect2, feet: Vector2, count: int, warning: float, 
 # a way out over everything under way. Empty when none does.
 static func lane_plan(room: Rect2, feet: Vector2, look: String, base: Dictionary, rng: RandomNumberGenerator, body := Rect2(), is_open := Callable()) -> Dictionary:
 	var floor_route: OverlapRoute = null
-	var keep_off := HeadOfDeparturesBehavior.keep_off_body(body)
+	var keep_off := keep_off_body(body)
 	var offsets: Array[int] = [0]
 	for k in range(1, LANE_REACH + 1):
 		offsets.append(k)
@@ -375,7 +385,7 @@ func _begin(enemy: Enemy, attack: int, phase_two: bool) -> void:
 			attack = _attack
 		Attack.REEL:
 			_attack = Attack.REEL
-			_reel_kind = ReelChange.next_genre(_last_reel, _rng.randf())
+			_reel_kind = forced_reel if forced_reel >= 0 else ReelChange.next_genre(_last_reel, _rng.randf())
 			var screen := _screen(enemy)
 			if screen != null:
 				screen.cut_to_black(windup_for(Attack.REEL, phase_two) + 0.25)

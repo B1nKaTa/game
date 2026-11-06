@@ -143,6 +143,15 @@ func test_a_blocked_side_turns_it_the_other_way_or_back() -> void:
 	assert_eq(FilmReelBehavior.bounce_turn(Vector2.RIGHT, Vector2(0, 80), both_blocked), Vector2.LEFT, "back the way it came")
 
 
+func test_it_bounces_only_off_what_it_runs_into_head_on() -> void:
+	var wall_ahead: Array[Vector2] = [Vector2.LEFT]
+	assert_true(FilmReelBehavior.ran_into(Vector2.RIGHT, wall_ahead), "a wall across its way")
+	var wall_beside: Array[Vector2] = [Vector2.RIGHT]
+	assert_false(FilmReelBehavior.ran_into(Vector2.DOWN, wall_beside), "a seat it rolls along")
+	var none: Array[Vector2] = []
+	assert_false(FilmReelBehavior.ran_into(Vector2.DOWN, none))
+
+
 func test_its_next_leg_is_warned_long_enough_to_step_aside() -> void:
 	assert_true(FilmReelBehavior.WINDUP * PlayerStats.BASE_WARNING >= 0.2)
 	# It must still roll its own length to reach the spot right ahead of it.

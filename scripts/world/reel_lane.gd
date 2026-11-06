@@ -20,8 +20,8 @@ const COLOR := Color("e4524f")
 const PIE_TIN := Color("c9cdd6")
 const PIE_CREAM := Color("fbf3e6")
 const PIE_CRUST := Color("d9a35a")
-const WEED := Color("a8794a")
-const WEED_DARK := Color("5a3b22")
+const WEED := Color("d8b27a")
+const WEED_DARK := Color("6b4a2a")
 
 var _source: Enemy
 var _direction := Vector2.RIGHT
@@ -197,11 +197,11 @@ func _draw() -> void:
 	var at := Vector2(minf(_travelled, _length), 0.0)
 	if _look == LOOK_TUMBLEWEED:
 		var spin := _travelled / 9.0
-		draw_circle(at, 10.0, Color(WEED, 0.55))
+		draw_circle(at, 12.0, Color(WEED, 0.8))
 		for i in 6:
 			var a := spin + TAU * i / 6.0
-			draw_arc(at + Vector2.from_angle(a) * 3.0, 6.5, a, a + 2.6, 8, WEED_DARK, 1.5)
-		draw_arc(at, 10.0, 0.0, TAU, 16, WEED_DARK, 1.0)
+			draw_arc(at + Vector2.from_angle(a) * 3.5, 7.5, a, a + 2.6, 8, WEED_DARK, 1.5)
+		draw_arc(at, 12.0, 0.0, TAU, 16, Color.BLACK, 1.0)
 	else:
 		draw_set_transform(at.rotated(_direction.angle()), _direction.angle() + _travelled / 30.0)
 		draw_circle(Vector2.ZERO, 9.0, PIE_TIN)

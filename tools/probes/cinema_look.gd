@@ -2,12 +2,13 @@ extends SceneTree
 # Opens a real window and saves screenshots of the Flashback Cinema: small, medium and large rooms with
 # their enemies, the screen at two moments of its flicker (and cut to black, flashed and burning, as
 # the Projectionist will drive it), a lobby card's line near the top of a room and lower down, and the
-# projector's beam in an empty room at both ends of a large one.
+# projector's beam in an empty room at both ends of a large one; and every attack of the Cinema's
+# enemies and bosses (cinema_attack_*.png), each shot timed by the attack's own state.
 # Run only from an exported copy whose config/name is renamed.
-# Args after --: rooms | screen | signs | beam | all
+# Args after --: rooms | screen | signs | beam | attacks | all
 
 const OUT := "D:/grandpa-shots-pr/"
-const WALL_LIMIT_MS := 240000
+const WALL_LIMIT_MS := 420000
 const DIR := "res://data/rooms/flashback_cinema/%s.tres"
 
 var _start := 0
@@ -15,6 +16,8 @@ var scene
 var view: RoomView
 var player: Player
 var progress
+# Called every frame while set, to hold a boss between the attacks the probe starts (lesson 159).
+var _hold := Callable()
 
 
 func _initialize() -> void:
@@ -29,6 +32,8 @@ func _process(_d: float) -> bool:
 		quit(3)
 	if player != null and is_instance_valid(player):
 		player.run.health.heal(99)
+	if _hold.is_valid():
+		_hold.call()
 	return false
 
 
@@ -86,7 +91,7 @@ func _main() -> void:
 	var args := OS.get_cmdline_user_args()
 	var which: String = args[0] if args.size() > 0 else "all"
 	await _new_run()
-	for part in ["rooms", "screen", "signs", "beam"]:
+	for part in ["rooms", "screen", "signs", "beam", "attacks"]:
 		if which == "all" or which == part:
 			await call("_" + part)
 	progress._store.delete_all()
@@ -233,3 +238,235 @@ func _beam() -> void:
 	_stand(_cell(6, 3))
 	await _wait(0.8)
 	await _shot("beam_large_north")
+
+
+# --- every attack of the Cinema's enemies and bosses ---
+
+func _until(check: Callable, limit: float) -> bool:
+	var began := Time.get_ticks_msec()
+	while not check.call() and Time.get_ticks_msec() - began < limit * 1000.0:
+		await process_frame
+	return check.call()
+
+
+func _spawn(id: String, at: Vector2) -> Enemy:
+	return view._spawn_enemy(load("res://data/enemies/%s.tres" % id), at, true)
+
+
+func _of(type) -> Array:
+	var found := []
+	for child in view.get_children():
+		if is_instance_of(child, type) and not child.is_queued_for_deletion():
+			found.append(child)
+	return found
+
+
+func _warned(enemy: Enemy, share: float) -> bool:
+	return is_instance_valid(enemy) and enemy._warning != null and enemy._warning.warning_progress(enemy._warning_share()) > share
+
+
+func _attack_shot(shot_name: String) -> void:
+	await _shot("attack_" + shot_name)
+
+
+func _quiet_combat(file: String) -> RoomLayout:
+	var layout := await _enter(file, RoomLayout.TYPE_COMBAT)
+	await _clear()
+	for coin in _of(Pickup):
+		coin.collect()
+	return layout
+
+
+func _boss_in_room(id: String) -> Enemy:
+	await _until(func(): return not get_nodes_in_group("enemies").is_empty(), 2.0)
+	for enemy in get_nodes_in_group("enemies"):
+		if enemy.def.id == id:
+			return enemy
+	print("no " + id)
+	return null
+
+
+func _attacks() -> void:
+	await _regulars()
+	await _crabtree()
+	await _projectionist()
+
+
+func _regulars() -> void:
+	# The Usher: his torch beam on patrol, then "Shh!" with the beam line warned, then the charge.
+	await _quiet_combat("combat_02")
+	_stand(_cell(5, 7))
+	var usher := _spawn("usher", _cell(13, 7))
+	await _wait(0.8)
+	await _attack_shot("usher_torch_patrol")
+	var b = usher._behavior
+	b._look = usher.global_position.direction_to(player.feet().global_position)
+	b._patrol = usher.global_position
+	b._seen = UsherBehavior.SPOT_TIME * 0.9
+	await _until(func(): return _warned(usher, 0.5), 3.0)
+	await _attack_shot("usher_shh_lane")
+	await _until(func(): return b._charge_left > 0.0 and b._charged_for > 0.1, 2.0)
+	await _attack_shot("usher_charge")
+	await _clear()
+	# The Popcorn Vendor: the tub's mark and spokes as it flies in, then the six kernels.
+	_stand(_cell(6, 7))
+	var vendor := _spawn("popcorn_vendor", _cell(14, 5))
+	vendor._behavior._cooldown = 0.0
+	await _until(func(): return _of(PopcornTub).any(func(tub): return tub.fill() > 0.55), 6.0)
+	await _attack_shot("popcorn_tub_mark")
+	await _until(func(): return _of(PopcornTub).any(func(tub): return tub.has_landed()), 2.0)
+	await _wait(0.12)
+	await _attack_shot("popcorn_kernels")
+	await _clear()
+	# The Runaway Film Reel: its warned leg, the strip it lays, and the turn toward him at a bounce.
+	_stand(_cell(10, 8))
+	var reel := _spawn("film_reel", _cell(4, 4))
+	await _until(func(): return _warned(reel, 0.4), 3.0)
+	await _attack_shot("film_reel_first_leg")
+	await _until(func(): return _of(FilmTrail).any(func(trail): return trail.piece_count() > 14), 6.0)
+	await _attack_shot("film_reel_trail")
+	var first_way: Vector2 = reel._behavior._way
+	await _until(func(): return is_instance_valid(reel) and reel._behavior._way != first_way and _warned(reel, 0.3), 8.0)
+	await _attack_shot("film_reel_bounce_turn")
+	var trails := _of(FilmTrail)
+	if not trails.is_empty() and trails[0].piece_count() > 0:
+		var trail = trails[0]
+		_stand(trail._pieces[trail.piece_count() - 1][0])
+		await _wait(0.3)
+		await _attack_shot("film_reel_trail_slows")
+	await _clear()
+	# The Extra: grey, with its shove warned.
+	_stand(_cell(9, 7))
+	var extra := _spawn("extra", _cell(12, 7))
+	await _until(func(): return _warned(extra, 0.4), 4.0)
+	await _attack_shot("extra_shove")
+	await _clear()
+	await _wait(0.5)
+
+
+func _crabtree() -> void:
+	await _enter("mini_boss_01", RoomLayout.TYPE_MINI_BOSS)
+	var boss := await _boss_in_room("crabtree")
+	if boss == null:
+		return
+	var b = boss._behavior
+	var center: Vector2 = boss.global_position
+	_hold = func():
+		if is_instance_valid(boss) and not b._telegraph.is_active():
+			b._cooldown = 99.0
+			b._review_timer = maxf(b._review_timer, 0.5)
+	_stand(center + Vector2(-110, 30))
+	await _wait(0.8)
+	for rating in [1, 5]:
+		b.forced_rating = rating
+		b._begin(boss, CrabtreeBehavior.Attack.STARS)
+		await _until(func(): return _warned(boss, 0.6), 2.0)
+		await _attack_shot("crabtree_stars_%d_lanes" % rating)
+		await _until(func(): return not b._telegraph.is_active(), 2.0)
+		await _wait(0.18)
+		await _attack_shot("crabtree_stars_%d_flying" % rating)
+		await _wait(1.2)
+	b._begin(boss, CrabtreeBehavior.Attack.THUMBS)
+	await _until(func(): return _warned(boss, 0.6), 2.0)
+	await _attack_shot("crabtree_thumbs_down_warned")
+	await _until(func(): return _of(Shockwave).any(func(ring): return ring.is_growing() and ring.radius_now() > 70.0), 2.0)
+	await _attack_shot("crabtree_thumbs_down_ring")
+	await _wait(0.8)
+	_hold = func():
+		if is_instance_valid(boss) and not b._telegraph.is_active():
+			b._cooldown = 99.0
+	b._review_timer = 0.0
+	await _until(func(): return not _of(SummonMark).is_empty(), 2.0)
+	await _wait(0.3)
+	await _attack_shot("crabtree_bad_review_marks")
+	await _until(func(): return _of(SummonMark).is_empty(), 2.0)
+	await _wait(0.4)
+	await _attack_shot("crabtree_hecklers")
+	_hold = Callable()
+	await _clear()
+
+
+func _projectionist() -> void:
+	await _enter("floor_boss_large_01", RoomLayout.TYPE_FLOOR_BOSS)
+	var boss := await _boss_in_room("projectionist")
+	if boss == null:
+		return
+	var b = boss._behavior
+	var center: Vector2 = boss.global_position
+	_hold = func():
+		if is_instance_valid(boss) and not b._telegraph.is_active():
+			b._cooldown = 99.0
+			b._since_reel = -99.0
+	_stand(center + Vector2(-120, 40))
+	await _wait(0.9)
+	await _attack_shot("projectionist_boss_bar")
+	var screen := CinemaScreen.in_room(view)
+	# The reel changes, with the screen in view: the cut to black and the flash, then each reel's hazard.
+	_stand(_cell(9, 5))
+	await _wait(0.6)
+	for kind in [ReelChange.Genre.RAIN, ReelChange.Genre.COMEDY, ReelChange.Genre.WESTERN]:
+		b.forced_reel = kind
+		b._begin(boss, ProjectionistBehavior.Attack.REEL, false)
+		if kind == ReelChange.Genre.RAIN:
+			await _until(func(): return screen != null and screen.darkness() > 0.9, 1.0)
+			await _attack_shot("reel_change_black_screen")
+			await _until(func(): return b.reel() != null, 1.5)
+			await _attack_shot("reel_change_flash")
+			await _wait(0.8)
+			await _attack_shot("reel_rain_floor")
+			# Warnings must still read on the wet floor.
+			b._begin(boss, ProjectionistBehavior.Attack.SPLICE, false)
+			await _until(func(): return _of(SpliceLane).any(func(lane): return lane.fill() > 0.6), 2.0)
+			await _attack_shot("reel_rain_with_splice")
+			await _until(func(): return _of(SpliceLane).is_empty(), 2.0)
+		else:
+			await _until(func(): return b.reel() != null, 1.5)
+			var look := "pie" if kind == ReelChange.Genre.COMEDY else "tumbleweed"
+			await _until(func(): return _of(ReelLane).any(func(lane): return lane.is_warning() and lane.fill() > 0.6), 3.0)
+			await _attack_shot("reel_%s_lanes" % look)
+			await _until(func(): return _of(ReelLane).any(func(lane): return not lane.is_warning() and lane.travelled() > 160.0), 3.0)
+			await _attack_shot("reel_%s_flying" % look)
+		var running = b.reel()
+		if running != null:
+			running._left = 0.05
+		for wet in _of(WetSplash):
+			wet._left = 0.05
+		await _until(func(): return _of(ReelLane).is_empty(), 4.0)
+		await _wait(0.3)
+	# The lens beam, the heaviest attack: early and late in its windup, then sweeping.
+	boss.global_position = center
+	_stand(center + Vector2(-120, 40))
+	await _wait(0.2)
+	b._begin(boss, ProjectionistBehavior.Attack.BEAM, false)
+	await _until(func(): return _of(LensBeam).any(func(beam): return beam.fill() > 0.3), 2.0)
+	await _attack_shot("lens_beam_warning_early")
+	await _until(func(): return _of(LensBeam).any(func(beam): return beam.fill() > 0.85), 2.0)
+	await _attack_shot("lens_beam_warning_late")
+	await _until(func(): return _of(LensBeam).any(func(beam): return beam.is_sweeping() and beam._swept > LensBeam.SWEEP_TIME * 0.45), 4.0)
+	await _attack_shot("lens_beam_sweeping")
+	await _until(func(): return _of(LensBeam).is_empty(), 4.0)
+	# The splice: the film lanes warned, then snapping shut.
+	await _wait(0.3)
+	b._begin(boss, ProjectionistBehavior.Attack.SPLICE, false)
+	await _until(func(): return _of(SpliceLane).any(func(lane): return lane.fill() > 0.6), 2.0)
+	await _attack_shot("splice_lanes_warned")
+	await _until(func(): return _of(SpliceLane).any(func(lane): return lane.has_snapped()), 2.0)
+	await _wait(0.05)
+	await _attack_shot("splice_snapped")
+	await _wait(0.6)
+	# Phase two: the film catches fire, and a splice over the burn.
+	boss.hp = boss.max_hp() * 0.45
+	await _until(func(): return b.burn() != null, 1.0)
+	if b.burn() != null:
+		b.burn()._radius = b.burn().cap() * 0.6
+	_stand(_cell(10, 6))
+	await _wait(0.5)
+	await _attack_shot("phase_two_burn_ring")
+	_stand(center + Vector2(-60, 90))
+	await _wait(0.2)
+	b._begin(boss, ProjectionistBehavior.Attack.SPLICE, true)
+	await _until(func(): return _of(SpliceLane).any(func(lane): return lane.fill() > 0.6), 2.0)
+	await _attack_shot("phase_two_splice_over_burn")
+	await _wait(0.8)
+	_hold = Callable()
+	await _clear()

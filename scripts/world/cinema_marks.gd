@@ -17,6 +17,8 @@ const REEL_HOLE := Color("15131a")
 const REEL_HUB := Color("e8e2d6")
 const FILM := Color(0.07, 0.06, 0.05)
 const EXTRA_CAP := Color("4a4a4a")
+const EXTRA_SUIT := Color("2c2c30")
+const EXTRA_COLLAR := Color("d8d8d8")
 const GRAIN := Color(1.0, 1.0, 1.0, 0.35)
 const BERET := Color("7a2f3a")
 const NOTEBOOK := Color("fbf7ef")
@@ -62,7 +64,10 @@ static func draw_mark(canvas: CanvasItem, mark: String, half: Vector2) -> void:
 			canvas.draw_circle(Vector2.ZERO, r * 0.2, REEL_HUB)
 			canvas.draw_rect(Rect2(-r * 0.2, r - 2.0, r * 1.2, 3.0), FILM)
 		"film_extra":
-			# A flat cap and the grain and scratches of old black-and-white film over him.
+			# A dark suit with a pale collar, a flat cap, and the grain and scratches of old
+			# black-and-white film over him, so a grey body never reads as a plain pale box.
+			canvas.draw_rect(Rect2(-half.x, -half.y * 0.25, half.x * 2.0, half.y * 1.25), EXTRA_SUIT)
+			canvas.draw_rect(Rect2(-half.x * 0.45, -half.y * 0.35, half.x * 0.9, 3.0), EXTRA_COLLAR)
 			canvas.draw_rect(Rect2(-half.x * 0.7, -half.y - 2.0, half.x * 1.5, 3.0), EXTRA_CAP)
 			canvas.draw_rect(Rect2(half.x * 0.3, -half.y - 1.0, half.x * 0.6, 2.0), EXTRA_CAP)
 			canvas.draw_line(Vector2(-half.x * 0.3, -half.y + 3.0), Vector2(-half.x * 0.2, half.y - 1.0), GRAIN, 1.0)

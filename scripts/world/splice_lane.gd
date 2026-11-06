@@ -103,7 +103,7 @@ func _draw() -> void:
 	var across_x := strip.size.x < strip.size.y
 	if not _snapped:
 		var progress := fill()
-		draw_rect(strip, Color(COLOR, 0.15 + 0.3 * progress))
+		draw_rect(strip, Color(COLOR, 0.2 + 0.35 * progress))
 		draw_rect(strip, COLOR, false, 2.0)
 		_draw_film(strip, across_x, 0.0)
 		return
