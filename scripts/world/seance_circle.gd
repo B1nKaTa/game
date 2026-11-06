@@ -11,7 +11,7 @@ extends Node2D
 # 0.85 dark; this one drifts on its own, is LIGHT_RADIUS wide, and the room around it is only DIM dark.
 # Warnings, shots and marks draw above it, as they draw above Lights Out. It goes out when she falls.
 const Z := LightsOut.Z
-const LIGHT_RADIUS := 132.0
+const LIGHT_RADIUS := 120.0
 const DIM := 0.5
 const CLEAR_SHARE := 0.8
 const DRIFT_SPEED := 12.0

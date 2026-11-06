@@ -780,7 +780,7 @@ func test_madame_zara_is_clearly_harder_than_mortimer_and_the_projectionist_and_
 	assert_eq(def.display_name, "Madame Zara, the Medium")
 	assert_eq(def.body_size, ZARA_BODY)
 	assert_eq(def.art(), "madame_zara")
-	assert_true(absf(def.max_hp * HOTLINE_HEALTH - 1950.0) < 0.5, str(def.max_hp * HOTLINE_HEALTH))
+	assert_true(absf(def.max_hp * HOTLINE_HEALTH - 2300.0) < 0.5, str(def.max_hp * HOTLINE_HEALTH))
 	assert_near(def.speed, 80.0)
 	assert_eq(def.pension_drop, 16)
 	assert_eq(def.summon.id, "ectoplasm", "she manifests the hotline's own summon")
@@ -788,7 +788,9 @@ func test_madame_zara_is_clearly_harder_than_mortimer_and_the_projectionist_and_
 	for id in ["mortimer_grimsby", "projectionist"]:
 		assert_true(def.max_hp * HOTLINE_HEALTH >= _load(id).max_hp * FLOOR_THREE_HEALTH * 1.1, id)
 	var commodore := _load("commodore_wellington")
-	assert_true(absf(def.max_hp - commodore.max_hp) < 0.5, "as tough as the other fourth-floor boss")
+	assert_true(def.max_hp >= commodore.max_hp, "at least as tough as the other fourth-floor boss (2300 against 1950, Task 6's tuning)")
+	for id in ["augustine", "chairman_of_the_board"]:
+		assert_true(def.max_hp * HOTLINE_HEALTH < _load(id).max_hp * 2.6, "still under the fifth floor's %s" % id)
 	assert_true(def.body_size.x >= _load("mortimer_grimsby").body_size.x)
 	assert_true(Medium.BASE_COOLDOWN < FuneralDirectorBehavior.BASE_COOLDOWN)
 	assert_true(Medium.BASE_COOLDOWN < ProjectionistBehavior.BASE_COOLDOWN)
@@ -1297,11 +1299,38 @@ func test_she_calls_holds_him_and_runs_the_board_alongside() -> void:
 	assert_true(tether.is_held(), "the line locks")
 	assert_eq(grandpa.held_at, Vector2(300, 210))
 	assert_true(behavior.planchette() != null or behavior.ghost() != null, "an attack runs alongside")
-	assert_true(zara.desired_velocity.is_zero_approx(), "she holds still while it holds")
+	while time < Medium.LINE_WINDUP + Medium.OUIJA_WINDUP + 0.1:
+		_medium_frame(behavior, zara, room)
+		time += FRAME
+	assert_true(tether.is_held(), "the line still holds")
+	assert_true(behavior._still_left <= 0.0, "she walks on while it holds, still only through windups")
 	while time < Medium.LINE_WINDUP + LineTether.HOLD + 0.1:
 		_medium_frame(behavior, zara, room)
 		time += FRAME
 	assert_true(grandpa.let_go >= 1, "he is let go")
+	room.free()
+	grandpa.free()
+
+
+func test_a_board_may_bring_a_possession_along_planned_over_it() -> void:
+	assert_true(Medium.alongside_chance(false) > 0.0 and Medium.alongside_chance(false) <= Medium.alongside_chance(true))
+	assert_true(Medium.alongside_chance(true) <= 1.0)
+	var grandpa := LeashTarget.new()
+	grandpa.position = Vector2(300, 210)
+	var room := Node2D.new()
+	var zara := _zara(Vector2(480, 150), grandpa)
+	room.add_child(zara)
+	var behavior := MadameZaraBehavior.new()
+	behavior._cooldown = 99.0
+	var time := 0.0
+	while time < 2.3:
+		grandpa.position = Vector2(300.0 + 20.0 * sin(time * 3.0), 210.0)
+		_medium_frame(behavior, zara, room)
+		time += FRAME
+	assert_true(behavior._start_ouija(zara), "the board")
+	assert_true(behavior._alongside(zara, Medium.Attack.OUIJA, false), "a possession alongside")
+	assert_true(behavior.planchette() != null and behavior.ghost() != null, "both under way")
+	assert_eq(behavior.attack(), Medium.Attack.OUIJA, "her own windup stays the board's")
 	room.free()
 	grandpa.free()
 
@@ -1629,7 +1658,7 @@ func test_she_manifests_two_ectoplasm_never_past_five_and_they_pay_nothing() -> 
 	assert_eq(Medium.ectoplasm_count(5), 0)
 	assert_eq(Medium.ectoplasm_count(9), 0)
 	assert_eq(Medium.MAX_ENEMIES, 5)
-	assert_near(Medium.ECTOPLASM_EVERY, 12.0)
+	assert_near(Medium.ECTOPLASM_EVERY, 8.0)
 	assert_false(BossMoves.can_summon(5, Medium.MAX_ENEMIES))
 	var source := FileAccess.get_file_as_string("res://scripts/actors/behaviors/madame_zara_behavior.gd")
 	assert_true(source.contains("enemy.request_summon_at("), "on marked spots")

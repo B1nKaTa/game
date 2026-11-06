@@ -15,7 +15,7 @@ extends EnemyBehavior
 #   through it, and spirits outside the ring swoop at him whenever he stands outside it (SeanceCircle).
 #   Her other attacks go on, planned to keep him in the light; she moves quicker and winds up quicker,
 #   but never the Ouija board's warning.
-# - Every twelve seconds she manifests two Ectoplasm on marked spots, never past five in the room, and
+# - Every eight seconds she manifests two Ectoplasm on marked spots, never past five in the room, and
 #   they pay nothing.
 # Every attack is planned with OverlapRoute over everything already under way (ProjectionistBehavior's
 # planning): she picks the first that leaves him a way out, marks a spot that stays safe, and waits a
@@ -41,12 +41,15 @@ const OUIJA_LONGEST := 4.0
 const OUIJA_START_PICK := 3
 # How far apart in time the copy's steps are kept.
 const TRAIL_STEP := 0.05
-# Her rests: the Club President's slot, as short as the Commodore's, shorter than the Projectionist's.
-const BASE_COOLDOWN := 0.6
-const PHASE_TWO_COOLDOWN := 0.42
+# Her rests: shorter than the Commodore's (0.6 and 0.42 left her far easier than Thaddeus for the bot).
+const BASE_COOLDOWN := 0.5
+const PHASE_TWO_COOLDOWN := 0.35
 const PHASE_TWO_SPEED := 1.2
 const PHASE_TWO_WINDUP_SCALE := 0.8
 const KEEP_NEAR := 110.0
+# How often a board or a possession she starts on her own brings the other along (Task 6's tuning).
+const ALONGSIDE_CHANCE := 0.75
+const PHASE_TWO_ALONGSIDE_CHANCE := 1.0
 const WARNING_RADIUS := 40.0
 # When nothing she would start leaves a way out, she waits this long and tries again.
 const RETRY := 0.25
@@ -55,7 +58,7 @@ const SAY_TIME := 1.0
 const LIGHT_HORIZON := 3.0
 const MAX_ENEMIES := 5
 const ECTOPLASM_COUNT := 2
-const ECTOPLASM_EVERY := 12.0
+const ECTOPLASM_EVERY := 8.0
 const FIRST_ECTOPLASM := 5.0
 const SUMMON_DISTANCE := 100.0
 const SUMMON_SPREAD := 0.9
@@ -96,6 +99,11 @@ static func is_phase_two(hp: float, max_hp: float) -> bool:
 
 static func cooldown_for(phase_two: bool) -> float:
 	return PHASE_TWO_COOLDOWN if phase_two else BASE_COOLDOWN
+
+
+# How often a board or a possession brings the other along.
+static func alongside_chance(phase_two: bool) -> float:
+	return PHASE_TWO_ALONGSIDE_CHANCE if phase_two else ALONGSIDE_CHANCE
 
 
 # The second phase quickens her windups, but never the board's extra-clear warning.
@@ -223,7 +231,8 @@ func tick(enemy: Enemy, delta: float) -> void:
 			_finish_attack(enemy, phase_two)
 		return
 	_cooldown -= delta
-	# She holds still while her line holds and her board's planchette slides, as a medium at her table.
+	# She holds still through each windup only, then walks on while her line holds and her planchette
+	# slides (Task 6: standing through them gave the bot several seconds of free swings).
 	if _still_left > 0.0:
 		return
 	var speed := enemy.def.speed * (PHASE_TWO_SPEED if phase_two else 1.0)
@@ -271,8 +280,20 @@ func _begin(enemy: Enemy, attack: int, phase_two: bool) -> void:
 				started = _start_possession(enemy, phase_two)
 		if started:
 			_main = option
+			if option != Attack.LINE and _rng.randf() < alongside_chance(phase_two):
+				_alongside(enemy, option, phase_two)
 			return
 	_cooldown = RETRY
+
+
+# The board and a possession may run together: the second is planned over the first, so a way out
+# still stands, and it shows its own warning; she says only the first's line.
+func _alongside(enemy: Enemy, main: int, phase_two: bool) -> bool:
+	if main == Attack.OUIJA:
+		return _start_possession(enemy, phase_two, Callable(), false)
+	if main == Attack.POSSESSION:
+		return _start_ouija(enemy, Callable(), false)
+	return false
 
 
 func _finish_attack(enemy: Enemy, phase_two: bool) -> void:
@@ -309,7 +330,7 @@ func _start_line(enemy: Enemy, phase_two: bool) -> bool:
 	enemy.set_warning(_telegraph, WARNING_RADIUS)
 	_anim(enemy, "tether_call", windup)
 	enemy.say("You have a call...", SAY_TIME)
-	_still_left = windup + LineTether.HOLD
+	_still_left = windup
 	return true
 
 
@@ -346,7 +367,7 @@ func _lock_line(enemy: Enemy, phase_two: bool) -> void:
 
 # --- the Ouija board ---
 
-func _start_ouija(enemy: Enemy, is_open := Callable()) -> bool:
+func _start_ouija(enemy: Enemy, is_open := Callable(), lead := true) -> bool:
 	if enemy.get_parent() == null:
 		return false
 	var open := is_open if is_open.is_valid() else _plan_open(enemy)
@@ -354,24 +375,25 @@ func _start_ouija(enemy: Enemy, is_open := Callable()) -> bool:
 	var path: Array = plan["path"]
 	if path.is_empty():
 		return false
-	_attack = Attack.OUIJA
 	_planchette = OuijaPlanchette.new()
 	_planchette.setup(enemy, plan["path"], OUIJA_WINDUP, OUIJA_DAMAGE, plan["word"])
 	enemy.get_parent().add_child(_planchette)
 	_planchette.global_position = Vector2.ZERO
 	var slide := OuijaPlanchette.slide_time(plan["path"])
-	_telegraph.start(OUIJA_WINDUP)
-	enemy.set_warning(_telegraph, WARNING_RADIUS, OUIJA_SHOWN_WHOLE)
-	_anim(enemy, "attack", OUIJA_WINDUP)
-	enemy.say("The spirits will spell it out...", SAY_TIME)
-	_still_left = maxf(_still_left, OUIJA_WINDUP + slide)
+	if lead:
+		_attack = Attack.OUIJA
+		_telegraph.start(OUIJA_WINDUP)
+		enemy.set_warning(_telegraph, WARNING_RADIUS, OUIJA_SHOWN_WHOLE)
+		_anim(enemy, "attack", OUIJA_WINDUP)
+		enemy.say("The spirits will spell it out...", SAY_TIME)
+	_still_left = maxf(_still_left, OUIJA_WINDUP)
 	_place_mark(enemy, plan["mark"], OUIJA_WINDUP + slide)
 	return true
 
 
 # --- Possession ---
 
-func _start_possession(enemy: Enemy, phase_two: bool, is_open := Callable()) -> bool:
+func _start_possession(enemy: Enemy, phase_two: bool, is_open := Callable(), lead := true) -> bool:
 	if enemy.get_parent() == null or not _trail.covers(_clock):
 		return false
 	var windup := windup_for(Attack.POSSESSION, phase_two)
@@ -380,15 +402,16 @@ func _start_possession(enemy: Enemy, phase_two: bool, is_open := Callable()) -> 
 	var plan := possession_plan(_room(enemy), trail, TRAIL_STEP, windup, enemy.target_ground(), _live(enemy), enemy.body_rect(), open)
 	if not plan["safe"]:
 		return false
-	_attack = Attack.POSSESSION
 	_ghost = PossessionGhost.new()
 	_ghost.setup(enemy, trail, TRAIL_STEP, windup, POSSESSION_DAMAGE)
 	enemy.get_parent().add_child(_ghost)
 	_ghost.global_position = Vector2.ZERO
-	_telegraph.start(windup)
-	enemy.set_warning(_telegraph, WARNING_RADIUS)
-	_anim(enemy, "possession", windup)
-	enemy.say("Let me in...", SAY_TIME)
+	if lead:
+		_attack = Attack.POSSESSION
+		_telegraph.start(windup)
+		enemy.set_warning(_telegraph, WARNING_RADIUS)
+		_anim(enemy, "possession", windup)
+		enemy.say("Let me in...", SAY_TIME)
 	_still_left = maxf(_still_left, windup)
 	_place_mark(enemy, plan["mark"], windup + PossessionGhost.LIFE)
 	return true

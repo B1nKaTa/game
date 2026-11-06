@@ -8,7 +8,7 @@
 script = ExtResource("1")
 id = "madame_zara"
 display_name = "Madame Zara, the Medium"
-max_hp = 886.364
+max_hp = 1045.455
 speed = 80.0
 pension_drop = 16
 is_boss = true
