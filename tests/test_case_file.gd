@@ -121,11 +121,11 @@ func test_the_bestiary_names_a_floor_for_every_enemy_and_leaves_out_the_dummy() 
 	assert_true(by_id["intern_reaper"]["known"])
 	assert_eq(int(by_id["intern_reaper"]["count"]), 1)
 	assert_true(by_id["regional_reaper"]["known"], "a boss beaten before the file still counts as met")
-	assert_false(by_id["mall_santa"]["known"])
+	assert_false(by_id["projectionist"]["known"])
 	var detail := CaseFileData.enemy_detail(by_id["intern_reaper"])
 	assert_eq(detail[0], by_id["intern_reaper"]["def"].display_name)
 	assert_true(" ".join(PackedStringArray(detail)).contains("Found on:"))
-	assert_eq(CaseFileData.enemy_detail(by_id["mall_santa"])[0], CaseFileData.UNKNOWN_NAME)
+	assert_eq(CaseFileData.enemy_detail(by_id["projectionist"])[0], CaseFileData.UNKNOWN_NAME)
 
 
 # An enemy the save met that no EnemyDef answers any more (a retired path's boss) stays as history:

@@ -328,18 +328,18 @@ func test_he_never_does_the_same_thing_twice_running_and_uses_all_four() -> void
 	assert_eq(seen.size(), 4)
 
 
-func test_fairweather_is_clearly_harder_than_mortimer_and_the_mall_santa() -> void:
+func test_fairweather_is_clearly_harder_than_mortimer_and_the_projectionist() -> void:
 	var def := _load("thaddeus_fairweather")
 	assert_true(def.is_boss)
 	assert_true(absf(def.max_hp * GOLF_HEALTH - 1950.0) < 0.5, str(def.max_hp * GOLF_HEALTH))
 	assert_eq(def.pension_drop, 16)
-	for id in ["mortimer_grimsby", "mall_santa"]:
+	for id in ["mortimer_grimsby", "projectionist"]:
 		assert_true(def.max_hp * GOLF_HEALTH >= _load(id).max_hp * FLOOR_THREE_HEALTH * 1.1, id)
 	assert_true(def.body_size.x >= _load("mortimer_grimsby").body_size.x)
 	assert_true(ClubPresidentBehavior.BASE_COOLDOWN < FuneralDirectorBehavior.BASE_COOLDOWN)
-	assert_true(ClubPresidentBehavior.BASE_COOLDOWN < MallSantaBehavior.BASE_COOLDOWN)
+	assert_true(ClubPresidentBehavior.BASE_COOLDOWN < ProjectionistBehavior.BASE_COOLDOWN)
 	assert_true(ClubPresidentBehavior.PHASE_TWO_COOLDOWN < FuneralDirectorBehavior.PHASE_TWO_COOLDOWN)
-	assert_true(ClubPresidentBehavior.PHASE_TWO_COOLDOWN < MallSantaBehavior.PHASE_TWO_COOLDOWN)
+	assert_true(ClubPresidentBehavior.PHASE_TWO_COOLDOWN < ProjectionistBehavior.PHASE_TWO_COOLDOWN)
 	assert_true(ClubPresidentBehavior.HOLE_IN_ONE_DAMAGE > Enemy.HEAVY_DAMAGE)
 
 

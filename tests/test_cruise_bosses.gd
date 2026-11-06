@@ -287,19 +287,19 @@ func test_the_swabbed_decks_follow_the_plan() -> void:
 	assert_true(walk > Commodore.WET_RADIUS * 2.0, "%f" % walk)
 
 
-func test_the_commodore_is_clearly_harder_than_mortimer_and_the_mall_santa() -> void:
+func test_the_commodore_is_clearly_harder_than_mortimer_and_the_projectionist() -> void:
 	var def := _load("commodore_wellington")
 	assert_true(def.is_boss)
 	assert_eq(def.id, "commodore_wellington")
 	assert_eq(def.display_name, "Commodore Wellington")
 	assert_true(absf(def.max_hp * CRUISE_HEALTH - 1950.0) < 0.5, str(def.max_hp * CRUISE_HEALTH))
 	assert_eq(def.pension_drop, 16)
-	for id in ["mortimer_grimsby", "mall_santa"]:
+	for id in ["mortimer_grimsby", "projectionist"]:
 		assert_true(def.max_hp * CRUISE_HEALTH >= _load(id).max_hp * FLOOR_THREE_HEALTH * 1.1, id)
 	assert_true(Commodore.BASE_COOLDOWN < FuneralDirectorBehavior.BASE_COOLDOWN)
 	assert_true(Commodore.PHASE_TWO_COOLDOWN < FuneralDirectorBehavior.PHASE_TWO_COOLDOWN)
-	assert_true(Commodore.BASE_COOLDOWN < MallSantaBehavior.BASE_COOLDOWN)
-	assert_true(Commodore.PHASE_TWO_COOLDOWN < MallSantaBehavior.PHASE_TWO_COOLDOWN)
+	assert_true(Commodore.BASE_COOLDOWN < ProjectionistBehavior.BASE_COOLDOWN)
+	assert_true(Commodore.PHASE_TWO_COOLDOWN < ProjectionistBehavior.PHASE_TWO_COOLDOWN)
 	assert_true(Commodore.ANCHOR_DAMAGE > Enemy.HEAVY_DAMAGE)
 	assert_true(def.summon == null, "he calls nobody")
 

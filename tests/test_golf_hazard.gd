@@ -54,7 +54,7 @@ func test_the_player_and_enemies_read_the_sand() -> void:
 
 func test_walkers_and_bosses_wade_but_ghosts_mounds_and_fixtures_never_touch_it() -> void:
 	assert_true(SandTrap.wades(_load("intern_reaper"), false))
-	assert_true(SandTrap.wades(_load("mall_santa"), false), "a boss wades as anyone does")
+	assert_true(SandTrap.wades(_load("projectionist"), false), "a boss wades as anyone does")
 	assert_false(SandTrap.wades(_load("intern_reaper"), true), "underground it passes under")
 	assert_false(SandTrap.wades(_load("debt_ghost"), false), "a ghost floats over")
 	assert_false(SandTrap.wades(_load("steam_valve"), false), "bolted to the wall")

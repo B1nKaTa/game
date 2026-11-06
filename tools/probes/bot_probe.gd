@@ -251,17 +251,11 @@ func _attribute(scene) -> void:
 		elif child is PipeRing and child.damage() > 0 and absf(child.global_position.distance_to(scene.player.feet().global_position) - child.radius_now()) < 24.0:
 			name = "crescendo"
 			d = 0.0
-		elif child is ClosingRing:
-			name = "closing_ring"
-			d = 0.0
 		elif child is ProcessionLane and child.is_marching():
 			name = "procession"
 			d = 0.0
 		elif child is CollectionPlate and child.is_flying():
 			name = "plate"
-			d = 0.0
-		elif child is PresentDrop and d < 30.0:
-			name = "present"
 			d = 0.0
 		elif child is AnchorDrop or child is QuoitRing or child is WriteUpMark or child is GroundStrike:
 			if d < 60.0:
@@ -734,21 +728,6 @@ class Bot extends Node:
 						var away: Vector2 = at.direction_to(feet)
 						escape += away if away != Vector2.ZERO else Vector2.RIGHT
 						break
-			elif child is PresentDrop and not child._landed:
-				if _seen_for(child) and feet.distance_to(child.global_position) < PresentDrop.RADIUS + 12.0:
-					var away2: Vector2 = child.global_position.direction_to(feet)
-					escape += away2 if away2 != Vector2.ZERO else Vector2.RIGHT
-					_want_dodge(child.get_instance_id())
-			elif child is ClosingRing:
-				if not _seen_for(child):
-					continue
-				var d: float = feet.distance_to(child.global_position)
-				var r: float = child.radius_now()
-				if d < r + 10.0:
-					var out: Vector2 = child.global_position.direction_to(feet)
-					escape += out if out != Vector2.ZERO else Vector2.RIGHT
-					if child._left <= 0.0 and absf(d - r) < 22.0:
-						_want_dodge(child.get_instance_id() + int(r / 20.0))
 			elif child is PipeRing and child.damage() > 0:
 				var d2: float = feet.distance_to(child.global_position)
 				if d2 > child.radius_now() and d2 - child.radius_now() < 20.0 and d2 < child.reach():

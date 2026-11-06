@@ -297,14 +297,14 @@ static func is_passing_effect(child: Node) -> bool:
 	if ItemFx.is_passing_effect(child):
 		return true
 	# The Flashback Cinema
-	if child is PopcornTub or child is FilmTrail:
+	if child is PopcornTub or child is FilmTrail or child is LensBeam or child is SpliceLane or child is ReelLane or child is ReelChange or child is BurnRing:
 		return true
 
 	return (child is Projectile or child is DeathBurst or child is Thermos or child is EnemyBlast
 		or child is SummonMark or child is GroundStrike or child is LightsOut or child is SteamJet
 		or child is Shockwave or child is FlameBurst or child is PipeRing or child is CollectionPlate
 		or child is ProcessionLane or child is SafeSpotMark or child is PerfumeCloud or child is WetSplash
-		or child is DroppedCoffin or child is PresentDrop or child is ClosingRing
+		or child is DroppedCoffin
 		or child is TapeSpread or child is PaperTrail or child is WriteUpMark or child is LaneDrop or child is HoldMusic
 		or child is TakeoverTether
 		or GolfProps.is_passing_effect(child)

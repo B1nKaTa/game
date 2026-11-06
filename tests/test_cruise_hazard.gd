@@ -169,7 +169,7 @@ func test_walkers_slide_but_bosses_and_running_charges_never_do() -> void:
 	orderly.hold_lane()
 	assert_false(orderly.slides_with_roll(), "a running charge holds its lane")
 	orderly.free()
-	for id in ["mortimer_grimsby", "reverend", "mall_santa"]:
+	for id in ["mortimer_grimsby", "reverend", "projectionist"]:
 		var boss := Enemy.new()
 		boss.setup(_load(id), null, 0.5)
 		assert_false(boss.slides_with_roll(), "%s keeps his footing" % id)

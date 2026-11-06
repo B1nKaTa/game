@@ -37,7 +37,7 @@ const WET_RADIUS := 26.0
 const WET_WARNING := 0.9
 const WET_TIME := 5.0
 const WARNING_RADIUS := 42.0
-# Shorter than Mortimer's 0.65 and 0.45 and the Mall Santa's, as he must be clearly harder than both.
+# Shorter than Mortimer's 0.65 and 0.45 and the Projectionist's, as he must be clearly harder than both.
 const BASE_COOLDOWN := 0.6
 const PHASE_TWO_COOLDOWN := 0.42
 const PHASE_TWO_SPEED := 1.2

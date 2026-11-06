@@ -702,11 +702,11 @@ func test_the_chairman_is_clearly_harder_than_every_floor_boss_before_him() -> v
 	assert_true(absf(def.max_hp * OFFICE_HEALTH - 2500.0) < 0.5, str(def.max_hp * OFFICE_HEALTH))
 	assert_true(def.max_hp > _load("augustine").max_hp, "more than Augustine, who stands just below him")
 	assert_true(def.max_hp * OFFICE_HEALTH >= FLOOR_FOUR_BOSS * 1.1, "the fourth floor's bosses, about 1950 by the spec")
-	for id in ["mortimer_grimsby", "mall_santa"]:
+	for id in ["mortimer_grimsby", "projectionist"]:
 		assert_true(def.max_hp * OFFICE_HEALTH >= _load(id).max_hp * FLOOR_THREE_HEALTH * 1.1, id)
 	assert_true(Chairman.BASE_COOLDOWN < FuneralDirectorBehavior.BASE_COOLDOWN)
-	assert_true(Chairman.BASE_COOLDOWN < MallSantaBehavior.BASE_COOLDOWN)
-	assert_true(Chairman.PHASE_TWO_COOLDOWN < MallSantaBehavior.PHASE_TWO_COOLDOWN)
+	assert_true(Chairman.BASE_COOLDOWN < ProjectionistBehavior.BASE_COOLDOWN)
+	assert_true(Chairman.PHASE_TWO_COOLDOWN < ProjectionistBehavior.PHASE_TWO_COOLDOWN)
 	assert_true(Chairman.GAVEL_DAMAGE > Enemy.HEAVY_DAMAGE)
-	assert_true(def.speed >= _load("mall_santa").speed)
+	assert_true(def.speed >= _load("projectionist").speed)
 	assert_true(def.summon == null, "he calls no one")

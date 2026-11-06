@@ -29,7 +29,7 @@ FOOT_MARGIN = 1
 KEEP_FIRST = ('idle', 'walk')
 
 # id -> {game anim: (export anim, frames, hash of the export anim's frames)}. A game anim cut to no
-# frames is left out, so the game falls back (Santa's attack shows no strike yet).
+# frames is left out, so the game falls back to its walk or idle.
 CUTS = {
     # The scythe drawn back, then the low sweep from the moment it lands.
     'intern_reaper': {'windup': ('attack', [1, 2, 3], '4090bbed'), 'attack': ('attack', [4, 5, 6, 8], '4090bbed')},
@@ -43,8 +43,6 @@ CUTS = {
     'hr_representative': {'windup': ('attack', [4, 5, 6, 7], '06a0adcd'), 'attack': ('attack', [8], '06a0adcd')},
     'regional_reaper': {'windup': ('attack', [1, 2], 'cc7370db'), 'attack': ('attack', [3, 4, 5, 6, 7], 'cc7370db')},
     'old_smokey': {'windup': ('attack', [3, 4, 5], 'f5edbd72'), 'attack': ('attack', [6, 7, 8], 'f5edbd72')},
-    # The export barely moves and shows no strike, so Santa keeps the fallbacks until it is redone.
-    'mall_santa': {'attack': ('attack', [], '026823f5')},
     'thaddeus_fairweather': {'windup': ('attack', [4, 5, 6], 'eb66e3b2'), 'attack': ('attack', [7, 8], 'eb66e3b2')},
     # The gavel raised overhead, then brought down.
     'chairman_of_the_board': {'windup': ('attack', [3, 4, 5, 6], '2c6098a8'), 'attack': ('attack', [7, 8], '2c6098a8')},

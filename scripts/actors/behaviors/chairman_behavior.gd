@@ -61,7 +61,7 @@ const TAPE_EVERY := 10.0
 const TAPE_ROWS := 3
 const TAPE_ROW_GAP := 3
 const WARNING_RADIUS := 40.0
-# Shorter than Mortimer's and the Mall Santa's 0.65 and 0.45.
+# Shorter than Mortimer's and the Projectionist's 0.65 and 0.45.
 const BASE_COOLDOWN := 0.35
 const PHASE_TWO_COOLDOWN := 0.25
 const PHASE_TWO_SPEED := 1.2

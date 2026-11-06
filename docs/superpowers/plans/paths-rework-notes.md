@@ -223,3 +223,44 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
 - **Gloria's shared rules:** the fountain jets' spot and patch rules, which the Commodore's deck wash
   and the Chairman still use, moved to `SplashJets` with their tests (now in the cruise's boss tests);
   the comparisons against Gloria in the later floors' tests now name Crabtree.
+- **The Projectionist's numbers:** the Mall Santa's 1650 final health (916.67 in the .tres, the
+  Santa's own figure), 80 px/s, 16 Pension, his 0.65 s rest (0.45 in phase two), 1.2x speed and 0.8x
+  windups in phase two. No summons.
+- **Heaviest attack: the lens beam** (3 pills, the whole 1.2 s windup shown, the start line outlined
+  twice, never shortened). It is the projector's own light, so it is the natural big hit, and the
+  splice could not be it, since the spec has splices quicken in phase two. The beam is thrown from
+  where he stands (he holds still for its windup and sweep), 340 px long, 26 px wide, sweeping 100
+  degrees in 2.2 s; the whole arc it has still to cross is tinted red the whole time (lesson 160), and
+  feet it passes over cost 3 pills once.
+- **The beam's plan:** OverlapRoute holds only rects and circles, so the sweep is sampled as circles
+  along the beam (18 px apart, radius 22) at slices 18 px of far-end travel apart, each hurting for its
+  slice (about 500 circles). He tries the arc's middle on Grandpa first, then turned 30, 60 and 95
+  degrees off each way, either way round, over everything under way (the reel's lanes, the splice, the
+  burn), and marks the nearest spot the beam never covers. Over 200 seeds in his two rooms the first
+  try worked 199 times in 199 (one state was lost before the beam), the slowest plan 43 ms.
+- **OverlapRoute got faster, not different:** each shape now visits only the grid points inside its
+  bounding box (the exact test is unchanged), and overlapping windows on one point are merged. The
+  airport's and office's 200-seed tests and the route's own tests pass as before.
+- **The splice:** 2 or 3 lanes (always 3 in phase two), 36 px wide, their middles 96 px apart, right
+  across the room as rows or columns; warned 1.0 s (0.85 in phase two) after a 0.5 s windup ("Splice!"),
+  then the film snaps shut and feet in a lane cost a pill. Planned round his feet first, then moved
+  half a pitch at a time, over everything under way; 195 of 195 live states planned, slowest 16 ms.
+  Drawn as two dark film strips with sprocket holes along each lane's sides, slamming together.
+- **The reel change:** every 14 s (10 in phase two, the first after 3 s), never two running and never
+  the same genre twice in a row. A 0.7 s windup ("Reel change!") cuts the screen to black with the
+  queue barrier's chime (`barrier_chime`, the game's warning chime), then a flash, and the reel runs
+  8 s (`ReelChange`): rain wets every floor cell but the doorways' (WetSplash, the wet floor's own
+  slide rules) with faint rain streaks over the room; a silent comedy throws a custard pie down a warned
+  lane (a row or column, either way, 380 px/s) every 1.0 s; a western rolls a tumbleweed along a warned
+  row (200 px/s) every 1.3 s; both 0.8x as often in phase two. Each lane warns 0.9 s, is 28 px wide, and
+  is planned with OverlapRoute too (his own line or up to 3 lanes off it, half the time his line first),
+  skipped when none leaves a way out.
+- **Phase two's burn:** a half disc burns out from the screen's foot at 6 px/s, to a cap of half the
+  room's height (240 px at most), so the back rows always stay; inside it burns as fire (a fire hit
+  every 0.8 s). A white burning edge on the warning layer, a scorched inside under the bodies, and the
+  screen burns along with it (`CinemaScreen.set_burning`). It goes out when he falls.
+- **Retired with the Mall Santa:** his elves, his behavior, the present drop and the closing ring
+  (nothing else used them), his art folder `art/sprites/mall_santa` (the PixelLab originals stay there),
+  and his entries in the art strips tool and the art look probe. The later floors' floor-boss tests
+  compare with the Projectionist. `tests/support/pending_bosses.gd` keeps only Chip and Thaddeus for
+  Task 5.

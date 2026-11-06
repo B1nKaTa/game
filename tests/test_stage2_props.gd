@@ -213,7 +213,7 @@ func test_a_drop_lands_on_open_floor_whatever_died_over() -> void:
 
 
 func test_the_third_floors_effects_are_cleared_from_a_stored_room() -> void:
-	var effects: Array[Node] = [PerfumeCloud.new(), WetSplash.new(), DroppedCoffin.new(), PresentDrop.new(), ClosingRing.new(),
+	var effects: Array[Node] = [PerfumeCloud.new(), WetSplash.new(), DroppedCoffin.new(),
 		# Head Office
 		TapeSpread.new(), PaperTrail.new(), WriteUpMark.new(), LaneDrop.new(), HoldMusic.new(), TakeoverTether.new(), GavelStrike.new()]
 	for effect in effects:

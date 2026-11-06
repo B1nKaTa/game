@@ -29,7 +29,7 @@ const BUNKER_REACH := 3
 const BUNKER_APART := 3
 const BUNKER_TRIES := 40
 const WARNING_RADIUS := 40.0
-# Shorter than Mortimer's and the Mall Santa's 0.65 and 0.45.
+# Shorter than Mortimer's and the Projectionist's 0.65 and 0.45.
 const BASE_COOLDOWN := 0.6
 const PHASE_TWO_COOLDOWN := 0.42
 const PHASE_TWO_SPEED := 1.2
