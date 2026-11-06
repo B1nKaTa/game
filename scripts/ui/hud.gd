@@ -4,10 +4,23 @@ extends CanvasLayer
 const BOSS_BAR_SIZE := Vector2(480, 10)
 const BOSS_BAR_TOP := 336.0
 const BOSS_NAME_TOP := 314.0
-const SLIP_COUNTER_AT := Vector2(300, 5)
-const THERMOS_COUNTER_AT := Vector2(360, 5)
-const POTION_SLOT_AT := Vector2(414, 5)
-const COUNTER_TEXT_OFFSET := Vector2(15, -2)
+# Where the Slip and Thermos counters start; they follow the pills and Pension along the left panel's
+# top row (_layout_top_row).
+const SLIP_COUNTER_AT := Vector2(160, 3)
+const THERMOS_COUNTER_AT := Vector2(196, 3)
+const POTION_SLOT_AT := Vector2(412, 5)
+const COUNTER_TEXT_OFFSET := Vector2(15, 2)
+# The HUD sits in two framed panels (HudStyle) that leave the top middle clear, where the north door's
+# opening and its sign show: pills, Pension, Slips, Thermoses and the item row on the left; the potion
+# slot (and the run timer) right of the middle; then the small map.
+const LEFT_PANEL_AT := Vector2(2, 1)
+const LEFT_PANEL_MIN_WIDTH := 276.0
+const RIGHT_PANEL := Rect2(404, 1, 118, 34)
+# Behind the small map and the floor name over it (FloorMapView.MINI_RECT).
+const MAP_PANEL := Rect2(524, 0, 116, 75)
+const PILLS_AT := Vector2(8, 5)
+const COUNTER_GAP := 10.0
+const COUNTER_STEP := 36.0
 const NOTICE_TOP := 40.0
 const NOTICE_TIME := 3.5
 # A faint band behind the top row, so full pills never read as empty over a pale floor.
@@ -18,16 +31,16 @@ const BAND_BOTTOM := 36.0
 # The item row under the band: the count and the newest few names, cut short with an ellipsis, and the
 # case file's key on its right. It ends before the small map (FloorMapView.MINI_RECT) and never wraps.
 const ITEM_ROW_AT := Vector2(8, 22)
-const ITEM_ROW_END := 520.0
-const ITEM_ROW_FONT := 9
+const ITEM_ROW_END := 272.0
+const ITEM_ROW_FONT := 8
 const ITEMS_SHOWN := 3
 const CASE_FILE_HINT := "Case file"
 const HINT_GAP := 10.0
 # The Game tab's run timer, on the top row in the gap before the Slip counter, right-aligned to it,
 # since the small map's floor name holds the row's right end.
-const TIMER_AT := Vector2(250, 5)
+const TIMER_AT := Vector2(474, 22)
 const TIMER_WIDTH := 44.0
-const TIMER_FONT := 10
+const TIMER_FONT := 8
 # The banner a combo shows as it forms, under the notice line.
 const BANNER_TOP := 60.0
 const BANNER_TIME := 2.5
@@ -60,6 +73,9 @@ var show_condolences := false
 # Set from the Game tab's Show run timer. Only a run's HUD has the timer.
 var show_timer := false
 var _timer: Label
+var _frame: HudFrame
+var _slip_icon: ConsumableIcon
+var _thermos_icon: ConsumableIcon
 
 
 static func status_text(pension: int, condolences: int, with_condolences: bool) -> String:
@@ -129,27 +145,29 @@ func setup(run: RunState) -> void:
 
 
 func _ready() -> void:
-	_add_rect(Vector2.ZERO, TOP_BAND_SIZE, TOP_BAND)
-	_status = _add_label(Vector2(8, 4), 12)
+	_frame = HudFrame.new()
+	_frame.hud = self
+	add_child(_frame)
+	_status = _add_label(Vector2(8, 5), HudStyle.SMALL)
 	_items = _add_label(ITEM_ROW_AT, ITEM_ROW_FONT)
 	_items.clip_text = true
 	_items.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_items.autowrap_mode = TextServer.AUTOWRAP_OFF
 	_case_hint = _add_label(ITEM_ROW_AT, ITEM_ROW_FONT)
-	_case_hint.add_theme_color_override("font_color", Color(0.85, 0.82, 0.74, 0.8))
+	_case_hint.add_theme_color_override("font_color", HudStyle.DIM_TEXT)
 	_case_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_message = _add_label(Vector2(0, 150), 20)
+	_message = _add_label(Vector2(0, 150), HudStyle.LARGE)
 	_message.size = Vector2(640, 40)
 	_message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_notice = _add_label(Vector2(0, NOTICE_TOP), 12)
+	_notice = _add_label(Vector2(0, NOTICE_TOP), HudStyle.SMALL)
 	_notice.size = Vector2(640, 20)
 	_notice.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_banner = _add_label(Vector2(0, BANNER_TOP), 16)
+	_banner = _add_label(Vector2(0, BANNER_TOP), HudStyle.LARGE)
 	_banner.size = Vector2(640, 24)
 	_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_banner.add_theme_color_override("font_color", BANNER_COLOR)
 	_banner.add_theme_constant_override("outline_size", 5)
-	_boss_name = _add_label(Vector2(0, BOSS_NAME_TOP), 16)
+	_boss_name = _add_label(Vector2(0, BOSS_NAME_TOP), HudStyle.LARGE)
 	_boss_name.size = Vector2(640, 20)
 	_boss_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var left := (640.0 - BOSS_BAR_SIZE.x) / 2.0
@@ -157,8 +175,10 @@ func _ready() -> void:
 	_boss_fill = _add_rect(Vector2(left, BOSS_BAR_TOP), BOSS_BAR_SIZE, Color("e4524f"))
 	hide_boss_bar()
 	if _run != null:
-		_slips = _add_counter(SLIP_COUNTER_AT, ConsumableIcon.Kind.SLIP)
-		_thermoses = _add_counter(THERMOS_COUNTER_AT, ConsumableIcon.Kind.THERMOS)
+		_slip_icon = _add_icon(SLIP_COUNTER_AT, ConsumableIcon.Kind.SLIP)
+		_slips = _add_label(SLIP_COUNTER_AT + COUNTER_TEXT_OFFSET, HudStyle.SMALL)
+		_thermos_icon = _add_icon(THERMOS_COUNTER_AT, ConsumableIcon.Kind.THERMOS)
+		_thermoses = _add_label(THERMOS_COUNTER_AT + COUNTER_TEXT_OFFSET, HudStyle.SMALL)
 		_potion_slot = PotionSlot.new()
 		_potion_slot.position = POTION_SLOT_AT
 		add_child(_potion_slot)
@@ -240,6 +260,7 @@ func show_boss_bar(display_name: String, max_hp: float) -> void:
 	_boss_back.visible = true
 	_boss_fill.visible = true
 	set_boss_health(max_hp)
+	_frame.queue_redraw()
 
 
 func set_boss_health(hp: float) -> void:
@@ -250,18 +271,20 @@ func hide_boss_bar() -> void:
 	_boss_name.visible = false
 	_boss_back.visible = false
 	_boss_fill.visible = false
+	if _frame != null:
+		_frame.queue_redraw()
 
 
 func is_boss_bar_visible() -> bool:
 	return _boss_back != null and _boss_back.visible
 
 
-func _add_counter(at: Vector2, kind: ConsumableIcon.Kind) -> Label:
+func _add_icon(at: Vector2, kind: ConsumableIcon.Kind) -> ConsumableIcon:
 	var icon := ConsumableIcon.new()
 	icon.setup(kind)
 	icon.position = at
 	add_child(icon)
-	return _add_label(at + COUNTER_TEXT_OFFSET, 12)
+	return icon
 
 
 func _add_rect(at: Vector2, size: Vector2, color: Color) -> ColorRect:
@@ -277,9 +300,8 @@ func _add_rect(at: Vector2, size: Vector2, color: Color) -> ColorRect:
 func _add_label(at: Vector2, font_size: int) -> Label:
 	var label := Label.new()
 	label.position = at
-	label.add_theme_font_size_override("font_size", font_size)
-	label.add_theme_color_override("font_outline_color", Color.BLACK)
-	label.add_theme_constant_override("outline_size", 3)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	HudStyle.style_label(label, font_size)
 	add_child(label)
 	return label
 
@@ -287,8 +309,6 @@ func _add_label(at: Vector2, font_size: int) -> Label:
 func _refresh() -> void:
 	var text := status_text(_pension, _condolences, show_condolences)
 	if _run != null:
-		var pills := "■".repeat(_run.health.pills) + "□".repeat(_run.health.max_pills - _run.health.pills)
-		text = "Pills: %s   %s" % [pills, text]
 		_slips.text = counter_text(_run.keys)
 		_thermoses.text = counter_text(_run.bombs)
 		_potion_label = KeyBindings.prompt_label("potion")
@@ -299,10 +319,61 @@ func _refresh() -> void:
 		_items.text = items_text(names)
 		_case_label = KeyBindings.prompt_label("case_file")
 		_case_hint.text = case_hint_text(_case_label)
-		var font := ThemeDB.fallback_font
+		var font := HudStyle.font()
 		var rects := item_row_rects(font.get_string_size(_case_hint.text, HORIZONTAL_ALIGNMENT_LEFT, -1, ITEM_ROW_FONT).x + 6.0)
 		_items.position = rects[0].position
 		_items.size = rects[0].size
 		_case_hint.position = rects[1].position
 		_case_hint.size = rects[1].size
 	_status.text = text
+	_layout_top_row()
+	_frame.queue_redraw()
+
+
+# The left panel's top row: the pills as icons, then the coin and Pension, then the Slip and Thermos
+# counters, each placed after the last so nothing overlaps however many pills he has.
+func _layout_top_row() -> void:
+	var x := ITEM_ROW_AT.x
+	if _run != null:
+		x = PILLS_AT.x + _run.health.max_pills * HudStyle.PILL_STEP + COUNTER_GAP
+	_status.position = Vector2(x + 12.0, 5)
+	if _run == null:
+		return
+	var status_width := HudStyle.font().get_string_size(_status.text, HORIZONTAL_ALIGNMENT_LEFT, -1, HudStyle.SMALL).x
+	x = _status.position.x + status_width + COUNTER_GAP
+	_slip_icon.position = Vector2(x, 3)
+	_slips.position = _slip_icon.position + COUNTER_TEXT_OFFSET
+	_thermos_icon.position = Vector2(x + COUNTER_STEP, 3)
+	_thermoses.position = _thermos_icon.position + COUNTER_TEXT_OFFSET
+
+
+func left_panel_rect() -> Rect2:
+	var end := LEFT_PANEL_MIN_WIDTH
+	if _thermoses != null:
+		end = maxf(end, _thermoses.position.x + 22.0)
+	elif _status != null:
+		end = maxf(end, _status.position.x + HudStyle.font().get_string_size(_status.text, HORIZONTAL_ALIGNMENT_LEFT, -1, HudStyle.SMALL).x + 8.0)
+	return Rect2(LEFT_PANEL_AT, Vector2(end, 34))
+
+
+# Draws the panels and the icons that are not nodes of their own: the pills and the Pension coin.
+class HudFrame extends Control:
+	var hud: Hud
+
+	func _ready() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		size = Vector2(640, 360)
+
+	func _draw() -> void:
+		if hud == null or hud._status == null:
+			return
+		HudStyle.draw_panel(self, hud.left_panel_rect())
+		if hud._run != null:
+			HudStyle.draw_panel(self, RIGHT_PANEL)
+			HudStyle.draw_panel(self, MAP_PANEL)
+			var health := hud._run.health
+			for i in health.max_pills:
+				HudStyle.draw_pill(self, PILLS_AT + Vector2(i * HudStyle.PILL_STEP, 0), i < health.pills)
+		HudStyle.draw_coin(self, hud._status.position + Vector2(-12, 0))
+		if hud._boss_back != null and hud._boss_back.visible:
+			HudStyle.draw_panel(self, Rect2(hud._boss_back.position - Vector2(4, 4), BOSS_BAR_SIZE + Vector2(8, 8)))

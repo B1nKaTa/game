@@ -6,9 +6,9 @@ extends Control
 # name, on the same row, so it never runs into the item list under the top row.
 const SIZE := Vector2(110, 16)
 const FLASK_AT := Vector2(0, 0)
-const TEXT_AT := Vector2(14, -2)
+const TEXT_AT := Vector2(15, 2)
 const NAME_WIDTH_WITH_BUFF := 48.0
-const BUFF_TEXT_AT := Vector2(64, 0)
+const BUFF_TEXT_AT := Vector2(64, 2)
 const EMPTY_COLOR := Color(0.7, 0.7, 0.78, 0.55)
 const NAME_FONT := 11
 const BUFF_FONT := 9
@@ -59,9 +59,7 @@ func _add_label(at: Vector2, font_size: int) -> Label:
 	label.size = Vector2(SIZE.x - at.x, 14)
 	label.clip_text = true
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	label.add_theme_font_size_override("font_size", font_size)
-	label.add_theme_color_override("font_outline_color", Color.BLACK)
-	label.add_theme_constant_override("outline_size", 3)
+	HudStyle.style_label(label, HudStyle.SMALL if font_size <= NAME_FONT else font_size)
 	add_child(label)
 	return label
 
