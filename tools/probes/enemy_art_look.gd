@@ -8,7 +8,7 @@ extends SceneTree
 #         against its body box.
 #  sort   Harold behind and in front of an NPC and an enemy.
 
-const OUT := "D:/grandpa-shots-r8/"
+const OUT := "D:/grandpa-shots-r9/"
 const WALL_LIMIT_MS := 1500000
 const CROP := Vector2i(160, 120)
 const WARNING_RED := Color("e4524f")
@@ -51,6 +51,9 @@ const OWN_ANIMS := {
 	"mortimer_grimsby": ["embalming_spray", "conduct"], "commodore_wellington": ["foghorn_blast", "buoy_call"],
 	"augustine": ["runway_signal", "gate_change"],
 }
+
+# Small-bodied enemies redrawn on 32 to 36 px canvases (2026-11-06), shot beside Harold like the bosses.
+const BESIDE_HAROLD := ["seasonal_temp", "tour_group", "yes_man", "weeping_mourner", "early_bird_diner"]
 
 var _start := 0
 var scene
@@ -271,7 +274,7 @@ func _shoot_enemy(id: String, floor_id: String) -> void:
 	await _wait(0.25)
 	_save(await _image(), tag + "_walk_east", _screen(enemy))
 	enemy.desired_velocity = Vector2.ZERO
-	if boss:
+	if boss or BESIDE_HAROLD.has(id):
 		# Harold beside him, both soles on one row.
 		var feet := enemy.global_position + Vector2(0.0, def.body_size.y / 2.0)
 		_stand(feet + Vector2(-def.body_size.x / 2.0 - 16.0, 0.0))
