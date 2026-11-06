@@ -296,7 +296,7 @@ func _npc_defs() -> Array[NpcDef]:
 
 
 # NPCs drawn as a placeholder until the art pass reaches them.
-const AWAITING_ART := ["esme"]
+const AWAITING_ART := []
 
 
 func test_every_npc_with_art_loads_his_idle_loop_and_rotations() -> void:
