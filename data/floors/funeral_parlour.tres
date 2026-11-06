@@ -53,6 +53,7 @@ scatter_lights = 4
 [resource]
 script = ExtResource("1")
 id = "funeral_parlour"
+art_style = "depth"
 display_name = "Eternal Rest Funeral Parlour"
 rooms_dir = "res://data/rooms/funeral_parlour/"
 enemies = [ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7")]
