@@ -2,6 +2,85 @@
 
 The decisions made while wiring the enemy art, with a verdict for each enemy. The user handed every decision to the agent doing the work. The hooks and strip conventions are in `art-inventory.md` section 1.9.
 
+## 2026-11-06: the redraws
+
+Seven enemies from the second batch's "For regeneration" list were drawn again in PixelLab and replaced their exports. Each old export is kept in `D:\grandpa-art\enemies\_old\<id>\`, and `ids.txt` names the new characters. This closes the Mortimer, Senior Adjuster and small-bodied items on that list. lost_luggage is still open.
+
+| Enemy | PixelLab id | Canvas | What changed |
+|---|---|---|---|
+| mortimer_grimsby | ecdd4150-5775-49af-a85d-ccc46067c957 | 88 | A slate-grey frock coat in place of the black one |
+| senior_adjuster | 2ed1eb0b-f0db-4a30-b1fd-01b769c8fe86 | 64 | A grey hooded robe in place of the crimson one |
+| tour_group | fbcebc57-2d75-461b-aae2-c48f1961ad43 | 36 | Smaller, matching its 14x18 body |
+| seasonal_temp | 712e5aa5-563d-4bf1-a33b-13b6b56330bc | 32 | Smaller, now a grey hoodie with lime trim |
+| yes_man | 49639c5b-76d8-4fb0-a8b9-5ec5d4a6ecc5 | 36 | Smaller |
+| weeping_mourner | b3ddde62-bd91-4390-8620-b626002eb8cd | 36 | Smaller, now in a mauve veil |
+| early_bird_diner | 15ccfd24-e992-4559-8ae6-e0fa3dbfe8f3 | 36 | Smaller |
+
+### Anims
+
+- Every one has an east idle (breathing-idle), walk (walking-6-frames) and attack (v3 custom, 8 frames), the same set as its old export. Mortimer also has `embalming_spray` and `conduct` (v3 custom), as before.
+- Each attack was described from the behavior:
+  - Mortimer: arms raised and slammed down, for the casket.
+  - Senior Adjuster: a wide sweep.
+  - Tour Group: a braced crouch, then a rush.
+  - Seasonal Temp: a hunch, then a lunging swipe.
+  - Yes-Man: a crouch, then a lunge with the clipboard out.
+  - Weeping Mourner: a wail, then a lunge with the arms out.
+  - Early Bird Diner: a hunch over the tray, then a rush.
+- Mortimer's first `conduct` turned him toward the viewer and drew stray blue props, so it was rerolled once. Nothing else needed a reroll.
+- The cuts were picked again from labelled sheets of each attack and keyed to the new hashes in `CUTS`.
+
+### Height
+
+Each enemy's idle height in px, against Harold's 40:
+
+| Enemy | Before | After |
+|---|---|---|
+| seasonal_temp | 44 | 29 |
+| tour_group | 43 | 33 |
+| yes_man | 43 | 35 |
+| weeping_mourner | 45 | 28 |
+| early_bird_diner | 41 | 32 |
+
+The look probe now shoots these five beside Harold too (`BESIDE_HAROLD`).
+
+### Luminance
+
+Measured with the look probe. Shots are in `D:\grandpa-shots-r9\`.
+
+| Enemy | Floor | Lift | Body luminance |
+|---|---|---|---|
+| mortimer_grimsby | Parlour | none | 0.29 |
+| mortimer_grimsby | Parlour | 1.5 on 230 ±20 | 0.37 |
+| mortimer_grimsby | Parlour | 1.75 on 230 ±20 | 0.45, but the coat washed to lavender |
+| mortimer_grimsby | Parlour | **1.6 on 230 ±20 (kept)** | 0.40 and 0.42 in two runs |
+| senior_adjuster | Records | **none (kept)** | 0.45 and 0.42 |
+| seasonal_temp | Records | none | 0.48 |
+| tour_group | Terminal | none | 0.55 |
+| yes_man | Head Office | none | 0.62 |
+| weeping_mourner | Parlour | none | 0.43 |
+| early_bird_diner | Cruise | none | 0.61 |
+
+- **Mortimer.** The slate coat is saturated enough (about 0.2) for a lift to work, unlike the black one. At 1.6 it reads as a grey coat under a dark hat on the red floor.
+- **Senior Adjuster.** He needs no lift, so his 330 hue band went too.
+
+### Variants
+
+- **airport_weeping_mourner.** The new mauve veil sits near hue 290, outside the old 240 ±25 band, so the airport swap did nothing. It now swaps 290 to 200 ±25 and keeps no value lift (0.86, pale blue).
+- **parlour_seasonal_temp and shores_seasonal_temp.** Both still find the lime trim at hue 90. They read cyan and violet (0.45 and 0.52), with less coloured area than before, since the hoodie is grey.
+
+### Verdicts
+
+| Enemy | Verdict |
+|---|---|
+| mortimer_grimsby | Good: a slate coat and a white baton. The casket slam, spray and conduct all read. |
+| senior_adjuster | Good: a grey hooded robe on the grey Records floor. The outline carries it. |
+| tour_group | Good: shorter than Harold. The rush reads. |
+| seasonal_temp | Good: the smallest of the five |
+| yes_man | Good: clearly shorter than Harold |
+| weeping_mourner | Good: mauve on the red Parlour floor |
+| early_bird_diner | Good: the tray rush reads |
+
 ## 2026-11-06: the second batch
 
 38 new exports went in from `D:\grandpa-art\enemies\`, and the regenerated Regional Reaper replaced his first export. Every enemy outside the Mall and Fairway's End now has art. The Training Yard dummy is the only one without.

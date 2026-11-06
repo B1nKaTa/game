@@ -269,3 +269,4 @@
 - 2026-11-06: The probe's warning-red share counted skin and the Sunbather's code deck chair as red → judge the red check from the shot, with the enemy awake, beside the warning ring, not from the number alone.
 - 2026-11-06: A value lift only moves pixels at least 0.15 saturated, so Mortimer's black coat stayed at 0.20 even at 2.2 → a body that is mostly black or grey cannot be lifted by art_value; list it for regeneration in a lighter colour.
 - 2026-11-06: `rm -rf art/sprites/<id>` before rebuilding a strip also deleted its tracked .import files → rebuild into the folder in place (the tool overwrites each strip), or restore the .import files with git checkout.
+- 2026-11-06: The redrawn Weeping Mourner's veil moved to hue 290, so the airport variant's 240 ±25 swap matched nothing and it showed the base colours → when a base export is redrawn, re-shoot every variant with its art_id and re-aim its hue band at the new art.
