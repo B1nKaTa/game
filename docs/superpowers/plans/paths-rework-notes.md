@@ -325,3 +325,20 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
 - **Golf look tests:** the fairway, night-light, enemies-on-grass and prop-debris tests left
   test_golf_floor (the debris of the golf props no longer matters on a floor that will not hold them);
   the palette tests now live in the new test_seance_floor.gd.
+- **Props (Phase A):** `d` psychic desk, `q` seance table and `z` cubicle partition are solid furniture
+  (`RockBlock`s on the wall layer, in `WALLS_AND_BOMB_ONLY`, broken by blasts and bosses, each hiding a
+  coin at the furniture rate); `a` lava lamp breaks to anything like the vase and gives a small soft
+  violet light; `e` beaded curtain is a plain `Node2D` that blocks nothing and never breaks, lying under
+  the bodies at 0.8 alpha, its strands parting round Grandpa. Filing trays reuse Head Office's `y`.
+- **Multi-cell pieces:** the desk art is 64x48 and the table art 64x64, so two desk cells side by side
+  (paired from the west along a row) are one `PsychicDesk` with a 64x32 body, and a 2x2 square of table
+  cells is one `SeanceTable` with a 64x64 body. A leftover desk or table cell is a narrow desk or small
+  table with its own placeholder (art ids `psychic_desk_narrow`, `seance_table_small`, no art planned).
+  Breaking a piece opens every cell it covered. One prop, one coin roll.
+- **Partition art:** `cubicle_partition.png` is a 64x48 strip of two cells, so `SeancePartition` stays one
+  per cell (as the Cinema's seats) drawn 32x48 with frame posts only at a run's open ends; the strip is to
+  be cut into two 32x48 halves when the art is wired. The lamp is drawn for 32x48 art and the curtain for
+  48x64. No PNG is wired yet.
+- **The table's candles** give a small flickering candle light; the desks give none, the wall lights
+  being the candle-warm desk lights.
+- **`SeanceProps.is_passing_effect`** returns false until the hotline's attacks add their effects.

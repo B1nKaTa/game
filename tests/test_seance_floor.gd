@@ -166,3 +166,266 @@ func test_enemies_stand_out_from_the_carpet_under_the_hotlines_light() -> void:
 		var body := _lit(SpriteVisual.readable(def.color), palette)
 		for tone in _tones(palette):
 			assert_true(_difference(body, _lit(tone, palette)) >= 0.22, "%s against the carpet" % def.id)
+
+
+# --- its props ---
+
+func _room(changes: Dictionary = {}, type := RoomLayout.TYPE_HEALING) -> RoomLayout:
+	var rows := PackedStringArray(["#".repeat(20)])
+	for y in range(1, 10):
+		rows.append("#" + ".".repeat(18) + "#")
+	rows.append("#".repeat(20))
+	for cell: Vector2i in changes:
+		var row := rows[cell.y]
+		rows[cell.y] = row.substr(0, cell.x) + changes[cell] + row.substr(cell.x + 1)
+	var layout := RoomLayout.new()
+	layout.room_type = type
+	layout.rows = rows
+	if type == RoomLayout.TYPE_HEALING:
+		var row := layout.rows[8]
+		layout.rows[8] = row.substr(0, 4) + "H" + row.substr(5)
+	return layout
+
+
+func _ready_alone(node: Node2D) -> void:
+	node._ready()
+
+
+func test_the_props_have_symbols_of_their_own() -> void:
+	assert_eq(RoomLayout.SYMBOL_DESK + RoomLayout.SYMBOL_SEANCE_TABLE + RoomLayout.SYMBOL_PARTITION + RoomLayout.SYMBOL_LAVA_LAMP + RoomLayout.SYMBOL_BEADED_CURTAIN, "dqzae")
+	for symbol in [RoomLayout.SYMBOL_DESK, RoomLayout.SYMBOL_SEANCE_TABLE, RoomLayout.SYMBOL_PARTITION]:
+		assert_true(RoomLayout.ALLOWED.contains(symbol), symbol)
+		assert_true(RoomLayout.SOLID_SYMBOLS.contains(symbol), symbol)
+		assert_true(RoomLayout.WALLS_AND_BOMB_ONLY.contains(symbol), "%s needs more than the cane" % symbol)
+		assert_false(RoomLayout.WALLS.contains(symbol), "%s can be blasted open" % symbol)
+		assert_false(RoomLayout.WALL_LIKE.contains(symbol), symbol)
+		assert_false(RoomLayout.DECOR_SYMBOLS.contains(symbol), symbol)
+	for symbol in [RoomLayout.SYMBOL_LAVA_LAMP, RoomLayout.SYMBOL_BEADED_CURTAIN, RoomLayout.SYMBOL_IN_TRAY]:
+		assert_true(RoomLayout.ALLOWED.contains(symbol), symbol)
+		assert_true(RoomLayout.DECOR_SYMBOLS.contains(symbol), "%s blocks nothing" % symbol)
+		assert_false(RoomLayout.SOLID_SYMBOLS.contains(symbol), symbol)
+		assert_false(RoomLayout.WALLS_AND_BOMB_ONLY.contains(symbol), symbol)
+	for symbol in "dqzae":
+		assert_eq(RoomLayout.ALLOWED.count(symbol), 1, "%s is used once" % symbol)
+
+
+# A desk, a table and a partition are cover, as the Cinema's seats are: solid on the wall layer, which
+# stops walkers and every shot, broken only by blasts and bosses, and each can hide a coin.
+func test_desks_tables_and_partitions_are_cover_that_can_hide_a_coin() -> void:
+	for piece: RockBlock in [PsychicDesk.new(), SeanceTable.new(), SeancePartition.new()]:
+		_ready_alone(piece)
+		assert_true(piece.is_solid(), piece.art_id())
+		assert_eq(piece.collision_layer, 1, "%s on the wall layer" % piece.art_id())
+		assert_true(piece.get_child_count() > 0, "%s has a body" % piece.art_id())
+		assert_false(piece.can_break_by(BreakableBlock.SOURCE_CANE), "the cane only bounces off %s" % piece.art_id())
+		assert_true(piece.can_break_by(BreakableBlock.SOURCE_BLAST), piece.art_id())
+		assert_true(piece.can_break_by(BreakableBlock.SOURCE_BOSS), piece.art_id())
+		assert_false(BossDash.stops_at(piece), "a charge smashes through %s" % piece.art_id())
+		piece.free()
+	var partition := SeancePartition.new()
+	var as_node: Node = partition
+	assert_true(as_node is CubicleWall, "the office's partition in violet")
+	assert_true(_difference(partition.debris_color(), CubicleWall.FABRIC) > 0.15, "a fabric of its own")
+	partition.free()
+
+
+# Each prop is drawn at the size of its art, so the pictures drop in later: the desk 64x48 over two
+# cells, the table 64x64 over four, the partition a 32x48 half of its 64x48 strip, the lamp 32x48 and
+# the curtain 48x64.
+func test_each_prop_is_named_and_sized_for_its_art() -> void:
+	var desk := PsychicDesk.new()
+	assert_eq(desk.art_id(), "psychic_desk")
+	assert_eq(desk.art_size(), Vector2(64, 48))
+	assert_eq(desk.body_size(), Vector2(64, 32), "two cells wide")
+	desk.wide = false
+	assert_eq(desk.body_size(), Vector2(32, 32), "a narrow desk fills one cell")
+	assert_true(desk.art_id() != "psychic_desk", "and never stretches the wide art")
+	desk.free()
+	var table := SeanceTable.new()
+	assert_eq(table.art_id(), "seance_table")
+	assert_eq(table.art_size(), Vector2(64, 64))
+	assert_eq(table.body_size(), Vector2(64, 64), "four cells")
+	table.large = false
+	assert_eq(table.body_size(), Vector2(32, 32))
+	assert_true(table.art_id() != "seance_table")
+	table.free()
+	var partition := SeancePartition.new()
+	assert_eq(partition.art_id(), "cubicle_partition")
+	assert_eq(SeancePartition.ART_SIZE, Vector2(32, 48))
+	partition.free()
+	var lamp := LavaLamp.new()
+	assert_eq(lamp.art_id(), "lava_lamp")
+	assert_eq(LavaLamp.ART_SIZE, Vector2(32, 48))
+	lamp.free()
+	var curtain := BeadedCurtain.new()
+	assert_eq(curtain.art_id(), "beaded_curtain")
+	assert_eq(BeadedCurtain.ART_SIZE, Vector2(48, 64))
+	curtain.free()
+
+
+func test_a_lava_lamp_blocks_nothing_breaks_to_anything_and_glows() -> void:
+	var lamp := LavaLamp.new()
+	_ready_alone(lamp)
+	assert_false(lamp.is_solid())
+	assert_eq(lamp.collision_layer, 0, "nothing bumps into it")
+	for source in [BreakableBlock.SOURCE_CANE, BreakableBlock.SOURCE_BLAST, BreakableBlock.SOURCE_BOSS]:
+		assert_true(lamp.can_break_by(source), source)
+	var as_node: Node = lamp
+	assert_false(as_node is RockBlock, "it hides no coin")
+	var lights := 0
+	for child: Variant in lamp.get_children():
+		if child is PointLight2D:
+			lights += 1
+			assert_true(child.energy < 0.6 and child.texture_scale < 0.6, "a small soft light")
+	assert_eq(lights, 1)
+	lamp.free()
+
+
+func test_a_seance_table_lights_its_candles() -> void:
+	var table := SeanceTable.new()
+	_ready_alone(table)
+	var lit := false
+	for child: Variant in table.get_children():
+		lit = lit or child is PointLight2D
+	assert_true(lit, "the candles light the carpet")
+	table.free()
+
+
+func test_a_beaded_curtain_blocks_nothing_never_breaks_and_parts_round_him() -> void:
+	var curtain := BeadedCurtain.new()
+	var as_node: Node = curtain
+	assert_false(as_node is CollisionObject2D, "nothing bumps into it")
+	assert_false(as_node is BreakableBlock, "nothing breaks it")
+	_ready_alone(curtain)
+	assert_true(curtain.z_index < 0, "under the bodies")
+	assert_true(BeadedCurtain.ALPHA < 1.0, "nothing behind it hides")
+	curtain.free()
+	assert_true(BeadedCurtain.is_near(Vector2(10, 12)))
+	assert_false(BeadedCurtain.is_near(Vector2(40, 0)))
+	assert_true(BeadedCurtain.strand_shift(6.0, 0.0) > 0.0, "a strand east of him swings east")
+	assert_true(BeadedCurtain.strand_shift(-6.0, 0.0) < 0.0, "and one west of him west")
+	assert_true(BeadedCurtain.strand_shift(2.0, 0.0) > BeadedCurtain.strand_shift(12.0, 0.0), "the nearest swing most")
+	assert_near(BeadedCurtain.strand_shift(30.0, 0.0), 0.0, "far strands hang still")
+
+
+func test_desks_pair_up_along_a_row_and_tables_fill_a_square() -> void:
+	var layout := _room({
+		Vector2i(3, 3): "d", Vector2i(4, 3): "d", Vector2i(5, 3): "d", Vector2i(6, 3): "d",
+		Vector2i(3, 6): "d", Vector2i(4, 6): "d", Vector2i(5, 6): "d",
+		Vector2i(13, 3): "q", Vector2i(14, 3): "q", Vector2i(13, 4): "q", Vector2i(14, 4): "q", Vector2i(13, 5): "q",
+	})
+	var desks := SeanceProps.desk_groups(layout)
+	assert_eq(desks.size(), 4)
+	assert_eq(desks[0], [Vector2i(3, 3), Vector2i(4, 3)])
+	assert_eq(desks[1], [Vector2i(5, 3), Vector2i(6, 3)])
+	assert_eq(desks[2], [Vector2i(3, 6), Vector2i(4, 6)])
+	assert_eq(desks[3], [Vector2i(5, 6)], "the odd cell at the row's end is a narrow desk")
+	var tables := SeanceProps.table_groups(layout)
+	assert_eq(tables.size(), 2)
+	assert_eq(tables[0].size(), 4, "a square is one round table")
+	assert_eq(tables[1], [Vector2i(13, 5)], "a cell left over is a small table")
+	assert_eq(SeanceProps.middle_of(tables[0]), Vector2(14 * 32, 4 * 32), "the table stands at the square's middle")
+
+
+func test_cover_needs_a_blast_and_stays_clear_of_doors() -> void:
+	for symbol in ["d", "q", "z"]:
+		var changes := {}
+		for y in range(1, 10):
+			changes[Vector2i(14, y)] = symbol
+		assert_true(str(_room(changes).validate()).contains("needs a bomb"), "%s needs a bomb" % symbol)
+		assert_true(_room({Vector2i(9, 2): symbol}).validate().size() > 0, "%s beside a door" % symbol)
+	assert_eq(_room({Vector2i(6, 3): "d", Vector2i(7, 3): "d", Vector2i(6, 2): "z", Vector2i(7, 2): "z", Vector2i(13, 6): "a", Vector2i(4, 6): "e", Vector2i(15, 3): "y"}).validate().size(), 0, "a cubicle and its decor are fine")
+
+
+func _bare_room(layout: RoomLayout, type: String) -> RoomView:
+	var room := FloorRoom.new()
+	room.layout = layout
+	room.room_type = type
+	room.decor_seed = 12
+	var no_upgrades: Array[UpgradeDef] = []
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 3
+	var view := RoomView.new()
+	view.setup(room, null, _def(), RunState.new(no_upgrades, {}), null, rng, null, null)
+	return view
+
+
+func test_the_props_go_into_a_room_one_piece_each() -> void:
+	var layout := _room({
+		Vector2i(3, 3): "z", Vector2i(4, 3): "z", Vector2i(5, 3): "z", Vector2i(6, 3): "z",
+		Vector2i(3, 4): "d", Vector2i(4, 4): "d", Vector2i(5, 4): "d", Vector2i(6, 4): "d",
+		Vector2i(13, 6): "q", Vector2i(14, 6): "q", Vector2i(13, 7): "q", Vector2i(14, 7): "q",
+		Vector2i(15, 3): "a", Vector2i(12, 3): "e", Vector2i(16, 3): "y",
+	})
+	var view := _bare_room(layout, RoomLayout.TYPE_HEALING)
+	SeanceProps.build(view, layout, _def().room_palette())
+	var counts := {}
+	for child: Variant in view.get_children():
+		var kind: String = child.get_script().get_global_name()
+		counts[kind] = int(counts.get(kind, 0)) + 1
+	assert_eq(int(counts.get("SeancePartition", 0)), 4, "one partition a cell")
+	assert_eq(int(counts.get("PsychicDesk", 0)), 2, "two wide desks")
+	assert_eq(int(counts.get("SeanceTable", 0)), 1, "one round table")
+	assert_eq(int(counts.get("LavaLamp", 0)), 1)
+	assert_eq(int(counts.get("BeadedCurtain", 0)), 1)
+	for child: Variant in view.get_children():
+		if child is PsychicDesk:
+			assert_true(child.wide)
+			var west := WalkGrid.cell_of(child.position - Vector2(16, 0))
+			var east := WalkGrid.cell_of(child.position + Vector2(16, 0))
+			assert_true(west != east and layout.symbol_at(west) == "d" and layout.symbol_at(east) == "d", "a desk stands over its two cells")
+		if child is SeanceTable:
+			assert_true(child.large)
+			assert_eq(child.position, Vector2(14 * 32, 7 * 32))
+	view.free()
+
+
+# A piece over several cells opens every one of them when it breaks, so walkers path through the gap.
+func test_a_broken_desk_or_table_opens_every_cell_it_stood_on() -> void:
+	var layout := _room({
+		Vector2i(3, 4): "d", Vector2i(4, 4): "d", Vector2i(5, 4): "d", Vector2i(6, 4): "d", Vector2i(7, 4): "d", Vector2i(8, 4): "d",
+		Vector2i(13, 6): "q", Vector2i(14, 6): "q", Vector2i(13, 7): "q", Vector2i(14, 7): "q",
+	})
+	var view := _bare_room(layout, RoomLayout.TYPE_HEALING)
+	SeanceProps.build(view, layout, _def().room_palette())
+	var desk: PsychicDesk = null
+	var table: SeanceTable = null
+	for child: Variant in view.get_children():
+		if child is PsychicDesk and not child.hides_coin and desk == null:
+			desk = child
+		if child is SeanceTable:
+			table = child
+	assert_true(desk != null, "a desk with no coin to drop")
+	desk.broken.emit(desk.global_position)
+	var desk_open := 0
+	for cell in layout.cells_of("d"):
+		desk_open += 1 if view._broken_cells.has(cell) else 0
+	assert_eq(desk_open, 2, "both of the desk's cells, and no other")
+	if not table.hides_coin:
+		table.broken.emit(table.global_position)
+		for cell in layout.cells_of("q"):
+			assert_true(view._broken_cells.has(cell), "the table's cell %s" % str(cell))
+	view.free()
+
+
+func test_the_props_leave_no_lingering_effect_yet() -> void:
+	var node := Node2D.new()
+	assert_false(SeanceProps.is_passing_effect(node))
+	node.free()
+	var source := FileAccess.get_file_as_string("res://scripts/world/room_view.gd")
+	assert_true(source.contains("SeanceProps.is_passing_effect(child)"), "the room asks the hotline what lingers")
+	assert_true(source.contains("SeanceProps.build(self, layout, palette)"), "and lets it lay its props")
+
+
+# Debris is a few small dots, so each prop's must show on the carpet it falls on.
+func test_every_props_debris_shows_on_the_carpet() -> void:
+	var palette := _def().room_palette()
+	for prop: BreakableBlock in [PsychicDesk.new(), SeanceTable.new(), SeancePartition.new(), LavaLamp.new()]:
+		prop.palette = palette
+		for tone in _tones(palette):
+			assert_true(_difference(prop.debris_color(), tone) > 0.25, "%s debris against %s" % [prop.art_id(), str(tone)])
+		prop.free()
+	var tray := InTray.new()
+	for tone in _tones(palette):
+		assert_true(_difference(tray.debris_color(), tone) > 0.25, "filing tray debris")
+	tray.free()

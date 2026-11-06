@@ -73,7 +73,8 @@ const SYMBOL_STUMP := "m"
 # The Last Resort Cruise adds its buffet tray, Head Office its in-tray, Fairway's End its flag
 # pin and Departures, Terminal Zero its suitcase stack, which block nothing.
 # The Flashback Cinema adds its lobby cards.
-const DECOR_SYMBOLS := "gnwuktlmfprc" + "0" + "y" + "3" + "7" + "i"
+# The Seance Hotline adds its lava lamps and beaded curtains.
+const DECOR_SYMBOLS := "gnwuktlmfprc" + "0" + "y" + "3" + "7" + "i" + "ae"
 # A freshly mopped cell: everyone walks on it, Grandpa and chargers slide. Kept well clear of doors.
 const SYMBOL_WET := "W"
 const WET_DOOR_CLEARANCE := 2
@@ -135,15 +136,26 @@ const SYMBOL_PILLAR := "|"
 # A lobby card on its easel (LifeSign): it blocks nothing, breaks to nothing, and shows a line of
 # Harold's life while he stands near. Kept off the cells touching a door, so no line greets him there.
 const SYMBOL_LIFE_SIGN := "i"
+# The Seance Hotline. A psychic's desk (a phone whose display glows green, and a crystal ball) and a
+# seance table are solid and break like a rock, to blasts and bosses only, and can hide a coin as
+# furniture does. Two desk cells side by side make one wide desk and four table cells in a square one
+# round draped table (SeanceProps). A cubicle partition is the office's partition in violet fabric
+# (SeancePartition). A lava lamp blocks nothing and breaks to anything, like a vase, and a beaded
+# curtain blocks nothing and never breaks. Filing trays are Head Office's in-trays (SYMBOL_IN_TRAY).
+const SYMBOL_DESK := "d"
+const SYMBOL_SEANCE_TABLE := "q"
+const SYMBOL_PARTITION := "z"
+const SYMBOL_LAVA_LAMP := "a"
+const SYMBOL_BEADED_CURTAIN := "e"
 # Each new path adds its props at the end of each list: the Last Resort Cruise, Head Office,
-# Fairway's End, Departures, Terminal Zero and the Flashback Cinema, in that order.
-const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc" + "b012" + "x9Ny" + "s345" + "=678" + "-|i"
+# Fairway's End, Departures, Terminal Zero, the Flashback Cinema and the Seance Hotline, in that order.
+const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc" + "b012" + "x9Ny" + "s345" + "=678" + "-|i" + "dqzae"
 # Nothing can walk through these, so nothing may be dropped or summoned on them.
-const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGojh" + "b12" + "9N" + "45" + "68" + "-|"
+const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGojh" + "b12" + "9N" + "45" + "68" + "-|" + "dqz"
 # Routes may not need a hole or a wall, and may not need a bomb for a crate or a rock.
 const WALL_LIKE := "#lo"
 const WALLS := "#lVo" + "1" + "|"
-const WALLS_AND_BOMB_ONLY := "#lVXOAYKDMoh" + "12" + "N" + "5" + "8" + "-|"
+const WALLS_AND_BOMB_ONLY := "#lVXOAYKDMoh" + "12" + "N" + "5" + "8" + "-|" + "dqz"
 const MUST_REACH_WITHOUT_BREAKING := "EBIHSPG"
 # A vault lays this many labeled pickups out in the open, this many cells apart so names never overlap.
 const VAULT_EXTRAS := 3

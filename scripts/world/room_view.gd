@@ -299,6 +299,9 @@ static func is_passing_effect(child: Node) -> bool:
 	# The Flashback Cinema
 	if child is PopcornTub or child is FilmTrail or child is LensBeam or child is SpliceLane or child is ReelLane or child is ReelChange or child is BurnRing:
 		return true
+	# The Seance Hotline
+	if SeanceProps.is_passing_effect(child):
+		return true
 
 	return (child is Projectile or child is DeathBurst or child is Thermos or child is EnemyBlast
 		or child is SummonMark or child is GroundStrike or child is LightsOut or child is SteamJet
@@ -590,6 +593,8 @@ func _create_props(palette: RoomPalette) -> void:
 	TerminalProps.build(self, layout, palette)
 	# The Flashback Cinema: seat rows, pillars and aisle lights.
 	CinemaProps.build(self, layout, palette)
+	# The Seance Hotline: cubicle partitions, desks, seance tables, lava lamps and beaded curtains.
+	SeanceProps.build(self, layout, palette)
 
 
 func _place_prop(prop: BreakableBlock, cell: Vector2i) -> void:
