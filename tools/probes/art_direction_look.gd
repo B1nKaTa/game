@@ -87,6 +87,26 @@ func _main() -> void:
 	var which: String = args[0] if args.size() > 0 else "all"
 	if which == "combat":
 		await _combat_only()
+	if which == "all" or which == "options":
+		change_scene_to_file("res://scenes/title.tscn")
+		await _wait(1.2)
+		current_scene.call("_choose", "options")
+		await _wait(0.5)
+		for node in root.find_children("*", "", true, false):
+			if is_instance_valid(node) and node.has_method("_show_tab") and node.get("_tab") != null:
+				node.call("_show_tab", GameSettings.GAME)
+		await _wait(0.3)
+		await _shot("options_game")
+	if which == "all" or which == "lineup":
+		await _lineup("floor_1", ["intern_reaper", "filing_clerk", "debt_ghost", "seasonal_temp", "notary_public",
+			"burnt_out_auditor", "denial_officer", "senior_adjuster", "regional_reaper"], "lineup_floor_1")
+	if which == "all" or which == "variants":
+		await _lineup("floor_1", ["cinema_intern_reaper", "furnace_intern_reaper", "furnace_burnt_out_auditor",
+			"parlour_seasonal_temp", "shores_seasonal_temp", "shores_denial_officer"], "lineup_variants")
+	if which == "all" or which == "bars":
+		await _lineup("floor_1", ["seasonal_temp", "intern_reaper", "denial_officer", "notary_public", "debt_ghost"], "bars_floor_1", true)
+		await _lineup("cemetery", ["plot_holder", "intern_reaper", "denial_officer"], "bars_cemetery", true)
+		await _lineup("funeral_parlour", ["pallbearer", "weeping_mourner", "parlour_seasonal_temp"], "bars_parlour", true)
 	if which == "all" or which == "floor_1":
 		await _floor_one()
 	if which == "all" or which == "others":
@@ -388,6 +408,42 @@ func _free_cells(layout: RoomLayout, count: int, step := 3) -> Array[Vector2i]:
 	if found.size() < count and step > 1:
 		return _free_cells(layout, count, step - 1)
 	return found
+
+
+# Every enemy named stands in a row in an empty room on that floor, held still, each with its name under
+# it (and its health bar with bars), and the row is shot.
+func _lineup(floor_id: String, ids: Array, shot_name: String, bars := false) -> void:
+	if not await _new_run(floor_id):
+		return
+	var layout := await _enter(_room_file("healing"))
+	_stand(Vector2i(1, layout.size_in_cells().y - 2))
+	var size := layout.size_in_cells()
+	var step := maxf(2.0, float(size.x - 2) / ids.size())
+	for i in ids.size():
+		var path := "res://data/enemies/%s.tres" % ids[i]
+		if not ResourceLoader.exists(path):
+			print("NO ENEMY %s" % ids[i])
+			continue
+		var cell := Vector2i(1 + int(step * (i + 0.5)), size.y / 2)
+		var enemy: Enemy = view.spawn_fixture(load(path), cell)
+		enemy.set_physics_process(false)
+		if bars:
+			enemy._show_bar = true
+			enemy.hp = enemy.max_hp() * 0.6
+			enemy._bar_layer.queue_redraw()
+		var label := Label.new()
+		label.text = String(ids[i]).replace("_", " ")
+		label.add_theme_font_size_override("font_size", 8)
+		label.add_theme_constant_override("outline_size", 3)
+		label.add_theme_color_override("font_outline_color", Color.BLACK)
+		label.position = RoomBackdrop.cell_center(cell) + Vector2(-30, 26 + (i % 2) * 10)
+		label.size = Vector2(60, 10)
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.z_index = 70
+		view.add_child(label)
+	await _wait(0.6)
+	await _shot(shot_name)
+	await _clear()
 
 
 func _other(floor_id: String) -> void:
