@@ -2,10 +2,10 @@ class_name HudStyle
 extends RefCounted
 
 # The HUD's look (docs/art/art-direction-notes.md, HUD): framed pixel panels in the basement's dark wood
-# and brass, the project's own pixel font (res://art/ui/basement_ledger.ttf, made for the game) drawn at
+# and brass, the project's own bitmap font (res://art/ui/basement_ledger.fnt, tools/art/font_build.py) drawn at
 # whole multiples of its 8 px size, and small pixel icons. Glyphs the font lacks (brackets, symbols) come
 # from the engine's own font, so no text is ever lost.
-const FONT_PATH := "res://art/ui/basement_ledger.ttf"
+const FONT_PATH := "res://art/ui/basement_ledger.fnt"
 const SMALL := 8
 const LARGE := 16
 const PANEL_FILL := Color(0.07, 0.05, 0.045, 0.86)
@@ -25,8 +25,7 @@ static var _font: FontFile
 static func font() -> Font:
 	if _font == null and ResourceLoader.exists(FONT_PATH):
 		_font = load(FONT_PATH)
-		_font.antialiasing = TextServer.FONT_ANTIALIASING_NONE
-		_font.hinting = TextServer.HINTING_NONE
+		_font.fixed_size_scale_mode = TextServer.FIXED_SIZE_SCALE_INTEGER_ONLY
 		_font.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_DISABLED
 		_font.fallbacks = [ThemeDB.fallback_font]
 	return _font if _font != null else ThemeDB.fallback_font
