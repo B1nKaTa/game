@@ -20,6 +20,11 @@ const KERNEL := Color("fff4c0")
 const KERNEL_HULL := Color("c9a24a")
 const LOOK_STAR := "star"
 const STAR_GOLD := Color("ffd24a")
+# The star's art: res://art/props/star_spin.png, four 16x16 frames of a coin-flip spin, each shown
+# STAR_SPIN_FRAME seconds; else the still star.png; else the drawing.
+const STAR_ART := "star"
+const STAR_SPIN_ART := "star_spin"
+const STAR_SPIN_FRAME := 0.08
 # The Seance Hotline: a Poltergeist on Hold hurls the office. Each art (stapler.png, mug.png,
 # fax_machine.png) is a 32x32 canvas to be shown at 0.75, so each placeholder fills the 24x24 its art
 # will: the stapler about 20x16, the mug 15x16 and the fax machine 20x18.
@@ -75,6 +80,8 @@ func is_dart() -> bool:
 
 func _physics_process(delta: float) -> void:
 	_age += delta
+	if look == LOOK_STAR:
+		queue_redraw()
 	if _age >= LIFETIME or not is_instance_valid(_target):
 		queue_free()
 		return
@@ -89,6 +96,11 @@ func _physics_process(delta: float) -> void:
 		if landed and is_dart() and _target.has_method("slow"):
 			_target.slow(slow_fraction, slow_time)
 		queue_free()
+
+
+# Which frame of the star's spin shows at this age.
+static func star_frame(age: float, frames: int) -> int:
+	return int(age / STAR_SPIN_FRAME) % frames
 
 
 func _draw() -> void:
@@ -121,6 +133,17 @@ func _draw() -> void:
 		draw_circle(Vector2(0.5, 2.0), 1.2, KERNEL_HULL)
 		return
 	if look == LOOK_STAR:
+		var spin := PropArt.texture(STAR_SPIN_ART)
+		if spin != null:
+			var side := spin.get_height()
+			var frames := maxi(spin.get_width() / side, 1)
+			var region := Rect2(star_frame(_age, frames) * side, 0, side, side)
+			draw_texture_rect_region(spin, Rect2(-side / 2.0, -side / 2.0, side, side), region)
+			return
+		var still := PropArt.texture(STAR_ART)
+		if still != null:
+			draw_texture(still, PropArt.centred(still))
+			return
 		var star := PackedVector2Array()
 		for i in 10:
 			star.append(Vector2.from_angle(-PI / 2.0 + TAU * i / 10.0) * (6.5 if i % 2 == 0 else 2.8))

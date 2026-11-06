@@ -22,6 +22,10 @@ const PIE_CREAM := Color("fbf3e6")
 const PIE_CRUST := Color("d9a35a")
 const WEED := Color("d8b27a")
 const WEED_DARK := Color("6b4a2a")
+# The tumbleweed's roll, res://art/props/tumbleweed_roll.png: four 24x24 frames, each a quarter turn
+# clockwise (rolling east), one every quarter of its 18 px ball's round (about 14 px) rolled.
+const ROLL_ART := "tumbleweed_roll"
+const ROLL_STEP := 14.0
 
 var _source: Enemy
 var _direction := Vector2.RIGHT
@@ -37,6 +41,13 @@ var _has_hit := false
 
 static func speed_of(look: String) -> float:
 	return TUMBLEWEED_SPEED if look == LOOK_TUMBLEWEED else PIE_SPEED
+
+
+# Which frame of the tumbleweed's roll shows after rolling this far: a quarter turn every ROLL_STEP,
+# clockwise for east, the other way round for west.
+static func roll_frame(travelled: float, frames: int, westward: bool) -> int:
+	var step := int(travelled / ROLL_STEP) % frames
+	return (frames - step) % frames if westward else step
 
 
 # Whether feet are hit by the thing a distance along a lane from origin running along direction.
@@ -195,8 +206,19 @@ func _draw() -> void:
 		draw_rect(Rect2(ahead, -WIDTH / 2.0, _length - ahead, WIDTH), Color(COLOR, 0.12))
 		draw_rect(Rect2(ahead, -WIDTH / 2.0, _length - ahead, WIDTH), Color(COLOR, 0.6), false, 1.0)
 	var at := Vector2(minf(_travelled, _length), 0.0)
-	# Their art, res://art/props/pie.png and tumbleweed.png (32x32) at 1:1: the pie upright as it
-	# flies, the tumbleweed turning as it rolls.
+	# The tumbleweed rolls through the quarter turns of its roll strip on whole pixels, backwards when
+	# it rolls west.
+	var roll := PropArt.texture(ROLL_ART) if _look == LOOK_TUMBLEWEED else null
+	if roll != null:
+		var side := roll.get_height()
+		var frames := maxi(roll.get_width() / side, 1)
+		var frame := roll_frame(_travelled, frames, _direction.x < 0.0)
+		var spot := (at.rotated(_direction.angle()) - Vector2(side, side) / 2.0).floor()
+		draw_set_transform(Vector2.ZERO)
+		draw_texture_rect_region(roll, Rect2(spot, Vector2(side, side)), Rect2(frame * side, 0, side, side))
+		return
+	# Their art, res://art/props/pie.png and tumbleweed.png at 1:1: the pie upright as it flies, the
+	# tumbleweed turning as it rolls.
 	var art := PropArt.texture(_look)
 	if art != null:
 		var turn := _travelled / 9.0 if _look == LOOK_TUMBLEWEED else 0.0

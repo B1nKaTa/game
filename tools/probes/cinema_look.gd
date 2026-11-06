@@ -5,12 +5,13 @@ extends SceneTree
 # projector's beam in an empty room at both ends of a large one; and every attack of the Cinema's
 # enemies and bosses (cinema_attack_*.png), each shot timed by the attack's own state.
 # Run only from an exported copy whose config/name is renamed.
-# Args after --: rooms | screen | signs | beam | attacks | all
+# Args after --: rooms | screen | signs | beam | attacks | all, then optionally the folder to save into.
 
-const OUT := "D:/grandpa-shots-pr/"
+const DEFAULT_OUT := "D:/grandpa-shots-pr/"
 const WALL_LIMIT_MS := 420000
 const DIR := "res://data/rooms/flashback_cinema/%s.tres"
 
+var OUT := DEFAULT_OUT
 var _start := 0
 var scene
 var view: RoomView
@@ -22,6 +23,9 @@ var _hold := Callable()
 
 func _initialize() -> void:
 	_start = Time.get_ticks_msec()
+	var user_args := OS.get_cmdline_user_args()
+	if user_args.size() > 1:
+		OUT = user_args[1].trim_suffix("/") + "/"
 	DirAccess.make_dir_recursive_absolute(OUT)
 	_main.call_deferred()
 
