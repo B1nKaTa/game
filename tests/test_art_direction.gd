@@ -58,7 +58,19 @@ func test_sconces_stay_off_the_north_door() -> void:
 		var cells := DepthLook.sconce_cells(rows)
 		assert_true(cells.size() >= 1, "width %d" % width)
 		for cell in cells:
-			assert_true(absi(cell.x - width / 2) > DepthLook.DOOR_CLEAR, "width %d: %s" % [width, str(cell)])
+			if cell.y == 0:
+				assert_true(absi(cell.x - width / 2) > DepthLook.DOOR_CLEAR, "width %d: %s" % [width, str(cell)])
+
+
+func test_the_room_s_own_wall_blocks_carry_a_couple_of_sconces() -> void:
+	var rows := PackedStringArray(["####################", "#..................#", "#..##..........##..#", "#..##..........##..#",
+		"#..................#", "#..................#", "####################"])
+	var inner := 0
+	for cell in DepthLook.sconce_cells(rows):
+		assert_true(DepthLook.is_face(rows, cell), str(cell))
+		if cell.y > 0:
+			inner += 1
+	assert_true(inner >= 1 and inner <= DepthLook.INNER_SCONCES, "%d on the blocks" % inner)
 
 
 func test_every_room_type_beyond_a_door_has_a_sign_or_none_on_purpose() -> void:

@@ -41,6 +41,8 @@ const BODY_GAMMA := 0.76
 # Sconces sit on north wall faces this far apart, never within DOOR_CLEAR cells of a door column.
 const SCONCE_SPACING := 7
 const DOOR_CLEAR := 2
+const INNER_SCONCES := 2
+const INNER_SPACING := 6.0
 # Where the flame sits on the sconce picture, from its top-left.
 const SCONCE_FLAME := Vector2(7, 5)
 # Anything drawn at this z or above (shots, ground marks, warnings) is unshaded.
@@ -192,6 +194,26 @@ static func sconce_cells(rows: PackedStringArray) -> Array[Vector2i]:
 		var cell := Vector2i(x, 0)
 		if is_face(rows, cell):
 			cells.append(cell)
+	# The north wall sits under the HUD in a room that fits the view, so the room's own wall blocks
+	# carry a couple of sconces too, where their light and flame show. Picked by noise from the faces
+	# off the border, kept INNER_SPACING apart from each other.
+	var inner: Array[Vector2i] = []
+	for y in range(2, rows.size() - 1):
+		for x in range(1, width - 1):
+			if is_face(rows, Vector2i(x, y)):
+				inner.append(Vector2i(x, y))
+	inner.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return RoomDecor.noise(a, 521) < RoomDecor.noise(b, 521))
+	var picked: Array[Vector2i] = []
+	for cell in inner:
+		if picked.size() >= INNER_SCONCES:
+			break
+		var clear := true
+		for other in picked:
+			if other.distance_to(cell) < INNER_SPACING:
+				clear = false
+		if clear:
+			picked.append(cell)
+	cells.append_array(picked)
 	return cells
 
 
