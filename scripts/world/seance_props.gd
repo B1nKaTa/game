@@ -113,7 +113,10 @@ static func table_groups(layout: RoomLayout) -> Array[Array]:
 # The hotline's lingering effects, which a stored room clears when Grandpa leaves. RoomView's own
 # is_passing_effect asks this too. Each attack of the floor adds its own here: the psychic's cord,
 # the gazer's ball and the ectoplasm's trail (the poltergeist's objects are plain shots), then Sister
-# Celestine's cards and what they do.
+# Celestine's cards and what they do, then Madame Zara's line, board, planchette, possession, seance
+# circle and its spirits.
 static func is_passing_effect(child: Node) -> bool:
 	return (child is PhoneCordLash or child is CrystalBall or child is EctoplasmTrail
-		or child is TarotCard or child is TowerTiles or child is ScytheSweep or child is WheelRing or child is StarFall)
+		or child is TarotCard or child is TowerTiles or child is ScytheSweep or child is WheelRing or child is StarFall
+		or child is LineTether or child is OuijaBoard or child is OuijaPlanchette or child is PossessionGhost
+		or child is SeanceCircle or child is SpiritSwoop)

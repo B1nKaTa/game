@@ -405,11 +405,6 @@ func _golf() -> void:
 	await _until(func(): return _warned(gazer, 0.45), 8.0)
 	await _shot("g5_dark_corner_gazer_windup")
 	await _clear()
-	_stand(_cell(27, 2))
-	var caddie := _spawn("caddie", _cell(21, 2))
-	await _until(func(): return _warned(caddie, 0.45), 8.0)
-	await _shot("g6_dark_corner_caddie_lane")
-	await _clear()
 	_stand(_cell(3, 3))
 	var reader: Enemy = _spawn("celestine", _cell(8, 4))
 	var c = reader._behavior
@@ -419,21 +414,20 @@ func _golf() -> void:
 	await _shot("g7_dark_corner_star_spots")
 	await _clear()
 	_stand(_cell(26, 14))
-	var boss: Enemy = _spawn("thaddeus_fairweather", _cell(21, 13))
+	var boss: Enemy = _spawn("madame_zara", _cell(21, 13))
 	var t = boss._behavior
+	t.forced_attack = MadameZaraBehavior.Attack.OUIJA
+	t._cooldown = 0.0
+	await _until(func(): return is_instance_valid(boss) and t.planchette() != null, 4.0)
 	_held = t
-	t._caddie_timer = 99.0
-	await _wait(0.1)
-	t._begin(boss, ClubPresidentBehavior.Attack.HOLE_IN_ONE, false)
-	await _wait(ClubPresidentBehavior.HOLE_IN_ONE_WINDUP * 0.5)
-	await _shot("g8_dark_corner_hole_in_one")
+	await _wait(MadameZaraBehavior.OUIJA_WINDUP * 0.5)
+	await _shot("g8_dark_corner_ouija_path")
 	await _wait(1.2)
-	# Phase two navy, mid room.
-	boss.hp = boss.max_hp() * 0.4
-	boss.health_changed.emit(boss.hp)
+	# The seance circle of her second phase, mid room.
+	t.forced_phase_two = true
 	boss.global_position = _cell(15, 8)
 	_stand(_cell(11, 8))
-	await _wait(0.4)
-	await _shot("g9_president_phase2_navy")
+	await _wait(1.0)
+	await _shot("g9_zara_seance_circle")
 	_held = null
 	await _clear()

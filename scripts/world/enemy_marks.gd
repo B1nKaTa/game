@@ -250,9 +250,6 @@ func _draw_mark(half: Vector2) -> void:
 			draw_polyline(chain, CHAIN_GOLD, 2.0)
 			draw_circle(Vector2(0.0, -half.y * 0.35 + 10.0), 3.5, CHAIN_GOLD)
 			draw_rect(Rect2(-3.0, -half.y + 4.0, 6.0, 3.0), OFFICE_COLLAR)
-		# Fairway's End's marks, drawn in their own file.
-		"caddie_bib", "boater":
-			GolfMarks.draw_mark(self, _def.mark, half)
 	# Departures, Terminal Zero draws its own marks.
 	TerminalMarks.draw_mark(self, _def.mark, half)
 	# The Flashback Cinema

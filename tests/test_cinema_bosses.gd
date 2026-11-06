@@ -599,7 +599,6 @@ func test_the_cinemas_bosses_are_on_its_floor_with_their_posters_and_memento() -
 	assert_eq(floor_def.floor_boss.id, "projectionist")
 	for id in ["crabtree", "projectionist"]:
 		assert_true(ResourceLoader.exists("res://data/bounties/%s.tres" % id), "%s has a poster" % id)
-		assert_false(PendingBosses.BY_OLD.values().has(id), "%s needs no stand-in" % id)
 	var found := false
 	for entry: Dictionary in Mementos.ALL:
 		if entry["boss"] == "projectionist":

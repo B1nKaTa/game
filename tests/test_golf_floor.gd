@@ -1,7 +1,7 @@
 extends TestCase
 
-# What still holds of Fairway's End while its enemies, bosses, props and looks wait to be retired: the
-# floor's rooms, palette and whole-floor rules now live in test_seance_floor.gd.
+# What still holds of Fairway's End while its props and looks wait to be retired: the floor's rooms,
+# palette, enemies, bosses and whole-floor rules now live in test_seance_floor.gd.
 
 
 func _def() -> FloorDef:
@@ -14,16 +14,6 @@ func _floor(id: String) -> FloorDef:
 
 func _difference(a: Color, b: Color) -> float:
 	return Vector3(a.r - b.r, a.g - b.g, a.b - b.b).length()
-
-
-# --- its bosses ---
-
-# The hotline's own regulars and Sister Celestine hold the floor now (test_seance_floor.gd); the Club
-# President keeps its floor boss room, with the Caddie as his summon, until his phase retires him.
-func test_the_golf_floor_boss_still_holds_its_boss_room() -> void:
-	var def := _def()
-	assert_eq(def.floor_boss.id, "thaddeus_fairweather")
-	assert_eq(def.floor_boss.summon.id, "caddie")
 
 
 # --- its look ---
@@ -110,8 +100,8 @@ func test_the_sand_under_a_wall_light_stays_dim_and_warnings_show_on_it() -> voi
 	assert_true(_night_lit(palette.sand, palette).get_luminance() < 0.4, "the sand at a fill stays dim")
 
 
-# Two pale bodies read as one under a single light (the cruise's lesson), so only one of the course's
-# people is pale: the Caddie in his whites.
+# Two pale bodies read as one under a single light (the cruise's lesson), so only one of the floor's
+# people is pale: the Poltergeist on Hold.
 func test_only_one_of_the_floors_people_is_pale() -> void:
 	var defs: Array[EnemyDef] = []
 	defs.assign(_def().enemies)

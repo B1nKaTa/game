@@ -491,6 +491,8 @@ func _enter_room(target_id: int) -> void:
 	_hud.hide_boss_bar()
 	player.recall_teeth()
 	player.end_push()
+	# A hold from the room he leaves (On the Line) stays there too.
+	player.end_leash()
 	var from_id := _current_id
 	if _room_view != null:
 		# Before anything leaves the room, so an item can still take from it (Moving Boxes).

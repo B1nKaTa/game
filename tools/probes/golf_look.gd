@@ -1,10 +1,9 @@
 extends SceneTree
-# Opens a real window and saves screenshots of Fairway's End Golf Club: its rooms with enemies in them,
-# the sand beside the striped fairway, every prop, every enemy and every attack of the Club President,
-# and the lingering effects and the HUD over the palest tile in a large room. Sister Celestine, who
-# took Chip's room, is left to the hotline's own look shots.
+# Opens a real window and saves screenshots of what is left of Fairway's End Golf Club: its rooms, the
+# sand beside the striped fairway, every prop, and the HUD over the palest tile in a large room. Its
+# enemies and bosses are retired; the hotline's own look shots show Sister Celestine and Madame Zara.
 # Run only from an exported copy whose config/name is renamed.
-# Args after --: rooms | props | enemies | president | pale | all
+# Args after --: rooms | props | pale | all
 
 const OUT := "D:/grandpa-look-golf/shots/"
 const WALL_LIMIT_MS := 280000
@@ -71,7 +70,7 @@ func _main() -> void:
 	progress.data.record_floor_cleared(4, "last_resort_cruise")
 	var args := OS.get_cmdline_user_args()
 	var which: String = args[0] if args.size() > 0 else "all"
-	for part in ["rooms", "props", "enemies", "president", "pale"]:
+	for part in ["rooms", "props", "pale"]:
 		if which == "all" or which == part:
 			await call("_" + part)
 	progress._store.delete_all()
@@ -254,132 +253,6 @@ func _props() -> void:
 	await _shot("23_props_after_breaking")
 
 
-# --- the regular enemies ---
-
-func _enemies() -> void:
-	await _new_run()
-	var rows := _rows(20, 11)
-	_fill(rows, Vector2i(12, 7), Vector2i(15, 8), "s")
-	await _enter(rows)
-	# The whole roster side by side.
-	_stand(_cell(3, 8))
-	var ids := ["caddie"]
-	for i in ids.size():
-		var e := _spawn(ids[i], _cell(4 + i * 3, 4))
-		e.set_physics_process(false)
-	await _wait(0.2)
-	await _shot("30_roster")
-	await _clear()
-	# The Caddie: the lane, then the cart.
-	_stand(_cell(4, 5))
-	var caddie := _spawn("caddie", _cell(11, 5))
-	await _until(func(): return _warned(caddie, 0.45), 8.0)
-	await _shot("31_caddie_lane")
-	await _until(func(): return is_instance_valid(caddie) and caddie._behavior._charge_left > 0.0, 2.0)
-	await _wait(0.12)
-	await _shot("32_caddie_cart_charge")
-	await _wait(0.6)
-	await _shot("33_caddie_rest")
-	await _clear()
-
-
-# --- Club President Thaddeus Fairweather ---
-
-func _president() -> void:
-	await _new_run()
-	var layout := await _enter_quiet("res://data/rooms/seance_hotline/floor_boss_01.tres")
-	var center := _middle(layout)
-	_stand(_floor_near(layout, center + Vector2(-120, 10)))
-	var boss: Enemy = view._spawn_enemy(load("res://data/enemies/thaddeus_fairweather.tres"), center, true)
-	var b = boss._behavior
-	held.append(b)
-	b._caddie_timer = 99.0
-	await _wait(0.1)
-	boss.global_position = center
-	b._cooldown = 99.0
-	# Hold him still so his windups stay where they began.
-	b._begin(boss, ClubPresidentBehavior.Attack.HOLE_IN_ONE, false)
-	await _wait(0.15)
-	await _shot("50_president_hole_in_one_early")
-	await _wait(ClubPresidentBehavior.HOLE_IN_ONE_WINDUP * 0.5 - 0.15)
-	await _shot("51_president_hole_in_one_mid")
-	await _until(func(): return _of(GiantBallDrop).any(func(s): return s._landed), 2.0)
-	await _shot("52_president_hole_in_one_lands")
-	await _wait(0.8)
-	b._cooldown = 99.0
-	boss.global_position = center
-	_stand(_floor_near(layout, center + Vector2(-140, 0)))
-	await _wait(0.1)
-	b._begin(boss, ClubPresidentBehavior.Attack.CART, false)
-	await _wait(ClubPresidentBehavior.CART_WINDUP * 0.5)
-	await _shot("53_president_cart_lane")
-	await _until(func(): return b._dash.is_active(), 2.0)
-	await _wait(0.12)
-	await _shot("54_president_cart_charging")
-	await _wait(1.0)
-	b._cooldown = 99.0
-	boss.global_position = center
-	_stand(_floor_near(layout, center + Vector2(-90, 20)))
-	await _wait(0.1)
-	b._begin(boss, ClubPresidentBehavior.Attack.SPRINKLER, false)
-	await _wait(ClubPresidentBehavior.SPRINKLER_WINDUP * 0.5)
-	await _shot("55_president_sprinkler_windup")
-	await _until(func(): return _of(SprinklerSweep).any(func(s): return s.is_sweeping()), 2.0)
-	await _wait(0.5)
-	b._cooldown = 99.0
-	await _shot("56_president_sprinkler_sweeping")
-	await _wait(1.3)
-	b._cooldown = 99.0
-	boss.global_position = center
-	_stand(_floor_near(layout, center + Vector2(-90, 0)))
-	await _wait(0.1)
-	for old in _of(BunkerPatch):
-		old.queue_free()
-	await _wait(0.05)
-	b._begin(boss, ClubPresidentBehavior.Attack.BUNKER, false)
-	await _wait(BunkerPatch.WARNING * 0.5)
-	await _shot("57_president_bunker_warning")
-	await _until(func(): return _of(BunkerPatch).any(func(p): return p.is_laid()), 2.0)
-	await _wait(0.2)
-	b._cooldown = 99.0
-	await _shot("58_president_bunker_sand")
-	_stand(_floor_near(layout, center + Vector2(-90, 0)))
-	await _wait(0.3)
-	b._cooldown = 99.0
-	await _shot("59_president_grandpa_in_spread_sand")
-	await _wait(0.5)
-	# The second phase: caddies, then a cart charge chained into a bunker spread.
-	boss.hp = boss.max_hp() * 0.4
-	boss.health_changed.emit(boss.hp)
-	b._caddie_timer = 0.0
-	for old in _of(BunkerPatch):
-		old.queue_free()
-	await _wait(0.4)
-	b._cooldown = 99.0
-	await _shot("60_president_phase2_caddie_marks")
-	await _wait(1.0)
-	b._cooldown = 99.0
-	_freeze_all()
-	await _shot("61_president_phase2_caddies")
-	for e in get_nodes_in_group("enemies"):
-		if e != boss:
-			e.dismiss()
-	boss.set_physics_process(true)
-	b._caddie_timer = 99.0
-	boss.global_position = center
-	_stand(_floor_near(layout, center + Vector2(-140, 0)))
-	await _wait(0.1)
-	held.erase(b)
-	b._cooldown = 99.0
-	b._begin(boss, ClubPresidentBehavior.Attack.CART, true)
-	await _until(func(): return b._dash.is_active(), 2.0)
-	await _until(func(): return not b._dash.is_active(), 2.0)
-	await _until(func(): return not _of(BunkerPatch).is_empty(), 2.0)
-	await _wait(0.3)
-	await _shot("62_president_phase2_cart_into_bunkers")
-	await _clear()
-
-
 # --- the palest tile: sand in a large room, the HUD over it, and every effect on it ---
 
 func _pale() -> void:
@@ -391,39 +264,4 @@ func _pale() -> void:
 	_stand(_cell(14, 3))
 	await _wait(0.4)
 	await _shot("70_pale_hud_over_sand")
-	# Every effect over the sand: the hole in one, the bunker warning, the sprinkler and the caddie's
-	# lane.
-	_stand(_cell(10, 6))
-	var boss: Enemy = view._spawn_enemy(load("res://data/enemies/thaddeus_fairweather.tres"), _cell(18, 6), true)
-	var b = boss._behavior
-	held.append(b)
-	b._caddie_timer = 99.0
-	await _wait(0.1)
-	b._cooldown = 99.0
-	b._begin(boss, ClubPresidentBehavior.Attack.HOLE_IN_ONE, false)
-	await _wait(ClubPresidentBehavior.HOLE_IN_ONE_WINDUP * 0.5)
-	await _shot("71_pale_hole_in_one")
-	await _wait(1.2)
-	b._cooldown = 99.0
-	boss.global_position = _cell(18, 6)
-	b._begin(boss, ClubPresidentBehavior.Attack.SPRINKLER, false)
-	await _wait(ClubPresidentBehavior.SPRINKLER_WINDUP * 0.5)
-	await _shot("72_pale_sprinkler_windup")
-	await _wait(1.0)
-	b._cooldown = 99.0
-	await _shot("73_pale_sprinkler_jet")
-	await _wait(1.2)
-	b._cooldown = 99.0
-	boss.global_position = _cell(18, 6)
-	b._begin(boss, ClubPresidentBehavior.Attack.BUNKER, false)
-	await _wait(BunkerPatch.WARNING * 0.6)
-	await _shot("74_pale_bunker_warning_on_sand")
-	await _until(func(): return _of(BunkerPatch).any(func(p): return p.is_laid()), 2.0)
-	await _wait(0.2)
-	await _shot("75_pale_bunker_laid_on_sand")
-	boss.dismiss()
-	await _wait(0.2)
-	var caddie := _spawn("caddie", _cell(17, 6))
-	await _until(func(): return _warned(caddie, 0.45), 8.0)
-	await _shot("83_pale_caddie_lane")
 	await _clear()

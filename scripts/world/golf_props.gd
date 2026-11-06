@@ -44,9 +44,3 @@ static func is_parked_cart(layout: RoomLayout, cell: Vector2i) -> bool:
 		if layout.symbol_at(cell + side) == RoomLayout.SYMBOL_HEDGE:
 			return false
 	return true
-
-
-# The golf course's lingering effects, which a stored room clears when Grandpa leaves. RoomView's own
-# is_passing_effect asks this too.
-static func is_passing_effect(child: Node) -> bool:
-	return child is BunkerPatch or child is SprinklerSweep

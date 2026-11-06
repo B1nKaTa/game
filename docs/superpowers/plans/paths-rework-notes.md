@@ -503,3 +503,103 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
   `gopher` as history (`path_migration.gd` still maps `chip` to `celestine` for posters and beaten bosses).
 - **Left as it is:** the Golf Visor cosmetic (Celestine's poster extra) still says "Chip's own"; its
   text is the item audit's to retheme with the other poster looks.
+- **Madame Zara (Phase D), one commit:** she takes the Club President's slot and numbers (1950 final
+  health, 886.364 in the `.tres`, 80 px/s, 16 Pension, 44x52, the Commodore's 0.6 and 0.42 rests), with
+  the floor wired and Thaddeus retired in the same commit. Teal (0.1, 0.7, 0.65): 0.25 or more off every
+  hotline body and the Ectoplasm, 0.4 off the warning red, off the mint and the carpet's violet, and
+  not pale (s 0.86, so the Poltergeist stays the floor's one pale body). Mark `medium_turban`: a plum
+  turban with a crystal and a feather, two strands of gold and pink beads, a receiver on its cord.
+- **Second phase:** 1.2x speed, 0.8x windups except the Ouija board's, 0.42 s rests, as the
+  Projectionist's. She holds still while a line holds and while the planchette is warned and slides
+  (a medium at her table), and through a possession's windup only, so the copy can walk while she moves.
+- **The Ouija board** (`OuijaBoard`) lies on her room's floor for the whole fight, laid in `on_ready`
+  and laid again if a stored room ever clears it: a 7x4 letter grid (YES, A to E, NO; F to L; M to S;
+  T to Z), the room less 48 px, letters at most 96x80 px apart so in the large room it lies in the
+  middle, on translucent dark wood with a gold rim and cream letters, flat at z -8 under the bodies. One
+  framed board of letters, nothing like the carpet's scattered stars and moons. It fades when she falls.
+- **The planchette, her heaviest attack** (`OuijaPlanchette`): 3 pills once, the whole 1.2 s windup
+  shown (`set_warning` whole, never shortened in phase two), every piece of its path a red band 32 px
+  wide with a ring on each letter, each outlined twice (`Enemy.HEAVIEST_LANE_GAP`), and what it has still
+  to cross stays shown as it slides. It spells one of 18 words (HELLO, BOO, GERALD, HEDGE, ...) at
+  230 px/s, resting 0.12 s on each letter; a word taking more than 4.0 s to spell is left out (11 of 18
+  fit the large room, all but few the medium). Sized to `planchette.png` (32x32, not wired): drawn as a
+  wooden heart with a glass window, hitting feet within 16 px of its middle.
+- **The board's plan:** the words sorted by how near their path passes his feet, starting at one of the
+  3 nearest, at most 8 tried, each slide sampled as circles every 12 px (and one for each rest) over
+  everything under way; the first that leaves a spot nothing ever covers wins, else the first that leaves
+  any way out. Marks are the escape's never-covered spot, or the spot that stays safe once he gets there,
+  never one by her body (`mark_of`).
+- **On the Line** (`LineTether`): a circle of radius 88 round his feet as she calls, shown 0.8 s (0.64 in
+  phase two) as a coiled cord on the floor with a cord from her to its edge, in the cord's cream, never
+  the warning red, since the circle itself hurts no one. Then the line locks and holds him 3 s. She calls
+  only when what is under way leaves him a safe spot inside the circle, and checks again as it locks
+  (he may have moved): when nothing is safe the line goes dead ("The line's gone dead.") and holds no one.
+  Alongside she runs the board or a possession, the board first and the possession first by turns,
+  planned with the circle as the only open floor; with neither fitting, the hold runs alone.
+- **The circle a plan may use:** `LineTether.open_within` answers for whole walk-grid cells and calls a
+  cell open only when all four of its corners lie inside the circle (and the room's floor is open there),
+  since OverlapRoute asks `set_open` once per cell with whichever corner lands there first. So a plan can
+  miss a way out inside the circle but never promise one outside it. His own cell always counts.
+- **The hold on Grandpa:** `Player.leash_to(center, radius, seconds)`, `end_leash`, `is_leashed`, read
+  through `LeashRule.held_velocity`, applied at the end of `_handle_movement` after every push and before
+  `move_and_slide`, so walks, dodges, pushes and body shoves all stay inside: a step that would cross the
+  edge stops on it, keeping its share along the edge; caught outside as it locks he is drawn back in at
+  150 px/s (quicker than his walk) and may not step further out. It ends with its own time, in
+  `FloorScene._enter_room` (beside `end_push`, lesson 132), when she falls (`on_killed`), and when the
+  line drops or leaves the room (`_exit_tree`), each only if it still holds that line's circle.
+- **Bot reading:** the circle is 1 outside it while it warns and 2 outside it while it holds (margin
+  12 px strict, 4 px otherwise), and never imminent, since it never hurts. The planchette is 2 along all it
+  has still to cross; the copy 2 along its next 1.5 s of walk; the seance circle 2 outside its light; a
+  spirit's ring 2 unless the spot is lit. The bot treats the planchette and the copy as moving hazards
+  (its `sweeps` list), keeping a dodge for the moment they arrive.
+- **Possession** (`PossessionGhost`, `FeetTrail`): she records his feet every tick (the last 2.25 s
+  kept); a possession takes his last 2 s as 41 points 0.05 s apart. Warned 0.7 s (0.56 in phase two): a
+  dotted red trail of his steps and a red ring where it rises, the copy faint there. Then it walks the
+  trail at his pace and, for the rest of its 4 s, walks it back (decided over a second pass: no jump, and
+  everywhere it goes was shown). So a moment t into its walk it stands where he stood t after the
+  recording began, which is 2 s plus its windup before. A pale violet copy at half alpha with wisps and
+  a red ring round its feet (his own frame, tinted, once his art is loaded; a see-through outline
+  before), drawn on the shots' layer. 1 pill a touch (feet within 12 px), and it hurts again only after
+  his feet have left it; the player's own grace does the rest. She casts it only when it leaves him a way
+  out over what is under way, and only once she has his last 2 s.
+- **The seance circle** (`SeanceCircle`, phase two): the room dims to 0.5 (Lights Out is 0.85) over
+  0.8 s but for a ring of light of radius 132 (Lights Out's is 70 and rides on him) round a point that
+  drifts at 12 px/s toward random goals inside the room less 64 px, its candle-warm edge drawn. It sits on
+  Lights Out's z 50, under every warning and shot. Night Shift (`LightsOut.kept_lit`) keeps the room lit,
+  but the ring and spirits still show and still strike, since they are an attack, not a darkness. Four
+  spirits circle 26 px outside the ring; after his feet have stood outside it 0.5 s, one swoops every
+  1.6 s (`SpiritSwoop`): a 22 px red ring on his spot warned 0.8 s with the spirit flying in, 1 pill only if
+  his feet are still in the ring and still outside the light as it lands.
+- **Her plans in the light:** while he stands in the light, every plan of hers treats only the cells
+  wholly inside the light shrunk by its drift over 3 s (132 - 36 = 96 px) as open, so the way out she
+  leaves keeps him in the light; when he stands outside it she plans over the open floor, and the spirits
+  do the rest.
+- **The Ectoplasm** comes in pairs every 12 s (first at 5 s), on summon marks across his way, never past
+  5 enemies in the room, paying nothing as every summon. It is the floor's summon at last
+  (`madame_zara.summon`).
+- **No hold music:** a test reads her behavior and all six of her nodes and finds no `HoldMusic`.
+- **Look hooks:** `forced_attack` (used once) starts any attack; `forced_phase_two` starts the seance
+  circle whatever her health; `last_anim`, `tether()`, `planchette()`, `ghost()`, `board()`, `circle()`
+  let a probe time its shots on state.
+- **Retired with Thaddeus:** `thaddeus_fairweather.tres` (renamed to `madame_zara.tres` in git),
+  `club_president_behavior.gd`, the Caddie (`caddie.tres`, `caddie_behavior.gd` with its `Cart`, which
+  nothing else used; the baggage handler has its own), `giant_ball_drop.gd`, `sprinkler_sweep.gd`,
+  `bunker_patch.gd` (only he used them), `golf_marks.gd` (only the boater and the caddie's bib were left),
+  `GolfProps.is_passing_effect` (it only named the patch and the sprinkler) and its room line, his art
+  folder `art/sprites/thaddeus_fairweather` (the Bestiary's history cell draws a placeholder), his
+  strips-tool cut and art-look probe entry, the bot's sprinkler, bunker and giant-ball branches,
+  `test_golf_bosses.gd`, `test_golf_enemies.gd`, the spread-sand tests of `test_golf_hazard.gd`, the golf
+  look probe's enemy and president shots, and round2_look's caddie and president shots (its dark corner
+  now shows the Ouija board's path and its mid room the seance circle). `tests/support/pending_bosses.gd`
+  is gone: test_bounties and test_mementos read the floor's real bosses.
+- **Left for Phase E:** `SandTrap`, `SandRule` (still read by the player's walk and dodge and the
+  enemy's walk), `GolfProps` (the sand, flag pins, ball washers, hedges and parked carts), `GolfLook`
+  (patterns 13), the sand palette fields, `FlagPin`, `BallWasher`, `Hedge`, `ParkedCart`, the symbols
+  `s 3 4 5`, `test_golf_floor.gd` and `test_golf_hazard.gd` (now only the sand and props), and the golf
+  look probe's rooms, props and pale-tile shots. No layout uses any of them.
+- **Verified (Phase D):** the suite passed in a `git archive` copy of the commit (2187 tests, 0 failed).
+  Over 200 seeds in her two rooms: the board planned 175 of 175 live states (25 lost before it), every
+  one marked, 110 sliding within 56 px of him, slowest 9 ms in the large room; On the Line called in 180
+  (20 refused, the circle already shut), dropped 3 at the lock, ran an attack alongside in all other 177,
+  each with a marked spot inside the circle, slowest call and plan 24 ms; a possession was cast in 199 of
+  199, slowest 12 ms. Not looked at in a real window yet (Task 6 shoots it).

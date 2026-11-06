@@ -77,6 +77,10 @@ var _feet: Marker2D
 # A gust that shoves him along for a while, as the bellows do. A dodge breaks free of it.
 var _push := Vector2.ZERO
 var _push_left := 0.0
+# A hold that keeps his feet inside a circle for a while (Madame Zara's On the Line). See LeashRule.
+var _leash_center := Vector2.ZERO
+var _leash_radius := 0.0
+var _leash_left := 0.0
 # Whether the next fire hit that would land is shrugged off, with the coal shovel. Only a fire hit
 # that lands sets it, and only a shrugged one clears it.
 var _fire_shrug_next := false
@@ -259,6 +263,30 @@ func end_push() -> void:
 	_push_left = 0.0
 
 
+# Holds his feet inside a circle for a while: nothing carries them outward past its edge, a dodge
+# neither, and caught outside he is drawn back in (LeashRule).
+func leash_to(center: Vector2, radius: float, seconds: float) -> void:
+	_leash_center = center
+	_leash_radius = radius
+	_leash_left = seconds
+
+
+func end_leash() -> void:
+	_leash_left = 0.0
+
+
+func is_leashed() -> bool:
+	return _leash_left > 0.0
+
+
+func leash_center() -> Vector2:
+	return _leash_center
+
+
+func leash_radius() -> float:
+	return _leash_radius
+
+
 func slow_factor() -> float:
 	return _slow.speed_factor()
 
@@ -312,6 +340,7 @@ func _physics_process(delta: float) -> void:
 	_was_dodging = _dodge.is_active()
 	_slow.tick(delta)
 	_push_left = maxf(_push_left - delta, 0.0)
+	_leash_left = maxf(_leash_left - delta, 0.0)
 	_self_stun_left = maxf(_self_stun_left - delta, 0.0)
 	run.health.tick(delta)
 	run.tick_buff(delta)
@@ -656,6 +685,9 @@ func _handle_movement() -> void:
 			_visual.play("walk" if input != Vector2.ZERO else "idle")
 	if _push_left > 0.0:
 		velocity += _push
+	# On the Line: whatever moves him, walk, dodge or shove, his feet stay inside the circle.
+	if is_leashed() and _feet != null:
+		velocity = LeashRule.held_velocity(_feet.global_position, velocity, _leash_center, _leash_radius, get_physics_process_delta_time())
 	move_and_slide()
 
 

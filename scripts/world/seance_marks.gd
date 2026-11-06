@@ -3,7 +3,7 @@ extends RefCounted
 
 # The placeholder signs drawn on the Seance Hotline's own people and things, so each reads without art.
 # EnemyMarks hands its canvas over for these marks. Later bosses add theirs to MARKS and the match.
-const MARKS := ["psychic_headset", "gazer_veil", "poltergeist", "ectoplasm", "tarot_shawl"]
+const MARKS := ["psychic_headset", "gazer_veil", "poltergeist", "ectoplasm", "tarot_shawl", "medium_turban"]
 const HEADSET := Color("2a2430")
 const MIC := Color("c9cdd6")
 const PHONE_GLOW := Color("8ce64d")
@@ -25,6 +25,12 @@ const SHAWL := Color("3c2a5e")
 const FRINGE := Color("e2c25a")
 const CARD_BACK := Color("2b1846")
 const CARD_EDGE := Color("e2c25a")
+const TURBAN := Color("5b1f63")
+const TURBAN_FOLD := Color("8a3a8f")
+const TURBAN_JEWEL := Color("ad9bf3")
+const FEATHER := Color("f1e6c8")
+const BEAD_GOLD := Color("e2c25a")
+const BEAD_PINK := Color("e85fc8")
 
 
 static func draws(mark: String) -> bool:
@@ -91,3 +97,24 @@ static func draw_mark(canvas: CanvasItem, mark: String, half: Vector2) -> void:
 				var card := Rect2(half.x - 1.0 + i * 3.0, -4.0 + absf(i - 1.0) * 1.5, 5.0, 8.0)
 				canvas.draw_rect(card, CARD_BACK)
 				canvas.draw_rect(card, CARD_EDGE, false, 1.0)
+		"medium_turban":
+			# Madame Zara: a tall plum turban wound in folds with a crystal pinned at its front and a cream
+			# feather rising from it, two long strands of gold and pink beads, and a phone receiver held to
+			# her ear by its coiled cord.
+			canvas.draw_rect(Rect2(-half.x * 0.7, -half.y - 8.0, half.x * 1.4, 12.0), TURBAN)
+			for i in 3:
+				canvas.draw_line(Vector2(-half.x * 0.7, -half.y - 5.0 + i * 3.5), Vector2(half.x * 0.7, -half.y - 7.0 + i * 3.5), TURBAN_FOLD, 1.0)
+			canvas.draw_circle(Vector2(0.0, -half.y - 2.0), 3.0, TURBAN_JEWEL)
+			canvas.draw_arc(Vector2(0.0, -half.y - 2.0), 3.0, 0.0, TAU, 10, Color.BLACK, 1.0)
+			canvas.draw_line(Vector2(1.0, -half.y - 5.0), Vector2(5.0, -half.y - 17.0), FEATHER, 2.0)
+			canvas.draw_line(Vector2(3.0, -half.y - 11.0), Vector2(7.0, -half.y - 13.0), FEATHER, 1.0)
+			for strand in 2:
+				var sag := half.y * (0.15 + 0.2 * strand)
+				for i in 7:
+					var along := i / 6.0
+					var bead := Vector2(-half.x * 0.55 + along * half.x * 1.1, -half.y * 0.45 + sin(along * PI) * sag)
+					canvas.draw_circle(bead, 1.6, BEAD_GOLD if (i + strand) % 2 == 0 else BEAD_PINK)
+			canvas.draw_rect(Rect2(half.x * 0.55, -half.y * 0.75, 5.0, 10.0), RECEIVER)
+			canvas.draw_rect(Rect2(half.x * 0.5, -half.y * 0.75 - 1.0, 7.0, 3.0), RECEIVER)
+			for i in 3:
+				canvas.draw_arc(Vector2(half.x * 0.75, -half.y * 0.75 + 12.0 + i * 3.0), 1.5, 0.0, TAU, 6, CORD, 1.0)

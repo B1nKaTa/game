@@ -191,13 +191,38 @@ func test_its_own_enemies() -> void:
 	assert_near(def.health_mult, 2.2)
 
 
-# Its own mini boss holds the mini boss rooms, calling no one; the golf club's floor boss waits for his
-# phase.
+# Its own mini boss holds the mini boss rooms, calling no one.
 func test_its_own_mini_boss() -> void:
 	var def := _def()
 	assert_eq(def.mini_boss.id, "celestine")
 	assert_eq(def.mini_boss.summon, null)
 	assert_eq(def.mini_boss.art_id, "celestine")
+
+
+# Its own floor boss holds the boss rooms, manifesting the floor's own summon, the Ectoplasm.
+func test_its_own_floor_boss() -> void:
+	var def := _def()
+	assert_eq(def.floor_boss.id, "madame_zara")
+	assert_eq(def.floor_boss.art_id, "madame_zara")
+	assert_eq(def.floor_boss.summon.id, "ectoplasm")
+	for gone in ["thaddeus_fairweather", "caddie"]:
+		assert_false(ResourceLoader.exists("res://data/enemies/%s.tres" % gone), "%s is retired" % gone)
+
+
+# Madame Zara's teal is her own: apart from every other body of the floor by colour as well as size,
+# and from the warning red, the mint and the violet carpet.
+func test_madame_zaras_colour_is_told_apart_from_the_floor() -> void:
+	var zara := SpriteVisual.readable(_def().floor_boss.color)
+	var others: Array[EnemyDef] = []
+	others.assign(_def().enemies)
+	others.append(_def().mini_boss)
+	others.append(_def().floor_boss.summon)
+	for other in others:
+		assert_true(_difference(zara, SpriteVisual.readable(other.color)) >= 0.25, "apart from %s" % other.id)
+	assert_true(_difference(zara, Enemy.WARNING_COLOR) >= 0.4, "far from the warning red")
+	assert_true(_difference(zara, SafeSpotMark.COLOR) >= 0.3, "and the mint")
+	assert_true(_hue_gap(zara.h, _def().room_palette().floor_a.h) >= 0.1, "and the carpet's violet")
+	assert_true(_def().floor_boss.color.s >= 0.4, "not a second pale body")
 
 
 # Its regulars, its bosses and their summons, each told apart from all the others by colour or size.
@@ -206,9 +231,11 @@ func test_every_enemy_of_the_floor_can_be_told_apart() -> void:
 	defs.assign(_def().enemies)
 	for boss in [_def().mini_boss, _def().floor_boss]:
 		defs.append(boss)
-		if boss.summon != null:
+		if boss.summon != null and not defs.has(boss.summon):
 			defs.append(boss.summon)
-	defs.append(load("res://data/enemies/ectoplasm.tres"))
+	var ectoplasm: EnemyDef = load("res://data/enemies/ectoplasm.tres")
+	if not defs.has(ectoplasm):
+		defs.append(ectoplasm)
 	for i in defs.size():
 		for j in range(i + 1, defs.size()):
 			var a := SpriteVisual.readable(defs[i].color)

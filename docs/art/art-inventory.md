@@ -146,10 +146,10 @@ All of these are code; Section 2 lists each piece by path.
 - `summon_mark.gd`: a red r16 and an X;
 - `safe_spot_mark.gd` and `gap_mark.gd`: green rings;
 - `lights_out.gd`: a black overlay with a 70 px hole.
+- `seance_circle.gd`: a dim overlay with a drifting 132 px ring of light.
 
 **Enemy overlays drawn in code**, which rotate to any angle:
 - the Baggage Handler's trolley;
-- the Caddie and Club President's golf cart (`CaddieBehavior.Cart`);
 - the Pallbearers' `CoffinCarry`;
 - Mortimer's `CoffinShell`;
 - the Tour Group's `GuideFlag`.
@@ -206,11 +206,11 @@ No font file or Theme exists. Everything uses Godot's fallback font with outline
 
 ### 1.9 Enemy art as built (H1 to H4, 2026-11-05)
 
-H1 to H4 are in. The first ten enemies had art: intern_reaper, stoker, mall_cop, club_golfer, hr_representative, regional_reaper, old_smokey, mall_santa, thaddeus_fairweather and chairman_of_the_board. The Mall Santa's and the Club Golfer's were retired with them (they stay on PixelLab), and the Mall Cop's is worn by the airport's.
+H1 to H4 are in. The first ten enemies had art: intern_reaper, stoker, mall_cop, club_golfer, hr_representative, regional_reaper, old_smokey, mall_santa, thaddeus_fairweather and chairman_of_the_board. The Mall Santa's, the Club Golfer's and Thaddeus Fairweather's were retired with them (they stay on PixelLab), and the Mall Cop's is worn by the airport's.
 
 - **Folders.** `res://art/sprites/<art_id>/<anim>.png`, one row of square frames per anim. `EnemyDef.art()` is `art_id`, or the id when that is empty.
 - **Building strips.** Run `py tools/art/enemy_strips.py D:/grandpa-art/enemies art/sprites [id ...]`. It reads `<id>/<state>/animations/<anim>/east/frame_###.png` and writes every anim folder it finds as `<anim>.png`. idle and walk keep every frame. Every other anim drops frame 000, the reference pose. All frames of one enemy go on one square canvas, a multiple of 4 wide, centred on the source canvas's middle column, with each frame's lowest row on one feet row.
-- **Anim names the game asks for.** `idle`, `walk`, `windup` and `attack`, plus any name a behavior plays through `Enemy.play_anim(name, seconds)` (the Mall Cop's `whistle`, the Usher's `shush`, Crabtree's `review` and the Projectionist's `crank`). Put a new one in the export as `animations/<name>/east/` and rerun the tool.
+- **Anim names the game asks for.** `idle`, `walk`, `windup` and `attack`, plus any name a behavior plays through `Enemy.play_anim(name, seconds)` (the Mall Cop's `whistle`, the Usher's `shush`, Crabtree's `review`, the Projectionist's `crank`, Celestine's `deal_cards` and Madame Zara's `tether_call` and `possession`). Put a new one in the export as `animations/<name>/east/` and rerun the tool.
 - **Cuts.** `CUTS` in the tool picks frames for one export, matched by the hash of its frames: the windup is cut from the first frames of the attack, and the attack is trimmed to open on the strike. A newer export of the same anim gets the default (every frame but 000), and a real `windup` folder always wins over a cut.
 - **H1, the driver** (`EnemyAnim`, `Enemy._update_anim`, run every frame).
   - `windup` plays once over the warning's windup and holds its last frame.
@@ -551,8 +551,8 @@ The pallbearers' coffin carry uses the dropped_coffin art below.
 
 It replaces Fairway's End, whose characters stay on PixelLab unused. Every new id wears its own art
 (`art_id` = its id) but the returning pair, which wear their bases' (`bingo_caller`, `soot_ghost`).
-Sister Celestine holds the mini boss rooms; the Club President, his summon and the golf props below stay
-until Madame Zara takes his room.
+Sister Celestine holds the mini boss rooms and Madame Zara the boss rooms; the golf props below stay
+until the golf look is retired.
 
 **Enemies**
 
@@ -574,6 +574,7 @@ trail blobs (`ectoplasm_trail.gd`, r7, PX 1). The phone cord's lash (`phone_cord
 | id | file | body | anims (from the code) | facing | tool | gens |
 |---|---|---|---|---|---|---|
 | celestine (mini) | celestine.tres | 32x40 | idle, walk, deal_cards (as she deals), attack (as each card is turned) | E+flip | C64 + 4A | 6 |
+| madame_zara (boss) | madame_zara.tres | 44x52 | idle, walk, attack (over the Ouija board), tether_call (On the Line, a receiver raised), possession (reaching out) | E+flip | C88 + 5A@2 | 12 |
 
 **Her cards and attacks:** the tarot cards (`tarot_card.gd`, drawn 32x48, the size of the art:
 `tarot_card_back`, `tarot_tower`, `tarot_death`, `tarot_wheel`, `tarot_star`, already made, not yet
@@ -581,27 +582,19 @@ wired; `TarotCard.art_id()` names the stem it shows). The Tower's falling tiles 
 scythe (`scythe_sweep.gd`), the wheel's blades (`wheel_ring.gd`) and the falling stars (`star_fall.gd`)
 stay code.
 
-**Left from Fairway's End**
+**Her attacks:** the planchette (`ouija_planchette.gd`, drawn about 32x32, the size of
+`planchette.png`, already made, not yet wired; `OuijaPlanchette.ART_SIZE`). The Ouija board under her
+room (`ouija_board.gd`), the phone-cord circle (`line_tether.gd`), the possessed copy (`possession_ghost.gd`,
+Harold's own frame tinted and faded), the seance circle and its spirits (`seance_circle.gd`,
+`spirit_swoop.gd`) stay code.
+
+**Summons:** ectoplasm (Madame Zara).
+
+**Left from Fairway's End** (its enemies and bosses are retired; their art stays on PixelLab)
 
 | id | file | body | anims (from the code) | facing | tool | gens |
 |---|---|---|---|---|---|---|
-| caddie (Thaddeus's summon) | caddie.tres | 22x22 | idle, walk, climb out (rest) | E+flip | C48 + 3A | 5 |
-| golf cart overlay | `CaddieBehavior.Cart`, also the Club President's and the parked cart | about 30x22, rotated | | top-down | MO | 1 |
-
-**Bosses**
-
-| id | file | body | anims (from the code) | facing | tool | gens |
-|---|---|---|---|---|---|---|
-| thaddeus_fairweather (boss) | thaddeus_fairweather.tres | 46x52 | idle, walk, windup, hole-in-one swing, cart drive (uses the cart overlay), sprinkler call | E+flip | C88 + 6A@2 | 14 |
-
-**Summons:** caddie (Thaddeus).
-
-**Projectiles and hazards**
-
-| id | gens |
-|---|---|
-| giant ball (`giant_ball_drop.gd`) | PX 1 |
-| sprinkler head (`sprinkler_sweep.gd`). The sector warning stays code. | PX 1 |
+| golf cart | the parked cart (a lone `5`) | about 30x22 | | top-down | MO | 1 |
 
 **Props**
 
@@ -613,7 +606,7 @@ stay code.
 | sand | `s` (`sand_trap.gd`); the bunker patch reuses it | 32 | MO 1 |
 | decor_fog | | | MO 1 |
 
-The parked cart (a lone `5`) reuses the golf cart art. Grass, bench and plant are shared.
+Grass, bench and plant are shared.
 
 **Tiles:** mown fairway (pattern 13) and hedge wall (pattern 13): TS 25.
 
@@ -977,7 +970,7 @@ A canvas is about 1.6 to 2 times the body height, rounded to a multiple of 4.
 | 22-32 | most regulars and the denial officer | 48 | about 38-42 |
 | 28 (Harold) | Harold | 44 | about 38 |
 | 38-40 | mini bosses (Senior Adjuster, Gus, Barbara, Klaus, Gloria, Reverend, Lorraine, Celestine, Wanda, Doreen) | **64** | about 54 |
-| 48-52 | floor bosses (Regional Reaper 48, Undertaker 48, Matron 48, Santa 50, Old Smokey 50, Mortimer 50, Commodore 52, Thaddeus 52, Augustine 52, Chairman 52) | **88** (largest at 2 gens; 96 costs 3) | about 72-76 |
+| 48-52 | floor bosses (Regional Reaper 48, Undertaker 48, Matron 48, Santa 50, Old Smokey 50, Mortimer 50, Commodore 52, Zara 52, Augustine 52, Chairman 52) | **88** (largest at 2 gens; 96 costs 3) | about 72-76 |
 
 A boss must be at least 1.6 times Harold's height on screen, and its feet go on its body box bottom like everyone else's. Scythes, gavels and clubs may reach outside the body box, but **the body itself** should fill about the box's width, so a hit that lands on the art lands on the box.
 

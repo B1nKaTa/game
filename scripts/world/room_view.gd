@@ -310,7 +310,6 @@ static func is_passing_effect(child: Node) -> bool:
 		or child is DroppedCoffin
 		or child is TapeSpread or child is PaperTrail or child is WriteUpMark or child is LaneDrop or child is HoldMusic
 		or child is TakeoverTether
-		or GolfProps.is_passing_effect(child)
 		# Departures, Terminal Zero
 		or child is XRaySweep or child is RunwayLane)
 

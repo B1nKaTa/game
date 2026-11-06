@@ -91,9 +91,6 @@ func test_sand_never_costs_a_pill() -> void:
 	var sand := SandTrap.new()
 	assert_false(sand.has_method("hit_target") or sand.has_method("damage") or sand.has_method("take_hit"), "sand has no way to hurt")
 	sand.free()
-	var patch := BunkerPatch.new()
-	assert_false(patch.has_method("hit_target") or patch.has_method("damage"), "nor does spread sand")
-	patch.free()
 
 
 func test_grains_lie_inside_their_cell_and_stay_put() -> void:
@@ -133,60 +130,8 @@ func test_old_layouts_hold_no_sand() -> void:
 		assert_true(layout.cells_of(RoomLayout.SYMBOL_SAND).is_empty(), path)
 
 
-# --- spread sand ---
-
-func test_spread_sand_warns_first_then_lies_for_eight_seconds() -> void:
-	assert_near(BunkerPatch.WARNING, 1.0)
-	assert_near(BunkerPatch.LAST, 8.0)
-	var cells: Array[Vector2i] = [Vector2i(4, 4), Vector2i(5, 4)]
-	var patch := BunkerPatch.new()
-	patch.setup(cells, BunkerPatch.WARNING, BunkerPatch.LAST)
-	assert_eq(patch.advance(BunkerPatch.WARNING - 0.05), BunkerPatch.NOTHING, "still a warning")
-	assert_false(patch.is_laid())
-	assert_eq(patch.advance(0.1), BunkerPatch.LAID, "then the sand goes down")
-	assert_true(patch.is_laid())
-	patch.lay()
-	assert_eq(patch.sand_traps().size(), 2)
-	assert_true(SandTrap.any_covers(patch.sand_traps(), RoomBackdrop.cell_center(Vector2i(4, 4))))
-	assert_false(SandTrap.any_covers(patch.sand_traps(), RoomBackdrop.cell_center(Vector2i(6, 4))))
-	assert_eq(patch.advance(BunkerPatch.LAST - 0.1), BunkerPatch.NOTHING, "it lies for its time")
-	assert_eq(patch.advance(0.2), BunkerPatch.RAKED, "then it is raked away")
-	assert_eq(patch.advance(1.0), BunkerPatch.NOTHING, "once")
-	patch.free()
-
-
-func test_spread_sand_lands_and_goes_once_whatever_the_frame_times() -> void:
-	for step in [0.004, 0.016, 0.05, 0.3, 1.7]:
-		var cells: Array[Vector2i] = [Vector2i(3, 3)]
-		var patch := BunkerPatch.new()
-		patch.setup(cells, BunkerPatch.WARNING, BunkerPatch.LAST)
-		var laid := 0
-		var raked := 0
-		var time := 0.0
-		while time < 12.0:
-			time += step
-			var event := patch.advance(step)
-			if event == BunkerPatch.LAID:
-				laid += 1
-			elif event == BunkerPatch.RAKED:
-				raked += 1
-		assert_eq(laid, 1, "laid once at %f a frame" % step)
-		assert_eq(raked, 1, "raked once at %f a frame" % step)
-		patch.free()
-
-
-func test_the_warning_leaves_time_to_walk_off_a_patch_even_wading() -> void:
-	# From the middle of a three by three patch to clear of it, with his feet's half width.
-	var way_out := RoomBackdrop.TILE * 1.5 + Player.FEET_BOX_SIZE.x / 2.0
-	var react := 0.2
-	assert_true(PlayerStats.BASE_SPEED * (BunkerPatch.WARNING - react) > way_out, "walking")
-	assert_true(PlayerStats.BASE_SPEED * SandRule.SPEED_FACTOR * (BunkerPatch.WARNING - react) > way_out, "wading out of sand already there")
-
-
-func test_spread_sand_is_cleared_from_a_stored_room_and_laid_bunkers_are_not() -> void:
-	var patch := BunkerPatch.new()
-	assert_true(RoomView.is_passing_effect(patch), "spread sand goes with Grandpa leaving")
-	patch.free()
+# A layout's bunker is part of the room, so a stored room keeps it.
+func test_laid_bunkers_stay_in_a_stored_room() -> void:
 	var sand := SandTrap.new()
 	assert_false(RoomView.is_passing_effect(sand), "a layout's bunker is part of the room")
 	sand.free()

@@ -25,14 +25,14 @@ func test_there_is_a_poster_for_every_mini_and_floor_boss() -> void:
 	var floors := _floors()
 	var wanted := {}
 	for id in floors:
-		wanted[PendingBosses.id_of((floors[id] as FloorDef).mini_boss.id)] = id
-		wanted[PendingBosses.id_of((floors[id] as FloorDef).floor_boss.id)] = id
+		wanted[(floors[id] as FloorDef).mini_boss.id] = id
+		wanted[(floors[id] as FloorDef).floor_boss.id] = id
 	assert_eq(BountyBoard.all().size(), 20)
 	for def in BountyBoard.all():
 		assert_eq(wanted.get(def.id, ""), def.floor_id, def.id)
 		var floor_def: FloorDef = floors[def.floor_id]
 		assert_eq(def.depth, floor_def.depth, def.id)
-		assert_eq(def.floor_boss, PendingBosses.id_of(floor_def.floor_boss.id) == def.id, def.id)
+		assert_eq(def.floor_boss, floor_def.floor_boss.id == def.id, def.id)
 
 
 func test_the_rewards_follow_the_depth() -> void:

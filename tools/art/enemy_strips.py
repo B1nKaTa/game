@@ -41,7 +41,6 @@ CUTS = {
     'hr_representative': {'windup': ('attack', [4, 5, 6, 7], '06a0adcd'), 'attack': ('attack', [8], '06a0adcd')},
     'regional_reaper': {'windup': ('attack', [1, 2], 'cc7370db'), 'attack': ('attack', [3, 4, 5, 6, 7], 'cc7370db')},
     'old_smokey': {'windup': ('attack', [3, 4, 5], 'f5edbd72'), 'attack': ('attack', [6, 7, 8], 'f5edbd72')},
-    'thaddeus_fairweather': {'windup': ('attack', [4, 5, 6], 'eb66e3b2'), 'attack': ('attack', [7, 8], 'eb66e3b2')},
     # The gavel raised overhead, then brought down.
     'chairman_of_the_board': {'windup': ('attack', [3, 4, 5, 6], '2c6098a8'), 'attack': ('attack', [7, 8], '2c6098a8')},
 }

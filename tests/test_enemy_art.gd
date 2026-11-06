@@ -6,7 +6,7 @@ extends TestCase
 
 const ART_DIR := "res://art/sprites/"
 const ARTED := ["intern_reaper", "stoker", "mall_cop", "hr_representative", "regional_reaper",
-	"old_smokey", "thaddeus_fairweather", "chairman_of_the_board"]
+	"old_smokey", "chairman_of_the_board"]
 const ANIMS := ["idle", "walk", "windup", "attack", "whistle"]
 # Art whose own enemy is retired, and the enemy who wears it now.
 const WORN_BY := {"mall_cop": "airport_mall_cop"}
