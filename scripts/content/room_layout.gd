@@ -73,7 +73,7 @@ const SYMBOL_STUMP := "m"
 # The Last Resort Cruise adds its buffet tray, Head Office its in-tray, Fairway's End its flag
 # pin and Departures, Terminal Zero its suitcase stack, which block nothing.
 # The Flashback Cinema adds its lobby cards.
-const DECOR_SYMBOLS := "gnwuktlmfprce" + "0" + "y" + "3" + "7" + "i"
+const DECOR_SYMBOLS := "gnwuktlmfprc" + "0" + "y" + "3" + "7" + "i"
 # A freshly mopped cell: everyone walks on it, Grandpa and chargers slide. Kept well clear of doors.
 const SYMBOL_WET := "W"
 const WET_DOOR_CLEARANCE := 2
@@ -91,21 +91,6 @@ const SYMBOL_HYMN_CART := "j"
 const SYMBOL_PEW := "h"
 const SYMBOL_WREATH := "r"
 const SYMBOL_CANDLE := "c"
-# Escalator strips laid in the mall's floor, one symbol per way they run. Walkable, never harmful,
-# and kept well clear of doors so nobody is carried out of a room or into one.
-const SYMBOL_STRIP_RIGHT := ">"
-const SYMBOL_STRIP_LEFT := "<"
-const SYMBOL_STRIP_UP := "^"
-const SYMBOL_STRIP_DOWN := "v"
-const STRIP_SYMBOLS := "><^v"
-const STRIP_DOOR_CLEARANCE := 2
-# Mall stock. A shopping cart and a gumball machine break like barrels, a planter and a fountain like
-# rocks, and a sale sign blocks nothing and breaks to anything, like grass.
-const SYMBOL_CART := "a"
-const SYMBOL_GUMBALL := "z"
-const SYMBOL_PLANTER := "d"
-const SYMBOL_FOUNTAIN := "q"
-const SYMBOL_SALE_SIGN := "e"
 # The Last Resort Cruise. A deck chair breaks like a barrel and a lifeboat davit like a rock, a buffet
 # tray blocks nothing and breaks to anything, like grass, and the pool is never broken, like a hole.
 const SYMBOL_DECK_CHAIR := "b"
@@ -152,13 +137,13 @@ const SYMBOL_PILLAR := "|"
 const SYMBOL_LIFE_SIGN := "i"
 # Each new path adds its props at the end of each list: the Last Resort Cruise, Head Office,
 # Fairway's End, Departures, Terminal Zero and the Flashback Cinema, in that order.
-const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc><^vazdqe" + "b012" + "x9Ny" + "s345" + "=678" + "-|i"
+const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc" + "b012" + "x9Ny" + "s345" + "=678" + "-|i"
 # Nothing can walk through these, so nothing may be dropped or summoned on them.
-const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGojhazdq" + "b12" + "9N" + "45" + "68" + "-|"
+const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGojh" + "b12" + "9N" + "45" + "68" + "-|"
 # Routes may not need a hole or a wall, and may not need a bomb for a crate or a rock.
 const WALL_LIKE := "#lo"
 const WALLS := "#lVo" + "1" + "|"
-const WALLS_AND_BOMB_ONLY := "#lVXOAYKDMohdq" + "12" + "N" + "5" + "8" + "-|"
+const WALLS_AND_BOMB_ONLY := "#lVXOAYKDMoh" + "12" + "N" + "5" + "8" + "-|"
 const MUST_REACH_WITHOUT_BREAKING := "EBIHSPG"
 # A vault lays this many labeled pickups out in the open, this many cells apart so names never overlap.
 const VAULT_EXTRAS := 3
@@ -195,25 +180,9 @@ const REQUIRED := {
 
 @export var room_type: String = ""
 @export var rows: PackedStringArray = []
-# The room's escalator strips reverse every few seconds, after a chime. Old layouts have none.
-@export var strips_reverse: bool = false
 # The Last Resort Cruise: the room's deck rolls every few seconds, after a horn. It lays no tile, so it
 # has no symbol. Old layouts never roll.
 @export var ship_rolls: bool = false
-
-
-# The way a strip symbol runs, or zero for anything else.
-static func strip_direction(symbol: String) -> Vector2i:
-	match symbol:
-		SYMBOL_STRIP_RIGHT:
-			return Vector2i.RIGHT
-		SYMBOL_STRIP_LEFT:
-			return Vector2i.LEFT
-		SYMBOL_STRIP_UP:
-			return Vector2i.UP
-		SYMBOL_STRIP_DOWN:
-			return Vector2i.DOWN
-	return Vector2i.ZERO
 
 
 func validate() -> PackedStringArray:
@@ -268,8 +237,6 @@ func validate() -> PackedStringArray:
 				errors.append("wet floor at %s is within %d cells of a door" % [str(cell), WET_DOOR_CLEARANCE])
 			if symbol == SYMBOL_VENT and _within_of_a_door(cell, VENT_DOOR_CLEARANCE):
 				errors.append("vent at %s is within %d cells of a door" % [str(cell), VENT_DOOR_CLEARANCE])
-			if STRIP_SYMBOLS.contains(symbol) and _within_of_a_door(cell, STRIP_DOOR_CLEARANCE):
-				errors.append("strip at %s is within %d cells of a door" % [str(cell), STRIP_DOOR_CLEARANCE])
 			if symbol == SYMBOL_RED_TAPE and _within_of_a_door(cell, RED_TAPE_DOOR_CLEARANCE):
 				errors.append("red tape at %s is within %d cells of a door" % [str(cell), RED_TAPE_DOOR_CLEARANCE])
 			if symbol == SYMBOL_SAND and _within_of_a_door(cell, SAND_DOOR_CLEARANCE):

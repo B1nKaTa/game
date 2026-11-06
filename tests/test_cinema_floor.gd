@@ -360,8 +360,7 @@ func test_every_room_type_a_floor_uses_is_covered() -> void:
 			assert_true(types.has(room_type), room_type)
 
 
-# The Mall's props and escalator strips are gone: the Cinema has seat rows, pillars and lobby cards,
-# and no hazard laid in its floor.
+# The Cinema has seat rows, pillars and lobby cards, and no hazard laid in its floor.
 func test_rooms_hold_seats_pillars_and_chests_and_nothing_of_the_mall() -> void:
 	var seats := 0
 	var pillars := 0
@@ -373,7 +372,6 @@ func test_rooms_hold_seats_pillars_and_chests_and_nothing_of_the_mall() -> void:
 		seats += layout.cells_of(RoomLayout.SYMBOL_SEAT).size()
 		pillars += layout.cells_of(RoomLayout.SYMBOL_PILLAR).size()
 		chest_rooms += 1 if not layout.cells_of("C").is_empty() else 0
-		assert_false(layout.strips_reverse, _name(layout))
 		assert_false(layout.ship_rolls, _name(layout))
 	assert_true(seats >= 300, "seat cells %d" % seats)
 	assert_true(pillars >= 20, "pillars %d" % pillars)

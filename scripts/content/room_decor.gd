@@ -24,7 +24,7 @@ const FURNACE := "furnace"
 const STAINED_GLASS := "stained_glass"
 # A coffin resting on a draped stand, against the panelling or out on the floor.
 const COFFIN_STAND := "coffin_stand"
-# A mall bench, a food court table with its chairs, and a fluorescent panel's pale pool of light.
+# A bench, a food court table with its chairs, and a fluorescent panel's pale pool of light.
 const BENCH := "bench"
 const FOOD_TABLE := "food_table"
 const FLUORESCENT := "fluorescent"

@@ -71,7 +71,7 @@ func test_a_caddie_warns_then_runs_holding_his_lane() -> void:
 	_step(behavior, caddie)
 	assert_true(caddie.desired_velocity.normalized().is_equal_approx(Vector2.RIGHT), "down the lane he showed")
 	assert_near(caddie.desired_velocity.length(), CaddieBehavior.CHARGE_SPEED)
-	assert_false(caddie.rides_strips(), "a running cart holds its lane")
+	assert_false(caddie.slides_with_roll(), "a running cart holds its lane")
 	caddie.free()
 	grandpa.free()
 

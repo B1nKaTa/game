@@ -647,10 +647,8 @@ func _handle_movement() -> void:
 		velocity = SlideRule.velocity(velocity.limit_length(speed), input * speed, slides, get_physics_process_delta_time())
 		if not slides:
 			velocity = _round_corners(velocity, input, speed)
-		# An escalator strip carries him on top of his walk. A dodge goes where it is aimed instead.
+		# A rolling deck slides him on top of his walk. A dodge holds him where it is aimed instead.
 		if _feet != null and is_inside_tree():
-			velocity += ConveyorStrip.carry_at(get_tree(), _feet.global_position)
-			# A rolling deck slides him too. A dodge holds him where it is aimed instead.
 			velocity += ShipDeck.slide_at(get_tree(), _feet.global_position) * run.slide_mult()
 		if taped or is_self_stunned():
 			velocity = Vector2.ZERO

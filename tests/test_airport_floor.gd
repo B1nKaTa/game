@@ -112,6 +112,12 @@ func test_it_looks_like_no_other_floor() -> void:
 		assert_near(mine.weight_of(kind), 0.0, kind)
 
 
+func test_fluorescent_panels_are_lights_and_benches_are_not() -> void:
+	assert_true(RoomDecor.is_light(RoomDecor.FLUORESCENT))
+	assert_false(RoomDecor.is_light(RoomDecor.BENCH))
+	assert_false(RoomDecor.is_light(RoomDecor.FOOD_TABLE))
+
+
 func test_departure_boards_are_decor_and_not_lights() -> void:
 	assert_eq(RoomDecor.DEPARTURE_BOARD, "departure_board")
 	assert_false(RoomDecor.is_light(RoomDecor.DEPARTURE_BOARD))

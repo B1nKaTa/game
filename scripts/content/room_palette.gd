@@ -68,19 +68,6 @@ extends Resource
 @export var brass := Color("c9a25a")
 @export var coffin_wood := Color("4a2a1c")
 @export var coffin_lid := Color("6b3d26")
-# Mall stock. Shopping carts and gumball machines break like barrels, planters and fountains like
-# rocks, and sale signs block nothing and break to anything, like grass.
-@export var cart_wire := Color("b9c0c9")
-@export var cart_handle := Color("d9453b")
-@export var gumball_glass := Color(0.85, 0.95, 1.0, 0.75)
-@export var gumball_base := Color("c4161c")
-@export var sale_board := Color("fbf3d6")
-@export var sale_text := Color("d9453b")
-@export var planter := Color("8a8f98")
-@export var planter_edge := Color("3c4048")
-@export var palm_leaf := Color("4f9a52")
-@export var fountain_stone := Color("c9c4b8")
-@export var fountain_water := Color("6fc4ec")
 @export_group("Decor")
 @export var grass := Color("557f48")
 @export var grass_cut := Color("3f5f38")
@@ -105,12 +92,13 @@ extends Resource
 @export var plant_leaf := Color("5f9a52")
 @export var iv_stand := Color("c7ccd4")
 @export var iv_bag := Color(0.75, 0.9, 1.0, 0.85)
-# Mall decor: benches, food court tables and the fluorescent panels overhead.
+# Benches, food court tables and the fluorescent panels overhead, on the cruise, at the airport and in
+# the office.
 @export var bench := Color("7a5a3a")
 @export var food_table := Color("e8e2d2")
 @export var fluorescent := Color(0.85, 0.95, 1.0)
-# 1 draws a small woven motif on the carpet patches of the floor, 2 lays iron grating on them, 3
-# polishes big shiny tiles with a glint across each, and 0 leaves the floor plain.
+# 1 draws a small woven motif on the carpet patches of the floor, 2 lays iron grating on them, and 0
+# leaves the floor plain. (3 was the retired Mall's polished tile.)
 # 4 lays Head Office carpet tiles, a seam round each and flecks in the pile.
 @export var floor_pattern := 0
 @export var carpet_motif := Color(1.0, 1.0, 1.0, 0.12)

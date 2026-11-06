@@ -50,22 +50,13 @@ const BOOK_EDGE := Color("e2b33c")
 const DIRECTOR_HAT := Color("15131a")
 const DIRECTOR_BAND := Color("7a2f3a")
 const CARNATION := Color("fbf7ef")
-const SWEATBAND := Color("f4f1e6")
-const SNEAKER := Color("fbfbff")
 const COP_CAP := Color("1c2340")
 const COP_PEAK := Color("0c1020")
 const COP_BADGE := Color("e2c25a")
 const WHISTLE := Color("c9cdd6")
 const PERFUME_GLASS := Color(0.85, 0.95, 1.0, 0.85)
 const PERFUME_BULB := Color("d9576b")
-const TIARA := Color("e8e4f0")
-const TIARA_GEM := Color("6fd6ff")
 const PEARL := Color("fbf7ef")
-const PURSE := Color("8a2f6a")
-const SANTA_RED := Color("c4161c")
-const SANTA_WHITE := Color("fbfbff")
-const SANTA_BELT := Color("15131a")
-const ELF_HAT := Color("1f7a34")
 # Head Office: ties, a shredder's feed slot, a clipboard, a headset, and a chairman's chain of office.
 const OFFICE_TIE := Color("c8202c")
 const OFFICE_COLLAR := Color("f4f1e6")
@@ -206,11 +197,6 @@ func _draw_mark(half: Vector2) -> void:
 			draw_rect(Rect2(-half.x * 0.5, -half.y - 4.0, half.x, 3.0), DIRECTOR_BAND)
 			draw_rect(Rect2(-half.x * 0.8, -half.y, half.x * 1.6, 3.0), DIRECTOR_HAT)
 			draw_circle(Vector2(-half.x * 0.45, -half.y * 0.3), 3.0, CARNATION)
-		"headband":
-			# A sweatband round the head and white sneakers.
-			draw_rect(Rect2(-half.x, -half.y + 3.0, half.x * 2.0, 3.0), SWEATBAND)
-			draw_rect(Rect2(-half.x + 1.0, half.y - 3.0, 5.0, 3.0), SNEAKER)
-			draw_rect(Rect2(half.x - 6.0, half.y - 3.0, 5.0, 3.0), SNEAKER)
 		"cop_cap":
 			# A peaked cap with a badge, and a whistle on a cord.
 			draw_rect(Rect2(-half.x * 0.7, -half.y - 5.0, half.x * 1.4, 6.0), COP_CAP)
@@ -224,29 +210,6 @@ func _draw_mark(half: Vector2) -> void:
 			draw_rect(Rect2(half.x - 1.0, -4.0, 7.0, 9.0), Color.BLACK, false, 1.0)
 			draw_line(Vector2(half.x + 2.5, -4.0), Vector2(half.x + 2.5, -8.0), Color.BLACK, 1.0)
 			draw_circle(Vector2(half.x + 2.5, -10.0), 3.0, PERFUME_BULB)
-		"tiara":
-			# A sparkling tiara, a string of pearls and a purse of wishing-well coins.
-			var points := PackedVector2Array([Vector2(-half.x * 0.6, -half.y + 1.0), Vector2(-half.x * 0.35, -half.y - 5.0), Vector2(-half.x * 0.15, -half.y - 1.0), Vector2(0.0, -half.y - 8.0), Vector2(half.x * 0.15, -half.y - 1.0), Vector2(half.x * 0.35, -half.y - 5.0), Vector2(half.x * 0.6, -half.y + 1.0)])
-			draw_polyline(points, TIARA, 2.0)
-			draw_circle(Vector2(0.0, -half.y - 8.0), 2.0, TIARA_GEM)
-			for i in 5:
-				draw_circle(Vector2(-half.x * 0.4 + i * half.x * 0.2, -half.y * 0.35 + absf(i - 2.0) * -1.5), 1.5, PEARL)
-			draw_rect(Rect2(half.x - 3.0, 2.0, 9.0, 8.0), PURSE)
-			draw_circle(Vector2(half.x + 1.5, 2.0), 2.0, Projectile.COIN_GOLD)
-		"santa_hat":
-			# A floppy red hat with white trim and a bobble, and a big white beard.
-			var hat := PackedVector2Array([Vector2(-half.x * 0.6, -half.y + 2.0), Vector2(half.x * 0.6, -half.y + 2.0), Vector2(half.x * 0.7, -half.y - 12.0)])
-			draw_colored_polygon(hat, SANTA_RED)
-			draw_rect(Rect2(-half.x * 0.7, -half.y, half.x * 1.4, 4.0), SANTA_WHITE)
-			draw_circle(Vector2(half.x * 0.7, -half.y - 12.0), 3.5, SANTA_WHITE)
-			draw_colored_polygon(PackedVector2Array([Vector2(-half.x * 0.5, -half.y * 0.45), Vector2(half.x * 0.5, -half.y * 0.45), Vector2(0.0, half.y * 0.15)]), SANTA_WHITE)
-			draw_rect(Rect2(-half.x, half.y * 0.2, half.x * 2.0, 4.0), SANTA_BELT)
-			draw_rect(Rect2(-3.0, half.y * 0.2, 6.0, 4.0), Projectile.COIN_GOLD)
-		"elf_hat":
-			# A pointed green hat with a bell.
-			draw_colored_polygon(PackedVector2Array([Vector2(-half.x * 0.8, -half.y + 2.0), Vector2(half.x * 0.8, -half.y + 2.0), Vector2(half.x * 1.2, -half.y - 9.0)]), ELF_HAT)
-			draw_circle(Vector2(half.x * 1.2, -half.y - 9.0), 2.0, Projectile.COIN_GOLD)
-			draw_rect(Rect2(-half.x * 0.8, -half.y + 1.0, half.x * 1.6, 2.0), SANTA_RED)
 		# The Last Resort Cruise, drawn by CruiseMarks.
 		"tray", "cue", "sunhat", "megaphone", "captain_hat":
 			CruiseMarks.draw_mark(self, _def.mark, half)

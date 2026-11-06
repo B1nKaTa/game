@@ -492,7 +492,7 @@ func _create_props(palette: RoomPalette) -> void:
 		tree.palette = palette
 		_place_prop(tree, cell)
 		tree.broken.connect(_on_rock_broken.bind(false, cell))
-	for symbol: String in [RoomLayout.SYMBOL_ARMCHAIR, RoomLayout.SYMBOL_BED, RoomLayout.SYMBOL_PEW, RoomLayout.SYMBOL_PLANTER, RoomLayout.SYMBOL_FOUNTAIN]:
+	for symbol: String in [RoomLayout.SYMBOL_ARMCHAIR, RoomLayout.SYMBOL_BED, RoomLayout.SYMBOL_PEW]:
 		for cell in layout.cells_of(symbol):
 			var furniture: RockBlock
 			match symbol:
@@ -500,10 +500,6 @@ func _create_props(palette: RoomPalette) -> void:
 					furniture = Armchair.new()
 				RoomLayout.SYMBOL_PEW:
 					furniture = ChapelPew.new()
-				RoomLayout.SYMBOL_PLANTER:
-					furniture = MallPlanter.new()
-				RoomLayout.SYMBOL_FOUNTAIN:
-					furniture = MallFountain.new()
 				_:
 					furniture = CareBed.new()
 			furniture.palette = palette
@@ -530,32 +526,22 @@ func _create_props(palette: RoomPalette) -> void:
 			barrel.palette = palette
 			_place_prop(barrel, cell)
 			barrel.broken.connect(_on_barrel_broken.bind(cell))
-	for symbol: String in [RoomLayout.SYMBOL_HYMN_CART, RoomLayout.SYMBOL_CART, RoomLayout.SYMBOL_GUMBALL]:
-		for cell in layout.cells_of(symbol):
-			var cart: Barrel
-			match symbol:
-				RoomLayout.SYMBOL_CART:
-					cart = ShoppingCart.new()
-				RoomLayout.SYMBOL_GUMBALL:
-					cart = GumballMachine.new()
-				_:
-					cart = HymnCart.new()
-			cart.palette = palette
-			_place_prop(cart, cell)
-			cart.broken.connect(_on_barrel_broken.bind(cell))
+	for cell in layout.cells_of(RoomLayout.SYMBOL_HYMN_CART):
+		var cart := HymnCart.new()
+		cart.palette = palette
+		_place_prop(cart, cell)
+		cart.broken.connect(_on_barrel_broken.bind(cell))
 	for cell in layout.cells_of(RoomLayout.SYMBOL_VASE):
 		var vase := FlowerVase.new()
 		vase.palette = palette
 		_place_prop(vase, cell)
 		vase.broken.connect(_on_vase_broken.bind(cell))
-	for symbol: String in [RoomLayout.SYMBOL_WREATH, RoomLayout.SYMBOL_CANDLE, RoomLayout.SYMBOL_SALE_SIGN]:
+	for symbol: String in [RoomLayout.SYMBOL_WREATH, RoomLayout.SYMBOL_CANDLE]:
 		for cell in layout.cells_of(symbol):
 			var stand: BreakableBlock
 			match symbol:
 				RoomLayout.SYMBOL_WREATH:
 					stand = WreathStand.new()
-				RoomLayout.SYMBOL_SALE_SIGN:
-					stand = SaleSign.new()
 				_:
 					stand = CandleStand.new()
 			stand.palette = palette
@@ -595,12 +581,6 @@ func _create_props(palette: RoomPalette) -> void:
 		pipe.setup(cell, layout.inward_of(cell))
 		pipe.position = RoomBackdrop.cell_center(cell)
 		add_child(pipe)
-	for symbol in RoomLayout.STRIP_SYMBOLS:
-		for cell in layout.cells_of(symbol):
-			var strip := ConveyorStrip.new()
-			strip.setup(Vector2(RoomLayout.strip_direction(symbol)), layout.strips_reverse)
-			strip.position = RoomBackdrop.cell_center(cell)
-			add_child(strip)
 	# The Last Resort Cruise: its deck props and, in a room that rolls, the rolling deck.
 	CruiseProps.build(self, layout, palette)
 	_create_office_props(layout, palette)

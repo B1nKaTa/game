@@ -8,13 +8,8 @@ const SHOT_Z := 55
 const DART_BARREL := Color("dff3ff")
 const DART_PLUNGER := Color("7fb7d8")
 const DART_NEEDLE := Color("f4f4f4")
-# What a plain shot looks like: a sheet of paper, a wishing-well coin or a bauble from a present.
+# What a plain shot looks like: a sheet of paper, unless its look says otherwise.
 const LOOK_PAPER := ""
-const LOOK_COIN := "coin"
-const LOOK_ORNAMENT := "ornament"
-const COIN_GOLD := Color("e8c04a")
-const COIN_SHINE := Color("fff4c0")
-const ORNAMENT_RED := Color("d93a3a")
 # Head Office: a note of hold music, a black quaver.
 const LOOK_NOTE := "note"
 const NOTE_INK := Color("15131a")
@@ -78,17 +73,6 @@ func _draw() -> void:
 		draw_rect(Rect2(-7, -2.5, 10, 5), Color.BLACK, false, 1.0)
 		draw_rect(Rect2(-10, -1.5, 3, 3), DART_PLUNGER)
 		draw_line(Vector2(3, 0), Vector2(9, 0), DART_NEEDLE, 1.0)
-		return
-	if look == LOOK_COIN:
-		draw_circle(Vector2.ZERO, 5.0, COIN_GOLD)
-		draw_arc(Vector2.ZERO, 5.0, 0.0, TAU, 16, Color.BLACK, 1.0)
-		draw_arc(Vector2.ZERO, 3.0, 0.0, TAU, 12, COIN_SHINE, 1.0)
-		return
-	if look == LOOK_ORNAMENT:
-		draw_circle(Vector2.ZERO, 5.0, ORNAMENT_RED)
-		draw_arc(Vector2.ZERO, 5.0, 0.0, TAU, 16, Color.BLACK, 1.0)
-		draw_rect(Rect2(-1.5, -7.0, 3.0, 2.5), COIN_GOLD)
-		draw_circle(Vector2(-1.5, -1.5), 1.5, COIN_SHINE)
 		return
 	if look == LOOK_NOTE:
 		# A pale glow behind, so a black note reads on dark carpet as well as pale.

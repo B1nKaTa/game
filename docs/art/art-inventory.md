@@ -88,7 +88,6 @@ All of these are code; Section 2 lists each piece by path.
   - 0 plain tile;
   - 1 woven carpet;
   - 2 iron tread plate;
-  - 3 polished mall tile;
   - 10 teak deck;
   - 12 office carpet tile;
   - 13 mown fairway stripes (`golf_look.gd`).
@@ -139,7 +138,7 @@ All of these are code; Section 2 lists each piece by path.
 - `golf_ball_shot.gd` extends it.
 - **There is no texture hook.**
 
-**Hazards** (`floor_vent`, `organ_pipe`, `conveyor_strip`, `red_tape`, `sand_trap`, `queue_barrier`, `wet_floor`, `steam_jet`, `perfume_cloud` and the others): all `_draw`, with no hook. Many have states (idle, warning, active, held).
+**Hazards** (`floor_vent`, `organ_pipe`, `red_tape`, `sand_trap`, `queue_barrier`, `wet_floor`, `steam_jet`, `perfume_cloud` and the others): all `_draw`, with no hook. Many have states (idle, warning, active, held).
 
 **Telegraphs**, all code, which is right (see section 5):
 - `enemy._draw_warning` on a WarningLayer at z 60: circle, lane and cone fills in `#e4524f`;
@@ -151,7 +150,6 @@ All of these are code; Section 2 lists each piece by path.
 **Enemy overlays drawn in code**, which rotate to any angle:
 - the Baggage Handler's trolley;
 - the Caddie and Club President's golf cart (`CaddieBehavior.Cart`);
-- the Mall Santa's `Sleigh`;
 - the Pallbearers' `CoffinCarry`;
 - Mortimer's `CoffinShell`;
 - the Tour Group's `GuideFlag`.
@@ -208,11 +206,11 @@ No font file or Theme exists. Everything uses Godot's fallback font with outline
 
 ### 1.9 Enemy art as built (H1 to H4, 2026-11-05)
 
-H1 to H4 are in. The first ten enemies have art: intern_reaper, stoker, mall_cop, club_golfer, hr_representative, regional_reaper, old_smokey, mall_santa, thaddeus_fairweather and chairman_of_the_board.
+H1 to H4 are in. The first ten enemies had art: intern_reaper, stoker, mall_cop, club_golfer, hr_representative, regional_reaper, old_smokey, mall_santa, thaddeus_fairweather and chairman_of_the_board. The Mall Santa's was retired with him (it stays on PixelLab), and the Mall Cop's is worn by the airport's.
 
 - **Folders.** `res://art/sprites/<art_id>/<anim>.png`, one row of square frames per anim. `EnemyDef.art()` is `art_id`, or the id when that is empty.
 - **Building strips.** Run `py tools/art/enemy_strips.py D:/grandpa-art/enemies art/sprites [id ...]`. It reads `<id>/<state>/animations/<anim>/east/frame_###.png` and writes every anim folder it finds as `<anim>.png`. idle and walk keep every frame. Every other anim drops frame 000, the reference pose. All frames of one enemy go on one square canvas, a multiple of 4 wide, centred on the source canvas's middle column, with each frame's lowest row on one feet row.
-- **Anim names the game asks for.** `idle`, `walk`, `windup` and `attack`, plus any name a behavior plays through `Enemy.play_anim(name, seconds)` (today only the Mall Cop's `whistle`). Put a new one in the export as `animations/<name>/east/` and rerun the tool.
+- **Anim names the game asks for.** `idle`, `walk`, `windup` and `attack`, plus any name a behavior plays through `Enemy.play_anim(name, seconds)` (the Mall Cop's `whistle`, the Usher's `shush`, Crabtree's `review` and the Projectionist's `crank`). Put a new one in the export as `animations/<name>/east/` and rerun the tool.
 - **Cuts.** `CUTS` in the tool picks frames for one export, matched by the hash of its frames: the windup is cut from the first frames of the attack, and the attack is trimmed to open on the strike. A newer export of the same anim gets the default (every frame but 000), and a real `windup` folder always wins over a cut.
 - **H1, the driver** (`EnemyAnim`, `Enemy._update_anim`, run every frame).
   - `windup` plays once over the warning's windup and holds its last frame.
@@ -424,52 +422,40 @@ The cemetery reuses the Records rock, barrel, bones, grass and hole. The underta
 
 **Furnace Works total: 74**. **Floor 2 total: 156.**
 
-### 2.5 Floor 3: Golden Years Mall at 7 a.m. (`data/floors/golden_years_mall.tres`)
+### 2.5 Floor 3: The Flashback Cinema, Last Showing (`data/floors/flashback_cinema.tres`)
+
+It replaced Golden Years Mall, whose characters stay on PixelLab unused. Every id below wears its own
+art (`art_id` = its id) but the returning pair, which wear their bases' recoloured.
 
 **Enemies**
 
 | id | file | body | anims (from the code) | facing | tool | gens |
 |---|---|---|---|---|---|---|
-| mall_walker | mall_walker.tres | 16x20 | idle (the line freezes on the whistle), power-walk, break-away run | E+flip | C36 + 3A | 5 |
-| mall_cop | mall_cop.tres | 20x24 | idle, walk, scooter run, whistle | E+flip, lane | C48 + 4A | 6 |
-| perfume_sprayer | perfume_sprayer.tres | 18x24 | idle, walk, spray. The cloud and haze are code. | E+flip | C48 + 3A | 5 |
-| mall_intern_reaper | mall_intern_reaper.tres | 20x24 | as intern_reaper | E+flip | recolour | 0 |
-| mall_notary_public | mall_notary_public.tres | 18x26 | as notary_public | E+flip | recolour | 0 |
-| mall_elf (summon) | mall_elf.tres | 12x14 | idle, run, swing | E+flip | C32 + 3A | 5 |
+| usher | usher.tres | 20x26 | idle, walk (patrol, torch held out), windup ("Shh!"), attack (the charge), shush | E+flip, lane | C48 + 4A | 6 |
+| popcorn_vendor | popcorn_vendor.tres | 18x24 | idle, walk, windup (tub raised), attack (the lob) | E+flip | C48 + 3A | 5 |
+| film_reel | film_reel.tres | 18x18 | an object: idle, walk (rolling), windup (rattling) | E+flip | MO + AO | 3 |
+| cinema_intern_reaper | cinema_intern_reaper.tres | 20x24 | as intern_reaper | E+flip | recolour | 0 |
+| cinema_notary_public | cinema_notary_public.tres | 18x26 | as notary_public | E+flip | recolour | 0 |
+| extra (summon) | extra.tres | 16x22 | idle, walk, windup, attack (a shove); grey, black-and-white film | E+flip | C36 + 3A | 4 |
 
 **Bosses**
 
 | id | file | body | anims (from the code) | facing | tool | gens |
 |---|---|---|---|---|---|---|
-| gloria (mini) | gloria.tres | 32x40 | idle, walk, windup, coin toss, splash call, summon | E+flip | C64 + 6A | 8 |
-| mall_santa (boss) | mall_santa.tres | 44x50 | idle, walk, windup, present throw, "ho ho" ring, conveyor call | E+flip | C88 + 6A@2 | 14 |
-| sleigh overlay | `Sleigh` in mall_santa_behavior.gd | about 48x28, rotated | | top-down | MO | 1 |
+| crabtree (mini) | crabtree.tres | 32x40 | idle, walk, windup, attack (stars thrown, thumbs down), review | E+flip | C64 + 5A | 7 |
+| projectionist (boss) | projectionist.tres | 44x52 | idle, walk, windup, attack, crank (the lens beam) | E+flip | C88 + 5A@2 | 12 |
 
-**Summons:** mall_walker (Gloria), mall_elf (Santa).
-
-**Projectiles**
+**Projectiles and hazards**
 
 | id | gens |
 |---|---|
-| coin (r5) | PX 1 |
-| ornament (r5) | PX 1 |
-| present (`present_drop.gd`, r18) | MO 1 |
+| popcorn tub and kernel (`popcorn_tub.gd`, `Projectile` "kernel") | MO 1, PX 1 |
+| star (`Projectile` "star") | PX 1 |
+| film trail piece (`film_trail.gd`) | PX 1 |
+| pie and tumbleweed (`reel_lane.gd`) | MO 2 |
+| lens beam, splice film, burn ring, rain | code |
 
-**Props**
-
-| id | type | size | gens |
-|---|---|---|---|
-| shopping_cart | `a` | 28x24 | MO 1 |
-| gumball_machine | `z` | 18x32 | MO 1 |
-| mall_planter | `d` | 30x28 | MO 1 |
-| mall_fountain | `q`, with ripple | 32x26 | MO + AO 2 |
-| sale_sign | `e` | 16x22 | MO 1 |
-| conveyor strip | `> < ^ v`, belt plus a moving anim | 32 | MO + AO 2 |
-| decor_bench, decor_fluorescent, decor_food_table | decor | | MO 3 |
-
-**Tiles:** polished mall tile (pattern 3) and shop shutters (pattern 3): TS 25.
-
-**Mall total: 83**
+**Props:** seat rows (`-`), pillars (`|`), aisle lights, the screen frame and lobby cards (Task 3).
 
 ### 2.6 Floor 3: Eternal Rest Funeral Parlour (`data/floors/funeral_parlour.tres`)
 

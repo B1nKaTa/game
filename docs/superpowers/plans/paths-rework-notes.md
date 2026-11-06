@@ -264,3 +264,13 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
   and his entries in the art strips tool and the art look probe. The later floors' floor-boss tests
   compare with the Projectionist. `tests/support/pending_bosses.gd` keeps only Chip and Thaddeus for
   Task 5.
+- **Retired with the Mall's props:** the shopping cart, gumball machine, planter, fountain and sale
+  sign with their symbols `a z d q e`, their palette colours and room branches; the escalator strips
+  (`> < ^ v`, `ConveyorStrip`, `ConveyorRule`, `ConveyorCycle`, `strips_reverse`, the carry in the
+  enemy's and the player's walk; `Enemy.rides_strips` folded into `slides_with_roll`, which the rolling
+  deck still reads); the polished tile and shop-shutter patterns 3; the Mall Walkers', Gloria's, the
+  Santa's and the elves' marks and the coin and ornament shots; `test_mall_floor.gd` and
+  `test_mall_hazard.gd` (the fluorescent-panel rule moved to the airport's floor test). The bench,
+  food-court table and fluorescent panel stay, as the cruise, the airport and the office hang them.
+  No layout in any folder used a retired symbol. The `escalator_hum` sound stays in the sound bank,
+  unplayed, for the music and sound pass to drop with the golf path's.

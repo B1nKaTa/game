@@ -113,15 +113,14 @@ func _enter_layout(layout: RoomLayout) -> void:
 	view = scene.debug_room_view()
 
 
-func _enter(rows: PackedStringArray, reverses := false) -> void:
+func _enter(rows: PackedStringArray) -> void:
 	var layout := RoomLayout.new()
 	layout.room_type = RoomLayout.TYPE_HEALING
 	layout.rows = rows
-	layout.strips_reverse = reverses
 	await _enter_layout(layout)
 
 
-# A real layout with its pipes or strips, but entered as a quiet room so nothing of its own spawns.
+# A real layout with its pipes, but entered as a quiet room so nothing of its own spawns.
 func _enter_quiet(file: String) -> RoomLayout:
 	var source: RoomLayout = load(file)
 	var layout: RoomLayout = source.duplicate()

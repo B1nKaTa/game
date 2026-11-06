@@ -503,7 +503,7 @@ func _check_big_room_view(scene: Node) -> void:
 		await _check_camera(scene)
 		positions_seen[scene.debug_camera().position] = true
 	_check(positions_seen.size() >= 4, "the camera follows him around a big room")
-	# He is held still while the screen shakes, since a rolling deck, a ring or an escalator would
+	# He is held still while the screen shakes, since a rolling deck or a ring would
 	# carry him and the camera with him.
 	scene.player.set_physics_process(false)
 	await get_tree().process_frame
