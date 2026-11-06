@@ -35,7 +35,7 @@ func test_there_are_fourteen_films_each_with_a_title_and_a_description() -> void
 		assert_true(description.length() >= 80 and description.length() <= 330, "%s: %d letters" % [id, description.length()])
 		assert_true(description.contains("Harold"), "%s shows Harold" % id)
 	assert_eq(CinemaScenes.ids().size(), 14)
-	assert_eq(CinemaScenes.scene("walking_biscuit")["title"], "Walking Biscuit")
+	assert_eq(CinemaScenes.scene("biscuit_walk")["title"], "Walking Biscuit")
 	assert_true(CinemaScenes.scene("no_such_film").is_empty())
 
 
@@ -104,20 +104,36 @@ func test_screens_hang_in_fighting_and_boss_rooms_only() -> void:
 # --- the art the screen loads ---
 
 func test_scene_art_is_a_strip_of_frames_and_a_placeholder_stands_in() -> void:
-	assert_eq(CinemaScenes.FRAME_SIZE, Vector2i(160, 56))
-	assert_eq(CinemaScenes.FRAMES, 3)
+	assert_eq(CinemaScenes.FRAME_SIZE, Vector2i(160, 64))
+	assert_eq(CinemaScenes.FRAMES, 2)
 	assert_eq(CinemaScenes.art_path("seaside_day"), "res://art/cinema/scenes/seaside_day.png")
 	for id in CinemaScenes.ids():
 		var image := CinemaScenes.placeholder_image(id)
-		assert_eq(image.get_size(), Vector2i(480, 56), id)
+		assert_eq(image.get_size(), Vector2i(320, 64), id)
 	var image := CinemaScenes.placeholder_image("first_car")
 	var warm := 0
-	for x in range(0, 480, 7):
+	for x in range(0, 320, 5):
 		var pixel := image.get_pixel(x, 6)
 		if pixel.r >= pixel.g and pixel.g >= pixel.b:
 			warm += 1
 	assert_true(warm > 60, "a sepia sky")
-	assert_false(image.get_region(Rect2i(0, 0, 160, 56)).get_data() == image.get_region(Rect2i(160, 0, 160, 56)).get_data(), "the frames differ, so the fade shows")
+	assert_false(image.get_region(Rect2i(0, 0, 160, 64)).get_data() == image.get_region(Rect2i(160, 0, 160, 64)).get_data(), "the frames differ, so the fade shows")
+
+
+# Every film has its art: a 2-frame strip of 160x64 frames, which the screen loads instead of the
+# placeholder.
+func test_every_film_has_its_strip() -> void:
+	for id in CinemaScenes.ids():
+		var path := CinemaScenes.art_path(id)
+		assert_true(ResourceLoader.exists(path), id + " has art")
+		var texture: Texture2D = load(path)
+		assert_eq(Vector2i(texture.get_size()), Vector2i(CinemaScenes.FRAME_SIZE.x * CinemaScenes.FRAMES, CinemaScenes.FRAME_SIZE.y), id)
+		var screen := CinemaScreen.new()
+		screen.setup(_layout(20, 11), id, 3)
+		screen._ready()
+		assert_eq(screen._texture.resource_path, path, id + " shows its art")
+		assert_eq(screen._frames, 2, id + " fades between its two frames")
+		screen.free()
 
 
 # --- where it hangs ---
@@ -133,7 +149,11 @@ func test_the_screen_hangs_west_of_the_north_door_in_every_room_size() -> void:
 		assert_near(wall.size.y, RoomBackdrop.TILE * 2.0, "two cells deep")
 		var picture := CinemaScreen.picture_rect_for(wall)
 		assert_true(wall.encloses(picture.grow(CinemaScreen.FRAME_WIDTH)), "the framed picture fits the wall at width %d" % width)
-		assert_eq(Vector2i(picture.size), CinemaScenes.FRAME_SIZE, "a frame shows at 1:1")
+		assert_near(picture.size.x, float(CinemaScenes.FRAME_SIZE.x), "a frame shows at 1:1 across")
+		assert_near(picture.size.y, wall.size.y - CinemaScreen.THIN_MARGIN * 2.0, "as many rows as the wall leaves room for")
+		var rows := CinemaScreen.shown_rows(picture.size)
+		assert_near(rows.y, picture.size.y, "at 1:1 down too")
+		assert_near(rows.x * 2.0 + rows.y, float(CinemaScenes.FRAME_SIZE.y), "the middle rows, trimmed evenly")
 		assert_true(picture.end.y <= RoomBackdrop.TILE * 2.0, "never over the floor")
 
 
@@ -143,7 +163,8 @@ func test_a_thin_wall_still_fits_a_smaller_picture() -> void:
 	assert_near(wall.size.y, RoomBackdrop.TILE * 1.0, "one cell deep")
 	var picture := CinemaScreen.picture_rect_for(wall)
 	assert_true(wall.encloses(picture), "inside the wall")
-	assert_true(absf(picture.size.x / picture.size.y - 160.0 / 56.0) < 0.1, "keeping its shape")
+	assert_true(absf(picture.size.x / picture.size.y - 160.0 / 64.0) < 0.1, "keeping its shape")
+	assert_near(CinemaScreen.shown_rows(picture.size).y, 64.0, "shrunk, it shows every row")
 
 
 # --- what the Projectionist drives ---
@@ -192,7 +213,7 @@ func test_the_screen_plays_its_film_with_the_shader_and_adds_no_body() -> void:
 	assert_eq(screen.scene_id, "burnt_roast")
 	assert_true(screen.is_in_group(CinemaScreen.GROUP) or not screen.is_inside_tree())
 	assert_true(screen._material.shader == CinemaScreen.SHADER)
-	assert_eq(screen._material.get_shader_parameter("frames"), 3, "a placeholder strip has every frame")
+	assert_eq(screen._material.get_shader_parameter("frames"), CinemaScenes.FRAMES, "the strip has every frame")
 	for child in screen.get_children():
 		assert_false(child is CollisionObject2D, "purely decorative")
 	assert_true(screen.z_index < 0, "under the bodies")

@@ -401,7 +401,7 @@ func test_every_fighting_room_keeps_its_north_wall_for_the_screen() -> void:
 		var wall := CinemaScreen.wall_rect(layout)
 		assert_near(wall.size.y, RoomBackdrop.TILE * 2.0, "%s has a two-cell screen wall" % _name(layout))
 		var picture := CinemaScreen.picture_rect_for(wall).grow(CinemaScreen.FRAME_WIDTH)
-		assert_eq(Vector2i(CinemaScreen.picture_rect_for(wall).size), CinemaScenes.FRAME_SIZE, _name(layout))
+		assert_near(CinemaScreen.picture_rect_for(wall).size.x, float(CinemaScenes.FRAME_SIZE.x), _name(layout))
 		var door_rect := Rect2(Vector2(door) * RoomBackdrop.TILE - Vector2(0, RoomBackdrop.TILE), Vector2(RoomBackdrop.TILE, RoomBackdrop.TILE * 2.0))
 		assert_false(picture.intersects(door_rect), "%s: the screen covers the north door" % _name(layout))
 		assert_true(picture.position.x >= RoomBackdrop.TILE and picture.end.y <= RoomBackdrop.TILE * 2.0, _name(layout))

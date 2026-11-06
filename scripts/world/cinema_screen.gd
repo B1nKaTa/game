@@ -10,7 +10,10 @@ extends Node2D
 const GROUP := "cinema_screens"
 const SHADER := preload("res://scripts/world/cinema_screen.gdshader")
 # The picture shows a scene frame at 1:1 inside a gold frame, with plain velvet drapes either side.
+# A frame a little taller than the wall leaves room for keeps its width and loses a few rows top and
+# bottom (at most MAX_CROP of its height); a wall much too small shrinks the picture instead.
 const FRAME_WIDTH := 3.0
+const MAX_CROP := 0.15
 const DRAPE_GAP := 2.0
 # On a wall one cell thick, as an old layout has, the picture shrinks to fit it.
 const THIN_MARGIN := 3.0
@@ -56,14 +59,29 @@ static func wall_rect(layout: RoomLayout) -> Rect2:
 	return Rect2(Vector2(tile, 0.0), Vector2((door_x - 1) * tile, depth * tile))
 
 
-# The picture itself, centred on that wall: a frame at 1:1 when the wall is deep enough, or shrunk to
-# the wall's depth, keeping its shape.
+# The picture itself, centred on that wall: a frame at 1:1 when the wall is deep enough, at 1:1 across
+# with a few rows trimmed when it is a little short (the Cinema's 64 px screen wall shows 58 of a
+# frame's 64 rows), or shrunk to the wall, keeping its shape, when it is far too small.
 static func picture_rect_for(wall: Rect2) -> Rect2:
 	var frame := Vector2(CinemaScenes.FRAME_SIZE)
 	var room := wall.size - Vector2(THIN_MARGIN, THIN_MARGIN) * 2.0
-	var scale_factor := minf(1.0, minf(room.x / frame.x, room.y / frame.y))
-	var size := (frame * scale_factor).floor()
+	var scale_factor := minf(1.0, room.x / frame.x)
+	var size := frame * scale_factor
+	if size.y > room.y:
+		if size.y - room.y <= size.y * MAX_CROP:
+			size.y = room.y
+		else:
+			size = frame * minf(scale_factor, room.y / frame.y)
+	size = size.floor()
 	return Rect2((wall.get_center() - size / 2.0).round(), size)
+
+
+# Which rows of a frame a picture of this size shows: the middle ones, as (first row, row count).
+static func shown_rows(picture: Vector2) -> Vector2:
+	var frame := Vector2(CinemaScenes.FRAME_SIZE)
+	var scale_factor := picture.x / frame.x if picture.x > 0.0 else 1.0
+	var rows := minf(frame.y, picture.y / scale_factor)
+	return Vector2((frame.y - rows) / 2.0, rows)
 
 
 static func in_room(room: Node) -> CinemaScreen:
@@ -86,7 +104,7 @@ func _ready() -> void:
 	if palette == null:
 		palette = RoomPalette.new()
 	_texture = _load_scene(scene_id)
-	_frames = clampi(int(_texture.get_width() / CinemaScenes.FRAME_SIZE.x), 1, CinemaScenes.FRAMES)
+	_frames = clampi(int(_texture.get_width() / CinemaScenes.FRAME_SIZE.x), 1, CinemaScenes.MAX_FRAMES)
 	_material = ShaderMaterial.new()
 	_material.shader = SHADER
 	_material.set_shader_parameter("frames", _frames)
@@ -162,7 +180,11 @@ func darkness() -> float:
 # --- drawing ---
 
 func _draw_picture() -> void:
-	_picture.draw_texture_rect(_texture, _picture_rect, false)
+	# The whole strip across (the shader picks the frame), the middle rows down.
+	var rows := shown_rows(_picture_rect.size)
+	var scale_y := float(_texture.get_height()) / CinemaScenes.FRAME_SIZE.y
+	var source := Rect2(0.0, rows.x * scale_y, _texture.get_width(), rows.y * scale_y)
+	_picture.draw_texture_rect_region(_texture, _picture_rect, source)
 
 
 func _draw() -> void:

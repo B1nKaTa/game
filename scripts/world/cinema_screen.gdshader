@@ -17,7 +17,7 @@ uniform float burn : hint_range(0.0, 1.0) = 0.0;
 uniform float seed = 0.0;
 // How bright the brightest part of the film is, so the screen never burns to white beside the HUD.
 uniform float peak = 0.82;
-uniform vec2 picture_size = vec2(160.0, 56.0);
+uniform vec2 picture_size = vec2(160.0, 58.0);
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);

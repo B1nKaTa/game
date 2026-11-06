@@ -5,22 +5,23 @@ extends RefCounted
 # old-film style, each a landscape strip of FRAMES frames that the screen cross-fades between
 # (CinemaScreen). None shows how his story ends, or his house as somewhere to get back to.
 #
-# Art: res://art/cinema/scenes/<id>.png is one horizontal strip of 2 or 3 frames, each FRAME_SIZE
-# (160x56 px), side by side with no gaps, so a 3-frame strip is 480x56. The frames are the same still
-# with a small change each (an arm raised, smoke rising, a dog's tail up), since they fade slowly into
-# one another. The screen shows a frame at 1:1, adds its own sepia, grain, scratches and flicker, so
-# the art can be plain sepia tones with a black outline. Until a file exists, the screen paints a
-# placeholder from placeholder_image.
-const FRAME_SIZE := Vector2i(160, 56)
-const FRAMES := 3
+# Art: res://art/cinema/scenes/<id>.png is one horizontal strip of FRAMES frames (up to MAX_FRAMES),
+# each FRAME_SIZE (160x64 px), side by side with no gaps, so the 2-frame strips are 320x64. The frames
+# are the same still with a small change, since they fade slowly into one another. The screen shows a
+# frame at 1:1 across, trimming a few rows top and bottom to fit its wall (CinemaScreen), and adds its
+# own sepia, grain, scratches and flicker. Until a file exists, the screen paints a placeholder from
+# placeholder_image.
+const FRAME_SIZE := Vector2i(160, 64)
+const FRAMES := 2
+const MAX_FRAMES := 3
 const ART_DIR := "res://art/cinema/scenes/"
 # The room types whose north wall holds a screen.
 const SCREEN_ROOMS: Array[String] = [RoomLayout.TYPE_COMBAT, RoomLayout.TYPE_MINI_BOSS, RoomLayout.TYPE_FLOOR_BOSS]
 
 const ALL: Array[Dictionary] = [
-	{"id": "hedge_feud_1974", "title": "The hedge, 1974",
+	{"id": "hedge_1974", "title": "The hedge, 1974",
 		"description": "Harold and Gerald stand either side of a waist-high privet hedge in two back gardens, each holding garden shears and glaring, a tape measure stretched over the hedge between them. In the next frame Gerald points at the tape and Harold folds his arms."},
-	{"id": "walking_biscuit", "title": "Walking Biscuit",
+	{"id": "biscuit_walk", "title": "Walking Biscuit",
 		"description": "Harold in a flat cap and raincoat walks a scruffy little terrier on a lead along a park path, past a bench where one fat pigeon sits. Biscuit strains towards the pigeon; in the next frame the pigeon has not moved an inch."},
 	{"id": "first_car", "title": "His first car",
 		"description": "A young Harold in shirtsleeves polishes a small round-backed saloon car at the kerb with a chamois, beaming. The front bumper has a dent; in the next frame he has noticed it."},
@@ -28,7 +29,7 @@ const ALL: Array[Dictionary] = [
 		"description": "The bus depot canteen strung with paper chains: Harold in a paper hat holds a pint and a sausage roll beside a trestle table, colleagues in overalls around him. In the next frame he is mid-laugh and the sausage roll is gone."},
 	{"id": "family_christmas", "title": "A family Christmas",
 		"description": "Harold in a lopsided paper crown carves a turkey at a crowded dinner table, a tinsel tree behind. A small child pulls a cracker with him; in the next frame it has snapped and both are holding the wrong half."},
-	{"id": "fixing_the_fence", "title": "Fixing the fence",
+	{"id": "fence_fix", "title": "Fixing the fence",
 		"description": "Harold in a garden, a hammer in one hand and nails between his lips, holds up a wooden fence panel that leans badly. In the next frame the panel beside it has quietly fallen over."},
 	{"id": "retirement_cake", "title": "The retirement cake",
 		"description": "Harold in his good suit at the depot, before a slab cake iced with a clock face and the words NEVER LATE, colleagues clapping behind him. In the next frame the clock on the wall above them reads ten past."},
@@ -36,16 +37,16 @@ const ALL: Array[Dictionary] = [
 		"description": "Harold on a striped deckchair on a pebble beach, trousers rolled to the knee and a knotted handkerchief on his head, an ice cream melting down his hand, the pier behind. In the next frame a gull has the cone."},
 	{"id": "lost_umbrella", "title": "The lost umbrella",
 		"description": "Harold at a bus stop in pouring rain, soaked, watching a bus pull away; through its back window his umbrella hangs from a seat. In the next frame the bus is smaller and he is still pointing."},
-	{"id": "learning_to_dance", "title": "Learning to dance",
+	{"id": "dance_lesson", "title": "Learning to dance",
 		"description": "A young Harold in a dance hall, stiff as a post, treads on his partner's foot while chalk footprints of the lesson mark the floor around them. In the next frame they are both laughing."},
 	{"id": "burnt_roast", "title": "The burnt Sunday roast",
 		"description": "Harold in oven gloves opens a kitchen oven and a cloud of smoke rolls out over a blackened joint, the family at the table behind waving tea towels. In the next frame he is holding it up as if it were meant."},
-	{"id": "prize_marrow", "title": "The prize marrow",
-		"description": "A village show tent: Harold stands proudly beside an enormous marrow wearing a second-place rosette, and beside it sits Gerald's slightly bigger marrow with the first-place one. In the next frame Harold is measuring them both."},
-	{"id": "fishing_trip", "title": "A fishing trip",
-		"description": "Harold on a folding stool on a riverbank, a thermos at his feet, his rod bent double as he reels in an old boot. In the next frame he is pouring the water out of it."},
-	{"id": "tandem_ride", "title": "The tandem",
-		"description": "Harold and his wife ride a tandem bicycle down a country lane between hedgerows, he pedalling hard at the front, she behind with her feet up off the pedals. In the next frame he looks back and she is pedalling."},
+	{"id": "pigeon_bench", "title": "The pigeon on the bench",
+		"description": "Harold in a flat cap sits hunched on a park bench under a lamp post, a paper bag of crumbs at his feet, while a pigeon perches on the next bench along and keeps its distance. In the next frame it is still eyeing the bag."},
+	{"id": "shed_painting", "title": "Painting the shed",
+		"description": "Harold in overalls stands at a ladder against the garden shed with a brush, painting its boards, a wheelbarrow by the fence behind him. In the next frame he leans in for one more stroke."},
+	{"id": "bike_lesson", "title": "The bike lesson",
+		"description": "Harold cycles slowly down a terraced street beside a small child on a little bicycle, ready to steady the handlebars. In the next frame the child is still upright and pedalling."},
 ]
 
 
