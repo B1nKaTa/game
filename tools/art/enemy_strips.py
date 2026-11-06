@@ -66,6 +66,10 @@ CUTS = {
     'denial_officer': {'windup': ('attack', [3, 4, 5, 6], 'e3c13db4'), 'attack': ('attack', [7, 8], 'e3c13db4')},
     # The care home's own Denial Officer (2026-11-06): the serving tray raised overhead, then brought down.
     'shores_denial_officer': {'windup': ('attack', [3, 4, 5, 6], 'c3169a31'), 'attack': ('attack', [7, 8], 'c3169a31')},
+    # The Cinema's own Intern Reaper, a reaper usher: the scythe drawn back, then swept low.
+    'cinema_intern_reaper': {'windup': ('attack', [1, 2, 3, 4], '6f387949'), 'attack': ('attack', [5, 6, 7, 8], '6f387949')},
+    # The parlour's own Seasonal Temp, an altar server: a crouch, then the lunge.
+    'parlour_seasonal_temp': {'windup': ('attack', [1, 2, 3], 'b40a7a33'), 'attack': ('attack', [4, 5, 6, 7], 'b40a7a33')},
     'senior_adjuster': {'windup': ('attack', [1, 2, 3, 4], '041ecf4f'), 'attack': ('attack', [5, 6, 7, 8], '041ecf4f')},
     'plot_holder': {'windup': ('attack', [1, 2], '6d2d20b4'), 'attack': ('attack', [3, 4, 5, 6, 7], '6d2d20b4')},
     'head_groundskeeper': {'windup': ('attack', [3, 4, 5, 6, 7], 'ca1f2154'), 'attack': ('attack', [8], 'ca1f2154')},
