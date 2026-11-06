@@ -391,6 +391,7 @@ func _begin(enemy: Enemy, attack: int, phase_two: bool) -> void:
 				screen.cut_to_black(windup_for(Attack.REEL, phase_two) + 0.25)
 			Sfx.play("barrier_chime")
 			enemy.say("Reel change!", SAY_TIME)
+			enemy.play_anim("reel_change", windup_for(Attack.REEL, phase_two) + 0.25)
 	_telegraph.start(windup_for(attack, phase_two))
 	enemy.set_warning(_telegraph, WARNING_RADIUS, attack == Attack.BEAM and BEAM_SHOWN_WHOLE)
 
@@ -409,7 +410,8 @@ func _start_beam(enemy: Enemy) -> bool:
 	_beam_left = BEAM_WINDUP + LensBeam.SWEEP_TIME
 	_place_mark(enemy, plan["mark"], _beam_left)
 	enemy.say("Lights, lens, action!", SAY_TIME)
-	enemy.play_anim("crank", BEAM_WINDUP)
+	# His attack strip raises the projector case and holds it on the lens through the sweep.
+	enemy.play_anim("attack", _beam_left)
 	return true
 
 
@@ -429,6 +431,7 @@ func _start_splice(enemy: Enemy, phase_two: bool) -> bool:
 		lane.global_position = Vector2.ZERO
 	_place_mark(enemy, plan["mark"], warning + 0.2)
 	enemy.say("Splice!", SAY_TIME)
+	enemy.play_anim("splice", warning)
 	return true
 
 

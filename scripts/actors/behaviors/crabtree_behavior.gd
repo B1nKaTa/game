@@ -33,6 +33,10 @@ const MOST_HECKLERS := 3
 const SUMMON_DISTANCE := 100.0
 const SUMMON_SPREAD := 0.5
 const SAY_TIME := 1.0
+# His star_rating and thumbs_down anims run a little past the windup, so the throw and the stamp show
+# as the stars fly and the ring goes out.
+const RATING_ANIM_HOLD := 0.15
+const THUMB_ANIM_HOLD := 0.3
 const RATING_TEXT: Array[String] = ["", "One star.", "Two stars.", "Three stars.", "Four stars!", "Five stars!"]
 
 enum Attack { NONE, STARS, THUMBS }
@@ -117,7 +121,8 @@ func _bad_review(enemy: Enemy) -> void:
 	if not BossMoves.can_summon(alive, MAX_ENEMIES) or count <= 0:
 		return
 	enemy.say("A dreadful show!", SAY_TIME)
-	enemy.play_anim("review", SAY_TIME)
+	# His attack strip opens the notebook and thrusts the review out.
+	enemy.play_anim("attack", SAY_TIME)
 	enemy.request_summon_at(BossMoves.cutoff_points(enemy.target_ground(), enemy.target_motion(), enemy.global_position, count, SUMMON_DISTANCE, SUMMON_SPREAD), BossMoves.SUMMON_WARNING)
 
 
@@ -132,10 +137,12 @@ func _begin(enemy: Enemy, attack: int) -> void:
 			for way in star_lanes(_aim, _rating):
 				enemy.add_warning_lane(way, STAR_LANE, STAR_LANE_WIDTH, false)
 			enemy.say(RATING_TEXT[_rating], SAY_TIME)
+			enemy.play_anim("star_rating", STAR_WINDUP + RATING_ANIM_HOLD)
 		Attack.THUMBS:
 			_telegraph.start(THUMB_WINDUP)
 			enemy.set_warning(_telegraph, WARNING_RADIUS)
 			enemy.say("Thumbs down.", SAY_TIME)
+			enemy.play_anim("thumbs_down", THUMB_WINDUP + THUMB_ANIM_HOLD)
 			var ring := Shockwave.new()
 			ring.setup(enemy, RING_FROM, RING_TO, RING_TIME, RING_WIDTH, THUMB_WINDUP)
 			enemy.get_parent().add_child(ring)

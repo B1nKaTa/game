@@ -106,7 +106,6 @@ func tick(enemy: Enemy, delta: float) -> void:
 		enemy.set_warning(_telegraph, WARNING_RADIUS)
 		enemy.set_warning_lane(_way, CHARGE_LENGTH, LANE_WIDTH, false)
 		enemy.say(SHH_TEXT, SAY_TIME)
-		enemy.play_anim("shush", WINDUP)
 
 
 # Walks to his next patrol spot, the torch leading the way and swinging a little either side.

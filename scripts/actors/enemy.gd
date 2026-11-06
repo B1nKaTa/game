@@ -240,10 +240,14 @@ func _update_anim(delta: float) -> void:
 		return
 	var winding := is_winding_up()
 	var to_target := direction_to_target() if is_instance_valid(target) else Vector2.ZERO
+	# A behavior's own anim (play_anim), started with the windup or as it ends, plays on through both
+	# rather than giving way to the plain windup or attack.
+	var own := _anim_once_left > 0.0 and _visual.anim() != EnemyAnim.WINDUP and _visual.anim() != EnemyAnim.ATTACK
 	if winding and not _was_winding:
-		_visual.play_once(EnemyAnim.WINDUP, _warning.remaining())
-		_anim_once_left = 0.0
-	elif _was_winding and not winding and not _dead:
+		if not own:
+			_visual.play_once(EnemyAnim.WINDUP, _warning.remaining())
+			_anim_once_left = 0.0
+	elif _was_winding and not winding and not _dead and not own:
 		# The hit lands as the windup ends. Without an attack strip it carries on as it would.
 		if SpriteVisual.has_anim(def.art(), EnemyAnim.ATTACK):
 			_visual.play_once(EnemyAnim.ATTACK, EnemyAnim.ATTACK_TIME)

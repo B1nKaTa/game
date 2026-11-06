@@ -6,10 +6,29 @@ extends TestCase
 
 const ART_DIR := "res://art/sprites/"
 const ARTED := ["intern_reaper", "stoker", "mall_cop", "hr_representative", "regional_reaper",
-	"old_smokey", "chairman_of_the_board"]
-const ANIMS := ["idle", "walk", "windup", "attack", "whistle"]
+	"old_smokey", "chairman_of_the_board",
+	# The Cinema's and the Seance Hotline's (D:/grandpa-art/newpaths).
+	"usher", "popcorn_vendor", "film_reel", "extra", "crabtree", "projectionist"]
 # Art whose own enemy is retired, and the enemy who wears it now.
 const WORN_BY := {"mall_cop": "airport_mall_cop"}
+# Objects drawn facing south, which never turn and so are never mirrored.
+const UNFLIPPED := ["film_reel"]
+# The new paths' regulars, whose windup and attack are cut from their attack export.
+const CUT_REGULARS := ["usher", "popcorn_vendor", "extra"]
+# A boss's own anims, each played by its behavior through Enemy.play_anim: id -> [behavior, anims].
+const BOSS_ANIMS := {
+	"crabtree": ["crabtree_behavior.gd", ["star_rating", "thumbs_down", "attack"]],
+	"projectionist": ["projectionist_behavior.gd", ["reel_change", "splice", "attack"]],
+}
+
+
+# Every anim strip in an art folder.
+func _anims(id: String) -> Array[String]:
+	var names: Array[String] = []
+	for file in DirAccess.get_files_at(ART_DIR + id):
+		if file.ends_with(".png"):
+			names.append(file.get_basename())
+	return names
 
 
 func _has(names: Array) -> Callable:
@@ -141,11 +160,70 @@ func test_an_object_that_never_flips_keeps_its_one_look() -> void:
 	enemy.free()
 
 
+func test_objects_drawn_facing_south_are_never_mirrored() -> void:
+	for id in UNFLIPPED:
+		var enemy := _enemy(id)
+		assert_false(enemy.def.flips, id)
+		assert_true(enemy.visual().has_art(), id)
+		enemy.desired_velocity = Vector2(-enemy.def.speed, 0)
+		enemy._update_anim(0.016)
+		assert_eq(enemy.visual().shown_anim(), "walk", id)
+		assert_false(enemy.visual().is_facing_left(), id + " walking west stays as drawn")
+		enemy.free()
+
+
+func test_the_new_paths_regulars_have_a_cut_windup_and_attack() -> void:
+	for id in CUT_REGULARS:
+		assert_true(SpriteVisual.has_anim(id, "windup") and SpriteVisual.has_anim(id, "attack"), id)
+
+
+func test_each_new_boss_plays_its_own_anims() -> void:
+	for id: String in BOSS_ANIMS:
+		var source := FileAccess.get_file_as_string("res://scripts/actors/behaviors/" + BOSS_ANIMS[id][0])
+		for anim: String in BOSS_ANIMS[id][1]:
+			assert_true(SpriteVisual.has_anim(id, anim), "%s has %s" % [id, anim])
+			assert_true(source.contains("enemy.play_anim(\"%s\"" % anim) or source.contains("_anim(enemy, \"%s\"" % anim), "%s plays %s" % [id, anim])
+	# Names the art has no strip for are not played.
+	for pair in [["usher_behavior.gd", "shush"], ["crabtree_behavior.gd", "review"], ["projectionist_behavior.gd", "crank"]]:
+		var text := FileAccess.get_file_as_string("res://scripts/actors/behaviors/" + pair[0])
+		assert_false(text.contains("\"%s\"" % pair[1]), pair[0] + " no longer plays " + pair[1])
+
+
+func test_a_behaviors_own_anim_plays_through_the_windup_and_the_hit() -> void:
+	var enemy := _enemy("projectionist")
+	var telegraph := Telegraph.new()
+	telegraph.start(0.6)
+	enemy.set_warning(telegraph, 40.0)
+	enemy.play_anim("splice", 0.9)
+	enemy._update_anim(0.016)
+	assert_eq(enemy.visual().shown_anim(), "splice", "not the plain windup")
+	telegraph.tick(1.0)
+	enemy.clear_warning()
+	enemy._update_anim(0.016)
+	assert_eq(enemy.visual().shown_anim(), "splice", "not the plain attack")
+	for i in 70:
+		enemy._update_anim(0.016)
+	assert_eq(enemy.visual().shown_anim(), "idle")
+	enemy.free()
+	# Without its own anim, the plain windup and attack still play.
+	var usher := _enemy("usher")
+	telegraph = Telegraph.new()
+	telegraph.start(0.6)
+	usher.set_warning(telegraph, 40.0)
+	usher._update_anim(0.016)
+	assert_eq(usher.visual().shown_anim(), "windup")
+	telegraph.tick(1.0)
+	usher.clear_warning()
+	usher._update_anim(0.016)
+	assert_eq(usher.visual().shown_anim(), "attack")
+	usher.free()
+
+
 func test_every_strip_is_square_frames_with_the_feet_on_one_row() -> void:
 	for id in ARTED:
 		var size := -1
 		var row := -1
-		for anim in ANIMS:
+		for anim in _anims(id):
 			var path := ART_DIR + "%s/%s.png" % [id, anim]
 			if not ResourceLoader.exists(path):
 				continue
@@ -170,7 +248,7 @@ func test_every_strip_puts_the_feet_on_the_body_box_bottom() -> void:
 		var visual := SpriteVisual.new()
 		visual.set_feet(def.body_size.y / 2.0)
 		visual.setup(def.art(), def.body_size, def.color, def.frame_width)
-		for anim in ANIMS:
+		for anim in _anims(id):
 			if not SpriteVisual.has_anim(id, anim):
 				continue
 			visual.play(anim)

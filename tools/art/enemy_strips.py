@@ -94,6 +94,15 @@ CUTS = {
     'yes_man': {'windup': ('attack', [2, 3, 4, 5], 'a78791b6'), 'attack': ('attack', [6, 7, 8], 'a78791b6')},
     'paper_shredder': {'windup': ('attack', [1, 2, 3, 4], 'bdcec632'), 'attack': ('attack', [5, 6, 7, 8], 'bdcec632')},
     'doreen': {'windup': ('attack', [1, 2, 3], '1a44f1cb'), 'attack': ('attack', [4, 5, 6, 7, 8], '1a44f1cb')},
+    # The Cinema and the Seance Hotline (2026-11-06, D:/grandpa-art/newpaths). The bosses play their own
+    # anims (crabtree star_rating and thumbs_down, the projectionist reel_change and splice, celestine
+    # deal_cards, madame_zara tether_call and possession), so they keep the default cuts.
+    # Shh with a finger, the torch raised, then the lunge of the charge.
+    'usher': {'windup': ('attack', [1, 2, 3, 4, 5, 6], '9fcb0998'), 'attack': ('attack', [7, 8], '9fcb0998')},
+    # The arm drawn back with the tray, then the tub thrown.
+    'popcorn_vendor': {'windup': ('attack', [3, 4, 5, 6], '86176168'), 'attack': ('attack', [7, 8], '86176168')},
+    # Arms out to heckle, then the shove.
+    'extra': {'windup': ('attack', [3, 4, 5, 6, 7], 'd589017a'), 'attack': ('attack', [8], 'd589017a')},
 }
 
 
