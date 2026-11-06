@@ -143,12 +143,21 @@ def glass(f, held, vel):
     return pulse(f, held, vel, 0.5, True, 0.16)
 
 
-def theremin(f, held, vel):
-    rel = 0.25; n = _n(held, rel); env = _env(n, 0.09, 0.2, 0.85, rel, int(held * RATE))
+def theremin(f, held, vel, slide_from=None, slide=0.0):
+    """A theremin: a near-sine with vibrato that scoops up into each note. Given `slide_from` (a
+    frequency), it starts there instead and glides to the note over `slide` seconds (portamento)."""
+    gliding = slide_from is not None and slide > 0.0
+    rel = 0.1 if gliding else 0.25; n = _n(held, rel)
+    env = _env(n, 0.025 if gliding else 0.09, 0.2, 0.85, rel, int(held * RATE))
     out = array("f", [0.0]) * n; ph = 0.0
+    ratio = math.log(slide_from / f) if gliding else 0.0
     for i in range(n):
         t = i / RATE
-        ph += f * (1.0 - 0.03 * math.exp(-t * 18)) * (1.0 + 0.012 * math.sin(TAU * 6.3 * t)) / RATE
+        if gliding:
+            bend = math.exp(ratio * (0.5 + 0.5 * math.cos(math.pi * t / slide))) if t < slide else 1.0
+        else:
+            bend = 1.0 - 0.03 * math.exp(-t * 18)
+        ph += f * bend * (1.0 + 0.012 * math.sin(TAU * 6.3 * t)) / RATE
         out[i] = (math.sin(TAU * ph) + 0.12 * math.sin(2 * TAU * ph)) * env[i] * vel * 0.8
     return out
 
@@ -274,6 +283,17 @@ def pipe(f, held, vel):
     return out
 
 
+def theatre(f, held, vel):
+    """A picture-house organ: flute pipes at 16', 8', 4' and 2', under a deep tremulant that sways
+    the pitch and the loudness together."""
+    rel = 0.18; n = _n(held, rel); env = _env(n, 0.035, 0.12, 0.9, rel, int(held * RATE))
+    table = _table("theatre", [(1, 0.3), (2, 1.0), (3, 0.06), (4, 0.4), (6, 0.12), (8, 0.1)])
+    out = _play_table(table, f / 2.0, env, vel * 0.6, vib=0.0055, vib_rate=6.6, vib_delay=0.0)
+    for i in range(n):
+        out[i] *= 0.8 + 0.2 * math.sin(TAU * 6.6 * i / RATE)
+    return out
+
+
 def pad(f, held, vel):
     """Soft strings: three saws a little apart under a warm filter, swelling in and out."""
     rel = 0.6; n = _n(held, rel); env = _env(n, 0.3, 0.3, 0.85, rel, int(held * RATE))
@@ -373,7 +393,7 @@ INSTRUMENTS = {"epiano": epiano, "vibes": vibes, "bass": bass, "synthbass": synt
                "square": square, "thin": thin, "brass": brass, "theremin": theremin, "organ": organ,
                "bell": bell, "piano": piano, "musicbox": musicbox, "marimba": marimba, "tri": tri,
                "pipe": pipe, "pad": pad, "choir": choir, "flute": flute, "reed": reed, "bassoon": bassoon,
-               "guitar": guitar, "tapestop": tapestop, "glass": glass}
+               "guitar": guitar, "tapestop": tapestop, "glass": glass, "theatre": theatre}
 
 _rng = random.Random(7)
 
@@ -516,6 +536,29 @@ def drum(kind, vel):
                     t = j / RATE
                     out[start + j] += (0.6 * _noise() + math.sin(TAU * 1900 * t)) * math.exp(-t * 450) * vel * 0.45
         return out
+    if kind == "ring":
+        # An old telephone: a clapper rattling between two small bells for a second, then ringing out.
+        n = int(1.4 * RATE); out = array("f", [0.0]) * n
+        la = lb = 0.0; dec = math.exp(-28.0 / RATE); period = RATE // 40
+        for i in range(n):
+            t = i / RATE
+            if i % period == 0 and t < 1.0:
+                if (i // period) % 2:
+                    lb = 1.0
+                else:
+                    la = 1.0
+            out[i] = (la * (math.sin(TAU * 1250 * t) + 0.4 * math.sin(TAU * 3110 * t))
+                      + lb * (math.sin(TAU * 1480 * t) + 0.4 * math.sin(TAU * 3590 * t))) * vel * 0.3
+            la *= dec; lb *= dec
+        return out
+    if kind == "bloop":
+        # A blob letting go in a lava lamp: a soft sine that rises as it floats off.
+        n = int(0.4 * RATE); out = array("f", [0.0]) * n; ph = 0.0
+        for i in range(n):
+            t = i / RATE
+            ph += (160 + 380 * (1.0 - math.exp(-t * 9))) / RATE
+            out[i] = math.sin(TAU * ph) * min(1.0, t / 0.015) * math.exp(-t * 9) * vel * 0.6
+        return out
     raise ValueError(kind)
 
 
@@ -523,11 +566,14 @@ def drum(kind, vel):
 
 class Song:
     """`meter` is beats per bar. A looping song folds its tail onto its start; a sting (loop=False)
-    keeps `tail` seconds after its last beat and fades out."""
+    keeps `tail` seconds after its last beat and fades out. `tremolo` maps an instrument name to
+    (pulses per beat, depth): every note it plays swells and dips in time with the beat."""
 
-    def __init__(self, bpm, beats, reverb=0.25, swing=0.0, meter=4, loop=True, tail=2.0):
+    def __init__(self, bpm, beats, reverb=0.25, swing=0.0, meter=4, loop=True, tail=2.0, tremolo=None):
         self.bpm = bpm; self.beats = beats; self.reverb = reverb; self.swing = swing
         self.meter = meter; self.loop = loop; self.tail = tail
+        self.tremolo = tremolo or {}
+        self._slide_from = None; self._slide = 0.0
         self.spb = 60.0 / bpm
         self.length = int(beats * self.spb * RATE)
         size = self.length + 4 * RATE
@@ -557,28 +603,55 @@ class Song:
         m = name_or_midi if isinstance(name_or_midi, int) else midi(name_or_midi)
         held = max(0.03, beats * self.spb * legato)
         f = hz(m)
+        # Inside a gliding line, the note slides in from the one before it.
+        kw = {} if self._slide_from is None else dict(slide_from=hz(self._slide_from), slide=self._slide)
         if wide:
             # Two voices a few cents apart, one each side: a fuller, chorused sound.
-            self._mix(INSTRUMENTS[inst](f * 1.003, held, vel), start_beat, gain * 0.75, wet, -0.55)
-            self._mix(INSTRUMENTS[inst](f / 1.003, held, vel), start_beat, gain * 0.75, wet, 0.55)
+            for d, side in ((1.003, -0.55), (1 / 1.003, 0.55)):
+                if kw:
+                    kw["slide_from"] = hz(self._slide_from) * d
+                sound = self._tremble(inst, INSTRUMENTS[inst](f * d, held, vel, **kw), start_beat)
+                self._mix(sound, start_beat, gain * 0.75, wet, side)
         else:
-            self._mix(INSTRUMENTS[inst](f, held, vel), start_beat, gain, wet, pan)
+            self._mix(self._tremble(inst, INSTRUMENTS[inst](f, held, vel, **kw), start_beat), start_beat, gain, wet, pan)
+
+    def _tremble(self, inst, sound, start_beat):
+        """Applies the song's tremolo for this instrument, locked to the beat: full on each pulse."""
+        if inst not in self.tremolo:
+            return sound
+        per_beat, depth = self.tremolo[inst]
+        rate = TAU * per_beat * self.bpm / 60.0
+        t0 = self._swung(start_beat) * self.spb
+        for i in range(len(sound)):
+            sound[i] *= 1.0 - depth * (0.5 - 0.5 * math.cos(rate * (t0 + i / RATE)))
+        return sound
 
     def hit(self, kind, start_beat, vel=0.8, gain=1.0, wet=0.4, pan=0.0):
         self._mix(drum(kind, vel), start_beat, gain, wet, pan)
 
     def line(self, inst, start_beat, notes, vel=0.8, gain=1.0, wet=1.0, transpose=0, pan=0.0, wide=False, bars=None,
-             legato=0.95):
+             legato=0.95, glide=0.0):
         """notes: list of (name or 'r', beats). Returns the beat after the line. With `bars`, the
-        line must fill exactly that many bars of the song's meter."""
+        line must fill exactly that many bars of the song's meter. With `glide` (seconds), each note
+        slides in from the one before it, unless a rest comes between; the instrument must take
+        `slide_from` (the theremin does)."""
         if bars is not None:
             total = sum(b for _, b in notes)
             assert abs(total - bars * self.meter) < 1e-6, "line is %g beats, not %d bars" % (total, bars)
-        at = start_beat
-        for name, beats in notes:
-            if name != "r":
-                self.note(inst, midi(name) + transpose, at, beats, vel, gain, wet, pan, wide, legato)
-            at += beats
+        at = start_beat; prev = None
+        try:
+            for name, beats in notes:
+                if name != "r":
+                    m = midi(name) + transpose
+                    self._slide_from = prev if glide and prev != m else None
+                    self._slide = glide
+                    self.note(inst, m, at, beats, vel, gain, wet, pan, wide, legato)
+                    prev = m
+                else:
+                    prev = None
+                at += beats
+        finally:
+            self._slide_from = None
         return at
 
     def render(self, path):
@@ -644,7 +717,8 @@ def _reverb(x, amount, spread):
 QUALITY = {"": [0, 4, 7], "m": [0, 3, 7], "7": [0, 4, 7, 10], "maj7": [0, 4, 7, 11], "m7": [0, 3, 7, 10],
            "m6": [0, 3, 7, 9], "6": [0, 4, 7, 9], "dim": [0, 3, 6],
            "maj9": [4, 7, 11, 14], "m9": [3, 7, 10, 14], "9": [4, 10, 14, 7], "13": [4, 10, 14, 21],
-           "7b9": [4, 10, 13, 7], "m11": [3, 10, 14, 17], "m7b5": [0, 3, 6, 10], "sus4": [0, 5, 7]}
+           "7b9": [4, 10, 13, 7], "m11": [3, 10, 14, 17], "m7b5": [0, 3, 6, 10], "sus4": [0, 5, 7],
+           "mmaj7": [0, 3, 7, 11]}
 
 
 def chord(symbol, low=54):

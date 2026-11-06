@@ -272,19 +272,50 @@ func _build() -> void:
 	else:
 		_build_blocked()
 	for index in count:
-		var spot := position_of(index)
-		var over: Array[Vector2] = []
-		var end := 0.0
-		for r in _rects.size():
-			if _rects[r].has_point(spot):
-				over.append(_rect_times[r])
-				end = maxf(end, _rect_times[r].y)
-		for c in _circles.size():
-			if _in_circle(spot, _circles[c]):
-				over.append(_circle_times[c])
-				end = maxf(end, _circle_times[c].y)
-		_covers[index] = over
-		_last_end[index] = end
+		_covers[index] = []
+		_last_end[index] = 0.0
+	# Each shape visits only the positions inside its bounding box, which matters for a beam sampled as
+	# a thousand circles; each position still answers the exact test.
+	for r in _rects.size():
+		var rect := _rects[r]
+		_cover(rect, _rect_times[r], func(spot: Vector2) -> bool: return rect.has_point(spot))
+	for c in _circles.size():
+		var circle := _circles[c]
+		var box := Rect2(circle.x - circle.z, circle.y - circle.z, circle.z * 2.0, circle.z * 2.0)
+		_cover(box, _circle_times[c], func(spot: Vector2) -> bool: return _in_circle(spot, circle))
+	# Overlapping windows over one position are merged, which changes no answer but keeps the search fast
+	# where many slices of a sweep pass over the same spot.
+	for index in count:
+		if _covers[index].size() > 2:
+			_covers[index] = _merged(_covers[index])
+
+
+# Adds a window to every position inside box that inside accepts.
+func _cover(box: Rect2, window: Vector2, inside: Callable) -> void:
+	var i_from := clampi(floori((box.position.x - area.position.x) / STEP - 0.5) - 1, 0, _nx - 1)
+	var i_to := clampi(ceili((box.end.x - area.position.x) / STEP - 0.5) + 1, 0, _nx - 1)
+	var j_from := clampi(floori((box.position.y - area.position.y) / STEP - 0.5) - 1, 0, _ny - 1)
+	var j_to := clampi(ceili((box.end.y - area.position.y) / STEP - 0.5) + 1, 0, _ny - 1)
+	for j in range(j_from, j_to + 1):
+		for i in range(i_from, i_to + 1):
+			var index := j * _nx + i
+			if inside.call(position_of(index)):
+				_covers[index].append(window)
+				_last_end[index] = maxf(_last_end[index], window.y)
+
+
+static func _merged(windows: Array) -> Array:
+	var sorted := windows.duplicate()
+	sorted.sort_custom(func(a: Vector2, b: Vector2) -> bool: return a.x < b.x)
+	var out: Array = [sorted[0]]
+	for k in range(1, sorted.size()):
+		var window: Vector2 = sorted[k]
+		var last: Vector2 = out[out.size() - 1]
+		if window.x <= last.y:
+			out[out.size() - 1] = Vector2(last.x, maxf(last.y, window.y))
+		else:
+			out.append(window)
+	return out
 
 
 # Which positions his feet box may not stand on. Each block marks only the positions near it, and

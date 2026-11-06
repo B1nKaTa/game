@@ -1,6 +1,6 @@
 extends ItemEffect
 
-# Haggler's Hat: the cheapest item for sale in each shop costs half, marked as such. Heals, Slips and
+# Matinee Pass: the cheapest item for sale in each shop costs half, marked as such. Heals, Slips and
 # Thermoses keep their prices, and a free item stays free.
 
 const SHARE := 0.5

@@ -37,7 +37,7 @@ const WET_RADIUS := 26.0
 const WET_WARNING := 0.9
 const WET_TIME := 5.0
 const WARNING_RADIUS := 42.0
-# Shorter than Mortimer's 0.65 and 0.45 and the Mall Santa's, as he must be clearly harder than both.
+# Shorter than Mortimer's 0.65 and 0.45 and the Projectionist's, as he must be clearly harder than both.
 const BASE_COOLDOWN := 0.6
 const PHASE_TWO_COOLDOWN := 0.42
 const PHASE_TWO_SPEED := 1.2
@@ -236,12 +236,12 @@ func _swab_the_decks(enemy: Enemy) -> void:
 	var is_open := func(spot: Vector2) -> bool:
 		return grid == null or grid.is_open(WalkGrid.cell_of(spot))
 	var target := WalkGrid.cell_of(enemy.target_ground())
-	for cell in FountainDivaBehavior.splash_cells(target, WET_JETS, _rng, enemy.room_cells, is_open):
+	for cell in SplashJets.splash_cells(target, WET_JETS, _rng, enemy.room_cells, is_open):
 		var strike := enemy.strike_ground(RoomBackdrop.cell_center(cell), WET_RADIUS, WET_WARNING)
 		if strike == null:
 			continue
 		strike.set_look(GroundStrike.LOOK_SPLASH)
-		strike.landed.connect(_wet.bind(enemy.get_parent(), FountainDivaBehavior.splash_patch(cell, enemy.room_cells, is_open)))
+		strike.landed.connect(_wet.bind(enemy.get_parent(), SplashJets.splash_patch(cell, enemy.room_cells, is_open)))
 
 
 static func _wet(_at: Vector2, room: Node, cells: Array[Vector2i]) -> void:

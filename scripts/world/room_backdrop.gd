@@ -127,14 +127,6 @@ func _draw() -> void:
 						var left := tile.position.x + board * TILE / 4.0
 						draw_line(Vector2(left, tile.position.y), Vector2(left, tile.end.y), _palette.brick_line, 1.0)
 					draw_rect(Rect2(tile.position + Vector2(0, TILE * 0.3), Vector2(TILE, 3)), _palette.wall_line)
-				# Closed shop shutters: thin slats across, with a bar and a lock at the foot.
-				if _palette.wall_pattern == 3:
-					for slat in 6:
-						var top := tile.position.y + 3.0 + slat * 4.0
-						draw_line(Vector2(tile.position.x, top), Vector2(tile.end.x, top), _palette.brick_line, 1.0)
-					draw_rect(Rect2(tile.position + Vector2(0, TILE - 5), Vector2(TILE, 3)), _palette.wall_line)
-					if posmod(x, 3) == 1:
-						draw_rect(Rect2(tile.position + Vector2(TILE / 2.0 - 2, TILE - 6), Vector2(4, 4)), _palette.carpet_motif)
 				# The Last Resort Cruise: a ship's white rail, a top rail and a mid rail on posts.
 				if _palette.wall_pattern == WALL_SHIP_RAIL:
 					draw_rect(Rect2(tile.position + Vector2(0, 7), Vector2(TILE, 3)), _palette.wall_line)
@@ -148,9 +140,12 @@ func _draw() -> void:
 					draw_rect(Rect2(tile.position + Vector2(0, TILE * 0.55), Vector2(TILE, TILE * 0.45)), _palette.brick_line)
 					draw_rect(Rect2(tile.position + Vector2(0, TILE * 0.5), Vector2(TILE, 2)), _palette.wall_line)
 					draw_rect(Rect2(tile.position + Vector2(0, TILE - 3), Vector2(TILE, 3)), _palette.wall_line)
-				# Fairway's End: clipped hedges.
-				if _palette.wall_pattern == GolfLook.HEDGE_WALL:
-					GolfLook.draw_wall_tile(self, tile, Vector2i(x, y), _palette)
+				# The Flashback Cinema: dark panels with gold trim.
+				if _palette.wall_pattern == CinemaLook.DECO_WALL:
+					CinemaLook.draw_wall_tile(self, tile, Vector2i(x, y), _palette)
+				# The Seance Hotline: dark teal panels under a thin teal rail, with small stars.
+				if _palette.wall_pattern == SeanceLook.STAR_WALL:
+					SeanceLook.draw_wall_tile(self, tile, Vector2i(x, y), _palette)
 				continue
 			draw_rect(tile, _palette.floor_color(Vector2i(x, y), _seed))
 			# A patterned floor lays carpet on its middle tone, woven and seamless, and tiles the rest.
@@ -171,13 +166,6 @@ func _draw() -> void:
 					draw_rect(Rect2(tile.position + corner, Vector2(2, 2)), _palette.speckle)
 				draw_rect(tile, _palette.grout, false, 1.0)
 				continue
-			# Polished mall tile: each tile's own grout line and a square of reflected light in a corner.
-			# No streaks, so it never reads as a wet floor, and no arrows or dark bands, as a strip has.
-			if _palette.floor_pattern == 3:
-				draw_rect(tile, _palette.grout, false, 1.0)
-				draw_rect(Rect2(tile.position + Vector2(3, 3), Vector2(9, 9)), _palette.carpet_motif)
-				draw_rect(Rect2(tile.position + Vector2(3, 3), Vector2(4, 4)), _palette.speckle)
-				continue
 			# The Last Resort Cruise: teak deck planks running across, with dark caulked seams and staggered
 			# butt joints. Only straight dark lines, so it never reads as a wet floor's bright streaks.
 			if _palette.floor_pattern == FLOOR_TEAK_DECK:
@@ -195,9 +183,13 @@ func _draw() -> void:
 				for fleck in 6:
 					var fleck_at := Vector2(RoomDecor.noise(Vector2i(x * 7 + fleck, y), _seed + 11), RoomDecor.noise(Vector2i(x, y * 7 + fleck), _seed + 13))
 					draw_rect(Rect2(tile.position + Vector2(3, 3) + fleck_at * (TILE - 8.0), Vector2(2, 2)), _palette.carpet_motif)
-			# Fairway's End: mown stripes and nothing else, since dots are the sand's look.
-			if _palette.floor_pattern == GolfLook.FAIRWAY:
-				GolfLook.draw_floor_tile(self, tile, Vector2i(x, y), _palette)
+			# The Flashback Cinema: teal carpet with runners through the doors, and no speckles.
+			if _palette.floor_pattern == CinemaLook.CARPET:
+				CinemaLook.draw_floor_tile(self, tile, Vector2i(x, y), Vector2i(_rows[0].length(), _rows.size()), _palette)
+				continue
+			# The Seance Hotline: violet carpet with faint stars and moons, and no seams or speckles.
+			if _palette.floor_pattern == SeanceLook.CARPET:
+				SeanceLook.draw_floor_tile(self, tile, Vector2i(x, y), _palette)
 				continue
 			draw_line(tile.position, tile.position + Vector2(TILE, 0), _palette.grout, 1.0)
 			draw_line(tile.position, tile.position + Vector2(0, TILE), _palette.grout, 1.0)

@@ -389,14 +389,9 @@ func _physics_process(delta: float) -> void:
 		_knockback = Vector2.ZERO
 		desired_velocity = Vector2.ZERO
 	velocity = desired_velocity + _knockback
-	# Sand slows its own walk, never a knockback (Fairway's End).
-	if SandTrap.slows(self):
-		velocity -= desired_velocity * (1.0 - SandRule.SPEED_FACTOR)
 	if _push_left > 0.0:
 		_push_left -= delta
 		velocity += _push
-	if rides_strips() and is_inside_tree():
-		velocity += ConveyorStrip.carry_at(get_tree(), global_position)
 	if slides_with_roll() and is_inside_tree():
 		velocity += ShipDeck.slide_at(get_tree(), global_position)
 	_knockback = _knockback.lerp(Vector2.ZERO, minf(KNOCKBACK_DECAY * delta, 1.0))
@@ -472,18 +467,14 @@ func is_pushed() -> bool:
 	return _push_left > 0.0
 
 
-# An escalator strip carries whatever walks on the floor. Ghosts float over it, a mound is under it,
-# and something bolted to a wall never moves.
-func rides_strips() -> bool:
-	return def != null and not def.ignores_walls and not def.wall_mounted and not submerged and not _holding_lane
-
-
-# A rolling deck slides whatever walks on it, as a strip carries it, but a boss keeps its footing.
+# A rolling deck slides whatever walks on it, but a boss keeps its footing. Ghosts float over it, a
+# mound is under it, something bolted to a wall never moves, and a running charge holds its lane.
 func slides_with_roll() -> bool:
-	return rides_strips() and not def.is_boss
+	return def != null and not def.ignores_walls and not def.wall_mounted and not submerged and not _holding_lane and not def.is_boss
 
 
-# A dash or charge calls this each frame it runs, so a strip never carries it off the lane it warned.
+# A dash or charge calls this each frame it runs, so a rolling deck never carries it off the lane it
+# warned.
 func hold_lane() -> void:
 	_holding_lane = true
 

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/enemy_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/actors/behaviors/celestine_behavior.gd" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "celestine"
+display_name = "Sister Celestine, Tarot Reader"
+max_hp = 345.455
+speed = 75.0
+pension_drop = 8
+is_boss = true
+body_size = Vector2(32, 40)
+color = Color(0.65, 0.5, 0, 1)
+art_id = "celestine"
+behavior_script = ExtResource("2")
+mark = "tarot_shawl"

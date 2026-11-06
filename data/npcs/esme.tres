@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="NpcDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/npc_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "esme"
+display_name = "Esme, Crystal-Shop Keeper"
+color = Color(0.56, 0.4, 0.72, 1)
+body_size = Vector2(22, 30)
+lines = Array[String](["Charging Crystal? Leave it in moonlight. Or in a cane. Whichever's nearer.", "Amethyst for calm. Quartz for focus. Nothing for being dead, I'm afraid.", "Light a candle for the departed. Mind your sleeve. You count now.", "This incense keeps spirits away. The one that keeps you away is sold out.", "The crystals are cleansed every Tuesday. The customers, less often.", "Your aura's a lovely shade of grey. Very fashionable down here.", "No refunds. The stones remember who handled them. So do I.", "Sage clears the air. Not the queue. Nothing clears the queue."])
+moments = {
+"died": "Bad energy out there? I'll light you a candle. A small one. Budgets.",
+"boss_win": "Your aura's glowing. Or that's the bruising. Lovely either way."
+}

@@ -15,7 +15,7 @@ const PLAYER_STANDS_ON := 17
 const MADE_HANDS: Array[String] = [DrawPoker.STRAIGHT, DrawPoker.FLUSH, DrawPoker.FULL_HOUSE, DrawPoker.FOUR_OF_A_KIND, DrawPoker.STRAIGHT_FLUSH, DrawPoker.ROYAL_FLUSH]
 
 
-# How much of the every-table bonus (Loaded Dice) each game takes. Blackjack already returns about 94%
+# How much of the every-table bonus (Lucky Seat Ticket) each game takes. Blackjack already returns about 94%
 # and poker hands win often, so they take half: with the dice and Card Shark together every game still
 # keeps a share of the bets, at most about 97% coming back (test_items_batch3).
 const DICE_SHARE := {SLOT: 1.0, BLACKJACK: 0.5, POKER: 0.5}
@@ -29,7 +29,7 @@ static func boosted(payout: int, bet: int, bonus: float) -> int:
 	return payout + floori((payout - bet) * bonus + 0.0001)
 
 
-# The bonus a game's wins get: its share of every table's (Loaded Dice), and the poker table's own
+# The bonus a game's wins get: its share of every table's (Lucky Seat Ticket), and the poker table's own
 # (Card Shark).
 static func win_bonus(game: String, every_table: float, poker_table: float) -> float:
 	return every_table * float(DICE_SHARE.get(game, 0.0)) + (poker_table if game == POKER else 0.0)

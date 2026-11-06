@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = "support_stockings"
 display_name = "Support Stockings"
-description = "Sand, sedatives, quoits and paper never slow you below 70% speed. Compression is everything."
+description = "Sedatives, sticky trails, quoits and paper never slow you below 70% speed. Compression is everything."
 craft_price = 80
 rarity = "common"
 tags = PackedStringArray("dodge", "defence")

@@ -61,7 +61,7 @@ const TAPE_EVERY := 10.0
 const TAPE_ROWS := 3
 const TAPE_ROW_GAP := 3
 const WARNING_RADIUS := 40.0
-# Shorter than Mortimer's and the Mall Santa's 0.65 and 0.45.
+# Shorter than Mortimer's and the Projectionist's 0.65 and 0.45.
 const BASE_COOLDOWN := 0.35
 const PHASE_TWO_COOLDOWN := 0.25
 const PHASE_TWO_SPEED := 1.2
@@ -393,7 +393,7 @@ static func centered_in_gap(route: OverlapRoute, spot: Vector2, gaps: Array[Rect
 static func can_be_taped(cell: Vector2i, room_cells: Vector2i, is_open := Callable()) -> bool:
 	if cell.x < 1 or cell.y < 1 or cell.x > room_cells.x - 2 or cell.y > room_cells.y - 2:
 		return false
-	for door in FountainDivaBehavior.door_cells(room_cells):
+	for door in SplashJets.door_cells(room_cells):
 		if absi(cell.x - door.x) <= RoomLayout.RED_TAPE_DOOR_CLEARANCE and absi(cell.y - door.y) <= RoomLayout.RED_TAPE_DOOR_CLEARANCE:
 			return false
 	return not is_open.is_valid() or is_open.call(RoomBackdrop.cell_center(cell))

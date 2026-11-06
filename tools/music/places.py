@@ -347,32 +347,58 @@ def funeral_parlour():
 
 
 # ---------------------------------------------------------------------------------------------
-# Golden Years Mall at 7 a.m.: muzak in D, 100 bpm. A flute over electric piano and strings, vibes in
-# the middle, a shaker and a rim. The last A lifts a half step, as muzak must, and drops back down at
-# the top. 24 bars: A, B, A up a half step.
+# The Flashback Cinema, Last Showing: the organ intermission, a slow waltz in Eb, 3/4 at 132 bpm. A
+# picture-house organ with a deep tremulant plays the tune over a pedal "oom" and "pah-pah" chords;
+# the bells answer its long notes, a clarinet stop takes the sad middle in C minor, and the projector
+# clatters on throughout. At the end the reel runs out and the loose film flaps. 48 bars: curtain (4),
+# A (16), B in C minor (16), A again with a minor farewell (12).
 # ---------------------------------------------------------------------------------------------
 
-MALL_A = ("F#5:1.5 E5:.5 D5:1 A4 | B4:.5 C#5 D5 F#5:1.5 D5:1 | G5:1.5 F#5:.5 E5:1 B4 | C#5:.5 D5 E5 G5:1.5 E5:1 | "
-          "F#5:1.5 E5:.5 D5:1 A5 | A5:.5 G#5 F#5 C#5:1.5 E5:1 | D5:1 B5 C#5 A5 | D5:3 r:1")
-MALL_B = ("B4:1 D5 F#5:1.5 E5:.5 | Bb4:1 D5 E5:2 | A4:1 C#5 E5:1.5 D5:.5 | D#5:1 F#5 A5:2 | "
-          "G5:1.5 F#5:.5 E5:1 B4 | C#5:1 E5 G5 A5 | F#5:2 A5:1 F#5 | E5:1 D5 Bb4 D5")
-MALL_CHORDS = ("Dmaj7 Bm7 Em7 A7 Dmaj7 F#m7 Gmaj7,A7 Dmaj7 | Gmaj7 Gm6 F#m7 B7 Em7 A7 Dmaj7 A7,Bb7 | "
-               "Ebmaj7 Cm7 Fm7 Bb7 Ebmaj7 Gm7 Abmaj7,Bb7 Ebmaj7,A7")
+CIN_INTRO = "Eb6:1.5 D6:.5 C6:1 | Bb5:3 | C6:1.5 Bb5:.5 Ab5:1 | F5:3"
+CIN_A_HEAD = "Bb4:1 Eb5 G5 | Bb5:2 G5:1 | C6:2 Ab5:1 | F5:3 | D5:1 F5 Ab5 | C6:2 Bb5:1 | Ab5:1 G5:.5 F5 D5:1 | Eb5:3"
+CIN_A = (CIN_A_HEAD + " | G5:1 Bb5 Db6 | C6:3 | B5:2 Ab5:1 | G5:2 Eb5:1 | "
+         "E5:1 G5 Bb5 | Ab5:2 F5:1 | F5:1 Bb5 Ab5 | G5:1 F5 D5")
+CIN_B = ("Eb5:2 G5:1 | C6:3 | Ab5:2 C6:1 | Bb5:1 Ab5 F5 | D5:1 F5 B5 | D6:2 B5:1 | C6:1 G5 Eb5 | E5:1 G5 Bb5 | "
+         "Ab5:2 F5:1 | D6:2 Ab5:1 | G5:2 Eb5:1 | C6:2 Ab5:1 | F5:2 Ab5:1 | B5:2 D6:1 | Eb6:2 C6:1 | D6:1 C6 Bb5")
+CIN_A2 = CIN_A_HEAD + " | B5:2 Ab5:1 | G5:1 F5 Eb5 | Eb5:3 | D5:1 F5 Ab5"
+CIN_A_CHORDS = "Eb Eb Fm7 Bb7 Bb7 Fm7 Bb7 Eb"
+CIN_CHORDS = " ".join(["Eb Eb Fm7 Bb7", CIN_A_CHORDS, "Eb7 Ab Abm6 Eb C7 Fm7 Bb7 G7",
+                       "Cm Cm Fm Fm G7 G7 Cm C7 Fm Bb7 Eb Ab Dm7b5 G7 Cm Bb7", CIN_A_CHORDS, "Abm6 Eb Eb Bb7"])
 
 
-def golden_years_mall():
-    s = Song(100, 24 * 4, reverb=0.36)
-    p = _bars(prog(MALL_CHORDS), 24)
+def flashback_cinema():
+    s = Song(132, 48 * 3, reverb=0.42, meter=3)
+    p = _bars(prog(CIN_CHORDS, 3), 48)
     for bar, parts in enumerate(p):
-        comp(s, "epiano", bar, parts, "....x-......x-..", low=57, vel=0.5, gain=0.26, spread=0.5)
-        comp(s, "pad", bar, parts, "x---------------", low=55, vel=0.5, gain=0.09, spread=0.7)
-        bassline(s, "bass", bar, parts, [(0, 1.9, 0), (2, 1.4, 7), (3.5, 0.5, 5)], low=36, vel=0.8, gain=0.75)
-        drums(s, bar, {"kick": "x.......x.......", "rim": "....x.......x...", "shaker": "o.x.o.x.o.x.o.x."}, scale=0.65)
-    melody(s, "flute", 0, MALL_A, bars=8, vel=0.8, gain=0.7)
-    s.line("vibes", 7 * 4 + 3, mel("A5:.5 F#5", 1)[0], vel=0.7, gain=0.5, pan=0.4)
-    melody(s, "vibes", 8, MALL_B, bars=8, vel=0.8, gain=0.62, pan=0.15)
-    melody(s, "flute", 16, MALL_A, bars=8, vel=0.8, gain=0.7, transpose=1)
-    melody(s, "vibes", 16, MALL_A, bars=8, vel=0.4, gain=0.25, transpose=13, pan=0.4)
+        # Oom on the pedals, root and fifth by turns; pah-pah on the organ's lower manual.
+        bassline(s, "bass", bar, parts, [(0, 1, 7 if bar % 2 else 0)], low=34, vel=0.85, gain=0.7, wet=0.1)
+        bassline(s, "theatre", bar, parts, [(0, 1.5, 7 if bar % 2 else 0)], low=46, vel=0.6, gain=0.22, wet=0.3)
+        comp(s, "theatre", bar, parts, "..x-x-", low=55, vel=0.6, gain=0.15, spread=0.6)
+        comp(s, "vibes", bar, parts, "x-----", low=67, vel=0.35, gain=0.06, spread=0.7)
+        # The projector runs through it all, and the old print crackles.
+        drums(s, bar, {"tick": "oooooo", "brush": "x.o.o.", "crackle": "x....."}, scale=0.5)
+    # The reel runs out: the loose end of the film flaps round while the organ and bells climb back
+    # to the start.
+    s.hit("flap", 47 * 3, vel=0.7, gain=0.45, pan=0.4)
+    s.hit("flap", 47 * 3 + 1.5, vel=0.5, gain=0.35, pan=0.45)
+    s.line("vibes", 47 * 3, mel("D5:1 F5 Ab5", 3)[0], vel=0.55, gain=0.4, pan=-0.3)
+    melody(s, "theatre", 0, CIN_INTRO, bars=4, vel=0.75, gain=0.45, wide=True)
+    melody(s, "vibes", 0, CIN_INTRO, bars=4, vel=0.45, gain=0.25, pan=0.35)
+    at_bar = 4
+    for text, count, inst in ((CIN_A, 16, "theatre"), (CIN_B, 16, "reed"), (CIN_A2, 12, "theatre")):
+        if inst == "reed":
+            melody(s, "reed", at_bar, text, bars=count, vel=0.8, gain=0.5, pan=-0.15)
+            melody(s, "theatre", at_bar, text, bars=count, vel=0.6, gain=0.25, transpose=-12, pan=0.2)
+        else:
+            melody(s, "theatre", at_bar, text, bars=count, vel=0.8, gain=0.55, wide=True)
+        # The bells answer every note the tune holds for a whole bar.
+        for k, tokens in enumerate(b.split() for b in text.split("|")):
+            if len(tokens) == 1 and tokens[0].endswith(":3") and not tokens[0].startswith("r"):
+                bar = at_bar + k
+                notes, _ = chord(p[bar][0][2], 74)
+                for j, m in enumerate(notes[:3]):
+                    s.note("vibes", m, bar * 3 + 1 + j * 0.5, 0.5, vel=0.5, gain=0.35, pan=0.4)
+        at_bar += count
     return s
 
 
@@ -419,18 +445,8 @@ def last_resort_cruise():
 
 
 # ---------------------------------------------------------------------------------------------
-# Fairway's End Golf Club: polite piano at dusk, Db, 80 bpm. One piano, its left hand rolling broken
-# chords, strings very low behind it, crickets in the rough, and a small round of polite applause
-# before the top. 20 bars: A, B, A short.
+# A piano's left hand, shared with the ending.
 # ---------------------------------------------------------------------------------------------
-
-FAIR_A = ("F5:1 Ab5:.5 Db6:1.5 C6:.5 Ab5:.5 | Bb5:1.5 F5:.5 Db5:2 | Gb5:1 Bb5:.5 Db6:1.5 C6:.5 Bb5:.5 | Ab5:2 Eb5:1 C5 | "
-          "F5:1 Ab5:.5 Db6:1.5 Eb6:.5 F6 | Eb6:1 C6:.5 Ab5 F5:2 | Bb5:1 Gb5 Ab5:.5 C6 Eb6:1 | Db6:3 r:1")
-FAIR_B = ("Bb5:1.5 Ab5:.5 Gb5:1 Db5 | C5:1 Eb5 Ab5:2 | Gb5:1.5 F5:.5 Eb5:1 Bb4 | C5:1 Eb5 Gb5 Ab5 | "
-          "Bb5:1.5 Db6:.5 F6:1 Eb6 | Db6:1.5 A5:.5 Gb5:1 Eb5 | F5:1 Ab5 Db5 F5 | Gb5:1 Eb5 C5 Eb5")
-FAIR_C = "F5:1 Ab5:.5 Db6:1.5 C6:.5 Ab5:.5 | Bb5:1.5 F5:.5 Db5:2 | Gb5:1 Eb5 Ab5 C6 | Db6:2 r:2"
-FAIR_CHORDS = ("Dbmaj7 Bbm7 Gbmaj7 Ab7 Dbmaj7 Fm7 Gbmaj7,Ab7 Dbmaj7 | Gbmaj7 Fm7 Ebm7 Ab7 Gbmaj7 Gbm6 Fm7,Bbm7 Ebm7,Ab7 | "
-               "Dbmaj7 Bbm7 Ebm7,Ab7 Dbmaj7")
 
 
 def piano_left_hand(s, bar, parts, low=36, vel=0.45, gain=0.24):
@@ -444,20 +460,60 @@ def piano_left_hand(s, bar, parts, low=36, vel=0.45, gain=0.24):
                gain=gain, pan=-0.25)
 
 
-def fairways_end():
-    s = Song(80, 20 * 4, reverb=0.42)
-    p = _bars(prog(FAIR_CHORDS), 20)
+# ---------------------------------------------------------------------------------------------
+# Beyond Calling Psychic Hotline, Night Shift: a theremin and tremolo in B minor, 84 bpm. The theremin
+# glides from note to note over strings pulsing in triplets and a creeping minor line in the chords;
+# in the middle, in D, a guitar tremolo-picks the chords while the lava lamps bloop. A crystal ball
+# shimmers at each section, and the phone rings: once when the theremin pauses, twice at the top.
+# 24 bars: the call (2), A (8), B in D (8), A again (6).
+# ---------------------------------------------------------------------------------------------
+
+HOT_INTRO = "r:2 B5:2 | A#5:2 F#5:2"
+HOT_A_HEAD = "F#5:3 B4:1 | D5:2 A#5:2 | A5:3 F#5:1"
+HOT_A = HOT_A_HEAD + " | G#5:2 F#5:1 D5:1 | B5:3 F#5:1 | G5:2 E5:1 D5:1 | E5:2 A#4:2 | B4:3 r:1"
+HOT_B = ("A5:2 F#5:1 C#6:1 | D6:3 B5:1 | G5:2 B5:1 D6:1 | C#6:3 A5:1 | "
+         "F#5:2 A5:1 D6:1 | D#6:3 B5:1 | E6:2 D6:1 B5:1 | D6:2 C#6:2")
+HOT_A2 = HOT_A_HEAD + " | G#5:2 B5:2 | B5:2 F5:2 | E5:1 C#5 A#4:2"
+HOT_LINE = "Bm Bmmaj7 Bm7 Bm6"
+HOT_CHORDS = " ".join(["Bm F#7", HOT_LINE, "Gmaj7 Em7 C#m7b5,F#7 Bm", "Dmaj7 Bm7 Em7 A7 Dmaj7 B7 Em7 Gm6,F#7",
+                       HOT_LINE, "G7 F#7"])
+
+
+def _crystal_ball(s, bar, parts):
+    """A shimmer up the chord on the music box, as the ball clouds over."""
+    notes, _ = chord(parts[0][2], 76)
+    for k, m in enumerate(notes + [n + 12 for n in notes]):
+        s.note("musicbox", m, bar * 4 + k * 0.125, 0.5, vel=0.35 + 0.04 * k, gain=0.3, pan=-0.5 + 0.13 * k, wet=0.9)
+
+
+def seance_hotline():
+    s = Song(84, 24 * 4, reverb=0.45, tremolo={"pad": (3, 0.8)})
+    p = _bars(prog(HOT_CHORDS), 24)
     for bar, parts in enumerate(p):
-        piano_left_hand(s, bar, parts)
-        comp(s, "pad", bar, parts, "x---------------", low=56, vel=0.45, gain=0.07, spread=0.8)
-        for k, off in enumerate((0.75, 2.6) if bar % 3 else (1.4,)):
-            s.hit("cricket", bar * 4 + off, vel=0.5 + 0.2 * k, gain=0.3, pan=0.6 if (bar + k) % 2 else -0.6, wet=0.7)
-    s.hit("woodblock", 7 * 4 + 3, vel=0.6, gain=0.35, pan=0.5)
-    for k, off in enumerate((2.0, 2.3, 2.55, 2.85, 3.1, 3.4, 3.65)):
-        s.hit("clap", 19 * 4 + off, vel=0.25 + 0.03 * (k % 3), gain=0.3, pan=-0.5 + 0.15 * k, wet=0.7)
-    melody(s, "piano", 0, FAIR_A, bars=8, vel=0.7, gain=0.6, pan=0.15)
-    melody(s, "piano", 8, FAIR_B, bars=8, vel=0.7, gain=0.6, pan=0.15)
-    melody(s, "piano", 16, FAIR_C, bars=4, vel=0.7, gain=0.6, pan=0.15)
+        middle = 10 <= bar < 18
+        # The strings pulse in triplets under everything; vibes ring the chord on the one.
+        comp(s, "pad", bar, parts, "x---------------", low=52, vel=0.55, gain=0.16 if not middle else 0.11, spread=0.8)
+        if middle:
+            # A guitar picks each chord as fast as it can: triplet sixteenths.
+            comp(s, "guitar", bar, parts, "xo" * 12, low=55, vel=0.5, gain=0.12, spread=0.5, drop=3)
+            if bar % 2:
+                for off, pan in ((1.5, -0.5), (3.25, 0.4)):
+                    s.hit("bloop", bar * 4 + off, vel=0.6, gain=0.4, pan=pan, wet=0.7)
+        else:
+            comp(s, "vibes", bar, parts, "x-------x-------", low=60, vel=0.4, gain=0.12, spread=0.6)
+        bassline(s, "bass", bar, parts, [(0, 1.4, 0), (1.5, 0.4, 0), (2, 1.4, 7), (3.5, 0.4, 12)], low=35, vel=0.8, gain=0.7)
+        if bar >= 2:
+            drums(s, bar, {"brush": "x...o...x...o...", "rim": "....o.......o...", "kick": "o.......o......."}, scale=0.6)
+    for bar in (0, 10, 18):
+        _crystal_ball(s, bar, p[bar])
+    # The phone: two rings into the top of the loop, and one when the theremin first stops.
+    s.hit("ring", 0, vel=0.8, gain=0.35, pan=0.5)
+    s.hit("ring", 23 * 4 + 2, vel=0.8, gain=0.35, pan=0.5)
+    s.hit("ring", 9 * 4 + 3, vel=0.6, gain=0.25, pan=0.55)
+    melody(s, "theremin", 0, HOT_INTRO, bars=2, vel=0.6, gain=0.4, pan=-0.1, glide=0.12, legato=1.0)
+    melody(s, "theremin", 2, HOT_A, bars=8, vel=0.85, gain=0.6, pan=-0.1, glide=0.12, legato=1.0)
+    melody(s, "theremin", 10, HOT_B, bars=8, vel=0.85, gain=0.55, wide=True, glide=0.15, legato=1.0)
+    melody(s, "theremin", 18, HOT_A2, bars=6, vel=0.85, gain=0.6, pan=-0.1, glide=0.12, legato=1.0)
     return s
 
 

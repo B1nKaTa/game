@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/enemy_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/actors/behaviors/extra_behavior.gd" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "extra"
+display_name = "Film Extra"
+max_hp = 10.0
+speed = 125.0
+pension_drop = 1
+body_size = Vector2(16, 22)
+color = Color(0.5, 0.5, 0.5, 1)
+art_id = "extra"
+behavior_script = ExtResource("2")
+mark = "film_extra"

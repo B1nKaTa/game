@@ -101,7 +101,7 @@ func _charge(enemy: Enemy, delta: float) -> void:
 	_charge_left -= CHARGE_SPEED * delta
 	enemy.desired_velocity = _way * CHARGE_SPEED
 	enemy.smash(enemy.global_position + _way * SMASH_AHEAD, SMASH_RADIUS)
-	# Measured at his feet, as the caddie's cart is, since the lane is warned on the floor: by his middle
+	# Measured at his feet, since the lane is warned on the floor: by his middle
 	# the cart caught him a step outside it.
 	if not _has_hit and enemy.global_position.distance_to(enemy.target_ground()) <= HIT_RANGE:
 		_has_hit = true

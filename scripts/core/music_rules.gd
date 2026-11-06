@@ -23,9 +23,9 @@ const PATH_THEMES := {
 	"sunset_shores": "sunset_shores",
 	"furnace_works": "furnace_works",
 	"funeral_parlour": "funeral_parlour",
-	"golden_years_mall": "golden_years_mall",
+	"flashback_cinema": "flashback_cinema",
 	"last_resort_cruise": "last_resort_cruise",
-	"fairways_end": "fairways_end",
+	"seance_hotline": "seance_hotline",
 	"terminal_zero": "terminal_zero",
 	"head_office": "head_office",
 }

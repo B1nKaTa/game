@@ -129,7 +129,7 @@ func test_its_bite_leaves_time_to_step_away() -> void:
 # --- the returning enemies ---
 
 func test_returning_enemies_keep_their_numbers_and_take_the_floors_colors() -> void:
-	for id in ["weeping_mourner", "mall_cop"]:
+	for id in ["weeping_mourner"]:
 		var mine := _load("airport_" + id)
 		var theirs := _load(id)
 		assert_near(mine.max_hp, theirs.max_hp, id)
@@ -142,6 +142,55 @@ func test_returning_enemies_keep_their_numbers_and_take_the_floors_colors() -> v
 		assert_eq(mine.group_size, theirs.group_size, id)
 		assert_eq(mine.body_size, theirs.body_size, id)
 		assert_true(mine.id != theirs.id and mine.color != theirs.color, id)
+
+
+# The Mall that first had him is retired, so his numbers there are written out here.
+func test_the_mall_cop_keeps_the_numbers_he_had_in_the_mall() -> void:
+	var cop := _load("airport_mall_cop")
+	assert_near(cop.max_hp, 36.0)
+	assert_near(cop.speed, 64.0)
+	assert_eq(cop.pension_drop, 1)
+	assert_eq(cop.damage, 1)
+	assert_eq(cop.behavior_script, MallCopBehavior)
+	assert_eq(cop.display_name, "Mall Cop")
+	assert_eq(cop.max_per_room, 3)
+	assert_eq(cop.group_size, 1)
+	assert_eq(cop.body_size, Vector2(20, 24))
+	assert_eq(cop.art(), "mall_cop", "he still wears the Mall Cop's art")
+
+
+func test_the_mall_cop_charges_down_a_warned_lane() -> void:
+	assert_near(MallCopBehavior.WINDUP, 0.8)
+	assert_near(MallCopBehavior.CHARGE_LENGTH, 260.0)
+	var walk := PlayerStats.BASE_SPEED * (MallCopBehavior.WINDUP - 0.3)
+	assert_true(walk > MallCopBehavior.LANE_WIDTH, "time to step out of the lane")
+
+
+func test_his_whistle_finds_the_nearest_other_enemy() -> void:
+	var spots: Array[Vector2] = [Vector2(100, 100), Vector2(400, 100), Vector2(130, 120), Vector2(90, 300)]
+	assert_eq(MallCopBehavior.nearest_other(spots, 0), 2)
+	assert_eq(MallCopBehavior.nearest_other(spots, 2), 0)
+	assert_eq(MallCopBehavior.nearest_other(spots, 1), 2)
+	var alone: Array[Vector2] = [Vector2(10, 10)]
+	assert_eq(MallCopBehavior.nearest_other(alone, 0), -1, "alone he calls no one")
+	var none: Array[Vector2] = []
+	assert_eq(MallCopBehavior.nearest_other(none, 0), -1)
+
+
+func test_a_called_enemy_hurries_to_grandpa_for_two_seconds() -> void:
+	assert_near(Enemy.RALLY_SPEED, 1.5)
+	assert_near(MallCopBehavior.RALLY_TIME, 2.0)
+	var enemy := Enemy.new()
+	enemy.setup(_load("intern_reaper"), null, 0.5)
+	assert_false(enemy.is_rallied())
+	enemy.rally(MallCopBehavior.RALLY_TIME)
+	assert_true(enemy.is_rallied())
+	var boss := Enemy.new()
+	boss.setup(_load("reverend"), null, 0.5)
+	boss.rally(MallCopBehavior.RALLY_TIME)
+	assert_false(boss.is_rallied(), "a boss answers no whistle")
+	enemy.free()
+	boss.free()
 
 
 # --- the numbers ---

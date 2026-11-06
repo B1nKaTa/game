@@ -5,11 +5,11 @@
 [resource]
 script = ExtResource("1")
 id = "loaded_dice"
-display_name = "Loaded Dice"
-description = "Arcade wins pay out more, but every shop charges you 20% more. Word gets around."
+display_name = "Lucky Seat Ticket"
+description = "Arcade wins pay out more, but every shop charges you 20% more. Row G, seat 13. Lucky for some."
 rarity = "rare"
 cursed = true
 tags = PackedStringArray("money")
-first_clear_path = "golden_years_mall"
+first_clear_path = "flashback_cinema"
 shop_markup = 0.2
 arcade_win_bonus = 0.1

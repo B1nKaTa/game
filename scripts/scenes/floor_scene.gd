@@ -5,8 +5,8 @@ extends Node2D
 const PATHS_BY_DEPTH := {
 	1: ["res://data/floors/floor_1.tres", "res://data/floors/cemetery.tres"],
 	2: ["res://data/floors/sunset_shores.tres", "res://data/floors/furnace_works.tres"],
-	3: ["res://data/floors/funeral_parlour.tres", "res://data/floors/golden_years_mall.tres"],
-	4: ["res://data/floors/last_resort_cruise.tres", "res://data/floors/fairways_end.tres"],
+	3: ["res://data/floors/funeral_parlour.tres", "res://data/floors/flashback_cinema.tres"],
+	4: ["res://data/floors/last_resort_cruise.tres", "res://data/floors/seance_hotline.tres"],
 	5: ["res://data/floors/terminal_zero.tres", "res://data/floors/head_office.tres"],
 }
 # The deepest floor there is. A floor boss falling here ends the run.
@@ -302,8 +302,12 @@ func _resume_map(resume: Dictionary) -> bool:
 			return false
 		var side: Array = resume.get("exit_side", [0, 0])
 		_exit_side = Vector2i(int(side[0]), int(side[1]))
-		if map.attach_crossroads(load(CROSSROADS_LAYOUT), -_exit_side) == null:
+		var crossroads := map.attach_crossroads(load(CROSSROADS_LAYOUT), -_exit_side)
+		if crossroads == null:
 			return false
+		# A run on a retired path comes back at the start of its replacement's floor.
+		if bool(resume.get(PathMigration.FLOOR_START, false)):
+			RunCheckpoint.restart_floor(resume, map, crossroads.id)
 		_floor_seed = str(resume.get("seed", ""))
 	else:
 		return false
@@ -487,6 +491,8 @@ func _enter_room(target_id: int) -> void:
 	_hud.hide_boss_bar()
 	player.recall_teeth()
 	player.end_push()
+	# A hold from the room he leaves (On the Line) stays there too.
+	player.end_leash()
 	var from_id := _current_id
 	if _room_view != null:
 		# Before anything leaves the room, so an item can still take from it (Moving Boxes).

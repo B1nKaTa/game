@@ -1,0 +1,84 @@
+[gd_resource type="Resource" script_class="FloorDef" load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/floor_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/content/room_palette.gd" id="2"]
+[ext_resource type="Resource" path="res://data/enemies/phone_psychic.tres" id="3"]
+[ext_resource type="Resource" path="res://data/enemies/crystal_gazer.tres" id="4"]
+[ext_resource type="Resource" path="res://data/enemies/poltergeist.tres" id="5"]
+[ext_resource type="Resource" path="res://data/enemies/seance_bingo_caller.tres" id="6"]
+[ext_resource type="Resource" path="res://data/enemies/seance_soot_ghost.tres" id="7"]
+[ext_resource type="Resource" path="res://data/enemies/celestine.tres" id="8"]
+[ext_resource type="Resource" path="res://data/enemies/madame_zara.tres" id="9"]
+[ext_resource type="Resource" path="res://data/enemies/mimic.tres" id="10"]
+
+[sub_resource type="Resource" id="palette"]
+script = ExtResource("2")
+floor_a = Color(0.23, 0.13, 0.37, 1)
+floor_b = Color(0.21, 0.12, 0.35, 1)
+floor_c = Color(0.25, 0.15, 0.39, 1)
+floor_jitter = 0.01
+grout = Color(0, 0, 0, 0)
+speckle = Color(1, 1, 1, 0)
+wall = Color(0.04, 0.23, 0.25, 1)
+wall_line = Color(0, 0, 0, 0.12)
+darkness = Color(0.02, 0.02, 0.04, 1)
+ambient = Color(0.46, 0.36, 0.52, 1)
+torch = Color(0.85, 0.62, 0.36, 1)
+fill_light = Color(0.56, 0.72, 0.86, 1)
+crate = Color(0.36, 0.28, 0.24, 1)
+crate_edge = Color(0.16, 0.11, 0.09, 1)
+rock = Color(0.42, 0.4, 0.5, 1)
+rock_edge = Color(0.17, 0.16, 0.22, 1)
+barrel = Color(0.4, 0.3, 0.24, 1)
+barrel_band = Color(0.16, 0.11, 0.09, 1)
+cobweb = Color(0.82, 0.86, 0.95, 0.3)
+floor_crack = Color(0, 0, 0, 0.3)
+lantern = Color(1, 0.82, 0.52, 1)
+lantern_light = Color(0.95, 0.72, 0.45, 1)
+floor_pattern = 15
+carpet_motif = Color(0.62, 0.86, 0.9, 0.16)
+wall_pattern = 15
+brick_line = Color(0, 0, 0, 0.3)
+flicker = 0.05
+decor_density = 0.035
+decor_weights = {
+"cobweb": 1.0,
+"crack": 0.3,
+"office_chair": 1.2
+}
+scatter_lights = 0
+
+[resource]
+script = ExtResource("1")
+id = "seance_hotline"
+display_name = "Beyond Calling Psychic Hotline, Night Shift"
+rooms_dir = "res://data/rooms/seance_hotline/"
+enemies = [ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7")]
+enemy_weights = PackedInt32Array(3, 4, 3, 3, 2)
+extra_enemy_steps = PackedFloat32Array(0.5, 0.8)
+mini_boss = ExtResource("8")
+floor_boss = ExtResource("9")
+mimic = ExtResource("10")
+clear_pension = 1
+treasure_pension = 20
+prop_pension = 1
+palette = SubResource("palette")
+depth = 4
+open_after_depth = 4
+clears_to_open = 1
+danger = 6
+closed_hint = "Beat a fourth-floor boss first"
+health_mult = 2.2
+pension_mult = 2.5
+enemies_by_size = {
+"large": 14,
+"medium": 9,
+"small": 7
+}
+chest_weights = {
+"locked": 22,
+"lunchbox": 26,
+"mimic": 16,
+"safe": 20,
+"urn": 16
+}

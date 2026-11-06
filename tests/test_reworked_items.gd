@@ -254,7 +254,7 @@ func test_support_stockings_hold_his_speed_above_seventy_percent() -> void:
 	assert_near(run.stats.min_slow_factor, 0.7)
 	assert_near(run.stats.dodge_cooldown, PlayerStats.BASE_DODGE_COOLDOWN, "no dodge cut any more")
 	var player := FileAccess.get_file_as_string("res://scripts/actors/player.gd")
-	assert_true(player.contains("maxf(SandRule.slowed(_slow.speed_factor(), sunk), run.stats.min_slow_factor)"))
+	assert_true(player.contains("maxf(_slow.speed_factor(), run.stats.min_slow_factor)"))
 
 
 func test_titanium_hip_hits_what_he_dodges_through_once_a_dodge() -> void:

@@ -13,6 +13,11 @@ extends SceneTree
 # mat to the nearest clear spot, stands on marked gaps unless a heavy strike falls there, and dodges
 # to snap the Chairman's tether.
 # Version 8 counts the Chairman's restructuring rows as a gap attack, so it honours their mark.
+# Version 9 reads any hazard node that answers threat_at(p, strict) (0 clear, 1 better avoided, 2 a
+# coming hit) and threat_imminent(p), as every hazard of the Flashback Cinema does, with no branch of
+# its own: the beam, splice lanes, reel lanes, the burn, the popcorn tub and the film trail.
+# Version 10 leaves a marked safe spot on the third floor too once such a hazard covers it (it stood
+# on the beam's mark under a reel's pie lane), and names those hazards in the hits by source.
 # Version 6 reads the floor-5 bosses' overlaps: the Chairman's desk slam is a warned spot like any
 # deep strike, and Augustine's runway mark is honoured while his lanes light, as a gap is while a
 # chart or a sweep runs (the mark is skipped whenever a lane or strike covers it, as before).
@@ -251,17 +256,11 @@ func _attribute(scene) -> void:
 		elif child is PipeRing and child.damage() > 0 and absf(child.global_position.distance_to(scene.player.feet().global_position) - child.radius_now()) < 24.0:
 			name = "crescendo"
 			d = 0.0
-		elif child is ClosingRing:
-			name = "closing_ring"
-			d = 0.0
 		elif child is ProcessionLane and child.is_marching():
 			name = "procession"
 			d = 0.0
 		elif child is CollectionPlate and child.is_flying():
 			name = "plate"
-			d = 0.0
-		elif child is PresentDrop and d < 30.0:
-			name = "present"
 			d = 0.0
 		elif child is AnchorDrop or child is QuoitRing or child is WriteUpMark or child is GroundStrike:
 			if d < 60.0:
@@ -279,12 +278,13 @@ func _attribute(scene) -> void:
 		elif child is XRaySweep and child.is_sweeping() and absf((scene.player.feet().global_position.x if child._along_x else scene.player.feet().global_position.y) - child.beam_at()) < 30.0:
 			name = "xray"
 			d = 2.0
-		elif child is SprinklerSweep and child.is_sweeping() and SprinklerSweep.swept_over(child.global_position, child.sweep_start(), child.sweep_turn(), maxf(child._swept_for - 0.1, 0.0), child._swept_for, scene.player.feet().global_position):
-			name = "sprinkler"
+		elif child is ShuffleboardPuck and child.is_sliding() and scene.player.feet().global_position.distance_to(child.global_position + CollectionPlate.point_along(child._path, child._travelled)) < 30.0:
+			name = "puck"
 			d = 1.0
-		elif ((child is PuttRoll and child.is_rolling()) or (child is ShuffleboardPuck and child.is_sliding())) and scene.player.feet().global_position.distance_to(child.global_position + CollectionPlate.point_along(child._path, child._travelled)) < 30.0:
-			name = "putt" if child is PuttRoll else "puck"
-			d = 1.0
+		elif child.has_method("threat_at") and not (child is LineTether or child is SeanceCircle) and (child.threat_imminent(scene.player.feet().global_position) or child.threat_at(scene.player.feet().global_position, false) >= 2):
+			# Version 9's hazards name themselves when his feet are under a coming hit.
+			name = str(child.get_script().get_global_name())
+			d = 0.5
 		elif child is Enemy:
 			name = child.def.id
 		if name != "" and d < best_d:
@@ -411,10 +411,9 @@ class Bot extends Node:
 	var _last_hp_total := 0.0
 	var _since_progress := 0.0
 	var _fighting := false
-	# Floors 4 and 5: where he is stepping to out of a new hazard, how long a dodge he wants has waited
-	# for him to leave sand, and the cells raised or chiming barriers block this frame.
+	# Floors 4 and 5: where he is stepping to out of a new hazard, and the cells raised or chiming
+	# barriers block this frame.
 	var _deep_goal := Vector2.INF
-	var _sand_wait := 0.0
 	var _barrier_cells := {}
 	var _soft_cells := {}
 	var _dodge_against := Vector2.ZERO
@@ -506,10 +505,6 @@ class Bot extends Node:
 		elif threat == Vector2.ZERO and _steps_into_hit(_player.feet().global_position, _move):
 			# He waits at the edge of a warned spot or lane rather than walking into it.
 			_move = Vector2.ZERO
-		elif threat == Vector2.ZERO and _boss_here() and _player.is_in_sand():
-			var dry := _out_of_sand(_player.feet().global_position)
-			if dry != Vector2.INF:
-				_move = _player.feet().global_position.direction_to(dry)
 		var safe := safe_spot()
 		if safe != Vector2.INF:
 			_move = _walk_to(safe)
@@ -532,7 +527,7 @@ class Bot extends Node:
 	func debug_state() -> String:
 		var feet: Vector2 = _player.feet().global_position
 		var parts: Array[String] = []
-		parts.append("t=%.2f feet=%s move=%s goal=%s safe=%s dodging=%s sand=%s taped=%s cool=%.2f" % [clock, str(feet.round()), str(_move.snapped(Vector2(0.01, 0.01))), str(_deep_goal.round()) if _deep_goal != Vector2.INF else "-", str(safe_spot().round()) if safe_spot() != Vector2.INF else "-", str(_player.is_dodging()), str(_player.is_in_sand()), str(_player.is_taped()), _player._dodge._cooldown])
+		parts.append("t=%.2f feet=%s move=%s goal=%s safe=%s dodging=%s taped=%s cool=%.2f" % [clock, str(feet.round()), str(_move.snapped(Vector2(0.01, 0.01))), str(_deep_goal.round()) if _deep_goal != Vector2.INF else "-", str(safe_spot().round()) if safe_spot() != Vector2.INF else "-", str(_player.is_dodging()), str(_player.is_taped()), _player._dodge._cooldown])
 		for child in scene.debug_room_view().get_children():
 			if child.is_queued_for_deletion():
 				continue
@@ -680,6 +675,10 @@ class Bot extends Node:
 			if child is SafeSpotMark and not child.is_queued_for_deletion() and _seen_for(child):
 				if _heavy_strike_on(child.global_position) or (scene.debug_floor_def().depth >= 4 and _spot_hurts(child.global_position, _zones, false)):
 					continue
+				# Version 10: on any floor, a mark a later hazard covers (a reel's lane over the beam's
+				# mark) is no longer safe.
+				if _threat_hurts(child.global_position):
+					continue
 				if scene.debug_floor_def().depth >= 4 and (not _gap_attack_on() or _threat != Vector2.ZERO):
 					continue
 				return child.global_position
@@ -699,13 +698,13 @@ class Bot extends Node:
 				return true
 		return false
 
-	# Whether one of the deep floors' heavy strikes (an anchor, a stamp, a gavel, a giant ball) is
+	# Whether one of the deep floors' heavy strikes (an anchor, a stamp, a gavel) is
 	# falling on a spot, so a marked gap there is no longer safe.
 	func _heavy_strike_on(spot: Vector2) -> bool:
 		for child in scene.debug_room_view().get_children():
 			if child is AnchorDrop and not child._landed and spot.distance_to(child.global_position) < AnchorDrop.RADIUS + 12.0:
 				return true
-			if (child is GavelStrike or child is TerminalStrike or child is GiantBallDrop) and not child._landed and child._delay <= 0.0 and spot.distance_to(child.global_position) < child._radius + 12.0:
+			if (child is GavelStrike or child is TerminalStrike) and not child._landed and child._delay <= 0.0 and spot.distance_to(child.global_position) < child._radius + 12.0:
 				return true
 		return false
 
@@ -734,21 +733,6 @@ class Bot extends Node:
 						var away: Vector2 = at.direction_to(feet)
 						escape += away if away != Vector2.ZERO else Vector2.RIGHT
 						break
-			elif child is PresentDrop and not child._landed:
-				if _seen_for(child) and feet.distance_to(child.global_position) < PresentDrop.RADIUS + 12.0:
-					var away2: Vector2 = child.global_position.direction_to(feet)
-					escape += away2 if away2 != Vector2.ZERO else Vector2.RIGHT
-					_want_dodge(child.get_instance_id())
-			elif child is ClosingRing:
-				if not _seen_for(child):
-					continue
-				var d: float = feet.distance_to(child.global_position)
-				var r: float = child.radius_now()
-				if d < r + 10.0:
-					var out: Vector2 = child.global_position.direction_to(feet)
-					escape += out if out != Vector2.ZERO else Vector2.RIGHT
-					if child._left <= 0.0 and absf(d - r) < 22.0:
-						_want_dodge(child.get_instance_id() + int(r / 20.0))
 			elif child is PipeRing and child.damage() > 0:
 				var d2: float = feet.distance_to(child.global_position)
 				if d2 > child.radius_now() and d2 - child.radius_now() < 20.0 and d2 < child.reach():
@@ -777,7 +761,7 @@ class Bot extends Node:
 		return Vector2.ZERO
 
 	# Floors 4 and 5. Cells the walk avoids or cannot use this frame: raised or chiming barriers block
-	# only him, and sand and strung tape are walked round when there is another way.
+	# only him, and strung tape is walked round when there is another way.
 	func _read_cells() -> void:
 		_barrier_cells.clear()
 		_soft_cells.clear()
@@ -785,22 +769,21 @@ class Bot extends Node:
 		for barrier in QueueBarrier.barriers_in(tree):
 			if is_instance_valid(barrier) and (barrier.is_up() or barrier.is_chiming()):
 				_barrier_cells[barrier._cell] = true
-		for trap in tree.get_nodes_in_group(SandTrap.GROUP):
-			if is_instance_valid(trap):
-				_soft_cells[_cell(trap.global_position)] = true
 		for tape in tree.get_nodes_in_group(RedTape.GROUP):
 			if is_instance_valid(tape) and tape.is_strung() and not tape.is_cut():
 				_soft_cells[_cell(tape.global_position)] = true
 
 	func _is_deep(child: Node) -> bool:
-		return child is DeckLane or child is RunwayLane or child is LaneDrop or child is SprinklerSweep or child is PuttRoll or child is ShuffleboardPuck or child is AnchorDrop or child is QuoitRing or child is WriteUpMark or child is PaperTrail or child is BunkerPatch or child is TapeSpread or _is_deep_strike(child)
+		return child.has_method("threat_at") or child is DeckLane or child is RunwayLane or child is LaneDrop or child is ShuffleboardPuck or child is AnchorDrop or child is QuoitRing or child is WriteUpMark or child is PaperTrail or child is TapeSpread or _is_deep_strike(child)
 
-	# The deep floors' own marks on the ground: a giant ball, a gavel, a stamp or tray, a chipped ball.
+	# The deep floors' own marks on the ground: a gavel, a stamp or tray.
 	func _is_deep_strike(child: Node) -> bool:
-		return child is GiantBallDrop or child is GavelStrike or child is TerminalStrike or child is GolfBallLob or child is DeskSlam
+		return child is GavelStrike or child is TerminalStrike or child is DeskSlam
 
 	# 0 for clear, 1 for somewhere better avoided (it slows or will warn soon), 2 for a coming hit.
 	func _deep_zone(child: Node, p: Vector2, strict := false) -> int:
+		if child.has_method("threat_at"):
+			return int(child.threat_at(p, strict))
 		if child is DeckLane:
 			var off: Vector2 = p - child.global_position
 			var along: float = off.dot(child._direction)
@@ -826,21 +809,7 @@ class Bot extends Node:
 			if not child.has_landed():
 				return 2
 			return 2 if child._stand_left > 0.0 else 0
-		if child is SprinklerSweep:
-			var center: Vector2 = child.global_position
-			var dist := p.distance_to(center)
-			if dist > SprinklerSweep.REACH + 20.0:
-				return 0
-			var angle := SprinklerSweep.swept_angle_of(center, child.sweep_start(), child.sweep_turn(), p)
-			var margin := clampf(16.0 / maxf(dist, 1.0), 0.05, 1.0)
-			if dist > SprinklerSweep.ARM_WIDTH and angle > SprinklerSweep.SWEEP + margin and angle < TAU - margin:
-				return 0
-			if child.is_sweeping() and not strict:
-				var now := SprinklerSweep.SWEEP * clampf(child._swept_for / SprinklerSweep.SWEEP_TIME, 0.0, 1.0)
-				if angle < now - margin:
-					return 0
-			return 2
-		if child is PuttRoll or child is ShuffleboardPuck:
+		if child is ShuffleboardPuck:
 			var from: float = child._travelled
 			var d := from
 			while d <= child._total:
@@ -864,14 +833,14 @@ class Bot extends Node:
 			return 2 if child.covers(p) or (child._linger > 0.0 and dw < WriteUpMark.RADIUS + 4.0) else 0
 		if child is PaperTrail:
 			return 1 if child.covers(p) else 0
-		if child is BunkerPatch:
-			return 1 if not child.is_laid() and child.cells().has(_cell(p)) else 0
 		if child is TapeSpread:
 			return 1 if not child.is_strung() and child._cells.has(_cell(p)) else 0
 		return 0
 
 	# Whether a hit is a moment away, when a dodge's own cover helps.
 	func _deep_imminent(child: Node, p: Vector2) -> bool:
+		if child.has_method("threat_imminent"):
+			return bool(child.threat_imminent(p))
 		if child is DeckLane:
 			if not child.is_moving():
 				return false
@@ -881,13 +850,8 @@ class Bot extends Node:
 			return not child.is_waiting() and (child._left < 0.12 or child.is_lit())
 		if child is LaneDrop:
 			return not child.is_waiting() and not child.has_landed() and child._left < 0.12
-		if child is SprinklerSweep:
-			if not child.is_sweeping():
-				return child._left < 0.1
-			var now := SprinklerSweep.SWEEP * clampf(child._swept_for / SprinklerSweep.SWEEP_TIME, 0.0, 1.0)
-			return SprinklerSweep.swept_angle_of(child.global_position, child.sweep_start(), child.sweep_turn(), p) - now < 0.5
-		if child is PuttRoll or child is ShuffleboardPuck:
-			var moving: bool = child.is_rolling() if child is PuttRoll else child.is_sliding()
+		if child is ShuffleboardPuck:
+			var moving: bool = child.is_sliding()
 			return moving and p.distance_to(child.global_position + CollectionPlate.point_along(child._path, child._travelled)) < 40.0
 		if child is AnchorDrop or child is QuoitRing or child is WriteUpMark or _is_deep_strike(child):
 			return not child._landed and child._left < 0.12
@@ -949,11 +913,18 @@ class Bot extends Node:
 		for child in hard:
 			# A dodge out of a mark that falls in place helps; out of a sweep or a moving row it is
 			# better kept for the moment it arrives.
-			var sweeps: bool = child is SprinklerSweep or child is DeckLane or child is PuttRoll or child is ShuffleboardPuck
+			var sweeps: bool = child is DeckLane or child is ShuffleboardPuck or child is OuijaPlanchette or child is PossessionGhost
 			if not sweeps and _deep_goal != Vector2.INF and feet.distance_to(_deep_goal) > 30.0:
 				_want_dodge(child.get_instance_id())
 			if _deep_imminent(child, feet):
 				_want_dodge(child.get_instance_id() + 1)
+
+	# Whether a hazard read through threat_at has a coming hit on a spot.
+	func _threat_hurts(p: Vector2) -> bool:
+		for zone in _zones:
+			if is_instance_valid(zone) and zone.has_method("threat_at") and int(zone.threat_at(p, true)) == 2:
+				return true
+		return false
 
 	func _spot_hurts(p: Vector2, zones: Array, with_enemies := true) -> bool:
 		if with_enemies and _enemy_warning_at(p):
@@ -993,7 +964,7 @@ class Bot extends Node:
 				return true
 		return false
 
-	# The nearest open spot clear of every hit coming, preferring spots off sand, tape and slowing mats.
+	# The nearest open spot clear of every hit coming, preferring spots off tape and slowing mats.
 	func _nearest_clear(feet: Vector2, zones: Array) -> Vector2:
 		var layout: RoomLayout = scene.debug_map().room(scene.debug_current_id()).layout
 		var size := layout.size_in_cells()
@@ -1055,29 +1026,11 @@ class Bot extends Node:
 				return true
 		return false
 
-	func _boss_here() -> bool:
-		for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
-			if enemy.def.is_boss:
-				return true
-		return false
-
-	# The nearest open spot off sand, for a player who knows he cannot dodge there.
-	func _out_of_sand(feet: Vector2) -> Vector2:
-		var layout: RoomLayout = scene.debug_map().room(scene.debug_current_id()).layout
-		for step in range(1, 14):
-			for k in 12:
-				var p: Vector2 = feet + Vector2.from_angle(TAU * k / 12.0) * step * 8.0
-				if not _solid(layout, _cell(p)) and not SandTrap.is_sand_at(get_tree(), p) and _way_clear(feet, p, _zones):
-					return p
-		return Vector2.INF
-
 	# Whether a step from here walks into a deep floor's coming hit he is not already standing in.
 	func _steps_into_hit(feet: Vector2, way: Vector2) -> bool:
 		if way == Vector2.ZERO:
 			return false
 		var ahead := feet + way.normalized() * 16.0
-		if _boss_here() and not _player.is_in_sand() and SandTrap.is_sand_at(get_tree(), ahead):
-			return true
 		if _zones.is_empty():
 			return false
 		for zone in _zones:
@@ -1249,7 +1202,7 @@ class Bot extends Node:
 		var view: RoomView = scene.debug_room_view()
 		return not view._broken_cells.has(cell)
 
-	# Round sand and tape when there is a way round, through them when there is not.
+	# Round tape when there is a way round, through it when there is not.
 	func _find_path(layout: RoomLayout, from: Vector2i, to: Vector2i) -> Array[Vector2i]:
 		if not _soft_cells.is_empty():
 			var around := _find_path_avoiding(layout, from, to, true)
@@ -1315,13 +1268,6 @@ class Bot extends Node:
 		if _dodge_pressed:
 			Input.action_release("dodge")
 			_dodge_pressed = false
-		if _dodge_wish and _player.is_in_sand():
-			# No dodge starts in sand: he keeps the wish a moment and walks out first.
-			_sand_wait += get_physics_process_delta_time()
-			if _sand_wait > 0.5:
-				_dodge_wish = false
-			return
-		_sand_wait = 0.0
 		if _dodge_wish:
 			_dodge_wish = false
 			if _move != Vector2.ZERO:

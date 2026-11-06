@@ -171,7 +171,7 @@ func test_office_effects_are_cleared_from_a_stored_room() -> void:
 # --- the returning pair ---
 
 func test_returning_enemies_keep_their_numbers_and_take_the_floors_colors() -> void:
-	for id in ["florist", "perfume_sprayer"]:
+	for id in ["florist"]:
 		var mine := _load("office_" + id)
 		var theirs := _load(id)
 		assert_near(mine.max_hp, theirs.max_hp, id)
@@ -184,6 +184,71 @@ func test_returning_enemies_keep_their_numbers_and_take_the_floors_colors() -> v
 		assert_eq(mine.body_size, theirs.body_size, id)
 		assert_eq(mine.mark, theirs.mark, id)
 		assert_true(mine.id != theirs.id and mine.color != theirs.color, id)
+
+
+# The Mall that first had her is retired, so her numbers there are written out here.
+func test_the_perfume_sprayer_keeps_the_numbers_she_had_in_the_mall() -> void:
+	var sprayer := _load("office_perfume_sprayer")
+	assert_near(sprayer.max_hp, 30.0)
+	assert_near(sprayer.speed, 66.0)
+	assert_eq(sprayer.pension_drop, 1)
+	assert_eq(sprayer.behavior_script, PerfumeSprayerBehavior)
+	assert_eq(sprayer.display_name, "Perfume Sprayer")
+	assert_eq(sprayer.max_per_room, 3)
+	assert_eq(sprayer.group_size, 1)
+	assert_eq(sprayer.body_size, Vector2(18, 24))
+	assert_eq(sprayer.mark, "perfume")
+
+
+func test_the_sprayer_keeps_her_distance() -> void:
+	assert_eq(PerfumeSprayerBehavior.step(60.0), PerfumeSprayerBehavior.BACK_OFF)
+	assert_eq(PerfumeSprayerBehavior.step(119.0), PerfumeSprayerBehavior.BACK_OFF)
+	assert_eq(PerfumeSprayerBehavior.step(150.0), PerfumeSprayerBehavior.HOLD)
+	assert_eq(PerfumeSprayerBehavior.step(PerfumeSprayerBehavior.TOO_FAR + 1.0), PerfumeSprayerBehavior.CLOSE_IN)
+	assert_true(PerfumeSprayerBehavior.TOO_CLOSE >= 120.0)
+
+
+func test_her_clouds_follow_the_plan() -> void:
+	assert_near(PerfumeCloud.WARNING, 0.9)
+	assert_near(PerfumeCloud.LINGER, 4.0)
+	assert_near(PerfumeCloud.RADIUS, 40.0)
+	assert_near(PerfumeHaze.LIGHT_RADIUS_IN_CLOUD, 55.0)
+
+
+func test_a_cloud_covers_its_circle_only_once_it_lands_and_until_it_fades() -> void:
+	var cloud := PerfumeCloud.new()
+	cloud.setup(null, PerfumeCloud.WARNING, PerfumeCloud.LINGER, PerfumeCloud.RADIUS)
+	cloud.position = Vector2(200, 200)
+	var clouds := [cloud]
+	assert_false(PerfumeCloud.any_covers(clouds, Vector2(200, 200)), "not while it is only a warning")
+	cloud.advance(PerfumeCloud.WARNING + 0.05)
+	assert_true(cloud.has_landed())
+	assert_true(PerfumeCloud.any_covers(clouds, Vector2(200, 200)))
+	assert_true(PerfumeCloud.any_covers(clouds, Vector2(235, 210)), "inside its radius")
+	assert_false(PerfumeCloud.any_covers(clouds, Vector2(245, 200)), "outside it")
+	cloud.advance(PerfumeCloud.LINGER)
+	assert_false(PerfumeCloud.any_covers(clouds, Vector2(200, 200)), "faded")
+	assert_true(cloud.is_finished())
+	assert_true(PerfumeCloud.covers_point(Vector2.ZERO, 40.0, Vector2(0, 40)))
+	assert_false(PerfumeCloud.covers_point(Vector2.ZERO, 40.0, Vector2(0, 40.5)))
+	cloud.free()
+
+
+func test_a_cloud_never_costs_a_pill_and_its_warning_leaves_time_to_walk_out() -> void:
+	var cloud := PerfumeCloud.new()
+	assert_false(cloud.has_method("hit_target") or cloud.has_method("damage"))
+	cloud.free()
+	var walk := PlayerStats.BASE_SPEED * (PerfumeCloud.WARNING - 0.2)
+	assert_true(walk > PerfumeCloud.RADIUS, "%f" % walk)
+
+
+func test_the_haze_shows_only_in_a_cloud_and_warnings_draw_above_it() -> void:
+	assert_true(PerfumeHaze.Z < Enemy.WARNING_Z, "warnings stay above the haze")
+	assert_true(PerfumeHaze.Z < Projectile.SHOT_Z, "and shots and marks too")
+	assert_near(PerfumeHaze.shade_toward(0.0, true, 1.0), PerfumeHaze.DARKNESS, "in a cloud it closes in")
+	assert_near(PerfumeHaze.shade_toward(PerfumeHaze.DARKNESS, false, 1.0), 0.0, "and clears outside one")
+	assert_true(PerfumeHaze.shade_toward(0.0, true, 0.05) > 0.0)
+	assert_true(PerfumeHaze.shade_toward(0.0, true, 0.05) < PerfumeHaze.DARKNESS, "it eases in")
 
 
 # --- the numbers ---

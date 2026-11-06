@@ -11,12 +11,14 @@ const BEHAVIORS := [
 	"cruise_director_behavior", "commodore_behavior",
 	# Head Office
 	"yes_man_behavior", "paper_shredder_behavior", "hr_rep_behavior", "doreen_behavior", "chairman_behavior",
-	# Fairway's End
-	"caddie_behavior", "club_golfer_behavior", "gopher_behavior", "club_pro_behavior",
-	"club_president_behavior",
 	# Departures, Terminal Zero
 	"tour_group_behavior", "baggage_handler_behavior", "lost_luggage_behavior", "security_sergeant_behavior",
 	"head_of_departures_behavior",
+	# The Flashback Cinema
+	"usher_behavior", "popcorn_vendor_behavior", "film_reel_behavior", "extra_behavior", "crabtree_behavior", "projectionist_behavior",
+	# The Seance Hotline (the Ectoplasm has no attack, so no windup to read, and stays off this list)
+	"phone_psychic_behavior", "crystal_gazer_behavior", "poltergeist_behavior", "celestine_behavior",
+	"madame_zara_behavior",
 ]
 const ExploderBehavior := preload("res://scripts/actors/behaviors/exploder_behavior.gd")
 const PackBehavior := preload("res://scripts/actors/behaviors/pack_behavior.gd")

@@ -21,10 +21,10 @@ func _write_text(text: String) -> void:
 
 func test_the_file_round_trips() -> void:
 	_clean()
-	assert_true(RunCheckpoint.write(_path(), {"depth": 3, "path": "golden_years_mall"}))
+	assert_true(RunCheckpoint.write(_path(), {"depth": 3, "path": "flashback_cinema"}))
 	var read := RunCheckpoint.read(_path())
 	assert_eq(int(read["depth"]), 3)
-	assert_eq(read["path"], "golden_years_mall")
+	assert_eq(read["path"], "flashback_cinema")
 	assert_eq(int(read["version"]), RunCheckpoint.VERSION)
 	assert_false(FileAccess.file_exists(_path() + ".tmp"), "the temp file is renamed into place")
 	_clean()
@@ -224,7 +224,7 @@ func test_the_rng_state_round_trips() -> void:
 
 func test_every_path_rebuilds_the_same_map_from_its_seed() -> void:
 	var defs: Array[FloorDef] = []
-	for path in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "golden_years_mall", "last_resort_cruise", "fairways_end", "terminal_zero", "head_office"]:
+	for path in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "flashback_cinema", "last_resort_cruise", "seance_hotline", "terminal_zero", "head_office"]:
 		defs.append(load("res://data/floors/%s.tres" % path))
 	var seeds := RandomNumberGenerator.new()
 	seeds.seed = 77

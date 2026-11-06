@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1")
 id = "hover_round"
-display_name = "Hover Round"
-description = "Charging a swing no longer slows your walk. Top speed: brisk."
+display_name = "Levitation Slippers"
+description = "Charging a swing no longer slows your walk. Your feet barely touch the floor. Nor does the rest of you."
 rarity = "rare"
 tags = PackedStringArray("dodge", "cane")
-first_clear_path = "fairways_end"
+first_clear_path = "seance_hotline"
 charge_full_speed = true

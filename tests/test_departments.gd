@@ -21,8 +21,8 @@ func test_a_fresh_save_opens_only_the_lobby_and_the_corridors() -> void:
 
 
 func test_each_department_opens_on_its_floors_first_clear() -> void:
-	var cases := {"floor_1": Departments.BOUNTY_OFFICE, "cemetery": Departments.TRAINING_YARD, "sunset_shores": Departments.APOTHECARY_WING, "furnace_works": Departments.BOILER_ROOM, "funeral_parlour": Departments.DECOR_OFFICE, "golden_years_mall": Departments.BACK_ROOM,
-		"last_resort_cruise": Departments.PURSERS_OFFICE, "fairways_end": Departments.PRO_SHOP, "terminal_zero": Departments.DUTY_FREE, "head_office": Departments.EXECUTIVE_SUITE}
+	var cases := {"floor_1": Departments.BOUNTY_OFFICE, "cemetery": Departments.TRAINING_YARD, "sunset_shores": Departments.APOTHECARY_WING, "furnace_works": Departments.BOILER_ROOM, "funeral_parlour": Departments.DECOR_OFFICE, "flashback_cinema": Departments.BACK_ROOM,
+		"last_resort_cruise": Departments.PURSERS_OFFICE, "seance_hotline": Departments.CRYSTAL_COUNTER, "terminal_zero": Departments.DUTY_FREE, "head_office": Departments.EXECUTIVE_SUITE}
 	assert_eq(cases.size(), Departments.ALL.size() - Departments.corridor_ids().size(), "every department that opens is here")
 	for path in cases:
 		assert_true(Departments.is_open(cases[path], _data([path])), path)
@@ -63,7 +63,7 @@ func test_the_annexe_gate_opens_before_anything_else() -> void:
 	var map := Departments.build_map(Departments.load_layouts())
 	var annexe := map.room(Departments.index_of(Departments.ANNEXE))
 	assert_true(annexe.doors.values().has(Departments.index_of(Departments.ANNEXE_GATE)), "the annexe's door is in the gate")
-	for id in [Departments.PURSERS_OFFICE, Departments.PRO_SHOP, Departments.DUTY_FREE, Departments.EXECUTIVE_SUITE]:
+	for id in [Departments.PURSERS_OFFICE, Departments.CRYSTAL_COUNTER, Departments.DUTY_FREE, Departments.EXECUTIVE_SUITE]:
 		var opens_on: String = Departments.entry(id)["opens_on"]
 		assert_false(ProgressData.PATHS_AT_DEPTH[1].has(opens_on), "%s opens on a deeper floor" % id)
 
@@ -81,7 +81,7 @@ func test_opening_news_comes_three_names_a_line_and_fits_the_notice() -> void:
 	assert_eq(lines, [
 		"New departments open: Bounty Office, Training Yard, Apothecary Wing.",
 		"New departments open: Boiler Room, Decor Office, Back Room.",
-		"New departments open: Purser's Office, Pro Shop, Duty Free.",
+		"New departments open: Purser's Office, Crystal Counter, Duty Free.",
 		"New departments open: Executive Suite.",
 	])
 	for line in lines:
@@ -167,7 +167,7 @@ func test_a_keeper_stands_out_of_reach_of_every_counter_in_his_department() -> v
 
 
 func test_the_deep_floors_counters_open_on_their_own_floors() -> void:
-	var cases := {"pro_shop": "fairways_end", "duty_free": "terminal_zero", "severance_desk": "head_office"}
+	var cases := {"crystal_counter": "seance_hotline", "duty_free": "terminal_zero", "severance_desk": "head_office"}
 	for id in cases:
 		var merchant := Departments.merchant_entry(id)
 		assert_false(merchant.is_empty(), id)

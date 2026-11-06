@@ -55,7 +55,7 @@ extends Resource
 @export var death_pension_bonus: float = 0.0
 # The hundred items' always-on rules. Whether a wet floor never slides him.
 @export var wet_grip: bool = false
-# The least share of his speed any slow leaves him (wet, sand, sedatives, quoits, paper). Zero for none.
+# The least share of his speed any slow leaves him (sedatives, sticky trails, quoits, paper). Zero for none.
 @export var min_slow_factor: float = 0.0
 # Whether enemies he finishes skip their harmful last acts, such as a death blast.
 @export var clean_kills: bool = false
@@ -73,7 +73,7 @@ extends Resource
 @export var teeth_sets: int = 0
 # Dodges he can make back to back, on top of the usual one (Velcro Shoes).
 @export var bonus_dodge_charges: int = 0
-# Whether charging a swing leaves his walk at full speed (Hover Round).
+# Whether charging a swing leaves his walk at full speed (Levitation Slippers).
 @export var charge_full_speed: bool = false
 # How much further sleeping enemies notice him, and how much sooner a room's enemies stop waiting, as a
 # fraction (Squeaky Shoes).
@@ -89,11 +89,11 @@ extends Resource
 @export var max_pills_cap: int = 0
 # Seconds added to a Thermos's fuse (Pressure Cooker).
 @export var fuse_bonus: float = 0.0
-# Items a shop sells on top of its usual ones (Coupon Booklet).
+# Items a shop sells on top of its usual ones (Ticket Stub Book).
 @export var shop_extra_items: int = 0
-# How much dearer everything in a shop is, as a fraction of its price (Loaded Dice).
+# How much dearer everything in a shop is, as a fraction of its price (Lucky Seat Ticket).
 @export var shop_markup: float = 0.0
-# How much more an Arcade win pays of its winnings, as a fraction, at every table (Loaded Dice) and
+# How much more an Arcade win pays of its winnings, as a fraction, at every table (Lucky Seat Ticket) and
 # at the poker table alone (Card Shark).
 @export var arcade_win_bonus: float = 0.0
 @export var poker_win_bonus: float = 0.0

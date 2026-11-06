@@ -20,7 +20,6 @@ const GAPS := {
 	BLIP_KEY: 1.0 / BLIPS_PER_SECOND,
 	"coin": 0.06,
 	"plan_deposit": 0.09,
-	"sand_step": 0.22,
 	"enemy_hit": 0.05,
 	"boss_hit": 0.08,
 	"wood_break": 0.05,
@@ -28,7 +27,6 @@ const GAPS := {
 	"grass_cut": 0.05,
 	"steam_hiss": 0.3,
 	"barrier_chime": 0.5,
-	"escalator_hum": 0.6,
 	"organ_chord": 0.4,
 	"ship_horn": 1.0,
 	"attack_warning": 0.25,
@@ -49,12 +47,11 @@ const JITTER := {
 	"slot_jackpot": 0.0, "form_maxed": 0.0, "bounty_paid": 0.0, "department_open": 0.0,
 	"craft": 0.0, "landing_arrive": 0.0, "organ_chord": 0.0, "barrier_chime": 0.0,
 	"charge_hum": 0.0, "charge_ready": 0.0, "lethal_save": 0.0, "condolence": 0.0,
-	"cane_swing": 0.08, "dodge": 0.06, "coin": 0.02, "sand_step": 0.1, "enemy_hit": 0.08,
+	"cane_swing": 0.08, "dodge": 0.06, "coin": 0.02, "enemy_hit": 0.08,
 }
 # Loudness against the pool's level, in dB, for sounds that would crowd the others.
 const VOLUMES := {
 	"enemy_hit": -4.0,
-	"sand_step": -3.0,
 	"attack_warning": -2.0,
 	"ui_move": -4.0,
 	"fuse_hiss": -2.0,

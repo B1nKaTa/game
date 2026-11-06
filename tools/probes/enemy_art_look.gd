@@ -15,15 +15,14 @@ const WARNING_RED := Color("e4524f")
 # floor id -> [depth, path index].
 const FLOORS := {
 	"floor_1": [1, 0], "cemetery": [1, 1], "sunset_shores": [2, 0], "furnace_works": [2, 1],
-	"golden_years_mall": [3, 1], "funeral_parlour": [3, 0], "last_resort_cruise": [4, 0],
-	"fairways_end": [4, 1], "terminal_zero": [5, 0], "head_office": [5, 1],
+	"flashback_cinema": [3, 1], "funeral_parlour": [3, 0], "last_resort_cruise": [4, 0],
+	"seance_hotline": [4, 1], "terminal_zero": [5, 0], "head_office": [5, 1],
 }
 # enemy id -> its floor.
 const ENEMIES := [
 	["intern_reaper", "floor_1"], ["regional_reaper", "floor_1"],
 	["stoker", "furnace_works"], ["old_smokey", "furnace_works"], ["furnace_intern_reaper", "furnace_works"],
-	["mall_cop", "golden_years_mall"], ["mall_santa", "golden_years_mall"], ["mall_intern_reaper", "golden_years_mall"],
-	["club_golfer", "fairways_end"], ["thaddeus_fairweather", "fairways_end"],
+	["cinema_intern_reaper", "flashback_cinema"],
 	["cruise_stoker", "last_resort_cruise"], ["airport_mall_cop", "terminal_zero"],
 	["hr_representative", "head_office"], ["chairman_of_the_board", "head_office"],
 	# The second batch (2026-11-06).

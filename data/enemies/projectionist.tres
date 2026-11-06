@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/enemy_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/actors/behaviors/projectionist_behavior.gd" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "projectionist"
+display_name = "The Projectionist"
+max_hp = 916.67
+speed = 80.0
+pension_drop = 16
+is_boss = true
+body_size = Vector2(44, 52)
+color = Color(0.72, 0.56, 0.4, 1)
+art_id = "projectionist"
+behavior_script = ExtResource("2")
+mark = "projectionist"

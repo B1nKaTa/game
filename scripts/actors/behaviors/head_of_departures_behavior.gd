@@ -26,7 +26,7 @@ const GATE_WINDUP := 0.6
 const GATE_EVERY := 8.0
 const FIRST_GATE := 3.0
 const WARNING_RADIUS := 40.0
-# Shorter than Mortimer's and the Mall Santa's 0.65 and 0.45, as he must be clearly harder.
+# Shorter than Mortimer's and the Projectionist's 0.65 and 0.45, as he must be clearly harder.
 const BASE_COOLDOWN := 0.5
 const PHASE_TWO_COOLDOWN := 0.32
 const PHASE_TWO_SPEED := 1.2

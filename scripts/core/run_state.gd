@@ -57,6 +57,9 @@ var met := {}
 var found: Array[String] = []
 var hits_taken := 0
 var seeds: Array[String] = []
+# The Flashback Cinema's lobby card lines shown this run (LifeSigns), so none shows twice. The
+# checkpoint keeps them with the tally.
+var life_signs_shown: Array[String] = []
 var _won_visits := {}
 var _promised := {}
 var _offered_recipes := {}
@@ -394,8 +397,8 @@ func pension_amount(base: int, source := "") -> int:
 	return ceili(base * stats.pension_mult * mult)
 
 
-# What a charged swing's damage is multiplied by, before the cane's own damage_mult: the Golf Glove's
-# Follow Through and the golf trophy.
+# What a charged swing's damage is multiplied by, before the cane's own damage_mult: the Charging Crystal's
+# Full Moon and the crystal ball.
 func charge_damage_mult() -> float:
 	return stats.charge_damage_mult + (Mementos.CHARGE_POWER_BONUS if has_perk(Mementos.CHARGE_PERK) else 0.0)
 

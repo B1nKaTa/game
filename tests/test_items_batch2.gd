@@ -17,7 +17,7 @@ const BATCH := {
 	"afterimage": [ItemDef.RARE, ItemUnlocks.START, "", false],
 	"wheelchair_wheels": [ItemDef.RARE, ItemUnlocks.RECIPE, "", false],
 	"velcro_shoes": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "terminal_zero", false],
-	"hover_round": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "fairways_end", false],
+	"hover_round": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "seance_hotline", false],
 	"squeaky_shoes": [ItemDef.COMMON, ItemUnlocks.START, "", true],
 	"pogo_cane": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "last_resort_cruise", false],
 	"banana_peel": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "last_resort_cruise", false],

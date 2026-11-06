@@ -28,6 +28,10 @@ const ENEMIES_DIR := "res://data/enemies/"
 const FLOORS_DIR := "res://data/floors/"
 # Never in the Bestiary: the Training Yard's dummy is no enemy.
 const NOT_ENEMIES: Array[String] = ["training_dummy"]
+# A Bestiary cell for someone met in an older run who is in the game no more, as a retired path's
+# bosses: it keeps its count, under a name made from its id, with this placeholder colour.
+const HISTORY_COLOR := Color(0.42, 0.38, 0.34)
+const HISTORY_LINE := "No longer found on any floor."
 
 
 # Up to two capitals for a cell with no icon: "Rolling Pin" -> "RP", "Kettle" -> "KE".
@@ -264,6 +268,33 @@ static func bestiary(defs: Array[EnemyDef], seen: Dictionary, run: RunState, flo
 			"def": def,
 			"floor": str(floors.get(def.id, "")),
 		})
+	cells.append_array(history_cells(defs, seen))
+	return cells
+
+
+# The ids the save has met that no EnemyDef answers any more, as cells after every real one, by id.
+# Their "def" is null, so their detail and their look never reach for one.
+static func history_cells(defs: Array[EnemyDef], seen: Dictionary) -> Array[Dictionary]:
+	var known := {}
+	for def in defs:
+		known[def.id] = true
+	var ids: Array = seen.keys()
+	ids.sort()
+	var cells: Array[Dictionary] = []
+	for raw_id in ids:
+		var id := str(raw_id)
+		if id.is_empty() or known.has(id) or NOT_ENEMIES.has(id):
+			continue
+		cells.append({
+			"id": id,
+			"name": id.capitalize(),
+			"color": HISTORY_COLOR,
+			"known": true,
+			"count": maxi(int(seen[raw_id]), 0),
+			"icon": icon_path(ENEMY_ICON_DIR, id),
+			"def": null,
+			"floor": "",
+		})
 	return cells
 
 
@@ -284,6 +315,8 @@ static func met_line(cells: Array[Dictionary]) -> String:
 static func enemy_detail(cell: Dictionary) -> Array:
 	if not cell["known"]:
 		return [UNKNOWN_NAME, "Not yet met."]
+	if cell["def"] == null:
+		return [str(cell["name"]), HISTORY_LINE, "Defeated: %d" % int(cell["count"])]
 	var def: EnemyDef = cell["def"]
 	var lines: Array = [def.display_name]
 	if not str(cell["floor"]).is_empty():

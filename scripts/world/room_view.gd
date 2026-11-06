@@ -309,15 +309,20 @@ static func is_passing_effect(child: Node) -> bool:
 	# The items' shared visuals
 	if ItemFx.is_passing_effect(child):
 		return true
+	# The Flashback Cinema
+	if child is PopcornTub or child is FilmTrail or child is LensBeam or child is SpliceLane or child is ReelLane or child is ReelChange or child is BurnRing:
+		return true
+	# The Seance Hotline
+	if SeanceProps.is_passing_effect(child):
+		return true
 
 	return (child is Projectile or child is DeathBurst or child is Thermos or child is EnemyBlast
 		or child is SummonMark or child is GroundStrike or child is LightsOut or child is SteamJet
 		or child is Shockwave or child is FlameBurst or child is PipeRing or child is CollectionPlate
 		or child is ProcessionLane or child is SafeSpotMark or child is PerfumeCloud or child is WetSplash
-		or child is DroppedCoffin or child is PresentDrop or child is ClosingRing
+		or child is DroppedCoffin
 		or child is TapeSpread or child is PaperTrail or child is WriteUpMark or child is LaneDrop or child is HoldMusic
 		or child is TakeoverTether
-		or GolfProps.is_passing_effect(child)
 		# Departures, Terminal Zero
 		or child is XRaySweep or child is RunwayLane)
 
@@ -502,7 +507,7 @@ func _create_props(palette: RoomPalette) -> void:
 		tree.palette = palette
 		_place_prop(tree, cell)
 		tree.broken.connect(_on_rock_broken.bind(false, cell))
-	for symbol: String in [RoomLayout.SYMBOL_ARMCHAIR, RoomLayout.SYMBOL_BED, RoomLayout.SYMBOL_PEW, RoomLayout.SYMBOL_PLANTER, RoomLayout.SYMBOL_FOUNTAIN]:
+	for symbol: String in [RoomLayout.SYMBOL_ARMCHAIR, RoomLayout.SYMBOL_BED, RoomLayout.SYMBOL_PEW]:
 		for cell in layout.cells_of(symbol):
 			var furniture: RockBlock
 			match symbol:
@@ -510,10 +515,6 @@ func _create_props(palette: RoomPalette) -> void:
 					furniture = Armchair.new()
 				RoomLayout.SYMBOL_PEW:
 					furniture = ChapelPew.new()
-				RoomLayout.SYMBOL_PLANTER:
-					furniture = MallPlanter.new()
-				RoomLayout.SYMBOL_FOUNTAIN:
-					furniture = MallFountain.new()
 				_:
 					furniture = CareBed.new()
 			furniture.palette = palette
@@ -540,32 +541,22 @@ func _create_props(palette: RoomPalette) -> void:
 			barrel.palette = palette
 			_place_prop(barrel, cell)
 			barrel.broken.connect(_on_barrel_broken.bind(cell))
-	for symbol: String in [RoomLayout.SYMBOL_HYMN_CART, RoomLayout.SYMBOL_CART, RoomLayout.SYMBOL_GUMBALL]:
-		for cell in layout.cells_of(symbol):
-			var cart: Barrel
-			match symbol:
-				RoomLayout.SYMBOL_CART:
-					cart = ShoppingCart.new()
-				RoomLayout.SYMBOL_GUMBALL:
-					cart = GumballMachine.new()
-				_:
-					cart = HymnCart.new()
-			cart.palette = palette
-			_place_prop(cart, cell)
-			cart.broken.connect(_on_barrel_broken.bind(cell))
+	for cell in layout.cells_of(RoomLayout.SYMBOL_HYMN_CART):
+		var cart := HymnCart.new()
+		cart.palette = palette
+		_place_prop(cart, cell)
+		cart.broken.connect(_on_barrel_broken.bind(cell))
 	for cell in layout.cells_of(RoomLayout.SYMBOL_VASE):
 		var vase := FlowerVase.new()
 		vase.palette = palette
 		_place_prop(vase, cell)
 		vase.broken.connect(_on_vase_broken.bind(cell))
-	for symbol: String in [RoomLayout.SYMBOL_WREATH, RoomLayout.SYMBOL_CANDLE, RoomLayout.SYMBOL_SALE_SIGN]:
+	for symbol: String in [RoomLayout.SYMBOL_WREATH, RoomLayout.SYMBOL_CANDLE]:
 		for cell in layout.cells_of(symbol):
 			var stand: BreakableBlock
 			match symbol:
 				RoomLayout.SYMBOL_WREATH:
 					stand = WreathStand.new()
-				RoomLayout.SYMBOL_SALE_SIGN:
-					stand = SaleSign.new()
 				_:
 					stand = CandleStand.new()
 			stand.palette = palette
@@ -605,19 +596,15 @@ func _create_props(palette: RoomPalette) -> void:
 		pipe.setup(cell, layout.inward_of(cell))
 		pipe.position = RoomBackdrop.cell_center(cell)
 		add_child(pipe)
-	for symbol in RoomLayout.STRIP_SYMBOLS:
-		for cell in layout.cells_of(symbol):
-			var strip := ConveyorStrip.new()
-			strip.setup(Vector2(RoomLayout.strip_direction(symbol)), layout.strips_reverse)
-			strip.position = RoomBackdrop.cell_center(cell)
-			add_child(strip)
 	# The Last Resort Cruise: its deck props and, in a room that rolls, the rolling deck.
 	CruiseProps.build(self, layout, palette)
 	_create_office_props(layout, palette)
-	# Fairway's End: sand bunkers and the course's props.
-	GolfProps.build(self, layout, palette)
 	# Departures, Terminal Zero: its stock and its queue barriers.
 	TerminalProps.build(self, layout, palette)
+	# The Flashback Cinema: seat rows, pillars and aisle lights.
+	CinemaProps.build(self, layout, palette)
+	# The Seance Hotline: cubicle partitions, desks, seance tables, lava lamps and beaded curtains.
+	SeanceProps.build(self, layout, palette)
 
 
 func _place_prop(prop: BreakableBlock, cell: Vector2i) -> void:
@@ -880,7 +867,7 @@ func _add_pickup(at: Vector2, label: String, color: Color, on_take: Callable, ne
 
 func _create_rewards() -> void:
 	var cells := _room.layout.cells_of("I")
-	# The empty sack memento lays one more item out in a treasure room, on open floor near the others.
+	# The last reel memento lays one more item out in a treasure room, on open floor near the others.
 	if _room.room_type == RoomLayout.TYPE_TREASURE and not cells.is_empty() and _run.has_perk(Mementos.TREASURE_CHOICE_PERK):
 		var extra := _room.layout.open_spots_near(cells, cells)
 		for i in mini(Mementos.TREASURE_EXTRA, extra.size()):
@@ -971,7 +958,7 @@ func arcade_settled(payout: int, bet_amount: int) -> void:
 		arcade_won.emit()
 
 
-# How much more a win at this game pays of its winnings: Loaded Dice, and Card Shark at the poker
+# How much more a win at this game pays of its winnings: the Lucky Seat Ticket, and Card Shark at the poker
 # table. Never while the full loop counts every payout.
 func arcade_win_bonus(game: String) -> float:
 	if _run == null or _run.effects.ctx.counting_exact:
@@ -1022,7 +1009,7 @@ func _create_shop() -> void:
 	var stock := ShopRules.stock(Content.items(), _run, _rng, _floor_def.pension_mult)
 	_run.effects.shop_open(stock)
 	var cells := _room.layout.cells_of("S")
-	# A Coupon Booklet's extra ware lies on open floor near the others.
+	# A Ticket Stub Book's extra ware lies on open floor near the others.
 	var extra := extra_shop_cells(_room.layout, stock.size() - cells.size())
 	cells.append_array(extra)
 	for i in mini(stock.size(), cells.size()):
@@ -1059,7 +1046,7 @@ static func extra_shop_cells(layout: RoomLayout, count: int) -> Array[Vector2i]:
 		taken.append(layout.merchant_cell())
 	for i in count:
 		var wanted := wares[wares.size() - 1 - (i % wares.size())]
-		# The full label spacing first; a crowded shop (Fairway's End) settles for the plan's loose one.
+		# The full label spacing first; a crowded shop settles for the plan's loose one.
 		var best := Vector2i(-1, -1)
 		for loose in [false, true]:
 			var best_distance := INF
@@ -1457,7 +1444,7 @@ func snapshot() -> Dictionary:
 	return shot
 
 
-# The cells of a snapshot's wares that lie off the shop's own S cells (a Coupon Booklet's extra ware),
+# The cells of a snapshot's wares that lie off the shop's own S cells (a Ticket Stub Book's extra ware),
 # so a resumed shop's plan rewards keep clear of them as they did before.
 static func restored_extra_cells(layout: RoomLayout, shot: Dictionary) -> Array[Vector2i]:
 	var cells: Array[Vector2i] = []

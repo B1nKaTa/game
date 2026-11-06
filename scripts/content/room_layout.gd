@@ -70,9 +70,11 @@ const SYMBOL_CRACK := "k"
 const SYMBOL_TORCH := "t"
 const SYMBOL_LANTERN := "l"
 const SYMBOL_STUMP := "m"
-# The Last Resort Cruise adds its buffet tray, Head Office its in-tray, Fairway's End its flag
-# pin and Departures, Terminal Zero its suitcase stack, which block nothing.
-const DECOR_SYMBOLS := "gnwuktlmfprce" + "0" + "y" + "3" + "7"
+# The Last Resort Cruise adds its buffet tray, Head Office its in-tray and Departures, Terminal Zero
+# its suitcase stack, which block nothing.
+# The Flashback Cinema adds its lobby cards.
+# The Seance Hotline adds its lava lamps and beaded curtains.
+const DECOR_SYMBOLS := "gnwuktlmfprc" + "0" + "y" + "7" + "i" + "ae"
 # A freshly mopped cell: everyone walks on it, Grandpa and chargers slide. Kept well clear of doors.
 const SYMBOL_WET := "W"
 const WET_DOOR_CLEARANCE := 2
@@ -90,21 +92,6 @@ const SYMBOL_HYMN_CART := "j"
 const SYMBOL_PEW := "h"
 const SYMBOL_WREATH := "r"
 const SYMBOL_CANDLE := "c"
-# Escalator strips laid in the mall's floor, one symbol per way they run. Walkable, never harmful,
-# and kept well clear of doors so nobody is carried out of a room or into one.
-const SYMBOL_STRIP_RIGHT := ">"
-const SYMBOL_STRIP_LEFT := "<"
-const SYMBOL_STRIP_UP := "^"
-const SYMBOL_STRIP_DOWN := "v"
-const STRIP_SYMBOLS := "><^v"
-const STRIP_DOOR_CLEARANCE := 2
-# Mall stock. A shopping cart and a gumball machine break like barrels, a planter and a fountain like
-# rocks, and a sale sign blocks nothing and breaks to anything, like grass.
-const SYMBOL_CART := "a"
-const SYMBOL_GUMBALL := "z"
-const SYMBOL_PLANTER := "d"
-const SYMBOL_FOUNTAIN := "q"
-const SYMBOL_SALE_SIGN := "e"
 # The Last Resort Cruise. A deck chair breaks like a barrel and a lifeboat davit like a rock, a buffet
 # tray blocks nothing and breaks to anything, like grass, and the pool is never broken, like a hole.
 const SYMBOL_DECK_CHAIR := "b"
@@ -121,15 +108,6 @@ const RED_TAPE_DOOR_CLEARANCE := 2
 const SYMBOL_WATER_COOLER := "9"
 const SYMBOL_CUBICLE := "N"
 const SYMBOL_IN_TRAY := "y"
-# Fairway's End. Sand bunkers lie in the fairway: walkable, never harmful, slow to wade through, and kept
-# well clear of doors. See SandRule. A flag pin blocks nothing and breaks to anything, like grass. A ball
-# washer breaks like a barrel. A hedge is solid and breaks like a rock, and a hedge cell with no hedge
-# beside it is a parked golf cart instead (GolfProps.is_parked_cart).
-const SYMBOL_SAND := "s"
-const SAND_DOOR_CLEARANCE := 2
-const SYMBOL_FLAG := "3"
-const SYMBOL_BALL_WASHER := "4"
-const SYMBOL_HEDGE := "5"
 # Departures, Terminal Zero: a queue barrier line marked on the carpet. While it is down it is plain
 # floor. On a timer, after a chime and a flash, its rope rises, and while it is up it blocks Grandpa
 # and his dentures only: staff duck under the rope, so enemies and their shots pass and the walk grid
@@ -141,15 +119,34 @@ const BARRIER_DOOR_CLEARANCE := 2
 const SYMBOL_LUGGAGE_TROLLEY := "6"
 const SYMBOL_SUITCASES := "7"
 const SYMBOL_SEATS := "8"
+# The Flashback Cinema. A row of seats is solid cover that blocks walkers and shots and breaks like a
+# rock, to blasts and bosses only. A pillar is solid and never broken, like a wall, so no route may
+# need to pass one.
+const SYMBOL_SEAT := "-"
+const SYMBOL_PILLAR := "|"
+# A lobby card on its easel (LifeSign): it blocks nothing, breaks to nothing, and shows a line of
+# Harold's life while he stands near. Kept off the cells touching a door, so no line greets him there.
+const SYMBOL_LIFE_SIGN := "i"
+# The Seance Hotline. A psychic's desk (a phone whose display glows green, and a crystal ball) and a
+# seance table are solid and break like a rock, to blasts and bosses only, and can hide a coin as
+# furniture does. Two desk cells side by side make one wide desk and four table cells in a square one
+# round draped table (SeanceProps). A cubicle partition is the office's partition in violet fabric
+# (SeancePartition). A lava lamp blocks nothing and breaks to anything, like a vase, and a beaded
+# curtain blocks nothing and never breaks. Filing trays are Head Office's in-trays (SYMBOL_IN_TRAY).
+const SYMBOL_DESK := "d"
+const SYMBOL_SEANCE_TABLE := "q"
+const SYMBOL_PARTITION := "z"
+const SYMBOL_LAVA_LAMP := "a"
+const SYMBOL_BEADED_CURTAIN := "e"
 # Each new path adds its props at the end of each list: the Last Resort Cruise, Head Office,
-# Fairway's End and Departures, Terminal Zero, in that order.
-const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc><^vazdqe" + "b012" + "x9Ny" + "s345" + "=678"
+# Departures, Terminal Zero, the Flashback Cinema and the Seance Hotline, in that order.
+const ALLOWED := "#.EIHTBXCSPOQVZAYgnwuktlmWJFKDfULRMpGojhrc" + "b012" + "x9Ny" + "=678" + "-|i" + "dqzae"
 # Nothing can walk through these, so nothing may be dropped or summoned on them.
-const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGojhazdq" + "b12" + "9N" + "45" + "68"
+const SOLID_SYMBOLS := "#lXOQVPAYJFKDLRMGojh" + "b12" + "9N" + "68" + "-|" + "dqz"
 # Routes may not need a hole or a wall, and may not need a bomb for a crate or a rock.
 const WALL_LIKE := "#lo"
-const WALLS := "#lVo" + "1"
-const WALLS_AND_BOMB_ONLY := "#lVXOAYKDMohdq" + "12" + "N" + "5" + "8"
+const WALLS := "#lVo" + "1" + "|"
+const WALLS_AND_BOMB_ONLY := "#lVXOAYKDMoh" + "12" + "N" + "8" + "-|" + "dqz"
 const MUST_REACH_WITHOUT_BREAKING := "EBIHSPG"
 # A vault lays this many labeled pickups out in the open, this many cells apart so names never overlap.
 const VAULT_EXTRAS := 3
@@ -186,25 +183,9 @@ const REQUIRED := {
 
 @export var room_type: String = ""
 @export var rows: PackedStringArray = []
-# The room's escalator strips reverse every few seconds, after a chime. Old layouts have none.
-@export var strips_reverse: bool = false
 # The Last Resort Cruise: the room's deck rolls every few seconds, after a horn. It lays no tile, so it
 # has no symbol. Old layouts never roll.
 @export var ship_rolls: bool = false
-
-
-# The way a strip symbol runs, or zero for anything else.
-static func strip_direction(symbol: String) -> Vector2i:
-	match symbol:
-		SYMBOL_STRIP_RIGHT:
-			return Vector2i.RIGHT
-		SYMBOL_STRIP_LEFT:
-			return Vector2i.LEFT
-		SYMBOL_STRIP_UP:
-			return Vector2i.UP
-		SYMBOL_STRIP_DOWN:
-			return Vector2i.DOWN
-	return Vector2i.ZERO
 
 
 func validate() -> PackedStringArray:
@@ -259,15 +240,14 @@ func validate() -> PackedStringArray:
 				errors.append("wet floor at %s is within %d cells of a door" % [str(cell), WET_DOOR_CLEARANCE])
 			if symbol == SYMBOL_VENT and _within_of_a_door(cell, VENT_DOOR_CLEARANCE):
 				errors.append("vent at %s is within %d cells of a door" % [str(cell), VENT_DOOR_CLEARANCE])
-			if STRIP_SYMBOLS.contains(symbol) and _within_of_a_door(cell, STRIP_DOOR_CLEARANCE):
-				errors.append("strip at %s is within %d cells of a door" % [str(cell), STRIP_DOOR_CLEARANCE])
 			if symbol == SYMBOL_RED_TAPE and _within_of_a_door(cell, RED_TAPE_DOOR_CLEARANCE):
 				errors.append("red tape at %s is within %d cells of a door" % [str(cell), RED_TAPE_DOOR_CLEARANCE])
-			if symbol == SYMBOL_SAND and _within_of_a_door(cell, SAND_DOOR_CLEARANCE):
-				errors.append("sand at %s is within %d cells of a door" % [str(cell), SAND_DOOR_CLEARANCE])
 			# Departures, Terminal Zero.
 			if symbol == SYMBOL_BARRIER and _within_of_a_door(cell, BARRIER_DOOR_CLEARANCE):
 				errors.append("barrier at %s is within %d cells of a door" % [str(cell), BARRIER_DOOR_CLEARANCE])
+			# The Flashback Cinema.
+			if symbol == SYMBOL_LIFE_SIGN and _touches_a_door(cell):
+				errors.append("a lobby card at %s touches a door" % str(cell))
 	for side in SIDES:
 		if not open.has(door_cell(side)):
 			errors.append("needs a bomb to reach the door at %s" % str(door_cell(side)))

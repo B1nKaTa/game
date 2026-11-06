@@ -1,6 +1,6 @@
 extends ItemEffect
 
-# Knitting Needles: every swing also pokes two needles forward, a little either side of the swing.
+# Incense Sticks: every swing also pokes two sticks forward, a little either side of the swing.
 
 const DAMAGE := 5.0
 const DISTANCE := 130.0

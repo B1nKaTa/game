@@ -27,13 +27,16 @@ from npc_strips import join, load  # noqa: E402
 # Rows left empty under the feet.
 FOOT_MARGIN = 1
 KEEP_FIRST = ('idle', 'walk')
+# Objects drawn on a 48 px canvas about twice their body box (the film reel's 18x18, the Ectoplasm's
+# 22x18), halved so the art covers the box a hit tests.
+HALVED = ('film_reel', 'ectoplasm')
 # The way an anim was drawn: east, mirrored in the game, or south for an object that never turns
-# (EnemyDef.art_flips false: the mimic, the Lost Luggage and the steam valve).
+# (EnemyDef.art_flips false: the Ectoplasm, the film reel, the mimic, the Lost Luggage and the steam valve).
 DIRECTIONS = ('east', 'south')
 
 # id -> {game anim: (export anim, frames, hash of the export anim's frames[, replace])}. Frames are the
 # export's own numbers (000 is the reference pose). A game anim cut to no frames is left out, so the
-# game falls back (Santa's attack shows no strike yet). replace lets a cut win over the export's own
+# game falls back. replace lets a cut win over the export's own
 # anim of that name (the mimic's lunge comes from its idle, whose lid opens).
 CUTS = {
     # The scythe drawn back, then the low sweep from the moment it lands.
@@ -42,14 +45,9 @@ CUTS = {
     'stoker': {'windup': ('attack', [1, 2, 3], 'a40730c4'), 'attack': ('attack', [5, 6, 7, 8], 'a40730c4')},
     # His export is a whistle, which he blows after a charge (MallCopBehavior._stop); the charge itself walks.
     'mall_cop': {'whistle': ('attack', [2, 3, 4, 5, 6, 7, 8], '5c2ee994'), 'attack': ('attack', [], '5c2ee994')},
-    # The backswing to the top, then impact and follow-through as the balls fly.
-    'club_golfer': {'windup': ('attack', [3, 4, 5, 6], 'b990c9bf'), 'attack': ('attack', [7, 8], 'b990c9bf')},
     # The memo raised back, then thrown.
     'hr_representative': {'windup': ('attack', [4, 5, 6, 7], '06a0adcd'), 'attack': ('attack', [8], '06a0adcd')},
     'old_smokey': {'windup': ('attack', [3, 4, 5], 'f5edbd72'), 'attack': ('attack', [6, 7, 8], 'f5edbd72')},
-    # The export barely moves and shows no strike, so Santa keeps the fallbacks until it is redone.
-    'mall_santa': {'attack': ('attack', [], '026823f5')},
-    'thaddeus_fairweather': {'windup': ('attack', [4, 5, 6], 'eb66e3b2'), 'attack': ('attack', [7, 8], 'eb66e3b2')},
     # The gavel raised overhead, then brought down.
     'chairman_of_the_board': {'windup': ('attack', [3, 4, 5, 6], '2c6098a8'), 'attack': ('attack', [7, 8], '2c6098a8')},
     # The regenerated, lighter robe (2026-11-06): the scythe drawn back over his shoulder, then swept low.
@@ -99,6 +97,21 @@ CUTS = {
     'yes_man': {'windup': ('attack', [2, 3, 4, 5], 'a78791b6'), 'attack': ('attack', [6, 7, 8], 'a78791b6')},
     'paper_shredder': {'windup': ('attack', [1, 2, 3, 4], 'bdcec632'), 'attack': ('attack', [5, 6, 7, 8], 'bdcec632')},
     'doreen': {'windup': ('attack', [1, 2, 3], '1a44f1cb'), 'attack': ('attack', [4, 5, 6, 7, 8], '1a44f1cb')},
+    # The Cinema and the Seance Hotline (2026-11-06, D:/grandpa-art/newpaths). The bosses play their own
+    # anims (crabtree star_rating and thumbs_down, the projectionist reel_change and splice, celestine
+    # deal_cards, madame_zara tether_call and possession), so they keep the default cuts.
+    # Shh with a finger, the torch raised, then the lunge of the charge.
+    'usher': {'windup': ('attack', [1, 2, 3, 4, 5, 6], '9fcb0998'), 'attack': ('attack', [7, 8], '9fcb0998')},
+    # The arm drawn back with the tray, then the tub thrown.
+    'popcorn_vendor': {'windup': ('attack', [3, 4, 5, 6], '86176168'), 'attack': ('attack', [7, 8], '86176168')},
+    # Arms out to heckle, then the shove.
+    'extra': {'windup': ('attack', [3, 4, 5, 6, 7], 'd589017a'), 'attack': ('attack', [8], 'd589017a')},
+    # The cord gathered up, then whipped round.
+    'phone_psychic': {'windup': ('attack', [1, 2, 3, 4], '81d81a91'), 'attack': ('attack', [5, 6, 7, 8], '81d81a91')},
+    # The ball raised to her eye, then let go.
+    'crystal_gazer': {'windup': ('attack', [1, 2, 3, 4, 5], '1f8a98aa'), 'attack': ('attack', [6, 7, 8], '1f8a98aa')},
+    # The arm thrown up, then the hurl.
+    'poltergeist': {'windup': ('attack', [3, 4, 5, 6], 'fb8cba67'), 'attack': ('attack', [7, 8], 'fb8cba67')},
 }
 
 
@@ -147,6 +160,26 @@ def place(frame, size):
             if 0 <= tx < size and rows[y][x * 4 + 3]:
                 out[ty][tx * 4:tx * 4 + 4] = rows[y][x * 4:x * 4 + 4]
     return size, size, out
+
+
+# Half size: each 2x2 block takes its most common opaque colour when at least two of its pixels
+# are opaque, and the darkest on a tie, so the black outline survives.
+def halve(frame):
+    width, height, rows = frame
+    w, h = width // 2, height // 2
+    out = [bytearray(w * 4) for _ in range(h)]
+    for y in range(h):
+        for x in range(w):
+            seen = {}
+            for dy in (0, 1):
+                for dx in (0, 1):
+                    px = bytes(rows[y * 2 + dy][(x * 2 + dx) * 4:(x * 2 + dx) * 4 + 4])
+                    if px[3]:
+                        seen[px] = seen.get(px, 0) + 1
+            if sum(seen.values()) >= 2:
+                best = max(seen, key=lambda c: (seen[c], -(c[0] + c[1] + c[2])))
+                out[y][x * 4:x * 4 + 4] = best
+    return w, h, out
 
 
 def export_anims(base):
@@ -205,6 +238,8 @@ def build(source, target, enemy):
         print(enemy, 'has no idle, so it would show its placeholder; skipped')
         return
     loaded = {name: [load(f) for f in files] for name, files in strips.items()}
+    if enemy in HALVED:
+        loaded = {name: [halve(f) for f in frames] for name, frames in loaded.items()}
     size = canvas_size([f for frames in loaded.values() for f in frames])
     out = os.path.join(target, enemy)
     os.makedirs(out, exist_ok=True)

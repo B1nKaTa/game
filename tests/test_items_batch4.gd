@@ -45,10 +45,10 @@ const BATCH := {
 const POSTERS := {
 	"doreen": ["bureaucrats_stamp", "power_tie"],
 	"sergeant_wanda": ["complaint_form", "aviator_sunglasses"],
-	"chip": ["lawyers_card", "golf_visor"],
-	"gloria": ["fortune_card", "fountain_tiara"],
+	"celestine": ["lawyers_card", "golf_visor"],
+	"crabtree": ["fortune_card", "fountain_tiara"],
 }
-const PATHS := ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "golden_years_mall", "last_resort_cruise", "fairways_end", "terminal_zero", "head_office"]
+const PATHS := ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "flashback_cinema", "last_resort_cruise", "seance_hotline", "terminal_zero", "head_office"]
 
 
 func _with_combos(kit: ItemKit, ids: Array) -> RunState:
@@ -256,7 +256,7 @@ func test_fortune_teller_names_the_bosses_and_slows_each_ones_first_attack_once(
 
 
 func test_mothball_pockets_push_ghosts_off_for_two_seconds_after_a_hit() -> void:
-	for id: String in ["soot_ghost", "golf_soot_ghost", "debt_ghost", "weeping_mourner", "airport_weeping_mourner"]:
+	for id: String in ["soot_ghost", "seance_soot_ghost", "poltergeist", "debt_ghost", "weeping_mourner", "airport_weeping_mourner"]:
 		assert_true(Mothball.is_ghost(load("res://data/enemies/%s.tres" % id)), id)
 	for id: String in ["intern_reaper", "orderly", "regional_reaper"]:
 		assert_false(Mothball.is_ghost(load("res://data/enemies/%s.tres" % id)), id)

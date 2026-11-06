@@ -1,16 +1,16 @@
 extends SceneTree
 # Opens a real window and saves screenshots of round 2: contact damage (the touch, the shove out and a
-# dodge through a body) on the first floor and the midnight course, the floor-5 bosses' overlaps (a
+# dodge through a body) on the first floor and the Seance Hotline, the floor-5 bosses' overlaps (a
 # gavel planned during a chart with the gap mark moved, the same in phase two with the tape, the desk
 # slam's ring, burst and shove; Augustine's runway with the ropes up and its mark, a stamp and a gate
-# change during a pattern), and the midnight golf course's risky spots (warnings far from any light,
-# a Gopher on the grass, the Crossroads sign and both maps with the long name).
+# change during a pattern), and the Seance Hotline's risky spots (warnings far from any light, the
+# Crossroads sign and both maps with the long name).
 # Run only from an exported copy whose config/name is renamed.
-# Args after --: contact | chairman | augustine | golf | all
+# Args after --: contact | chairman | augustine | seance | all
 
 const OUT := "D:/grandpa-shots-r2/"
 const WALL_LIMIT_MS := 280000
-const GOLF := 1
+const SEANCE := 1
 const AIRPORT := 0
 const OFFICE := 1
 
@@ -84,7 +84,7 @@ func _main() -> void:
 	progress.data.record_floor_cleared(5, "terminal_zero")
 	var args := OS.get_cmdline_user_args()
 	var which: String = args[0] if args.size() > 0 else "all"
-	for part in ["contact", "chairman", "augustine", "golf"]:
+	for part in ["contact", "chairman", "augustine", "seance"]:
 		if which == "all" or which == part:
 			await call("_" + part)
 	progress._store.delete_all()
@@ -202,14 +202,14 @@ func _feet() -> Vector2:
 func _contact() -> void:
 	await _new_run(1, 0)
 	await _contact_shots("c1")
-	await _new_run(4, GOLF)
+	await _new_run(4, SEANCE)
 	await _contact_shots("c2")
 
 
 func _contact_shots(tag: String) -> void:
 	await _enter(_rows(20, 11))
 	var center := _cell(10, 6)
-	var grunt := _spawn("intern_reaper" if tag == "c1" else "club_golfer", center)
+	var grunt := _spawn("intern_reaper" if tag == "c1" else "crystal_gazer", center)
 	await _wait(0.8)
 	grunt.set_physics_process(false)
 	grunt._wake_left = 0.0
@@ -370,9 +370,9 @@ func _augustine() -> void:
 	await _clear()
 
 
-# --- the midnight course ---
+# --- the Seance Hotline ---
 
-func _golf() -> void:
+func _seance() -> void:
 	# The Crossroads sign with the long name, reached from the third floor.
 	await _new_run(1, 0)
 	scene._depth = 3
@@ -385,12 +385,12 @@ func _golf() -> void:
 	await _wait(0.4)
 	view = scene.debug_room_view()
 	if view is CrossroadsView:
-		var sign_node = view.sign_of_path(GOLF)
+		var sign_node = view.sign_of_path(SEANCE)
 		_stand(sign_node.global_position + Vector2(0, 16))
 		await _wait(0.4)
-		await _shot("g1_crossroads_golf_sign")
+		await _shot("g1_crossroads_seance_sign")
 	# The mini map's top row and the big map with the long name.
-	await _new_run(4, GOLF)
+	await _new_run(4, SEANCE)
 	await _wait(0.3)
 	await _shot("g2_minimap_long_name")
 	scene.debug_big_map().set_open(true)
@@ -400,56 +400,34 @@ func _golf() -> void:
 	await _wait(0.2)
 	# Warnings far from any fill light, in the corners of a large room.
 	await _enter(_rows(30, 17))
-	_stand(_cell(2, 14))
-	var gopher := _spawn("gopher", _cell(5, 14))
-	await _until(func(): return _warned(gopher, 0.45), 8.0)
-	await _shot("g4_dark_corner_gopher_ring")
-	await _clear()
 	_stand(_cell(3, 13))
-	var golfer := _spawn("club_golfer", _cell(8, 14))
-	await _until(func(): return _warned(golfer, 0.45), 8.0)
-	await _shot("g5_dark_corner_golfer_fan")
-	await _clear()
-	_stand(_cell(27, 2))
-	var caddie := _spawn("caddie", _cell(21, 2))
-	await _until(func(): return _warned(caddie, 0.45), 8.0)
-	await _shot("g6_dark_corner_caddie_lane")
+	var gazer := _spawn("crystal_gazer", _cell(8, 14))
+	await _until(func(): return _warned(gazer, 0.45), 8.0)
+	await _shot("g5_dark_corner_gazer_windup")
 	await _clear()
 	_stand(_cell(3, 3))
-	var chip: Enemy = _spawn("chip", _cell(8, 4))
-	var c = chip._behavior
-	_held = c
-	await _wait(0.1)
-	c._begin(chip, ClubProBehavior.Attack.CHIP)
-	await _wait(ClubProBehavior.CHIP_WARNING * 0.5)
-	await _shot("g7_dark_corner_chip_spots")
-	await _wait(1.2)
-	_held = null
+	var reader: Enemy = _spawn("celestine", _cell(8, 4))
+	var c = reader._behavior
+	c.forced_hand = [CelestineBehavior.Card.STAR, CelestineBehavior.Card.TOWER, CelestineBehavior.Card.STAR]
+	await _until(func(): return is_instance_valid(reader) and c.effect() is StarFall, 8.0)
+	await _wait(CelestineBehavior.STAR_WINDUP * 0.5)
+	await _shot("g7_dark_corner_star_spots")
 	await _clear()
 	_stand(_cell(26, 14))
-	var boss: Enemy = _spawn("thaddeus_fairweather", _cell(21, 13))
+	var boss: Enemy = _spawn("madame_zara", _cell(21, 13))
 	var t = boss._behavior
+	t.forced_attack = MadameZaraBehavior.Attack.OUIJA
+	t._cooldown = 0.0
+	await _until(func(): return is_instance_valid(boss) and t.planchette() != null, 4.0)
 	_held = t
-	t._caddie_timer = 99.0
-	await _wait(0.1)
-	t._begin(boss, ClubPresidentBehavior.Attack.HOLE_IN_ONE, false)
-	await _wait(ClubPresidentBehavior.HOLE_IN_ONE_WINDUP * 0.5)
-	await _shot("g8_dark_corner_hole_in_one")
+	await _wait(MadameZaraBehavior.OUIJA_WINDUP * 0.5)
+	await _shot("g8_dark_corner_ouija_path")
 	await _wait(1.2)
-	# Phase two navy, mid room.
-	boss.hp = boss.max_hp() * 0.4
-	boss.health_changed.emit(boss.hp)
+	# The seance circle of her second phase, mid room.
+	t.forced_phase_two = true
 	boss.global_position = _cell(15, 8)
 	_stand(_cell(11, 8))
-	await _wait(0.4)
-	await _shot("g9_president_phase2_navy")
+	await _wait(1.0)
+	await _shot("g9_zara_seance_circle")
 	_held = null
-	await _clear()
-	# A Gopher up on the grass in the middle of the room.
-	_stand(_cell(12, 8))
-	var up := _spawn("gopher", _cell(15, 8))
-	await _until(func(): return is_instance_valid(up) and not up.submerged, 8.0)
-	up.set_physics_process(false)
-	await _wait(0.1)
-	await _shot("g10_gopher_on_grass")
 	await _clear()

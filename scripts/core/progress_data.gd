@@ -100,12 +100,15 @@ var lifetime: Dictionary = {}
 var best_run: Dictionary = {}
 # The last RunLog.CAP runs, newest first.
 var run_log: Array = []
+# The Flashback Cinema's lobby card lines shown so far (LifeSigns), each id stamped with the order it
+# was last seen in. Optional in a save.
+var life_signs_seen: Dictionary = {}
 
 # The first path at each depth, the only one open before that depth's first clear.
 const FIRST_PATH_BY_DEPTH := {1: "floor_1", 2: "sunset_shores", 3: "funeral_parlour", 4: "last_resort_cruise", 5: "terminal_zero"}
 # Every path id at each depth. Mirrors floor_scene.gd's PATHS_BY_DEPTH by id, since ProgressData
 # must not load FloorDefs.
-const PATHS_AT_DEPTH := {1: ["floor_1", "cemetery"], 2: ["sunset_shores", "furnace_works"], 3: ["funeral_parlour", "golden_years_mall"], 4: ["last_resort_cruise", "fairways_end"], 5: ["terminal_zero", "head_office"]}
+const PATHS_AT_DEPTH := {1: ["floor_1", "cemetery"], 2: ["sunset_shores", "furnace_works"], 3: ["funeral_parlour", "flashback_cinema"], 4: ["last_resort_cruise", "seance_hotline"], 5: ["terminal_zero", "head_office"]}
 
 
 func level_of(id: String) -> int:
@@ -489,6 +492,7 @@ func to_dict() -> Dictionary:
 		"lifetime": lifetime,
 		"best_run": best_run,
 		"run_log": run_log,
+		"life_signs_seen": life_signs_seen,
 	}
 
 
@@ -502,6 +506,8 @@ static func from_dict(raw: Variant) -> ProgressData:
 		return null
 	if not raw["upgrades"] is Dictionary or not raw["opening_seen"] is bool:
 		return null
+	# Ids of paths, bosses, posters and departments that were replaced move to their new ones first.
+	raw = PathMigration.migrate_save(raw)
 	var data := ProgressData.new()
 	data.pension = int(raw["pension"])
 	data.opening_seen = raw["opening_seen"]
@@ -595,9 +601,22 @@ static func from_dict(raw: Variant) -> ProgressData:
 		for each in log_raw:
 			if each is Dictionary and data.run_log.size() < RunLog.CAP:
 				data.run_log.append(RunLog.clean(each))
+	# The Flashback Cinema's lobby cards. An older save has seen none of them.
+	data.life_signs_seen = _count_map(raw.get("life_signs_seen"))
 
 	data._infer_first_paths()
 	return data
+
+
+# A lobby card's line was shown: it is stamped one later than every line seen before, so the next run
+# can offer the ones seen longest ago first once all have been seen (LifeSigns.order).
+func see_life_sign(id: String) -> void:
+	if id.is_empty():
+		return
+	var latest := 0
+	for each in life_signs_seen:
+		latest = maxi(latest, int(life_signs_seen[each]))
+	life_signs_seen[id] = latest + 1
 
 
 # A run that ended goes to the top of the Log, the oldest past RunLog.CAP drops off, and its kills,

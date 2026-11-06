@@ -197,7 +197,7 @@ func test_reading_a_letter_marks_it() -> void:
 func test_every_path_has_a_letter() -> void:
 	var paths := LetterBook.LETTERS.map(func(l): return l["path"])
 	assert_eq(paths.size(), 10)
-	for id in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "golden_years_mall", "last_resort_cruise", "fairways_end", "terminal_zero", "head_office"]:
+	for id in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "flashback_cinema", "last_resort_cruise", "seance_hotline", "terminal_zero", "head_office"]:
 		assert_true(paths.has(id), id)
 
 

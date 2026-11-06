@@ -227,7 +227,7 @@ func test_the_blast_radius_lives_in_player_stats() -> void:
 func test_the_golf_glove_charges_faster_by_level() -> void:
 	assert_near(_stats("golf_glove", 1).charge_time_mult, 0.9)
 	assert_near(_stats("golf_glove", 3).charge_time_mult, 0.7)
-	assert_eq(_shipped("golf_glove").merchant, "pro_shop")
+	assert_eq(_shipped("golf_glove").merchant, "crystal_counter")
 	assert_eq(_shipped("golf_glove").prices, PackedInt32Array([160, 320, 560]))
 
 

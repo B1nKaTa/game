@@ -5,7 +5,7 @@ extends TestCase
 const Doreen := preload("res://scripts/actors/behaviors/doreen_behavior.gd")
 const Chairman := preload("res://scripts/actors/behaviors/chairman_behavior.gd")
 const Reverend := preload("res://scripts/actors/behaviors/reverend_behavior.gd")
-const Diva := preload("res://scripts/actors/behaviors/fountain_diva_behavior.gd")
+const Critic := preload("res://scripts/actors/behaviors/crabtree_behavior.gd")
 const Thrower := preload("res://scripts/actors/behaviors/thrower_behavior.gd")
 # Head Office scales health by this, and its bosses hold their final health divided by it.
 const OFFICE_HEALTH := 2.6
@@ -23,7 +23,7 @@ func _load(id: String) -> EnemyDef:
 
 
 func _near_a_door(cell: Vector2i, cells: Vector2i, reach: int) -> bool:
-	for door in FountainDivaBehavior.door_cells(cells):
+	for door in SplashJets.door_cells(cells):
 		if absi(cell.x - door.x) <= reach and absi(cell.y - door.y) <= reach:
 			return true
 	return false
@@ -169,14 +169,14 @@ func test_doreen_is_at_least_as_hard_as_the_mini_bosses_before_her() -> void:
 	assert_true(def.is_boss)
 	assert_true(absf(def.max_hp * OFFICE_HEALTH - 880.0) < 0.5, str(def.max_hp * OFFICE_HEALTH))
 	assert_true(def.max_hp * OFFICE_HEALTH >= FLOOR_FOUR_MINI, "the fourth floor's minis, about 760 by the spec")
-	for id in ["reverend", "gloria"]:
+	for id in ["reverend", "crabtree"]:
 		assert_true(def.max_hp * OFFICE_HEALTH >= _load(id).max_hp * FLOOR_THREE_HEALTH, id)
 	assert_true(Doreen.COOLDOWN <= Reverend.COOLDOWN, "rests no longer than the Reverend's")
-	assert_true(Doreen.COOLDOWN <= Diva.COOLDOWN, "or Gloria's")
+	assert_true(Doreen.COOLDOWN <= Critic.COOLDOWN, "or Crabtree's")
 	assert_true(Doreen.MEMO_WINDUP <= Reverend.EULOGY_WINDUP + 0.001, "windups no slower")
-	assert_true(Doreen.MUSIC_WINDUP <= Diva.COIN_WINDUP + 0.001)
+	assert_true(Doreen.MUSIC_WINDUP <= Critic.STAR_WINDUP + 0.001)
 	assert_true(Doreen.SUMMON_COUNT >= Reverend.SUMMON_COUNT)
-	assert_true(def.speed >= _load("gloria").speed)
+	assert_true(def.speed >= _load("crabtree").speed)
 	var body := def.body_size * 0.8
 	assert_true(body.x <= RoomBackdrop.TILE and body.y <= RoomBackdrop.TILE, "her box fits one cell")
 
@@ -702,11 +702,11 @@ func test_the_chairman_is_clearly_harder_than_every_floor_boss_before_him() -> v
 	assert_true(absf(def.max_hp * OFFICE_HEALTH - 2500.0) < 0.5, str(def.max_hp * OFFICE_HEALTH))
 	assert_true(def.max_hp > _load("augustine").max_hp, "more than Augustine, who stands just below him")
 	assert_true(def.max_hp * OFFICE_HEALTH >= FLOOR_FOUR_BOSS * 1.1, "the fourth floor's bosses, about 1950 by the spec")
-	for id in ["mortimer_grimsby", "mall_santa"]:
+	for id in ["mortimer_grimsby", "projectionist"]:
 		assert_true(def.max_hp * OFFICE_HEALTH >= _load(id).max_hp * FLOOR_THREE_HEALTH * 1.1, id)
 	assert_true(Chairman.BASE_COOLDOWN < FuneralDirectorBehavior.BASE_COOLDOWN)
-	assert_true(Chairman.BASE_COOLDOWN < MallSantaBehavior.BASE_COOLDOWN)
-	assert_true(Chairman.PHASE_TWO_COOLDOWN < MallSantaBehavior.PHASE_TWO_COOLDOWN)
+	assert_true(Chairman.BASE_COOLDOWN < ProjectionistBehavior.BASE_COOLDOWN)
+	assert_true(Chairman.PHASE_TWO_COOLDOWN < ProjectionistBehavior.PHASE_TWO_COOLDOWN)
 	assert_true(Chairman.GAVEL_DAMAGE > Enemy.HEAVY_DAMAGE)
-	assert_true(def.speed >= _load("mall_santa").speed)
+	assert_true(def.speed >= _load("projectionist").speed)
 	assert_true(def.summon == null, "he calls no one")

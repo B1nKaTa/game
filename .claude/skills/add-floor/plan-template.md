@@ -40,7 +40,7 @@ Floor-3 model: plan Task 6.
     the new run time.
   - Optionally, if the user agreed: `scripts/core/dev_start.gd` (`START_DEPTH`, `CLEARS_BY_DEPTH`,
     `PATHS_CLEARED`, `ALL_PATHS`, `HINT`), `tests/test_dev_start.gd`, and `_check_dev_start` in
-    the smoke driver, which names `"landing_3"` and `"golden_years_mall"` literally.
+    the smoke driver, which names `"landing_3"` and `"flashback_cinema"` literally.
 - **Test:** `tests/test_fourth_floor_unlocks.gd` (new), modelled on
   `tests/test_third_floor_unlocks.gd`: the open path is open, the locked one waits for a depth-N
   clear with its `closed_hint`, clears at depth N survive a save and an old save has none, the

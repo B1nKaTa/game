@@ -179,7 +179,7 @@ func test_a_strand_runs_the_way_its_cells_run() -> void:
 
 
 func test_old_layouts_hold_no_tape() -> void:
-	for path in ["res://data/rooms/floor_1/combat_01.tres", "res://data/rooms/golden_years_mall/combat_01.tres"]:
+	for path in ["res://data/rooms/floor_1/combat_01.tres", "res://data/rooms/flashback_cinema/combat_01.tres"]:
 		var layout: RoomLayout = load(path)
 		assert_true(layout.cells_of(RoomLayout.SYMBOL_RED_TAPE).is_empty(), path)
 

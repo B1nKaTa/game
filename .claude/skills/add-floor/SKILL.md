@@ -83,7 +83,7 @@ each answer as you go. The floor-3 spec shows the level of detail wanted.
 
 1. **Theme, names, depth and paths.** One place per path, in the game's dark-comedy afterlife tone
    (the earlier ones: Records Basement, Unkempt Cemetery, Sunset Shores Eternal Care, Furnace Works,
-   Eternal Rest Funeral Parlour, Golden Years Mall at 7 a.m.). Which is west (open) and east (locked).
+   Eternal Rest Funeral Parlour, The Flashback Cinema, Last Showing). Which is west (open) and east (locked).
    Each path needs an `id` in snake_case, which every hook below keys on.
 2. **Unlock rule.** So far always: the west path opens on reaching the depth
    (`open_after_depth = depth - 1`, `clears_to_open = 0`), the east one after one clear at its own

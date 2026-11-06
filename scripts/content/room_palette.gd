@@ -68,19 +68,6 @@ extends Resource
 @export var brass := Color("c9a25a")
 @export var coffin_wood := Color("4a2a1c")
 @export var coffin_lid := Color("6b3d26")
-# Mall stock. Shopping carts and gumball machines break like barrels, planters and fountains like
-# rocks, and sale signs block nothing and break to anything, like grass.
-@export var cart_wire := Color("b9c0c9")
-@export var cart_handle := Color("d9453b")
-@export var gumball_glass := Color(0.85, 0.95, 1.0, 0.75)
-@export var gumball_base := Color("c4161c")
-@export var sale_board := Color("fbf3d6")
-@export var sale_text := Color("d9453b")
-@export var planter := Color("8a8f98")
-@export var planter_edge := Color("3c4048")
-@export var palm_leaf := Color("4f9a52")
-@export var fountain_stone := Color("c9c4b8")
-@export var fountain_water := Color("6fc4ec")
 @export_group("Decor")
 @export var grass := Color("557f48")
 @export var grass_cut := Color("3f5f38")
@@ -105,12 +92,13 @@ extends Resource
 @export var plant_leaf := Color("5f9a52")
 @export var iv_stand := Color("c7ccd4")
 @export var iv_bag := Color(0.75, 0.9, 1.0, 0.85)
-# Mall decor: benches, food court tables and the fluorescent panels overhead.
+# Benches, food court tables and the fluorescent panels overhead, on the cruise, at the airport and in
+# the office.
 @export var bench := Color("7a5a3a")
 @export var food_table := Color("e8e2d2")
 @export var fluorescent := Color(0.85, 0.95, 1.0)
-# 1 draws a small woven motif on the carpet patches of the floor, 2 lays iron grating on them, 3
-# polishes big shiny tiles with a glint across each, and 0 leaves the floor plain.
+# 1 draws a small woven motif on the carpet patches of the floor, 2 lays iron grating on them, and 0
+# leaves the floor plain. (3 was the retired Mall's polished tile.)
 # 4 lays Head Office carpet tiles, a seam round each and flecks in the pile.
 @export var floor_pattern := 0
 @export var carpet_motif := Color(1.0, 1.0, 1.0, 0.12)
@@ -140,23 +128,41 @@ extends Resource
 }
 # The most lanterns and torches the scatter adds to a room. Ones the layout places don't count.
 @export var scatter_lights := 3
-# Fairway's End. Sand bunkers are a pale bed of grains, dark ones and a few bright ones.
-@export_group("Fairway's End")
-@export var sand := Color("d9c48c")
-@export var sand_grain := Color("8a7344")
-@export var sand_shine := Color("fff4d2")
-# The fairway's lighter mown stripe, laid over every other pair of columns (GolfLook.FAIRWAY).
-@export var fairway_stripe := Color(1.0, 1.0, 0.85, 0.08)
-# Flag pins break to anything, ball washers like barrels, hedges and parked carts like rocks.
-@export var hedge := Color("2f6a32")
-@export var hedge_leaf := Color("3f8a40")
-@export var golf_cart := Color("ece8da")
-@export var golf_cart_roof := Color("3f7a4a")
-@export var flag_cloth := Color("d9453b")
-@export var flag_pole := Color("f4f1e6")
-@export var ball_washer := Color("3b6fb0")
-# Thin ground fog (RoomDecor.FOG): faint flat wisps, kept see-through so nothing under them hides.
-@export var fog := Color(0.75, 0.82, 0.95, 0.14)
+# The Flashback Cinema. The carpet runners (CinemaLook.CARPET), the gold of the art-deco trim, the plum
+# velvet seat rows, the pillars, the little aisle lights in the floor, and the screen on the north wall
+# of every fighting room with the projector's beam from the south, when screen is on.
+@export_group("The Flashback Cinema")
+@export var carpet_runner := Color("23595c")
+@export var deco_gold := Color("c9a24a")
+@export var deco_gold_dim := Color(0.79, 0.64, 0.29, 0.55)
+@export var seat_velvet := Color("6e3f7c")
+@export var seat_velvet_dark := Color("3f2348")
+@export var pillar := Color("3a3a52")
+@export var pillar_edge := Color("17172a")
+@export var aisle_light := Color("ffcf7a")
+@export var screen_glow := Color(0.7, 0.8, 1.0)
+@export var projector_beam := Color(1.0, 0.86, 0.62)
+@export var screen := false
+# The Seance Hotline. The wall trim (SeanceLook.STAR_WALL), the violet cubicle partitions in their teal
+# frames, the psychics' desks with a phone whose display glows green and a crystal ball, the draped
+# seance table, the lava lamps' glass, wax and soft light, the beaded curtains' two bead colours, and the
+# ectoplasm, a deep dark green kept well away from the safe-spot mint.
+@export_group("Seance Hotline")
+@export var seance_trim := Color("4fa8a3")
+@export var partition_fabric := Color("6b4d8f")
+@export var partition_frame := Color("3e8c88")
+@export var desk_wood := Color("54433a")
+@export var desk_top := Color("6e5a4c")
+@export var phone_glow := Color("8ce64d")
+@export var crystal_ball := Color(0.76, 0.86, 1.0, 0.9)
+@export var table_cloth := Color("3a1f4d")
+@export var table_fringe := Color("c9a24a")
+@export var lava_glass := Color(0.32, 0.72, 0.78, 0.85)
+@export var lava_wax := Color("e85fc8")
+@export var lava_light := Color(0.85, 0.5, 0.95)
+@export var beads_warm := Color("e0a84a")
+@export var beads_cool := Color("4fb3b0")
+@export var ectoplasm := Color("1f6b45")
 
 
 func weight_of(kind: String) -> float:

@@ -3,7 +3,7 @@ extends TestCase
 
 func _floors() -> Dictionary:
 	var floors := {}
-	for id in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "golden_years_mall", "last_resort_cruise", "fairways_end", "terminal_zero", "head_office"]:
+	for id in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "flashback_cinema", "last_resort_cruise", "seance_hotline", "terminal_zero", "head_office"]:
 		floors[id] = load("res://data/floors/%s.tres" % id)
 	return floors
 
@@ -256,12 +256,12 @@ func test_progress_drops_an_unknown_poster_on_load() -> void:
 func test_the_deep_floors_posters_pay_what_the_spec_says() -> void:
 	var wanted := {
 		"lorraine": "gravity_boots", "commodore_wellington": "life_jacket",
-		"chip": "lawyers_card", "thaddeus_fairweather": "lucky_tee",
+		"celestine": "lawyers_card", "madame_zara": "lucky_tee",
 		"sergeant_wanda": "complaint_form", "augustine": "neck_pillow",
 		"doreen": "bureaucrats_stamp", "chairman_of_the_board": "golden_parachute",
 	}
 	# These mini bosses' posters pay an item now, and the looks they paid moved to the Decor Office.
-	var item_posters := ["lorraine", "chip", "sergeant_wanda", "doreen"]
+	var item_posters := ["lorraine", "celestine", "sergeant_wanda", "doreen"]
 	for id in wanted:
 		var def := _poster(id)
 		assert_true(def != null, id)

@@ -7,7 +7,7 @@ extends Resource
 @export var speed: float = 60.0
 @export var damage: int = 1
 # What walking into its body costs Grandpa, in pills. Zero makes its body harmless to touch, as the
-# Training Yard's dummy and the Mall Walkers, whose line hurts on touch by its own clock. See ContactRule.
+# Training Yard's dummy's. See ContactRule.
 @export var contact_damage: int = 1
 # A ghost passes through him harmlessly, whatever contact_damage says, unless this is set.
 @export var ghost_contact: bool = false
@@ -29,7 +29,8 @@ extends Resource
 # Multiplies the value of those same hues, to lift a dark robe a floor's light would swallow.
 @export var art_value: float = 1.0
 # Whether its east-drawn art is mirrored to face west. An object drawn facing south (the mimic, the
-# Lost Luggage, the steam valve) never turns, so it is never mirrored. Looks only.
+# Lost Luggage, the steam valve, the film reel, the Ectoplasm) never turns, so it is never mirrored.
+# Looks only.
 @export var art_flips: bool = true
 @export var behavior_script: Script
 @export var summon: EnemyDef

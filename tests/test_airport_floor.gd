@@ -97,7 +97,7 @@ func test_every_enemy_stands_out_from_the_carpet() -> void:
 
 func test_it_looks_like_no_other_floor() -> void:
 	var mine := _def().room_palette()
-	for id in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "golden_years_mall"]:
+	for id in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "flashback_cinema"]:
 		var theirs := _floor(id).room_palette()
 		assert_true(_difference(mine.floor_a, theirs.floor_a) > 0.15, "floor against %s" % id)
 		assert_true(_difference(mine.wall, theirs.wall) > 0.15, "walls against %s" % id)
@@ -110,6 +110,12 @@ func test_it_looks_like_no_other_floor() -> void:
 		assert_true(mine.weight_of(kind) > 0.0, kind)
 	for kind in [RoomDecor.GRASS, RoomDecor.BONES, RoomDecor.IV_STAND, RoomDecor.FURNACE, RoomDecor.GAUGE, RoomDecor.STAINED_GLASS, RoomDecor.COFFIN_STAND, RoomDecor.BENCH, RoomDecor.FOOD_TABLE]:
 		assert_near(mine.weight_of(kind), 0.0, kind)
+
+
+func test_fluorescent_panels_are_lights_and_benches_are_not() -> void:
+	assert_true(RoomDecor.is_light(RoomDecor.FLUORESCENT))
+	assert_false(RoomDecor.is_light(RoomDecor.BENCH))
+	assert_false(RoomDecor.is_light(RoomDecor.FOOD_TABLE))
 
 
 func test_departure_boards_are_decor_and_not_lights() -> void:

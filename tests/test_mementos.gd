@@ -179,7 +179,7 @@ func test_the_anchor_halves_slides_and_pushes() -> void:
 	assert_true(source.contains("ShipDeck.slide_at(get_tree(), _feet.global_position) * run.slide_mult()"), "the roll slides him half as far too")
 
 
-func test_the_golf_trophy_adds_to_a_charged_swing() -> void:
+func test_the_crystal_ball_adds_to_a_charged_swing() -> void:
 	assert_near(_plain_run().charge_damage_mult(), 1.0)
 	assert_near(_run_with(Mementos.CHARGE_PERK).charge_damage_mult(), 1.15)
 	var source := FileAccess.get_file_as_string("res://scripts/actors/player.gd")

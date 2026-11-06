@@ -8,10 +8,10 @@ extends RefCounted
 # from costing more than one pill.
 #
 # A touch costs nothing from:
-# - a ghost (the Soot Ghosts, the Debt Collector Ghost, the Weeping Mourners), unless its def sets
+# - a ghost (the Soot Ghosts, the Debt Collector Ghost, the Weeping Mourners, the Poltergeist on Hold),
+#   unless its def sets
 #   ghost_contact;
-# - a def whose contact_damage is 0: the Training Yard's dummy, and the Mall Walkers, whose line hurts on
-#   touch by its own clock;
+# - a def whose contact_damage is 0, such as the Training Yard's dummy;
 # - an enemy that is dead, dying, dismissed or queued to go;
 # - one still waiting out the room's start, which is also how a mimic that has just woken out of its chest
 #   gets its moment, since it waits as a room's enemies do;
@@ -30,7 +30,7 @@ const CLEAR_SPARE := 2.0
 static func is_ghost(enemy_def: EnemyDef) -> bool:
 	if enemy_def == null or enemy_def.is_boss:
 		return false
-	return enemy_def.id.contains("ghost") or enemy_def.id.contains("mourner")
+	return enemy_def.id.contains("ghost") or enemy_def.id.contains("mourner") or enemy_def.id.contains("poltergeist")
 
 
 # What touching this kind of enemy costs, before anything about its moment.
