@@ -6,8 +6,10 @@ extends EnemyBehavior
 # that costs a pill and pushes him back a step. A heckler, it calls out as it first steps in.
 const START_RANGE := 28.0
 const STRIKE_RANGE := 36.0
-const WINDUP := 0.4
-const COOLDOWN := 0.8
+# A crowd of them as quick as Grandpa cornered him at a 0.4 s windup and a 0.8 s rest (Task 6's
+# tuning), so each shove warns a little longer and comes less often.
+const WINDUP := 0.5
+const COOLDOWN := 1.4
 const SHOVE := 200.0
 const SHOVE_TIME := 0.16
 const HECKLES: Array[String] = ["Boo!", "Rubbish!", "Hiss!"]

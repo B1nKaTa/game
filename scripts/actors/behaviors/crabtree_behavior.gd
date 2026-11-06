@@ -22,11 +22,14 @@ const RING_TO := 130.0
 const RING_TIME := 0.7
 const RING_WIDTH := 14.0
 const WARNING_RADIUS := 34.0
-# The Mall's mini boss's rest, shorter than Barbara's and Klaus's.
-const COOLDOWN := 0.6
+# His rest, still shorter than Barbara's and Klaus's. Gloria's 0.6 left too few openings between his
+# warned fans and rings (Task 6's tuning).
+const COOLDOWN := 0.75
 const KEEP_NEAR := 120.0
 const FIRST_REVIEW := 4.0
-const REVIEW_EVERY := 10.0
+# Quick Extras who chase and shove came too thick at every 10 s (the bot won 3 fights in 20 against
+# Gloria's 16 and 17), so a review comes every 16 s (Task 6's tuning).
+const REVIEW_EVERY := 16.0
 const MAX_ENEMIES := 5
 const FEWEST_HECKLERS := 2
 const MOST_HECKLERS := 3
