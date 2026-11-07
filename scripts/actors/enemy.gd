@@ -198,8 +198,7 @@ class WarningLayer extends Node2D:
 	var enemy: Enemy
 
 	func _draw() -> void:
-		if enemy.shows_warnings():
-			enemy._draw_warning(self)
+		enemy._draw_warning(self)
 
 
 # Stars circle its head while it is stunned.
@@ -833,8 +832,10 @@ class BarLayer extends Node2D:
 		enemy._draw_bar(self)
 
 
+# The warning shapes show only for a boss or with Attack warnings on (shows_warnings); the stun's
+# stars and what it says always do.
 func _draw_warning(layer: Node2D) -> void:
-	if _warning != null and _warning.shows_warning(_warning_share()):
+	if shows_warnings() and _warning != null and _warning.shows_warning(_warning_share()):
 		var progress := _warning.warning_progress(_warning_share())
 		layer.draw_circle(Vector2.ZERO, _warning_radius * progress, Color(0.89, 0.32, 0.31, 0.15 + 0.3 * progress))
 		layer.draw_arc(Vector2.ZERO, _warning_radius, 0.0, TAU, 32, WARNING_COLOR, 2.0)

@@ -46,3 +46,13 @@ func test_every_world_attack_a_regular_starts_asks_before_drawing_red() -> void:
 	for name: String in REGULAR_WORLD_ATTACKS:
 		var source := FileAccess.get_file_as_string("res://scripts/world/%s.gd" % name)
 		assert_true(source.contains("AttackWarnings.drawn_by(") or source.contains("shows_warnings()"), name)
+
+
+# With the setting off a regular still shows its stun's stars and what it says: only the shapes hide.
+func test_hidden_warnings_keep_the_stars_and_the_words() -> void:
+	var source := FileAccess.get_file_as_string("res://scripts/actors/enemy.gd").replace("\r", "")
+	var layer := source.substr(source.find("class WarningLayer"), 200)
+	assert_false(layer.contains("if enemy.shows_warnings()"), "the layer always draws")
+	var body := source.substr(source.find("func _draw_warning("), 4000)
+	assert_true(body.contains("if shows_warnings() and _warning != null"), "only the shapes ask")
+	assert_true(body.find("_dazed_left > 0.0") > body.find("if def == null:"), "the stars sit outside the shapes")
