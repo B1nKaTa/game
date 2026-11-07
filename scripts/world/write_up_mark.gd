@@ -121,8 +121,10 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	if not _landed:
 		var filled := fill()
-		draw_circle(Vector2.ZERO, RADIUS * filled, Color(COLOR, 0.15 + 0.3 * filled))
-		draw_arc(Vector2.ZERO, RADIUS, 0.0, TAU, 24, COLOR, 2.0)
+		# The ring only with Attack warnings on (AttackWarnings); the memo in flight always shows.
+		if AttackWarnings.drawn_by(_source):
+			draw_circle(Vector2.ZERO, RADIUS * filled, Color(COLOR, 0.15 + 0.3 * filled))
+			draw_arc(Vector2.ZERO, RADIUS, 0.0, TAU, 24, COLOR, 2.0)
 		if _thrown_from != Vector2.INF:
 			var start := _thrown_from - global_position
 			var at := start.lerp(Vector2.ZERO, filled) + Vector2(0.0, -sin(filled * PI) * THROW_ARC)

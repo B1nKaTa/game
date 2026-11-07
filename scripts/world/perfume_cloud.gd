@@ -92,8 +92,10 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	if not _landed:
 		var filled := clampf(1.0 - _left / maxf(_warning, 0.01), 0.0, 1.0)
-		draw_circle(Vector2.ZERO, _radius * filled, Color(WARNING_COLOR, 0.15 + 0.3 * filled))
-		draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 32, WARNING_COLOR, 2.0)
+		# The ring only with Attack warnings on (AttackWarnings); the gathering mist always shows.
+		if AttackWarnings.drawn_by(_source):
+			draw_circle(Vector2.ZERO, _radius * filled, Color(WARNING_COLOR, 0.15 + 0.3 * filled))
+			draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 32, WARNING_COLOR, 2.0)
 		draw_circle(Vector2.ZERO, 4.0 + 6.0 * filled, Color(MIST, 0.5))
 		return
 	var fade := clampf(_linger / FADE, 0.0, 1.0)

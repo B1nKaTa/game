@@ -164,6 +164,9 @@ func _draw() -> void:
 		draw_polyline(coil, Color(CORD_SHADE, fade), 4.0)
 		draw_polyline(coil, Color(CORD, fade), 2.0)
 		return
+	# The band only with Attack warnings on (AttackWarnings); otherwise the caller's windup is the tell.
+	if not AttackWarnings.drawn_by(_source):
+		return
 	var filled := fill()
 	var band := _band_points(inner, outer, middle - HALF_ARC, middle + HALF_ARC)
 	draw_colored_polygon(band, Color(COLOR, 0.1 + 0.3 * filled))

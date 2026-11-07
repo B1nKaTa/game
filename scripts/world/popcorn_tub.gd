@@ -131,13 +131,16 @@ func _draw() -> void:
 			draw_circle(way * RADIUS * progress, 3.0, Color(POPCORN, 1.0 - progress))
 		return
 	var filled := fill()
-	for way in kernel_directions(_start_angle):
-		draw_set_transform(Vector2.ZERO, way.angle())
-		draw_rect(Rect2(RADIUS, -SPOKE_WIDTH / 2.0, SPOKE, SPOKE_WIDTH), Color(COLOR, 0.08 + 0.2 * filled))
-		draw_rect(Rect2(RADIUS, -SPOKE_WIDTH / 2.0, SPOKE, SPOKE_WIDTH), Color(COLOR, 0.7), false, 1.0)
-	draw_set_transform(Vector2.ZERO)
-	draw_circle(Vector2.ZERO, RADIUS * filled, Color(COLOR, 0.15 + 0.3 * filled))
-	draw_arc(Vector2.ZERO, RADIUS, 0.0, TAU, 24, COLOR, 2.0)
+	# A regular's lanes and ring show only with Attack warnings on (AttackWarnings); the tub and its
+	# growing shadow always do.
+	if AttackWarnings.drawn_by(_source):
+		for way in kernel_directions(_start_angle):
+			draw_set_transform(Vector2.ZERO, way.angle())
+			draw_rect(Rect2(RADIUS, -SPOKE_WIDTH / 2.0, SPOKE, SPOKE_WIDTH), Color(COLOR, 0.08 + 0.2 * filled))
+			draw_rect(Rect2(RADIUS, -SPOKE_WIDTH / 2.0, SPOKE, SPOKE_WIDTH), Color(COLOR, 0.7), false, 1.0)
+		draw_set_transform(Vector2.ZERO)
+		draw_circle(Vector2.ZERO, RADIUS * filled, Color(COLOR, 0.15 + 0.3 * filled))
+		draw_arc(Vector2.ZERO, RADIUS, 0.0, TAU, 24, COLOR, 2.0)
 	draw_circle(Vector2.ZERO, RADIUS * 0.6 * filled, Color(SHADOW, 0.35 * filled))
 	# The tub flies in on its arc, striped and heaped with popcorn.
 	var start := (_from - global_position) if _from != Vector2.INF else Vector2(0.0, -60.0)

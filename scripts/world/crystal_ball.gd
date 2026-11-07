@@ -205,12 +205,17 @@ func _draw() -> void:
 			var shard := Vector2.from_angle(TAU * i / 8.0 + 0.2) * BURST_RADIUS * progress
 			draw_line(shard * 0.6, shard, Color(SHINE, 1.0 - progress), 2.0)
 		return
+	var glow := GLOW
 	if _state == State.WARNING:
 		var filled := fill()
-		draw_circle(Vector2.ZERO, BURST_RADIUS * filled, Color(COLOR, 0.15 + 0.3 * filled))
-		draw_arc(Vector2.ZERO, BURST_RADIUS, 0.0, TAU, 32, COLOR, 2.0)
+		if AttackWarnings.drawn_by(_source):
+			draw_circle(Vector2.ZERO, BURST_RADIUS * filled, Color(COLOR, 0.15 + 0.3 * filled))
+			draw_arc(Vector2.ZERO, BURST_RADIUS, 0.0, TAU, 32, COLOR, 2.0)
+		elif filled * BURST_WARNING < Enemy.WINDUP_CUE_TIME * 2.0:
+			# With no ring, the ball's own glow flashes pale as its burst starts, the regulars' cue.
+			glow = Color(Enemy.WINDUP_CUE, 0.8)
 	# A soft glow, the glass with a deeper rim and a bright shine, and a little dark stand.
-	draw_circle(Vector2.ZERO, BALL_RADIUS + 4.0, GLOW)
+	draw_circle(Vector2.ZERO, BALL_RADIUS + 4.0, glow)
 	var art := PropArt.texture(ART_ID)
 	if art != null:
 		draw_texture_rect(art, Rect2(-art.get_size() / 2.0, art.get_size()), false)

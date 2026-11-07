@@ -103,6 +103,9 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	if _left > 0.0:
+		# The path only with Attack warnings on (AttackWarnings); otherwise the shark's windup is the tell.
+		if not AttackWarnings.drawn_by(_source):
+			return
 		var progress := clampf(1.0 - _left / maxf(_warning, 0.001), 0.0, 1.0)
 		var from := Vector2.ZERO
 		for point in _path:
