@@ -915,3 +915,15 @@ func _chairman() -> void:
 			await _shot("chairman_close", Rect2i(clampi(int(at.x) - 60, 0, 520), clampi(int(at.y) - 70, 0, 230), 120, 130))
 	await _bodies("chairman")
 	await _clear()
+	# Alone and held still in a quiet room of his floor, clear of Harold and of every warning's tint.
+	layout = await _enter(_room_file("healing"))
+	var mid := _middle(layout)
+	_stand(layout.nearest_floor_cell(mid + Vector2i(-4, 2)))
+	var chairman := view.spawn_fixture(load("res://data/enemies/chairman_of_the_board.tres"), mid)
+	chairman.set_physics_process(false)
+	await _wait(0.6)
+	var spot: Vector2 = view.get_viewport().get_canvas_transform() * chairman.global_position
+	await _shot("chairman_alone", Rect2i(clampi(int(spot.x) - 60, 0, 520), clampi(int(spot.y) - 70, 0, 230), 120, 130))
+	await _shot("chairman_alone_room")
+	await _bodies("chairman_alone")
+	await _clear()
