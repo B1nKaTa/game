@@ -83,3 +83,53 @@ func test_the_head_anchor_sits_on_his_head() -> void:
 func test_his_anchors_mirror_when_he_faces_left() -> void:
 	assert_eq(GrandpaLook.mirrored(Vector2(3, -1), -1.0), Vector2(-3, -1))
 	assert_eq(GrandpaLook.mirrored(Vector2(3, -1), 1.0), Vector2(3, -1))
+
+
+# Every cardigan has its own outfit of his strips (tools/art/harold_outfits.py): the same frames, the
+# same outline and pixels everywhere but the cardigan, which is redrawn, and nothing drawn in code.
+func test_every_cardigan_has_an_outfit_on_his_own_frames() -> void:
+	var cardigans := 0
+	for def in CosmeticDef.all():
+		if def.slot != CosmeticDef.SLOT_CARDIGAN or def.shape == "tie":
+			continue
+		cardigans += 1
+		var outfit := GrandpaLook.outfit_art({CosmeticDef.SLOT_CARDIGAN: def})
+		assert_eq(outfit, "grandpa_" + def.id, def.id)
+		for anim in ANIMS:
+			var own := _image(anim)
+			var texture: Texture2D = load(SpriteVisual.art_path(outfit, anim))
+			var worn := texture.get_image()
+			if worn.is_compressed():
+				worn.decompress()
+			assert_eq(worn.get_size(), own.get_size(), "%s %s" % [def.id, anim])
+			var changed := 0
+			var moved := 0
+			for y in own.get_height():
+				for x in own.get_width():
+					var a := own.get_pixel(x, y)
+					var b := worn.get_pixel(x, y)
+					if not is_equal_approx(a.a, b.a):
+						moved += 1
+					elif not a.is_equal_approx(b):
+						changed += 1
+			assert_eq(moved, 0, "%s %s keeps his outline" % [def.id, anim])
+			assert_true(changed > 300, "%s %s redraws the cardigan (%d px)" % [def.id, anim, changed])
+	assert_true(cardigans >= 3, str(cardigans))
+
+
+func test_no_cardigan_or_a_tie_wears_his_own_art() -> void:
+	assert_eq(GrandpaLook.outfit_art({}), GrandpaLook.ART_ID)
+	var tie := CosmeticDef.find("power_tie", CosmeticDef.all())
+	assert_eq(GrandpaLook.outfit_art({CosmeticDef.SLOT_CARDIGAN: tie}), GrandpaLook.ART_ID)
+
+
+func test_a_change_of_art_keeps_the_anim_playing() -> void:
+	var visual := SpriteVisual.new()
+	visual.setup(GrandpaLook.ART_ID, Vector2(20, 28), Color.WHITE, Player.SPRITE_FRAME_WIDTH)
+	visual.play("walk")
+	visual.set_art("grandpa_mustard_cardigan")
+	assert_eq(visual.art_id(), "grandpa_mustard_cardigan")
+	assert_eq(visual.anim(), "walk")
+	assert_eq(visual.sprite().texture.resource_path, SpriteVisual.art_path("grandpa_mustard_cardigan", "walk"))
+	assert_eq(visual.sprite().hframes, 8)
+	visual.free()

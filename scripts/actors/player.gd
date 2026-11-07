@@ -159,6 +159,7 @@ func refresh_look() -> void:
 		_visual.add_child(_look)
 		_look.z_index = 0
 	_look.setup(run.look)
+	_visual.set_art(GrandpaLook.outfit_art(run.look))
 
 
 # The HURT_ id of the last hit that landed, read by the balance bot to tell touches from attacks.

@@ -1,9 +1,10 @@
 class_name GrandpaLook
 extends Node2D
 
-# What Grandpa wears: a hat over his head and a cardigan band over his chest, drawn above his sprite.
-# The cane's colour is read by the Player for its placeholder cane line and swing arc. Placeholders,
-# drawn in code until the art pass. Nothing here touches a stat.
+# What Grandpa wears: a hat over his head and a tie over his chest, drawn above his sprite, and a
+# cardigan as an outfit of his own art (outfit_art). The cane's colour is read by the Player for its
+# placeholder cane line and swing arc. The hats and tie are drawn in code until the art pass. Nothing
+# here touches a stat.
 
 # Relative to the Player's origin, for the 60 pixel frame (tools/art/harold_strips.py), facing right:
 # the 2026-11-06 chunky redraw's hair tops out at y = -19 (-20 at the top of his breath) and his beard
@@ -62,6 +63,20 @@ static func arc_color(look: Dictionary, fallback: Color) -> Color:
 	return color
 
 
+# The art Harold wears: a cardigan has its own outfit of his strips, his own cardigan redrawn in its
+# colour (tools/art/harold_outfits.py, art/sprites/grandpa_<id>/), so nothing is drawn over his chest.
+# His own art without one, or for a cardigan with no outfit built yet.
+const ART_ID := "grandpa"
+
+
+static func outfit_art(look: Dictionary) -> String:
+	var cardigan := look.get(CosmeticDef.SLOT_CARDIGAN) as CosmeticDef
+	if cardigan == null or cardigan.shape == "tie":
+		return ART_ID
+	var outfit := ART_ID + "_" + cardigan.id
+	return outfit if SpriteVisual.has_anim(outfit, "idle") else ART_ID
+
+
 static func has_stripes(look: Dictionary) -> bool:
 	var cane := look.get(CosmeticDef.SLOT_CANE) as CosmeticDef
 	return cane != null and cane.shape == "stripe"
@@ -71,7 +86,8 @@ func _draw() -> void:
 	var cardigan := _look.get(CosmeticDef.SLOT_CARDIGAN) as CosmeticDef
 	if cardigan != null and cardigan.shape == "tie":
 		draw_tie(self, mirrored(TIE_AT, facing), cardigan.color)
-	elif cardigan != null:
+	elif cardigan != null and outfit_art(_look) == ART_ID:
+		# The placeholder band, only for a cardigan whose outfit is not built.
 		var band := Rect2(mirrored(CHEST, facing) - BAND_SIZE / 2.0, BAND_SIZE)
 		draw_rect(band, cardigan.color)
 		draw_line(band.position + Vector2(BAND_SIZE.x / 2.0, 0), band.position + Vector2(BAND_SIZE.x / 2.0, BAND_SIZE.y), cardigan.color.darkened(0.35), 1.0)

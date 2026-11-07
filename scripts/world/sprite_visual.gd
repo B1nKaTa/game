@@ -212,6 +212,25 @@ func setup(art_id: String, body_size: Vector2, color: Color, frame_width: int) -
 	play("idle")
 
 
+# Swaps the art for another drawn on the same frames (Harold's cardigan outfits), keeping the anim
+# playing and its time, so a change of look never restarts a step.
+func set_art(art_id: String) -> void:
+	if art_id == _art_id:
+		return
+	_art_id = art_id
+	var anim_now := _anim
+	var time_now := _time
+	var once := _once_duration
+	_anim = ""
+	play(anim_now)
+	_time = time_now
+	_once_duration = once
+
+
+func art_id() -> String:
+	return _art_id
+
+
 # Stands this node on the feet, feet_y below its parent's origin, and places every strip by its
 # lowest row there. The placeholder box stays where it was, centred on the parent.
 func set_feet(feet_y: float) -> void:
