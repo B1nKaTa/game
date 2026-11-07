@@ -176,7 +176,10 @@ def build(export, game, art_set):
 # lamp.png) indoors. Tones keep the ground under the bodies; a red or bright floor is pulled further.
 # set: faces (tiles_pro indices, plain first), ground tone, face tone, sconce, props {game id: (file, w, h)}
 AREAS = {
-    'waiting_room': {'faces': [0, 1, 7, 2, 5, 6, 3, 1], 'ground': (0.82, 0.8, 0.78), 'face': (0.9, 0.88, 0.84), 'sconce': 'lamp'},
+    # The lobby's parquet patches came out saturated orange (0.58 against the floor's 0.27) and read as
+    # stains under the lamps, so they are calmed toward their own grey and dimmed a little ('patch').
+    'waiting_room': {'faces': [0, 1, 7, 2, 5, 6, 3, 1], 'ground': (0.82, 0.8, 0.78), 'face': (0.9, 0.88, 0.84), 'sconce': 'lamp',
+                     'patch': (0.5, 0.9)},
     'crossroads': {'faces': [0, 1, 7, 5, 4, 2, 3, 6], 'ground': (0.8, 0.78, 0.76), 'face': (0.9, 0.88, 0.86), 'sconce': 'torch'},
     'cemetery': {'faces': [0, 1, 7, 2, 5, 3, 6, 4], 'ground': (0.78, 0.8, 0.76), 'face': (0.88, 0.9, 0.86), 'sconce': 'torch'},
     'sunset_shores': {'faces': [0, 1, 7, 2, 3, 4, 5, 6], 'ground': (0.78, 0.76, 0.74), 'face': (0.86, 0.84, 0.82), 'sconce': 'lamp'},
@@ -190,7 +193,7 @@ AREAS = {
 }
 
 
-def area_ground(folder, mult):
+def area_ground(folder, mult, patch=None):
     sheet = load(os.path.join(folder, 'ground.png'))
     meta = json.load(open(os.path.join(folder, 'ground.json'), encoding='utf-8'))
     strip = [[(0, 0, 0, 0)] * (16 * TILE) for _ in range(TILE)]
@@ -200,7 +203,36 @@ def area_ground(folder, mult):
         pixels = tone(crop(sheet, tile['bounding_box']), mult)
         for y in range(TILE):
             strip[y][index * TILE:(index + 1) * TILE] = pixels[y]
+    if patch is not None:
+        strip = calm_patch(strip, patch)
     return strip
+
+
+# Pulls the patch terrain's pixels (those nearer the all-patch tile's mean than the all-base tile's, or
+# far more coloured than the base, as the patch's own dark edge is) a share of the way to their own
+# grey, then dims them: patch = (share kept of the colour, dim).
+def calm_patch(strip, patch):
+    keep, dim = patch
+
+    def mean(index):
+        px = [p for row in strip for p in row[index * TILE:(index + 1) * TILE]]
+        return [sum(p[k] for p in px) / len(px) for k in range(3)]
+
+    lower, upper = mean(0), mean(15)
+    base_chroma = max(lower) - min(lower)
+    out = []
+    for row in strip:
+        new_row = []
+        for p in row:
+            near_upper = sum((p[k] - upper[k]) ** 2 for k in range(3)) < sum((p[k] - lower[k]) ** 2 for k in range(3))
+            near_upper = near_upper or max(p[:3]) - min(p[:3]) > base_chroma + 25
+            if not near_upper or p[3] == 0:
+                new_row.append(p)
+                continue
+            grey = 0.2126 * p[0] + 0.7152 * p[1] + 0.0722 * p[2]
+            new_row.append(tuple(min(255, int((grey + (p[k] - grey) * keep) * dim)) for k in range(3)) + (p[3],))
+        out.append(new_row)
+    return out
 
 
 # A wall top from a wall front: darker, and each pixel pulled toward its row's mean so the courses blur.
@@ -218,7 +250,7 @@ def build_area(export, game, art_set):
     folder = os.path.join(export, 'sets', art_set)
     out = os.path.join(game, 'art', 'tiles', art_set, 'depth')
     os.makedirs(out, exist_ok=True)
-    save(os.path.join(out, 'ground.png'), area_ground(folder, spec['ground']))
+    save(os.path.join(out, 'ground.png'), area_ground(folder, spec['ground'], spec.get('patch')))
     faces = []
     for n, index in enumerate(spec['faces']):
         face = tone(load(os.path.join(folder, 'walls', 'tile_%d.png' % index)), spec['face'])
