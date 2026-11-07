@@ -7,7 +7,9 @@ extends SceneTree
 # Run only from an exported copy whose config/name is renamed.
 # Args after --: floor_1 | combat | others | all | verify | windups | wide, then optionally the folder
 # to save into. verify shoots every area (fights with the regulars' warnings off and on, doors, mini
-# boss and boss), windups every regular's windup as a strip, wide the bars beside a wide window.
+# boss and boss), windups every regular's windup as a strip, wide the bars beside a wide window,
+# fix5 the Chairman's fight, Harold in each cardigan, Sunset Shores' warnings on its carpet and the
+# Crossroads.
 
 const DEFAULT_OUT := "D:/grandpa-shots-ad/"
 const WALL_LIMIT_MS := 900000
@@ -26,6 +28,8 @@ var view: RoomView
 var player: Player
 var progress
 var _walk := false
+# The move action held while _walk is on.
+var _walk_action := "move_right"
 
 
 func _initialize() -> void:
@@ -49,7 +53,7 @@ func _process(_d: float) -> bool:
 
 func _hold_keys() -> void:
 	if _walk:
-		Input.action_press("move_right")
+		Input.action_press(_walk_action)
 
 
 func _wait(seconds: float) -> void:
@@ -127,6 +131,12 @@ func _main() -> void:
 		await _wide()
 	if which == "barcost":
 		await _bar_cost()
+	if which == "fix5":
+		await _crossroads()
+		await _crossroads_south()
+		await _cardigans()
+		await _carpet_warnings()
+		await _chairman()
 	progress._store.delete_all()
 	print("LOOK DONE")
 	quit(0)
@@ -773,4 +783,134 @@ func _other(floor_id: String) -> void:
 		enemies[0].strike_ground(player.global_position + Vector2(40, 10), 30.0, 2.0)
 	await _wait(0.6)
 	await _shot("other_" + floor_id)
+	await _clear()
+
+
+# The Crossroads' south edge round Harold, where a lone pale patch once stood out as a pile.
+func _crossroads_south() -> void:
+	var at: Vector2 = view.get_viewport().get_canvas_transform() * player.global_position
+	await _shot("crossroads_south", Rect2i(clampi(int(at.x) - 120, 0, 400), clampi(int(at.y) - 60, 0, 270), 240, 90))
+
+
+func _harold_crop() -> Rect2i:
+	var at: Vector2 = view.get_viewport().get_canvas_transform() * player.global_position
+	return Rect2i(int(at.x) - 30, int(at.y) - 34, 60, 64)
+
+
+# Harold in each cardigan's outfit in an empty basement room: standing, walking east and west, and a
+# swing, each crop at 4x, with the art he wears printed.
+func _cardigans() -> void:
+	if not await _new_run("floor_1"):
+		return
+	var layout := await _enter(_room_file("healing"))
+	var mid := _middle(layout)
+	for id in ["none", "burgundy_cardigan", "mustard_cardigan", "bingo_teal"]:
+		player.run.look = {} if id == "none" else {"cardigan": load("res://data/cosmetics/%s.tres" % id)}
+		player.refresh_look()
+		print("CARDIGAN %s wears %s" % [id, player._visual.art_id()])
+		for way in [1.0, -1.0]:
+			var side := "east" if way > 0.0 else "west"
+			_stand(mid)
+			player.aim_source = func() -> Vector2: return player.global_position + Vector2(200.0 * way, 0.0)
+			await _wait(0.35)
+			for i in 2:
+				await _shot("cardigan_%s_idle_%s_%d" % [id, side, i], _harold_crop())
+				await _wait(0.2)
+			_walk_action = "move_right" if way > 0.0 else "move_left"
+			_walk = true
+			await _wait(0.25)
+			for i in 3:
+				await _shot("cardigan_%s_walk_%s_%d" % [id, side, i], _harold_crop())
+				await _wait(0.1)
+			_walk = false
+			Input.action_release(_walk_action)
+			player.velocity = Vector2.ZERO
+			await _wait(0.2)
+			player._swing(1, Player.ATTACK_REACH, Player.ATTACK_ANGLE, Player.ATTACK_PUSH, false, false)
+			await _wait(0.03)
+			await _shot("cardigan_%s_swing_%s" % [id, side], _harold_crop())
+			await _wait(0.5)
+	player.aim_source = Callable()
+	player.run.look = {}
+	player.refresh_look()
+
+
+# The floor cell of a room with the most patch ground (its carpet) round it, for decor seed 7 (_enter).
+func _patch_cell(layout: RoomLayout) -> Vector2i:
+	var best := _middle(layout)
+	var best_score := -1
+	var size := layout.size_in_cells()
+	for y in range(2, size.y - 2):
+		for x in range(2, size.x - 2):
+			if layout.rows[y][x] != ".":
+				continue
+			var score := 0
+			for dy in range(-1, 2):
+				for dx in range(-1, 2):
+					if DepthLook.ground_index(Vector2i(x + dx, y + dy), 7) == 15:
+						score += 1
+			if score > best_score:
+				best_score = score
+				best = Vector2i(x, y)
+	print("PATCH cell %s score %d" % [best, best_score])
+	return best
+
+
+# Sunset Shores' carpet under its warnings: a regular's ring with the setting on, the mini boss's and the
+# boss's own telegraphs, with Harold standing on the carpet so every attack aims at it.
+func _carpet_warnings() -> void:
+	if not await _new_run("sunset_shores"):
+		return
+	AttackWarnings.shown = true
+	var layout := await _enter(_room_file("healing"))
+	var cell := _patch_cell(layout)
+	_stand(cell)
+	var regular: Enemy = view.spawn_fixture(scene.debug_floor_def().enemies[0], layout.nearest_floor_cell(cell + Vector2i(4, 0)))
+	await _wait(0.5)
+	regular.strike_ground(player.global_position + Vector2(0, 6), 30.0, 2.0)
+	await _wait(0.4)
+	var image := await _shot("shores_carpet_ring_on")
+	print("RED shores_carpet_ring_on %d" % _red_count(image))
+	await _clear()
+	AttackWarnings.shown = false
+	var mini_def: EnemyDef = scene.debug_floor_def().mini_boss
+	_stand(cell)
+	var mini := view.spawn_fixture(mini_def, layout.nearest_floor_cell(cell + Vector2i(3, 0)))
+	await _wait(0.8)
+	if is_instance_valid(mini):
+		mini.strike_ground(player.global_position + Vector2(-20, 6), 30.0, 2.0)
+	for i in 4:
+		image = await _shot("shores_carpet_mini_%d" % i)
+		print("RED shores_carpet_mini_%d %d" % [i, _red_count(image)])
+		await _wait(0.6)
+	await _clear()
+	layout = await _enter(_room_file("floor_boss"), RoomLayout.TYPE_FLOOR_BOSS)
+	cell = _patch_cell(layout)
+	_stand(cell)
+	await _wait(1.5)
+	for i in 6:
+		_stand(cell)
+		image = await _shot("shores_carpet_boss_%d" % i)
+		print("RED shores_carpet_boss_%d %d" % [i, _red_count(image)])
+		await _wait(0.7)
+	await _clear()
+
+
+# The Chairman fighting in his own room on Head Office, shot as he works, then held and his body measured.
+func _chairman() -> void:
+	AttackWarnings.shown = false
+	if not await _new_run("head_office"):
+		return
+	var layout := await _enter(_room_file("floor_boss"), RoomLayout.TYPE_FLOOR_BOSS)
+	_stand(_middle(layout) + Vector2i(0, 2))
+	await _wait(2.0)
+	for i in 5:
+		await _shot("chairman_fight_%d" % i)
+		await _wait(0.8)
+	_freeze()
+	for enemy in get_nodes_in_group("enemies"):
+		if enemy.def.id == "chairman_of_the_board":
+			var at: Vector2 = view.get_viewport().get_canvas_transform() * enemy.global_position
+			await _shot("chairman_close", Rect2i(clampi(int(at.x) - 60, 0, 520), clampi(int(at.y) - 70, 0, 230), 120, 130))
+	await _bodies("chairman")
 	await _clear()
