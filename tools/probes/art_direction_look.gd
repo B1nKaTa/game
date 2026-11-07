@@ -583,6 +583,7 @@ func _windups(floor_id: String) -> void:
 			await process_frame
 		if not is_instance_valid(enemy) or not enemy.is_winding_up():
 			print("WINDUP %s %s none in 6 s" % [floor_id, def.id])
+			await _shot("windup_%s_%s_idle" % [floor_id, def.id])
 			continue
 		var total: float = enemy._warning.remaining()
 		var frames: Array[Image] = []
@@ -592,9 +593,13 @@ func _windups(floor_id: String) -> void:
 			return image.get_region(rect)
 		if before != null:
 			frames.append(crop.call(before))
-		while frames.size() < 10 and is_instance_valid(enemy):
+		# Five frames in a row first, so the windup's pale flash (Enemy.WINDUP_CUE_TIME) is caught.
+		while frames.size() < 11 and is_instance_valid(enemy):
 			frames.append(crop.call(root.get_texture().get_image()))
-			await _wait(maxf(0.035, total / 8.0))
+			if frames.size() < 6:
+				await process_frame
+			else:
+				await _wait(maxf(0.035, total / 6.0))
 		var strip := Image.create(80 * frames.size(), 80, false, Image.FORMAT_RGBA8)
 		for i in frames.size():
 			frames[i].convert(Image.FORMAT_RGBA8)
