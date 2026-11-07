@@ -798,40 +798,40 @@ func _harold_crop() -> Rect2i:
 	return Rect2i(int(at.x) - 30, int(at.y) - 34, 60, 64)
 
 
-# Harold in each cardigan's outfit in an empty basement room: standing, walking east and west, and a
-# swing, each crop at 4x, with the art he wears printed.
+# Harold in each cardigan's outfit in an empty basement room: standing, walking and swinging, facing
+# east and then west, each crop at 4x, with the art he wears printed. He is held still and his anims are
+# played on his sprite, since a walk across a small room reaches its doors.
 func _cardigans() -> void:
 	if not await _new_run("floor_1"):
 		return
-	var layout := await _enter(_room_file("healing"))
-	var mid := _middle(layout)
+	var layout := await _enter(_room_file("combat_0"), RoomLayout.TYPE_COMBAT)
+	await _clear()
+	var cell := _middle(layout) + Vector2i(0, 1)
 	for id in ["none", "burgundy_cardigan", "mustard_cardigan", "bingo_teal"]:
+		player.set_physics_process(true)
 		player.run.look = {} if id == "none" else {"cardigan": load("res://data/cosmetics/%s.tres" % id)}
 		player.refresh_look()
+		_stand(cell)
+		await _wait(0.1)
+		player.set_physics_process(false)
 		print("CARDIGAN %s wears %s" % [id, player._visual.art_id()])
 		for way in [1.0, -1.0]:
 			var side := "east" if way > 0.0 else "west"
-			_stand(mid)
-			player.aim_source = func() -> Vector2: return player.global_position + Vector2(200.0 * way, 0.0)
-			await _wait(0.35)
+			player._visual.set_facing_left(way < 0.0)
+			player._visual.play("idle")
+			await _wait(0.2)
 			for i in 2:
 				await _shot("cardigan_%s_idle_%s_%d" % [id, side, i], _harold_crop())
 				await _wait(0.2)
-			_walk_action = "move_right" if way > 0.0 else "move_left"
-			_walk = true
-			await _wait(0.15)
+			player._visual.play("walk")
 			for i in 3:
-				await _shot("cardigan_%s_walk_%s_%d" % [id, side, i], _harold_crop())
 				await _wait(0.1)
-			_walk = false
-			Input.action_release(_walk_action)
-			player.velocity = Vector2.ZERO
-			await _wait(0.2)
-			player._swing(1, Player.ATTACK_REACH, Player.ATTACK_ANGLE, Player.ATTACK_PUSH, false, false)
+				await _shot("cardigan_%s_walk_%s_%d" % [id, side, i], _harold_crop())
+			player._visual.play_once("attack", CaneCombo.LOCK_TIME)
 			await _wait(0.03)
 			await _shot("cardigan_%s_swing_%s" % [id, side], _harold_crop())
-			await _wait(0.5)
-	player.aim_source = Callable()
+			await _wait(0.4)
+	player.set_physics_process(true)
 	player.run.look = {}
 	player.refresh_look()
 
