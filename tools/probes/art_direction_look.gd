@@ -5,10 +5,12 @@ extends SceneTree
 # HUD filled; then one combat room on every other floor. Prints the lit luminance of each awake enemy's
 # body and of Harold, measured as the pixels that change when the body is hidden (LESSONS 2026-11-05).
 # Run only from an exported copy whose config/name is renamed.
-# Args after --: floor_1 | combat | others | all, then optionally the folder to save into.
+# Args after --: floor_1 | combat | others | all | verify | windups | wide, then optionally the folder
+# to save into. verify shoots every area (fights with the regulars' warnings off and on, doors, mini
+# boss and boss), windups every regular's windup as a strip, wide the bars beside a wide window.
 
 const DEFAULT_OUT := "D:/grandpa-shots-ad/"
-const WALL_LIMIT_MS := 560000
+const WALL_LIMIT_MS := 900000
 const FLOORS := {
 	"floor_1": [1, 0], "cemetery": [1, 1], "sunset_shores": [2, 0], "furnace_works": [2, 1],
 	"funeral_parlour": [3, 0], "flashback_cinema": [3, 1], "last_resort_cruise": [4, 0], "seance_hotline": [4, 1],
@@ -112,6 +114,17 @@ func _main() -> void:
 	if which == "all" or which == "others":
 		for floor_id in OTHERS:
 			await _other(floor_id)
+	if which == "verify":
+		await _waiting_room()
+		await _crossroads()
+		await _landing(3)
+		for floor_id: String in FLOORS:
+			await _verify_floor(floor_id)
+	if which == "windups":
+		for floor_id: String in FLOORS:
+			await _windups(floor_id)
+	if which == "wide":
+		await _wide()
 	progress._store.delete_all()
 	print("LOOK DONE")
 	quit(0)
@@ -444,6 +457,216 @@ func _lineup(floor_id: String, ids: Array, shot_name: String, bars := false) -> 
 	await _wait(0.6)
 	await _shot(shot_name)
 	await _clear()
+
+
+# Strongly red pixels below the HUD's band: the warning red (#e4524f) and anything near it. A hint only;
+# the shot decides (LESSONS 2026-11-06: skin and red props count too).
+func _red_count(image: Image) -> int:
+	var n := 0
+	for y in range(40, image.get_height()):
+		for x in image.get_width():
+			var c := image.get_pixel(x, y)
+			if c.r > 0.6 and c.r - c.g > 0.35 and c.r - c.b > 0.3:
+				n += 1
+	return n
+
+
+# The screen crop round a door on the north wall: the gap, its jambs and its sign.
+func _door_crop(layout: RoomLayout) -> Rect2i:
+	var at: Vector2 = view.get_viewport().get_canvas_transform() * RoomBackdrop.cell_center(layout.door_cell(RoomLayout.NORTH))
+	return Rect2i(clampi(int(at.x) - 80, 0, 480), clampi(int(at.y) - 60, 0, 250), 160, 110)
+
+
+# A combat room file of this floor holding a symbol, or its first combat room.
+func _room_with(symbol: String) -> String:
+	var dir: String = scene.debug_floor_def().rooms_dir
+	var names := DirAccess.get_files_at(dir)
+	names.sort()
+	for name in names:
+		if name.begins_with("combat") and name.ends_with(".tres") and not name.contains("large"):
+			var layout: RoomLayout = load(dir.path_join(name))
+			if not symbol.is_empty() and not layout.cells_of(symbol).is_empty():
+				return dir.path_join(name)
+	return _room_file("combat_0")
+
+
+# Everyone moves and attacks for a while, then a regular puts a ground warning down by Harold and a few
+# shots fly at him; held still and shot, with the warning red counted.
+func _fight(shot_name: String) -> void:
+	for enemy in get_nodes_in_group("enemies"):
+		enemy.set_physics_process(true)
+	await _wait(1.6)
+	var enemies := get_nodes_in_group("enemies")
+	for enemy in enemies:
+		if not enemy.def.is_boss:
+			enemy.strike_ground(player.global_position + Vector2(40, 10), 30.0, 2.0)
+			break
+	for i in mini(3, enemies.size()):
+		enemies[i].shoot(enemies[i].global_position.direction_to(player.global_position), 60.0)
+	await _wait(0.45)
+	_freeze()
+	var image := await _shot(shot_name)
+	var winding := 0
+	for enemy in enemies:
+		if is_instance_valid(enemy) and enemy.is_winding_up():
+			winding += 1
+	print("RED %s %d winding %d warnings_shown %s" % [shot_name, _red_count(image), winding, AttackWarnings.shown])
+
+
+# One area in the new look: a combat room, a fight with the regulars' warnings off and on, its north
+# door shut and open, the mini boss's and the boss's own warnings with the setting off.
+func _verify_floor(floor_id: String) -> void:
+	AttackWarnings.shown = false
+	if not await _new_run(floor_id):
+		return
+	var symbol := RoomLayout.SYMBOL_RED_TAPE if floor_id == "head_office" else ""
+	var layout := await _enter(_room_with(symbol), RoomLayout.TYPE_COMBAT)
+	var mid := _middle(layout)
+	_stand(mid)
+	await _wait(0.8)
+	_freeze()
+	await _shot("%s_combat" % floor_id)
+	await _bodies("%s_combat" % floor_id)
+	await _fight("%s_fight_off" % floor_id)
+	AttackWarnings.shown = true
+	await _fight("%s_fight_on" % floor_id)
+	AttackWarnings.shown = false
+	_stand(layout.door_cell(RoomLayout.NORTH) + Vector2i(1, 2))
+	await _wait(0.3)
+	await _shot("%s_door_locked" % floor_id, _door_crop(layout))
+	await _clear()
+	await _wait(1.0)
+	await _shot("%s_door_open" % floor_id, _door_crop(layout))
+	# The mini boss, awake beside Harold in an empty room, with the setting off.
+	var mini_def: EnemyDef = scene.debug_floor_def().mini_boss
+	if mini_def != null:
+		layout = await _enter(_room_file("healing"))
+		mid = _middle(layout)
+		_stand(mid)
+		var enemy := view.spawn_fixture(mini_def, layout.nearest_floor_cell(mid + Vector2i(3, 0)))
+		await _wait(0.8)
+		enemy.strike_ground(player.global_position + Vector2(-40, 10), 30.0, 2.0)
+		for i in 3:
+			var image := await _shot("%s_mini_%d" % [floor_id, i])
+			print("RED %s_mini_%d %d winding %s" % [floor_id, i, _red_count(image), enemy.is_winding_up() if is_instance_valid(enemy) else false])
+			await _wait(0.7)
+		await _clear()
+	layout = await _enter(_room_file("floor_boss"), RoomLayout.TYPE_FLOOR_BOSS)
+	_stand(_middle(layout) + Vector2i(0, 2))
+	await _wait(2.0)
+	for i in 4:
+		var image := await _shot("%s_boss_%d" % [floor_id, i])
+		print("RED %s_boss_%d %d" % [floor_id, i, _red_count(image)])
+		await _wait(0.8)
+	_freeze()
+	await _bodies("%s_boss" % floor_id)
+	await _clear()
+
+
+# Every regular enemy of the floor alone beside Harold with the setting off, shot from just before its
+# windup starts through the windup, as one strip per enemy.
+func _windups(floor_id: String) -> void:
+	AttackWarnings.shown = false
+	if not await _new_run(floor_id):
+		return
+	var layout := await _enter(_room_file("healing"))
+	var mid := _middle(layout)
+	for def: EnemyDef in scene.debug_floor_def().enemies:
+		await _clear()
+		_stand(mid)
+		var enemy := view.spawn_fixture(def, layout.nearest_floor_cell(mid + Vector2i(3, 0)))
+		var canvas := view.get_viewport().get_canvas_transform()
+		var before: Image = null
+		var began := Time.get_ticks_msec()
+		while is_instance_valid(enemy) and not enemy.is_winding_up() and Time.get_ticks_msec() - began < 6000:
+			before = root.get_texture().get_image()
+			await process_frame
+		if not is_instance_valid(enemy) or not enemy.is_winding_up():
+			print("WINDUP %s %s none in 6 s" % [floor_id, def.id])
+			continue
+		var total: float = enemy._warning.remaining()
+		var frames: Array[Image] = []
+		var crop := func(image: Image) -> Image:
+			var at: Vector2 = canvas * enemy.global_position
+			var rect := Rect2i(clampi(int(at.x) - 40, 0, 560), clampi(int(at.y) - 50, 0, 280), 80, 80)
+			return image.get_region(rect)
+		if before != null:
+			frames.append(crop.call(before))
+		while frames.size() < 10 and is_instance_valid(enemy):
+			frames.append(crop.call(root.get_texture().get_image()))
+			await _wait(maxf(0.035, total / 8.0))
+		var strip := Image.create(80 * frames.size(), 80, false, Image.FORMAT_RGBA8)
+		for i in frames.size():
+			frames[i].convert(Image.FORMAT_RGBA8)
+			strip.blit_rect(frames[i], Rect2i(0, 0, 80, 80), Vector2i(80 * i, 0))
+		strip.resize(strip.get_width() * 3, 240, Image.INTERPOLATE_NEAREST)
+		strip.save_png(OUT + "windup_%s_%s.png" % [floor_id, def.id])
+		print("WINDUP %s %s %.2f s" % [floor_id, def.id, total])
+	await _clear()
+
+
+func _waiting_room() -> void:
+	change_scene_to_file("res://scenes/waiting_room.tscn")
+	await _wait(1.5)
+	await _shot("waiting_room_lobby")
+	for id in ["hallway", "bounty_office", "training_yard"]:
+		current_scene.debug_enter_department(id)
+		await _wait(0.8)
+		await _shot("waiting_room_" + id)
+
+
+func _crossroads() -> void:
+	change_scene_to_file("res://scenes/floor.tscn")
+	await _wait(0.8)
+	scene = current_scene
+	player = scene.player
+	view = scene.debug_room_view()
+	print("CROSSROADS %s" % scene.debug_floor_def().id)
+	await _shot("crossroads")
+
+
+func _landing(depth: int) -> void:
+	progress.begin_dev_run(ProgressData.new(), "user://look_dev.json", depth)
+	change_scene_to_file("res://scenes/floor.tscn")
+	await _wait(0.8)
+	scene = current_scene
+	player = scene.player
+	print("LANDING %s" % scene.debug_floor_def().id)
+	await _shot("landing_%d" % depth)
+	progress.end_dev_run(false)
+
+
+# A wide window (2560x1080 where the screen allows it) in the parlour: the screen itself is grabbed, so
+# the bars beside the picture show, then a resize and a fullscreen round trip, with the frame rate after.
+func _wide() -> void:
+	if not await _new_run("funeral_parlour"):
+		return
+	var layout := await _enter(_room_file("combat_0"), RoomLayout.TYPE_COMBAT)
+	_stand(_middle(layout))
+	_freeze()
+	var screen := DisplayServer.get_screen_count() - 1
+	for i in DisplayServer.get_screen_count():
+		if DisplayServer.screen_get_size(i).x >= 2560:
+			screen = i
+	var area := DisplayServer.screen_get_usable_rect(screen)
+	for size: Vector2i in [Vector2i(mini(2560, area.size.x - 20), 1080), Vector2i(1700, 700), Vector2i(1280, 720)]:
+		DisplayServer.window_set_size(size)
+		DisplayServer.window_set_position(area.position + Vector2i(4, 30))
+		await _wait(1.5)
+		var got := DisplayServer.window_get_size()
+		var grab := DisplayServer.screen_get_image_rect(Rect2i(DisplayServer.window_get_position(), got))
+		var tag := "%dx%d" % [got.x, got.y]
+		if grab != null:
+			grab.save_png(OUT + "wide_%s.png" % tag)
+			var w := grab.get_width()
+			var h := grab.get_height()
+			print("WIDE %s grab %dx%d left %s mid %s right %s fps %d" % [tag, w, h, grab.get_pixel(4, h / 2), grab.get_pixel(w / 2, h / 2), grab.get_pixel(w - 5, h / 2), Engine.get_frames_per_second()])
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+	await _wait(2.0)
+	print("FULLSCREEN size %s fps %d" % [DisplayServer.window_get_size(), Engine.get_frames_per_second()])
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+	await _wait(2.0)
+	print("WINDOWED size %s fps %d" % [DisplayServer.window_get_size(), Engine.get_frames_per_second()])
 
 
 func _other(floor_id: String) -> void:
