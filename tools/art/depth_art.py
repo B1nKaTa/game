@@ -16,6 +16,7 @@
 #   cap.png     the wall top; face_N.png the wall fronts, toned onto one brightness
 #   sconce.png  the wall torch, drawn on north wall faces (DepthLook)
 # and art/props/<set>/<id>.png for each prop, trimmed, made fully opaque or clear, and shrunk to its box.
+import colorsys
 import json
 import os
 import sys
@@ -186,7 +187,11 @@ AREAS = {
     'crossroads': {'faces': [0, 1, 7, 5, 4, 2, 3, 6], 'ground': (0.8, 0.78, 0.76), 'face': (0.9, 0.88, 0.86), 'sconce': 'torch',
                    'plain': True},
     'cemetery': {'faces': [0, 1, 7, 2, 5, 3, 6, 4], 'ground': (0.78, 0.8, 0.76), 'face': (0.88, 0.9, 0.86), 'sconce': 'torch'},
-    'sunset_shores': {'faces': [0, 1, 7, 2, 3, 4, 5, 6], 'ground': (0.78, 0.76, 0.74), 'face': (0.86, 0.84, 0.82), 'sconce': 'lamp'},
+    # The care home's salmon carpet swallowed the warning red: a boss's ring on it all but vanished in a
+    # shot. Its patches are turned to a dusty teal carpet ('patch_hue': hue in degrees, saturation and
+    # value gains), which the red reads against and which stays far from the safe-spot mint.
+    'sunset_shores': {'faces': [0, 1, 7, 2, 3, 4, 5, 6], 'ground': (0.78, 0.76, 0.74), 'face': (0.86, 0.84, 0.82), 'sconce': 'lamp',
+                      'patch_hue': (188.0, 0.62, 0.78)},
     'furnace_works': {'faces': [0, 1, 7, 2, 3, 4, 5, 6], 'ground': (0.78, 0.74, 0.72), 'face': (0.86, 0.82, 0.8), 'sconce': 'torch'},
     'funeral_parlour': {'faces': [0, 1, 7, 2, 3, 4, 5, 6], 'ground': (0.72, 0.66, 0.66), 'face': (0.86, 0.82, 0.8), 'sconce': 'lamp'},
     'flashback_cinema': {'faces': [0, 1, 7, 2, 3, 4, 5, 6], 'ground': (0.76, 0.76, 0.78), 'face': (0.86, 0.84, 0.84), 'sconce': 'lamp'},
@@ -197,7 +202,7 @@ AREAS = {
 }
 
 
-def area_ground(folder, mult, patch=None, plain=False):
+def area_ground(folder, mult, patch=None, plain=False, patch_hue=None):
     sheet = load(os.path.join(folder, 'ground.png'))
     meta = json.load(open(os.path.join(folder, 'ground.json'), encoding='utf-8'))
     strip = [[(0, 0, 0, 0)] * (16 * TILE) for _ in range(TILE)]
@@ -209,6 +214,8 @@ def area_ground(folder, mult, patch=None, plain=False):
             strip[y][index * TILE:(index + 1) * TILE] = pixels[y]
     if patch is not None:
         strip = calm_patch(strip, patch)
+    if patch_hue is not None:
+        strip = turn_patch(strip, patch_hue)
     if plain:
         strip = [row[:TILE] * 16 for row in strip]
     return strip
@@ -241,6 +248,35 @@ def calm_patch(strip, patch):
     return out
 
 
+# Turns the patch terrain's pixels (found as calm_patch finds them) to another hue, keeping each pixel's
+# own hue offset from the all-patch tile's, and scales their saturation and value: (hue, sat, value).
+def turn_patch(strip, patch_hue):
+    hue, sat_gain, val_gain = patch_hue
+
+    def mean(index):
+        px = [p for row in strip for p in row[index * TILE:(index + 1) * TILE]]
+        return [sum(p[k] for p in px) / len(px) for k in range(3)]
+
+    lower, upper = mean(0), mean(15)
+    base_chroma = max(lower) - min(lower)
+    ref = colorsys.rgb_to_hsv(*[c / 255.0 for c in upper])[0]
+    out = []
+    for row in strip:
+        new_row = []
+        for p in row:
+            near_upper = sum((p[k] - upper[k]) ** 2 for k in range(3)) < sum((p[k] - lower[k]) ** 2 for k in range(3))
+            near_upper = near_upper or max(p[:3]) - min(p[:3]) > base_chroma + 25
+            if not near_upper or p[3] == 0:
+                new_row.append(p)
+                continue
+            h, s, v = colorsys.rgb_to_hsv(*[c / 255.0 for c in p[:3]])
+            offset = (h - ref + 0.5) % 1.0 - 0.5
+            r, g, b = colorsys.hsv_to_rgb((hue / 360.0 + offset) % 1.0, min(s * sat_gain, 1.0), min(v * val_gain, 1.0))
+            new_row.append((int(r * 255), int(g * 255), int(b * 255), p[3]))
+        out.append(new_row)
+    return out
+
+
 # A wall top from a wall front: darker, and each pixel pulled toward its row's mean so the courses blur.
 def cap_from(face):
     out = []
@@ -256,7 +292,7 @@ def build_area(export, game, art_set):
     folder = os.path.join(export, 'sets', art_set)
     out = os.path.join(game, 'art', 'tiles', art_set, 'depth')
     os.makedirs(out, exist_ok=True)
-    save(os.path.join(out, 'ground.png'), area_ground(folder, spec['ground'], spec.get('patch'), spec.get('plain', False)))
+    save(os.path.join(out, 'ground.png'), area_ground(folder, spec['ground'], spec.get('patch'), spec.get('plain', False), spec.get('patch_hue')))
     faces = []
     for n, index in enumerate(spec['faces']):
         face = tone(load(os.path.join(folder, 'walls', 'tile_%d.png' % index)), spec['face'])
