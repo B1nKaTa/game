@@ -23,11 +23,13 @@ const ARTED := ["intern_reaper", "stoker", "mall_cop", "hr_representative", "reg
 # Art whose own enemy is retired, and the enemy who wears it now.
 const WORN_BY := {"mall_cop": "airport_mall_cop"}
 # Floor variants wearing a base's art, recoloured or not: variant -> base.
-const VARIANTS := {"furnace_intern_reaper": "intern_reaper", "cinema_intern_reaper": "intern_reaper",
+const VARIANTS := {"furnace_intern_reaper": "intern_reaper",
 	"cruise_stoker": "stoker", "airport_mall_cop": "mall_cop", "airport_weeping_mourner": "weeping_mourner",
 	"cruise_orderly": "orderly", "furnace_burnt_out_auditor": "burnt_out_auditor", "office_florist": "florist",
-	"parlour_plot_holder": "plot_holder", "parlour_seasonal_temp": "seasonal_temp",
-	"shores_seasonal_temp": "seasonal_temp", "shores_denial_officer": "denial_officer"}
+	"parlour_plot_holder": "plot_holder", "shores_seasonal_temp": "seasonal_temp"}
+# Variants drawn for their own floor (the Cinema's usher reaper, the parlour's altar server, the care
+# home's administrator), which wear their own art.
+const OWN_ART_VARIANTS := ["cinema_intern_reaper", "parlour_seasonal_temp", "shores_denial_officer"]
 # Objects drawn facing south, which never turn and so are never mirrored.
 const UNFLIPPED := ["mimic", "lost_luggage", "steam_valve", "film_reel", "ectoplasm"]
 # Objects whose art the strip tool halves to cover their box.
@@ -300,6 +302,12 @@ func test_a_floor_variant_wears_its_bases_art_recoloured() -> void:
 		assert_eq(def.art(), VARIANTS[variant], variant)
 		var shown := _enemy(variant)
 		assert_true(shown.visual().has_art(), variant + " shows its base's art")
+		shown.free()
+	for variant: String in OWN_ART_VARIANTS:
+		var def: EnemyDef = load("res://data/enemies/%s.tres" % variant)
+		assert_eq(def.art(), variant, variant + " wears its own art")
+		var shown := _enemy(variant)
+		assert_true(shown.visual().has_art(), variant + " shows its own art")
 		shown.free()
 	var base: EnemyDef = load("res://data/enemies/intern_reaper.tres")
 	assert_eq(base.art(), "intern_reaper", "an empty art_id is its own id")

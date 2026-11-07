@@ -259,7 +259,7 @@ func test_returning_enemies_keep_their_numbers_and_take_the_floors_colors() -> v
 		assert_eq(mine.mark, theirs.mark, id)
 		assert_true(_difference(mine.color, theirs.color) > 0.2, "%s wears the Cinema's colours" % id)
 	var reaper := _load("cinema_intern_reaper")
-	assert_eq(reaper.art(), "intern_reaper", "the reaper keeps its base's art")
+	assert_eq(reaper.art(), "cinema_intern_reaper", "the reaper wears its own usher art")
 	assert_true(reaper.art_hue_width > 0.0 and not is_equal_approx(reaper.art_hue_to, reaper.art_hue_from), "recoloured")
 
 
