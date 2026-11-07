@@ -792,8 +792,9 @@ func _crossroads_south() -> void:
 	await _shot("crossroads_south", Rect2i(clampi(int(at.x) - 120, 0, 400), clampi(int(at.y) - 60, 0, 270), 240, 90))
 
 
+# Read from his own viewport, since a walk that reaches a door changes the room and frees the view.
 func _harold_crop() -> Rect2i:
-	var at: Vector2 = view.get_viewport().get_canvas_transform() * player.global_position
+	var at: Vector2 = player.get_viewport().get_canvas_transform() * player.global_position
 	return Rect2i(int(at.x) - 30, int(at.y) - 34, 60, 64)
 
 
@@ -818,7 +819,7 @@ func _cardigans() -> void:
 				await _wait(0.2)
 			_walk_action = "move_right" if way > 0.0 else "move_left"
 			_walk = true
-			await _wait(0.25)
+			await _wait(0.15)
 			for i in 3:
 				await _shot("cardigan_%s_walk_%s_%d" % [id, side, i], _harold_crop())
 				await _wait(0.1)
