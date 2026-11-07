@@ -19,6 +19,8 @@ static var _key := ""
 static var _left: ImageTexture
 static var _right: ImageTexture
 static var _watch: BarWatch
+# Off, the bars stay Godot's plain black (used to measure what the frame costs).
+static var enabled := true
 
 
 static func show_for(palette: RoomPalette) -> void:
@@ -84,8 +86,11 @@ static func view_size() -> Vector2i:
 	return Vector2i(ProjectSettings.get_setting("display/window/size/viewport_width"), ProjectSettings.get_setting("display/window/size/viewport_height"))
 
 
-# Keeps the frame viewport the size of the window and the game's viewport off the screen. Godot puts
-# its viewport back on the screen whenever the window changes, so this takes it off again every frame.
+# Shows the frame only while the window has bars, that is while the picture is smaller than the window.
+# Then it keeps the frame viewport the size of the window and the game's viewport off the screen (Godot
+# puts it back whenever the window changes, so it is taken off again every frame). With no bars the
+# screen is Godot's own: the frame viewport is switched off and this only compares the window's size
+# each frame, since no signal tells a viewport-stretched root that its window was resized.
 class BarWatch extends Node:
 	var fill := Color.BLACK
 	var edge := Color.BLACK
@@ -93,7 +98,10 @@ class BarWatch extends Node:
 	var _canvas: RID
 	var _item: RID
 	var _window := Vector2i.ZERO
+	var _integer := true
 	var _picture := Rect2i()
+	var _shown := false
+	var _enabled := true
 
 	func _ready() -> void:
 		process_mode = Node.PROCESS_MODE_ALWAYS
@@ -104,24 +112,33 @@ class BarWatch extends Node:
 		RenderingServer.canvas_item_set_parent(_item, _canvas)
 		RenderingServer.canvas_item_set_default_texture_filter(_item, RenderingServer.CANVAS_ITEM_TEXTURE_FILTER_NEAREST)
 		RenderingServer.viewport_set_update_mode(_viewport, RenderingServer.VIEWPORT_UPDATE_ALWAYS)
-		RenderingServer.viewport_set_active(_viewport, true)
+		RenderingServer.viewport_set_active(_viewport, false)
 
 	func repaint() -> void:
 		_window = Vector2i.ZERO
 
+	func shown() -> bool:
+		return _shown
+
 	func _process(_delta: float) -> void:
 		var window := DisplayServer.window_get_size()
-		if not _viewport.is_valid() or window.x <= 0 or window.y <= 0:
-			return
 		var root := get_tree().root
-		var picture := SideBars.picture_rect(window, SideBars.view_size(), root.content_scale_stretch == Window.CONTENT_SCALE_STRETCH_INTEGER)
-		if window != _window or picture != _picture:
-			_window = window
-			_picture = picture
-			_paint(root)
-		RenderingServer.viewport_attach_to_screen(root.get_viewport_rid(), Rect2(), DisplayServer.INVALID_WINDOW_ID)
+		var integer := root.content_scale_stretch == Window.CONTENT_SCALE_STRETCH_INTEGER
+		if window == _window and integer == _integer and SideBars.enabled == _enabled:
+			if _shown:
+				RenderingServer.viewport_attach_to_screen(root.get_viewport_rid(), Rect2(), DisplayServer.INVALID_WINDOW_ID)
+			return
+		_window = window
+		_integer = integer
+		_enabled = SideBars.enabled
+		_picture = SideBars.picture_rect(window, SideBars.view_size(), integer)
+		var bars := window.x > 0 and window.y > 0 and (_picture.size.x < window.x or _picture.size.y < window.y)
+		if bars and SideBars.enabled:
+			_show(root)
+		elif _shown:
+			_hand_back(root)
 
-	func _paint(root: Window) -> void:
+	func _show(root: Window) -> void:
 		RenderingServer.viewport_set_size(_viewport, _window.x, _window.y)
 		RenderingServer.canvas_item_clear(_item)
 		RenderingServer.canvas_item_add_rect(_item, Rect2(Vector2(), Vector2(_window)), fill)
@@ -136,15 +153,22 @@ class BarWatch extends Node:
 			RenderingServer.canvas_item_add_rect(_item, Rect2(left - line, 0, line, _window.y), edge)
 			RenderingServer.canvas_item_add_rect(_item, Rect2(right, 0, line, _window.y), edge)
 		RenderingServer.canvas_item_add_texture_rect(_item, Rect2(_picture), root.get_texture().get_rid())
+		RenderingServer.viewport_set_active(_viewport, true)
 		RenderingServer.viewport_attach_to_screen(_viewport, Rect2(Vector2(), Vector2(_window)), DisplayServer.MAIN_WINDOW_ID)
+		RenderingServer.viewport_attach_to_screen(root.get_viewport_rid(), Rect2(), DisplayServer.INVALID_WINDOW_ID)
+		_shown = true
 
-	# Hands the window back to the game's own viewport, where Godot would show it.
+	# Switches the frame off and gives the screen back to the game's own viewport, where Godot puts it.
+	func _hand_back(root: Window) -> void:
+		RenderingServer.viewport_attach_to_screen(_viewport, Rect2(), DisplayServer.INVALID_WINDOW_ID)
+		RenderingServer.viewport_set_active(_viewport, false)
+		RenderingServer.viewport_attach_to_screen(root.get_viewport_rid(), Rect2(_picture), DisplayServer.MAIN_WINDOW_ID)
+		_shown = false
+
 	func _exit_tree() -> void:
 		var root := get_tree().root
-		RenderingServer.viewport_attach_to_screen(_viewport, Rect2(), DisplayServer.INVALID_WINDOW_ID)
+		if _shown:
+			_hand_back(root)
 		for rid: RID in [_item, _canvas, _viewport]:
 			RenderingServer.free_rid(rid)
 		_viewport = RID()
-		var window := DisplayServer.window_get_size()
-		var picture := SideBars.picture_rect(window, SideBars.view_size(), root.content_scale_stretch == Window.CONTENT_SCALE_STRETCH_INTEGER)
-		RenderingServer.viewport_attach_to_screen(root.get_viewport_rid(), Rect2(picture), DisplayServer.MAIN_WINDOW_ID)

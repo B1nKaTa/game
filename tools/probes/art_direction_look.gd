@@ -125,6 +125,8 @@ func _main() -> void:
 			await _windups(floor_id)
 	if which == "wide":
 		await _wide()
+	if which == "barcost":
+		await _bar_cost()
 	progress._store.delete_all()
 	print("LOOK DONE")
 	quit(0)
@@ -672,6 +674,91 @@ func _wide() -> void:
 	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 	await _wait(2.0)
 	print("WINDOWED size %s fps %d" % [DisplayServer.window_get_size(), Engine.get_frames_per_second()])
+
+
+# What the side frame costs and whether it lines up: on a wide window, with vsync off, the mean and 95th
+# percentile frame time with the frame on and with plain black bars (twice each, interleaved), and on a
+# 16:9 window, where the frame must switch itself off; the mouse warped to known screen points against
+# where the game reads it; and how many frames a colour change takes to reach the screen either way.
+func _bar_cost() -> void:
+	if not await _new_run("funeral_parlour"):
+		return
+	var layout := await _enter(_room_file("combat_0"), RoomLayout.TYPE_COMBAT)
+	_stand(_middle(layout))
+	for enemy in get_nodes_in_group("enemies"):
+		enemy.set_physics_process(true)
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
+	var screen := DisplayServer.get_screen_count() - 1
+	for i in DisplayServer.get_screen_count():
+		if DisplayServer.screen_get_size(i).x >= 2560:
+			screen = i
+	var area := DisplayServer.screen_get_usable_rect(screen)
+	var wide := Vector2i(mini(2560, area.size.x - 20), 1080)
+	for case: Array in [[wide, true], [wide, false], [wide, true], [wide, false], [Vector2i(1920, 1080), true]]:
+		DisplayServer.window_set_size(case[0])
+		DisplayServer.window_set_position(area.position + Vector2i(4, 30))
+		SideBars.enabled = case[1]
+		await _wait(1.0)
+		var times: Array[float] = []
+		var last := Time.get_ticks_usec()
+		var began := Time.get_ticks_msec()
+		while Time.get_ticks_msec() - began < 4000:
+			await process_frame
+			var now := Time.get_ticks_usec()
+			times.append((now - last) / 1000.0)
+			last = now
+		var total := 0.0
+		for ms in times:
+			total += ms
+		times.sort()
+		var shown: bool = SideBars._watch != null and SideBars._watch.shown()
+		print("BARCOST window %s frame %s shown %s frames %d mean %.3f ms p95 %.3f ms" % [DisplayServer.window_get_size(), case[1], shown, times.size(), total / times.size(), times[int(times.size() * 0.95)]])
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED)
+	_freeze()
+	# The mouse: warped to the screen spots of known view points, read back by the game.
+	for frame_on: bool in [true, false]:
+		DisplayServer.window_set_size(wide)
+		SideBars.enabled = frame_on
+		await _wait(0.8)
+		var window := DisplayServer.window_get_size()
+		var picture := SideBars.picture_rect(window, SideBars.view_size(), true)
+		var scale := float(picture.size.x) / SideBars.view_size().x
+		var worst := 0.0
+		for spot: Vector2 in [Vector2(20, 20), Vector2(320, 180), Vector2(620, 340), Vector2(100, 300)]:
+			DisplayServer.warp_mouse(Vector2i(Vector2(picture.position) + spot * scale + Vector2(scale, scale) * 0.5))
+			await process_frame
+			await process_frame
+			worst = maxf(worst, root.get_mouse_position().distance_to(spot))
+		print("BARMOUSE frame %s picture %s scale %.1f worst offset %.2f view px" % [frame_on, picture, scale, worst])
+	# A colour change: how many frames until the screen shows it.
+	var layer := CanvasLayer.new()
+	layer.layer = 120
+	var block := ColorRect.new()
+	block.size = Vector2(80, 80)
+	block.position = Vector2(280, 140)
+	layer.add_child(block)
+	root.add_child(layer)
+	for frame_on: bool in [true, false, true, false]:
+		SideBars.enabled = frame_on
+		await _wait(0.6)
+		var lags: Array[int] = []
+		for trial in 6:
+			var colour := Color(1, 0, 0) if trial % 2 == 0 else Color(0, 0, 1)
+			block.color = colour
+			var frames := 0
+			while frames < 12:
+				await process_frame
+				frames += 1
+				var window := DisplayServer.window_get_size()
+				var grab := DisplayServer.screen_get_image_rect(Rect2i(DisplayServer.window_get_position() + window / 2 - Vector2i(2, 2), Vector2i(4, 4)))
+				if grab != null and grab.get_pixel(1, 1).is_equal_approx(colour):
+					break
+			lags.append(frames)
+		print("BARLAG frame %s frames until shown %s" % [frame_on, lags])
+	layer.queue_free()
+	SideBars.enabled = true
+	DisplayServer.window_set_size(Vector2i(1280, 720))
+	await _wait(0.5)
 
 
 func _other(floor_id: String) -> void:
