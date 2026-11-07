@@ -180,7 +180,10 @@ AREAS = {
     # stains under the lamps, so they are calmed toward their own grey and dimmed a little ('patch').
     'waiting_room': {'faces': [0, 1, 7, 2, 5, 6, 3, 1], 'ground': (0.82, 0.8, 0.78), 'face': (0.9, 0.88, 0.84), 'sconce': 'lamp',
                      'patch': (0.5, 0.9)},
-    'crossroads': {'faces': [0, 1, 7, 5, 4, 2, 3, 6], 'ground': (0.8, 0.78, 0.76), 'face': (0.9, 0.88, 0.86), 'sconce': 'torch'},
+    # The pale cobble patches stood out of the earth as bright piles where one only clipped a room's
+    # edge (beside Harold at the south wall), so they are dimmed onto the earth and kept as worn cobbles.
+    'crossroads': {'faces': [0, 1, 7, 5, 4, 2, 3, 6], 'ground': (0.8, 0.78, 0.76), 'face': (0.9, 0.88, 0.86), 'sconce': 'torch',
+                   'patch': (0.6, 0.7)},
     'cemetery': {'faces': [0, 1, 7, 2, 5, 3, 6, 4], 'ground': (0.78, 0.8, 0.76), 'face': (0.88, 0.9, 0.86), 'sconce': 'torch'},
     'sunset_shores': {'faces': [0, 1, 7, 2, 3, 4, 5, 6], 'ground': (0.78, 0.76, 0.74), 'face': (0.86, 0.84, 0.82), 'sconce': 'lamp'},
     'furnace_works': {'faces': [0, 1, 7, 2, 3, 4, 5, 6], 'ground': (0.78, 0.74, 0.72), 'face': (0.86, 0.82, 0.8), 'sconce': 'torch'},
