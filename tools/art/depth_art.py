@@ -180,10 +180,11 @@ AREAS = {
     # stains under the lamps, so they are calmed toward their own grey and dimmed a little ('patch').
     'waiting_room': {'faces': [0, 1, 7, 2, 5, 6, 3, 1], 'ground': (0.82, 0.8, 0.78), 'face': (0.9, 0.88, 0.84), 'sconce': 'lamp',
                      'patch': (0.5, 0.9)},
-    # The pale cobble patches stood out of the earth as bright piles where one only clipped a room's
-    # edge (beside Harold at the south wall), so they are dimmed onto the earth and kept as worn cobbles.
+    # The pale cobble patches stood out of the earth as a bright pile where one only clipped the room's
+    # south wall beside Harold, and even dimmed (patch 0.6, 0.7) the lone bump still read as a heap, so
+    # the Crossroads is plain earth: every tile is its all-earth tile ('plain').
     'crossroads': {'faces': [0, 1, 7, 5, 4, 2, 3, 6], 'ground': (0.8, 0.78, 0.76), 'face': (0.9, 0.88, 0.86), 'sconce': 'torch',
-                   'patch': (0.6, 0.7)},
+                   'plain': True},
     'cemetery': {'faces': [0, 1, 7, 2, 5, 3, 6, 4], 'ground': (0.78, 0.8, 0.76), 'face': (0.88, 0.9, 0.86), 'sconce': 'torch'},
     'sunset_shores': {'faces': [0, 1, 7, 2, 3, 4, 5, 6], 'ground': (0.78, 0.76, 0.74), 'face': (0.86, 0.84, 0.82), 'sconce': 'lamp'},
     'furnace_works': {'faces': [0, 1, 7, 2, 3, 4, 5, 6], 'ground': (0.78, 0.74, 0.72), 'face': (0.86, 0.82, 0.8), 'sconce': 'torch'},
@@ -196,7 +197,7 @@ AREAS = {
 }
 
 
-def area_ground(folder, mult, patch=None):
+def area_ground(folder, mult, patch=None, plain=False):
     sheet = load(os.path.join(folder, 'ground.png'))
     meta = json.load(open(os.path.join(folder, 'ground.json'), encoding='utf-8'))
     strip = [[(0, 0, 0, 0)] * (16 * TILE) for _ in range(TILE)]
@@ -208,6 +209,8 @@ def area_ground(folder, mult, patch=None):
             strip[y][index * TILE:(index + 1) * TILE] = pixels[y]
     if patch is not None:
         strip = calm_patch(strip, patch)
+    if plain:
+        strip = [row[:TILE] * 16 for row in strip]
     return strip
 
 
@@ -253,7 +256,7 @@ def build_area(export, game, art_set):
     folder = os.path.join(export, 'sets', art_set)
     out = os.path.join(game, 'art', 'tiles', art_set, 'depth')
     os.makedirs(out, exist_ok=True)
-    save(os.path.join(out, 'ground.png'), area_ground(folder, spec['ground'], spec.get('patch')))
+    save(os.path.join(out, 'ground.png'), area_ground(folder, spec['ground'], spec.get('patch'), spec.get('plain', False)))
     faces = []
     for n, index in enumerate(spec['faces']):
         face = tone(load(os.path.join(folder, 'walls', 'tile_%d.png' % index)), spec['face'])
