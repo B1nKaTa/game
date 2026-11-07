@@ -161,7 +161,7 @@ Built by `py tools/art/shot_art.py D:/grandpa-art/direction .` into `res://art/p
 
 ## Side bars on wide screens
 
-Godot 4 has no `black_bars_set_images`, and on gl_compatibility the bars stay black whatever the clear colour. `SideBars` therefore keeps one window-sized viewport that paints the area's dark frame and the game's own picture at the rect Godot would use (`SideBars.picture_rect`), and takes the game's viewport off the screen every frame, since two viewports shown on one window halved the frame rate. Input mapping stays Godot's own. Shot with `art_direction_look.gd wide`.
+Godot 4 has no `black_bars_set_images`, and on gl_compatibility the bars stay black whatever the clear colour. `SideBars` therefore keeps one window-sized viewport that paints the area's dark frame and the game's own picture at the rect Godot would use (`SideBars.picture_rect`), and takes the game's viewport off the screen every frame, since two viewports shown on one window halved the frame rate. Input mapping stays Godot's own. It switches on only while the window has bars; with none (an exact 16:9 fit) the screen is Godot's and only the window size is compared each frame. Measured with `art_direction_look.gd barcost` on a 2540x1080 window, vsync off: 0.94 ms a frame with the frame against 0.89 ms with black bars (p95 1.30 against 1.21), the mouse read back to within the same half pixel either way, and a change on screen after one frame either way. Shot with `wide`.
 
 ## Verified on 2026-11-07
 
