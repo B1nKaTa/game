@@ -48,8 +48,9 @@ CUTS = {
     # The memo raised back, then thrown.
     'hr_representative': {'windup': ('attack', [4, 5, 6, 7], '06a0adcd'), 'attack': ('attack', [8], '06a0adcd')},
     'old_smokey': {'windup': ('attack', [3, 4, 5], 'f5edbd72'), 'attack': ('attack', [6, 7, 8], 'f5edbd72')},
-    # The gavel raised overhead, then brought down.
-    'chairman_of_the_board': {'windup': ('attack', [3, 4, 5, 6], '2c6098a8'), 'attack': ('attack', [7, 8], '2c6098a8')},
+    # The gavel raised overhead, then brought down. Redrawn in the depth style on 2026-11-07 in a light
+    # silver pinstripe (D:/grandpa-art/direction/enemies), since the charcoal suit read at 0.32.
+    'chairman_of_the_board': {'windup': ('attack', [3, 4, 5, 6], '8ad03ae5'), 'attack': ('attack', [7, 8], '8ad03ae5')},
     # The regenerated, lighter robe (2026-11-06): the scythe drawn back over his shoulder, then swept low.
     'regional_reaper': {'windup': ('attack', [1, 2, 3, 4], '436d18dc'), 'attack': ('attack', [5, 6, 7, 8], '436d18dc')},
     # The second batch (2026-11-06), picked off labelled contact sheets of each attack.
