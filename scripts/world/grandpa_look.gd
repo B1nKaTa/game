@@ -100,11 +100,17 @@ static func draw_hat(canvas: CanvasItem, shape: String, head: Vector2, color: Co
 			canvas.draw_polyline(PackedVector2Array([crown[0], crown[1], crown[2], crown[3]]), OUTLINE, 1.0)
 			canvas.draw_polyline(PackedVector2Array([brim[0], brim[1], brim[2], brim[3], brim[4], brim[5], brim[0]]), OUTLINE, 1.0)
 		"flat_cap":
-			var crown := Rect2(head + Vector2(-7, -9), Vector2(14, 5))
-			canvas.draw_rect(crown, color)
-			var peak := PackedVector2Array([head + Vector2(5 * facing_dir, -5), head + Vector2(11 * facing_dir, -4), head + Vector2(5 * facing_dir, -3)])
+			# Rounded to the dome of his hair (top at y = -20) and pulled down to his brow, so no corner
+			# hangs in the air, with the peak out over his forehead the way he faces.
+			var crown := PackedVector2Array()
+			for point: Vector2 in [Vector2(-7, -1), Vector2(-7, -5), Vector2(-5, -7), Vector2(4, -7), Vector2(7, -4), Vector2(7, -1)]:
+				crown.append(head + Vector2(point.x * facing_dir, point.y))
+			var peak := PackedVector2Array([head + Vector2(5 * facing_dir, -3), head + Vector2(11 * facing_dir, -1), head + Vector2(5 * facing_dir, 0)])
+			canvas.draw_colored_polygon(crown, color)
 			canvas.draw_colored_polygon(peak, color.darkened(0.25))
-			canvas.draw_rect(crown, OUTLINE, false, 1.0)
+			canvas.draw_line(head + Vector2(-6 * facing_dir, -3), head + Vector2(5 * facing_dir, -3), color.darkened(0.2), 1.0)
+			canvas.draw_polyline(crown + PackedVector2Array([crown[0]]), OUTLINE, 1.0)
+			canvas.draw_polyline(peak, OUTLINE, 1.0)
 		"cone":
 			var cone := PackedVector2Array([head + Vector2(-6, -6), head + Vector2(6, -6), head + Vector2(0, -20)])
 			canvas.draw_colored_polygon(cone, color)
