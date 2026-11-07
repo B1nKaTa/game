@@ -249,6 +249,8 @@ func _ready() -> void:
 	var palette := _floor_def.room_palette()
 	# Props, doors, chests and pickups look in the path's own art folder first (PropArt).
 	PropArt.art_set = _floor_def.art()
+	# On a screen wider than 16:9, the bars beside the picture take this area's dark wall tone.
+	SideBars.show_for(palette)
 	# An Arcade Room keeps its neon patterns, so it never passes for one of the floor's own rooms.
 	var tile_set := _floor_def.art()
 	_depth = DepthLook.for_floor(_floor_def)
