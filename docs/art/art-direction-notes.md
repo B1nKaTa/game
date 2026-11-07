@@ -76,6 +76,9 @@ This is a rulebook. A floor redone later follows it and only picks its own mater
 - When a base art is redrawn, re-aim its variants' `art_hue_from` at the new art's main colour.
 - **Health bars** sit a few pixels over the top of the drawn art (`Enemy.bar_top`, `SpriteVisual.idle_height`), on their own layer one z over the bodies.
 - **Attack warnings.** Regular enemies draw no warning shapes unless the Game tab's "Attack warnings" is on (`AttackWarnings`); their tell is the windup pose and a short pale flash at its start (`Enemy.WINDUP_CUE`). Bosses and mini bosses keep every telegraph and safe-spot mark.
+  - A world attack a regular starts (the popcorn tub, phone cord, perfume, write-up, crystal ball, steam jet, shuffleboard puck, ground strike) asks `AttackWarnings.drawn_by(source)` before drawing red; the thing itself (the tub and its shadow, the memo, the mist, the ball) always shows. The crystal ball flashes pale as its burst starts.
+  - Only the shapes hide: a regular's stun stars and spoken lines always show.
+  - A riser (the Plot Holders) winds up under Harold, where his body hides its mound, so with the ring hidden it flashes a pale ring round the spot and kicks up earth (`Enemy._draw_rising_cue`).
 
 ## 11. The other areas
 
@@ -156,9 +159,21 @@ Built by `py tools/art/shot_art.py D:/grandpa-art/direction .` into `res://art/p
 | Fire breath, steam, shockwaves, pipe rings, burn rings, beams, foghorn, blasts | their own scripts | | effects | still code |
 | Harold's cane wave, rolling pin, soup, scooter flames, fizz, cough, clouds | item_fx.gd | Harold | effects | still code |
 
-## To verify when testing resumes
+## Side bars on wide screens
 
-Testing was paused on 2026-11-06 by the user ("don't test anything until further notice"). Everything below was built but not yet run.
+Godot 4 has no `black_bars_set_images`, and on gl_compatibility the bars stay black whatever the clear colour. `SideBars` therefore keeps one window-sized viewport that paints the area's dark frame and the game's own picture at the rect Godot would use (`SideBars.picture_rect`), and takes the game's viewport off the screen every frame, since two viewports shown on one window halved the frame rate. Input mapping stays Godot's own. Shot with `art_direction_look.gd wide`.
+
+## Verified on 2026-11-07
+
+Testing resumed ("test everything"). Shots are in `D:\grandpa-shots-ad\verify2` (every area), `verify3` (windups, wide window, bars, lineups) and `verify4` (rising cue, hats).
+
+- Suite and two full loops pass; the window opens inside its screen, F11 toggles fullscreen and is kept.
+- Every area's combat room, fight with the setting off and on, door shut and open, mini boss and boss. With the setting off no regular draws red (fixed: seven world attacks drew theirs regardless); bosses and mini bosses keep theirs. Warning reds stay distinct on the parlour's wine carpet and the office's red tape.
+- Every regular's windup flashes pale and reads, except the risers, which now have their own cue. The usher, the sunbather and the lost luggage never wind up in plain sight (they shush or ambush).
+- The Waiting Room's parquet was calmed (saturation 0.58 to 0.37, `depth_art.py` `patch`). Harold's flat cap was reshaped onto his hair.
+- Bodies read on every floor. The Chairman measures 0.32 (a charcoal suit, which a value lift cannot raise), but reads on the pale carpet; a lighter redraw would lift him.
+
+The list below is the checklist as it was written before the run.
 
 - **Window on other PCs** (2026-11-07). On a friend's PC the window came out bigger than the screen, cropping the HUD on the left, and changing the resolution in Options did not help. The changes:
   - sizes now come from the window's own screen, its free area outside the taskbar, less the title bar;
