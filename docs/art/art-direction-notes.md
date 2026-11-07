@@ -173,6 +173,15 @@ Testing resumed ("test everything"). Shots are in `D:\grandpa-shots-ad\verify2` 
 - The Waiting Room's parquet was calmed (saturation 0.58 to 0.37, `depth_art.py` `patch`). Harold's flat cap was reshaped onto his hair.
 - Bodies read on every floor. The Chairman measures 0.32 (a charcoal suit, which a value lift cannot raise), but reads on the pale carpet; a lighter redraw would lift him.
 
+## Fixed on 2026-11-07 (fix5)
+
+Shots are in `D:\grandpa-shots-adix5` (`art_direction_look.gd fix5`).
+
+- **The Chairman** is redrawn in the depth style (`create_character` v3, 64 px, low top-down, black outline, low detail) in a light silver pinstripe with a navy tie, broad as before, gavel in hand. His idle, walk and the windup and slam cut from his attack are built into a 72 px canvas (`enemy_strips.py`, export in `D:/grandpa-art/direction/enemies`). He measures 0.54 alone and 0.42 in his fight, where his own warning fills tint him.
+- **Cardigans are outfits.** Each cardigan cosmetic drawn as a cardigan has its own copy of Harold's three strips with his olive cardigan redrawn in its colour (`tools/art/harold_outfits.py`, `art/sprites/grandpa_<id>/`): his five cardigan tones each become the same step of a ramp built from the cosmetic's colour, so every frame lines up with his own. `GrandpaLook.outfit_art` picks the art and `SpriteVisual.set_art` swaps it without restarting the anim. He faces east in the art and is mirrored for west, as before. The code band remains only as the fallback for a cardigan with no outfit built; the Power Tie is still drawn in code.
+- **Sunset Shores' carpet** is turned from salmon to a dusty teal (`depth_art.py` `patch_hue`, `turn_patch`): on the salmon a boss's ring all but vanished, on the teal every ring and fill reads.
+- **The Crossroads** is plain earth (`plain`): its lone cobble patch at the south wall read as a pile beside Harold, even dimmed.
+
 The list below is the checklist as it was written before the run.
 
 - **Window on other PCs** (2026-11-07). On a friend's PC the window came out bigger than the screen, cropping the HUD on the left, and changing the resolution in Options did not help. The changes:
