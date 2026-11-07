@@ -1,0 +1,17 @@
+[remap]
+
+importer="font_data_bmfont"
+type="FontFile"
+uid="uid://cl5blbvkr2vd3"
+path="res://.godot/imported/basement_ledger.fnt-ee788f327bbcb5576a81ee41ea1e896d.fontdata"
+
+[deps]
+
+source_file="res://art/ui/basement_ledger.fnt"
+dest_files=["res://.godot/imported/basement_ledger.fnt-ee788f327bbcb5576a81ee41ea1e896d.fontdata"]
+
+[params]
+
+fallbacks=[]
+compress=true
+scaling_mode=2
