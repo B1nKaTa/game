@@ -800,6 +800,21 @@ func _draw() -> void:
 		draw_polyline(mound, MOUND_EDGE, 1.0)
 
 
+# With no ring, a mound about to rise under Grandpa is hidden by his body, so it gets the regulars' cue
+# where he can see it: a short pale flash round the spot as the windup starts, then earth kicked up out
+# from under him, never red and never wider than the hit.
+func _draw_rising_cue(layer: Node2D) -> void:
+	var elapsed := maxf(_warning._duration - _warning.remaining(), 0.0)
+	var share := clampf(elapsed / maxf(_warning._duration, 0.01), 0.0, 1.0)
+	if elapsed < WINDUP_CUE_TIME * 2.0:
+		layer.draw_arc(Vector2(0.0, 6.0), 14.0, 0.0, TAU, 20, Color(WINDUP_CUE, 0.85), 2.0)
+	var reach := 8.0 + 14.0 * share
+	for i in 6:
+		var way := Vector2.from_angle(TAU * i / 6.0 + share * 2.0)
+		var hop := absf(sin(elapsed * 14.0 + i)) * 3.0
+		layer.draw_circle(Vector2(0.0, 6.0) + way * Vector2(reach, reach * 0.45) - Vector2(0.0, hop), 1.5 + share, MOUND_COLOR)
+
+
 # Where the health bar's top goes, in the enemy's own space: a few pixels over the top of its drawn art
 # (SpriteVisual.idle_height above its feet), not over the hit box, which is shorter than most art.
 func bar_top() -> float:
@@ -868,6 +883,8 @@ func _draw_warning(layer: Node2D) -> void:
 			if progress > 0.0:
 				layer.draw_colored_polygon(fill, Color(WARNING_COLOR, 0.2 + 0.3 * progress))
 			layer.draw_polyline(outline, WARNING_COLOR, 2.0)
+	elif submerged and def != null and def.hidden_look != "smoke" and is_winding_up():
+		_draw_rising_cue(layer)
 	if def == null:
 		return
 	var top := -def.body_size.y / 2.0

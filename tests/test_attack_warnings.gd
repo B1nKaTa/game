@@ -56,3 +56,10 @@ func test_hidden_warnings_keep_the_stars_and_the_words() -> void:
 	var body := source.substr(source.find("func _draw_warning("), 4000)
 	assert_true(body.contains("if shows_warnings() and _warning != null"), "only the shapes ask")
 	assert_true(body.find("_dazed_left > 0.0") > body.find("if def == null:"), "the stars sit outside the shapes")
+
+
+# A riser winds up under Grandpa, hidden by his body, so with no ring it kicks up earth he can see.
+func test_a_hidden_riser_shows_a_cue_with_the_warnings_off() -> void:
+	var source := FileAccess.get_file_as_string("res://scripts/actors/enemy.gd")
+	assert_true(source.contains("elif submerged and def != null and def.hidden_look != \"smoke\" and is_winding_up():"))
+	assert_true(source.contains("func _draw_rising_cue("))
