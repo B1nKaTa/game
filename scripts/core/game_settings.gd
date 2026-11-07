@@ -24,9 +24,10 @@ const DEFAULTS := {
 		"brightness": [0, -50, 50],
 		"contrast": [0, -50, 50],
 		"gamma": [0, -50, 50],
-		# "" is the best fit for the screen, worked out when it is applied.
-		"resolution": "",
-		"fullscreen": true,
+		# A 1080p window by default; a screen too small for it gets the biggest size that fits. "" is the
+		# best fit for the screen, worked out when it is applied. F11 or Alt+Enter goes fullscreen.
+		"resolution": "1920x1080",
+		"fullscreen": false,
 		"vsync": true,
 		"confine_mouse": true,
 		"pixel_perfect": true,

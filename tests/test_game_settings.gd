@@ -24,7 +24,7 @@ func test_defaults_match_the_spec() -> void:
 	assert_eq(s.value(GameSettings.VIDEO, "brightness"), 0)
 	assert_eq(s.value(GameSettings.VIDEO, "contrast"), 0)
 	assert_eq(s.value(GameSettings.VIDEO, "gamma"), 0)
-	assert_eq(s.value(GameSettings.VIDEO, "fullscreen"), true)
+	assert_eq(s.value(GameSettings.VIDEO, "fullscreen"), false)
 	assert_eq(s.value(GameSettings.VIDEO, "vsync"), true)
 	assert_eq(s.value(GameSettings.VIDEO, "confine_mouse"), true)
 	assert_eq(s.value(GameSettings.VIDEO, "pixel_perfect"), true)
@@ -43,9 +43,9 @@ func test_defaults_match_the_spec() -> void:
 	assert_eq(s.value(GameSettings.GAME, "language"), "en")
 
 
-func test_the_resolution_default_is_empty_until_the_screen_is_known() -> void:
-	# An empty resolution means "the best fit", worked out from the screen when it is applied.
-	assert_eq(GameSettings.new().value(GameSettings.VIDEO, "resolution"), "")
+func test_the_resolution_default_is_a_1080p_window() -> void:
+	# A screen too small for it gets the best fit instead, worked out when it is applied.
+	assert_eq(GameSettings.new().value(GameSettings.VIDEO, "resolution"), "1920x1080")
 
 
 func test_round_trip_through_the_file() -> void:
@@ -87,7 +87,7 @@ func test_bad_values_fall_back_or_clamp() -> void:
 	s.load_from(_path())
 	assert_eq(s.value(GameSettings.VIDEO, "brightness"), 50, "clamped to the slider")
 	assert_eq(s.value(GameSettings.VIDEO, "contrast"), 0, "a wrong type keeps the default")
-	assert_eq(s.value(GameSettings.VIDEO, "fullscreen"), true, "a number is not a switch")
+	assert_eq(s.value(GameSettings.VIDEO, "fullscreen"), false, "a number is not a switch")
 	assert_eq(s.value(GameSettings.AUDIO, "master"), 0)
 	assert_eq(s.value(GameSettings.GAME, "minimap_opacity"), 20, "the minimap never goes below 20")
 	assert_eq(s.value(GameSettings.GAME, "language"), "en", "an unknown language falls back")

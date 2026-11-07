@@ -262,7 +262,7 @@ func _on_off(on: bool) -> String:
 func _choice_text(key: String, current: String) -> String:
 	if key == "language":
 		return "< %s >" % LANGUAGE_NAMES.get(current, current)
-	var best := GameSettings.best_resolution(DisplayServer.screen_get_size())
+	var best: Vector2i = Settings.resolution_choices()[-1]
 	var size := Settings.window_size(_draft)
 	var text := GameSettings.resolution_text(size)
 	return "< %s%s >" % [text, "*" if size == best else ""]

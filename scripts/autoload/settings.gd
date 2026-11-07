@@ -63,7 +63,25 @@ func cursor_mode(hidden: bool) -> Input.MouseMode:
 
 
 func resolution_choices() -> Array[Vector2i]:
-	return GameSettings.resolutions_for(DisplayServer.screen_get_size())
+	return GameSettings.resolutions_for(window_room())
+
+
+# The screen the window is on right now. Asking for "the" screen size reads the main screen, which on a
+# PC with two screens, or with Windows display scaling, can be bigger than the one the game shows on.
+func current_screen() -> int:
+	return DisplayServer.window_get_current_screen()
+
+
+# The room a window can take on its screen: the area outside the taskbar, less the title bar and borders.
+func window_room() -> Vector2i:
+	var screen := current_screen()
+	var room := DisplayServer.screen_get_usable_rect(screen).size
+	if room.x <= 0 or room.y <= 0:
+		room = DisplayServer.screen_get_size(screen)
+	var frame := DisplayServer.window_get_size_with_decorations() - DisplayServer.window_get_size()
+	if DisplayServer.window_get_mode() != DisplayServer.WINDOW_MODE_WINDOWED or frame.x < 0 or frame.y < 0:
+		frame = Vector2i(16, 40)
+	return room - frame
 
 
 # The window size the settings ask for: the chosen one if it still fits, otherwise the best fit.
@@ -80,14 +98,50 @@ func _apply_video(settings: GameSettings) -> void:
 	var root := get_tree().root
 	root.content_scale_stretch = Window.CONTENT_SCALE_STRETCH_INTEGER if settings.value(GameSettings.VIDEO, "pixel_perfect") else Window.CONTENT_SCALE_STRETCH_FRACTIONAL
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if settings.value(GameSettings.VIDEO, "vsync") else DisplayServer.VSYNC_DISABLED)
+	var screen := current_screen()
 	if settings.value(GameSettings.VIDEO, "fullscreen"):
 		if DisplayServer.window_get_mode() != DisplayServer.WINDOW_MODE_FULLSCREEN:
 			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+		_log_display.call_deferred()
 		return
 	if DisplayServer.window_get_mode() != DisplayServer.WINDOW_MODE_WINDOWED:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 	var size := window_size(settings)
 	if DisplayServer.window_get_size() != size:
 		DisplayServer.window_set_size(size)
-		var screen := DisplayServer.screen_get_position() + (DisplayServer.screen_get_size() - size) / 2
-		DisplayServer.window_set_position(screen)
+	# Centred in the screen's free area and never pushed past its top-left corner, so a window that is
+	# still too big loses its bottom-right edge, not the HUD on its left.
+	var area := DisplayServer.screen_get_usable_rect(screen)
+	if area.size.x <= 0 or area.size.y <= 0:
+		area = Rect2i(DisplayServer.screen_get_position(screen), DisplayServer.screen_get_size(screen))
+	var corner := area.position + (area.size - DisplayServer.window_get_size_with_decorations()) / 2
+	DisplayServer.window_set_position(Vector2i(maxi(corner.x, area.position.x), maxi(corner.y, area.position.y)))
+	_log_display.call_deferred()
+
+
+# F11 or Alt+Enter switches between fullscreen and a window at any time, and keeps the choice.
+func _input(event: InputEvent) -> void:
+	if is_quiet() or not (event is InputEventKey):
+		return
+	var key := event as InputEventKey
+	if not key.pressed or key.echo:
+		return
+	if key.keycode == KEY_F11 or (key.keycode == KEY_ENTER and key.alt_pressed):
+		var next := current.duplicate_settings()
+		next.set_value(GameSettings.VIDEO, "fullscreen", not current.value(GameSettings.VIDEO, "fullscreen"))
+		commit(next)
+		get_viewport().set_input_as_handled()
+
+
+# What the game saw of the screens, written each time the window is set up, so a display problem on
+# another PC can be read back from user://display_log.txt.
+func _log_display() -> void:
+	var file := FileAccess.open("user://display_log.txt", FileAccess.WRITE)
+	if file == null:
+		return
+	var screen := current_screen()
+	file.store_line("screens: %d  current: %d  primary: %d" % [DisplayServer.get_screen_count(), screen, DisplayServer.get_primary_screen()])
+	for i in DisplayServer.get_screen_count():
+		file.store_line("screen %d: size %s  usable %s  position %s  scale %.2f  dpi %d" % [i, DisplayServer.screen_get_size(i), DisplayServer.screen_get_usable_rect(i), DisplayServer.screen_get_position(i), DisplayServer.screen_get_scale(i), DisplayServer.screen_get_dpi(i)])
+	file.store_line("window: mode %d  size %s  with frame %s  position %s" % [DisplayServer.window_get_mode(), DisplayServer.window_get_size(), DisplayServer.window_get_size_with_decorations(), DisplayServer.window_get_position()])
+	file.store_line("content scale factor %.2f  choices %s" % [get_tree().root.content_scale_factor, resolution_choices()])

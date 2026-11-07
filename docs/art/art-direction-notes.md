@@ -160,6 +160,14 @@ Built by `py tools/art/shot_art.py D:/grandpa-art/direction .` into `res://art/p
 
 Testing was paused on 2026-11-06 by the user ("don't test anything until further notice"). Everything below was built but not yet run.
 
+- **Window on other PCs** (2026-11-07). On a friend's PC the window came out bigger than the screen, cropping the HUD on the left, and changing the resolution in Options did not help. The changes:
+  - sizes now come from the window's own screen, its free area outside the taskbar, less the title bar;
+  - the window is never placed past the screen's top-left corner;
+  - the default is a 1920x1080 window, not fullscreen;
+  - F11 and Alt+Enter toggle fullscreen;
+  - user://display_log.txt records what the game saw of the screens.
+
+  Check that it opens fully on screen on 1080p, 1440p and two-screen setups, with Windows scaling at 100% and 150%; that F11 and Alt+Enter work and are kept; that the Options resolution list fits the screen; and that test_game_settings passes.
 - **Suite and full loop.** Run tools/test.ps1 and one full loop in a renamed export after all of pass 2 and the rollout; commit edf4571 onward is untested.
 - **Health bars** (edf4571): screenshot a bar over a short (seasonal_temp), a tall (denial_officer, notary_public) and a wide enemy on floor 1, the cemetery and the parlour (`art_direction_look.gd bars`), and check the bar never sits on a body.
 - **Hidden warnings** (3ae4990):
