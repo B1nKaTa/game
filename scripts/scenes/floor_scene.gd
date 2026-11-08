@@ -246,7 +246,8 @@ func write_checkpoint() -> bool:
 	ending["pension_earned"] = maxi(_run.pension_earned - room_paid, 0)
 	var rooms := {}
 	for id: int in _room_views:
-		var view: RoomView = _room_views[id]
+		# Untyped: a typed assignment fails on a freed view before is_instance_valid can skip it.
+		var view = _room_views[id]
 		if is_instance_valid(view) and view.is_finished() and not view is CrossroadsView:
 			rooms[str(id)] = view.snapshot()
 	var checkpoint := {
