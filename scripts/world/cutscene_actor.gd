@@ -53,6 +53,12 @@ func setup(actor_id: String) -> void:
 		_sprite.position = HAROLD_SPRITE_OFFSET
 		_body.add_child(_sprite)
 		_sprite.setup("grandpa", Vector2(20, 28), HAROLD_COLOR, Player.SPRITE_FRAME_WIDTH)
+	elif ActorLook.has_sprite(id):
+		# Someone the game already has art for (the Chairman) plays his own idle and walk, on his feet.
+		_sprite = SpriteVisual.new()
+		_body.add_child(_sprite)
+		_sprite.setup(ActorLook.SPRITE_ART[id], Vector2(20, 28), Color.WHITE, 0)
+		_sprite.set_feet(0.0)
 	else:
 		_look = ActorLook.new()
 		_look.id = id

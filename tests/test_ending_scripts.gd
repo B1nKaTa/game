@@ -126,6 +126,27 @@ func test_the_eternal_feud_ends_on_its_own_card_first() -> void:
 	assert_true(texts.has("Some feuds are eternal. Please take a number."))
 
 
+# The Chairman retires in Under New Management as the player fought him: his own silver pinstripe art,
+# standing on his feet, not the old code drawing in a dark suit.
+func test_the_chairman_wears_his_own_art_in_the_endings() -> void:
+	assert_true(ActorLook.has_sprite("chairman"), "his art is there")
+	var actor := CutsceneActor.new()
+	actor.setup("chairman")
+	assert_true(actor._sprite != null, "a sprite")
+	assert_true(actor._look == null, "not the code drawing")
+	if actor._sprite != null:
+		assert_eq(actor._sprite.art_id(), "chairman_of_the_board")
+		assert_true(actor._sprite.has_art(), "it shows his idle")
+		assert_eq(actor._sprite.position, Vector2.ZERO, "on his feet")
+	actor.face(-1)
+	assert_true(actor._sprite == null or actor._sprite.is_facing_left(), "mirrored to face west")
+	actor.free()
+	var gerald := CutsceneActor.new()
+	gerald.setup("gerald")
+	assert_true(gerald._look != null and gerald._sprite == null, "the others keep their drawings")
+	gerald.free()
+
+
 func _texts(steps: Array) -> Array:
 	var texts := []
 	for step: Dictionary in steps:

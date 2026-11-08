@@ -26,6 +26,12 @@ const PROPS: Array[String] = [
 	"souvenirs", "garage_door", "shirt", "boarding_pass", "torn_pass", "monitor", "monitor_flat",
 	"sandwich", "ladder", "zzz", "baggage", "ticket", "spray",
 ]
+# Actors who appear in the game with their own art, so a scene shows them as the player met them: the
+# actor id and its art folder (res://art/sprites/<art>/), faced east and mirrored for west. CutsceneActor
+# plays their idle and walk; the code drawing below stays only as the fallback when the art is missing.
+const SPRITE_ART := {
+	"chairman": "chairman_of_the_board",
+}
 const OUTLINE := Color(0.08, 0.06, 0.05)
 # Actors drawn as several people, who fall each on his own (down).
 const GROUPS: Array[String] = ["mourners"]
@@ -33,6 +39,10 @@ const SKIN := Color("e8b48a")
 const GERALD_SKIN := Color("e0b090")
 const GERALD_CARDIGAN := Color("c8a46a")
 const GERALD_TROUSERS := Color("5a4a6a")
+# The Chairman's art's suit, pinstripe and tie (art/sprites/chairman_of_the_board).
+const CHAIRMAN_SUIT := Color("8f98a0")
+const CHAIRMAN_STRIPE := Color("ced7da")
+const CHAIRMAN_TIE := Color("333a4e")
 const HEAD_HEIGHT := 34.0
 
 var id := ""
@@ -49,6 +59,10 @@ var state := ""
 
 static func display_name(actor_id: String) -> String:
 	return str(NAMES.get(actor_id, actor_id.capitalize()))
+
+
+static func has_sprite(actor_id: String) -> bool:
+	return SPRITE_ART.has(actor_id) and SpriteVisual.has_anim(SPRITE_ART[actor_id], "idle")
 
 
 static func is_known(actor_id: String) -> bool:
@@ -88,8 +102,11 @@ func _draw() -> void:
 			draw_rect(Rect2(-8, -37, 16, 3), Color("2f9a5a"))
 			draw_line(Vector2(-3 + facing * 2, -28), Vector2(3 + facing * 2, -29), Color("5a2a1a"), 1.0)
 		"chairman":
-			_person(Color("1a1e2e"), Color("1a1e2e"), SKIN, Color("b8b8c0"), 1.2, 4.0)
-			draw_rect(Rect2(-2, -28, 4, 12), Color("d4a62a"))
+			# The fallback in his art's colours: a light silver pinstripe suit, a navy tie, white hair.
+			_person(CHAIRMAN_SUIT, CHAIRMAN_SUIT.darkened(0.2), SKIN, Color("ced7da"), 1.2, 4.0)
+			for stripe_x: float in [-5.0, -2.0, 4.0, 7.0]:
+				draw_line(Vector2(stripe_x, -31), Vector2(stripe_x, -12), CHAIRMAN_STRIPE, 1.0)
+			draw_rect(Rect2(-1, -31, 3, 13), CHAIRMAN_TIE)
 		"doctor":
 			_person(Color.WHITE, Color("4a6a8a"), SKIN, Color("5a3a22"))
 			draw_arc(Vector2(0, -24), 5, 0.2, PI - 0.2, 8, Color("3a3a40"), 1.0)
