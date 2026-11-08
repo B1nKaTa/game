@@ -4,8 +4,8 @@
 # shading, low detail). Plain Python, no packages.
 #
 # The export is kept as drawn but for three fixes, in the depth look (docs/art/art-direction-notes.md):
-# - its dial above the gate showed an up arrow; it is redrawn by hand as a brass dial with a dark arrow
-#   pointing down;
+# - its dial above the gate showed an up arrow; it is redrawn by hand as a brass floor indicator with
+#   tick marks and a needle leaning down (never an arrow or cross shape, which read as a cross);
 # - its rail rivets were a red close to the warning red (#e93934 beside #e4524f), so they become brass;
 # - the open states are made from the closed one: each leaf of the lattice gate folds to its side of the
 #   frame (to FOLD_HALF, then FOLD_OPEN columns wide), showing the dark car behind with its floor boards.
@@ -61,19 +61,21 @@ def recolour_rivets(px):
 
 def draw_dial(px):
     cx, cy = DIAL
-    # A brass disc with a dark rim, a pale glint upper left, and a dark arrow pointing down.
+    # An old floor indicator: a brass disc with a dark rim, three tick marks round its top and one
+    # needle leaning down to the left (to the lowest floor). No straight cross or arrow shape: an
+    # upright line with a bar across it reads as a cross at this size, which the game must not show.
     for y in range(cy - 3, cy + 4):
         for x in range(cx - 3, cx + 4):
             d = (x - cx) ** 2 + (y - cy) ** 2
-            if d <= 9:
-                px[y][x] = BRASS if d <= 6 else BRASS_MID
+            # Radius under 3, so the disc has no single-pixel bumps at its top, bottom and sides.
+            if d <= 8:
+                px[y][x] = BRASS if d <= 5 else BRASS_MID
             elif d <= 13 and px[y][x][3] > 0:
                 px[y][x] = OUTLINE
-    px[cy - 2][cx - 2] = PALE
-    for (x, y) in [(cx, cy - 2), (cx, cy - 1), (cx, cy), (cx - 1, cy), (cx + 1, cy), (cx, cy + 1)]:
+    for (x, y) in [(cx - 2, cy - 1), (cx, cy - 2), (cx + 2, cy - 1)]:
+        px[y][x] = BRASS_DARK
+    for (x, y) in [(cx, cy), (cx - 1, cy + 1), (cx - 2, cy + 2)]:
         px[y][x] = ARROW
-    px[cy + 1][cx - 1] = BRASS_MID
-    px[cy + 1][cx + 1] = BRASS_MID
 
 
 # The rows of the gate's three rails (top, middle, bottom), which fold with the leaves.
