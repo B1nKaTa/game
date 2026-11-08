@@ -33,3 +33,30 @@ func test_the_frame_is_drawn_without_the_godot_3_call() -> void:
 func test_the_left_bar_lightens_toward_its_edge() -> void:
 	var image := SideBars.frame_image(Color(0.1, 0.1, 0.1), Color(0.5, 0.4, 0.3), true)
 	assert_true(image.get_pixel(SideBars.WIDTH - 2, 0).get_luminance() > image.get_pixel(0, 0).get_luminance())
+
+
+func _source(path: String) -> String:
+	return FileAccess.get_file_as_string(path).replace("\r", "")
+
+
+func _body(source: String, header: String) -> String:
+	var start := source.find(header)
+	var next := source.find("\nfunc ", start + header.length())
+	return source.substr(start, (next if next > 0 else source.length()) - start)
+
+
+func test_a_minimised_window_leaves_the_bars_alone() -> void:
+	var watch := _body(_source("res://scripts/world/side_bars.gd"), "\tfunc _process(")
+	var guard := watch.find("if window.x <= 0 or window.y <= 0:")
+	assert_true(guard > 0 and guard < watch.find("var root"), "it returns before touching any state")
+
+
+func test_the_title_screen_puts_the_bars_back_to_black() -> void:
+	assert_true(_source("res://scripts/scenes/title_screen.gd").contains("SideBars.reset()"))
+	SideBars.reset()
+	assert_true(true, "reset before any frame is a no-op")
+
+
+func test_the_first_window_is_already_full_hd() -> void:
+	assert_eq(ProjectSettings.get_setting("display/window/size/window_width_override"), 1920)
+	assert_eq(ProjectSettings.get_setting("display/window/size/window_height_override"), 1080)

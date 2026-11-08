@@ -47,6 +47,21 @@ static func show_for(palette: RoomPalette) -> void:
 	_watch.repaint()
 
 
+# Back to plain black bars, as on the title screen once a run is left. Before any room has set a frame
+# the bars are Godot's own black already.
+static func reset() -> void:
+	if _left == null:
+		return
+	_key = ""
+	var black := frame_image(Color.BLACK, Color.BLACK, true)
+	_left.update(black)
+	_right.update(black)
+	if _watch != null and is_instance_valid(_watch):
+		_watch.fill = Color.BLACK
+		_watch.edge = Color.BLACK
+		_watch.repaint()
+
+
 # The left bar's edge is on its right side, next to the picture; the right bar's on its left.
 static func frame_image(darkness: Color, wall: Color, edge_on_right: bool) -> Image:
 	var image := Image.create(WIDTH, HEIGHT, false, Image.FORMAT_RGB8)
@@ -122,6 +137,9 @@ class BarWatch extends Node:
 
 	func _process(_delta: float) -> void:
 		var window := DisplayServer.window_get_size()
+		# A minimised window has no size; everything stays as it was until it comes back.
+		if window.x <= 0 or window.y <= 0:
+			return
 		var root := get_tree().root
 		var integer := root.content_scale_stretch == Window.CONTENT_SCALE_STRETCH_INTEGER
 		if window == _window and integer == _integer and SideBars.enabled == _enabled:

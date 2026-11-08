@@ -1,7 +1,7 @@
 extends Node2D
 
 # The title screen, where the game opens after the boot scene: the Waiting Room's queue drawn in code,
-# the game's name above it, the menu bottom left and the version under it. The full loop (--smoke)
+# the game's name above it, the menu bottom left, the version under it and the build id (BuildInfo) bottom right. The full loop (--smoke)
 # never comes here. The dev keys (F3, F5, F6) do nothing here; they work in the Waiting Room.
 
 const MENU_AT := Vector2(26, 198)
@@ -28,6 +28,8 @@ func _ready() -> void:
 	get_tree().paused = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	MusicPlayer.play(MusicRules.title())
+	# Back from a run, the bars beside a wide picture lose the last area's frame.
+	SideBars.reset()
 	add_child(TitleSceneArt.new())
 	_ui = CanvasLayer.new()
 	add_child(_ui)
@@ -54,6 +56,7 @@ func _ready() -> void:
 	var version := MenuStyle.label("v%s" % str(ProjectSettings.get_setting(VERSION_SETTING, "0.5.0")), 9, MenuStyle.DIM)
 	version.position = Vector2(MENU_AT.x, GameSettings.VIEW.y - 16)
 	_ui.add_child(version)
+	_ui.add_child(HudStyle.build_label())
 	_build_menu()
 	_ui.add_child(PadFocus.new())
 

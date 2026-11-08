@@ -51,6 +51,10 @@ const THORNS_ART := "thorns_lying"
 # The casket that lands (art/props/casket.png, 40 px across as the drawing's), fading; its growing shadow
 # in the warning stays drawn.
 const CASKET_ART := "casket"
+const CUE_MARK := "mark"
+const CUE_THROWN := "thrown"
+const CUE_SHADOW := "shadow"
+const CUE_NONE := "none"
 
 var _source: Enemy
 var _radius := 20.0
@@ -124,6 +128,20 @@ func is_burning() -> bool:
 
 func radius() -> float:
 	return _radius
+
+
+# What shows where it will land while it is warned: its red mark (CUE_MARK), the thing thrown at it
+# (CUE_THROWN), or with warnings off and nothing thrown, the faint dark cue (CUE_SHADOW). Nothing shows
+# (CUE_NONE) only before a delayed spot starts or while a hidden pit still follows him; neither can hurt yet.
+func cue() -> String:
+	var marked := _source == null or not is_instance_valid(_source) or _source.shows_warnings()
+	if _landed:
+		return CUE_NONE
+	if marked:
+		return CUE_MARK
+	if _delay > 0.0 or is_following():
+		return CUE_NONE
+	return CUE_THROWN if _thrown_from != Vector2.INF else CUE_SHADOW
 
 
 # How far the warning has filled, from 0 to 1.
@@ -256,11 +274,15 @@ func _draw() -> void:
 		return
 	var filled := fill()
 	# A regular enemy's mark is not drawn unless Attack warnings is on (AttackWarnings); what it throws
-	# still flies.
+	# still flies, and a spot with nothing thrown at it keeps a faint dark cue.
 	var marked := _source == null or not is_instance_valid(_source) or _source.shows_warnings()
 	if marked:
 		draw_circle(Vector2.ZERO, _radius * filled, Color(COLOR, 0.15 + 0.3 * filled))
 		draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 24, COLOR, 2.0)
+	elif _thrown_from == Vector2.INF:
+		var cue := AttackWarnings.cue_color(filled)
+		draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 24, cue, 1.0)
+		draw_circle(Vector2.ZERO, _radius * AttackWarnings.cue_growth(filled), cue)
 	if _look == LOOK_CASKET and marked:
 		draw_arc(Vector2.ZERO, _radius + CASKET_RING_GAP, 0.0, TAU, 32, COLOR, 2.0)
 		_draw_coffin(0.3 + 0.7 * filled, CASKET_SHADOW, 0.25 + 0.5 * filled)
