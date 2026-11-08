@@ -37,6 +37,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_opened_frame = Engine.get_process_frames()
 	add_child(MenuStyle.backing())
+	add_child(MenuStyle.panel(Vector2(16, 14), Vector2(608, 332)))
 	var title := MenuStyle.label(tr("New Game") if _mode == MODE_NEW else tr("Load Game"), MenuStyle.TITLE_FONT + 2, MenuStyle.GOLD)
 	title.position = Vector2(0, 22)
 	title.custom_minimum_size.x = GameSettings.VIEW.x

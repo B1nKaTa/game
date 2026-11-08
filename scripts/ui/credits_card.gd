@@ -11,6 +11,7 @@ const SPEED := 30.0
 # Where the first line starts: low on the screen, but already in view.
 const START_Y := 250.0
 const LINE_GAP := 6
+const SHEET_X := 110.0
 const LINES := [
 	[TitleBrand.FULL_NAME, 24],
 	["", 11],
@@ -36,6 +37,8 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_opened_frame = Engine.get_process_frames()
 	add_child(MenuStyle.backing())
+	# The credits are typed on a long form that runs up the clipboard.
+	add_child(MenuStyle.panel(Vector2(SHEET_X, 12), Vector2(GameSettings.VIEW.x - 2.0 * SHEET_X, GameSettings.VIEW.y - 18.0)))
 	_column = VBoxContainer.new()
 	_column.add_theme_constant_override("separation", LINE_GAP)
 	_column.position = Vector2(0, START_Y)
@@ -45,10 +48,11 @@ func _ready() -> void:
 		var color := MenuStyle.GOLD if line[1] >= 13 and line != LINES[2] else MenuStyle.TEXT
 		var label := MenuStyle.label(tr(line[0]), line[1], color)
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		label.custom_minimum_size.x = GameSettings.VIEW.x
+		# Each line only as wide as its text, centred, so a stamped title's box fits its words.
+		label.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		_column.add_child(label)
 	var hint := MenuStyle.label(tr("Esc: back"), 9, MenuStyle.DIM)
-	hint.position = Vector2(12, GameSettings.VIEW.y - 18)
+	hint.position = Vector2(SHEET_X + 10.0, GameSettings.VIEW.y - 24)
 	add_child(hint)
 
 
