@@ -140,9 +140,14 @@ func _draw() -> void:
 		draw_set_transform(Vector2.ZERO, PI / 2.0)
 	if not _strung:
 		# Laid by an attack and not yet strung: a red outline of the band, filling as it comes.
+		# Only the Chairman lays it, so it follows the setting itself (AttackWarnings): otherwise a faint
+		# dark band, pulsing.
 		var pulse := 0.5 + 0.5 * sin(_age * 10.0)
-		draw_rect(Rect2(-half, -BAND_WIDTH / 2.0, RoomBackdrop.TILE, BAND_WIDTH), Color(WARN, 0.15 + 0.25 * pulse))
-		draw_rect(Rect2(-half, -BAND_WIDTH / 2.0, RoomBackdrop.TILE, BAND_WIDTH), WARN, false, 1.0)
+		if AttackWarnings.shown:
+			draw_rect(Rect2(-half, -BAND_WIDTH / 2.0, RoomBackdrop.TILE, BAND_WIDTH), Color(WARN, 0.15 + 0.25 * pulse))
+			draw_rect(Rect2(-half, -BAND_WIDTH / 2.0, RoomBackdrop.TILE, BAND_WIDTH), WARN, false, 1.0)
+		else:
+			AttackWarnings.draw_cue_lane(self, Rect2(-half, -BAND_WIDTH / 2.0, RoomBackdrop.TILE, BAND_WIDTH), 0.8 + 0.2 * pulse)
 		draw_set_transform(Vector2.ZERO)
 		return
 	if _cut_left > 0.0:

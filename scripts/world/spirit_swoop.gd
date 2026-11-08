@@ -107,8 +107,13 @@ func _draw() -> void:
 	var at := _spot - global_position
 	if not _landed:
 		var progress := fill()
-		draw_circle(at, RADIUS * progress, Color(COLOR, 0.15 + 0.3 * progress))
-		draw_arc(at, RADIUS, 0.0, TAU, 24, COLOR, 2.0)
+		# The red spot only with Attack warnings on (AttackWarnings); otherwise the faint cue, and the
+		# spirit flying in always shows.
+		if AttackWarnings.drawn_by(_source):
+			draw_circle(at, RADIUS * progress, Color(COLOR, 0.15 + 0.3 * progress))
+			draw_arc(at, RADIUS, 0.0, TAU, 24, COLOR, 2.0)
+		else:
+			AttackWarnings.draw_cue_circle(self, at, RADIUS, progress)
 		# The spirit flying in from its place round the light.
 		var spirit := (_from - global_position).lerp(at, progress * progress)
 		draw_line(spirit, spirit.lerp(_from - global_position, 0.25), Color(SPIRIT, 0.4), 3.0)
@@ -120,4 +125,5 @@ func _draw() -> void:
 		return
 	var shown := clampf(_show_left / SHOW_TIME, 0.0, 1.0)
 	draw_circle(at, RADIUS, Color(SPIRIT, 0.45 * shown))
-	draw_arc(at, RADIUS, 0.0, TAU, 24, Color(COLOR, shown), 2.0)
+	if AttackWarnings.drawn_by(_source):
+		draw_arc(at, RADIUS, 0.0, TAU, 24, Color(COLOR, shown), 2.0)

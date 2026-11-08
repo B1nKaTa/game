@@ -226,6 +226,9 @@ func _draw() -> void:
 		return
 	var now := angle_now()
 	var end := end_angle()
+	if not AttackWarnings.drawn_by(_source):
+		_draw_hidden(now, end)
+		return
 	# All it has still to cross shows, so the warning reads wherever he stands.
 	if absf(end - now) > 0.01:
 		var sector := _sector(now, end, LENGTH)
@@ -246,12 +249,28 @@ func _draw() -> void:
 	_draw_beam(now, 1.0)
 
 
+# With Attack warnings off (AttackWarnings): the faint dark cue over the lane and the arc still to turn
+# through, the lens glowing up through the windup, then the beam of light itself with no red edge.
+func _draw_hidden(now: float, end: float) -> void:
+	if absf(end - now) > 0.01:
+		AttackWarnings.draw_cue_polygon(self, _sector(now, end, LENGTH), fill() if is_warning() else 0.0)
+	if is_warning():
+		var progress := fill()
+		draw_set_transform(Vector2.ZERO, _start)
+		AttackWarnings.draw_cue_lane(self, Rect2(0.0, -WIDTH / 2.0, LENGTH, WIDTH), progress)
+		draw_set_transform(Vector2.ZERO)
+		draw_circle(Vector2.ZERO, 6.0 + 4.0 * progress, Color(LENS, 0.5 + 0.5 * progress))
+		return
+	_draw_beam(now, 1.0)
+
+
 func _draw_beam(angle: float, alpha: float) -> void:
 	draw_set_transform(Vector2.ZERO, angle)
 	var beam := Rect2(0.0, -WIDTH / 2.0, LENGTH, WIDTH)
 	draw_rect(beam, Color(LIGHT, LIGHT.a * alpha))
 	draw_rect(Rect2(0.0, -WIDTH / 6.0, LENGTH, WIDTH / 3.0), Color(LIGHT_CORE, LIGHT_CORE.a * alpha))
-	draw_rect(beam, Color(COLOR, alpha), false, 2.0)
-	draw_rect(beam.grow(Enemy.HEAVIEST_LANE_GAP), Color(COLOR, 0.6 * alpha), false, 2.0)
+	if AttackWarnings.drawn_by(_source):
+		draw_rect(beam, Color(COLOR, alpha), false, 2.0)
+		draw_rect(beam.grow(Enemy.HEAVIEST_LANE_GAP), Color(COLOR, 0.6 * alpha), false, 2.0)
 	draw_set_transform(Vector2.ZERO)
 	draw_circle(Vector2.ZERO, 9.0, Color(LENS, alpha))

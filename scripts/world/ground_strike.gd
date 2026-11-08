@@ -283,8 +283,10 @@ func _draw() -> void:
 		var cue := AttackWarnings.cue_color(filled)
 		draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 24, cue, 1.0)
 		draw_circle(Vector2.ZERO, _radius * AttackWarnings.cue_growth(filled), cue)
-	if _look == LOOK_CASKET and marked:
-		draw_arc(Vector2.ZERO, _radius + CASKET_RING_GAP, 0.0, TAU, 32, COLOR, 2.0)
+	# The casket's growing shadow is the thing coming down, so it shows with the warnings hidden too.
+	if _look == LOOK_CASKET:
+		if marked:
+			draw_arc(Vector2.ZERO, _radius + CASKET_RING_GAP, 0.0, TAU, 32, COLOR, 2.0)
 		_draw_coffin(0.3 + 0.7 * filled, CASKET_SHADOW, 0.25 + 0.5 * filled)
 	if _thrown_from != Vector2.INF:
 		var start := _thrown_from - global_position

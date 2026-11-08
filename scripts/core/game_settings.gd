@@ -47,7 +47,8 @@ const DEFAULTS := {
 		"hide_minimap_in_combat": false,
 		"minimap_opacity": [100, 20, 100],
 		"run_timer": false,
-		# Regular enemies' red attack warnings (AttackWarnings). Bosses always show theirs.
+		# Every enemy's red attack warnings, bosses' and mini bosses' too (AttackWarnings). Safe-spot
+		# marks always show.
 		"attack_warnings": false,
 		"language": "en",
 	},

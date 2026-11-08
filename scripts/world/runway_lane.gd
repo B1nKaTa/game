@@ -102,15 +102,25 @@ func _draw() -> void:
 	draw_set_transform(Vector2.ZERO, _direction.angle())
 	var lane := Rect2(0.0, -_width / 2.0, _length, _width)
 	var lamp := LAMP_DIM
+	# The red only with Attack warnings on (AttackWarnings); otherwise the faint cue, and the runway's
+	# own lamps blink as it warms up.
+	var red := AttackWarnings.drawn_by(_source)
 	if _delay > 0.0:
-		draw_rect(lane, Color(COLOR, 0.35), false, 1.0)
+		if red:
+			draw_rect(lane, Color(COLOR, 0.35), false, 1.0)
 	elif _left > 0.0:
 		var progress := clampf(1.0 - _left / maxf(_warning, 0.001), 0.0, 1.0)
-		draw_rect(Rect2(0.0, -_width / 2.0, _length * progress, _width), Color(COLOR, 0.15 + 0.3 * progress))
-		draw_rect(lane, COLOR, false, 2.0)
+		if red:
+			draw_rect(Rect2(0.0, -_width / 2.0, _length * progress, _width), Color(COLOR, 0.15 + 0.3 * progress))
+			draw_rect(lane, COLOR, false, 2.0)
+		else:
+			AttackWarnings.draw_cue_lane(self, lane, progress)
+			if fmod(progress * 6.0, 1.0) < 0.5:
+				lamp = LAMP_LIT
 	elif _lit_left > 0.0:
 		draw_rect(lane, BLAZE)
-		draw_rect(lane, COLOR, false, 2.0)
+		if red:
+			draw_rect(lane, COLOR, false, 2.0)
 		lamp = LAMP_LIT
 	var count := floori(_length / LAMP_EVERY)
 	for i in count:

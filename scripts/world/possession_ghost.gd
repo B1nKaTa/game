@@ -200,19 +200,25 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	var alpha := clampf(_fade_left / FADE, 0.0, 1.0) if is_over() else 1.0
 	var at := now_at() - global_position
+	# With Attack warnings off (AttackWarnings) the trail and rings are the faint dark cue; the copy
+	# itself always shows.
+	var red := AttackWarnings.drawn_by(_source)
 	if is_warning():
 		# The way it will walk: his steps as a dotted red trail, filling, and a ring where it rises.
 		var progress := fill()
 		var stride := maxi(int(0.15 / _step), 1)
 		for k in range(0, _trail.size(), stride):
-			draw_circle(_trail[k] - global_position, 3.0, Color(COLOR, 0.35 + 0.5 * progress))
+			draw_circle(_trail[k] - global_position, 3.0, Color(COLOR, 0.35 + 0.5 * progress) if red else AttackWarnings.cue_color(progress))
 		var points := PackedVector2Array()
 		for spot in _trail:
 			points.append(spot - global_position)
 		if points.size() > 1:
-			draw_polyline(points, Color(COLOR, 0.25 + 0.3 * progress), 2.0)
-		draw_arc(at, REACH + 6.0, 0.0, TAU, 20, COLOR, 2.0)
-		draw_circle(at, (REACH + 6.0) * progress, Color(COLOR, 0.18))
+			draw_polyline(points, Color(COLOR, 0.25 + 0.3 * progress) if red else AttackWarnings.cue_color(progress), 2.0 if red else AttackWarnings.CUE_LINE)
+		if red:
+			draw_arc(at, REACH + 6.0, 0.0, TAU, 20, COLOR, 2.0)
+			draw_circle(at, (REACH + 6.0) * progress, Color(COLOR, 0.18))
+		else:
+			AttackWarnings.draw_cue_circle(self, at, REACH + 6.0, progress)
 	elif not is_over():
 		# What it has still to walk in the next second, faint.
 		var ahead := PackedVector2Array()
@@ -221,10 +227,10 @@ func _draw() -> void:
 			ahead.append(ghost_at(_trail, _step, time) - global_position)
 			time += _step
 		if ahead.size() > 1:
-			draw_polyline(ahead, Color(COLOR, 0.35), 2.0)
+			draw_polyline(ahead, Color(COLOR, 0.35) if red else AttackWarnings.cue_color(1.0), 2.0)
 	# The copy itself: faint while it waits to rise, then its red ring round the feet.
 	var shown := (0.35 if is_warning() else 1.0) * alpha
-	draw_arc(at, REACH, 0.0, TAU, 20, Color(COLOR, 0.85 * shown), 2.0)
+	draw_arc(at, REACH, 0.0, TAU, 20, Color(COLOR, 0.85 * shown) if red else Color(AttackWarnings.CUE_COLOR, AttackWarnings.CUE_ALPHA_LATE * shown), 2.0)
 	if _sprite == null:
 		_draw_placeholder(at, shown)
 	for i in 3:

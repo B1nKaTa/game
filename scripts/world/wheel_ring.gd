@@ -179,16 +179,24 @@ func _blade_points(from_angle: float, to_angle: float) -> PackedVector2Array:
 func _draw() -> void:
 	var at := angle()
 	var fade := clampf(_fade_left / FADE, 0.0, 1.0) if is_spent() else 1.0
-	if is_warning():
+	var red := AttackWarnings.drawn_by(_source)
+	if is_warning() and red:
 		var filled := fill()
 		# The whole band it turns in, tinted and edged, so the clear inside and outside both read.
 		draw_arc(Vector2.ZERO, (INNER + OUTER) / 2.0, 0.0, TAU, 48, Color(COLOR, 0.08 + 0.12 * filled), OUTER - INNER)
 		draw_arc(Vector2.ZERO, INNER, 0.0, TAU, 40, COLOR, 1.5)
 		draw_arc(Vector2.ZERO, OUTER, 0.0, TAU, 48, COLOR, 2.0)
+	elif is_warning():
+		# Warnings hidden (AttackWarnings): the band's edges and the blades as the faint dark cue.
+		var cue := AttackWarnings.cue_color(fill())
+		draw_arc(Vector2.ZERO, INNER, 0.0, TAU, 40, cue, AttackWarnings.CUE_LINE)
+		draw_arc(Vector2.ZERO, OUTER, 0.0, TAU, 48, cue, AttackWarnings.CUE_LINE)
 	for i in BLADES:
 		var from_a := at + TAU * i / BLADES
 		var blade := _blade_points(from_a, from_a + BLADE_ARC)
-		if is_warning():
+		if is_warning() and not red:
+			AttackWarnings.draw_cue_polygon(self, blade, maxf(fill(), 0.8))
+		elif is_warning():
 			draw_colored_polygon(blade, Color(COLOR, 0.15 + 0.3 * fill()))
 			var outline := blade.duplicate()
 			outline.append(blade[0])

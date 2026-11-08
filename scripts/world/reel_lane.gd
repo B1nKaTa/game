@@ -194,15 +194,21 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	draw_set_transform(Vector2.ZERO, _direction.angle())
 	var lane := Rect2(0.0, -WIDTH / 2.0, _length, WIDTH)
+	# The red only with Attack warnings on (AttackWarnings); otherwise the faint cue, then the pie or
+	# tumbleweed itself.
+	var red := AttackWarnings.drawn_by(_source)
 	if is_warning():
 		var progress := fill()
-		draw_rect(Rect2(0.0, -WIDTH / 2.0, _length * progress, WIDTH), Color(COLOR, 0.15 + 0.3 * progress))
-		draw_rect(lane, COLOR, false, 2.0)
+		if red:
+			draw_rect(Rect2(0.0, -WIDTH / 2.0, _length * progress, WIDTH), Color(COLOR, 0.15 + 0.3 * progress))
+			draw_rect(lane, COLOR, false, 2.0)
+		else:
+			AttackWarnings.draw_cue_lane(self, lane, progress)
 		draw_set_transform(Vector2.ZERO)
 		return
 	# What is still ahead of it stays faintly warned.
 	var ahead := maxf(_travelled - HIT_REACH, 0.0)
-	if ahead < _length:
+	if ahead < _length and red:
 		draw_rect(Rect2(ahead, -WIDTH / 2.0, _length - ahead, WIDTH), Color(COLOR, 0.12))
 		draw_rect(Rect2(ahead, -WIDTH / 2.0, _length - ahead, WIDTH), Color(COLOR, 0.6), false, 1.0)
 	var at := Vector2(minf(_travelled, _length), 0.0)

@@ -156,4 +156,7 @@ func _draw_edge() -> void:
 	var flicker := 0.85 + 0.15 * sin(Time.get_ticks_msec() / 90.0)
 	_edge.draw_arc(Vector2.ZERO, _radius + 2.0, 0.0, PI, 48, Color(EDGE_GLOW, EDGE_GLOW.a * alpha * flicker), EDGE_WIDTH + 4.0)
 	_edge.draw_arc(Vector2.ZERO, _radius, 0.0, PI, 48, Color(EDGE, alpha), EDGE_WIDTH)
-	_edge.draw_arc(Vector2.ZERO, _radius - EDGE_WIDTH / 2.0 - 1.0, 0.0, PI, 48, Color(Enemy.WARNING_COLOR, 0.8 * alpha), 1.5)
+	# The red line inside the edge only with Attack warnings on (AttackWarnings); the burning edge
+	# itself always shows.
+	if AttackWarnings.drawn_by(_source):
+		_edge.draw_arc(Vector2.ZERO, _radius - EDGE_WIDTH / 2.0 - 1.0, 0.0, PI, 48, Color(Enemy.WARNING_COLOR, 0.8 * alpha), 1.5)

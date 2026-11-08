@@ -135,14 +135,19 @@ func _draw() -> void:
 				draw_rect(Rect2(at - Vector2(3.0, 2.0), Vector2(6.0, 4.0)), Color(TILE_EDGE, fade), false, 1.0)
 		return
 	var filled := fill()
+	var red := AttackWarnings.drawn_by(_source)
 	for square in _squares:
 		var middle := square.get_center()
-		draw_rect(square, Color(COLOR, 0.12 + 0.18 * filled))
-		draw_rect(square.grow(-1.0), COLOR, false, 2.0)
-		# The red fills out from the middle as the fall nears.
-		var inner := Rect2(middle - square.size * filled * 0.5, square.size * filled)
-		if inner.has_area():
-			draw_rect(inner, Color(COLOR, 0.3))
+		if red:
+			draw_rect(square, Color(COLOR, 0.12 + 0.18 * filled))
+			draw_rect(square.grow(-1.0), COLOR, false, 2.0)
+			# The red fills out from the middle as the fall nears.
+			var inner := Rect2(middle - square.size * filled * 0.5, square.size * filled)
+			if inner.has_area():
+				draw_rect(inner, Color(COLOR, 0.3))
+		else:
+			# Warnings hidden (AttackWarnings): the faint cue's edge; the tile's shadow below fills it.
+			draw_rect(square.grow(-1.0), AttackWarnings.cue_color(filled), false, AttackWarnings.CUE_LINE)
 		# The tile's shadow grows on the square, darker as it comes down.
 		var shadow := square.size * (0.35 + 0.55 * filled)
 		draw_rect(Rect2(middle - shadow * 0.5, shadow), Color(SHADOW, 0.15 + 0.3 * filled))

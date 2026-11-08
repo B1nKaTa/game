@@ -88,8 +88,13 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	if _left > 0.0:
 		var progress := clampf(1.0 - _left / maxf(_warning, 0.001), 0.0, 1.0)
-		# Marks along the way back. The way out is the Reverend's own warned lane.
+		# Marks along the way back. The way out is the Reverend's own warned lane. The red marks only
+		# with Attack warnings on (AttackWarnings); otherwise the faint cue.
+		var red := AttackWarnings.drawn_by(_source)
 		for i in range(_path.size() / 2, _path.size(), MARK_EVERY):
+			if not red:
+				AttackWarnings.draw_cue_circle(self, _path[i], MARK_RADIUS, progress)
+				continue
 			draw_circle(_path[i], MARK_RADIUS * progress, Color(COLOR, 0.15 + 0.3 * progress))
 			draw_arc(_path[i], MARK_RADIUS, 0.0, TAU, 12, COLOR, 1.5)
 		return

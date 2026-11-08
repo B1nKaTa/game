@@ -76,6 +76,12 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	if _left > 0.0:
 		var progress := clampf(1.0 - _left / maxf(_warning, 0.001), 0.0, 1.0)
+		if not AttackWarnings.drawn_by(_source):
+			# Warnings hidden (AttackWarnings): the faint cue of how far the ring will reach.
+			var cue := AttackWarnings.cue_color(progress)
+			draw_arc(Vector2.ZERO, _to, 0.0, TAU, 48, cue, 2.0)
+			draw_arc(Vector2.ZERO, lerpf(_from, _to, progress), 0.0, TAU, 48, cue, AttackWarnings.CUE_LINE)
+			return
 		draw_arc(Vector2.ZERO, _to, 0.0, TAU, 48, Color(COLOR, 0.35 + 0.5 * progress), 2.0)
 		draw_arc(Vector2.ZERO, lerpf(_from, _to, progress), 0.0, TAU, 48, Color(COLOR, 0.25), 1.0)
 		return

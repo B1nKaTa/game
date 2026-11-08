@@ -103,8 +103,13 @@ func _draw() -> void:
 	var across_x := strip.size.x < strip.size.y
 	if not _snapped:
 		var progress := fill()
-		draw_rect(strip, Color(COLOR, 0.2 + 0.35 * progress))
-		draw_rect(strip, COLOR, false, 2.0)
+		# The red strip only with Attack warnings on (AttackWarnings); otherwise the faint cue between the
+		# two lengths of film, which always show.
+		if AttackWarnings.drawn_by(_source):
+			draw_rect(strip, Color(COLOR, 0.2 + 0.35 * progress))
+			draw_rect(strip, COLOR, false, 2.0)
+		else:
+			AttackWarnings.draw_cue_rect(self, strip, progress)
 		_draw_film(strip, across_x, 0.0)
 		return
 	# The film slams shut, then the flash of the splice fades.

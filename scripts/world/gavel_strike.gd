@@ -23,13 +23,20 @@ func _draw() -> void:
 			return
 		_draw_gavel(1.0, HEAD, 1.0 - progress)
 		return
+	# The red rings only with Attack warnings on (AttackWarnings); otherwise the faint cue. The gavel's
+	# growing shadow always shows.
+	var red := AttackWarnings.drawn_by(_source)
 	if _delay > 0.0:
-		draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 24, Color(COLOR, WAITING_ALPHA), 1.0)
+		if red:
+			draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 24, Color(COLOR, WAITING_ALPHA), 1.0)
 		return
 	var filled := fill()
-	draw_circle(Vector2.ZERO, _radius * filled, Color(COLOR, 0.15 + 0.3 * filled))
-	draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 24, COLOR, 2.0)
-	draw_arc(Vector2.ZERO, _radius + RING_GAP, 0.0, TAU, 32, COLOR, 2.0)
+	if red:
+		draw_circle(Vector2.ZERO, _radius * filled, Color(COLOR, 0.15 + 0.3 * filled))
+		draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 24, COLOR, 2.0)
+		draw_arc(Vector2.ZERO, _radius + RING_GAP, 0.0, TAU, 32, COLOR, 2.0)
+	else:
+		AttackWarnings.draw_cue_circle(self, Vector2.ZERO, _radius, filled)
 	_draw_gavel(0.3 + 0.7 * filled, SHADOW, 0.25 + 0.5 * filled)
 
 
