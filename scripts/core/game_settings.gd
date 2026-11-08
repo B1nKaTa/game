@@ -180,6 +180,15 @@ static func window_keys(settings: GameSettings) -> Array:
 	return values
 
 
+# F11 or Alt+Enter: the keys that switch fullscreen at any time (Settings), never bound to an action.
+static func is_window_key(event: InputEvent) -> bool:
+	var key := event as InputEventKey
+	if key == null:
+		return false
+	var code := key.keycode if key.keycode != KEY_NONE else key.physical_keycode
+	return code == KEY_F11 or (code == KEY_ENTER and key.alt_pressed)
+
+
 static func resolution_text(size: Vector2i) -> String:
 	return "%dx%d" % [size.x, size.y]
 

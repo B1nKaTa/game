@@ -403,6 +403,9 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index > MOUSE_BUTTON_MIDDLE:
 		return
 	get_viewport().set_input_as_handled()
+	# The fullscreen keys are kept for the window: the cell goes on waiting for another key.
+	if GameSettings.is_window_key(event):
+		return
 	var action := _waiting_action
 	_waiting_action = ""
 	if event is InputEventKey and event.physical_keycode == KEY_ESCAPE:

@@ -143,7 +143,7 @@ func _input(event: InputEvent) -> void:
 	var key := event as InputEventKey
 	if not key.pressed or key.echo:
 		return
-	if key.keycode == KEY_F11 or (key.keycode == KEY_ENTER and key.alt_pressed):
+	if GameSettings.is_window_key(key):
 		get_viewport().set_input_as_handled()
 		# An open Options panel takes the switch into its draft, so OK keeps it and Esc undoes it.
 		if not fullscreen_asked.get_connections().is_empty():

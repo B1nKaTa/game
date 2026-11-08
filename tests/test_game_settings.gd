@@ -158,3 +158,25 @@ func test_minimap_visibility() -> void:
 	assert_false(GameSettings.minimap_visible(true, true, false), "hidden while a fight is on")
 	assert_true(GameSettings.minimap_visible(true, false, false))
 	assert_false(GameSettings.minimap_visible(false, false, true), "the big map always hides it")
+
+
+# F11 and Alt+Enter switch fullscreen, so a key cell waiting for a key never takes them (OptionsPanel._input).
+func test_the_fullscreen_keys_are_the_window_keys() -> void:
+	var f11 := InputEventKey.new()
+	f11.keycode = KEY_F11
+	assert_true(GameSettings.is_window_key(f11))
+	var physical := InputEventKey.new()
+	physical.physical_keycode = KEY_F11
+	assert_true(GameSettings.is_window_key(physical), "as a cell reads it, by its physical key")
+	var enter := InputEventKey.new()
+	enter.keycode = KEY_ENTER
+	assert_false(GameSettings.is_window_key(enter), "Enter alone binds as usual")
+	enter.alt_pressed = true
+	assert_true(GameSettings.is_window_key(enter))
+	var w := InputEventKey.new()
+	w.keycode = KEY_W
+	assert_false(GameSettings.is_window_key(w))
+	assert_false(GameSettings.is_window_key(InputEventMouseButton.new()))
+	var source := FileAccess.get_file_as_string("res://scripts/ui/options_panel.gd")
+	var waiting := source.substr(source.find("func _input("), 900)
+	assert_true(waiting.contains("GameSettings.is_window_key(event)"), "the waiting cell turns them away")
