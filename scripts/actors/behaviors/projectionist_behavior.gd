@@ -68,6 +68,8 @@ var _lane_timer := 0.0
 var _beam_left := 0.0
 var _phase_two_seen := false
 var _burn: BurnRing
+# How far the burn had reached, so one laid again on his return carries on from there.
+var _burn_reach := 0.0
 var _mark: SafeSpotMark
 # A look probe's pick for his next reel; -1 lets him choose.
 var forced_reel := -1
@@ -293,6 +295,12 @@ func tick(enemy: Enemy, delta: float) -> void:
 	var phase_two := is_phase_two(enemy.hp, enemy.max_hp())
 	if phase_two and not _phase_two_seen:
 		_enter_phase_two(enemy)
+	elif _phase_two_seen and not is_instance_valid(_burn):
+		# Leaving the room clears its effects (a teleport, the Eternal Warranty), so the burn is laid
+		# again on return, as far on as it had reached.
+		_make_burn(enemy)
+	elif is_instance_valid(_burn):
+		_burn_reach = _burn.radius()
 	_since_reel += delta
 	_beam_left = maxf(_beam_left - delta, 0.0)
 	_run_reel(enemy, delta, phase_two)
@@ -324,12 +332,17 @@ func _reel_running() -> bool:
 func _enter_phase_two(enemy: Enemy) -> void:
 	_phase_two_seen = true
 	enemy.say("The film's caught fire!", SAY_TIME * 1.5)
-	if not enemy.is_inside_tree():
+	_make_burn(enemy)
+
+
+func _make_burn(enemy: Enemy) -> void:
+	if enemy.get_parent() == null:
 		return
 	var room := _room(enemy)
 	var screen := _screen(enemy)
 	_burn = BurnRing.new()
 	_burn.setup(enemy, BurnRing.cap_for(room.size.y))
+	_burn.resume(_burn_reach)
 	enemy.get_parent().add_child(_burn)
 	_burn.global_position = burn_center(room, screen.picture_rect() if screen != null else Rect2())
 
@@ -490,4 +503,4 @@ func reel() -> ReelChange:
 
 
 func burn() -> BurnRing:
-	return _burn
+	return _burn if is_instance_valid(_burn) else null

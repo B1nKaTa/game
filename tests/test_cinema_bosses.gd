@@ -556,6 +556,46 @@ func test_the_burn_grows_slowly_from_the_screen_to_a_cap() -> void:
 	ring.free()
 
 
+# Leaving his room (a teleport, the Eternal Warranty) clears its effects, the burn among them; on
+# return he lays it again, as far on as it had reached, and only one.
+func test_the_burn_is_laid_again_after_his_stored_room_was_cleared() -> void:
+	var grandpa := Node2D.new()
+	grandpa.position = Vector2(300, 300)
+	var room := Node2D.new()
+	var boss := Enemy.new()
+	boss.setup(_load("projectionist"), grandpa, 0.25)
+	boss.room_cells = Vector2i(20, 11)
+	boss.position = Vector2(400, 200)
+	room.add_child(boss)
+	var behavior := ProjectionistBehavior.new()
+	behavior._cooldown = 99.0
+	boss.hp = boss.max_hp() * 0.49
+	behavior.tick(boss, 0.016)
+	assert_true(behavior.burn() != null and is_instance_valid(behavior.burn()), "below half the burn comes")
+	behavior.burn().advance(10.0, Vector2.INF)
+	behavior.tick(boss, 0.016)
+	var reach := behavior.burn().radius()
+	assert_true(reach > 30.0, "it has grown (%f)" % reach)
+	for child in room.get_children():
+		if RoomView.is_passing_effect(child):
+			room.remove_child(child)
+			child.free()
+	assert_false(is_instance_valid(behavior.burn()), "the stored room's clear took it")
+	behavior.tick(boss, 0.016)
+	var again := behavior.burn()
+	assert_true(again != null and is_instance_valid(again), "it is laid again on his next turn")
+	assert_true(again.get_parent() == room, "in his room")
+	assert_near(again.radius(), reach, "as far on as it had reached")
+	behavior.tick(boss, 0.016)
+	var rings := 0
+	for child in room.get_children():
+		if child is BurnRing:
+			rings += 1
+	assert_eq(rings, 1, "and only one")
+	room.free()
+	grandpa.free()
+
+
 func test_phase_two_quickens_reels_and_splices_but_never_the_beam() -> void:
 	assert_true(Projector.is_phase_two(800.0, 1650.0))
 	assert_false(Projector.is_phase_two(900.0, 1650.0))

@@ -49,6 +49,11 @@ func setup(source: Enemy, cap: float) -> void:
 	z_as_relative = false
 
 
+# Carries on a burn laid again after its room was left, from the reach it had.
+func resume(reach: float) -> void:
+	_radius = clampf(reach, 0.0, _cap)
+
+
 func _ready() -> void:
 	_edge = Node2D.new()
 	_edge.z_as_relative = false
