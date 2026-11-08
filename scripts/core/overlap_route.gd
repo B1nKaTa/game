@@ -217,7 +217,8 @@ func escape(feet: Vector2, keep_off := Callable()) -> Dictionary:
 			var end := _last_end[q]
 			if _extra_time.y >= 0.0 and _in_circle(spot, _extra):
 				end = maxf(end, _extra_time.y)
-			if result["haven"] == Vector2.INF and end <= t:
+			# A haven is a mark too, so it keeps off what keep_off names (a boss's body) as well.
+			if result["haven"] == Vector2.INF and end <= t and (not keep_off.is_valid() or not keep_off.call(spot)):
 				result["haven"] = spot
 			if end <= 0.0 and (not keep_off.is_valid() or not keep_off.call(spot)):
 				result["pure"] = spot
@@ -229,6 +230,10 @@ func escape(feet: Vector2, keep_off := Callable()) -> Dictionary:
 	result["safe"] = not current.is_empty()
 	if result["safe"] and result["haven"] == Vector2.INF:
 		result["haven"] = position_of(current[0])
+		for q in current:
+			if not keep_off.is_valid() or not keep_off.call(position_of(q)):
+				result["haven"] = position_of(q)
+				break
 	return result
 
 

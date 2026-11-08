@@ -203,6 +203,9 @@ static func beam_plan(room: Rect2, origin: Vector2, feet: Vector2, base: Diction
 	var aim := (feet - origin).angle()
 	var arc := deg_to_rad(LensBeam.ARC_DEG)
 	var floor_route: OverlapRoute = null
+	# A beam whose only safe pocket lies against his body is kept only if no other beam marks a spot
+	# off it.
+	var crowded := {}
 	for shift: float in BEAM_SHIFTS:
 		for clockwise: bool in [clockwise_first, not clockwise_first]:
 			var turn := arc if clockwise else -arc
@@ -214,7 +217,12 @@ static func beam_plan(room: Rect2, origin: Vector2, feet: Vector2, base: Diction
 			var out := route.escape(feet, keep_off)
 			if out["safe"]:
 				var mark: Vector2 = out["pure"] if out["pure"] != Vector2.INF else out["haven"]
-				return {"start": start, "turn": turn, "mark": mark}
+				if not keep_off.call(mark):
+					return {"start": start, "turn": turn, "mark": mark}
+				if crowded.is_empty():
+					crowded = {"start": start, "turn": turn, "mark": mark}
+	if not crowded.is_empty():
+		return crowded
 	return {"start": INF, "turn": 0.0, "mark": Vector2.INF}
 
 
