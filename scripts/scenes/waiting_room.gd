@@ -20,7 +20,8 @@ const NOTICEBOARD := "noticeboard"
 const EMPLOYEE_PLAQUE := "employee_plaque"
 const ENDING_ARCHIVE := "ending_archive"
 const MERCHANT_PROMPT := "Trade"
-const RUN_DOOR_ICON := ">"
+# The stairs plaque (DoorSign "v") hangs over the run door's picture: the way down to the floors.
+const RUN_DOOR_ICON := "v"
 # A number that is not called shows the old 666 on the lobby's ticket line.
 const NOT_CALLED := LobbyText.NOT_CALLED
 
@@ -436,13 +437,16 @@ func _furnish(view: RoomView, room: FloorRoom) -> void:
 			_add_npc(view, entry)
 	if department == Departments.BOUNTY_OFFICE:
 		_poster_board = PosterBoard.new()
-		_poster_board.position = RoomBackdrop.cell_center(Departments.station_entry(BOUNTY_BOARD)["cell"])
+		_poster_board.position = PosterBoard.BOARD_CENTER
 		view.add_child(_poster_board)
 		# Under the station, so the station's prompt draws over the board.
 		view.move_child(_poster_board, (_stations[BOUNTY_BOARD] as Node).get_index())
 		_refresh_poster_board()
 	if department == Departments.TRAINING_YARD:
 		var dummy := view.spawn_fixture(load(Departments.TRAINING_DUMMY) as EnemyDef, Departments.DUMMY_CELL)
+		# Its stand rests on the floor, though it counts as wall-mounted so nothing shoves it: it gets
+		# the contact shadow a wall-mounted enemy goes without.
+		ContactShadow.add_to(dummy, dummy.def.body_size.x * 0.95, Vector2(0.0, dummy.def.body_size.y / 2.0))
 		var numbers := TrainingDummy.new()
 		numbers.position = dummy.position
 		view.add_child(numbers)
@@ -503,12 +507,8 @@ func _open_bounty_panel(title: String) -> void:
 func _refresh_poster_board() -> void:
 	if not is_instance_valid(_poster_board):
 		return
-	var posters := BountyBoard.showing(Progress.data)
-	var taken := -1
-	for i in posters.size():
-		if BountyBoard.is_taken(posters[i], Progress.data):
-			taken = i
-	_poster_board.show_posters(posters.size(), taken)
+	# Collected posters stay up, stamped CLOSED, beside those still showing.
+	_poster_board.show_posters(BountyBoard.board_entries(BountyBoard.showing(Progress.data), BountyBoard.all(), Progress.data))
 
 
 func _add_run_door(view: RoomView) -> void:

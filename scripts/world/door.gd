@@ -21,6 +21,8 @@ const GATE_TIME := 0.35
 const LIFT_ART := "lift"
 const LIFT_TIME := 0.6
 const LIFT_FEET := 16.0
+# Where a door standing on the floor hangs its plaque: in the arch of its picture.
+const SIGN_AT := Vector2(0, -1)
 
 var locked := true
 var requires_key := false
@@ -204,7 +206,12 @@ func _draw() -> void:
 	var art := PropArt.state_texture("door", art_state())
 	if art != null:
 		PropArt.draw(self, art)
-		if not chained:
+		if not chained and DoorSign.has_sign(_icon):
+			# The plaque a door in a wall hangs in its opening (the stairs for the run door and the
+			# stairwell), here hung in the doorway of the picture, in place of the bare letter.
+			DoorSign.draw(self, SIGN_AT, _icon)
+			_draw_prompt()
+		elif not chained:
 			_draw_icon_and_prompt(true)
 		return
 	var color := Color("7a3b3b") if locked else Color("c98a3c")

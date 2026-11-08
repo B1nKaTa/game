@@ -272,9 +272,59 @@ func test_the_deep_floors_posters_pay_what_the_spec_says() -> void:
 			assert_eq(def.extra_kind == BountyDef.EXTRA_COSMETIC, not def.floor_boss, id)
 
 
-# The board holds every poster at once, so twenty papers fit it with the taken one marked.
+# The board holds every poster at once, collected ones too, so twenty papers fit inside its frame, side
+# by side with no overlap, below its WANTED card.
 func test_the_cork_board_fits_every_poster() -> void:
 	assert_true(PosterBoard.MAX_PAPERS >= BountyBoard.all().size())
-	var last := PosterBoard.paper_rect(PosterBoard.MAX_PAPERS - 1)
-	var box := Rect2(-PosterBoard.BOARD_SIZE / 2.0, PosterBoard.BOARD_SIZE)
-	assert_true(box.encloses(last), str(last))
+	var inside := Rect2(-PosterBoard.BOARD_SIZE / 2.0, PosterBoard.BOARD_SIZE).grow(-3.0)
+	for i in PosterBoard.MAX_PAPERS:
+		var paper := PosterBoard.paper_rect(i)
+		assert_true(inside.encloses(paper), "%d %s" % [i, paper])
+		assert_true(paper.position.y >= inside.position.y + 18.0, "under the WANTED card")
+		if i % PosterBoard.COLUMNS > 0:
+			assert_false(paper.intersects(PosterBoard.paper_rect(i - 1)), str(i))
+		if i >= PosterBoard.COLUMNS:
+			assert_false(paper.intersects(PosterBoard.paper_rect(i - PosterBoard.COLUMNS)), str(i))
+
+
+# The board hangs on the Bounty Office's north wall, clear of the west wall and the north door's jamb,
+# and below the HUD's top band.
+func test_the_cork_board_keeps_clear_of_the_wall_the_door_and_the_hud() -> void:
+	var office: RoomLayout = Departments.load_layouts()[Departments.BOUNTY_OFFICE]
+	var box := Rect2(PosterBoard.BOARD_CENTER - PosterBoard.BOARD_SIZE / 2.0, PosterBoard.BOARD_SIZE)
+	var door_x := office.door_cell(RoomLayout.NORTH).x * RoomBackdrop.TILE + RoomBackdrop.TILE / 2.0
+	assert_true(box.position.x >= RoomBackdrop.TILE, "past the west wall")
+	assert_true(box.end.x <= door_x - DoorOpening.HALF_WIDTH - DoorOpening.JAMB_WIDTH, "short of the door's jamb")
+	assert_true(box.position.y >= Hud.BAND_BOTTOM - 4.0, "under the HUD's band")
+	var station: Vector2 = RoomBackdrop.cell_center(Departments.station_entry("bounty_board")["cell"])
+	assert_true(box.has_point(station), "the station Grandpa uses stands at the board")
+
+
+# Each poster wears the stamp of its state, and a collected one stays up, closed, in its floor's place.
+func test_each_poster_on_the_board_shows_its_state() -> void:
+	var data := ProgressData.new()
+	var adjuster := _poster("senior_adjuster")
+	var reaper := _poster("regional_reaper")
+	assert_eq(BountyBoard.poster_state(adjuster, data), BountyBoard.POSTER_OPEN)
+	BountyBoard.take(adjuster, data)
+	assert_eq(BountyBoard.poster_state(adjuster, data), BountyBoard.POSTER_TAKEN)
+	assert_eq(BountyBoard.poster_state(reaper, data), BountyBoard.POSTER_OPEN)
+	data.record_boss_beaten("senior_adjuster", false)
+	assert_eq(BountyBoard.poster_state(adjuster, data), BountyBoard.POSTER_WON)
+	BountyBoard.collect(adjuster, data)
+	assert_eq(BountyBoard.poster_state(adjuster, data), BountyBoard.POSTER_CLOSED)
+	var defs := BountyBoard.all()
+	var showing := BountyBoard.posters(defs, _floors(), data)
+	assert_false(showing.has(adjuster), "no longer offered")
+	var entries := BountyBoard.board_entries(showing, defs, data)
+	assert_eq(entries.size(), showing.size() + 1, "the collected poster still hangs")
+	assert_eq(entries[0], {"id": "senior_adjuster", "state": BountyBoard.POSTER_CLOSED}, "the mini boss first")
+	assert_eq(entries[1], {"id": "regional_reaper", "state": BountyBoard.POSTER_OPEN})
+	for state in [BountyBoard.POSTER_OPEN, BountyBoard.POSTER_TAKEN, BountyBoard.POSTER_WON, BountyBoard.POSTER_CLOSED]:
+		assert_true(ResourceLoader.exists("res://art/props/waiting_room/%s.png" % PosterBoard.stamp_art(state)), state)
+
+
+# Every wanted boss has his print on the board, cut from his own sprite (tools/art/waiting_props.py).
+func test_every_poster_has_its_bosss_print() -> void:
+	for def in BountyBoard.all():
+		assert_true(ResourceLoader.exists("res://art/props/waiting_room/%s.png" % PosterBoard.portrait_art(def.id)), def.id)

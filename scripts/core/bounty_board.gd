@@ -52,6 +52,48 @@ static func showing(data: ProgressData) -> Array[BountyDef]:
 	return posters(defs, floors_for(defs), data)
 
 
+# How a poster looks on the cork board (PosterBoard): up, taken, won and waiting at the desk, or
+# collected and closed.
+const POSTER_OPEN := "open"
+const POSTER_TAKEN := "taken"
+const POSTER_WON := "won"
+const POSTER_CLOSED := "closed"
+
+
+static func poster_state(def: BountyDef, data: ProgressData) -> String:
+	if data.bounties_retired.has(def.id):
+		return POSTER_CLOSED
+	if is_taken(def, data):
+		return POSTER_WON if data.bounty_won else POSTER_TAKEN
+	return POSTER_OPEN
+
+
+# Every poster the board hangs, {"id", "state"}: those showing and those already collected, in floor
+# order (depth, the mini boss before the floor boss, then id), so each keeps its place as states change.
+# Only the look: what can be taken or collected is still showing() and the bounty panel.
+static func board_entries(showing_now: Array[BountyDef], defs: Array[BountyDef], data: ProgressData) -> Array[Dictionary]:
+	var shown_ids := {}
+	for def in showing_now:
+		shown_ids[def.id] = true
+	var hung: Array[BountyDef] = []
+	for def in defs:
+		if shown_ids.has(def.id) or data.bounties_retired.has(def.id):
+			hung.append(def)
+	hung.sort_custom(BountyBoard._floor_order)
+	var entries: Array[Dictionary] = []
+	for def in hung:
+		entries.append({"id": def.id, "state": poster_state(def, data)})
+	return entries
+
+
+static func _floor_order(a: BountyDef, b: BountyDef) -> bool:
+	if a.depth != b.depth:
+		return a.depth < b.depth
+	if a.floor_boss != b.floor_boss:
+		return not a.floor_boss
+	return a.id < b.id
+
+
 static func is_taken(def: BountyDef, data: ProgressData) -> bool:
 	return data.bounty_taken == def.id
 

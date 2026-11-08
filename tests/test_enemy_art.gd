@@ -318,10 +318,18 @@ func test_a_floor_variant_wears_its_bases_art_recoloured() -> void:
 
 
 func test_an_enemy_without_art_keeps_its_placeholder_and_marks() -> void:
-	var enemy := _enemy("training_dummy")
+	var def: EnemyDef = (load("res://data/enemies/training_dummy.tres") as EnemyDef).duplicate()
+	def.art_id = "no_such_art"
+	var enemy := Enemy.new()
+	enemy.setup(def, null, 0.5)
+	enemy._ready()
 	assert_false(enemy.visual().has_art())
 	assert_false(enemy._marks.art_shown)
 	enemy.free()
+	# The Training Yard's dummy has its own picture now: a stuffed intern on a stand.
+	var dummy := _enemy("training_dummy")
+	assert_true(dummy.visual().has_art(), "the dummy shows its art, not a box")
+	dummy.free()
 	var arted := _enemy("stoker")
 	assert_true(arted._marks.art_shown, "art draws its own shovel")
 	arted.free()

@@ -115,9 +115,10 @@ const STATIONS: Array[Dictionary] = [
 	# A red box with a paper tongue, and a cork board that marks NEW while a letter waits unread.
 	{"id": "ticket_machine", "department": LOBBY, "cell": Vector2i(23, 3), "title": "Take a Number", "prompt": "Ticket", "size": Vector2(20, 28), "color": Color("c8323a"), "look": "ticket_machine"},
 	{"id": "noticeboard", "department": LOBBY, "cell": Vector2i(23, 7), "title": "Noticeboard. Letters from the Living", "prompt": "Read", "size": Vector2(34, 24), "color": Color("a8794a"), "look": "noticeboard"},
-	# A PosterBoard draws the cork board and its posters, so the station draws none. It stands off the
-	# middle column, since (10, 2) would be beside the cell a north door would use. Its prompt sits
-	# higher than a station's, over the board's WANTED title ("prompt_offset").
+	# A PosterBoard draws the cork board and its posters, hung on the wall left of the north door
+	# (PosterBoard.BOARD_CENTER), so the station draws none. It stands off the middle column, since
+	# (10, 2) would be beside the cell a north door would use. Its prompt sits higher than a station's,
+	# over the board ("prompt_offset").
 	{"id": "bounty_board", "department": BOUNTY_OFFICE, "cell": Vector2i(6, 2), "title": "Bounty Office. Overdue Accounts", "prompt": "Wanted posters", "board": false, "prompt_offset": Vector2(-30, -32)},
 	{"id": "item_rack", "department": TRAINING_YARD, "cell": Vector2i(15, 3), "title": "Item Rack", "prompt": "Try items", "label": "Rack", "size": Vector2(36, 28), "color": Color("6a5a48")},
 	# No named clerk keeps the Decor Office. Looks are bought and worn at this one counter.
@@ -144,11 +145,12 @@ const NPCS: Array[Dictionary] = [
 	{"id": "gerald", "department": LOBBY, "cell": Vector2i(17, 4), "def": "res://data/npcs/gerald.tres", "greets": true, "needs_ending": EndingRules.ETERNAL_FEUD},
 ]
 
-# The trophy wall's frames hang centred on this x in the lobby, the line between columns 19 and 20, on
-# the line between the top wall and the first floor row. Ten frames fill the top wall between the
-# north door at column 15 and the lantern at column 24 (test_mementos).
+# The trophy wall's frames hang centred on this x in the lobby, the line between columns 19 and 20, just
+# under the top wall's face: the face is the row the HUD's top band covers wherever its panels are, so
+# the frames' tops sit one pixel below it. Ten frames fill the top wall between the north door at column
+# 15 and the lantern at column 24 (test_mementos).
 const TROPHY_WALL_X := 640.0
-const TROPHY_WALL_Y := 34.0
+const TROPHY_WALL_Y := 44.0
 
 # The door out to a run stands inside the lobby, since all four lobby walls lead to departments. It is
 # off the row the east and west doors share, so walking across the lobby never starts a run.
