@@ -5,11 +5,16 @@ extends Node
 # and test runs (--script) read nothing and write nothing, so they always play on the defaults.
 
 signal changed
+# F11 or Alt+Enter while something (the Options panel) listens: it changes its own draft instead.
+signal fullscreen_asked
 
 const PATH := "user://settings.cfg"
 
 var current := GameSettings.new()
 var _adjust: AdjustLayer
+# The window keys last applied (GameSettings.window_keys), and the window's mode and size last logged.
+var _window_keys: Array = []
+var _logged_window := ""
 
 
 func _ready() -> void:
@@ -95,28 +100,40 @@ func _apply_video(settings: GameSettings) -> void:
 	# A mouse mode already set by a scene is kept, only its confinement follows the option.
 	var hidden := Input.mouse_mode == Input.MOUSE_MODE_HIDDEN or Input.mouse_mode == Input.MOUSE_MODE_CONFINED_HIDDEN
 	Input.mouse_mode = cursor_mode(hidden)
+	var vsync := DisplayServer.VSYNC_ENABLED if settings.value(GameSettings.VIDEO, "vsync") else DisplayServer.VSYNC_DISABLED
+	if DisplayServer.window_get_vsync_mode() != vsync:
+		DisplayServer.window_set_vsync_mode(vsync)
+	# The window itself is set up only when its own keys change (GameSettings.WINDOW_KEYS), never on a
+	# slider tick, so a window the player dragged stays where it is.
+	var keys := GameSettings.window_keys(settings)
+	if keys == _window_keys:
+		return
+	_window_keys = keys
 	var root := get_tree().root
 	root.content_scale_stretch = Window.CONTENT_SCALE_STRETCH_INTEGER if settings.value(GameSettings.VIDEO, "pixel_perfect") else Window.CONTENT_SCALE_STRETCH_FRACTIONAL
-	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if settings.value(GameSettings.VIDEO, "vsync") else DisplayServer.VSYNC_DISABLED)
 	var screen := current_screen()
 	if settings.value(GameSettings.VIDEO, "fullscreen"):
 		if DisplayServer.window_get_mode() != DisplayServer.WINDOW_MODE_FULLSCREEN:
 			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
-		_log_display.call_deferred()
+		_log_display_if_changed.call_deferred()
 		return
-	if DisplayServer.window_get_mode() != DisplayServer.WINDOW_MODE_WINDOWED:
+	var was_windowed := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_WINDOWED
+	if not was_windowed:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 	var size := window_size(settings)
-	if DisplayServer.window_get_size() != size:
+	var resized := DisplayServer.window_get_size() != size
+	if resized:
 		DisplayServer.window_set_size(size)
-	# Centred in the screen's free area and never pushed past its top-left corner, so a window that is
-	# still too big loses its bottom-right edge, not the HUD on its left.
-	var area := DisplayServer.screen_get_usable_rect(screen)
-	if area.size.x <= 0 or area.size.y <= 0:
-		area = Rect2i(DisplayServer.screen_get_position(screen), DisplayServer.screen_get_size(screen))
-	var corner := area.position + (area.size - DisplayServer.window_get_size_with_decorations()) / 2
-	DisplayServer.window_set_position(Vector2i(maxi(corner.x, area.position.x), maxi(corner.y, area.position.y)))
-	_log_display.call_deferred()
+	# Placed only when it changed size or just left fullscreen: centred in the screen's free area and never
+	# pushed past its top-left corner, so a window that is still too big loses its bottom-right edge, not
+	# the HUD on its left.
+	if resized or not was_windowed:
+		var area := DisplayServer.screen_get_usable_rect(screen)
+		if area.size.x <= 0 or area.size.y <= 0:
+			area = Rect2i(DisplayServer.screen_get_position(screen), DisplayServer.screen_get_size(screen))
+		var corner := area.position + (area.size - DisplayServer.window_get_size_with_decorations()) / 2
+		DisplayServer.window_set_position(Vector2i(maxi(corner.x, area.position.x), maxi(corner.y, area.position.y)))
+	_log_display_if_changed.call_deferred()
 
 
 # F11 or Alt+Enter switches between fullscreen and a window at any time, and keeps the choice.
@@ -127,14 +144,27 @@ func _input(event: InputEvent) -> void:
 	if not key.pressed or key.echo:
 		return
 	if key.keycode == KEY_F11 or (key.keycode == KEY_ENTER and key.alt_pressed):
+		get_viewport().set_input_as_handled()
+		# An open Options panel takes the switch into its draft, so OK keeps it and Esc undoes it.
+		if not fullscreen_asked.get_connections().is_empty():
+			fullscreen_asked.emit()
+			return
 		var next := current.duplicate_settings()
 		next.set_value(GameSettings.VIDEO, "fullscreen", not current.value(GameSettings.VIDEO, "fullscreen"))
 		commit(next)
-		get_viewport().set_input_as_handled()
 
 
-# What the game saw of the screens, written each time the window is set up, so a display problem on
-# another PC can be read back from user://display_log.txt.
+# Writes the display log at startup and whenever the window's mode or size has really changed since.
+func _log_display_if_changed() -> void:
+	var now := "%d %s" % [DisplayServer.window_get_mode(), DisplayServer.window_get_size()]
+	if now == _logged_window:
+		return
+	_logged_window = now
+	_log_display()
+
+
+# What the game saw of the screens, so a display problem on another PC can be read back from
+# user://display_log.txt.
 func _log_display() -> void:
 	var file := FileAccess.open("user://display_log.txt", FileAccess.WRITE)
 	if file == null:

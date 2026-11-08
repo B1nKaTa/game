@@ -168,6 +168,18 @@ static func best_resolution(screen: Vector2i) -> Vector2i:
 	return resolutions_for(screen)[-1]
 
 
+# The video keys that set up the window itself. Settings changes the window's mode, size and place only
+# when these differ from what it applied last, since Options applies its draft on every slider tick.
+const WINDOW_KEYS: Array[String] = ["fullscreen", "resolution", "pixel_perfect"]
+
+
+static func window_keys(settings: GameSettings) -> Array:
+	var values := []
+	for key in WINDOW_KEYS:
+		values.append(settings.value(VIDEO, key))
+	return values
+
+
 static func resolution_text(size: Vector2i) -> String:
 	return "%dx%d" % [size.x, size.y]
 
