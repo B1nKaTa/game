@@ -4,7 +4,8 @@
 # this tool as 'hand'), in the depth look (docs/art/art-direction-notes.md): one dark outline round a
 # standing prop, one or two shading steps per colour, light from the upper left, toned like the rest,
 # and no warning red or safe-spot mint. The aisle light lies flat in the carpet, so it has a brass rim and
-# no outline. Plain Python, no packages.
+# no outline. It also retones the hotline's partition panes (partition_fabric), so run it after
+# area_props.py. Plain Python, no packages.
 # Usage: py tools/art/hand_props.py <game root>
 import os
 import sys
@@ -170,6 +171,44 @@ def aisle_light():
     return c.px
 
 
+# The hotline's partition pieces (built by area_props.py 'split', so run this after it): their panes were
+# bright violet glass with a diagonal glare, which read as glowing windows. The pane becomes a muted slate
+# partition fabric with a faint weave and its shaded edges, the teal frame stays, so under the area's
+# violet light they read as office partitions in its palette. Each export pane tone -> fabric tone; WEAVE
+# marks the tones laid as a two-tone checker.
+PARTITION_SET = 'seance_hotline'
+PARTITION_PIECES = ('cubicle_partition', 'cubicle_partition_west', 'cubicle_partition_mid', 'cubicle_partition_east')
+FABRIC = {
+    '5c2677': '3e4250',  # the pane
+    '6f4480': '3e4250',  # its glare, gone
+    '623c73': '3e4250',  # the glare's edge, gone
+    '421b53': '30323e',  # the pane's shaded edge
+    '481758': '2a2c38',  # its darkest corner
+}
+WEAVE = {'3e4250': '434756'}
+
+
+def partition_fabric(game):
+    from env_art import load
+    for name in PARTITION_PIECES:
+        path = os.path.join(game, 'art', 'props', PARTITION_SET, name + '.png')
+        pixels = load(path)
+        out = []
+        for y, row in enumerate(pixels):
+            line = []
+            for x, p in enumerate(row):
+                key = '%02x%02x%02x' % p[:3]
+                if p[3] and key in FABRIC:
+                    tone_hex = FABRIC[key]
+                    if tone_hex in WEAVE and (x + y) % 2:
+                        tone_hex = WEAVE[tone_hex]
+                    p = hexc(tone_hex)[:3] + (p[3],)
+                line.append(p)
+            out.append(line)
+        save(path, out)
+        print(PARTITION_SET, name, 'fabric')
+
+
 PIECES = {
     ('sunset_shores', 'decor_iv_stand'): drip_stand,
     ('furnace_works', 'decor_gauge'): gauge,
@@ -188,6 +227,7 @@ def main():
         path = os.path.join(game, 'art', 'props', art_set, game_id + '.png')
         save(path, pixels)
         print(art_set, game_id, len(pixels[0]), len(pixels))
+    partition_fabric(game)
 
 
 if __name__ == '__main__':
