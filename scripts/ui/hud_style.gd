@@ -18,6 +18,7 @@ const PILL_FULL := Color("e8e0d0")
 const PILL_CAP := Color("d9584f")
 const PILL_EMPTY := Color(0.3, 0.26, 0.24)
 const PILL_STEP := 7.0
+const BUILD_MARGIN := 8.0
 
 static var _font: FontFile
 
@@ -38,6 +39,19 @@ static func style_label(label: Label, font_size: int, color := TEXT) -> void:
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_color_override("font_outline_color", Color.BLACK)
 	label.add_theme_constant_override("outline_size", 2)
+
+
+# The build id (BuildInfo) in small dim pixel text, right-aligned in the bottom-right corner of the
+# 640x360 view, on the title screen and the pause menu. It never takes the mouse.
+static func build_label() -> Label:
+	var label := Label.new()
+	label.text = BuildInfo.label()
+	style_label(label, SMALL, DIM_TEXT)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	label.custom_minimum_size.x = GameSettings.VIEW.x - 2 * BUILD_MARGIN
+	label.position = Vector2(BUILD_MARGIN, GameSettings.VIEW.y - 16)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return label
 
 
 # A framed panel: a dark fill, a black edge, a wooden frame with a lit top edge, and cut corners.

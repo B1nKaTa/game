@@ -91,6 +91,8 @@ var _opened_frame := -1
 var _ignore_frame := -1
 var _confirm: ConfirmBox
 var _done := false
+# The On/Off buttons of the open tab by key, so F11 can update the Fullscreen one.
+var _toggles := {}
 
 
 func setup(tab: String = GameSettings.VIDEO) -> void:
@@ -109,6 +111,7 @@ func _ready() -> void:
 	_opened_frame = Engine.get_process_frames()
 	_draft = Settings.current.duplicate_settings()
 	_keys_before = KeyBindings.snapshot()
+	Settings.fullscreen_asked.connect(_toggle_fullscreen)
 	add_child(MenuStyle.backing())
 	add_child(MenuStyle.panel(AT, SIZE))
 	var title := MenuStyle.label(tr("Options"), MenuStyle.TITLE_FONT, MenuStyle.GOLD)
@@ -247,6 +250,7 @@ func _build_row(section: String, key: String) -> void:
 		toggle.custom_minimum_size.x = 60
 		toggle.pressed.connect(_on_toggle.bind(section, key, toggle))
 		row.add_child(toggle)
+		_toggles[key] = toggle
 	else:
 		var choice := MenuStyle.button(_choice_text(key, current))
 		choice.custom_minimum_size.x = 150
@@ -282,6 +286,23 @@ func _on_slider(level: float, section: String, key: String, shown: Label) -> voi
 	_draft.set_value(section, key, int(level))
 	shown.text = str(int(level))
 	Settings.apply(_draft)
+
+
+# F11 or Alt+Enter while the panel is open (Settings.fullscreen_asked) switches the draft's Fullscreen,
+# as its toggle would, so OK keeps it and closing without OK puts the window back.
+func _toggle_fullscreen() -> void:
+	if _is_waiting() or _done:
+		return
+	_draft.set_value(GameSettings.VIDEO, "fullscreen", not _draft.value(GameSettings.VIDEO, "fullscreen"))
+	var toggle: Variant = _toggles.get("fullscreen")
+	if is_instance_valid(toggle):
+		toggle.text = _on_off(_draft.value(GameSettings.VIDEO, "fullscreen"))
+	Settings.apply(_draft)
+
+
+func _exit_tree() -> void:
+	if Settings.fullscreen_asked.is_connected(_toggle_fullscreen):
+		Settings.fullscreen_asked.disconnect(_toggle_fullscreen)
 
 
 func _on_toggle(section: String, key: String, toggle: Button) -> void:

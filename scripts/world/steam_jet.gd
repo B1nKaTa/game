@@ -97,11 +97,16 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	draw_set_transform(Vector2.ZERO, _direction.angle())
 	if _left > 0.0:
-		# The lane only for a boss or with Attack warnings on (AttackWarnings).
+		# The red lane only for a boss or with Attack warnings on (AttackWarnings); otherwise its faint cue.
+		var progress := clampf(1.0 - _left / maxf(_warning, 0.001), 0.0, 1.0)
 		if AttackWarnings.drawn_by(_source):
-			var progress := clampf(1.0 - _left / maxf(_warning, 0.001), 0.0, 1.0)
 			draw_rect(Rect2(0.0, -_width / 2.0, _length * progress, _width), Color(COLOR, 0.15 + 0.3 * progress))
 			draw_rect(Rect2(0.0, -_width / 2.0, _length, _width), COLOR, false, 2.0)
+		else:
+			var cue := AttackWarnings.cue_color(progress)
+			draw_rect(Rect2(0.0, -_width / 2.0, _length, _width), cue, false, 1.0)
+			var grown := _width * AttackWarnings.cue_growth(progress)
+			draw_rect(Rect2(0.0, -grown / 2.0, _length, grown), cue)
 		return
 	var fade := clampf(_blow_left / BLOW_TIME, 0.0, 1.0)
 	var t := Time.get_ticks_msec() / 1000.0

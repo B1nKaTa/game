@@ -175,7 +175,7 @@ Testing resumed ("test everything"). Shots are in `D:\grandpa-shots-ad\verify2` 
 
 ## Fixed on 2026-11-07 (fix5)
 
-Shots are in `D:\grandpa-shots-adix5` (`art_direction_look.gd fix5`).
+Shots are in `D:\grandpa-shots-ad\fix5` (`art_direction_look.gd fix5`).
 
 - **The Chairman** is redrawn in the depth style (`create_character` v3, 64 px, low top-down, black outline, low detail) in a light silver pinstripe with a navy tie, broad as before, gavel in hand. His idle, walk and the windup and slam cut from his attack are built into a 72 px canvas (`enemy_strips.py`, export in `D:/grandpa-art/direction/enemies`). He measures 0.54 alone and 0.42 in his fight, where his own warning fills tint him.
 - **Cardigans are outfits.** Each cardigan cosmetic drawn as a cardigan has its own copy of Harold's three strips with his olive cardigan redrawn in its colour (`tools/art/harold_outfits.py`, `art/sprites/grandpa_<id>/`): his five cardigan tones each become the same step of a ramp built from the cosmetic's colour, so every frame lines up with his own. `GrandpaLook.outfit_art` picks the art and `SpriteVisual.set_art` swaps it without restarting the anim. He faces east in the art and is mirrored for west, as before. The code band remains only as the fallback for a cardigan with no outfit built; the Power Tie is still drawn in code.
@@ -254,3 +254,13 @@ Run everything in a renamed `git archive` copy (never the real user folder), one
   - Madame Zara's planchette in the large room with Harold in its south half: its path in view below the HUD band and off the small map;
   - the Projectionist in phase two: leave by teleport and come back, and the burn ring is back at the reach it had, the screen burning with it.
 - **Save guard**: the real `slot_1\save.json` MD5 was d5100b123e498c491f6fa88f5b879d27 (2026-11-06 17:52) when this pass began; nothing in it ran Godot.
+
+### From `art-direction` (e0398a6 and the window work)
+
+Testing was stopped on 2026-11-08 ("don't test anything right now"). Already checked before the stop, in a renamed export: the suite (2258 tests, 0 failed, on d2f153e), one full loop (SMOKE PASS), the title screen and pause menu with a stamped build id (`D:\grandpa-shots-ad\buildid`), and the side-bar frame in a 1440x900 window (`D:\grandpa-shots-ad\sidebars`: picture not black, 12 of 12 frames show that frame's picture, the same after minimise and restore). Still to check:
+
+- **Build id in a real exe** (2c6819b): run the build steps (docs/release/build-steps.md) once into a scratch folder, start the exe, and check that the title corner and the first line of display_log.txt name the stamped commit. That proves `include_filter="build_info.txt"` takes the file into the pck; no exe was exported.
+- **F11 with Options open** (5fc40b5): open Options, press F11 and Alt+Enter, and check that the window switches, the Fullscreen toggle's text follows, OK keeps the change, and Esc then "Discard" puts the window back. Also F11 while a key cell waits for a key (it should be ignored).
+- **Window steadiness** (5fc40b5): drag the window, move a brightness or volume slider in Options, and check that the window stays where it was dragged; change the resolution and check that it re-centres. display_log.txt should be written at startup and on a mode or size change only (check its time stamp after slider moves).
+- **Hidden ground cues** (e0398a6): with Attack warnings off, shoot the bingo caller's marks (floor 1 and the hotline), a steam valve's lane (furnace) and a Phone Psychic's band (hotline) mid-warning and late, on a dark floor and a pale one. The dark cue must be visible but clearly fainter than the red shapes, and it must never read as a hole or a floor pattern.
+- **Side bars** (d2f153e): the probe's minimised window kept reporting 1440x900, so the zero-size guard never ran. Check minimise and restore on a real wide screen in fullscreen. Check the bars turn plain black on the title screen after Save and Quit from a run. On a screen smaller than 1920x1080 (a 1366x768 laptop), check how the first window looks: it now opens at 1920x1080 before Settings shrinks it. The probe's shots are the frame viewport's own image, not a grab of the screen.

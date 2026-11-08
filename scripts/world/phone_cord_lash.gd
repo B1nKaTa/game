@@ -164,8 +164,16 @@ func _draw() -> void:
 		draw_polyline(coil, Color(CORD_SHADE, fade), 4.0)
 		draw_polyline(coil, Color(CORD, fade), 2.0)
 		return
-	# The band only with Attack warnings on (AttackWarnings); otherwise the caller's windup is the tell.
+	# The red band only with Attack warnings on (AttackWarnings); otherwise the caller's windup and a
+	# faint cue on the band, which thickens as the lash nears.
 	if not AttackWarnings.drawn_by(_source):
+		var cue := AttackWarnings.cue_color(fill())
+		var outline := _band_points(inner, outer, middle - HALF_ARC, middle + HALF_ARC)
+		outline.append(outline[0])
+		draw_polyline(outline, cue, 1.0)
+		var half := BAND / 2.0 * AttackWarnings.cue_growth(fill())
+		if half > 0.5:
+			draw_colored_polygon(_band_points(maxf(radius - half, 1.0), radius + half, middle - HALF_ARC, middle + HALF_ARC), cue)
 		return
 	var filled := fill()
 	var band := _band_points(inner, outer, middle - HALF_ARC, middle + HALF_ARC)
