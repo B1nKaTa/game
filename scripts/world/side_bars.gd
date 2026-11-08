@@ -171,7 +171,9 @@ class BarWatch extends Node:
 			RenderingServer.canvas_item_add_rect(_item, Rect2(left - line, 0, line, _window.y), edge)
 			RenderingServer.canvas_item_add_rect(_item, Rect2(right, 0, line, _window.y), edge)
 		RenderingServer.canvas_item_add_texture_rect(_item, Rect2(_picture), root.get_texture().get_rid())
-		RenderingServer.viewport_set_active(_viewport, true)
+		# Already on while shown: a repaint or a new size only redraws it.
+		if not _shown:
+			RenderingServer.viewport_set_active(_viewport, true)
 		RenderingServer.viewport_attach_to_screen(_viewport, Rect2(Vector2(), Vector2(_window)), DisplayServer.MAIN_WINDOW_ID)
 		RenderingServer.viewport_attach_to_screen(root.get_viewport_rid(), Rect2(), DisplayServer.INVALID_WINDOW_ID)
 		_shown = true
