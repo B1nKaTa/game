@@ -66,6 +66,7 @@ An old art-deco picture house on its last night. Gold trim, deep teal carpet, pl
   - "Forty-one years at the depot. One clock. He was never late. The clock was."
 - **No repeats in a run:** each line is shown at most once per run, picked by the run seed.
 - **Saved:** lines seen are kept in the save, as a new optional key with a default, so a later run favours unseen lines.
+- **Updated 2026-11-08 (`cinema-story`):** cards stand only in rooms with a screen, beside it, and each line belongs to one film, so a card shows a line of the film its screen plays. The 40 lines now cover his whole life (Biscuit in 3), over 19 films (`docs/cinema-life-signs.md`).
 
 ### Regular enemies
 

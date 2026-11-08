@@ -367,9 +367,10 @@ func find_recipe(id: String) -> void:
 	_store.save_progress(data)
 
 
-# A Flashback Cinema lobby card's line, picked for this run and saved as seen the moment it shows.
-func take_life_sign(seed_text: String, shown: Array[String]) -> String:
-	var id := LifeSigns.take(seed_text, data, shown)
+# A Flashback Cinema lobby card's line, picked for this run from the film its room's screen plays
+# (scene_id, "" for any), and saved as seen the moment it shows.
+func take_life_sign(seed_text: String, shown: Array[String], scene_id := "") -> String:
+	var id := LifeSigns.take(seed_text, data, shown, scene_id)
 	if not id.is_empty():
 		_store.save_progress(data)
 	return id

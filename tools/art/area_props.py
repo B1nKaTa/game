@@ -94,6 +94,8 @@ AREA_PROPS = {
     },
     'flashback_cinema': {
         'lobby_card': ('lobby_card2', 20, 26),
+        # One chunky seat a cell, seen from behind as the rows face the screen (was two small seats).
+        'seat_row': ('cinema_seat', 28, 32),
         'decor_plant': ('game', 0, 0),
     },
     'last_resort_cruise': {

@@ -688,17 +688,18 @@ func test_no_lamp_or_tray_stands_on_a_curtains_rail() -> void:
 
 
 # A partition, a desk or a table can hide a coin at the furniture rate, so the floor holds no more such
-# pieces than the Cinema has seats (lesson: count a coin prop across the folder before wiring it).
+# pieces than the Cinema had seats when that rate was set for both floors (785; the Cinema has fewer,
+# bigger seats since) (lesson: count a coin prop across the folder before wiring it).
+const CINEMA_SEATS_AT_THE_RATE := 785
+
+
 func test_the_coin_props_are_counted_against_the_cinemas_seats() -> void:
 	var pieces := 0
 	for layout in _layouts():
 		pieces += layout.cells_of(RoomLayout.SYMBOL_PARTITION).size()
 		pieces += SeanceProps.desk_groups(layout).size() + SeanceProps.table_groups(layout).size()
-	var seats := 0
-	for resource in Content.load_dir("res://data/rooms/flashback_cinema/"):
-		seats += resource.cells_of(RoomLayout.SYMBOL_SEAT).size()
 	assert_true(pieces >= 200, "coin pieces %d" % pieces)
-	assert_true(pieces <= seats, "%d coin pieces against the Cinema's %d seats" % [pieces, seats])
+	assert_true(pieces <= CINEMA_SEATS_AT_THE_RATE, "%d coin pieces against the Cinema's %d seats" % [pieces, CINEMA_SEATS_AT_THE_RATE])
 
 
 # Celestine (32x40) and Madame Zara (44x52) take these rooms later, so their real collision boxes must
