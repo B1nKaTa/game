@@ -37,8 +37,13 @@ TROUSERS_X = 23
 CANE_MAX_GROUP = 20
 SHIRT = ('eceeee', 'c9cfd6', 'b4bccb', '9196a4')
 OUTLINE_MAX = 40
+# How wide his lit hair is where his crown starts (head_anchor).
+CROWN_WIDTH = 10
 # His trousers' browns, and how many columns at their back end his seat spans.
 TROUSERS = ('472a2f', '7a4736', '342427', '4d2a36')
+# Torso rows taken out of every seated Harold frame (recut), bringing him from 34 to 32 px from seat to
+# hair, the ghosts' size.
+CUT_ROWS = (33, 36)
 SEAT_SPAN = 6
 # A seated ghost's body ends where its rows narrow below this share of its widest row.
 SIT_SHARE = 0.7
@@ -139,14 +144,14 @@ def cane_pixels(rows, size):
 
 
 def head_anchor(rows, size):
-    """Where a hat goes: the middle of the hair's top rows, 6 px under the top of the hair."""
+    """Where a hat goes: the middle of the crown, 6 px under its top. The crown's top is the first row
+    where his lit hair is CROWN_WIDTH across: the seated art's hair rises to a narrow tuft above it, and
+    a hat set by the tuft floated over the sides of his head."""
     top = None
     for y in range(size):
-        for x in range(size):
-            if rows[y][x * 4 + 3] and sum(rows[y][x * 4:x * 4 + 3]) > OUTLINE_MAX * 3:
-                top = y
-                break
-        if top is not None:
+        lit = [x for x in range(size) if rows[y][x * 4 + 3] and sum(rows[y][x * 4:x * 4 + 3]) > OUTLINE_MAX * 3]
+        if lit and max(lit) - min(lit) + 1 >= CROWN_WIDTH:
+            top = y
             break
     xs = []
     for y in range(top, top + 4):
@@ -168,13 +173,20 @@ def tie_anchor(rows, size, head):
 def harold_sit(rows, size):
     """Where he sits on the seat: the underside of his thighs at their back end (he faces south-west, so
     his seat is at the east end of his trousers), the lowest trouser row within SEAT_SPAN columns of
-    that end, and the middle of those columns."""
+    that end, as (the column of that end, the row under it)."""
     cane = set(cane_pixels(rows, size))
     trousers = [(x, y) for y in range(size) for x in range(size)
                 if rows[y][x * 4 + 3] and px(rows, x, y)[:3].hex() in TROUSERS and (x, y) not in cane]
     back = max(x for x, y in trousers)
     seat = [(x, y) for x, y in trousers if x > back - SEAT_SPAN]
-    return ((back - SEAT_SPAN / 2.0) + 1.0, max(y for x, y in seat) + 1)
+    return (back, max(y for x, y in seat) + 1)
+
+
+def torso_middle(rows, size):
+    """The middle across of his cardigan, the bulk of him."""
+    xs = [x for y in range(size) for x in range(size)
+          if rows[y][x * 4 + 3] and px(rows, x, y)[:3].hex() in CARDIGAN]
+    return (min(xs) + max(xs) + 1) / 2.0
 
 
 def ghost_sit(rows, size):
@@ -194,8 +206,8 @@ def ghost_sit(rows, size):
 
 def chair_parts(raw, out_dir):
     """The chair cut down to the sitters' legs: LEG_CUT rows of its legs come out, so its seat line
-    (CHAIR_SEAT_ROW) sits as far over the floor as their thighs do. Its front legs, from just under the
-    seat's front lip down, go into chair_front.png, drawn over the sitter."""
+    (CHAIR_SEAT_ROW) sits as far over the floor as their thighs do. The sitter is drawn over the whole
+    chair, so no leg of it ever covers theirs."""
     w, h, rows = load(os.path.join(raw, 'chair.png'))
     share, cool = TONE['chair']
     for row in rows:
@@ -206,9 +218,7 @@ def chair_parts(raw, out_dir):
             row[x * 4 + 2] = int(b * share)
     kept = rows[:CHAIR_LIP_END + 1] + rows[CHAIR_LIP_END + 1 + LEG_CUT:]
     kept += [bytearray(w * 4) for _ in range(h - len(kept))]
-    front = [bytearray(r) if y > CHAIR_LIP_END else bytearray(w * 4) for y, r in enumerate(kept)]
     save(os.path.join(out_dir, 'chair.png'), w, h, kept)
-    save(os.path.join(out_dir, 'chair_front.png'), w, h, front)
     return max(y for y in range(h) if any(kept[y][x * 4 + 3] for x in range(w)))
 
 
@@ -243,8 +253,16 @@ def harold_frames(raw):
     for f in files:
         rows = place(load(f), HAROLD_SIZE)
         clear_specks(rows, HAROLD_SIZE)
-        frames.append(rows)
+        frames.append(recut(rows, HAROLD_SIZE))
     return frames, names
+
+
+def recut(rows, size):
+    """Seated Harold, drawn from his standing character, comes out a little tall beside the ghosts, so
+    the same plain torso rows (CUT_ROWS: his cardigan and hands between chest and lap) come out of every
+    frame and the rows above drop down. His face, his seat and his legs are untouched."""
+    kept = [row for y, row in enumerate(rows) if y not in CUT_ROWS]
+    return [bytearray(size * 4) for _ in range(size - len(kept))] + kept
 
 
 def ghost_frames(raw, ghost):
@@ -284,8 +302,13 @@ def main():
     frames, names = harold_frames(raw)
     heads, ties, feet, sits = [], [], [], []
     canes = []
+    # Across, his seat point is his body's middle: each frame's thigh end, less how far the rest frame's
+    # thigh end lies east of its cardigan's middle, so he sits centred on the chair in every frame.
+    rest_back, _rest_row = harold_sit(frames[0], HAROLD_SIZE)
+    to_middle = rest_back - torso_middle(frames[0], HAROLD_SIZE)
     for rows in frames:
-        sits.append(harold_sit(rows, HAROLD_SIZE))
+        back, row = harold_sit(rows, HAROLD_SIZE)
+        sits.append((back - to_middle, row))
         head = head_anchor(rows, HAROLD_SIZE)
         heads.append(head)
         ties.append(tie_anchor(rows, HAROLD_SIZE, head))
@@ -359,7 +382,7 @@ def write_frames(project, names, heads, ties, feet, outfits, ghost_rows, sits, g
         'const HAROLD_FEET_ROW := %d' % max(set(feet), key=feet.count),
         'const HAROLD_HEAD: Array[Vector2] = [%s]' % ', '.join('Vector2(%g, %g)' % h for h in heads),
         'const HAROLD_TIE: Array[Vector2] = [%s]' % ', '.join('Vector2(%g, %g)' % t for t in ties),
-        '# Where he sits in each frame: the underside of his thighs at their back end. TitleRoom puts this',
+        '# Where he sits in each frame: across, his body\'s middle; down, the underside of his thighs. TitleRoom puts this',
         '# point on his chair\'s seat line in every frame.',
         'const HAROLD_SIT: Array[Vector2] = [%s]' % ', '.join('Vector2(%g, %g)' % t for t in sits),
         '# Cardigans drawn as outfits of the seated strip, as GrandpaLook.outfit_art builds them for play.',
@@ -374,7 +397,7 @@ def write_frames(project, names, heads, ties, feet, outfits, ghost_rows, sits, g
         'const GHOST_FRAMES := %d' % (4 + 8 * len(GHOST_ANIMS)),
         '# Each ghost\'s top row and lowest row in its seated front frame (its head and dangling feet).',
         'const GHOST_ROWS := {%s}' % ', '.join('"%s": Vector2i(%d, %d)' % (g, r[0], r[1]) for g, r in sorted(ghost_rows.items())),
-        '# Where each ghost sits in each frame: the bottom of its body above its hanging legs.',
+        '# Where each ghost sits in each frame: the middle of the bottom of its body, above its hanging legs.',
         'const GHOST_SIT := {%s}' % ', '.join('"%s": [%s]' % (g, ', '.join('Vector2(%g, %g)' % t for t in gs)) for g, gs in sorted(ghost_sits.items())),
         '',
         '# The chair (art/title/chair.png, its legs cut by LEG_CUT): the row its sitters sit on, and its feet.',

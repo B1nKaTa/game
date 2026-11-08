@@ -43,6 +43,7 @@ var _target_x := 0.0
 var _start_x := 0.0
 var _bob_time := 0.0
 var _lift := 0.0
+var _mirrored := false
 
 
 func setup(art: Texture2D, tint: Color, art_id: String) -> void:
@@ -82,7 +83,7 @@ func head_top() -> Vector2:
 # frame, lifted while it drifts.
 func expected_offset() -> Vector2:
 	if is_seated():
-		return TitleSeats.frame_offset(_sits[frame], TitleFrames.GHOST_SIZE)
+		return TitleSeats.frame_offset(_sits[frame], TitleFrames.GHOST_SIZE, _mirrored)
 	var stand_start: int = TitleFrames.GHOST_ANIMS["stand_up"][0]
 	return TitleSeats.frame_offset(_sits[stand_start], TitleFrames.GHOST_SIZE) - Vector2(0, _lift)
 
@@ -211,6 +212,11 @@ func _rest() -> void:
 # Shows a frame, mirrored when it faces west (the art faces east), drawn where expected_offset puts it.
 func _show(index: int, direction: int) -> void:
 	frame = index
+	_mirrored = direction < 0
 	_sprite.frame = index
-	_sprite.flip_h = direction < 0
+	_sprite.flip_h = _mirrored
 	_sprite.position = expected_offset()
+
+
+func is_mirrored() -> bool:
+	return _mirrored

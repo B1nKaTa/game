@@ -3,7 +3,8 @@ extends Node2D
 
 # Seated Harold on the title screen, in room pixels. His origin is his chair's seat anchor, and every
 # frame is drawn with its own sit point (TitleFrames.HAROLD_SIT, the underside of his thighs) on it, so
-# no idle lifts him off the seat; across, his seat stays where the rest frame's is. He waits:
+# no idle lifts him off the seat or moves him sideways on it (across, his sit point is his body's
+# middle). He waits:
 # every few seconds he taps his cane, checks his ticket or sighs (with a small puff of breath), and
 # otherwise holds his rest frame. He wears what the save has him wear (SeatedLook): his cardigan outfit
 # strip, his cane recoloured by a small shader, and his hat or tie drawn over him at each frame's anchor.
@@ -126,7 +127,7 @@ func play(anim: String) -> void:
 
 # Where frame is drawn from his origin, so its sit point lands on the seat anchor.
 static func expected_offset(index: int) -> Vector2:
-	return Vector2(-TitleFrames.HAROLD_SIT[TitleFrames.HAROLD_REST].x, -TitleFrames.HAROLD_SIT[index].y)
+	return TitleSeats.frame_offset(TitleFrames.HAROLD_SIT[index], TitleFrames.HAROLD_SIZE)
 
 
 func sprite_offset() -> Vector2:

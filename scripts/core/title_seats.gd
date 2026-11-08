@@ -52,7 +52,8 @@ func open_seats(allowed: Array[int]) -> Array[int]:
 	return open
 
 
-# Where a frame's picture goes, from the sitter's origin on the seat anchor, so its sit point lands on
-# the anchor: straight up by the sit point's row, and centred across on its canvas.
-static func frame_offset(sit: Vector2, frame_size: int) -> Vector2:
-	return Vector2(-frame_size / 2.0, -sit.y)
+# Where a frame's picture goes, from the sitter's origin on the seat anchor, so its sit point lands
+# exactly on the anchor, across and down. A frame drawn mirrored has its sit point mirrored too.
+static func frame_offset(sit: Vector2, frame_size: int, mirrored := false) -> Vector2:
+	var across := frame_size - sit.x if mirrored else sit.x
+	return Vector2(-across, -sit.y)

@@ -114,7 +114,8 @@ func _ready() -> void:
 	plaque.position = Vector2(round(216.0 / 2.0), PLAQUE_TOP)
 	plaque.chain_length = PLAQUE_TOP + 1.0
 	_room.add_child(plaque)
-	# Chair, then sitter, then the chair's front legs (chair_front.png), so a sitter sits in its chair.
+	# The whole chair behind, its sitter over it, so nothing of the chair ever covers a sitter's legs or
+	# Harold's cane.
 	for x in SEATS:
 		_add_sprite("chair", Vector2(x - CHAIR_HALF, FLOOR_Y - TitleFrames.CHAIR_FEET_ROW))
 	harold = TitleHarold.new()
@@ -131,8 +132,6 @@ func _ready() -> void:
 		ghost.position = seats.anchors[ghost.seat]
 		_room.add_child(ghost)
 		ghosts.append(ghost)
-	for x in SEATS:
-		_add_sprite("chair_front", Vector2(x - CHAIR_HALF, FLOOR_Y - TitleFrames.CHAIR_FEET_ROW))
 	_front_light = _make_lights(true)
 	var vignette := Node2D.new()
 	vignette.draw.connect(_draw_vignette.bind(vignette))

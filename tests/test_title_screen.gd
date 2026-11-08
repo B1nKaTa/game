@@ -429,7 +429,7 @@ func test_a_ghost_stays_on_its_seat_through_every_pose_and_move() -> void:
 						moves += 1
 			ghost._process(0.05)
 			if ghost.is_seated():
-				var expected := TitleSeats.frame_offset(TitleFrames.GHOST_SIT[art][ghost.frame], TitleFrames.GHOST_SIZE)
+				var expected := TitleSeats.frame_offset(TitleFrames.GHOST_SIT[art][ghost.frame], TitleFrames.GHOST_SIZE, ghost.is_mirrored())
 				assert_eq(ghost.sprite_offset(), expected, "%s frame %d off its seat" % [art, ghost.frame])
 				assert_eq(ghost.position.y, 98.0)
 				assert_near(ghost.position.x, target)
@@ -447,6 +447,7 @@ func test_harold_stays_on_his_seat_through_every_idle() -> void:
 			var sit: Vector2 = TitleFrames.HAROLD_SIT[harold.frame]
 			assert_eq(harold.sprite_offset(), TitleHarold.expected_offset(harold.frame))
 			assert_eq(harold.sprite_offset().y + sit.y, 0.0, "his thighs sit on the seat line in frame %d" % harold.frame)
+			assert_eq(harold.sprite_offset().x + sit.x, 0.0, "his body's middle sits on the seat's middle in frame %d" % harold.frame)
 	harold.free()
 
 
@@ -454,6 +455,15 @@ func test_sit_points_are_measured_inside_each_frame_and_he_reaches_the_floor() -
 	assert_eq(TitleFrames.HAROLD_SIT.size(), TitleFrames.HAROLD_FRAMES)
 	for sit in TitleFrames.HAROLD_SIT:
 		assert_true(absf(sit.y - TitleFrames.HAROLD_SIT[0].y) <= 3.0, "his seat holds within 3 px through his idles")
+		assert_true(absf(sit.x - TitleFrames.HAROLD_SIT[0].x) <= 2.0, "he never slides sideways on his seat")
+	# Seated, he stands as tall over his seat as the ghosts do (31 to 34 px from seat to the top of the head).
+	var harold_art := Image.load_from_file(ProjectSettings.globalize_path("res://art/title/harold.png"))
+	var harold_top := _top_row(harold_art, 0, TitleFrames.HAROLD_SIZE)
+	var harold_height := TitleFrames.HAROLD_SIT[0].y - harold_top
+	for art: String in TitleFrames.GHOST_SIT:
+		var image := Image.load_from_file(ProjectSettings.globalize_path("res://art/title/%s.png" % art))
+		var ghost_height: float = TitleFrames.GHOST_SIT[art][0].y - _top_row(image, 0, TitleFrames.GHOST_SIZE)
+		assert_true(absf(harold_height - ghost_height) <= 2.0, "Harold %d px seated against %s's %d" % [harold_height, art, ghost_height])
 	for art: String in TitleFrames.GHOST_SIT:
 		assert_eq(TitleFrames.GHOST_SIT[art].size(), TitleFrames.GHOST_FRAMES)
 		for sit: Vector2 in TitleFrames.GHOST_SIT[art]:
@@ -462,3 +472,31 @@ func test_sit_points_are_measured_inside_each_frame_and_he_reaches_the_floor() -
 	var seat_height := TitleFrames.CHAIR_FEET_ROW - TitleFrames.CHAIR_SEAT_ROW
 	var leg := TitleFrames.HAROLD_FEET_ROW - TitleFrames.HAROLD_SIT[0].y
 	assert_true(absf(leg - seat_height) <= 2.0, "seat %d px over the floor, his legs %d" % [seat_height, leg])
+
+
+func _top_row(image: Image, frame: int, frame_size: int) -> int:
+	for y in frame_size:
+		for x in frame_size:
+			if image.get_pixel(frame * frame_size + x, y).a > 0.0:
+				return y
+	return frame_size
+
+
+func _top_row(image: Image, frame: int, frame_size: int) -> int:
+	for y in frame_size:
+		for x in frame_size:
+			if image.get_pixel(frame * frame_size + x, y).a > 0.0:
+				return y
+	return frame_size
+
+
+func test_the_ticket_strip_hangs_from_the_slot_on_the_rooms_grid() -> void:
+	assert_eq(TitleMenu.SLOT, TitleRoom.to_view(TitleRoom.slot()), "the strip comes out of the machine's slot")
+	assert_eq(TitleMenu.TICKET_SIZE, Vector2(TicketButton.CELLS) * TicketButton.CELL)
+	for index in TitleMenu.ids(3).size():
+		for selected in [false, true]:
+			var rect := TitleMenu.ticket_rect(index, selected)
+			assert_eq(posmod(int(rect.position.x) + 4, 3), 0, "ticket %d off the grid across" % index)
+			assert_eq(posmod(int(rect.position.y), 3), 0, "ticket %d off the grid down" % index)
+		if index > 0:
+			assert_eq(TitleMenu.ticket_rect(index).position.y, TitleMenu.ticket_rect(index - 1).end.y, "each ticket hangs from the one above")
