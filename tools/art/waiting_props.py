@@ -35,7 +35,9 @@ PAPER = (24, 28)
 PORTRAIT_AT = (4, 3)
 PORTRAIT = (16, 14)
 STAMP_Y = 19
-STAMP = (24, 7)
+# Nine rows: a rule, a clear row, the word, a clear row, a rule. With the rules touching the word (seven
+# rows) the stamps could not be read at 1x.
+STAMP = (24, 9)
 FRAME = 22
 FACE = 16
 
@@ -51,7 +53,7 @@ FONT = {
     'R': ['##.', '#.#', '##.', '#.#', '#.#'],
     'S': ['.##', '#..', '.#.', '..#', '##.'],
     'T': ['###', '.#.', '.#.', '.#.', '.#.'],
-    'W': ['#.#', '#.#', '#.#', '###', '#.#'],
+    'W': ['#.#', '#.#', '###', '###', '#.#'],
     'I': ['###', '.#.', '.#.', '.#.', '###'],
 }
 WIDE_W = ['#...#', '#...#', '#.#.#', '#.#.#', '.#.#.']
@@ -207,7 +209,8 @@ STAMPS = {
 }
 
 
-# A rubber stamp across the poster: a rule, the word, a rule, with a few pixels missing as real ink does.
+# A rubber stamp across the poster: a rule, the word with a clear row either side, a rule, with a few
+# pixels missing from the rules as real ink does (never from the word, so it stays legible).
 def stamp(word, ink):
     w, h = STAMP
     px = blank(w, h)
@@ -216,7 +219,7 @@ def stamp(word, ink):
             px[0][x] = ink
         if noise(x, 6, 4) > 12:
             px[h - 1][x] = ink
-    text(px, word, (w - word_width(word)) // 2, 1, ink)
+    text(px, word, (w - word_width(word)) // 2, 2, ink)
     return px
 
 
