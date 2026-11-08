@@ -31,25 +31,30 @@ static func build(view: RoomView, layout: RoomLayout, palette: RoomPalette) -> v
 		light.palette = palette
 		light.position = spot
 		view.add_child(light)
+	# The film the room's screen plays, and so the film its lobby card tells of.
+	var scene_id := ""
+	if palette.screen and view._room != null and CinemaScenes.shows_screen(view._room.room_type):
+		scene_id = scene_for(view._map, view._room)
 	for cell in layout.cells_of(RoomLayout.SYMBOL_LIFE_SIGN):
 		var card := LifeSign.new()
 		card.position = RoomBackdrop.cell_center(cell)
-		card.setup(view._player, func() -> String: return take_life_sign(view))
+		card.setup(view._player, func() -> String: return take_life_sign(view, scene_id))
 		view.add_child(card)
-	if palette.screen and view._room != null and CinemaScenes.shows_screen(view._room.room_type):
-		add_screen(view, layout, palette, scene_for(view._map, view._room), view._room.decor_seed)
+	if not scene_id.is_empty():
+		add_screen(view, layout, palette, scene_id, view._room.decor_seed)
 
 
-# A lobby card's line, the first time it shows: picked by the floor's seed, never one this run has
-# shown, and saved as seen at once (Progress.take_life_sign).
-static func take_life_sign(view: RoomView) -> String:
+# A lobby card's line, the first time it shows: one of the film the room's screen plays (scene_id, or
+# any film where there is no screen), picked by the floor's seed, never one this run has shown, and
+# saved as seen at once (Progress.take_life_sign).
+static func take_life_sign(view: RoomView, scene_id := "") -> String:
 	var shown: Array[String] = []
 	if view._run != null:
 		shown = view._run.life_signs_shown
 	var seed_text := life_sign_seed(view._run, view._room)
 	if view._bank != null and view._bank.has_method("take_life_sign"):
-		return view._bank.take_life_sign(seed_text, shown)
-	return LifeSigns.take(seed_text, null, shown)
+		return view._bank.take_life_sign(seed_text, shown, scene_id)
+	return LifeSigns.take(seed_text, null, shown, scene_id)
 
 
 # The run's seed for its lobby cards: the seed the floor was built from, which the run keeps for its

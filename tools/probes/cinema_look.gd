@@ -215,10 +215,11 @@ func _sign_in(file: String, shot_name: String) -> void:
 
 
 func _signs() -> void:
-	await _sign_in("combat_01", "sign_near_the_top")
-	await _sign_in("combat_large_02", "sign_low_in_a_large_room")
-	await _sign_in("healing_small_01", "sign_small_room_east")
-	await _sign_in("vault_large_01", "sign_large_room_corner")
+	# Cards stand only beside a screen, just west of its picture (the line is one of that film's).
+	await _sign_in("combat_01", "sign_beside_the_screen")
+	await _sign_in("combat_large_02", "sign_beside_a_large_screen")
+	await _sign_in("combat_small_02", "sign_beside_a_small_screen")
+	await _sign_in("mini_boss_large_01", "sign_beside_the_mini_boss_screen")
 	# Walking away hides it again.
 	_stand(_cell(10, 8))
 	await _wait(0.4)

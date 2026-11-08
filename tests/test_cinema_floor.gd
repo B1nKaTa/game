@@ -373,7 +373,8 @@ func test_rooms_hold_seats_pillars_and_chests_and_nothing_of_the_mall() -> void:
 		pillars += layout.cells_of(RoomLayout.SYMBOL_PILLAR).size()
 		chest_rooms += 1 if not layout.cells_of("C").is_empty() else 0
 		assert_false(layout.ship_rolls, _name(layout))
-	assert_true(seats >= 300, "seat cells %d" % seats)
+	# Fewer, bigger seats than the first cut's 785 small ones, still enough to be cover in every room.
+	assert_true(seats >= 250 and seats <= 400, "seat cells %d" % seats)
 	assert_true(pillars >= 20, "pillars %d" % pillars)
 	assert_true(chest_rooms >= 3, "rooms with a chest %d" % chest_rooms)
 
@@ -408,13 +409,25 @@ func test_every_fighting_room_keeps_its_north_wall_for_the_screen() -> void:
 	assert_eq(rooms, 17)
 
 
-func test_every_room_has_one_lobby_card_clear_of_the_doors() -> void:
+# A lobby card tells of the film on the screen, so it stands in the rooms with a screen only, one each,
+# in the first row under the screen wall just west of the picture, clear of the doors and far from the
+# small map in the top right.
+func test_every_screen_room_has_one_lobby_card_beside_its_screen() -> void:
+	var cards_seen := 0
 	for layout in _layouts():
 		var cards := layout.cells_of(RoomLayout.SYMBOL_LIFE_SIGN)
+		if not CinemaScenes.shows_screen(layout.room_type):
+			assert_eq(cards.size(), 0, "%s has no screen, so no card" % _name(layout))
+			continue
 		assert_eq(cards.size(), 1, _name(layout))
+		var picture := CinemaScreen.picture_rect_for(CinemaScreen.wall_rect(layout))
 		for cell in cards:
+			cards_seen += 1
 			assert_false(layout.touches_a_door(cell), "%s: the card at %s touches a door" % [_name(layout), str(cell)])
-			assert_true(cell.y > RoomLayout.UNDER_THE_HUD, "%s: the card under the HUD row" % _name(layout))
+			assert_eq(cell.y, 2, "%s: the card stands right under the screen wall" % _name(layout))
+			var x := RoomBackdrop.cell_center(cell).x
+			assert_true(x <= picture.position.x and x >= picture.position.x - RoomBackdrop.TILE * 2.0, "%s: the card at %s stands just west of the picture" % [_name(layout), str(cell)])
+	assert_eq(cards_seen, 17)
 
 
 # The Projectionist (44x52) and Crabtree (32x40) take these rooms in Task 4, so their real collision
@@ -450,11 +463,18 @@ func test_props_and_the_screen_go_into_a_fighting_room() -> void:
 	assert_eq(int(counts.get("CinemaBeam", 0)), 1, "and its beam")
 	assert_eq(int(counts.get("LifeSign", 0)), 1, "one lobby card")
 	assert_true(int(counts.get("AisleLight", 0)) > 0, "aisle lights at the row ends")
-	assert_true(CinemaScenes.ids().has(CinemaScreen.in_room(view).scene_id))
+	var film := CinemaScreen.in_room(view).scene_id
+	assert_true(CinemaScenes.ids().has(film))
+	# The card's lines are the film's: each it picks belongs to the film the screen plays.
+	for child in view.get_children():
+		if child is LifeSign:
+			for i in LifeSigns.lines_of(film).size():
+				var id: String = child.pick.call()
+				assert_eq(LifeSigns.scene_of(id), film, "the card tells of %s" % film)
 	view.free()
 
 
-func test_a_shop_has_its_card_but_no_screen() -> void:
+func test_a_shop_has_neither_card_nor_screen() -> void:
 	var layout: RoomLayout = load(DIR + "shop_01.tres")
 	var view := _bare_room(layout, RoomLayout.TYPE_SHOP)
 	CinemaProps.build(view, layout, _def().room_palette())
@@ -463,8 +483,20 @@ func test_a_shop_has_its_card_but_no_screen() -> void:
 	for child in view.get_children():
 		if child is LifeSign:
 			cards += 1
-	assert_eq(cards, 1)
+	assert_eq(cards, 0)
 	view.free()
+
+
+# One chunky seat a cell, sized beside Harold (about 42 px tall): it fills its cell's height, where the
+# first cut drew two or three small seats in a 30x15 strip.
+func test_a_seat_is_one_big_seat_a_cell() -> void:
+	PropArt.art_set = "flashback_cinema"
+	var art := PropArt.texture("seat_row")
+	PropArt.art_set = ""
+	assert_true(art != null)
+	assert_eq(Vector2i(art.get_size()), CinemaSeat.ART_SIZE)
+	assert_true(CinemaSeat.ART_SIZE.y >= 28 and CinemaSeat.ART_SIZE.y <= RoomBackdrop.TILE, "as tall as a cell, no taller")
+	assert_true(CinemaSeat.ART_SIZE.x <= RoomBackdrop.TILE, "within its cell, so a row's seats stand apart")
 
 
 func test_another_floors_palette_never_hangs_a_screen() -> void:

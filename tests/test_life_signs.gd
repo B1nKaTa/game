@@ -42,24 +42,54 @@ func test_the_specs_three_lines_are_there_word_for_word() -> void:
 		assert_true(texts.has(line), line)
 
 
-func test_the_lines_are_about_gerald_biscuit_the_depot_and_small_things() -> void:
-	var counts := {"Gerald": 0, "Biscuit": 0, "work": 0}
-	for text in _texts():
-		for topic in ["Gerald", "Biscuit"]:
-			if text.contains(topic):
-				counts[topic] += 1
-		for word in ["depot", "bus", "foreman", "retired", "number 12", "strike", "promotion"]:
-			if text.containsn(word):
-				counts["work"] += 1
-				break
-	assert_true(counts["Gerald"] >= 8, str(counts))
-	assert_true(counts["Biscuit"] >= 8, str(counts))
-	assert_true(counts["work"] >= 8, str(counts))
+# The lines cover his whole life: the feud, his wife, the children, the depot, cars, holidays and
+# hobbies, with the dog in a handful at most.
+func test_the_lines_cover_his_whole_life_and_the_dog_only_a_few() -> void:
+	var topics := {
+		"Gerald": ["Gerald"],
+		"Biscuit": ["Biscuit"],
+		"work": ["depot", "number 12", "foreman", "retired", "bus"],
+		"wife": ["wedding", "her toes", "impress her", "She caught"],
+		"family": ["children", "family", "Christmas", "Bike lessons"],
+		"holidays": ["seaside", "caravan", "windbreak", "summer"],
+		"hobbies": ["fishing", "shed", "marrow", "pigeon"],
+	}
+	var counts := {}
+	for topic in topics:
+		counts[topic] = 0
+		for text in _texts():
+			for word: String in topics[topic]:
+				if text.contains(word):
+					counts[topic] += 1
+					break
+	assert_true(counts["Biscuit"] >= 2 and counts["Biscuit"] <= 5, str(counts))
+	assert_true(counts["Gerald"] >= 5 and counts["Gerald"] <= 10, str(counts))
+	for topic in ["work", "wife", "family", "hobbies"]:
+		assert_true(counts[topic] >= 4, "%s: %s" % [topic, str(counts)])
+	assert_true(counts["holidays"] >= 3, str(counts))
+
+
+# Every line belongs to one of the screen's films, and every film has lines of its own, so a card
+# beside any screen always has something to say about the film playing.
+func test_every_line_belongs_to_a_film_and_every_film_has_lines() -> void:
+	for line in LifeSigns.ALL:
+		assert_true(CinemaScenes.ids().has(String(line["scene"])), "%s: no film %s" % [line["id"], line["scene"]])
+		assert_eq(LifeSigns.scene_of(line["id"]), line["scene"])
+	for id in CinemaScenes.ids():
+		var lines := LifeSigns.lines_of(id)
+		assert_true(lines.size() >= 2 and lines.size() <= 3, "%s has %d lines" % [id, lines.size()])
+	assert_eq(LifeSigns.scene_of("no_such_line"), "")
+	assert_true(LifeSigns.lines_of("no_such_film").is_empty())
 
 
 func test_no_line_tells_an_ending_or_points_to_his_house() -> void:
 	for text in _texts():
 		var lower := text.to_lower()
+		# Nothing that an ending reveals either: how he goes, what he does when he is back, or Gerald's
+		# fate (the stairs, the sandwich, the bath, the light bulb, the armchair, the grapes, the roses,
+		# the lawnmower, the haunting, holiday snaps).
+		for banned in ["stairs", "sandwich", "bath", "ladder", "bulb", "armchair", "television", "grapes", "roses", "lawnmower", "haunt", "ghost", "photo", "golf", "promise"]:
+			assert_false(lower.contains(banned), "%s: %s" % [banned, text])
 		for banned in ["house", "home", "ending", "funeral", "grave", "coffin", "heaven", "afterlife", "goodbye", "hospital", "died"]:
 			assert_false(lower.contains(banned), "%s: %s" % [banned, text])
 
@@ -78,6 +108,26 @@ func test_a_run_shows_every_line_once_and_then_no_more() -> void:
 	assert_eq(shown.size(), 40)
 	assert_eq(LifeSigns.take("seed-1", data, shown), "", "nothing left this run")
 	assert_eq(shown.size(), 40)
+
+
+# A card beside a screen shows a line of the film playing, each once a run, in the seed's order, and
+# then nothing; the save still records each one as seen.
+func test_a_card_takes_only_lines_of_the_film_on_its_screen() -> void:
+	var data := ProgressData.new()
+	var shown: Array[String] = []
+	for film in CinemaScenes.ids():
+		var lines := LifeSigns.lines_of(film)
+		for i in lines.size():
+			var id := LifeSigns.take("seed-2", data, shown, film)
+			assert_eq(LifeSigns.scene_of(id), film, "%s shows a line of its own film" % film)
+		assert_eq(LifeSigns.take("seed-2", data, shown, film), "", "%s has told all its lines this run" % film)
+	assert_eq(shown.size(), 40, "every line once")
+	assert_eq(data.life_signs_seen.size(), 40)
+	# Unseen lines of a film still come before seen ones, as for the whole pool.
+	var again: Array[String] = []
+	var fresh := ProgressData.new()
+	fresh.see_life_sign("hedge_1974")
+	assert_true(LifeSigns.take("seed-3", fresh, again, "hedge_1974") != "hedge_1974", "an unseen line of the film first")
 
 
 func test_the_runs_seed_sets_the_order() -> void:

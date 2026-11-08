@@ -20,8 +20,8 @@ func _layout(width: int, height: int, thick_wall := true, type := RoomLayout.TYP
 
 # --- the films ---
 
-func test_there_are_fourteen_films_each_with_a_title_and_a_description() -> void:
-	assert_eq(CinemaScenes.ALL.size(), 14)
+func test_there_are_nineteen_films_each_with_a_title_and_a_description() -> void:
+	assert_eq(CinemaScenes.ALL.size(), 19)
 	var seen := {}
 	for scene in CinemaScenes.ALL:
 		var id: String = scene["id"]
@@ -34,7 +34,7 @@ func test_there_are_fourteen_films_each_with_a_title_and_a_description() -> void
 		assert_true(sentences >= 1 and sentences <= 3, "%s: %d sentences" % [id, sentences])
 		assert_true(description.length() >= 80 and description.length() <= 330, "%s: %d letters" % [id, description.length()])
 		assert_true(description.contains("Harold"), "%s shows Harold" % id)
-	assert_eq(CinemaScenes.ids().size(), 14)
+	assert_eq(CinemaScenes.ids().size(), 19)
 	assert_eq(CinemaScenes.scene("biscuit_walk")["title"], "Walking Biscuit")
 	assert_true(CinemaScenes.scene("no_such_film").is_empty())
 
@@ -43,7 +43,7 @@ func test_the_films_are_the_ones_the_spec_asks_for() -> void:
 	var text := ""
 	for scene in CinemaScenes.ALL:
 		text += " " + String(scene["title"]) + " " + String(scene["description"])
-	for wanted in ["Gerald", "1974", "hedge", "Biscuit", "car", "works do", "Christmas", "fence", "retirement cake", "seaside", "umbrella", "dance", "roast"]:
+	for wanted in ["Gerald", "1974", "hedge", "Biscuit", "car", "works do", "Christmas", "fence", "retirement cake", "seaside", "umbrella", "dance", "roast", "wedding", "number 12", "marrow", "fishing", "caravan"]:
 		assert_true(text.containsn(wanted), "a film about %s" % wanted)
 
 
@@ -61,7 +61,7 @@ func test_a_rooms_film_comes_from_its_seed() -> void:
 		var id := CinemaScenes.pick(seed_value)
 		assert_eq(CinemaScenes.pick(seed_value), id, "the same seed, the same film")
 		counts[id] = int(counts.get(id, 0)) + 1
-	assert_eq(counts.size(), 14, "every film is shown somewhere")
+	assert_eq(counts.size(), CinemaScenes.ALL.size(), "every film is shown somewhere")
 	for id in counts:
 		assert_true(counts[id] > 60 and counts[id] < 240, "%s picked %d times in 2000" % [id, counts[id]])
 
@@ -92,6 +92,25 @@ func test_rooms_next_door_never_show_the_same_film() -> void:
 				if chosen.has(other):
 					assert_true(chosen[other] != chosen[room.id], "seed %d: rooms %d and %d both show %s" % [seed_value, room.id, other, chosen[room.id]])
 	assert_true(rooms > 400, "checked %d screen rooms" % rooms)
+
+
+# Each screen on a floor plays a film of its own while unused films remain, so each lobby card has its
+# film's lines to itself.
+func test_a_floor_shows_each_film_once_while_films_remain() -> void:
+	var floors := 0
+	for seed_value in 60:
+		var map := _floor_map(seed_value)
+		if map == null:
+			continue
+		var chosen := CinemaScenes.assign(map)
+		if chosen.size() > CinemaScenes.ALL.size():
+			continue
+		floors += 1
+		var films := {}
+		for id in chosen.values():
+			assert_false(films.has(id), "seed %d shows %s twice" % [seed_value, id])
+			films[id] = true
+	assert_true(floors > 40, "checked %d floors" % floors)
 
 
 func test_screens_hang_in_fighting_and_boss_rooms_only() -> void:

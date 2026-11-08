@@ -47,6 +47,16 @@ const ALL: Array[Dictionary] = [
 		"description": "Harold in overalls stands at a ladder against the garden shed with a brush, painting its boards, a wheelbarrow by the fence behind him. In the next frame he leans in for one more stroke."},
 	{"id": "bike_lesson", "title": "The bike lesson",
 		"description": "Harold cycles slowly down a terraced street beside a small child on a little bicycle, ready to steady the handlebars. In the next frame the child is still upright and pedalling."},
+	{"id": "bus_route", "title": "The number 12",
+		"description": "Harold in his peaked depot cap at the wheel of a double-decker, waving from the cab as he pulls up at a stop where a queue waits with shopping bags. In the next frame his hand is back on the wheel and the first passenger steps up."},
+	{"id": "wedding_day", "title": "The wedding",
+		"description": "A young Harold in a borrowed suit and his laughing bride come down the church steps under a shower of confetti, guests clapping either side. In the next frame the wind has taken his hat."},
+	{"id": "prize_marrow", "title": "The prize marrow",
+		"description": "Harold and Gerald in flat caps stand side by side behind a trestle table at the village show, each beside an enormous marrow, one wearing a rosette, glaring at each other under the bunting. In the next frame Harold leans over his marrow to measure it."},
+	{"id": "fishing_trip", "title": "The fishing trip",
+		"description": "Harold in a flat cap and wellingtons sits on a folding stool under a willow on a quiet riverbank, his rod out over the water and a flask of tea beside him. In the next frame the rod bends and he lands an old boot."},
+	{"id": "caravan_holiday", "title": "The caravan holiday",
+		"description": "A small caravan in a field in pouring rain, the children's faces at its window, while Harold in a hooded raincoat wrestles a striped windbreak. In the next frame the wind has it."},
 ]
 
 
@@ -80,9 +90,10 @@ static func _start(seed_value: int) -> int:
 	return posmod(n >> 7, ALL.size())
 
 
-# Every screen room's film on a floor: each room takes its own pick, or the next scene along when a
-# room next door, through any door, already shows it. Rooms are taken in id order, so the floor always
-# gets the same films.
+# Every screen room's film on a floor: each room takes its own pick, or the next scene along that no
+# other room on the floor shows yet, so each lobby card has its film's lines to itself (LifeSigns). On
+# a floor with more screens than films, a film may come round again, but never in a room next door,
+# through any door. Rooms are taken in id order, so the floor always gets the same films.
 static func assign(map: FloorMap) -> Dictionary:
 	var chosen := {}
 	for room in map.rooms:
@@ -90,11 +101,19 @@ static func assign(map: FloorMap) -> Dictionary:
 			continue
 		var start := _start(room.decor_seed)
 		var pick_id: String = ALL[start]["id"]
+		var fallback := ""
 		for step in ALL.size():
 			var id: String = ALL[(start + step) % ALL.size()]["id"]
-			if not _shown_next_door(map, room, id, chosen):
+			if _shown_next_door(map, room, id, chosen):
+				continue
+			if fallback.is_empty():
+				fallback = id
+			if not chosen.values().has(id):
 				pick_id = id
+				fallback = ""
 				break
+		if not fallback.is_empty():
+			pick_id = fallback
 		chosen[room.id] = pick_id
 	return chosen
 
