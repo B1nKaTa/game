@@ -18,6 +18,8 @@ const LEFT_PANEL_MIN_WIDTH := 276.0
 const RIGHT_PANEL := Rect2(404, 1, 118, 34)
 # Behind the small map and the floor name over it (FloorMapView.MINI_RECT).
 const MAP_PANEL := Rect2(524, 0, 116, 75)
+# The first child: a copy of the world under MAP_PANEL, read by the small map's WarningWindow.
+const BACK_COPY := "WorldUnderMap"
 const PILLS_AT := Vector2(8, 5)
 const COUNTER_GAP := 10.0
 const COUNTER_STEP := 36.0
@@ -145,6 +147,12 @@ func setup(run: RunState) -> void:
 
 
 func _ready() -> void:
+	# The world under the small map, copied before any HUD piece draws, for its WarningWindow.
+	var copy := BackBufferCopy.new()
+	copy.name = BACK_COPY
+	copy.copy_mode = BackBufferCopy.COPY_MODE_RECT
+	copy.rect = MAP_PANEL
+	add_child(copy)
 	_frame = HudFrame.new()
 	_frame.hud = self
 	add_child(_frame)

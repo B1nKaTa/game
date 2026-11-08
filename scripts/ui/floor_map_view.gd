@@ -164,6 +164,11 @@ func floor_name() -> String:
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# The small map lies over the play area's top right, so warnings under it show through it.
+	if not _is_big and get_parent() is Hud:
+		var window := WarningWindow.new()
+		window.setup(Rect2(Hud.MAP_PANEL.position - position, Hud.MAP_PANEL.size))
+		add_child(window)
 	if _is_big:
 		visible = false
 		# It has to hear the key while the game is paused.
