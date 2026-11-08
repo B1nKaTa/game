@@ -1,27 +1,23 @@
 extends Node2D
 
-# The title screen, where the game opens after the boot scene: the Waiting Room's queue drawn in code,
-# the game's name above it, the menu bottom left, the version under it and the build id (BuildInfo) bottom right. The full loop (--smoke)
-# never comes here. The dev keys (F3, F5, F6) do nothing here; they work in the Waiting Room.
+# The title screen, where the game opens after the boot scene: the afterlife's waiting room, animated
+# (TitleRoom), with the game's name on a brass plaque (TitleBrand), the tagline under it, and the menu
+# as paper tickets on the strip from the TAKE 1 machine (TitleMenu, TicketButton). Moving through the
+# menu slides a ticket out; choosing one tears it off, then its action runs. The version is bottom left
+# and the build id (BuildInfo) bottom right. Seated Harold wears what the current slot's save has him
+# wear (SeatedLook), read only. The full loop (--smoke) never comes here. The dev keys (F3, F5, F6) do
+# nothing here; they work in the Waiting Room.
 
-const MENU_AT := Vector2(26, 198)
-const MENU_WIDTH := 150.0
-const MENU_FONT := 13
 const VERSION_SETTING := "application/config/version"
-const LABELS := {
-	"continue": "Continue",
-	"new": "New Game",
-	"load": "Load Game",
-	"options": "Options",
-	"credits": "Credits",
-	"quit": "Quit Game",
-}
+const LABELS := TitleMenu.LABELS
+const TAGLINE_Y := 110.0
 
 var _ui: CanvasLayer
-var _menu: VBoxContainer
+var _menu: Control
 var _overlay: CanvasLayer
 var _overlay_closed_frame := -1
 var _focus_id := ""
+var _tearing: TicketButton
 
 
 func _ready() -> void:
@@ -30,54 +26,62 @@ func _ready() -> void:
 	MusicPlayer.play(MusicRules.title())
 	# Back from a run, the bars beside a wide picture lose the last area's frame.
 	SideBars.reset()
-	add_child(TitleSceneArt.new())
+	var room := TitleRoom.new()
+	room.set_look(SeatedLook.from_worn(_worn(), CosmeticDef.all()))
+	add_child(room)
 	_ui = CanvasLayer.new()
 	add_child(_ui)
-	var title := MenuStyle.label(tr("GRANDPA"), 44, MenuStyle.GOLD)
-	title.add_theme_color_override("font_outline_color", Color.BLACK)
-	title.add_theme_constant_override("outline_size", 6)
-	title.position = Vector2(0, 30)
-	title.custom_minimum_size.x = GameSettings.VIEW.x
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_ui.add_child(title)
-	var subtitle := MenuStyle.label(tr("Please take a number."), 11, MenuStyle.DIM)
-	subtitle.position = Vector2(0, 86)
-	subtitle.custom_minimum_size.x = GameSettings.VIEW.x
-	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_ui.add_child(subtitle)
-	var back := PanelContainer.new()
-	back.add_theme_stylebox_override("panel", MenuStyle.box(Color(0.06, 0.04, 0.08, 0.85)))
-	back.position = MENU_AT - Vector2(6, 6)
-	_ui.add_child(back)
-	_menu = VBoxContainer.new()
-	_menu.add_theme_constant_override("separation", 1)
-	_menu.custom_minimum_size.x = MENU_WIDTH
-	back.add_child(_menu)
-	var version := MenuStyle.label("v%s" % str(ProjectSettings.get_setting(VERSION_SETTING, "0.5.0")), 9, MenuStyle.DIM)
-	version.position = Vector2(MENU_AT.x, GameSettings.VIEW.y - 16)
+	var tagline := Label.new()
+	tagline.text = tr(TitleBrand.TAGLINE)
+	HudStyle.style_label(tagline, HudStyle.SMALL, HudStyle.DIM_TEXT)
+	tagline.position = Vector2(0, TAGLINE_Y)
+	tagline.custom_minimum_size.x = GameSettings.VIEW.x
+	tagline.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	tagline.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_ui.add_child(tagline)
+	_menu = Control.new()
+	_menu.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_ui.add_child(_menu)
+	var version := Label.new()
+	version.text = "v%s" % str(ProjectSettings.get_setting(VERSION_SETTING, "0.5.0"))
+	HudStyle.style_label(version, HudStyle.SMALL, HudStyle.DIM_TEXT)
+	version.position = Vector2(HudStyle.BUILD_MARGIN, GameSettings.VIEW.y - 16)
+	version.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_ui.add_child(version)
 	_ui.add_child(HudStyle.build_label())
 	_build_menu()
 	_ui.add_child(PadFocus.new())
 
 
+# What the current slot has Harold wear, read from its save as the game reads it; nothing on a fresh
+# install or when no save could be read.
+func _worn() -> Dictionary:
+	if Progress.data == null:
+		return {}
+	return Progress.data.cosmetics_worn
+
+
 func _build_menu() -> void:
 	for child in _menu.get_children():
 		_menu.remove_child(child)
 		child.free()
+	_tearing = null
 	var focus: Button = null
-	for id in SaveSlots.menu_items(SaveSlots.slots_with_progress(Progress.ROOT)):
-		var button := MenuStyle.button(tr(LABELS[id]), MENU_FONT)
-		button.pressed.connect(_choose.bind(id))
-		_menu.add_child(button)
+	var ids := TitleMenu.ids(SaveSlots.slots_with_progress(Progress.ROOT))
+	for index in ids.size():
+		var id := ids[index]
+		var ticket := TicketButton.new()
+		ticket.setup(id, index, tr(TitleMenu.label(id)))
+		ticket.pressed.connect(_tear.bind(ticket))
+		_menu.add_child(ticket)
 		if focus == null or id == _focus_id:
-			focus = button
+			focus = ticket
 	focus.grab_focus.call_deferred()
 
 
 # W and S move through the menu as well as the arrows.
 func _unhandled_input(event: InputEvent) -> void:
-	if _overlay != null:
+	if _overlay != null or _tearing != null:
 		return
 	var key := event as InputEventKey
 	if key == null or not key.pressed or key.echo:
@@ -93,6 +97,25 @@ func _unhandled_input(event: InputEvent) -> void:
 	if next != null:
 		next.grab_focus()
 		get_viewport().set_input_as_handled()
+
+
+# The chosen ticket tears off the strip; its action runs once it has fallen away.
+func _tear(ticket: TicketButton) -> void:
+	if _tearing != null or _overlay != null or Engine.get_process_frames() == _overlay_closed_frame:
+		return
+	_tearing = ticket
+	_focus_id = ticket.menu_id
+	ticket.tear()
+	get_tree().create_timer(TitleMenu.TEAR_TIME).timeout.connect(_torn.bind(ticket.menu_id))
+
+
+func _torn(id: String) -> void:
+	if not is_inside_tree():
+		return
+	_choose(id)
+	# Back on the menu (an overlay closed, or nothing opened), the strip is whole again.
+	if _overlay == null and id != "quit":
+		_build_menu()
 
 
 func _choose(id: String) -> void:
@@ -150,7 +173,6 @@ func _on_slot_picked(slot: int, action: String) -> void:
 func debug_menu_ids() -> Array[String]:
 	var ids: Array[String] = []
 	for child in _menu.get_children():
-		for id: String in LABELS:
-			if tr(LABELS[id]) == child.text:
-				ids.append(id)
+		if child is TicketButton:
+			ids.append((child as TicketButton).menu_id)
 	return ids

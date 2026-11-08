@@ -12,7 +12,7 @@ const SPEED := 30.0
 const START_Y := 250.0
 const LINE_GAP := 6
 const LINES := [
-	["GRANDPA", 28],
+	[TitleBrand.FULL_NAME, 24],
 	["", 11],
 	["A game by Stanislav Zlatkov", 13],
 	["", 11],
