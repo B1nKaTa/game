@@ -22,6 +22,9 @@ const CUE_ALPHA := 0.25
 const CUE_ALPHA_LATE := 0.35
 const CUE_GROW_FROM := 0.6
 const CUE_LINE := 1.0
+# Where the room is dark (the Matron's Lights Out), a dark cue would vanish, so it is drawn pale instead:
+# the windup flash's cream (Enemy.WINDUP_CUE), at the same faint alphas.
+const CUE_PALE := Color(1.0, 0.96, 0.82)
 
 
 static func drawn_for(def: EnemyDef) -> bool:
@@ -42,15 +45,15 @@ static func cue_growth(filled: float) -> float:
 	return smoothstep(CUE_GROW_FROM, 1.0, filled)
 
 
-# The hidden cue's colour for a warning filled this far.
-static func cue_color(filled: float) -> Color:
-	return Color(CUE_COLOR, lerpf(CUE_ALPHA, CUE_ALPHA_LATE, cue_growth(filled)))
+# The hidden cue's colour for a warning filled this far, pale in a dark room.
+static func cue_color(filled: float, pale := false) -> Color:
+	return Color(CUE_PALE if pale else CUE_COLOR, lerpf(CUE_ALPHA, CUE_ALPHA_LATE, cue_growth(filled)))
 
 
 # The hidden cue in the shape of a red mark, drawn on canvas in its current transform: a thin dark edge
 # from the start, filling in from the middle over the last part of the warning.
-static func draw_cue_circle(canvas: CanvasItem, at: Vector2, radius: float, filled: float) -> void:
-	var cue := cue_color(filled)
+static func draw_cue_circle(canvas: CanvasItem, at: Vector2, radius: float, filled: float, pale := false) -> void:
+	var cue := cue_color(filled, pale)
 	canvas.draw_arc(at, radius, 0.0, TAU, 32, cue, CUE_LINE)
 	var grown := radius * cue_growth(filled)
 	if grown > 0.5:
@@ -58,8 +61,8 @@ static func draw_cue_circle(canvas: CanvasItem, at: Vector2, radius: float, fill
 
 
 # A lane (rect, its length along x): the edge, and a band down its middle that widens to fill it.
-static func draw_cue_lane(canvas: CanvasItem, rect: Rect2, filled: float) -> void:
-	var cue := cue_color(filled)
+static func draw_cue_lane(canvas: CanvasItem, rect: Rect2, filled: float, pale := false) -> void:
+	var cue := cue_color(filled, pale)
 	canvas.draw_rect(rect, cue, false, CUE_LINE)
 	var grown := rect.size.y * cue_growth(filled)
 	if grown > 0.5:
@@ -67,8 +70,8 @@ static func draw_cue_lane(canvas: CanvasItem, rect: Rect2, filled: float) -> voi
 
 
 # A patch of floor (a falling tile's square, a strip of floor): the edge, and a fill from its middle.
-static func draw_cue_rect(canvas: CanvasItem, rect: Rect2, filled: float) -> void:
-	var cue := cue_color(filled)
+static func draw_cue_rect(canvas: CanvasItem, rect: Rect2, filled: float, pale := false) -> void:
+	var cue := cue_color(filled, pale)
 	canvas.draw_rect(rect, cue, false, CUE_LINE)
 	var grown := rect.size * cue_growth(filled)
 	if grown.x > 0.5 and grown.y > 0.5:
@@ -77,10 +80,10 @@ static func draw_cue_rect(canvas: CanvasItem, rect: Rect2, filled: float) -> voi
 
 # Any other shape (a sector, a cone, a blade), as its outline points: the edge, then the shape filling
 # out from its middle.
-static func draw_cue_polygon(canvas: CanvasItem, points: PackedVector2Array, filled: float) -> void:
+static func draw_cue_polygon(canvas: CanvasItem, points: PackedVector2Array, filled: float, pale := false) -> void:
 	if points.size() < 3:
 		return
-	var cue := cue_color(filled)
+	var cue := cue_color(filled, pale)
 	var edge := points.duplicate()
 	edge.append(points[0])
 	canvas.draw_polyline(edge, cue, CUE_LINE)

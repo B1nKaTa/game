@@ -101,6 +101,7 @@ static func plan_circles(origin: Vector2, start: float, turn: float, delay: floa
 
 func setup(source: Enemy, start: float, turn: float, warning: float, damage := -1) -> void:
 	_source = source
+	_red = AttackWarnings.drawn_by(source)
 	_start = start
 	_turn = turn
 	_warning = warning
@@ -226,7 +227,7 @@ func _draw() -> void:
 		return
 	var now := angle_now()
 	var end := end_angle()
-	if not AttackWarnings.drawn_by(_source):
+	if not _shows_red():
 		_draw_hidden(now, end)
 		return
 	# All it has still to cross shows, so the warning reads wherever he stands.
@@ -249,6 +250,17 @@ func _draw() -> void:
 	_draw_beam(now, 1.0)
 
 
+# Whether its red shows (AttackWarnings.drawn_by), kept from while he was there, so the beam fading
+# after he falls does not turn red.
+var _red := true
+
+
+func _shows_red() -> bool:
+	if is_instance_valid(_source):
+		_red = AttackWarnings.drawn_by(_source)
+	return _red
+
+
 # With Attack warnings off (AttackWarnings): the faint dark cue over the lane and the arc still to turn
 # through, the lens glowing up through the windup, then the beam of light itself with no red edge.
 func _draw_hidden(now: float, end: float) -> void:
@@ -269,7 +281,7 @@ func _draw_beam(angle: float, alpha: float) -> void:
 	var beam := Rect2(0.0, -WIDTH / 2.0, LENGTH, WIDTH)
 	draw_rect(beam, Color(LIGHT, LIGHT.a * alpha))
 	draw_rect(Rect2(0.0, -WIDTH / 6.0, LENGTH, WIDTH / 3.0), Color(LIGHT_CORE, LIGHT_CORE.a * alpha))
-	if AttackWarnings.drawn_by(_source):
+	if _shows_red():
 		draw_rect(beam, Color(COLOR, alpha), false, 2.0)
 		draw_rect(beam.grow(Enemy.HEAVIEST_LANE_GAP), Color(COLOR, 0.6 * alpha), false, 2.0)
 	draw_set_transform(Vector2.ZERO)

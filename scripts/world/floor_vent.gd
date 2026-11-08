@@ -33,6 +33,9 @@ var _time := 0.0
 var _forced_warn := 0.0
 var _forced_warn_total := 0.0
 var _forced_flare := 0.0
+# Who forced the flare (Old Smokey's grid), whose Attack warnings setting its red square follows
+# (AttackWarnings.drawn_by). The room's own vent rhythm keeps its red, as any room hazard does.
+var _forced_source: Enemy
 var _held_left := 0.0
 var _was_flaring := false
 var _hit := {}
@@ -82,7 +85,8 @@ func set_period_scale(scale_factor: float) -> void:
 
 
 # The vent glows for warn seconds, flares for flare seconds, then starts its rhythm afresh.
-func force_flare(warn_time: float, flare_time: float) -> void:
+func force_flare(warn_time: float, flare_time: float, source: Enemy = null) -> void:
+	_forced_source = source
 	_held_left = 0.0
 	_forced_warn = warn_time
 	_forced_warn_total = warn_time
@@ -196,6 +200,9 @@ func _draw_overlay(layer: Node2D) -> void:
 		VentCycle.WARN:
 			var fill := warn_progress()
 			var size := REACH * 2.0
+			if _forced_warn > 0.0 and not AttackWarnings.drawn_by(_forced_source):
+				AttackWarnings.draw_cue_rect(layer, Rect2(-REACH, -REACH, size, size), fill)
+				return
 			layer.draw_rect(Rect2(-REACH, -REACH, size, size), Color(WARN_FILL, 0.25 + 0.45 * fill))
 			layer.draw_rect(Rect2(-REACH, -REACH, size, size), WARN_RING, false, 2.0)
 		VentCycle.FLARE:

@@ -125,7 +125,7 @@ func _way() -> Vector2:
 # With Attack warnings off (AttackWarnings): no red over the room. The beam's start is the faint dark
 # cue with its chevrons pointing the way it will sweep, then the beam of light itself crosses; the
 # safe-spot mark (SafeSpotMark) always shows.
-func _draw_hidden(ahead: Rect2) -> void:
+func _draw_hidden() -> void:
 	if _left > 0.0:
 		var progress := clampf(1.0 - _left / maxf(_warning, 0.001), 0.0, 1.0)
 		var start := _beam_rect(_from)
@@ -154,7 +154,7 @@ func _beam_rect(at: float) -> Rect2:
 func _draw() -> void:
 	var ahead := ahead_rect(_room, _along_x, _at, _to)
 	if not AttackWarnings.drawn_by(_source):
-		_draw_hidden(ahead)
+		_draw_hidden()
 		return
 	if _left > 0.0:
 		var progress := clampf(1.0 - _left / maxf(_warning, 0.001), 0.0, 1.0)

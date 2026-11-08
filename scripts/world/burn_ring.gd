@@ -44,6 +44,7 @@ static func burns(center: Vector2, radius: float, feet: Vector2) -> bool:
 
 func setup(source: Enemy, cap: float) -> void:
 	_source = source
+	_red = AttackWarnings.drawn_by(source)
 	_cap = cap
 	z_index = SCORCH_Z
 	z_as_relative = false
@@ -149,6 +150,17 @@ static func _half_disc(reach: float) -> PackedVector2Array:
 	return points
 
 
+# Whether its red shows (AttackWarnings.drawn_by), kept from while he was there, so the burn fading
+# after he falls does not turn red.
+var _red := true
+
+
+func _shows_red() -> bool:
+	if is_instance_valid(_source):
+		_red = AttackWarnings.drawn_by(_source)
+	return _red
+
+
 func _draw_edge() -> void:
 	if _radius <= 0.5:
 		return
@@ -158,5 +170,5 @@ func _draw_edge() -> void:
 	_edge.draw_arc(Vector2.ZERO, _radius, 0.0, PI, 48, Color(EDGE, alpha), EDGE_WIDTH)
 	# The red line inside the edge only with Attack warnings on (AttackWarnings); the burning edge
 	# itself always shows.
-	if AttackWarnings.drawn_by(_source):
+	if _shows_red():
 		_edge.draw_arc(Vector2.ZERO, _radius - EDGE_WIDTH / 2.0 - 1.0, 0.0, PI, 48, Color(Enemy.WARNING_COLOR, 0.8 * alpha), 1.5)

@@ -75,6 +75,7 @@ static func plan_circles(trail: PackedVector2Array, step: float, delay: float, f
 
 func setup(source: Enemy, trail: PackedVector2Array, step: float, warning: float, damage := DAMAGE) -> void:
 	_source = source
+	_red = AttackWarnings.drawn_by(source)
 	_trail = trail
 	_step = step
 	_warning = warning
@@ -197,12 +198,23 @@ func _process(delta: float) -> void:
 		_source.target.take_hit(_source.attack_damage(_damage))
 
 
+# Whether its red shows (AttackWarnings.drawn_by), kept from while she was there, so a copy fading after
+# she falls does not turn red.
+var _red := true
+
+
+func _shows_red() -> bool:
+	if is_instance_valid(_source):
+		_red = AttackWarnings.drawn_by(_source)
+	return _red
+
+
 func _draw() -> void:
 	var alpha := clampf(_fade_left / FADE, 0.0, 1.0) if is_over() else 1.0
 	var at := now_at() - global_position
 	# With Attack warnings off (AttackWarnings) the trail and rings are the faint dark cue; the copy
 	# itself always shows.
-	var red := AttackWarnings.drawn_by(_source)
+	var red := _shows_red()
 	if is_warning():
 		# The way it will walk: his steps as a dotted red trail, filling, and a ring where it rises.
 		var progress := fill()

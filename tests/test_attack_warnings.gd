@@ -9,7 +9,7 @@ const BOSS_WORLD_ATTACKS := ["runway_lane", "scythe_sweep", "star_fall", "tower_
 	"lane_drop", "takeover_tether", "red_tape", "anchor_drop", "deck_lane", "shockwave", "hold_music",
 	"quoit_ring", "ouija_planchette", "possession_ghost", "spirit_swoop", "procession_lane", "lens_beam",
 	"collection_plate", "xray_sweep", "summon_mark", "burn_ring", "desk_slam", "gavel_strike", "reel_lane",
-	"splice_lane", "steam_jet", "ground_strike"]
+	"splice_lane", "steam_jet", "ground_strike", "terminal_strike", "organ_pipe", "floor_vent"]
 
 
 class FakeSource extends RefCounted:
@@ -60,7 +60,7 @@ func test_every_world_attack_a_regular_starts_asks_before_drawing_red() -> void:
 # source (drawn_by), or the setting itself where it has no source (the Chairman's red tape, a summon's
 # spot).
 func test_every_world_attack_a_boss_starts_asks_before_drawing_red() -> void:
-	var red := RegEx.create_from_string("Color\\(\"e4524f\"\\)|WARNING_COLOR")
+	var red := RegEx.create_from_string("Color\\(\"e4524f\"\\)|WARNING_COLOR|HURT_EDGE")
 	for name: String in BOSS_WORLD_ATTACKS:
 		var source := FileAccess.get_file_as_string("res://scripts/world/%s.gd" % name)
 		assert_false(source.is_empty(), name)
@@ -80,7 +80,7 @@ func test_the_cue_helpers_draw_the_cue_colour() -> void:
 	var source := FileAccess.get_file_as_string("res://scripts/core/attack_warnings.gd")
 	for helper in ["draw_cue_circle", "draw_cue_lane", "draw_cue_rect", "draw_cue_polygon"]:
 		var body := source.substr(source.find("static func %s(" % helper), 700)
-		assert_true(body.contains("cue_color(filled)"), helper)
+		assert_true(body.contains("cue_color(filled, pale)"), helper)
 		assert_false(body.contains("e4524f"), helper)
 
 

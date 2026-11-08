@@ -818,27 +818,30 @@ func _draw_rising_cue(layer: Node2D) -> void:
 # With the warnings hidden, a boss's or mini boss's slam, lanes and cone still show where they will hurt
 # as the faint dark cue (AttackWarnings.draw_cue_circle and the rest), in the same shapes as the red ones
 # and never red. A regular's body attack keeps only its windup flash.
+# In her own Lights Out (a behavior whose is_dark() says so) the cue is drawn pale, since a dark one
+# would vanish in the dark.
 func _draw_boss_cue(layer: Node2D) -> void:
 	var progress := _warning.warning_progress(_warning_share())
+	var pale := _behavior != null and _behavior.has_method("is_dark") and _behavior.is_dark()
 	if _warning_radius > 0.0:
-		AttackWarnings.draw_cue_circle(layer, Vector2.ZERO, _warning_radius, progress)
+		AttackWarnings.draw_cue_circle(layer, Vector2.ZERO, _warning_radius, progress, pale)
 	if _lane_length > 0.0:
 		layer.draw_set_transform(Vector2.ZERO, _lane_direction.angle())
-		AttackWarnings.draw_cue_lane(layer, Rect2(0.0, -_lane_width / 2.0, _lane_length, _lane_width), progress)
+		AttackWarnings.draw_cue_lane(layer, Rect2(0.0, -_lane_width / 2.0, _lane_length, _lane_width), progress, pale)
 		layer.draw_set_transform(Vector2.ZERO)
 	for extra: Array in _extra_lanes:
 		var way: Vector2 = extra[0]
 		var length: float = extra[1]
 		var width: float = extra[2]
 		layer.draw_set_transform(Vector2.ZERO, way.angle())
-		AttackWarnings.draw_cue_lane(layer, Rect2(0.0, -width / 2.0, length, width), progress)
+		AttackWarnings.draw_cue_lane(layer, Rect2(0.0, -width / 2.0, length, width), progress, pale)
 		layer.draw_set_transform(Vector2.ZERO)
 	if _cone_length > 0.0:
 		var base := _cone_direction.angle() - _cone_angle / 2.0
 		var cone := PackedVector2Array([Vector2.ZERO])
 		for i in 13:
 			cone.append(Vector2.from_angle(base + _cone_angle * i / 12.0) * _cone_length)
-		AttackWarnings.draw_cue_polygon(layer, cone, progress)
+		AttackWarnings.draw_cue_polygon(layer, cone, progress, pale)
 
 
 # Where the health bar's top goes, in the enemy's own space: a few pixels over the top of its drawn art

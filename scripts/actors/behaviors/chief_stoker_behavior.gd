@@ -281,6 +281,6 @@ func _flare_grid(enemy: Enemy) -> void:
 	var flaring := safe_pattern(cells, open, from, _rng)
 	for i in vents.size():
 		if flaring.has(cells[i]):
-			vents[i].force_flare(GRID_WARN, GRID_FLARE)
+			vents[i].force_flare(GRID_WARN, GRID_FLARE, enemy)
 		else:
 			vents[i].hold(GRID_WARN + GRID_FLARE)

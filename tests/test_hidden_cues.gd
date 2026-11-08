@@ -92,6 +92,20 @@ func test_the_cue_is_dark_neutral_and_grows_late() -> void:
 	assert_near(AttackWarnings.cue_growth(1.0), 1.0)
 	assert_true(AttackWarnings.cue_growth(0.8) > 0.0 and AttackWarnings.cue_growth(0.8) < 1.0, "it grows over the last part")
 	assert_true(late.a < 0.45, "clearly fainter than a red mark's late fill")
+	var pale := AttackWarnings.cue_color(1.0, true)
+	assert_true(pale.r > 0.9 and pale.g > 0.9, "pale in the dark, never red: %s" % pale)
+	assert_near(pale.a, late.a)
+
+
+# In the Matron's Lights Out her cue is pale, and the stamp, crescendo and vent grid a boss forces ask
+# their source before drawing red.
+func test_the_cues_a_boss_forces_on_room_objects_follow_the_setting() -> void:
+	var enemy := FileAccess.get_file_as_string("res://scripts/actors/enemy.gd")
+	assert_true(enemy.contains("_behavior.has_method(\"is_dark\") and _behavior.is_dark()"))
+	assert_true(FileAccess.get_file_as_string("res://scripts/actors/behaviors/funeral_director_behavior.gd").contains("force_chord(glow, reaches[i], enemy.def.damage, enemy)"))
+	assert_true(FileAccess.get_file_as_string("res://scripts/actors/behaviors/chief_stoker_behavior.gd").contains("force_flare(GRID_WARN, GRID_FLARE, enemy)"))
+	var stamp := FileAccess.get_file_as_string(WORLD_DIR + "terminal_strike.gd")
+	assert_true(stamp.contains("if AttackWarnings.drawn_by(_source):"))
 
 
 func test_a_regular_spot_with_nothing_thrown_keeps_a_cue() -> void:
