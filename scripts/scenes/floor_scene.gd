@@ -514,6 +514,9 @@ func _enter_room(target_id: int) -> void:
 	add_child(_room_view)
 	move_child(_room_view, 0)
 	_room_view.refresh_doors()
+	# A boss still standing in a room he comes back to (after a teleport out) keeps his bar; it was
+	# shown only when he spawned, and leaving hid it.
+	_show_standing_boss()
 	# A room with a fight in it shuts its doors behind him.
 	if _room_view.is_fighting():
 		Sfx.play("door_close")
@@ -990,6 +993,15 @@ func debug_ending_id() -> String:
 
 func debug_ending_snapshot() -> Dictionary:
 	return _ending_snapshot
+
+
+func _show_standing_boss() -> void:
+	for child in _room_view.get_children():
+		var enemy := child as Enemy
+		if enemy != null and enemy.def.is_boss and not enemy.is_summon and enemy.hp > 0.0 and not enemy.is_queued_for_deletion():
+			_hud.show_boss_bar(enemy.def.display_name, enemy.max_hp())
+			_hud.set_boss_health(enemy.hp)
+			return
 
 
 func _on_boss_spawned(boss: Enemy) -> void:
