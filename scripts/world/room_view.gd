@@ -466,6 +466,9 @@ func add_stairwell() -> void:
 	var door := Door.new()
 	door.setup(STAIRWELL_ID, STAIRWELL_ICON, _player.feet())
 	door.locked = false
+	# The way down is the cage lift, its gates folding open as it appears (Door.lift).
+	door.lift = true
+	door.lift_opens_on_arrival = true
 	door.position = RoomBackdrop.cell_center(cell)
 	door.entered.connect(func(_id: int): stairwell_entered.emit())
 	add_child(door)

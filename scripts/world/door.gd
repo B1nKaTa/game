@@ -13,12 +13,25 @@ const CHAINED_COLOR := Color("3c3a44")
 # jambs, the floor running on into darkness, a gate of bars while it is shut, and a small sign of the
 # room type beyond. Its cell and the walls' bodies are as they always were; only the look changed.
 const GATE_TIME := 0.35
+# The way down (the stairwell a fallen floor boss leaves, the Waiting Room's run door) is an old cage lift
+# standing on the floor (PropArt lift_closed, lift_half, lift_open): full wall height, wider than Grandpa,
+# with brass gates shut while the way is barred and a dial pointing down over them. Its gates fold open
+# over LIFT_TIME. Its trigger is the door's own, at the same spot; the picture's bottom row stands
+# LIFT_FEET below that spot, so he walks into the car. Without the art it draws as the old door.
+const LIFT_ART := "lift"
+const LIFT_TIME := 0.6
+const LIFT_FEET := 16.0
 
 var locked := true
 var requires_key := false
 # Stays shut however the room goes, as a closed path at the Crossroads does.
 var chained := false
 var has_key := Callable()
+# Drawn as the cage lift (LIFT_ART) when its art is there.
+var lift := false
+# A lift that appears already open (the stairwell, which comes once the boss falls) still shows its
+# gates folding open, from shut.
+var lift_opens_on_arrival := false
 # The room's colours, for the jambs and the floor beyond (set by RoomView before the door enters).
 var palette: RoomPalette
 # The depth look, when the floor is drawn in it (DepthLook), for the jambs and the floor beyond.
@@ -118,18 +131,21 @@ func _process(delta: float) -> void:
 func _update_gate(delta: float) -> void:
 	var target := 0.0 if is_shut() else 1.0
 	if _gate < 0.0:
-		_gate = target
+		_gate = 0.0 if lift and lift_opens_on_arrival else target
 		_redraw_opening()
 		return
 	if is_equal_approx(_gate, target):
 		return
-	_gate = move_toward(_gate, target, delta / GATE_TIME) if target > _gate else target
+	var rise_time := LIFT_TIME if lift else GATE_TIME
+	_gate = move_toward(_gate, target, delta / rise_time) if target > _gate else target
 	_redraw_opening()
 
 
 func _redraw_opening() -> void:
 	if _opening != null:
 		_opening.queue_redraw()
+	if lift:
+		queue_redraw()
 
 
 # Drawn again only when what it shows changes, not every frame.
@@ -158,9 +174,31 @@ func art_state() -> String:
 	return "open"
 
 
+# Which picture the lift shows for how far its gates have folded open (0 shut, 1 open).
+static func lift_state(opened: float) -> String:
+	if opened <= 0.0:
+		return "closed"
+	if opened < 1.0:
+		return "half"
+	return "open"
+
+
+# The cage lift's picture for now, standing on the floor; false when its art is missing.
+func _draw_lift() -> bool:
+	var art := PropArt.state_texture(LIFT_ART, lift_state(gate()))
+	if art == null:
+		return false
+	draw_texture(art, PropArt.standing(art, Vector2(0.0, LIFT_FEET)))
+	return true
+
+
 func _draw() -> void:
 	# A door in a wall is drawn by its opening; only the Slip prompt is drawn here, over the room.
 	if _side != Vector2i.ZERO:
+		_draw_prompt()
+		return
+	# The way down is the cage lift, which needs no letter: its dial points down.
+	if lift and _draw_lift():
 		_draw_prompt()
 		return
 	var art := PropArt.state_texture("door", art_state())
