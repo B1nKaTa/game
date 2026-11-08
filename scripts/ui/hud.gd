@@ -18,8 +18,6 @@ const LEFT_PANEL_MIN_WIDTH := 276.0
 const RIGHT_PANEL := Rect2(404, 1, 118, 34)
 # Behind the small map and the floor name over it (FloorMapView.MINI_RECT).
 const MAP_PANEL := Rect2(524, 0, 116, 75)
-# The first child: a copy of the world under MAP_PANEL, read by the small map's WarningWindow.
-const BACK_COPY := "WorldUnderMap"
 const PILLS_AT := Vector2(8, 5)
 const COUNTER_GAP := 10.0
 const COUNTER_STEP := 36.0
@@ -67,6 +65,7 @@ var _boss_name: Label
 var _boss_back: ColorRect
 var _boss_fill: ColorRect
 var _boss_max_hp := 1.0
+var _map_back: MapBack
 var _pension := 0
 var _condolences := 0
 # The Waiting Room shows Condolences beside Pension. A run shows Pension only, plus a pop-up when
@@ -147,15 +146,13 @@ func setup(run: RunState) -> void:
 
 
 func _ready() -> void:
-	# The world under the small map, copied before any HUD piece draws, for its WarningWindow.
-	var copy := BackBufferCopy.new()
-	copy.name = BACK_COPY
-	copy.copy_mode = BackBufferCopy.COPY_MODE_RECT
-	copy.rect = MAP_PANEL
-	add_child(copy)
 	_frame = HudFrame.new()
 	_frame.hud = self
 	add_child(_frame)
+	# The small map's panel on a node of its own, so it fades with the map (MapFade).
+	_map_back = MapBack.new()
+	_map_back.hud = self
+	add_child(_map_back)
 	_status = _add_label(Vector2(8, 5), HudStyle.SMALL)
 	_items = _add_label(ITEM_ROW_AT, ITEM_ROW_FONT)
 	_items.clip_text = true
@@ -200,6 +197,18 @@ func _ready() -> void:
 		arrows.setup(_run)
 		add_child(arrows)
 	_refresh()
+
+
+# The small map, its floor name and its panel together at this alpha (MapFade), so a warning under them shows.
+func set_map_alpha(alpha: float, mini_map: CanvasItem) -> void:
+	if _map_back != null:
+		_map_back.modulate.a = alpha
+	if mini_map != null:
+		mini_map.modulate.a = alpha
+
+
+func map_alpha() -> float:
+	return _map_back.modulate.a if _map_back != null else 1.0
 
 
 func set_pension(amount: int) -> void:
@@ -378,10 +387,22 @@ class HudFrame extends Control:
 		HudStyle.draw_panel(self, hud.left_panel_rect())
 		if hud._run != null:
 			HudStyle.draw_panel(self, RIGHT_PANEL)
-			HudStyle.draw_panel(self, MAP_PANEL)
 			var health := hud._run.health
 			for i in health.max_pills:
 				HudStyle.draw_pill(self, PILLS_AT + Vector2(i * HudStyle.PILL_STEP, 0), i < health.pills)
 		HudStyle.draw_coin(self, hud._status.position + Vector2(-12, 0))
 		if hud._boss_back != null and hud._boss_back.visible:
 			HudStyle.draw_panel(self, Rect2(hud._boss_back.position - Vector2(4, 4), BOSS_BAR_SIZE + Vector2(8, 8)))
+
+
+# The small map's panel, on its own so it fades with the map.
+class MapBack extends Control:
+	var hud: Hud
+
+	func _ready() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		size = Vector2(640, 360)
+
+	func _draw() -> void:
+		if hud != null and hud._run != null:
+			HudStyle.draw_panel(self, MAP_PANEL)

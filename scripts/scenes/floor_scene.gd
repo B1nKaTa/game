@@ -571,6 +571,9 @@ func _process(delta: float) -> void:
 	_hud.set_run_time(_run_time)
 	var fighting := _room_view != null and _room_view.is_fighting()
 	_mini_map.visible = GameSettings.minimap_visible(Settings.game("hide_minimap_in_combat"), fighting, _big_map.is_open())
+	# The small map lies over the play area's top right: it fades while a warning lies under it.
+	var under_map := MapFade.world_rect(get_viewport().get_canvas_transform())
+	_hud.set_map_alpha(MapFade.step(_hud.map_alpha(), MapFade.covered(_room_view, under_map), delta), _mini_map)
 	var frame := Engine.get_process_frames()
 	if frame != _pause_closed_frame and frame != _big_map.closed_frame and frame != _case_closed_frame and Input.is_action_just_pressed("pause"):
 		_on_pause_key()

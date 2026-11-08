@@ -85,39 +85,57 @@ func test_the_big_maps_close_prompt_names_the_back_button_on_a_pad() -> void:
 		assert_true(width < 120.0, "the prompt stays a short tag in the corner")
 
 
-# A warning under the small map shows through it: the HUD copies the world under the map's panel before
-# any of its own pieces draw, and the small map (only) lays a WarningWindow over its whole panel.
-func test_warnings_under_the_small_map_show_through_it() -> void:
+# A warning under the small map shows through it: while one lies under the map's panel, the map, its
+# floor name and its panel fade (MapFade); a prop there, a warning elsewhere or a hidden one does not.
+func test_the_small_map_fades_while_a_warning_lies_under_it() -> void:
+	assert_eq(MapFade.world_rect(Transform2D.IDENTITY), Hud.MAP_PANEL, "with no camera move, the panel itself")
+	assert_eq(MapFade.world_rect(Transform2D(0.0, Vector2(-300, -100))), Rect2(Hud.MAP_PANEL.position + Vector2(300, 100), Hud.MAP_PANEL.size), "follows the camera")
+	var area := Hud.MAP_PANEL
+	var room := Node2D.new()
+	(Engine.get_main_loop() as SceneTree).root.add_child(room)
+	var prop := Node2D.new()
+	prop.position = area.get_center()
+	room.add_child(prop)
+	assert_false(MapFade.covered(room, area), "a prop under the map is no warning")
+	var far := GroundStrike.new()
+	far.setup(null, 30.0, 2.0)
+	far.position = Vector2(100, 250)
+	room.add_child(far)
+	assert_false(MapFade.covered(room, area), "a warning elsewhere leaves the map whole")
+	var near := GroundStrike.new()
+	near.setup(null, 30.0, 2.0)
+	near.position = area.position + Vector2(-20, area.size.y + 10)
+	room.add_child(near)
+	assert_true(MapFade.covered(room, area), "a ring reaching under its corner")
+	near.free()
+	# A lane from far away that runs under the map counts by its own shape, not its start.
+	var lane := RunwayLane.new()
+	lane.setup(null, Vector2.RIGHT, 600.0, 24.0, 0.0, 2.0)
+	lane.position = Vector2(0, area.get_center().y)
+	room.add_child(lane)
+	assert_true(MapFade.covered(room, area), "a lane crossing under it")
+	lane.position = Vector2(0, area.end.y + 40)
+	assert_false(MapFade.covered(room, area), "the same lane below it")
+	room.free()
+	var alpha := 1.0
+	for i in 30:
+		alpha = MapFade.step(alpha, true, 1.0 / 60.0)
+	assert_near(alpha, MapFade.FADED, "faded within half a second")
+	for i in 30:
+		alpha = MapFade.step(alpha, false, 1.0 / 60.0)
+	assert_near(alpha, 1.0, "and whole again")
+
+
+# The panel behind the small map is its own piece, faded with it; the big map keeps full colour.
+func test_the_maps_panel_fades_with_the_small_map() -> void:
 	var hud := Hud.new()
 	hud._ready()
-	var copy := hud.get_child(0)
-	assert_true(copy is BackBufferCopy, "the copy is the HUD's first piece")
-	assert_eq((copy as BackBufferCopy).copy_mode, BackBufferCopy.COPY_MODE_RECT)
-	assert_eq((copy as BackBufferCopy).rect, Hud.MAP_PANEL)
-	var views: Array[FloorMapView] = []
-	for is_big in [false, true]:
-		var view := FloorMapView.new()
-		view.setup(FloorMap.new(), null, is_big)
-		hud.add_child(view)
-		view._ready()
-		views.append(view)
-	var windows := _windows(views[0])
-	assert_eq(windows.size(), 1, "the small map has its window")
-	if windows.is_empty():
-		hud.free()
-		return
-	var window := windows[0]
-	assert_eq(Rect2(views[0].position + window.position, window.size), Hud.MAP_PANEL, "over its whole panel")
-	assert_eq(_windows(views[1]).size(), 0, "the big map has none")
-	window._ready()
-	assert_true(window.material is ShaderMaterial and (window.material as ShaderMaterial).shader.code.contains("hint_screen_texture"), "it reads the copied world")
-	assert_true(WarningWindow.REACH >= SpliceLane.WIDTH / 2.0, "it reaches a lane's middle from its outline")
+	var view := FloorMapView.new()
+	view.setup(FloorMap.new(), null, false)
+	hud.add_child(view)
+	hud.set_map_alpha(MapFade.FADED, view)
+	assert_near(hud.map_alpha(), MapFade.FADED)
+	assert_near(view.modulate.a, MapFade.FADED)
+	hud.set_map_alpha(1.0, view)
+	assert_near(view.modulate.a, 1.0)
 	hud.free()
-
-
-func _windows(view: Node) -> Array[WarningWindow]:
-	var found: Array[WarningWindow] = []
-	for child in view.get_children():
-		if child is WarningWindow:
-			found.append(child)
-	return found
