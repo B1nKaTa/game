@@ -807,3 +807,22 @@ short reason. Plan: `2026-11-06-cinema-and-seance-paths.md`. Spec:
   Madame Zara) included. An earlier pair on `f547d50` was stopped by hand when the torch fix came in.
   Shots: `cinema_look.gd all` and `seance_look.gd all` from a copy of the final code, in
   `D:\grandpa-shots-pr\`. The real save's MD5 stayed 510284fa2ead4647c94fee44f99ca787 throughout.
+
+## Fewer, bigger seats (cinema-story, checked on the `combined` branch, 2026-11-08)
+
+The seats went from 785 cells to 349 (rows of 2 or 3, two to four rows a room), so the boss rooms
+have less cover. One batch, `max good 20 1 3 boss`, on `b1ef746` (combined: exits-warnings,
+waiting-props and cinema-story merged onto polish), in its own renamed copy (GrandpaCombBot), bot v10:
+
+| | wins of 20 | boss left | boss ttk | hits a run |
+|---|---|---|---|---|
+| Before (Task 6 final, four batches) | 4, 3, 4, 7 | 30, 37, 36, 22% | | |
+| Fewer seats (one batch) | 6 | 27.9% | 95.5 s | 5.7 (3.7 in the fight) |
+
+Hits by source over the batch: touching him 58, his own (splices, named after him) 29, the lens beam
+13, reel lanes 10, the burn 3; Task 6 read touching 41 to 53, the beam 14 to 24, reels 18 to 26 and
+splices 16 to 31 a batch. So the fight sits inside the range it was tuned to (6 of 20 against 3 to 7),
+with more touches and fewer reel hits now that fewer seats stand between him and Grandpa. One batch
+swings by about 4 wins (lesson 156), so this says "no big change", not "a little easier". The batch
+logged one SCRIPT ERROR, a freed room view assigned to a typed variable in
+`FloorScene.write_checkpoint`; that is fixed on the branch (the loop is untyped now).
