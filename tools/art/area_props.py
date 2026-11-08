@@ -15,6 +15,7 @@
 #   'deep'           a floor piece that fills its box exactly, toned deep (pool water)
 #   'stub'           grass cut down: the bottom rows of the tuft
 #   'split'          a run piece: <id>.png alone and <id>_west/_mid/_east.png built from one wide drawing
+#   'hand'           drawn by hand at 1:1 by hand_props.py (too small to read as a shrunk drawing), left alone
 # The box is the size the prop was drawn at before, so no footprint grows; collision is code and never
 # changes.
 import os
@@ -66,7 +67,7 @@ AREA_PROPS = {
         'care_bed': ('care_bed', 30, 30),
         'food_trolley': ('food_trolley', 24, 26),
         'wet_sign': ('wet_sign', 14, 20, 'dim'),
-        'decor_iv_stand': ('iv_stand2', 14, 28),
+        'decor_iv_stand': ('hand', 14, 28, 'hand'),
         'decor_lantern': ('floor_1:decor_lantern', 14, 20),
         'flower_vase': ('game', 0, 0), 'armchair': ('game', 0, 0), 'wheelchair': ('game', 0, 0),
         'decor_plant': ('game', 0, 0),
@@ -74,14 +75,14 @@ AREA_PROPS = {
     'furnace_works': {
         'coal_heap': ('coal_heap', 30, 25),
         'pipe_valve': ('pipe_valve', 14, 22),
-        'decor_gauge': ('gauge', 16, 20),
+        'decor_gauge': ('hand', 16, 20, 'hand'),
         'decor_pipe': ('pipe2', 24, 18),
         'decor_lantern': ('floor_1:decor_lantern', 14, 20),
         'coal_sack': ('game', 0, 0), 'furnace_crate': ('game', 0, 0), 'floor_vent': ('game', 0, 0),
         'decor_furnace': ('game', 0, 0),
     },
     'funeral_parlour': {
-        'candle_stand': ('candelabra', 14, 26, 'lift'),
+        'candle_stand': ('hand', 14, 26, 'hand'),
         'wreath_stand': ('wreath', 18, 24),
         'hymn_cart': ('hymn_cart', 27, 22),
         'decor_coffin_stand': ('coffin_stand', 26, 20),
@@ -221,6 +222,8 @@ def build(export, game, art_set):
     for game_id, spec in AREA_PROPS[art_set].items():
         source, w, h = spec[:3]
         mode = spec[3] if len(spec) > 3 else ''
+        if mode == 'hand':
+            continue
         mult = {'dim': DIM, 'split': DIM, 'lift': LIFT, 'deep': DEEP}.get(mode, TONE)
         if source == 'game':
             path = os.path.join(game, 'art', 'props', game_id + '.png')
