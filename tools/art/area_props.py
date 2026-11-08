@@ -38,13 +38,15 @@ AREA_PROPS = {
     'waiting_room': {
         'lobby_lamps': ('lobby_lamps', 14, 18),
         'arcade_table_slot': ('arcade_slot', 26, 28),
+        'station_crystal_counter': ('crystal_counter', 40, 28),
         'decor_lantern': ('floor_1:decor_lantern', 14, 20),
         'station_key_board': ('game', 0, 0), 'station_forms_counter': ('game', 0, 0),
         'station_ticket_machine': ('game', 0, 0), 'station_noticeboard': ('game', 0, 0),
         'station_decor_counter': ('game', 0, 0), 'station_item_rack': ('game', 0, 0),
         'station_duty_free': ('game', 0, 0), 'station_severance_desk': ('game', 0, 0),
         'station_employee_plaque': ('game', 0, 0), 'station_ending_archive': ('game', 0, 0),
-        'trophy_frame': ('game', 0, 0), 'lobby_fern': ('game', 0, 0), 'lobby_poster': ('game', 0, 0),
+        # The portrait wall's frame is drawn by hand with the posters (waiting_props.py).
+        'trophy_frame': ('hand', 0, 0, 'hand'), 'lobby_fern': ('game', 0, 0), 'lobby_poster': ('game', 0, 0),
         'lobby_chair': ('game', 0, 0), 'lobby_tank': ('game', 0, 0), 'arcade_table_cards': ('game', 0, 0),
     },
     'crossroads': {

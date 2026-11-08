@@ -2,8 +2,10 @@ class_name WaitingStation
 extends Node2D
 
 # A counter, board or merchant in a Waiting Room department. The scene opens its panel when Grandpa
-# presses interact beside the nearest one. A station with "art" shows that sprite, one without is a
-# board drawn in its colour, with its "label" written on it.
+# presses interact beside the nearest one. A station with "art" is a merchant who stands there, drawn
+# from res://art/npcs/<art>/ as the department's people are (or that sprite, or its colour box, without
+# it); one without is a board, its picture at res://art/props/[waiting_room/]station_<id>.png, with its
+# "label" written on it.
 
 const USE_RADIUS := 48.0
 const BODY_SIZE := Vector2(22, 30)
@@ -27,6 +29,8 @@ var highlighted := false
 # A small mark over the board, such as the noticeboard's NEW while a letter waits unread. Empty for none.
 var badge := ""
 var _feet: Node2D
+# The merchant's own art, when he has some (NpcSprite), or null.
+var _person: NpcSprite
 
 
 func setup(station_entry: Dictionary, feet: Node2D) -> void:
@@ -38,10 +42,28 @@ func setup(station_entry: Dictionary, feet: Node2D) -> void:
 
 
 func _ready() -> void:
-	if entry.has("art"):
-		var art := SpriteVisual.new()
-		add_child(art)
-		art.setup(entry["art"], BODY_SIZE, entry.get("color", Color.WHITE), FRAME_WIDTH)
+	if not entry.has("art"):
+		return
+	# A merchant who stands at his station is drawn as the department's people are (NpcSprite, from
+	# res://art/npcs/<art>/), on the bottom of the body box, with a contact shadow, and turns to face
+	# Grandpa while he is in reach. Without that art, a SpriteVisual (or its colour box) stands in.
+	var person := NpcSprite.new()
+	if person.setup(entry["art"]):
+		# His art stands on his feet, so the room sorts him by them, as it does an Npc.
+		y_sort_enabled = true
+		person.position = Vector2(0, BODY_SIZE.y / 2.0)
+		add_child(person)
+		_person = person
+		ContactShadow.add_to(self, BODY_SIZE.x, Vector2(0.0, BODY_SIZE.y / 2.0))
+		return
+	person.free()
+	var art := SpriteVisual.new()
+	add_child(art)
+	art.setup(entry["art"], BODY_SIZE, entry.get("color", Color.WHITE), FRAME_WIDTH)
+
+
+func person() -> NpcSprite:
+	return _person
 
 
 func is_near() -> bool:
@@ -53,6 +75,8 @@ func distance_to_feet() -> float:
 
 
 func _process(_delta: float) -> void:
+	if _person != null:
+		_person.face(_feet.global_position - global_position if is_near() else Vector2.ZERO)
 	queue_redraw()
 
 

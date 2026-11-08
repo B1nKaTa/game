@@ -1,30 +1,46 @@
 class_name TrophyWall
 extends Node2D
 
-# Ten frames along the lobby's top wall, one per floor boss in floor order. A beaten boss's memento
-# hangs in its frame. An empty frame shows a faint "?" and the boss's short name, so what is left to
-# beat is always in view. Placeholder shapes, drawn in code. Ten frames this narrow fit the eight wall
-# cells between the north door and the next lantern (test_mementos).
+# Ten framed portraits along the lobby's top wall, one per floor boss in floor order, each in dark wood
+# with a brass bevel (trophy_frame). A beaten boss's portrait hangs in colour, cut from his own sprite
+# (art/props/waiting_room/trophy_<boss id>.png, built by tools/art/waiting_props.py); one still to beat
+# shows only his dark silhouette. Every frame has a small brass name plate under it, every second one
+# a plate lower so long names never meet, and the endings count is set on a larger brass plaque below.
+# With no portrait the memento is drawn in code in its frame as before, and with no brass the words
+# stand alone. Ten frames this narrow fit the eight wall cells between the north door and the next
+# lantern (test_mementos).
 
 const FRAME_SIZE := Vector2(22, 22)
-# An empty frame with a pale mat, its middle left plain for the memento drawn in code (PropArt).
 const FRAME_ART := "trophy_frame"
 const FRAME_STEP := 25.0
 const MAT_INSET := 3.0
+const PORTRAIT_SIZE := 16.0
+# A boss not yet beaten: his portrait's shape in near black on the frame's dark backing.
+const SILHOUETTE := Color(0.07, 0.06, 0.08)
 const WOOD := Color("4a2f1c")
 const WOOD_EDGE := Color("22150c")
 const MAT := Color("d8cfb8")
 const QUESTION := Color(0.3, 0.27, 0.22, 0.45)
 const CAPTION := Color("ece9e0")
+# Brass name plates (brass_plate: 3 px caps and one middle column stretched) and the endings plaque
+# (brass_plaque: 4 px caps), with engraved dark words.
+const PLATE_ART := "brass_plate"
+const PLATE_CAP := 3
+const PLAQUE_ART := "brass_plaque"
+const PLAQUE_CAP := 4
+const ENGRAVED := Color("2e1c0c")
+const PLATE_PAD := 4.0
 const CAPTION_SIZE := 7
+# A caption's baseline under its frame's middle, and the plate's top this far over the baseline.
 const CAPTION_Y := 21.0
+const PLATE_ABOVE_BASELINE := 7.0
 # Every second caption hangs a whole caption lower, since a name like "Commodore" is wider than a
-# frame step and two empty frames side by side would run their names together.
+# frame step and two plates side by side would run together.
 const CAPTION_STAGGER := 13.0
-# A small line under the frames and their captions: how many endings are found (EndingRules).
-const ENDINGS_Y := 48.0
+# The endings count (EndingRules), on its plaque under the plates.
+const ENDINGS_Y := 51.0
+const PLAQUE_ABOVE_BASELINE := 9.0
 const ENDINGS_COLOR := Color("ffd24a")
-# A size up from the captions, since it sits over the pale lobby floor rather than the wall.
 const ENDINGS_SIZE := 8
 
 var _hung := {}
@@ -53,32 +69,60 @@ static func caption_y(index: int) -> float:
 	return CAPTION_Y + (CAPTION_STAGGER if index % 2 == 1 else 0.0)
 
 
+static func portrait_art(boss: String) -> String:
+	return "trophy_" + boss
+
+
 func _draw() -> void:
 	var font := ThemeDB.fallback_font
 	if not _endings_line.is_empty():
-		var line_width := font.get_string_size(_endings_line, HORIZONTAL_ALIGNMENT_LEFT, -1, ENDINGS_SIZE).x
-		var spot := Vector2(-line_width / 2.0, ENDINGS_Y)
-		draw_string_outline(font, spot, _endings_line, HORIZONTAL_ALIGNMENT_LEFT, -1, ENDINGS_SIZE, 3, Color.BLACK)
-		draw_string(font, spot, _endings_line, HORIZONTAL_ALIGNMENT_LEFT, -1, ENDINGS_SIZE, ENDINGS_COLOR)
+		_draw_label(_endings_line, Vector2(0, ENDINGS_Y), ENDINGS_SIZE, PLAQUE_ART, PLAQUE_CAP, PLAQUE_ABOVE_BASELINE, ENDINGS_COLOR)
+	var frame_art := PropArt.texture(FRAME_ART)
 	for i in Mementos.ALL.size():
 		var entry: Dictionary = Mementos.ALL[i]
 		var at := frame_center(i)
 		var frame := Rect2(at - FRAME_SIZE / 2.0, FRAME_SIZE)
-		var frame_art := PropArt.texture(FRAME_ART)
 		if frame_art != null:
 			PropArt.draw(self, frame_art, at)
 		else:
 			draw_rect(frame, WOOD)
 			draw_rect(frame, WOOD_EDGE, false, 1.0)
 			draw_rect(frame.grow(-MAT_INSET), MAT)
-		if _hung.has(entry["boss"]):
+		var beaten := _hung.has(entry["boss"])
+		var face := PropArt.texture(portrait_art(entry["boss"]))
+		if face != null:
+			PropArt.draw(self, face, at, Color.WHITE if beaten else SILHOUETTE)
+		elif beaten:
 			_draw_memento(entry["perk"], at)
 		else:
 			draw_string(font, at + Vector2(-3, 4), "?", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, QUESTION)
-			var caption: String = entry["short_name"]
-			var width := font.get_string_size(caption, HORIZONTAL_ALIGNMENT_LEFT, -1, CAPTION_SIZE).x
-			draw_string_outline(font, at + Vector2(-width / 2.0, caption_y(i)), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, CAPTION_SIZE, 2, Color.BLACK)
-			draw_string(font, at + Vector2(-width / 2.0, caption_y(i)), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, CAPTION_SIZE, CAPTION)
+		_draw_label(entry["short_name"], at + Vector2(0, caption_y(i)), CAPTION_SIZE, PLATE_ART, PLATE_CAP, PLATE_ABOVE_BASELINE, CAPTION)
+
+
+# Words centred on `baseline`, engraved on a brass plate stretched to fit them, or outlined alone when
+# the plate's picture is missing.
+func _draw_label(words: String, baseline: Vector2, size: int, plate_id: String, cap: int, above: float, bare_color: Color) -> void:
+	var font := ThemeDB.fallback_font
+	var width := font.get_string_size(words, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+	var spot := Vector2(-width / 2.0, 0.0) + baseline
+	var plate := PropArt.texture(plate_id)
+	if plate == null:
+		draw_string_outline(font, spot, words, HORIZONTAL_ALIGNMENT_LEFT, -1, size, 3, Color.BLACK)
+		draw_string(font, spot, words, HORIZONTAL_ALIGNMENT_LEFT, -1, size, bare_color)
+		return
+	var plate_width := ceilf(width + PLATE_PAD * 2.0)
+	var top_left := Vector2(floorf(baseline.x - plate_width / 2.0), baseline.y - above)
+	draw_plate(self, plate, cap, Rect2(top_left, Vector2(plate_width, plate.get_height())))
+	draw_string(font, spot, words, HORIZONTAL_ALIGNMENT_LEFT, -1, size, ENGRAVED)
+
+
+# A three-part picture stretched across `box`: its caps as drawn and its one middle column repeated.
+static func draw_plate(canvas: CanvasItem, plate: Texture2D, cap: int, box: Rect2) -> void:
+	var h := float(plate.get_height())
+	var middle := maxf(box.size.x - cap * 2.0, 0.0)
+	canvas.draw_texture_rect_region(plate, Rect2(box.position, Vector2(cap, h)), Rect2(0, 0, cap, h))
+	canvas.draw_texture_rect_region(plate, Rect2(box.position + Vector2(cap, 0), Vector2(middle, h)), Rect2(cap, 0, 1, h))
+	canvas.draw_texture_rect_region(plate, Rect2(box.position + Vector2(cap + middle, 0), Vector2(cap, h)), Rect2(cap + 1, 0, cap, h))
 
 
 func _draw_memento(perk: String, at: Vector2) -> void:

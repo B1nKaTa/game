@@ -185,3 +185,20 @@ func test_the_plaque_counts_head_office_clears() -> void:
 	data.record_floor_cleared(5, "head_office")
 	data.record_floor_cleared(5, "head_office")
 	assert_eq(data.clears_of_path("head_office"), 2)
+
+
+# Every merchant who stands at his station is drawn as a person (NpcSprite), never a coloured box: four
+# idle frames facing south and eight turns, about Harold's height. Every board without a person has its
+# own picture in the Waiting Room's set.
+func test_every_station_has_a_picture_and_every_merchant_a_person() -> void:
+	for entry: Dictionary in Departments.MERCHANTS + Departments.STATIONS:
+		if entry.has("art"):
+			var person := NpcSprite.new()
+			assert_true(person.setup(entry["art"]), entry["id"])
+			assert_eq(person.idle_frames(), 4, entry["id"])
+			assert_eq(person.rotation_frames(), NpcSprite.DIRECTIONS, entry["id"])
+			assert_true(person.height >= 36.0 and person.height <= NpcSprite.FRAME, entry["id"])
+			person.free()
+		elif entry.get("board", true):
+			var id := "station_" + str(entry["id"])
+			assert_true(ResourceLoader.exists("res://art/props/waiting_room/%s.png" % id), id)

@@ -201,3 +201,23 @@ func test_the_boarding_pass_adds_a_pill_to_every_landing() -> void:
 	assert_true(source.contains("LANDING_HEAL + (Mementos.LANDING_EXTRA if _run.has_perk(Mementos.LANDING_PERK) else 0)"))
 	assert_true(source.contains("_run.health.heal(landing_heal())"))
 	assert_eq(Mementos.LANDING_EXTRA, 1)
+
+
+# Every frame hangs its boss's portrait (shown as a silhouette until he is beaten), and the brass name
+# plates, which are wider than their names, never meet side to side or two frames apart.
+func test_every_frame_has_a_portrait_and_the_name_plates_never_meet() -> void:
+	for entry: Dictionary in Mementos.ALL:
+		assert_true(ResourceLoader.exists("res://art/props/waiting_room/%s.png" % TrophyWall.portrait_art(entry["boss"])), entry["boss"])
+	var font := ThemeDB.fallback_font
+	var plates: Array[Rect2] = []
+	for i in Mementos.ALL.size():
+		var caption: String = Mementos.ALL[i]["short_name"]
+		var width := ceilf(font.get_string_size(caption, HORIZONTAL_ALIGNMENT_LEFT, -1, TrophyWall.CAPTION_SIZE).x + TrophyWall.PLATE_PAD * 2.0)
+		var baseline := TrophyWall.frame_center(i) + Vector2(0, TrophyWall.caption_y(i))
+		plates.append(Rect2(Vector2(floorf(baseline.x - width / 2.0), baseline.y - TrophyWall.PLATE_ABOVE_BASELINE), Vector2(width, 10.0)))
+	for i in plates.size():
+		var frame := Rect2(TrophyWall.frame_center(i) - TrophyWall.FRAME_SIZE / 2.0, TrophyWall.FRAME_SIZE)
+		for j in plates.size():
+			assert_false(frame.intersects(plates[j]), "frame %d and plate %d" % [i, j])
+			if j > i:
+				assert_false(plates[i].intersects(plates[j]), "%s and %s" % [Mementos.ALL[i]["short_name"], Mementos.ALL[j]["short_name"]])
