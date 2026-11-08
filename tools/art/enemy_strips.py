@@ -18,6 +18,7 @@
 # the source canvas's middle column (so a flip keeps the feet in place), with the lowest used row of
 # each frame on FEET_ROW. SpriteVisual then puts that row on the body box bottom (+body_size.y / 2).
 import hashlib
+import math
 import os
 import sys
 
@@ -33,6 +34,22 @@ HALVED = ('film_reel', 'ectoplasm')
 # The way an anim was drawn: east, mirrored in the game, or south for an object that never turns
 # (EnemyDef.art_flips false: the Ectoplasm, the film reel, the mimic, the Lost Luggage and the steam valve).
 DIRECTIONS = ('east', 'south')
+
+# Frames drawn slimmer than the actor's other poses, widened on the placed canvas so his width holds
+# through every anim: id -> {(game anim, frame in the strip): (export anim, its hash, first row, last
+# row, most columns, rim)}. On each row the back (the leftmost run: the outline and rim pixels behind it)
+# moves out by k columns and the gap behind the rim is filled with a copy of the next k columns, so the
+# cloth's stripes and shading carry on and nothing else in the frame moves. k rises smoothly from 0 at
+# the first row to most halfway down and back to 0 at the last, keeping the back rounded.
+WIDEN = {
+    # The Chairman's slam turns him side on, a 22 px torso against 29 to 30 in his idle and walk, and the
+    # windup's last frame (gavel overhead) to 25: his broad back is drawn out again.
+    'chairman_of_the_board': {
+        ('attack', 0): ('attack', '8ad03ae5', 20, 57, 7, 3),
+        ('attack', 1): ('attack', '8ad03ae5', 20, 57, 7, 3),
+        ('windup', 3): ('attack', '8ad03ae5', 29, 57, 4, 3),
+    },
+}
 
 # id -> {game anim: (export anim, frames, hash of the export anim's frames[, replace])}. Frames are the
 # export's own numbers (000 is the reference pose). A game anim cut to no frames is left out, so the
@@ -202,6 +219,22 @@ def halve(frame):
     return w, h, out
 
 
+def widen(frame, first, last, most, rim):
+    size, height, rows = frame
+    for y in range(first, last + 1):
+        k = round(most * math.sin(math.pi * (y - first) / max(last - first, 1)))
+        row = rows[y]
+        xs = [x for x in range(size) if row[x * 4 + 3]]
+        if k <= 0 or not xs or xs[0] - k < 0:
+            continue
+        left = xs[0]
+        back = bytes(row[left * 4:(left + rim + 1) * 4])
+        fill = bytes(row[(left + rim + 1) * 4:(left + rim + 1 + k) * 4])
+        row[(left - k) * 4:(left - k + rim + 1) * 4] = back
+        row[(left - k + rim + 1) * 4:(left + rim + 1) * 4] = fill
+    return frame
+
+
 def export_anims(base):
     anims = {}
     folder = os.path.join(base, 'animations')
@@ -253,7 +286,8 @@ def build(source, target, enemy):
     if base is None:
         print(enemy, 'has no animations')
         return
-    strips = plan(enemy, export_anims(base))
+    anims = export_anims(base)
+    strips = plan(enemy, anims)
     if 'idle' not in strips:
         print(enemy, 'has no idle, so it would show its placeholder; skipped')
         return
@@ -264,7 +298,15 @@ def build(source, target, enemy):
     out = os.path.join(target, enemy)
     os.makedirs(out, exist_ok=True)
     for name, frames in loaded.items():
-        join([place(f, size) for f in frames], os.path.join(out, name + '.png'))
+        placed = [place(f, size) for f in frames]
+        for (anim, index), (source_anim, wanted, first, last, most, rim) in WIDEN.get(enemy, {}).items():
+            if anim != name or index >= len(placed):
+                continue
+            if source_anim not in anims or frame_hash(anims[source_anim]) != wanted:
+                print('  %s: %s %d was widened on another export, left as drawn' % (enemy, anim, index))
+                continue
+            placed[index] = widen(placed[index], first, last, most, rim)
+        join(placed, os.path.join(out, name + '.png'))
     print(enemy, size, ', '.join('%s %d' % (n, len(f)) for n, f in sorted(loaded.items())))
 
 
