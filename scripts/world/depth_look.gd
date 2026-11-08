@@ -145,8 +145,10 @@ static func unshaded() -> CanvasItemMaterial:
 	return _unshaded
 
 
-# Shots, ground marks and warnings keep their full colour in the dark. Called for each node a room gains.
-static func keep_vivid(node: Node) -> void:
+# Shots, ground marks and warnings keep their full colour in the dark. Called for each node a room gains,
+# deferred, so the node may be freed by then: the argument is untyped, since a freed object cannot be
+# passed to a typed one and the call would fail before is_instance_valid could turn it away.
+static func keep_vivid(node) -> void:
 	if not active or not is_instance_valid(node) or not (node is CanvasItem):
 		return
 	var item := node as CanvasItem
