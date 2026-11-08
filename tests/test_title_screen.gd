@@ -482,14 +482,6 @@ func _top_row(image: Image, frame: int, frame_size: int) -> int:
 	return frame_size
 
 
-func _top_row(image: Image, frame: int, frame_size: int) -> int:
-	for y in frame_size:
-		for x in frame_size:
-			if image.get_pixel(frame * frame_size + x, y).a > 0.0:
-				return y
-	return frame_size
-
-
 func test_the_ticket_strip_hangs_from_the_slot_on_the_rooms_grid() -> void:
 	assert_eq(TitleMenu.SLOT, TitleRoom.to_view(TitleRoom.slot()), "the strip comes out of the machine's slot")
 	assert_eq(TitleMenu.TICKET_SIZE, Vector2(TicketButton.CELLS) * TicketButton.CELL)

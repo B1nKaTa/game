@@ -13,12 +13,14 @@ const LABELS := {
 	"credits": "Credits",
 	"quit": "Quit Game",
 }
-# The top middle of the machine's slot, in view pixels (TitleRoom.SLOT in room pixels, times its scale).
-const SLOT := Vector2(275, 237)
-const TICKET_SIZE := Vector2(72, 15)
-# One ticket below the next, with a perforated seam between them.
-const STEP := 16.0
-const STICK_OUT := 7.0
+# The middle of the machine's slot mouth, in view pixels (TitleRoom.slot() in room pixels, through
+# TitleRoom.to_view). Every ticket edge falls on the room's 3 px grid (view x = 3 n - 4, y = 3 n).
+const SLOT := Vector2(275, 228)
+const TICKET_SIZE := Vector2(78, 21)
+# One ticket below the next, joined at its tear line.
+const STEP := 21.0
+# The selected ticket is pulled out this far, four of the room's pixels.
+const STICK_OUT := 12.0
 # How long the tear-off plays before the chosen action runs.
 const TEAR_TIME := 0.42
 
@@ -33,7 +35,7 @@ static func label(id: String) -> String:
 
 # Where ticket index sits, of the strip's tickets, and where it sits when selected.
 static func ticket_rect(index: int, selected := false) -> Rect2:
-	var at := Vector2(SLOT.x - TICKET_SIZE.x / 2.0, SLOT.y + 4.0 + index * STEP)
+	var at := Vector2(SLOT.x - TICKET_SIZE.x / 2.0, SLOT.y + index * STEP)
 	if selected:
 		at.x += STICK_OUT
 	return Rect2(at.round(), TICKET_SIZE)

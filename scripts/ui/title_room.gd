@@ -79,9 +79,9 @@ static func seat_anchors() -> Array[Vector2]:
 	return anchors
 
 
-# The machine's slot, where the ticket strip comes out, in room pixels.
+# The middle of the machine's slot mouth, where the ticket strip comes out, in room pixels.
 static func slot() -> Vector2:
-	return MACHINE_AT + Vector2(16, 37)
+	return MACHINE_AT + Vector2(16, 34)
 
 
 func set_look(seated: Dictionary) -> void:
@@ -270,6 +270,9 @@ func _draw_machine_panel(panel: Node2D) -> void:
 	panel.draw_rect(Rect2(8, 8, 16, 16), cream)
 	PixelGlyphs.draw_text(panel, PixelGlyphs.SMALL, "TAKE", Vector2(9, 10), ink)
 	PixelGlyphs.draw_text(panel, PixelGlyphs.SMALL, "1", Vector2(14, 17), ink)
+	# The slot's dark mouth across the machine's foot, which the ticket strip hangs out of.
+	panel.draw_rect(Rect2(4, 32, 24, 3), Color("120a0c"))
+	panel.draw_rect(Rect2(4, 32, 24, 1), Color("3a1e22"))
 	var tip := Vector2(16, 26)
 	for step in 3:
 		panel.draw_rect(Rect2(tip.x - 3 + step, tip.y + step, 1, 1), Color("e0b040"))
