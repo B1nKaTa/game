@@ -28,6 +28,8 @@ func _ready() -> void:
 	get_tree().paused = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	MusicPlayer.play(MusicRules.title())
+	# Back from a run, the bars beside a wide picture lose the last area's frame.
+	SideBars.reset()
 	add_child(TitleSceneArt.new())
 	_ui = CanvasLayer.new()
 	add_child(_ui)
