@@ -386,6 +386,39 @@ func open_spots_near(wanted: Array[Vector2i], taken: Array[Vector2i] = []) -> Ar
 	return found
 
 
+# Where a cage lift (the stairwell) stands: a plain floor cell with the north wall right above it, so
+# its 72 px picture stands against the wall rather than free in the room, at least LIFT_DOOR_GAP
+# columns off the north door (the lift is a cell and a half wide), off the door cells and spaced from
+# taken (the boss's items) as open_spots_near is, as near the top middle as that allows, east first:
+# east, since the Cinema's screen lies west of that door, and near it, since the HUD keeps only the top
+# middle of its band free of panels (Hud.RIGHT_PANEL starts about three cells east of the door), so
+# the lift's top shows there. A room with no such cell keeps the lift on open floor near its middle.
+const LIFT_DOOR_GAP := 2
+
+
+func lift_cell(taken: Array[Vector2i] = []) -> Vector2i:
+	var size := size_in_cells()
+	var door_x := door_cell(NORTH).x
+	var best := Vector2i(-1, -1)
+	var best_score := INF
+	for cell in cells_of(SYMBOL_FLOOR):
+		if symbol_at(cell + NORTH) != SYMBOL_WALL:
+			continue
+		var off := cell.x - door_x
+		if absi(off) < LIFT_DOOR_GAP or _touches_a_door(cell) or not _spaced_from(cell, taken):
+			continue
+		# The topmost row first, then nearest the door; east wins a tie with its mirror to the west.
+		var score := float(cell.y * size.x + absi(off)) + (0.0 if off > 0 else 0.5)
+		if score < best_score:
+			best_score = score
+			best = cell
+	if best != Vector2i(-1, -1):
+		return best
+	var middle: Array[Vector2i] = [size / 2]
+	var spots := open_spots_near(middle, taken)
+	return spots[0] if not spots.is_empty() else nearest_floor_cell(middle[0])
+
+
 func _nearest_open_spot(wanted: Vector2i, taken: Array[Vector2i]) -> Vector2i:
 	var best := Vector2i(-1, -1)
 	var best_distance := INF

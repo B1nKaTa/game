@@ -94,3 +94,28 @@ func test_the_ways_down_are_lifts() -> void:
 	assert_false(wall.contains("lift"))
 	var room := FileAccess.get_file_as_string("res://scripts/scenes/waiting_room.gd")
 	assert_true(room.substr(room.find("func _add_run_door("), 400).contains("door.lift = true"))
+	assert_true(view.substr(view.find("func add_stairwell("), 900).contains("layout.lift_cell(_choice_cells)"))
+
+
+# In every floor's boss rooms the lift stands against the north wall, clear of the north door and of
+# the boss's items, not free in the middle of the room.
+func test_the_lift_stands_against_the_north_wall() -> void:
+	var rooms := 0
+	for floor_dir in DirAccess.get_directories_at("res://data/rooms/"):
+		var dir := "res://data/rooms/%s/" % floor_dir
+		for file in DirAccess.get_files_at(dir):
+			if not file.begins_with("floor_boss") or not file.ends_with(".tres"):
+				continue
+			var layout: RoomLayout = load(dir + file)
+			var size := layout.size_in_cells()
+			var middle := Vector2i(size.x / 2, size.y / 2)
+			var items: Array[Vector2i] = [layout.nearest_floor_cell(middle)]
+			var cell := layout.lift_cell(items)
+			var name := floor_dir + "/" + file
+			rooms += 1
+			assert_eq(layout.symbol_at(cell), RoomLayout.SYMBOL_FLOOR, name + ": on plain floor")
+			assert_eq(layout.symbol_at(cell + RoomLayout.NORTH), RoomLayout.SYMBOL_WALL, name + ": the north wall right above it")
+			assert_true(absi(cell.x - layout.door_cell(RoomLayout.NORTH).x) >= RoomLayout.LIFT_DOOR_GAP, name + ": clear of the north door")
+			assert_false(layout.touches_a_door(cell), name + ": off the door cells")
+			assert_true(Vector2(cell - items[0]).length() >= RoomLayout.PICKUP_SPACING, name + ": clear of the boss's items")
+	assert_true(rooms >= 10, "every floor has boss rooms: %d" % rooms)

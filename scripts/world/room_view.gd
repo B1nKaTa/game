@@ -455,14 +455,13 @@ func _on_treasure_door_unlocked() -> void:
 	doors_opened.emit()
 
 
-# The way down from a fallen floor boss's room, on open floor near the middle and clear of the
-# boss's items. It waits until he has stepped off it, as any door he arrives on does.
+# The way down from a fallen floor boss's room: a cage lift standing against the north wall
+# (RoomLayout.lift_cell), clear of the boss's items. It waits until he has stepped off it, as any
+# door he arrives on does.
 func add_stairwell() -> void:
 	if stairwell() != null:
 		return
-	var wanted: Array[Vector2i] = [_room.layout.size_in_cells() / 2]
-	var spots := _room.layout.open_spots_near(wanted, _choice_cells)
-	var cell: Vector2i = spots[0] if not spots.is_empty() else _room.layout.nearest_floor_cell(wanted[0])
+	var cell := _room.layout.lift_cell(_choice_cells)
 	var door := Door.new()
 	door.setup(STAIRWELL_ID, STAIRWELL_ICON, _player.feet())
 	door.locked = false
