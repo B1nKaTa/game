@@ -98,6 +98,22 @@ static func distance_to_path(path: Array[Vector2], point: Vector2, from := 0.0) 
 	return best
 
 
+# Whether its whole path shows clear of the HUD (a BossMoves.clear_view), sampled every CIRCLE_STEP, with
+# at least half its band on screen.
+static func path_shown(path: Array[Vector2], clear: Dictionary) -> bool:
+	if path.is_empty():
+		return false
+	var margin := RADIUS / 2.0
+	if not BossMoves.shown_clear(clear, path[0], margin):
+		return false
+	for i in range(1, path.size()):
+		var pieces := maxi(ceili(path[i - 1].distance_to(path[i]) / CIRCLE_STEP), 1)
+		for k in range(1, pieces + 1):
+			if not BossMoves.shown_clear(clear, path[i - 1].lerp(path[i], k / float(pieces)), margin):
+				return false
+	return true
+
+
 static func _to_segment(point: Vector2, a: Vector2, b: Vector2) -> float:
 	var ab := b - a
 	var length := ab.length_squared()

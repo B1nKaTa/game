@@ -15,6 +15,23 @@ static func view_rect(room_size: Vector2, focus: Vector2) -> Rect2:
 	return Rect2(center - RoomBackdrop.VIEW_SIZE / 2.0, RoomBackdrop.VIEW_SIZE)
 
 
+# What the camera shows of the room clear of the HUD, in room space: the view below the HUD's top rows
+# (Hud.BAND_BOTTOM), and the small map's panel in its top right corner (Hud.MAP_PANEL), which lies over
+# the play area. Returns {"play": Rect2, "map": Rect2}.
+static func clear_view(room_size: Vector2, focus: Vector2) -> Dictionary:
+	var view := view_rect(room_size, focus)
+	var play := view.grow_individual(0.0, -Hud.BAND_BOTTOM, 0.0, 0.0)
+	var map := Rect2(view.position + Hud.MAP_PANEL.position, Hud.MAP_PANEL.size)
+	return {"play": play, "map": map}
+
+
+# Whether a point shows in a clear_view with margin to spare: inside the play area and off the map.
+static func shown_clear(clear: Dictionary, point: Vector2, margin: float) -> bool:
+	var play: Rect2 = clear["play"]
+	var map: Rect2 = clear["map"]
+	return play.grow(-margin).has_point(point) and not map.grow(margin).has_point(point)
+
+
 static func in_view(body: Rect2, room_size: Vector2, focus: Vector2) -> bool:
 	return view_rect(room_size, focus).grow_individual(-VIEW_MARGIN.x, -VIEW_MARGIN.y, -VIEW_MARGIN.x, -VIEW_MARGIN.y).encloses(body)
 

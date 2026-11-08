@@ -1709,3 +1709,60 @@ func test_madame_zaras_effects_are_cleared_from_a_stored_room() -> void:
 			assert_true(SeanceProps.is_passing_effect(effect), "the hotline knows %s lingers" % effect.get_script().get_global_name())
 		assert_true(RoomView.is_passing_effect(effect), "%s is cleared" % effect.get_script().get_global_name())
 		effect.free()
+
+
+func test_what_shows_clear_of_the_hud_is_below_its_band_and_off_the_small_map() -> void:
+	var medium := BossMoves.clear_view(Vector2(20, 11) * RoomBackdrop.TILE, Vector2(100, 300))
+	assert_eq(medium["play"], Rect2(0, Hud.BAND_BOTTOM, 640, 360 - Hud.BAND_BOTTOM), "a room that fits the view")
+	assert_eq(medium["map"], Hud.MAP_PANEL)
+	var large := BossMoves.clear_view(Vector2(30, 17) * RoomBackdrop.TILE, Vector2(900, 520))
+	assert_eq((large["play"] as Rect2).end, Vector2(960, 544), "the camera stops at the room's far corner")
+	assert_true(BossMoves.shown_clear(large, Vector2(700, 300), 8.0))
+	assert_false(BossMoves.shown_clear(large, Vector2(940, 240), 8.0), "under the small map, below the band")
+	assert_false(BossMoves.shown_clear(large, Vector2(500, 190), 8.0), "under the HUD's band")
+
+
+# In the large room, with Grandpa in its south half, the camera shows only part of the board and the
+# HUD covers its top: she spells a word whose whole path shows whenever one in view leaves him a way out.
+func test_the_planchette_keeps_its_path_in_view_when_a_word_there_will_do() -> void:
+	var layout := _layout(BOSS_ROOMS[1])
+	var bounds := ForemanBehavior.room_rect(layout.size_in_cells())
+	var room_size := Vector2(layout.size_in_cells()) * RoomBackdrop.TILE
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 41
+	var shown_before := 0
+	var shown_now := 0
+	var planned := 0
+	for i in 60:
+		var feet := _open_spot(layout, rng, bounds)
+		if feet.y < bounds.get_center().y:
+			continue
+		var at := _zara_spot(layout, rng, bounds)
+		var body := Rect2(at - ZARA_BODY / 2.0, ZARA_BODY)
+		var base := {"rects": [], "circles": []}
+		var clear := BossMoves.clear_view(room_size, feet)
+		var start := rng.randi_range(0, Medium.OUIJA_START_PICK - 1)
+		var before := Medium.ouija_plan(bounds, feet, base, body, _is_open(layout), start)
+		var now := Medium.ouija_plan(bounds, feet, base, body, _is_open(layout), start, clear)
+		var path: Array[Vector2] = []
+		path.assign(now["path"])
+		if path.is_empty():
+			continue
+		planned += 1
+		var old_path: Array[Vector2] = []
+		old_path.assign(before["path"])
+		if OuijaPlanchette.path_shown(old_path, clear):
+			shown_before += 1
+		if OuijaPlanchette.path_shown(path, clear):
+			shown_now += 1
+			continue
+		# Not shown: then no word in view leaves him a way out.
+		var shown_words: Array = []
+		for entry: Array in Medium.words_by_nearness(bounds, feet):
+			if OuijaPlanchette.path_shown(entry[1], clear):
+				shown_words.append(entry)
+		var pick := Medium._ouija_pick(shown_words, bounds, feet, base, body, _is_open(layout), start)
+		assert_true((pick["path"] as Array).is_empty(), "spot %d: a word in view would have done" % i)
+	print("planchette in view, south half of the large room: %d of %d (before: %d)" % [shown_now, planned, shown_before])
+	assert_true(planned >= 15, "enough spots in the south half (%d)" % planned)
+	assert_true(shown_now > shown_before, "more words stay in view than before")

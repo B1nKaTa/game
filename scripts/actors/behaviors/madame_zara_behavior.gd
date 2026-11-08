@@ -152,10 +152,26 @@ static func words_by_nearness(room: Rect2, feet: Vector2) -> Array:
 
 # The word to spell: of the words nearest his feet, from the one start picks, the first whose slide
 # leaves him a way out over everything under way and a spot nothing ever covers, or failing that the
-# first that leaves him a way out at all. Returns {word, path, mark}; path empty when none does.
-static func ouija_plan(room: Rect2, feet: Vector2, base: Dictionary, body := Rect2(), is_open := Callable(), start := 0) -> Dictionary:
-	var keep_off := ProjectionistBehavior.keep_off_body(body)
+# first that leaves him a way out at all. Given what the camera shows clear of the HUD (a
+# BossMoves.clear_view), the words whose whole path shows there are tried first, so in a large room the
+# board's far rows under the HUD or the small map are spelled only when no word in view leaves a way out.
+# Returns {word, path, mark}; path empty when none does.
+static func ouija_plan(room: Rect2, feet: Vector2, base: Dictionary, body := Rect2(), is_open := Callable(), start := 0, clear := {}) -> Dictionary:
 	var ordered := words_by_nearness(room, feet)
+	if not clear.is_empty():
+		var shown: Array = []
+		for entry: Array in ordered:
+			if OuijaPlanchette.path_shown(entry[1], clear):
+				shown.append(entry)
+		if shown.size() < ordered.size():
+			var plan := _ouija_pick(shown, room, feet, base, body, is_open, start)
+			if not (plan["path"] as Array).is_empty():
+				return plan
+	return _ouija_pick(ordered, room, feet, base, body, is_open, start)
+
+
+static func _ouija_pick(ordered: Array, room: Rect2, feet: Vector2, base: Dictionary, body: Rect2, is_open: Callable, start: int) -> Dictionary:
+	var keep_off := ProjectionistBehavior.keep_off_body(body)
 	var floor_route: OverlapRoute = null
 	var first := clampi(start, 0, maxi(ordered.size() - 1, 0))
 	var fallback := {}
@@ -371,7 +387,7 @@ func _start_ouija(enemy: Enemy, is_open := Callable(), lead := true) -> bool:
 	if enemy.get_parent() == null:
 		return false
 	var open := is_open if is_open.is_valid() else _plan_open(enemy)
-	var plan := ouija_plan(_room(enemy), enemy.target_ground(), _live(enemy), enemy.body_rect(), open, _rng.randi_range(0, OUIJA_START_PICK - 1))
+	var plan := ouija_plan(_room(enemy), enemy.target_ground(), _live(enemy), enemy.body_rect(), open, _rng.randi_range(0, OUIJA_START_PICK - 1), _clear_view(enemy))
 	var path: Array = plan["path"]
 	if path.is_empty():
 		return false
@@ -468,6 +484,14 @@ func _anim(enemy: Enemy, anim: String, seconds: float) -> void:
 
 func _room(enemy: Enemy) -> Rect2:
 	return ForemanBehavior.room_rect(enemy.room_cells)
+
+
+# What the camera shows of her room clear of the HUD, found the way the floor places the camera.
+func _clear_view(enemy: Enemy) -> Dictionary:
+	if not is_instance_valid(enemy.target):
+		return {}
+	var focus: Vector2 = enemy.target.camera_focus() if enemy.target.has_method("camera_focus") else enemy.target_ground()
+	return BossMoves.clear_view(Vector2(enemy.room_cells) * RoomBackdrop.TILE, focus)
 
 
 func _live(enemy: Enemy) -> Dictionary:
