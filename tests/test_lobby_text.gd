@@ -42,7 +42,7 @@ func test_the_lines_read_as_the_lobby_sign_did() -> void:
 	assert_eq(text.ticket_line(), "YOUR TICKET: 15   NOW SERVING: 15  Called!")
 	assert_eq(text.hint_line(), LONGEST_HINT)
 	text.show_text(15, LobbyText.NOT_CALLED, "")
-	assert_eq(text.ticket_line(), "YOUR TICKET: 16   NOW SERVING: 666")
+	assert_eq(text.ticket_line(), "YOUR TICKET: 16   NOW SERVING: 999")
 	assert_eq(text.hint_line(), "", "no hint outside debug builds")
 	text.free()
 

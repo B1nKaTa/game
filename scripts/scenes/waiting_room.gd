@@ -22,7 +22,7 @@ const ENDING_ARCHIVE := "ending_archive"
 const MERCHANT_PROMPT := "Trade"
 # The stairs plaque (DoorSign "v") hangs over the run door's picture: the way down to the floors.
 const RUN_DOOR_ICON := "v"
-# A number that is not called shows the old 666 on the lobby's ticket line.
+# A number that is not called shows 999 on the lobby's ticket line (LobbyText.NOT_CALLED).
 const NOT_CALLED := LobbyText.NOT_CALLED
 
 var player: Player
@@ -143,7 +143,7 @@ func _refresh_noticeboard() -> void:
 
 
 # The number on the lobby's sign: this visit's, once its ticket has been called and something came of
-# it, or the old 666.
+# it, or NOT_CALLED (999).
 static func now_serving(data: ProgressData) -> int:
 	return data.run_count if data.ticket_was_called() else NOT_CALLED
 

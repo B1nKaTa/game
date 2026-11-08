@@ -12,8 +12,9 @@ const TICKET_SIZE := 12
 const RIGHT_MARGIN := 8.0
 const TICKET_COLOR := Color("ece9e0")
 const NOW_SERVING_COLOR := Color("e4524f")
-# A number that is not called shows the old 666.
-const NOT_CALLED := 666
+# A number that is not called shows 999: "you'll be a while". Never 666, which reads as devil imagery
+# (the game keeps all heaven, hell and devil symbols out).
+const NOT_CALLED := 999
 # Along the bottom of the screen, the DEV hint on the left and the dev profile's label on the right.
 const HINT_AT := Vector2(12, 332)
 const HINT_SIZE := 10
