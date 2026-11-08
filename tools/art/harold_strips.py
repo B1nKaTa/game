@@ -23,6 +23,19 @@ FRAMES = {
     # out low (8) while the arc shows, then draws it back down (2) to the rest pose (1).
     'attack': ('attack', [7, 8, 2, 1]),
 }
+# Export frames 7 and 8 of the attack carry a dark slate lump behind his back (PixelLab drew a satchel
+# into the thrust). It is cleared on the placed 60 px canvas: on each row, every pixel left of his own
+# back outline, the column given here (rows 27 to 29 lean one pixel further back than the rest).
+LUMP_ROWS = {26: 23, 27: 23, 28: 23, 29: 23, 30: 22, 31: 22, 32: 22, 33: 22, 34: 22, 35: 22, 36: 22, 37: 22}
+TRIM = {'attack': {7: LUMP_ROWS, 8: LUMP_ROWS}}
+
+
+def trim(frame, rows_to_outline):
+    width, height, rows = frame
+    for y, outline in rows_to_outline.items():
+        for x in range(outline):
+            rows[y][x * 4:x * 4 + 4] = bytes(4)
+    return frame
 
 
 def place(frame):
@@ -49,6 +62,9 @@ def main():
     for name, (anim, picks) in FRAMES.items():
         folder = os.path.join(source, 'Idle', 'animations', anim, 'east')
         frames = [place(load(os.path.join(folder, 'frame_%03d.png' % i))) for i in picks]
+        for k, i in enumerate(picks):
+            if i in TRIM.get(name, {}):
+                frames[k] = trim(frames[k], TRIM[name][i])
         join(frames, os.path.join(target, name + '.png'))
         print(name, len(frames))
 
