@@ -822,7 +822,7 @@ func _draw_rising_cue(layer: Node2D) -> void:
 # would vanish in the dark.
 func _draw_boss_cue(layer: Node2D) -> void:
 	var progress := _warning.warning_progress(_warning_share())
-	var pale := _behavior != null and _behavior.has_method("is_dark") and _behavior.is_dark()
+	var pale: bool = _behavior != null and _behavior.has_method("is_dark") and _behavior.is_dark()
 	if _warning_radius > 0.0:
 		AttackWarnings.draw_cue_circle(layer, Vector2.ZERO, _warning_radius, progress, pale)
 	if _lane_length > 0.0:
