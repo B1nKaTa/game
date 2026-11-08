@@ -120,16 +120,23 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	draw_set_transform(Vector2.ZERO, _direction.angle())
+	# The red only with Attack warnings on (AttackWarnings); otherwise the faint cue, then the dancers or
+	# the buoy themselves.
+	var red := AttackWarnings.drawn_by(_source)
 	if _left > 0.0:
 		var progress := clampf(1.0 - _left / maxf(_warning, 0.001), 0.0, 1.0)
-		draw_rect(Rect2(0.0, -_width / 2.0, _length * progress, _width), Color(COLOR, 0.15 + 0.3 * progress))
-		draw_rect(Rect2(0.0, -_width / 2.0, _length, _width), COLOR, false, 2.0)
+		if red:
+			draw_rect(Rect2(0.0, -_width / 2.0, _length * progress, _width), Color(COLOR, 0.15 + 0.3 * progress))
+			draw_rect(Rect2(0.0, -_width / 2.0, _length, _width), COLOR, false, 2.0)
+		else:
+			AttackWarnings.draw_cue_lane(self, Rect2(0.0, -_width / 2.0, _length, _width), progress)
 		draw_set_transform(Vector2.ZERO)
 		return
 	var row := row_for(_look)
 	var back := clampf(_front - row, 0.0, _length)
 	var front := clampf(_front, 0.0, _length)
-	draw_rect(Rect2(back, -_width / 2.0, front - back, _width), Color(COLOR, 0.12 if _look == LOOK_LIFEBUOY else 0.25))
+	if red:
+		draw_rect(Rect2(back, -_width / 2.0, front - back, _width), Color(COLOR, 0.12 if _look == LOOK_LIFEBUOY else 0.25))
 	if _look == LOOK_LIFEBUOY:
 		_draw_buoy(_front - row / 2.0)
 	else:

@@ -26,6 +26,9 @@ var _forced_glow := 0.0
 var _forced_glow_total := 0.0
 var _forced_reach := PipeRing.REACH
 var _forced_damage := 0
+# Who forced the chord (the Funeral Director's crescendo), whose Attack warnings setting its red reach
+# follows (AttackWarnings.drawn_by).
+var _forced_source: Enemy
 var _held_left := 0.0
 var _overlay: Node2D
 var _light: PointLight2D
@@ -62,7 +65,8 @@ class Overlay extends Node2D:
 
 # Glows for glow_time, then chords once with a ring of the given reach and damage, then picks its
 # own beat up again from the start, so a forced chord is never followed by a second one at once.
-func force_chord(glow_time: float, reach: float, damage: int) -> void:
+func force_chord(glow_time: float, reach: float, damage: int, source: Enemy = null) -> void:
+	_forced_source = source
 	_held_left = 0.0
 	_forced_glow = maxf(glow_time, 0.01)
 	_forced_glow_total = _forced_glow
@@ -170,7 +174,8 @@ func _draw_overlay(layer: Node2D) -> void:
 			# A crescendo's ring hurts, so its whole reach shows while it glows, as any warning does.
 			if _forced_glow > 0.0 and _forced_damage > 0:
 				var start := inward.angle() - PI / 2.0
-				layer.draw_arc(at, _forced_reach, start, start + PI, 32, Color(PipeRing.HURT_EDGE, 0.35 + 0.5 * fill), 2.0)
+				var reach_color := Color(PipeRing.HURT_EDGE, 0.35 + 0.5 * fill) if AttackWarnings.drawn_by(_forced_source) else AttackWarnings.cue_color(fill)
+				layer.draw_arc(at, _forced_reach, start, start + PI, 32, reach_color, 2.0)
 			else:
 				layer.draw_arc(at, 10.0 + 4.0 * fill, 0.0, TAU, 16, Color(GLOW_RING, 0.4 + 0.5 * fill), 2.0)
 		PipeBeat.CHORD:

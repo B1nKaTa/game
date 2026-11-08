@@ -98,8 +98,13 @@ func _draw() -> void:
 		_draw_rope(Vector2.ZERO)
 		return
 	var filled := fill()
-	draw_circle(Vector2.ZERO, RADIUS * filled, Color(COLOR, 0.15 + 0.3 * filled))
-	draw_arc(Vector2.ZERO, RADIUS, 0.0, TAU, 24, COLOR, 2.0)
+	# The red ring only with Attack warnings on (AttackWarnings); otherwise the faint cue under the
+	# falling quoit.
+	if AttackWarnings.drawn_by(_source):
+		draw_circle(Vector2.ZERO, RADIUS * filled, Color(COLOR, 0.15 + 0.3 * filled))
+		draw_arc(Vector2.ZERO, RADIUS, 0.0, TAU, 24, COLOR, 2.0)
+	else:
+		AttackWarnings.draw_cue_circle(self, Vector2.ZERO, RADIUS, filled)
 	_draw_rope(Vector2(0.0, -DROP_HEIGHT * (1.0 - filled)))
 
 

@@ -515,6 +515,8 @@ func _add_run_door(view: RoomView) -> void:
 	var door := Door.new()
 	door.setup(0, RUN_DOOR_ICON, player.feet())
 	door.locked = false
+	# The way down to the floors is the cage lift (Door.lift), standing open.
+	door.lift = true
 	door.position = RoomBackdrop.cell_center(Departments.RUN_DOOR_CELL)
 	door.entered.connect(func(_id: int): Game.begin_run())
 	view.add_child(door)

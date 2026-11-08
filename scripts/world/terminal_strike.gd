@@ -81,7 +81,10 @@ func _draw() -> void:
 		return
 	var filled := fill()
 	if kind == LOOK_STAMP:
-		draw_arc(Vector2.ZERO, r + STAMP_RING_GAP, 0.0, TAU, 32, COLOR, 2.0)
+		# The stamp's outer red ring only with Attack warnings on (AttackWarnings); the stamp's shadow
+		# and the stamp coming down always show.
+		if AttackWarnings.drawn_by(_source):
+			draw_arc(Vector2.ZERO, r + STAMP_RING_GAP, 0.0, TAU, 32, COLOR, 2.0)
 		var size := 0.3 + 0.7 * filled
 		var alpha := 0.25 + 0.5 * filled
 		draw_rect(Rect2(-r * 0.7 * size, -r * 0.45 * size, r * 1.4 * size, r * 0.9 * size), Color(STAMP_SHADOW, alpha))

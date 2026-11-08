@@ -56,10 +56,15 @@ func _draw() -> void:
 		draw_set_transform(Vector2.ZERO)
 		return
 	var filled := fill()
-	draw_circle(Vector2.ZERO, _radius * filled, Color(COLOR, 0.15 + 0.3 * filled))
-	draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 48, RING_BACKING, RING_BACKING_WIDTH)
-	draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 48, COLOR, RING_WIDTH)
-	draw_arc(Vector2.ZERO, _radius - INNER_RING_GAP, 0.0, TAU, 48, COLOR, INNER_RING_WIDTH)
+	# The red rings only with Attack warnings on (AttackWarnings); otherwise the faint cue. His fists
+	# coming down always show.
+	if AttackWarnings.drawn_by(_source):
+		draw_circle(Vector2.ZERO, _radius * filled, Color(COLOR, 0.15 + 0.3 * filled))
+		draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 48, RING_BACKING, RING_BACKING_WIDTH)
+		draw_arc(Vector2.ZERO, _radius, 0.0, TAU, 48, COLOR, RING_WIDTH)
+		draw_arc(Vector2.ZERO, _radius - INNER_RING_GAP, 0.0, TAU, 48, COLOR, INNER_RING_WIDTH)
+	else:
+		AttackWarnings.draw_cue_circle(self, Vector2.ZERO, _radius, filled)
 	# His fists coming down on the desk in front of him.
 	var lift := 10.0 * (1.0 - filled)
 	draw_rect(Rect2(-22, -4 - lift, 12, 9), Color(DESK, 0.4 + 0.5 * filled))

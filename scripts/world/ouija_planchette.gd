@@ -242,6 +242,9 @@ func _draw() -> void:
 func _draw_path() -> void:
 	var progress := fill()
 	var tint := Color(COLOR, 0.14 + (0.26 * progress if is_warning() else 0.12))
+	# With Attack warnings off (AttackWarnings) the path is the faint dark cue; the board and the
+	# planchette always show.
+	var red := AttackWarnings.drawn_by(_source)
 	var stops: Array[Vector2] = []
 	var from := now_at() - global_position
 	var at := 0.0
@@ -250,23 +253,30 @@ func _draw_path() -> void:
 		var b := _path[i] - global_position
 		if at + travel + PAUSE >= _time:
 			var a := from if at <= _time else _path[i - 1] - global_position
-			_draw_band(a, b, tint)
+			_draw_band(a, b, tint, red, progress)
 			stops.append(b)
 		at += travel + PAUSE
 	if is_warning():
 		stops.push_front(_path[0] - global_position)
 	for stop in stops:
+		if not red:
+			AttackWarnings.draw_cue_circle(self, stop, RADIUS, progress)
+			continue
 		draw_circle(stop, RADIUS, tint)
 		draw_arc(stop, RADIUS, 0.0, TAU, 20, COLOR, 2.0)
 		draw_arc(stop, RADIUS + Enemy.HEAVIEST_LANE_GAP, 0.0, TAU, 20, COLOR, 2.0)
 
 
-func _draw_band(a: Vector2, b: Vector2, tint: Color) -> void:
+func _draw_band(a: Vector2, b: Vector2, tint: Color, red := true, progress := 0.0) -> void:
 	var length := a.distance_to(b)
 	if length < 1.0:
 		return
 	draw_set_transform(a, (b - a).angle())
 	var band := Rect2(0.0, -RADIUS, length, RADIUS * 2.0)
+	if not red:
+		AttackWarnings.draw_cue_lane(self, band, progress)
+		draw_set_transform(Vector2.ZERO)
+		return
 	draw_rect(band, tint)
 	draw_rect(band, COLOR, false, 2.0)
 	draw_rect(band.grow(Enemy.HEAVIEST_LANE_GAP), COLOR, false, 2.0)

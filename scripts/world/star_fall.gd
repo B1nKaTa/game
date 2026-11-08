@@ -162,9 +162,14 @@ func _draw() -> void:
 			_star(at, 9.0, Color(LIGHT, fade))
 			continue
 		var filled := fill(i)
-		draw_circle(at, RADIUS, Color(COLOR, 0.1 + 0.15 * filled))
-		draw_circle(at, RADIUS * filled, Color(COLOR, 0.3))
-		draw_arc(at, RADIUS, 0.0, TAU, 24, COLOR, 2.0)
+		# The red spot only with Attack warnings on (AttackWarnings); otherwise the faint cue. The star
+		# streaking down always shows.
+		if AttackWarnings.drawn_by(_source):
+			draw_circle(at, RADIUS, Color(COLOR, 0.1 + 0.15 * filled))
+			draw_circle(at, RADIUS * filled, Color(COLOR, 0.3))
+			draw_arc(at, RADIUS, 0.0, TAU, 24, COLOR, 2.0)
+		else:
+			AttackWarnings.draw_cue_circle(self, at, RADIUS, filled)
 		# The star streaks down onto its spot as it fills, from high above.
 		if filled > 0.4:
 			var drop := (1.0 - filled) / 0.6 * 70.0

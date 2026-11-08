@@ -251,8 +251,8 @@ func visual() -> SpriteVisual:
 	return _visual
 
 
-# Whether its attack warnings are drawn: a boss's or mini boss's always, a regular enemy's only with the
-# Attack warnings setting on (AttackWarnings). The timing behind them never changes.
+# Whether its red attack warnings are drawn: only with the Attack warnings setting on (AttackWarnings),
+# for a boss or mini boss as for a regular. The timing behind them never changes.
 func shows_warnings() -> bool:
 	return AttackWarnings.drawn_for(def)
 
@@ -815,6 +815,35 @@ func _draw_rising_cue(layer: Node2D) -> void:
 		layer.draw_circle(Vector2(0.0, 6.0) + way * Vector2(reach, reach * 0.45) - Vector2(0.0, hop), 1.5 + share, MOUND_COLOR)
 
 
+# With the warnings hidden, a boss's or mini boss's slam, lanes and cone still show where they will hurt
+# as the faint dark cue (AttackWarnings.draw_cue_circle and the rest), in the same shapes as the red ones
+# and never red. A regular's body attack keeps only its windup flash.
+# In her own Lights Out (a behavior whose is_dark() says so) the cue is drawn pale, since a dark one
+# would vanish in the dark.
+func _draw_boss_cue(layer: Node2D) -> void:
+	var progress := _warning.warning_progress(_warning_share())
+	var pale := _behavior != null and _behavior.has_method("is_dark") and _behavior.is_dark()
+	if _warning_radius > 0.0:
+		AttackWarnings.draw_cue_circle(layer, Vector2.ZERO, _warning_radius, progress, pale)
+	if _lane_length > 0.0:
+		layer.draw_set_transform(Vector2.ZERO, _lane_direction.angle())
+		AttackWarnings.draw_cue_lane(layer, Rect2(0.0, -_lane_width / 2.0, _lane_length, _lane_width), progress, pale)
+		layer.draw_set_transform(Vector2.ZERO)
+	for extra: Array in _extra_lanes:
+		var way: Vector2 = extra[0]
+		var length: float = extra[1]
+		var width: float = extra[2]
+		layer.draw_set_transform(Vector2.ZERO, way.angle())
+		AttackWarnings.draw_cue_lane(layer, Rect2(0.0, -width / 2.0, length, width), progress, pale)
+		layer.draw_set_transform(Vector2.ZERO)
+	if _cone_length > 0.0:
+		var base := _cone_direction.angle() - _cone_angle / 2.0
+		var cone := PackedVector2Array([Vector2.ZERO])
+		for i in 13:
+			cone.append(Vector2.from_angle(base + _cone_angle * i / 12.0) * _cone_length)
+		AttackWarnings.draw_cue_polygon(layer, cone, progress, pale)
+
+
 # Where the health bar's top goes, in the enemy's own space: a few pixels over the top of its drawn art
 # (SpriteVisual.idle_height above its feet), not over the hit box, which is shorter than most art.
 func bar_top() -> float:
@@ -847,8 +876,8 @@ class BarLayer extends Node2D:
 		enemy._draw_bar(self)
 
 
-# The warning shapes show only for a boss or with Attack warnings on (shows_warnings); the stun's
-# stars and what it says always do.
+# The red warning shapes show only with Attack warnings on (shows_warnings); a hidden boss's become the
+# faint cue (_draw_boss_cue). The stun's stars and what it says always show.
 func _draw_warning(layer: Node2D) -> void:
 	if shows_warnings() and _warning != null and _warning.shows_warning(_warning_share()):
 		var progress := _warning.warning_progress(_warning_share())
@@ -883,6 +912,8 @@ func _draw_warning(layer: Node2D) -> void:
 			if progress > 0.0:
 				layer.draw_colored_polygon(fill, Color(WARNING_COLOR, 0.2 + 0.3 * progress))
 			layer.draw_polyline(outline, WARNING_COLOR, 2.0)
+	elif def != null and def.is_boss and _warning != null and _warning.shows_warning(_warning_share()):
+		_draw_boss_cue(layer)
 	elif submerged and def != null and def.hidden_look != "smoke" and is_winding_up():
 		_draw_rising_cue(layer)
 	if def == null:

@@ -107,12 +107,16 @@ func _draw() -> void:
 	if _left <= 0.0:
 		return
 	var filled := clampf(1.0 - _left / maxf(_warning, 0.01), 0.0, 1.0)
+	# With Attack warnings off (AttackWarnings) the spiral is the faint dark cue, not red.
+	var red := AttackWarnings.drawn_by(_source)
+	var line_color := Color(COLOR, 0.25 + 0.35 * filled) if red else AttackWarnings.cue_color(filled)
+	var note_color := Color(COLOR, 0.4 + 0.4 * filled) if red else AttackWarnings.cue_color(filled)
 	for arm in _arms:
 		var points := spiral_points(_start, arm, _arms, _notes, _turn, _every, _speed)
 		# From her, through the nearest note, out to the furthest.
 		var line := PackedVector2Array([Vector2.ZERO])
 		for i in range(points.size() - 1, -1, -1):
 			line.append(points[i])
-		draw_polyline(line, Color(COLOR, 0.25 + 0.35 * filled), 2.0)
+		draw_polyline(line, line_color, 2.0)
 		for point in points:
-			draw_circle(point, 3.0 + 2.0 * filled, Color(COLOR, 0.4 + 0.4 * filled))
+			draw_circle(point, 3.0 + 2.0 * filled, note_color)

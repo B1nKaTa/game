@@ -195,6 +195,11 @@ func _draw() -> void:
 		var fade := clampf(_fade_left / FADE, 0.0, 1.0)
 		draw_colored_polygon(_sector(RADIUS, low, high), Color(BLADE, 0.12 * fade))
 		return
+	if _left > 0.0 and not AttackWarnings.drawn_by(_source):
+		# Warnings hidden (AttackWarnings): the faint cue over the arc, and the scythe waiting on its edge.
+		AttackWarnings.draw_cue_polygon(self, _sector(RADIUS, low, high), fill())
+		_draw_blade(start_edge, 0.8)
+		return
 	if _left > 0.0:
 		var filled := fill()
 		draw_colored_polygon(_sector(RADIUS, low, high), Color(COLOR, 0.1 + 0.25 * filled))
@@ -213,7 +218,7 @@ func _draw() -> void:
 	# Sweeping: the part still to cross stays tinted, the blade swings across.
 	var at := start_edge + _blade_angle(_swept) * sign_way
 	var rest := _sector(RADIUS, at, start_edge + HALF_ARC * 2.0 * sign_way)
-	draw_colored_polygon(rest, Color(COLOR, 0.25))
+	draw_colored_polygon(rest, Color(COLOR, 0.25) if AttackWarnings.drawn_by(_source) else AttackWarnings.cue_color(1.0))
 	draw_colored_polygon(_sector(RADIUS, start_edge, at), Color(BLADE, 0.18))
 	_draw_blade(at, 1.0)
 

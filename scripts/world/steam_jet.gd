@@ -97,7 +97,7 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	draw_set_transform(Vector2.ZERO, _direction.angle())
 	if _left > 0.0:
-		# The red lane only for a boss or with Attack warnings on (AttackWarnings); otherwise its faint cue.
+		# The red lane only with Attack warnings on (AttackWarnings); otherwise its faint cue.
 		var progress := clampf(1.0 - _left / maxf(_warning, 0.001), 0.0, 1.0)
 		if AttackWarnings.drawn_by(_source):
 			draw_rect(Rect2(0.0, -_width / 2.0, _length * progress, _width), Color(COLOR, 0.15 + 0.3 * progress))

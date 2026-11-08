@@ -134,10 +134,16 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	var strip_at := Rect2(_strip.position - global_position, _strip.size)
 	if not _landed:
+		# The red strip only with Attack warnings on (AttackWarnings); otherwise the faint cue.
+		var red := AttackWarnings.drawn_by(_source)
 		if _delay > 0.0:
-			draw_rect(strip_at, Color(COLOR, WAITING_ALPHA), false, 1.0)
+			if red:
+				draw_rect(strip_at, Color(COLOR, WAITING_ALPHA), false, 1.0)
 			return
 		var filled := fill()
+		if not red:
+			AttackWarnings.draw_cue_rect(self, strip_at, filled)
+			return
 		draw_rect(strip_at, Color(COLOR, 0.15 + 0.3 * filled))
 		draw_rect(strip_at, COLOR, false, 2.0)
 		return

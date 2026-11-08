@@ -68,10 +68,17 @@ func _draw() -> void:
 	var length := to.length()
 	var way := to / maxf(length, 0.01)
 	var along := 0.0
+	# With Attack warnings off (AttackWarnings) the dashes are the cord's own colour, faint, and the ring
+	# round him is the dark cue; the cord filling in is the tell.
+	var red := AttackWarnings.drawn_by(_source)
+	var dash := Color(COLOR, 0.5) if red else Color(CORD, 0.5)
 	# A dashed cord that fills in solid as the pull comes.
 	while along < length:
 		var stop := minf(along + DASH, length)
 		var solid := along / maxf(length, 0.01) <= filled
-		draw_line(way * along, way * stop, CORD if solid else Color(COLOR, 0.5), 2.0 if solid else 1.0)
+		draw_line(way * along, way * stop, CORD if solid else dash, 2.0 if solid else 1.0)
 		along += DASH * (1.0 if solid else 1.6)
-	draw_arc(to, 9.0, 0.0, TAU, 16, COLOR, 2.0)
+	if red:
+		draw_arc(to, 9.0, 0.0, TAU, 16, COLOR, 2.0)
+	else:
+		draw_arc(to, 9.0, 0.0, TAU, 16, AttackWarnings.cue_color(filled), 2.0)

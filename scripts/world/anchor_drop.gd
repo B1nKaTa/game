@@ -77,10 +77,15 @@ func _draw() -> void:
 		_draw_anchor(Vector2.ZERO, 1.0)
 		return
 	var filled := fill()
-	draw_circle(Vector2.ZERO, RADIUS * filled, Color(COLOR, 0.15 + 0.3 * filled))
-	draw_arc(Vector2.ZERO, RADIUS, 0.0, TAU, 32, COLOR, 2.0)
-	# The second ring: this is the one attack that costs three pills.
-	draw_arc(Vector2.ZERO, RADIUS + RING_GAP, 0.0, TAU, 32, COLOR, 2.0)
+	# The red rings only with Attack warnings on (AttackWarnings); otherwise the faint cue. The anchor
+	# coming down on its chain and its shadow always show.
+	if AttackWarnings.drawn_by(_source):
+		draw_circle(Vector2.ZERO, RADIUS * filled, Color(COLOR, 0.15 + 0.3 * filled))
+		draw_arc(Vector2.ZERO, RADIUS, 0.0, TAU, 32, COLOR, 2.0)
+		# The second ring: this is the one attack that costs three pills.
+		draw_arc(Vector2.ZERO, RADIUS + RING_GAP, 0.0, TAU, 32, COLOR, 2.0)
+	else:
+		AttackWarnings.draw_cue_circle(self, Vector2.ZERO, RADIUS, filled)
 	draw_circle(Vector2.ZERO, RADIUS * 0.75 * filled, Color(SHADOW, 0.4 * filled))
 	var drop := Vector2(0.0, -DROP_HEIGHT * (1.0 - filled))
 	draw_line(drop + Vector2(0.0, -DROP_HEIGHT), drop + Vector2(0.0, -14.0), CHAIN, 2.0)

@@ -366,7 +366,7 @@ func _play_crescendo(enemy: Enemy) -> float:
 	for i in pipes.size():
 		var glow := CRESCENDO_GLOW + i * CRESCENDO_STAGGER
 		if reaches[i] >= PLAYS_FROM:
-			pipes[i].force_chord(glow, reaches[i], enemy.def.damage)
+			pipes[i].force_chord(glow, reaches[i], enemy.def.damage, enemy)
 		else:
 			pipes[i].hold(glow + PipeRing.GROW_TIME * 2.0)
 		longest = maxf(longest, glow)
