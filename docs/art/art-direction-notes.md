@@ -61,7 +61,8 @@ This is a rulebook. A floor redone later follows it and only picks its own mater
 - A door in a wall is an **opening** (`DoorOpening`): a gap two cells wide through the whole wall, with stone jambs, the floor running on into darkness in four bands, and a gate of iron bars while the way is shut. The gate rises into the dark over 0.35 s when the room is cleared.
 - A Slip door shows a gold padlock on its bars; a chained door shows chains across them.
 - A **small sign** hangs in the opening for what lies beyond (`DoorSign`): a money bag for the shop, a skull for the boss, a small skull for the mini boss, a chest for treasure, a star for an item room, a cross for healing, a question mark for a side room, an eye for a secret, a lock for a vault, a signpost for the Crossroads, stairs for a landing, and the die for the Arcade. A plain fight room shows none. The small map keeps its own letters.
-- The door's cell, its trigger and the walls' bodies are unchanged. Doors standing on the floor (the stairwell, the Waiting Room's run door) keep their picture.
+- The door's cell, its trigger and the walls' bodies are unchanged.
+- **The ways down are a cage lift.** The stairwell a fallen floor boss leaves and the Waiting Room's run door stand on the floor as an old cage lift (`Door.lift`, `PropArt` `lift_closed`, `lift_half`, `lift_open`, 48x72): a grey stone surround with columns, a brass lattice gate, and a brass dial over it pointing down. The stairwell appears with its gates shut and they fold open over `Door.LIFT_TIME` (0.6 s); the run door stands open. Its bottom row stands `LIFT_FEET` (16 px) below the door's spot, so Grandpa walks into the car; the spot, the 18 px trigger and the interaction are as before. The old door picture and code drawing stay as the fallback. Built by `py tools/art/lift_art.py D:/grandpa-art/direction/lift/raw_d194c6a6.png .` (dial redrawn, red rivets made brass, open states folded from the shut one). One lift serves every floor; an area may add its own at `art/props/<set>/lift_<state>.png`.
 - This applies to every floor; the flat floors use their palette's wall and floor colours for the jambs and the gap.
 
 ## 9. HUD
@@ -75,7 +76,10 @@ This is a rulebook. A floor redone later follows it and only picks its own mater
 - Same settings as Harold: `create_character` v3, low top-down, single colour black outline, low detail, 48 px (32 px for the smallest), with v3 custom idle, walk and attack facing east. Strips are built by `tools/art/enemy_strips.py` from `D:/grandpa-art/direction/enemies`, with the windup cut from the attack (`CUTS`), and stray specks cleared from the frames first.
 - When a base art is redrawn, re-aim its variants' `art_hue_from` at the new art's main colour.
 - **Health bars** sit a few pixels over the top of the drawn art (`Enemy.bar_top`, `SpriteVisual.idle_height`), on their own layer one z over the bodies.
-- **Attack warnings.** Regular enemies draw no warning shapes unless the Game tab's "Attack warnings" is on (`AttackWarnings`); their tell is the windup pose and a short pale flash at its start (`Enemy.WINDUP_CUE`). Bosses and mini bosses keep every telegraph and safe-spot mark.
+- **Attack warnings.** No enemy draws red warning shapes unless the Game tab's "Attack warnings" is on (`AttackWarnings`); this covers regulars, mini bosses and floor bosses alike (since 2026-11-08, branch `exits-warnings`). A regular's tell is the windup pose and a short pale flash at its start (`Enemy.WINDUP_CUE`). A boss or mini boss has the same windup and flash, the faint dark ground cue in the shape of each area or ground attack (`AttackWarnings.draw_cue_circle`, `draw_cue_lane`, `draw_cue_rect`, `draw_cue_polygon`; its own ring, lanes and cone through `Enemy._draw_boss_cue`), and the objects its attacks are made of, which always show. With the setting on, every red shape shows as before.
+  - **Safe-spot marks stay** (`SafeSpotMark` mint, the Chairman's green `GapMark`). They show where to stand, not where it hurts, and several boss attacks (the runway, the Ouija path, the x-ray sweep, the beam) are unfair without them.
+  - In the Matron's own Lights Out her cue is drawn pale (`AttackWarnings.CUE_PALE`), since a dark one vanishes in the dark.
+  - The room's own hazards (a vent's rhythm, an organ pipe's beat, the travelling pipe ring) keep their red; only what a boss forces on them (Old Smokey's grid, the crescendo's reach) follows the setting.
   - A world attack a regular starts (the popcorn tub, phone cord, perfume, write-up, crystal ball, steam jet, shuffleboard puck, ground strike) asks `AttackWarnings.drawn_by(source)` before drawing red; the thing itself (the tub and its shadow, the memo, the mist, the ball) always shows. The crystal ball flashes pale as its burst starts.
   - Only the shapes hide: a regular's stun stars and spoken lines always show.
   - A riser (the Plot Holders) winds up under Harold, where his body hides its mound, so with the ring hidden it flashes a pale ring round the spot and kicks up earth (`Enemy._draw_rising_cue`).
@@ -231,6 +235,36 @@ Art leftovers and small bugs, on top of `art-direction` 291126a. The user asked 
 - **The Projectionist's burn** is laid again on his next turn when leaving the room cleared it (a teleport, the Eternal Warranty), as Madame Zara re-makes her circle, carrying on from the reach it had (`BurnRing.resume`), so the screen's burn does not snap back.
 - **`escalator_hum`** was already gone from the sound bank, `tools/sfx/sfx.py` and `audio/sfx` (paths-rework); only history notes name it, so there was nothing to remove.
 
+## Boss warnings and the cage lift (2026-11-08, branch `exits-warnings`)
+
+On top of `polish` 95447f7 with `art-direction` 4757d12 merged in (it held the hidden ground cue, e0398a6). Testing was paused for the whole pass: no Godot job ran, so nothing below has been parsed or seen in the engine.
+
+**What each boss attack shows with Attack warnings off.** W is the windup pose and pale flash; "ring", "lane" and "cone" are the dark cue the boss's own warning layer draws; "shadow" is a ground strike's dark cue.
+
+- Activities Coordinator: bingo W, ring, grid spots as shadows row by row; cage W, ring, lane, the balls flying.
+- Head of Departures: stamp W, ring, stamp shadow and the stamp dropping in (its outer red ring hidden); runway W, ring, lane cues with the runway lamps blinking, safe-spot mark; gate W, ring (it only pushes).
+- Sister Celestine (no windup; the card turning is her tell): tower tile-edge cues and growing tile shadows; death sector cue with the scythe waiting on its edge; wheel band edges and dark blades; star spot cues with the stars streaking down.
+- The Chairman: gavel ring cue and the gavel's shadow, gap mark; projections strip cues, gap mark; takeover the cord filling solid, ring cue round Grandpa; charge ring and lane (it follows the takeover with no fresh flash); tape a faint pulsing band; slam ring cue and his fists coming down; restructure drawer-row cues, gap mark.
+- Commodore Wellington: anchor ring cue, the anchor on its chain and its shadow; foghorn W, ring, lane; port W, ring (no harm); buoys W, ring, lane cues, then the buoys; swab splash spots as shadows.
+- Crabtree: stars W, ring, fanned lane cues, the star shots; thumbs W, ring, the shockwave's reach as a cue, then the ring.
+- Doreen: memos W, ring, strip cues, then the paper lands; music W, ring, the spiral as a cue, then the notes.
+- Foreman Klaus: slam W, ring, shockwave reach cue; steam W, ring, steam lane cues.
+- Head Groundskeeper: slam W, ring; furrow W, ring, lane, shadows; clippings W, ring, four shadows.
+- Lorraine: conga W, ring, lane cues, then the dancers, safe-spot mark; karaoke W, ring, cone; quoits W, ring, quoit cue and the quoit falling on its rope.
+- Madame Zara: line W, ring, the cord's coil (a leash, no harm); ouija W, ring, the board and planchette, the path as a cue, safe-spot mark; possession W, ring, the faint copy, its trail and rise ring as cues, safe-spot mark; seance swoops the spirit flying in and a spot cue (in a room 50% dim).
+- Matron Mercy: sedative W, ring, lane, the darts (pale cue in her Lights Out); gurney W, ring, lane; lights out W, ring, the dimming and "Lights out!" (no harm); visiting W, ring, summon spots as cues.
+- Mortimer Grimsby: casket W, ring, shadow and the coffin's growing shadow (now shown with the red hidden); procession W, ring, lane cues, then the bearers; spray W, ring, cone; crescendo W, ring, the pipes glowing and their reach as a cue, safe-spot mark; charge W, ring, lane.
+- Old Smokey: breath W, ring, cone; rain W, ring, the coal thrown in its arc; grid W, ring, the forced vents' squares as cues; bellows W, ring, lane (a push).
+- The Projectionist: beam W, ring, the lens glowing, the lane and the arc to turn as cues, safe-spot mark, then the beam of light (no red edge); splice W, ring, strip cues between the two lengths of film, safe-spot mark; reel W, ring, the screen cutting to black, then pie or tumbleweed lane cues and the thing itself; the burn's white edge always shows.
+- Regional Reaper: sweep W, ring; dash W, ring, lane; ring W, ring, the shots; summon W, ring, summon spots.
+- The Reverend: eulogy W, ring, lane, shadows along the line; plate W, ring, lane, return-path cues, then the plate.
+- Senior Adjuster: sweep W, ring; charge W, ring, lane.
+- Sergeant Wanda: x-ray W, ring, the beam's start as a cue with dark chevrons, then the beam crossing, safe-spot mark; trays W, ring, shadows and the trays fading in.
+- Tired Undertaker: shovel W, ring, four shadows; rows W, ring, row shadows; pits W, ring, nothing while the pit follows him, then a shadow; wreaths W, ring, lane, the wreaths flying; summon W, ring, summon spots.
+- A summon's spot (`SummonMark`) is a dark cue with its cross for every enemy now, not red.
+
+No hurting attack is left with no tell: an independent read of every behavior found none, and the three it found still red (the stamp's ring, the crescendo's reach, the vent grid) were fixed (3e892ce).
+
 ## To verify when testing resumes
 
 Run everything in a renamed `git archive` copy (never the real user folder), one heavy job at a time.
@@ -254,6 +288,14 @@ Run everything in a renamed `git archive` copy (never the real user folder), one
   - Madame Zara's planchette in the large room with Harold in its south half: its path in view below the HUD band and off the small map;
   - the Projectionist in phase two: leave by teleport and come back, and the burn ring is back at the reach it had, the screen burning with it.
 - **Save guard**: the real `slot_1\save.json` MD5 was d5100b123e498c491f6fa88f5b879d27 (2026-11-06 17:52) when this pass began; nothing in it ran Godot.
+
+### Boss warnings and the cage lift (`exits-warnings`)
+
+- **Imports first**: `lift_closed.png`, `lift_half.png` and `lift_open.png` are new and have no `.import` files. Run `--import` (in a renamed `git archive` copy, never the real user folder) and commit the three `.import` files it writes, or `test_door.test_the_lift_shows_shut_half_and_open_gates` fails.
+- **Suite**: never-run tests `test_attack_warnings` (all of it changed), `test_hidden_cues` (four new tests, two changed), `test_door` (three new). Every touched script is unparsed: `attack_warnings.gd`, `enemy.gd`, `door.gd`, `room_view.gd`, `waiting_room.gd`, `game_settings.gd`, `funeral_director_behavior.gd`, `chief_stoker_behavior.gd`, and the world scripts `anchor_drop`, `burn_ring`, `collection_plate`, `deck_lane`, `desk_slam`, `floor_vent`, `gavel_strike`, `ground_strike`, `hold_music`, `lane_drop`, `lens_beam`, `organ_pipe`, `ouija_planchette`, `possession_ghost`, `procession_lane`, `quoit_ring`, `red_tape`, `reel_lane`, `runway_lane`, `scythe_sweep`, `shockwave`, `spirit_swoop`, `splice_lane`, `star_fall`, `steam_jet`, `summon_mark`, `takeover_tether`, `terminal_strike`, `tower_tiles`, `wheel_ring`, `xray_sweep`.
+- **Full loop**: SMOKE PASS, no SCRIPT ERROR (the boss fights draw every changed branch).
+- **Boss shots, warnings off** (into `D:\grandpa-shots-ad\exits\`): every boss and mini boss mid-windup and late in each attack listed above, on a dark floor and a pale one. No red anywhere; each cue visible but clearly fainter than red was; the safe-spot mint and the gap mark still there. Then the same few with the setting on: everything red as before. Watch in particular the Matron's pale cue in her Lights Out, Zara's swoops in the dim seance, the x-ray sweep with no red over the room, the wheel's dark blades, the runway lamps blinking, and the Chairman's charge straight after his takeover (no second flash).
+- **Lift shots**: the stairwell appearing in a boss room on a depth floor and a flat one (its gates folding open over 0.6 s, half frame then open), its 72 px height against whatever stands north of it (it may cover a prop up to two cells above), Grandpa walking into it from each side (y-sorted: in front from the south, behind it from the north) and going down on the same trigger; the Waiting Room run door at cell (26, 8), standing open, against the lobby's wall and props above it; the dial reading as "down" at 1x.
 
 ### From `art-direction` (e0398a6 and the window work)
 
