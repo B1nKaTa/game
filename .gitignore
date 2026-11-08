@@ -5,3 +5,5 @@ __pycache__/
 # Rendered music is made by tools/music, never committed (see tools/music/README.md).
 audio/music/*.wav
 audio/music/*.wav.import
+# Written by tools/stamp_build.ps1 before every export (see docs/release/build-steps.md).
+build_info.txt

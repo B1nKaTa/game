@@ -139,6 +139,7 @@ func _log_display() -> void:
 	var file := FileAccess.open("user://display_log.txt", FileAccess.WRITE)
 	if file == null:
 		return
+	file.store_line(BuildInfo.label())
 	var screen := current_screen()
 	file.store_line("screens: %d  current: %d  primary: %d" % [DisplayServer.get_screen_count(), screen, DisplayServer.get_primary_screen()])
 	for i in DisplayServer.get_screen_count():
