@@ -1366,7 +1366,8 @@ func _check_ticket_and_letters() -> void:
 	var scene := get_tree().current_scene
 	_check(TicketRules.event_for(called) == TicketRules.CURSED_OFFER, "ticket %d is a cursed offer's number" % called)
 	_check(Progress.data.cursed_offer, "ticket %d puts a cursed ticket on offer" % called)
-	_check(scene.now_serving(Progress.data) == called, "the lobby's sign calls number %d" % called)
+	var sign_line := LobbyText.ticket_text(called + 1) + LobbyText.serving_text(called)
+	_check(scene.lobby_ticket_line() == sign_line, "the lobby's sign serves number %d, one short of Harold's" % called)
 	var panel := await _open_station(scene, "ticket_machine")
 	_check(panel is TicketPanel, "the ticket machine opens its panel")
 	if panel is TicketPanel:
@@ -3407,6 +3408,9 @@ func _check_ending_scene(found_before: int) -> void:
 	_expect_scene("WaitingRoom")
 	var room := get_tree().current_scene
 	_check(_hud_message(room) == "Welcome back. Please take a number.", "the Waiting Room welcomes him back, got '%s'" % _hud_message(room))
+	var served := LobbyText.ticket_text(Progress.data.run_count) + LobbyText.serving_text(Progress.data.run_count, true)
+	_check(room.lobby_ticket_line() == served, "after an ending the sign serves his own number, got '%s'" % room.lobby_ticket_line())
+	_check(not Progress.data.serve_pending(), "the finished run is served once")
 	_checked_ending = true
 
 

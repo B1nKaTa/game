@@ -22,8 +22,6 @@ const ENDING_ARCHIVE := "ending_archive"
 const MERCHANT_PROMPT := "Trade"
 # The stairs plaque (DoorSign "v") hangs over the run door's picture: the way down to the floors.
 const RUN_DOOR_ICON := "v"
-# A number that is not called shows 999 on the lobby's ticket line (LobbyText.NOT_CALLED).
-const NOT_CALLED := LobbyText.NOT_CALLED
 
 var player: Player
 var _hud: Hud
@@ -58,6 +56,8 @@ var _notices: Array[String] = []
 var _notice_wait := 0.0
 # The lobby's ticket line and DEV hint, on the HUD's layer so the camera never scrolls them away.
 var _lobby_text: LobbyText
+# True for the one visit after a run that reached an ending: the sign serves Harold's own number.
+var _served := false
 # The pause menu while it is open, and the frame it closed on.
 var _pause: PauseMenu
 var _pause_closed_frame := -1
@@ -106,6 +106,7 @@ func _ready() -> void:
 	_notice_wait = Hud.NOTICE_TIME if not Progress.notice.is_empty() else 0.0
 	Progress.notice = ""
 	_announce_ending()
+	_serve_finished_run()
 	_announce_new_departments()
 	_announce_new_items()
 	_call_ticket()
@@ -142,10 +143,18 @@ func _refresh_noticeboard() -> void:
 		board.badge = NoticeboardPanel.NEW_MARK if not LetterBook.unread(Progress.data).is_empty() else ""
 
 
-# The number on the lobby's sign: this visit's, once its ticket has been called and something came of
-# it, or NOT_CALLED (999).
-static func now_serving(data: ProgressData) -> int:
-	return data.run_count if data.ticket_was_called() else NOT_CALLED
+# After a run that reached an ending, once: the sign serves Harold's own number, with a ding.
+func _serve_finished_run() -> void:
+	if not Progress.take_serving():
+		return
+	_served = true
+	Sfx.play_later("ticket_ding", ARRIVAL_SOUND_AT + 0.3)
+	_notices.append(LobbyText.SERVED_NOTICE)
+
+
+# The ticket line as the lobby shows it, for the full-loop check.
+func lobby_ticket_line() -> String:
+	return _lobby_text.ticket_line() if _lobby_text != null else ""
 
 
 # After an ending: a new one says which file it was and what it paid, and the true ending's hat.
@@ -675,7 +684,7 @@ func _refresh_lobby_text() -> void:
 	var hint := ""
 	if DevStart.is_available():
 		hint = "%s   %s" % [DevStart.HINT, DevStart.WAITING_HINT_ON if Progress.is_dev_run() else DevStart.WAITING_HINT]
-	_lobby_text.show_text(Progress.data.run_count, now_serving(Progress.data), hint)
+	_lobby_text.show_text(Progress.data.run_count, hint, _served)
 
 
 # What the full-loop check reads and drives.

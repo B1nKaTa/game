@@ -286,6 +286,15 @@ func call_ticket() -> String:
 	return event
 
 
+# Serves a run that reached an ending on the lobby's sign, once, saved at once so a reload never
+# serves it again. Returns whether there was one to serve.
+func take_serving() -> bool:
+	if not data.take_serving():
+		return false
+	_store.save_progress(data)
+	return true
+
+
 func accept_cursed_ticket() -> bool:
 	if not data.accept_cursed_ticket():
 		return false

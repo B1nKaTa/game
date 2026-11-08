@@ -12,9 +12,10 @@ const TICKET_SIZE := 12
 const RIGHT_MARGIN := 8.0
 const TICKET_COLOR := Color("ece9e0")
 const NOW_SERVING_COLOR := Color("e4524f")
-# A number that is not called shows 999: "you'll be a while". Never 666, which reads as devil imagery
-# (the game keeps all heaven, hell and devil symbols out).
-const NOT_CALLED := 999
+# Harold's ticket is the run he is about to start, and the sign always serves the number just before
+# his: he is forever next. Once, after a run that reached an ending, the sign serves his own number.
+const SERVED_MARK := "  That's you!"
+const SERVED_NOTICE := "Now serving: you."
 # Along the bottom of the screen, the DEV hint on the left and the dev profile's label on the right.
 const HINT_AT := Vector2(12, 332)
 const HINT_SIZE := 10
@@ -27,15 +28,33 @@ var _serving: Label
 var _hint: Label
 
 
-static func ticket_text(run_count: int) -> String:
-	return "YOUR TICKET: %d   " % (run_count + 1)
+# The run about to start, or, while his finished run is being served, that run's own number.
+static func ticket_number(run_count: int, served := false) -> int:
+	return run_count if is_served(run_count, served) else run_count + 1
 
 
-static func serving_text(serving: int) -> String:
-	var text := "NOW SERVING: %d" % serving
-	if serving != NOT_CALLED:
-		text += "  Called!"
-	return text
+# Always one short of his ticket, except in the one moment his finished run is served.
+static func serving_number(run_count: int, served := false) -> int:
+	var ticket := ticket_number(run_count, served)
+	return ticket if is_served(run_count, served) else ticket - 1
+
+
+# A fresh save has no finished run to serve.
+static func is_served(run_count: int, served: bool) -> bool:
+	return served and run_count > 0
+
+
+# Three digits, as on the title screen's board: 000, 041, 1000.
+static func number_text(number: int) -> String:
+	return "%03d" % number
+
+
+static func ticket_text(ticket: int) -> String:
+	return "YOUR TICKET: %s   " % number_text(ticket)
+
+
+static func serving_text(serving: int, served := false) -> String:
+	return "NOW SERVING: %s%s" % [number_text(serving), SERVED_MARK if served else ""]
 
 
 static func text_width(text: String, font_size: int) -> float:
@@ -72,10 +91,10 @@ func _init() -> void:
 	add_child(_hint)
 
 
-# hint is "" outside debug builds.
-func show_text(run_count: int, serving: int, hint: String) -> void:
-	_ticket.text = ticket_text(run_count)
-	_serving.text = serving_text(serving)
+# hint is "" outside debug builds. served is true only for the visit that serves a finished run.
+func show_text(run_count: int, hint: String, served := false) -> void:
+	_ticket.text = ticket_text(ticket_number(run_count, served))
+	_serving.text = serving_text(serving_number(run_count, served), is_served(run_count, served))
 	var left := ticket_left(_ticket.text, _serving.text)
 	_ticket.position = Vector2(left, TICKET_TOP)
 	_serving.position = Vector2(left + text_width(_ticket.text, TICKET_SIZE), TICKET_TOP)
