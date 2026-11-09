@@ -30,3 +30,7 @@ window/stretch/scale_mode="integer"
 renderer/rendering_method="gl_compatibility"
 textures/canvas_textures/default_texture_filter=0
 environment/defaults/default_clear_color=Color(0.04, 0.03, 0.05, 1)
+
+[editor]
+
+export/convert_text_resources_to_binary=false

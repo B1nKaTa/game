@@ -64,3 +64,8 @@ func test_the_id_shows_where_bug_reports_look() -> void:
 	var log_at := settings.find("func _log_display")
 	var first_line := settings.find("file.store_line(", log_at)
 	assert_true(log_at >= 0 and settings.substr(first_line, 40).contains("BuildInfo.label()"), "the build id is display_log.txt's first line")
+
+# Converting text resources to binary on export emptied every RoomLayout's rows in the 2026-11-09 build:
+# the Waiting Room and the floors had no floor or walls. The export keeps them as text.
+func test_the_export_keeps_text_resources_as_text() -> void:
+	assert_eq(ProjectSettings.get_setting("editor/export/convert_text_resources_to_binary", true), false)
