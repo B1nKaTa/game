@@ -170,7 +170,7 @@ func try_ready_reel(view: RoomView, progress: FloorProgress, map: FloorMap) -> b
 		return false
 	for door in view.doors():
 		var target := door.target_id()
-		if not door.is_within(USE_RADIUS) or progress.is_visited(target):
+		if not door.is_within(USE_RADIUS) or door.is_shut() or progress.is_visited(target):
 			continue
 		var room: FloorRoom = map.room(target) if target >= 0 and target < map.rooms.size() else null
 		if room == null or not FIGHT_ROOMS.has(room.room_type):

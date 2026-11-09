@@ -209,6 +209,16 @@ func test_a_reel_does_not_ready_far_from_a_door_or_at_a_room_already_seen() -> v
 	_free_setup(parts)
 
 
+func test_a_reel_does_not_ready_at_a_shut_door() -> void:
+	var parts := _flashback_setup()
+	parts["run"].give_reel(Eras.FOOTBALL)
+	for door in parts["view"].doors():
+		door.locked = true
+	assert_false(parts["keeper"].try_ready_reel(parts["view"], parts["progress"], parts["map"]))
+	assert_eq(parts["keeper"].readied_door(), -1)
+	_free_setup(parts)
+
+
 func test_a_reel_does_not_ready_at_a_shop_door() -> void:
 	var parts := _flashback_setup(RoomLayout.TYPE_SHOP)
 	parts["run"].give_reel(Eras.BUS)
