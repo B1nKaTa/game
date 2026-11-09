@@ -89,7 +89,7 @@ const NAMES: Array[String] = [
 	"ticket_ding", "letter_read", "pause_open", "pause_close", "slot_select", "form_buy",
 	"form_milestone", "form_pick", "refile", "form_maxed", "form_denied", "plan_deposit",
 	"plan_withdraw", "craft", "brew", "condolence", "poster_take", "bounty_paid", "department_open",
-	"ticket_print", "trophy_hang",
+	"ticket_print", "trophy_hang", "rule_whistle", "rule_stamp", "reel_flicker",
 ]
 # The nearest synthesized sound for a file that is missing. Sounds with the same name as one in
 # SOUNDS fall back to it without an entry here.

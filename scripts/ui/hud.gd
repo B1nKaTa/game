@@ -66,6 +66,8 @@ var _boss_back: ColorRect
 var _boss_fill: ColorRect
 var _boss_max_hp := 1.0
 var _map_back: MapBack
+var _rule_icon: RuleIcon
+var _rule_stamp: RuleStamp
 var _pension := 0
 var _condolences := 0
 # The Waiting Room shows Condolences beside Pension. A run shows Pension only, plus a pop-up when
@@ -196,6 +198,12 @@ func _ready() -> void:
 		var arrows := ItemFx.OffscreenArrows.new()
 		arrows.setup(_run)
 		add_child(arrows)
+	# The room rule's icon under the minimap, and its announcement card and stamps, drawn last so they sit on top.
+	_rule_icon = RuleIcon.new()
+	add_child(_rule_icon)
+	_rule_stamp = RuleStamp.new()
+	_rule_stamp.announce_done.connect(_rule_icon.show_rule)
+	add_child(_rule_stamp)
 	_refresh()
 
 
@@ -203,8 +211,39 @@ func _ready() -> void:
 func set_map_alpha(alpha: float, mini_map: CanvasItem) -> void:
 	if _map_back != null:
 		_map_back.modulate.a = alpha
+	if _rule_icon != null:
+		_rule_icon.modulate.a = alpha
 	if mini_map != null:
 		mini_map.modulate.a = alpha
+
+
+func show_rule(rule: String) -> void:
+	_rule_icon.show_rule(rule)
+
+
+func announce_rule(rule: String) -> void:
+	_rule_icon.clear()
+	_rule_stamp.announce(rule)
+
+
+func stamp_rule(kind: String) -> void:
+	_rule_stamp.stamp(kind)
+
+
+func pulse_rule(on: bool) -> void:
+	_rule_icon.set_pulse(on)
+
+
+func break_rule() -> void:
+	_rule_icon.set_broken()
+
+
+func clear_rule() -> void:
+	_rule_icon.clear()
+
+
+func rule_announcing() -> bool:
+	return _rule_stamp.is_showing()
 
 
 func map_alpha() -> float:

@@ -1058,6 +1058,27 @@ def trophy_hang(rng, v):
     return mix(d, (wood(rng, 900, 0.08, 0.018), 0, 0.8), (wood(rng, 700, 0.12, 0.025), 0.07, 1.0))
 
 
+def rule_stamp(rng, v):
+    return stamp(rng, 0.18, 95.0)
+
+
+def rule_whistle(rng, v):
+    """A warden's whistle: two short high sine bursts with a little vibrato."""
+    burst = ad(osc(0.12, 2400, vib=0.03, vib_rate=28.0), 0.006, 0.07, 0.03)
+    breath = ad(bp(noise(0.12, rng), 2800, 2.0), 0.006, 0.05)
+    one = mix(0.12, (burst, 0, 1.0), (breath, 0, 0.12))
+    return mix(0.29, (one, 0, 1.0), (one, 0.17, 0.9))
+
+
+def reel_flicker(rng, v):
+    """A projector's rattle: soft noise under clicks, 24 a second."""
+    d = 0.6
+    layers = [(ad(lp(noise(d, rng), 1800), 0.03, 0.4), 0, 0.12)]
+    for k in range(int(d * 24)):
+        layers.append((click(rng, 2600 + 300 * (k % 2), 0.01, 2.5), k / 24.0, 0.7))
+    return mix(d, *layers)
+
+
 # --- the catalogue -------------------------------------------------------------------------
 # name: (function, variations, kind, peak). Kinds set the checks in check.py: hit (fast attack,
 # short), ui (under 0.25 s, fast attack), ui_soft (under 0.25 s, paper that swells in), blip (very short), blast (the big one, 0.8 to 1.2 s), and sfx (any
@@ -1169,6 +1190,10 @@ SOUNDS = {
     "department_open": (department_open, 1, "sfx", 0.6),
     "ticket_print": (ticket_print, 1, "sfx", 0.45),
     "trophy_hang": (trophy_hang, 1, "hit", 0.55),
+    # room rules and flashbacks
+    "rule_whistle": (rule_whistle, 1, "sfx", 0.35),
+    "rule_stamp": (rule_stamp, 1, "hit", 0.5),
+    "reel_flicker": (reel_flicker, 1, "sfx", 0.35),
 }
 
 
