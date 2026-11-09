@@ -253,6 +253,33 @@ func test_the_sepia_glow_clears_back_to_his_own_look() -> void:
 	player.free()
 
 
+func test_a_new_floor_ends_an_era_still_playing() -> void:
+	var parts := _flashback_setup()
+	var keeper: RuleKeeper = parts["keeper"]
+	var run: RunState = parts["run"]
+	var map: FloorMap = parts["map"]
+	run.give_reel(Eras.FOOTBALL)
+	keeper.try_ready_reel(parts["view"], parts["progress"], map)
+	var fight := RoomView.new()
+	fight._alive = 3
+	keeper.on_room_entered(fight, map.room(1), true)
+	assert_eq(run.era, Eras.FOOTBALL)
+	var ended := []
+	keeper.era_ended.connect(func(era): ended.append(era))
+	keeper.plan_floor(map, 2, "next", parts["progress"])
+	assert_eq(run.era, "", "a floor change ends it")
+	assert_eq(parts["player"].era(), "")
+	assert_eq(ended, [Eras.FOOTBALL])
+	assert_eq(parts["player"].last_line, "", "quietly: no return line")
+	# Clearing the old room later never ends anything again.
+	fight.finished.emit()
+	assert_eq(ended, [Eras.FOOTBALL])
+	keeper.set_floor(map, parts["progress"])
+	assert_eq(run.era, "")
+	fight.free()
+	_free_setup(parts)
+
+
 func test_the_sepia_flicker_sits_under_the_hud_and_frees_itself() -> void:
 	var hud := Hud.new()
 	assert_true(SepiaFlicker.LAYER < hud.layer, "the HUD stays in colour")

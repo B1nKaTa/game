@@ -74,6 +74,9 @@ func set_floor(map: FloorMap, progress: FloorProgress) -> void:
 	if _readied_door != -1:
 		_readied_door = -1
 		_set_glow(false)
+	# An era never outlives its floor: the room it plays in is gone, so it ends quietly here.
+	if _era_room != -1 or (_run != null and not _run.era.is_empty()):
+		_stop_era()
 
 
 func set_unlocked(unlocked: Array) -> void:
@@ -208,17 +211,23 @@ func _start_era(era: String, room_id: int) -> void:
 
 
 func _end_era() -> void:
-	var era := _run.era
-	_run.era = ""
-	_era_room = -1
 	SepiaFlicker.play(get_parent())
 	Sfx.play("reel_flicker")
 	var line := tr(Eras.RETURN_LINES[randi() % Eras.RETURN_LINES.size()])
 	if _player != null:
-		_player.set_era("")
 		_player.say_line(line)
 	# Harold has no speech bubble yet, so his line shows as a notice.
 	_notice(line)
+	_stop_era()
+
+
+# Old Harold again, with no flicker or line. The keeper alone sets run.era; the player only his moves.
+func _stop_era() -> void:
+	var era := _run.era
+	_run.era = ""
+	_era_room = -1
+	if _player != null:
+		_player.set_era("")
 	era_ended.emit(era)
 
 
