@@ -10,6 +10,9 @@ signal teeth_caught
 signal hurt
 signal bomb_requested(at: Vector2)
 signal potion_drunk(potion: PotionDef)
+# For the room rules: a swing or a dodge began, whether or not it lands.
+signal swing_started
+signal dodge_started
 
 const ATTACK_REACH := 44.0
 const ATTACK_ANGLE := 60.0
@@ -578,6 +581,7 @@ func _exit_tree() -> void:
 
 func _swing(damage: float, reach: float, angle: float, push: float, heavy: bool, finisher: bool) -> void:
 	_finish_swing()
+	swing_started.emit()
 	var swing_damage := damage * run.damage_mult()
 	# The Lucky Tee: now and then a swing does double.
 	if run.stats.lucky_swing_chance > 0.0:
@@ -698,6 +702,7 @@ func start_dodge(direction: Vector2) -> bool:
 	_close_call_spent = false
 	Sfx.play("dodge")
 	run.effects.dodge(direction)
+	dodge_started.emit()
 	return true
 
 

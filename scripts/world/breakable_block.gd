@@ -12,6 +12,12 @@ const EDGE := Color("3a2614")
 # Set before the block enters the tree, so a floor can recolor props.
 var palette: RoomPalette
 
+# Set by Harold's Thermos around its own blast, so an exhibit it breaks is his. Enemy blasts leave it false.
+static var blame_harold := false
+
+# The source of the hit that broke it.
+var last_source := ""
+
 
 # Everything breakable near a point is hit once, whoever is doing the breaking.
 static func smash(tree: SceneTree, center: Vector2, radius: float, source: String) -> int:
@@ -92,8 +98,13 @@ func body_rect() -> Rect2:
 func hit_by(source: String) -> bool:
 	if is_queued_for_deletion() or not can_break_by(source):
 		return false
+	last_source = source
 	_break()
 	return true
+
+
+func broken_by_harold() -> bool:
+	return last_source == SOURCE_CANE or blame_harold
 
 
 func take_blast() -> void:
@@ -108,6 +119,12 @@ func break_sound() -> String:
 func _break() -> void:
 	Sfx.play(break_sound())
 	broken.emit(global_position)
+	# The room's rule hears of it: Do Not Touch the Exhibits.
+	var room := get_parent()
+	while room != null and not room.has_method("note_prop_broken"):
+		room = room.get_parent()
+	if room != null:
+		room.note_prop_broken(broken_by_harold())
 	var parent := get_parent()
 	if parent != null and is_inside_tree():
 		DeathBurst.spawn(parent, position, debris_color(), false)

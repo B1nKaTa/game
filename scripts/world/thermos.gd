@@ -85,7 +85,9 @@ func _explode() -> void:
 				_player.run.effects.land(enemy, blast_damage(), RunEffects.THERMOS, push)
 			else:
 				enemy.take_damage(blast_damage(), push)
+	BreakableBlock.blame_harold = true
 	BreakableBlock.smash(get_tree(), global_position, radius, BreakableBlock.SOURCE_BLAST)
+	BreakableBlock.blame_harold = false
 	ReinforcedRock.blast(get_tree(), global_position, radius, level)
 	SecretWall.blast(get_tree(), global_position, radius)
 	Chest.blast(get_tree(), global_position, radius)

@@ -20,6 +20,8 @@ signal stairwell_entered
 signal arcade_game_wanted(table: ArcadeTable)
 # A game at one of its tables paid back more than its bet, for the endings' table visits.
 signal arcade_won
+# A prop broke; by_harold says whether it counts against him (his cane or his Thermos).
+signal prop_broken(by_harold: bool)
 
 const HEAL_AMOUNT := 2
 # The meta a pickup or chest carries when the run checkpoint keeps it, and the kinds it can be.
@@ -142,6 +144,10 @@ func drop_for_item(kind: String, at: Vector2, amount := 1) -> void:
 # Where the room's last enemy fell, for what an item leaves after a clear.
 func last_death_spot() -> Vector2:
 	return _last_death_at
+
+
+func note_prop_broken(by_harold: bool) -> void:
+	prop_broken.emit(by_harold)
 
 
 # The secret walls still standing in the room, for the Magnifying Glass's glint.
