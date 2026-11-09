@@ -253,6 +253,14 @@ func test_the_sepia_glow_clears_back_to_his_own_look() -> void:
 	player.free()
 
 
+func test_a_keeper_with_no_run_still_takes_a_new_floor() -> void:
+	var keeper := RuleKeeper.new()
+	keeper._era_room = 3
+	keeper.set_floor(FloorMap.new(), null)
+	assert_eq(keeper._era_room, -1, "the stale era room is forgotten, with no run to read")
+	keeper.free()
+
+
 func test_a_new_floor_ends_an_era_still_playing() -> void:
 	var parts := _flashback_setup()
 	var keeper: RuleKeeper = parts["keeper"]

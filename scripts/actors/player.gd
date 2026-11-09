@@ -165,6 +165,8 @@ func set_era(era_id: String) -> void:
 	_era_moves = EraMoves.for_era(era_id)
 	_era_dodge_hits.clear()
 	_combo = CaneCombo.new()
+	# A charge held through the reel door (or held as the era ends) never carries over to the other self.
+	_charge.cancel()
 	if _visual != null:
 		var look: Dictionary = run.look if run != null else {}
 		var art := GrandpaLook.outfit_art(look)
@@ -176,6 +178,21 @@ func set_era(era_id: String) -> void:
 	if _look != null:
 		_look.visible = era_id.is_empty()
 	queue_redraw()
+
+
+# A younger Harold's pace is his own: the cane's pace items (Rolling Pin, Rubber Ferrule) and the items'
+# swing pace never touch it. Old Harold's is the cane's, as before.
+func era_lock_time() -> float:
+	if _era_moves == null:
+		return CaneCombo.LOCK_TIME / run.swing_speed()
+	return _era_moves.lock_time
+
+
+# A swing's knockback: old Harold's cane is pushed further by Walker Tennis Balls; a kick or punch is not.
+func swing_push(push: float, from_era: bool) -> float:
+	if from_era:
+		return push
+	return push * run.stats.swing_push_mult
 
 
 # White for old Harold or an era with its own art; until then, old Harold's sprite warmed or cooled.
@@ -568,7 +585,7 @@ func _handle_attacks() -> void:
 		if Input.is_action_just_pressed("throw") and _era_moves.throw_ready():
 			_era_throw()
 		if Input.is_action_just_pressed("attack"):
-			_combo.lock_time = _era_moves.lock_time / run.swing_speed()
+			_combo.lock_time = era_lock_time()
 			# The combo only gates the pace and counts the step; the era has its own damage.
 			if _combo.try_attack() > 0:
 				var step := posmod(_combo.step() - 1, CaneCombo.DAMAGE.size()) % _era_moves.combo_damage.size()
@@ -708,15 +725,16 @@ func _swing(damage: float, reach: float, angle: float, push: float, heavy: bool,
 	# The Lucky Tee: now and then a swing does double.
 	if not from_era and run.stats.lucky_swing_chance > 0.0:
 		swing_damage = PlayerStats.lucky_damage(swing_damage, run.stats.lucky_swing_chance, randf())
-	# Walker Tennis Balls knock enemies further.
-	_active_swing = SwingAttack.new(_aim, reach, angle, swing_damage, push * run.stats.swing_push_mult, heavy, finisher)
+	# Walker Tennis Balls knock enemies further (swing_push), but never with a kick or punch.
+	_active_swing = SwingAttack.new(_aim, reach, angle, swing_damage, swing_push(push, from_era), heavy, finisher)
 	_active_swing.from_era = from_era
 	# Items may reshape the swing before it hits: what they change is also what is drawn. A kick or punch
 	# is a younger Harold's own, so the cane items stay off it.
 	if not from_era:
 		run.effects.swing(_active_swing)
 	Sfx.play("charged_swing" if heavy else "cane_swing")
-	_visual.play_once("attack", CaneCombo.LOCK_TIME)
+	# A kick or punch plays over its own lock, so the punch fills its wind-up and quick kicks never restart it.
+	_visual.play_once("attack", _era_moves.lock_time if from_era and _era_moves != null else CaneCombo.LOCK_TIME)
 	_strike_enemies()
 
 

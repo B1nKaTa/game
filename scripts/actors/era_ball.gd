@@ -12,11 +12,15 @@ const PICKUP_RADIUS := 16.0
 const SLOWDOWN := 0.9
 # A ball that finds no wall this long after its last one (out through a gap) stops, so it never flies on for ever.
 const FLIGHT_TIME := 3.0
+# A ball left resting where he can't reach (behind a prop, in a corner) goes after this long, so the
+# throw comes back.
+const REST_TIME := 4.0
 
 var direction := Vector2.RIGHT
 var _bounces_left := BOUNCES
 var _speed := SPEED
 var _flown := 0.0
+var _rested := 0.0
 var _hit := {}
 
 
@@ -26,6 +30,14 @@ func is_resting() -> bool:
 
 func bounces_used() -> int:
 	return BOUNCES - _bounces_left
+
+
+# Counts the time at rest; returns whether the ball has lain long enough to go by itself.
+func rest_tick(delta: float) -> bool:
+	if not is_resting():
+		return false
+	_rested += delta
+	return _rested >= REST_TIME
 
 
 # A wall's normal; returns whether it bounced.
@@ -44,7 +56,7 @@ func bounce(normal: Vector2) -> bool:
 func _physics_process(delta: float) -> void:
 	var player := get_tree().get_first_node_in_group("player") as Player
 	if is_resting():
-		if player != null and player.feet().global_position.distance_to(global_position) <= PICKUP_RADIUS:
+		if rest_tick(delta) or (player != null and player.feet().global_position.distance_to(global_position) <= PICKUP_RADIUS):
 			queue_free()
 		return
 	_flown += delta

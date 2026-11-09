@@ -173,3 +173,67 @@ func test_set_era_changes_his_moves_but_not_the_run() -> void:
 	assert_true(player._era_moves == null)
 	assert_eq(player._visual._tint, Color.WHITE)
 	player.free()
+
+
+# The Rolling Pin and Rubber Ferrule (cane pace) and Walker Tennis Balls (cane push) change old Harold's
+# swing, never a younger Harold's kick or punch.
+func test_cane_pace_and_push_items_leave_the_era_moves_alone() -> void:
+	var kit := ItemKit.new()
+	var bare := Player.new()
+	bare.setup(kit.make_run())
+	var caned := Player.new()
+	caned.setup(kit.run_with(["rolling_pin", "rubber_ferrule", "walker_tennis_balls"]))
+	assert_true(caned.run.swing_speed() != bare.run.swing_speed(), "the items do change the cane's pace")
+	assert_true(caned.run.stats.swing_push_mult > 1.0)
+	assert_true(caned.era_lock_time() != bare.era_lock_time(), "old Harold's pace follows them")
+	assert_true(caned.swing_push(100.0, false) > bare.swing_push(100.0, false), "old Harold's push too")
+	for id in Eras.STARTING:
+		bare.set_era(id)
+		caned.set_era(id)
+		var moves := EraMoves.for_era(id)
+		assert_near(caned.era_lock_time(), moves.lock_time)
+		assert_near(caned.era_lock_time(), bare.era_lock_time())
+		assert_near(caned.swing_push(moves.push, true), moves.push)
+		assert_near(caned.swing_push(moves.push, true), bare.swing_push(moves.push, true))
+	var source := _player_source()
+	var attacks := source.substr(source.find("func _handle_attacks("), 1400)
+	assert_true(attacks.contains("_combo.lock_time = era_lock_time()"), "the era's combo is paced by era_lock_time")
+	var swing := source.substr(source.find("func _swing("), 1300)
+	assert_true(swing.contains("swing_push(push, from_era)"))
+	bare.free()
+	caned.free()
+
+
+func test_a_held_charge_never_crosses_into_or_out_of_an_era() -> void:
+	var run := RunState.new([] as Array[UpgradeDef], {})
+	var player := Player.new()
+	player.setup(run)
+	player._charge.start()
+	player._charge.tick(ChargeSwing.HOLD_DELAY + 0.1)
+	assert_true(player._charge.is_charging())
+	player.set_era(Eras.BUS)
+	assert_false(player._charge.is_holding(), "held through the reel door, it is dropped")
+	player._charge.start()
+	player.set_era("")
+	assert_false(player._charge.is_holding(), "and on the way back")
+	player.free()
+
+
+func test_a_kick_or_punch_plays_over_its_own_lock() -> void:
+	var source := _player_source()
+	var swing := source.substr(source.find("func _swing("), 1600)
+	assert_true(swing.contains("_visual.play_once(\"attack\", _era_moves.lock_time if from_era"))
+
+
+func test_a_ball_he_cannot_reach_goes_by_itself() -> void:
+	var ball := EraBall.new()
+	assert_false(ball.rest_tick(EraBall.REST_TIME + 1.0), "never while it flies")
+	while ball.bounce(Vector2.UP):
+		pass
+	assert_true(ball.is_resting())
+	assert_false(ball.rest_tick(EraBall.REST_TIME - 0.5))
+	assert_true(ball.rest_tick(0.6), "after REST_TIME at rest it goes, and the throw comes back")
+	var source := FileAccess.get_file_as_string("res://scripts/actors/era_ball.gd")
+	var physics := source.substr(source.find("func _physics_process("), 400)
+	assert_true(physics.contains("if rest_tick(delta) or"), "it frees itself when rest_tick says so")
+	ball.free()

@@ -223,8 +223,10 @@ func _end_era() -> void:
 
 # Old Harold again, with no flicker or line. The keeper alone sets run.era; the player only his moves.
 func _stop_era() -> void:
-	var era := _run.era
-	_run.era = ""
+	var era := ""
+	if _run != null:
+		era = _run.era
+		_run.era = ""
 	_era_room = -1
 	if _player != null:
 		_player.set_era("")
