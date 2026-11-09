@@ -52,6 +52,14 @@ const SWEEP_BLADE := Color("e8ecf4")
 const LOOK_EASE := 4.0
 # The warm film glow on him while a readied reel waits for its door (RuleKeeper).
 const SEPIA_GLOW := Color("d9b98a")
+# The hit source the items hear for an era's moves: stat-like items still answer it, cane and denture ones don't.
+const ERA_HIT := "era"
+# Until each era has its own art: old Harold's sprite, warmed (1960) or cooled (1975), so playtests can tell.
+const FOOTBALL_TINT := Color("ffd9a0")
+const BUS_TINT := Color("c9d8ff")
+# How far beyond his feet the spin or barge reaches into a body it passes, and the barge's extra pace.
+const ERA_DODGE_REACH := 6.0
+const BARGE_PACE := 1.2
 
 var run: RunState
 var show_crosshair := false
@@ -79,8 +87,14 @@ var _visual: SpriteVisual
 # What he wears, drawn over the sprite. Made only once he wears something.
 var _look: GrandpaLook
 var _feet: Marker2D
-# The era he relives (Eras), "" for old Harold. Task 8 gives each era its moves and look.
+# The era he relives (Eras), "" for old Harold, as the RuleKeeper last set it.
 var _era := ""
+# A younger Harold's moves for the era (null for old Harold), and who his spin or barge has hit this dodge.
+var _era_moves: EraMoves
+var _era_dodge_hits := {}
+# His football or ticket lines in the room. They live beside him, as his teeth do, so recall_teeth clears them
+# on every room change.
+var _era_thrown: Array[Node2D] = []
 var _sepia_glow := false
 # The last line he said (say_line), until he has a speech bubble of his own.
 var last_line := ""
@@ -135,18 +149,50 @@ func feet() -> Node2D:
 func set_sepia_glow(on: bool) -> void:
 	_sepia_glow = on
 	if _visual != null:
-		_visual.set_tint(SEPIA_GLOW if on else Color.WHITE)
+		_visual.set_tint(SEPIA_GLOW if on else _era_tint())
 
 
 func has_sepia_glow() -> bool:
 	return _sepia_glow
 
 
-# The era he relives now. Only its pace (RunState.move_speed) changes here; Task 8 adds the moves.
+# A younger Harold for one room, or old Harold again with "". Only his moves and look change here: the
+# RuleKeeper owns run.era (and so his pace, RunState.move_speed). Health and stat items carry over; his
+# cane and dentures items don't touch an era's own moves. New moves every time, so a football left
+# lying in a room never holds back the next throw.
 func set_era(era_id: String) -> void:
 	_era = era_id
-	if run != null:
-		run.era = era_id
+	_era_moves = EraMoves.for_era(era_id)
+	_era_dodge_hits.clear()
+	_combo = CaneCombo.new()
+	if _visual != null:
+		var look: Dictionary = run.look if run != null else {}
+		var art := GrandpaLook.outfit_art(look)
+		if not era_id.is_empty() and SpriteVisual.has_anim(Eras.art_id(era_id), "idle"):
+			art = Eras.art_id(era_id)
+		_visual.set_tint(SEPIA_GLOW if _sepia_glow else _era_tint())
+		_visual.set_art(art)
+	# His hats and cardigan are old Harold's.
+	if _look != null:
+		_look.visible = era_id.is_empty()
+	queue_redraw()
+
+
+# White for old Harold or an era with its own art; until then, old Harold's sprite warmed or cooled.
+func _era_tint() -> Color:
+	if _era.is_empty() or SpriteVisual.has_anim(Eras.art_id(_era), "idle"):
+		return Color.WHITE
+	return FOOTBALL_TINT if _era == Eras.FOOTBALL else BUS_TINT
+
+
+# An era move landing on an enemy, with the stat items (damage, wounded and boss multipliers) as a swing
+# has them. With from, a strike a shield facing that point can stop; without, plain damage.
+func era_hit(enemy: Enemy, damage: float, push: Vector2, from: Variant = null) -> bool:
+	var amount := damage * run.damage_mult()
+	amount = PlayerStats.strike_damage(amount, enemy.hp / maxf(enemy.max_hp(), 1.0), run.stats.wounded_damage_mult)
+	amount = PlayerStats.boss_damage(amount, enemy.def.is_boss, run.boss_damage_mult())
+	var to_attacker: Variant = (from - enemy.global_position) if from is Vector2 else null
+	return run.effects.land(enemy, amount, ERA_HIT, push, to_attacker)
 
 
 func era() -> String:
@@ -368,6 +414,8 @@ func ease_look_ahead(delta: float) -> void:
 
 func _physics_process(delta: float) -> void:
 	_combo.tick(delta)
+	if _era_moves != null:
+		_era_moves.tick(delta)
 	_charge.tick(delta)
 	_dodge.tick(delta)
 	if _was_dodging and not _dodge.is_active():
@@ -515,6 +563,17 @@ func teeth_out() -> Array[ThrownDentures]:
 func _handle_attacks() -> void:
 	if is_self_stunned():
 		return
+	# A younger Harold: his own kick or punch and throw on the same buttons, and no charged swing.
+	if _era_moves != null:
+		if Input.is_action_just_pressed("throw") and _era_moves.throw_ready():
+			_era_throw()
+		if Input.is_action_just_pressed("attack"):
+			_combo.lock_time = _era_moves.lock_time / run.swing_speed()
+			# The combo only gates the pace and counts the step; the era has its own damage.
+			if _combo.try_attack() > 0:
+				var step := posmod(_combo.step() - 1, CaneCombo.DAMAGE.size()) % _era_moves.combo_damage.size()
+				_swing(_era_moves.combo_damage[step], _era_moves.reach, _era_moves.angle, _era_moves.push, false, false, true)
+		return
 	if Input.is_action_just_pressed("throw") and can_throw(_teeth):
 		_throw_teeth()
 	if not can_swing(_teeth):
@@ -576,6 +635,25 @@ func _throw_teeth() -> void:
 		_teeth.drop()
 
 
+# The football or the roll of tickets. It still counts as a throw for Keep Your Teeth In, and its sound is
+# the throw's own (CombatFeedback plays "teeth_throw" on teeth_thrown), but the denture items never hear it.
+func _era_throw() -> void:
+	var parent := get_parent()
+	if parent == null:
+		return
+	var spawn := _feet.global_position + _aim * 10.0
+	# Up against a wall, it starts at his feet, so it bounces off the wall instead of going through.
+	var query := PhysicsRayQueryParameters2D.create(_feet.global_position, spawn, ThrownDentures.BLOCKED_BY)
+	if not get_world_2d().direct_space_state.intersect_ray(query).is_empty():
+		spawn = _feet.global_position
+	var thrown := _era_moves.make_throw(_aim)
+	parent.add_child(thrown)
+	thrown.global_position = spawn
+	_era_thrown = _era_thrown.filter(func(n): return is_instance_valid(n))
+	_era_thrown.append(thrown)
+	teeth_thrown.emit()
+
+
 func _make_teeth(state: DentureThrow, way: Vector2) -> ThrownDentures:
 	var teeth := ThrownDentures.new()
 	teeth.setup(state, self, way, run.bite_damage_mult(), run.stats.bite_range, run.stats.bites_per_throw)
@@ -598,6 +676,7 @@ func recall_teeth() -> void:
 		_thrown_teeth.queue_free()
 	_thrown_teeth = null
 	_free_spares()
+	_free_era_thrown()
 	_teeth.catch_teeth()
 
 
@@ -608,23 +687,34 @@ func _free_spares() -> void:
 	_spare_teeth.clear()
 
 
+func _free_era_thrown() -> void:
+	for thrown in _era_thrown:
+		if is_instance_valid(thrown):
+			thrown.queue_free()
+	_era_thrown.clear()
+
+
 func _exit_tree() -> void:
 	if is_instance_valid(_thrown_teeth):
 		_thrown_teeth.queue_free()
 	_free_spares()
+	_free_era_thrown()
 
 
-func _swing(damage: float, reach: float, angle: float, push: float, heavy: bool, finisher: bool) -> void:
+func _swing(damage: float, reach: float, angle: float, push: float, heavy: bool, finisher: bool, from_era := false) -> void:
 	_finish_swing()
 	swing_started.emit()
 	var swing_damage := damage * run.damage_mult()
 	# The Lucky Tee: now and then a swing does double.
-	if run.stats.lucky_swing_chance > 0.0:
+	if not from_era and run.stats.lucky_swing_chance > 0.0:
 		swing_damage = PlayerStats.lucky_damage(swing_damage, run.stats.lucky_swing_chance, randf())
 	# Walker Tennis Balls knock enemies further.
 	_active_swing = SwingAttack.new(_aim, reach, angle, swing_damage, push * run.stats.swing_push_mult, heavy, finisher)
-	# Items may reshape the swing before it hits: what they change is also what is drawn.
-	run.effects.swing(_active_swing)
+	_active_swing.from_era = from_era
+	# Items may reshape the swing before it hits: what they change is also what is drawn. A kick or punch
+	# is a younger Harold's own, so the cane items stay off it.
+	if not from_era:
+		run.effects.swing(_active_swing)
 	Sfx.play("charged_swing" if heavy else "cane_swing")
 	_visual.play_once("attack", CaneCombo.LOCK_TIME)
 	_strike_enemies()
@@ -649,7 +739,8 @@ func _strike_enemies() -> void:
 		if swing.try_hit(global_position, enemy.get_instance_id(), enemy.body_rect()):
 			var damage := PlayerStats.strike_damage(swing.damage, enemy.hp / maxf(enemy.max_hp(), 1.0), run.stats.wounded_damage_mult)
 			damage = PlayerStats.boss_damage(damage, enemy.def.is_boss, run.boss_damage_mult())
-			if not run.effects.land(enemy, damage, swing_source(swing.heavy, swing.finisher), swing.push_toward(global_position, enemy.global_position), global_position - enemy.global_position):
+			var source := ERA_HIT if swing.from_era else swing_source(swing.heavy, swing.finisher)
+			if not run.effects.land(enemy, damage, source, swing.push_toward(global_position, enemy.global_position), global_position - enemy.global_position):
 				swing.mark_blocked()
 	for block: BreakableBlock in get_tree().get_nodes_in_group("breakable"):
 		if block.is_queued_for_deletion() or not block.can_break_by(BreakableBlock.SOURCE_CANE):
@@ -674,7 +765,8 @@ func _finish_swing() -> void:
 		swing_missed.emit(_active_swing.heavy)
 	var ended := _active_swing
 	_active_swing = null
-	run.effects.swing_end(ended)
+	if not ended.from_era:
+		run.effects.swing_end(ended)
 
 
 func _handle_movement() -> void:
@@ -699,6 +791,11 @@ func _handle_movement() -> void:
 		# Bunion Pads: a dodge straight at a prop's corner steps round it, as a walk does.
 		if run.stats.dodge_rounds_corners:
 			velocity = _round_corners(velocity, straightened(_dodge_direction), DODGE_SPEED, DODGE_CORNER_REACH)
+		# A younger Harold's spin turn or shoulder barge (a little faster, like a charge) hits what he passes.
+		if _era_moves != null:
+			if _era == Eras.BUS:
+				velocity *= BARGE_PACE
+			_era_dodge_strike()
 	else:
 		# Support Stockings: no slow takes him below their share of his speed.
 		var speed := run.move_speed() * maxf(_slow.speed_factor(), run.stats.min_slow_factor)
@@ -738,7 +835,26 @@ func start_dodge(direction: Vector2) -> bool:
 	Sfx.play("dodge")
 	run.effects.dodge(direction)
 	dodge_started.emit()
+	if _era_moves != null:
+		_era_dodge_hits.clear()
 	return true
+
+
+# The spin turn and the shoulder barge hit each enemy he passes through once per dodge. The barge knocks
+# them down, but never a boss or mini-boss.
+func _era_dodge_strike() -> void:
+	if not is_inside_tree() or _feet == null:
+		return
+	for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
+		var id := enemy.get_instance_id()
+		if _era_dodge_hits.has(id) or enemy.is_queued_for_deletion() or enemy.submerged or enemy.is_dead():
+			continue
+		if not enemy.body_rect().grow(ERA_DODGE_REACH).has_point(_feet.global_position):
+			continue
+		_era_dodge_hits[id] = true
+		era_hit(enemy, _era_moves.dodge_hit_damage, _dodge_direction * _era_moves.dodge_push, global_position)
+		if _era_moves.dodge_stun > 0.0 and is_instance_valid(enemy) and not enemy.is_dead() and not enemy.def.is_boss:
+			enemy.stun(_era_moves.dodge_stun)
 
 
 # Walking straight into a corner by a pixel or two steps him round it, sideways only, and only when
@@ -788,7 +904,8 @@ func _draw() -> void:
 	var swinging := _active_swing != null
 	var pointing := _active_swing.direction if swinging else _aim
 	# A cane skin draws the placeholder cane even over the sprite, so the skin shows until the art pass.
-	if not has_art or run.look.has(CosmeticDef.SLOT_CANE):
+	# A younger Harold carries no cane at all.
+	if _era.is_empty() and (not has_art or run.look.has(CosmeticDef.SLOT_CANE)):
 		# A dark edge under a skin, so a pale cane still reads on the Mall's white tile.
 		if run.look.has(CosmeticDef.SLOT_CANE):
 			draw_line(-pointing, pointing * 21.0, GrandpaLook.OUTLINE, 5.0)

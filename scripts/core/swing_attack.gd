@@ -21,6 +21,8 @@ var finisher: bool
 var duration := DURATION
 var both_ways := false
 var style := STYLE_ARC
+# A younger Harold's kick or punch (EraMoves): it lands as Player.ERA_HIT, and the cane items never see it.
+var from_era := false
 var _time_left := DURATION
 var _hit_ids := {}
 var _blocked := 0

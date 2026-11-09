@@ -436,6 +436,9 @@ static func is_passing_effect(child: Node) -> bool:
 	# Room rules: the Auditor's stamp ink (his stamp itself is a Projectile) and his AUDIT door flash
 	if child is InkBlot or child is AuditFlash:
 		return true
+	# Flashbacks: the 1960 football and the 1975 ticket line
+	if child is EraBall or child is TicketLine:
+		return true
 
 	return (child is Projectile or child is DeathBurst or child is Thermos or child is EnemyBlast
 		or child is SummonMark or child is GroundStrike or child is LightsOut or child is SteamJet

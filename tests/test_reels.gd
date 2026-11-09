@@ -248,7 +248,8 @@ func test_the_sepia_glow_clears_back_to_his_own_look() -> void:
 	player.set_sepia_glow(false)
 	assert_eq(player._visual._tint, Color.WHITE)
 	player.set_era(Eras.FOOTBALL)
-	assert_eq(run.era, Eras.FOOTBALL)
+	assert_eq(player.era(), Eras.FOOTBALL)
+	assert_eq(run.era, "", "the RuleKeeper owns run.era")
 	player.free()
 
 
