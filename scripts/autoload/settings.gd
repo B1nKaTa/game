@@ -78,8 +78,11 @@ func current_screen() -> int:
 
 
 # The room a window can take on its screen: the area outside the taskbar, less the title bar and borders.
+# Fullscreen covers the taskbar, so there the whole screen is the room: a 2560x1440 screen offers 2560x1440.
 func window_room() -> Vector2i:
 	var screen := current_screen()
+	if DisplayServer.window_get_mode() in [DisplayServer.WINDOW_MODE_FULLSCREEN, DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN]:
+		return DisplayServer.screen_get_size(screen)
 	var room := DisplayServer.screen_get_usable_rect(screen).size
 	if room.x <= 0 or room.y <= 0:
 		room = DisplayServer.screen_get_size(screen)
