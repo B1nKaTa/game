@@ -376,6 +376,15 @@ func find_recipe(id: String) -> void:
 	_store.save_progress(data)
 
 
+# A room rule kept to the clear, or broken. RuleKeeper calls this through the Callable FloorScene hands it.
+func record_rule(kept: bool) -> void:
+	if kept:
+		data.rules_kept += 1
+	else:
+		data.rules_broken += 1
+	_store.save_progress(data)
+
+
 # A Flashback Cinema lobby card's line, picked for this run from the film its room's screen plays
 # (scene_id, "" for any), and saved as seen the moment it shows.
 func take_life_sign(seed_text: String, shown: Array[String], scene_id := "") -> String:

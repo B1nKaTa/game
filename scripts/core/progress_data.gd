@@ -104,6 +104,9 @@ var run_log: Array = []
 # The Flashback Cinema's lobby card lines shown so far (LifeSigns), each id stamped with the order it
 # was last seen in. Optional in a save.
 var life_signs_seen: Dictionary = {}
+# How many room rules Harold has kept to a clear, and how many he has broken. Optional in a save.
+var rules_kept: int = 0
+var rules_broken: int = 0
 
 # The first path at each depth, the only one open before that depth's first clear.
 const FIRST_PATH_BY_DEPTH := {1: "floor_1", 2: "sunset_shores", 3: "funeral_parlour", 4: "last_resort_cruise", 5: "terminal_zero"}
@@ -501,6 +504,8 @@ func to_dict() -> Dictionary:
 		"best_run": best_run,
 		"run_log": run_log,
 		"life_signs_seen": life_signs_seen,
+		"rules_kept": rules_kept,
+		"rules_broken": rules_broken,
 	}
 
 
@@ -612,6 +617,9 @@ static func from_dict(raw: Variant) -> ProgressData:
 				data.run_log.append(RunLog.clean(each))
 	# The Flashback Cinema's lobby cards. An older save has seen none of them.
 	data.life_signs_seen = _count_map(raw.get("life_signs_seen"))
+	# The room rules' counts. An older save has kept and broken none.
+	data.rules_kept = maxi(int(raw.get("rules_kept", 0)), 0)
+	data.rules_broken = maxi(int(raw.get("rules_broken", 0)), 0)
 
 	data._infer_first_paths()
 	return data

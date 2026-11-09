@@ -97,12 +97,16 @@ var _augustine_seen_before := false
 # The scene playing, if any, and the ending it is.
 var _cutscene: CutscenePlayer
 var _ending_id := ""
+# The floor's room rules. Made first in _ready, so a resumed run can load them back before any room.
+var _rules: RuleKeeper
 
 
 func _ready() -> void:
 	# Harold and the room's bodies are drawn in order of where their feet are (RoomView sorts too).
 	y_sort_enabled = true
 	_rng.randomize()
+	_rules = RuleKeeper.new()
+	add_child(_rules)
 	# An interrupted run comes back from its checkpoint, and never starts a new run on the way.
 	var resume := Progress.resume
 	Progress.resume = {}
@@ -143,6 +147,7 @@ func _ready() -> void:
 	_run.effects.combo_formed.connect(_on_combo_formed)
 	Input.mouse_mode = Settings.cursor_mode(true)
 	add_child(player)
+	_rules.setup(player, _hud, _run, Progress.record_rule)
 	_feedback.watch_player(player)
 	var glow := Lighting.make_light(Color(1.0, 0.85, 0.6), 0.7, 0.8)
 	player.add_child(glow)
@@ -219,6 +224,8 @@ func _start_map() -> void:
 		_floor_def = load(CROSSROADS_FLOOR)
 		_map = FloorMap.with_only_crossroads(load(CROSSROADS_LAYOUT))
 		_map_kind = MAP_START
+	# A landing or the first Crossroads posts no rules.
+	_rules.plan_floor(FloorMap.new(), _depth, "")
 
 
 # --- The run checkpoint: written as rooms are cleared, on landings and on entering a floor ---
@@ -270,6 +277,7 @@ func write_checkpoint() -> bool:
 		"is_cleared": is_cleared,
 		"bosses": int(Progress.last_run.get("bosses", 0)),
 		"run_time": snappedf(_run_time, 0.1),
+		"rules": _rules.to_dict(),
 	}
 	return Progress.write_checkpoint(checkpoint)
 
@@ -328,6 +336,10 @@ func _resume_map(resume: Dictionary) -> bool:
 		if str(key).is_valid_int() and rooms[key] is Dictionary and rooms[key].get("cleared", false):
 			_restored[int(key)] = rooms[key]
 	is_cleared = bool(resume.get("is_cleared", false))
+	# Before the first room is entered, so a rule room he saw already gives no second notice. An older
+	# checkpoint has no rules, and its floor posts none.
+	var rules: Variant = resume.get("rules", {})
+	_rules.load_dict(rules if rules is Dictionary else {})
 	return true
 
 
@@ -457,6 +469,7 @@ func _choose_path(index: int) -> void:
 		return
 	_floor_seed = seed_text
 	_run.seeds.append(seed_text)
+	_rules.plan_floor(map, def.depth, seed_text)
 	_restored.clear()
 	_safe_room = -1
 	_exit_side = _room_view.side_of_path(index)
@@ -536,6 +549,7 @@ func _enter_room(target_id: int) -> void:
 		_tip_hat(_map.room(target_id))
 	_run.effects.ctx.room = _room_view
 	_run.effects.room_enter(_room_view)
+	_rules.on_room_entered(_room_view, _map.room(target_id), first_visit)
 
 
 # The room's music: its path's theme, the landing's, or the Arcade's. A boss's music starts when it
@@ -856,6 +870,7 @@ func _go_down() -> void:
 	_current_id = -1
 	_map_kind = MAP_LANDING
 	_floor_seed = ""
+	_rules.plan_floor(FloorMap.new(), _depth, "")
 	_restored.clear()
 	_safe_room = -1
 	_enter_room(_map.start_id)

@@ -531,6 +531,12 @@ func wait_for_room_start() -> void:
 	_wake_left = ROOM_WAKE_TIME / maxf(notice_mult, 1.0)
 
 
+# Waits as at the room's start, with no stun stars, while the room's rule is announced. Never cuts a
+# longer wait short.
+func hold(seconds: float) -> void:
+	_wake_left = maxf(_wake_left, seconds)
+
+
 func self_destruct() -> void:
 	_blew_itself_up = true
 

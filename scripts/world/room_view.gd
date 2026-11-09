@@ -150,6 +150,21 @@ func note_prop_broken(by_harold: bool) -> void:
 	prop_broken.emit(by_harold)
 
 
+# For Do Not Touch the Exhibits: whether anything Harold could break stands in the room.
+func has_breakables() -> bool:
+	for child in get_children():
+		if child is BreakableBlock and not child.is_queued_for_deletion() and child.can_break_by(BreakableBlock.SOURCE_CANE):
+			return true
+	return false
+
+
+# The room's enemies wait while its rule is announced.
+func hold_enemies(seconds: float) -> void:
+	for child in get_children():
+		if child is Enemy and not child.is_queued_for_deletion():
+			child.hold(seconds)
+
+
 # The secret walls still standing in the room, for the Magnifying Glass's glint.
 func secret_walls() -> Array[SecretWall]:
 	var walls: Array[SecretWall] = []
