@@ -15,10 +15,18 @@ func _view() -> RoomView:
 func test_the_auditor_is_a_tough_regular_not_a_boss() -> void:
 	var def: EnemyDef = load(AUDITOR)
 	assert_false(def.is_boss, "a boss's death wipes the room")
-	assert_true(def.max_hp >= 90.0 and def.max_hp <= 160.0, "tougher than a regular, weaker than a mini-boss")
-	assert_true(def.pension_drop >= 10, "about three times a regular's")
 	assert_eq(def.max_per_room, 1)
 	assert_eq(def.id, RoomView.AUDITOR_ID)
+
+
+# The floor's pay rate scales him and the regulars alike, so the ratio holds on every floor.
+func test_he_pays_about_three_times_a_regular_and_less_than_a_mini_boss() -> void:
+	var def: EnemyDef = load(AUDITOR)
+	var floor_def: FloorDef = load("res://data/floors/floor_1.tres")
+	var regular: EnemyDef = floor_def.enemies[0]
+	assert_true(def.pension_drop >= 2 * regular.pension_drop and def.pension_drop <= 5 * regular.pension_drop,
+		"%d against a regular's %d" % [def.pension_drop, regular.pension_drop])
+	assert_true(def.pension_drop < floor_def.mini_boss.pension_drop, "below the floor-1 mini-boss's")
 
 
 func test_his_health_lies_between_the_first_floors_regulars_and_its_mini_boss() -> void:
@@ -29,6 +37,35 @@ func test_his_health_lies_between_the_first_floors_regulars_and_its_mini_boss() 
 		toughest = maxf(toughest, regular.max_hp)
 	assert_true(def.max_hp > toughest, "tougher than every floor-1 regular")
 	assert_true(def.max_hp < floor_def.mini_boss.max_hp, "weaker than the floor-1 mini-boss")
+	assert_true(def.max_hp >= toughest * 1.4, "a mini-elite, clearly tougher than the toughest regular")
+
+
+func test_his_door_flash_is_a_passing_effect_that_frees_itself() -> void:
+	var flash := AuditFlash.new()
+	assert_true(RoomView.is_passing_effect(flash))
+	flash._process(AuditFlash.LIFE - 0.1)
+	assert_false(flash.is_queued_for_deletion(), "still showing")
+	flash._process(0.2)
+	assert_true(flash.is_queued_for_deletion(), "gone after its time")
+	flash.free()
+	assert_near(AuditFlash.LIFE, 1.0, "about a second")
+
+
+func test_his_door_flash_keeps_out_from_under_the_hud() -> void:
+	assert_true(AuditFlash.word_offset(200.0, 1.0).y < 0.0, "on a low door it stands on the door")
+	assert_true(AuditFlash.word_offset(Hud.BAND_BOTTOM + 4.0, 1.0).y > 0.0, "on a north door it shows below")
+
+
+func test_he_walks_in_with_the_stamp_flash() -> void:
+	var view := _view()
+	view.call_auditor(load(AUDITOR), null)
+	view._tick_audit(RoomView.AUDIT_DELAY + 0.1)
+	var flashes := 0
+	for child in view.get_children():
+		if child is AuditFlash:
+			flashes += 1
+	assert_eq(flashes, 1)
+	view.free()
 
 
 func test_he_is_on_no_floor_since_only_a_broken_rule_sends_him() -> void:

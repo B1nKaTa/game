@@ -199,11 +199,17 @@ func _tick_audit(delta: float) -> void:
 	if _audit_left > 0.0:
 		return
 	_audit_left = -1.0
-	var auditor := _spawn_enemy(_audit_def, summon_spot(_audit_spot()))
+	var at := summon_spot(_audit_spot())
+	var auditor := _spawn_enemy(_audit_def, at)
 	# His reserved place becomes him.
 	_alive -= 1
 	auditor.wait_for_room_start()
 	Sfx.play("door_open")
+	# AUDIT, stamped over the door he walks in by.
+	var flash := AuditFlash.new()
+	flash.position = at
+	add_child(flash)
+	Sfx.play("rule_stamp")
 
 
 # The door he comes in by, else where the last enemy fell, else the room's middle.
@@ -424,8 +430,8 @@ static func is_passing_effect(child: Node) -> bool:
 	# The Seance Hotline
 	if SeanceProps.is_passing_effect(child):
 		return true
-	# Room rules: the Auditor's stamp ink (his stamp itself is a Projectile)
-	if child is InkBlot:
+	# Room rules: the Auditor's stamp ink (his stamp itself is a Projectile) and his AUDIT door flash
+	if child is InkBlot or child is AuditFlash:
 		return true
 
 	return (child is Projectile or child is DeathBurst or child is Thermos or child is EnemyBlast
