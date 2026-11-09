@@ -1,14 +1,16 @@
 extends TestCase
 
 
-func test_crosshair_has_four_lines_around_the_point() -> void:
+# The aim mark is a ring round the point: four arms drew a plus at the mouse, which read as a cross in the
+# real-window shots, and the game never shows one.
+func test_the_aim_mark_is_a_ring_not_a_plus() -> void:
 	var center := Vector2(100, 50)
-	var points := Player.crosshair_lines(center)
-	assert_eq(points.size(), 8, "two ends for each of four lines")
+	var points := Player.crosshair_ring(center)
+	assert_true(points.size() >= 12, "round enough to read as a ring")
 	for point in points:
-		var distance := point.distance_to(center)
-		assert_true(distance >= Player.CROSSHAIR_GAP - 0.01, "leaves the middle clear")
-		assert_true(distance <= Player.CROSSHAIR_REACH + 0.01)
+		assert_near(point.distance_to(center), Player.CROSSHAIR_RADIUS, "on the ring")
+	assert_true(points[0].is_equal_approx(points[points.size() - 1]), "closed")
+	assert_false(FileAccess.get_file_as_string("res://scripts/actors/player.gd").contains("crosshair_lines"), "no four-armed mark is left")
 
 
 func test_a_new_player_has_no_crosshair_until_asked() -> void:

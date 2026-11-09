@@ -32,8 +32,9 @@ const FEET_BOX_SIZE := Vector2(14, 12)
 const FEET_OFFSET := Vector2(0, 17)
 # The contact shadow under his shoes and cane (ContactShadow).
 const SHADOW_WIDTH := 20.0
-const CROSSHAIR_GAP := 3.0
-const CROSSHAIR_REACH := 8.0
+# The aim mark: a ring with a dot in its middle. Four arms drew a plus, which reads as a cross.
+const CROSSHAIR_RADIUS := 5.0
+const CROSSHAIR_SEGMENTS := 16
 const CROSSHAIR_COLOR := Color(1.0, 0.9, 0.55, 0.95)
 const GHOST_EVERY := 0.05
 const SLOW_COLOR := Color(0.62, 0.86, 1.0, 0.9)
@@ -127,11 +128,10 @@ static func arrival_position(cell: Vector2i) -> Vector2:
 	return RoomBackdrop.cell_center(cell) - FEET_OFFSET
 
 
-static func crosshair_lines(center: Vector2) -> PackedVector2Array:
+static func crosshair_ring(center: Vector2) -> PackedVector2Array:
 	var points := PackedVector2Array()
-	for direction: Vector2 in [Vector2.UP, Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT]:
-		points.append(center + direction * CROSSHAIR_GAP)
-		points.append(center + direction * CROSSHAIR_REACH)
+	for i in CROSSHAIR_SEGMENTS + 1:
+		points.append(center + Vector2.from_angle(TAU * i / CROSSHAIR_SEGMENTS) * CROSSHAIR_RADIUS)
 	return points
 
 
@@ -939,9 +939,12 @@ func _draw() -> void:
 				draw_line(band - pointing, band + pointing, GrandpaLook.STRIPE_BAND, 3.0)
 	if show_crosshair:
 		var at_mouse := (mouse_aim or aim_source.is_valid()) and not ActiveDevice.using_pad
-		var lines := crosshair_lines(get_local_mouse_position() if at_mouse else to_local(_aim_point()))
-		draw_multiline(lines, Color.BLACK, 3.0)
-		draw_multiline(lines, CROSSHAIR_COLOR, 1.0)
+		var center := get_local_mouse_position() if at_mouse else to_local(_aim_point())
+		var ring := crosshair_ring(center)
+		draw_polyline(ring, Color.BLACK, 3.0)
+		draw_polyline(ring, CROSSHAIR_COLOR, 1.0)
+		draw_rect(Rect2(center.floor() - Vector2.ONE, Vector2(3, 3)), Color.BLACK)
+		draw_rect(Rect2(center.floor(), Vector2.ONE), CROSSHAIR_COLOR)
 	if swinging:
 		_draw_swing(_active_swing)
 	if _charge.is_charging():
