@@ -351,8 +351,8 @@ func _draw_room(room: FloorRoom, panel: Rect2, origin: Vector2, spacing: Vector2
 	draw_rect(rect, ROOM_COLORS.get(room.room_type, Color.WHITE))
 	var is_current := room.id == _current_id
 	draw_rect(rect, CURRENT_COLOR if is_current else Color.BLACK, false, 2.0 if is_current else 1.0)
-	# Too small for a letter on the corner map, and its shape says enough there.
-	if is_crossroads and not _is_big:
+	# Its shape says enough on either map, and its letter is a "+", which reads as a cross.
+	if is_crossroads:
 		return
 	var font_size := BIG_FONT if _is_big else MINI_FONT
 	var icon := RoomRules.door_icon(room.room_type)

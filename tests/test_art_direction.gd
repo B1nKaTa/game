@@ -83,6 +83,67 @@ func test_every_room_type_beyond_a_door_has_a_sign_or_none_on_purpose() -> void:
 			assert_eq(row.length(), DoorSign.SIZE, "sign %s rows are %d wide" % [icon, DoorSign.SIZE])
 
 
+# A row's drawn extent [first, last] in a sign picture, or [] for an empty row.
+func _extent(row: String) -> Array:
+	var first := -1
+	var last := -1
+	for x in row.length():
+		if row[x] != ".":
+			if first < 0:
+				first = x
+			last = x
+	return [] if first < 0 else [first, last]
+
+
+# A plus silhouette: a thin stem (3 wide or less, 2 rows or more) above and below a band that reaches 2 or
+# more cells past the stem on both sides; a round shape's single narrow end row is no stem. The healing sign was a medical plus and the Crossroads signpost's post ran
+# through its board, and both read as a cross at 1x, which the game must never show.
+func _reads_as_a_cross(rows: Array) -> bool:
+	for b in rows.size():
+		var band := _extent(rows[b])
+		if band.is_empty():
+			continue
+		var above := 0
+		var below := 0
+		for other in rows.size():
+			var stem := _extent(rows[other])
+			if other == b or stem.is_empty() or stem[1] - stem[0] + 1 > 3:
+				continue
+			if stem[0] - band[0] >= 2 and band[1] - stem[1] >= 2:
+				if other < b:
+					above += 1
+				else:
+					below += 1
+		if above >= 2 and below >= 2:
+			return true
+	return false
+
+
+func test_no_door_sign_reads_as_a_cross() -> void:
+	assert_true(_reads_as_a_cross(["...###...", "...#o#...", "#########", "#ooooooo#", "#########", "...#o#...", "...###..."]), "the check sees a plus")
+	assert_false(_reads_as_a_cross([".........", "..#####..", ".#ooooo#.", "#ooooooo#", "#ooooooo#", ".#ooooo#.", "..#####.."]), "a disc is no plus")
+	for icon in DoorSign.PICTURES:
+		var rows: Array = DoorSign.PICTURES[icon]
+		assert_false(_reads_as_a_cross(rows), "sign %s reads as a cross" % icon)
+		# Turned on its side too, so a lying cross is caught as well.
+		var turned: Array = []
+		for x in DoorSign.SIZE:
+			var column := ""
+			for row: String in rows:
+				column += row[x]
+			turned.append(column)
+		assert_false(_reads_as_a_cross(turned), "sign %s on its side reads as a cross" % icon)
+
+
+# The big map drew the Crossroads' letter, a literal "+", in its room.
+func test_the_big_map_draws_no_plus_for_the_crossroads() -> void:
+	var source := FileAccess.get_file_as_string("res://scripts/ui/floor_map_view.gd")
+	var icon_draw := source.find("var icon := RoomRules.door_icon(room.room_type)")
+	var skip := source.rfind("if is_crossroads:", icon_draw)
+	assert_true(icon_draw > 0 and skip > 0, "the Crossroads returns before any letter is drawn")
+	assert_false(source.contains("if is_crossroads and not _is_big:"), "on both maps")
+
+
 func test_a_door_gate_is_shut_while_the_room_is_shut_and_rises_after() -> void:
 	var door := Door.new()
 	door.locked = true
