@@ -24,6 +24,14 @@ extends SceneTree
 # Version 7 knows touching a body costs a pill: it keeps its feet a few pixels off every body that
 # hurts on touch, sliding round one in its way (an escape from a warned attack slides but never
 # stops for one). Touches are named touch_<id> in the hits by source.
+# Version 11 knows room rules and film reels. It takes reels with the other pickups, waits out the
+# Auditor's walk-in (a room fights while the view says so, not only while enemies stand), and counts
+# the rules it meets, breaks and keeps and the Auditors that come. "obey" anywhere after the depth keeps
+# a No Cane room's swings and a No Horseplay room's dodges back. "eras" plays fight rooms in turn as old
+# Harold, the 1960 footballer and the 1975 bus conductor: before each one it sets the reel, walks within
+# 40 px of the door, presses flashback for a frame and goes through. Era attacks use the era's reach.
+# It sums enemy health lost (dismissals left out) and fight time (summed physics delta) per combat room,
+# and prints old_dps and era_dps on the SUMMARY line.
 
 const WALL_LIMIT_MS := 1700000
 const SKILLS := {
@@ -58,6 +66,13 @@ func _process(_d: float) -> bool:
 var _results: Array = []
 var _config := ""
 var _path := 0
+# Version 11: the case flags, and which self the next fight room is played as (0 old, 1 and 2 the eras).
+var _eras := false
+var _obey := false
+var _era_turn := 0
+const ERA_TURNS: Array[String] = ["", Eras.FOOTBALL, Eras.BUS]
+# How near the door (his middle to the door, as Door.is_within measures) he stands to press flashback.
+const REEL_DOOR_GAP := 40.0
 
 
 func _main() -> void:
@@ -85,6 +100,8 @@ func _main() -> void:
 	for key in SAVES[save_name]:
 		progress.data.upgrades[key] = SAVES[save_name][key]
 	var mode: String = args[5] if args.size() > 5 else ""
+	_eras = args.slice(5).has("eras")
+	_obey = args.slice(5).has("obey")
 	var bosses_only := mode == "bosses" or mode == "mini" or mode == "boss"
 	for i in runs:
 		var result: Dictionary = {}
@@ -127,7 +144,59 @@ func _print_summary() -> void:
 		if r["mini_ttk"] > 0.0:
 			mini_times.append(r["mini_ttk"])
 			mini_hits.append(r["mini_hits"])
-	print("SUMMARY %s runs=%d reached_mini=%d beat_mini=%d reached_boss=%d beat_boss=%d income=%.0f run_minutes=%.1f rooms=%.1f hits=%.1f stuck_rooms=%d mini_ttk=%s mini_hits=%s boss_ttk=%s boss_hits=%s boss_left=%s" % [_config, n, sums["reached_mini"], sums["beat_mini"], sums["reached_boss"], sums["beat_boss"], sums["income"] / n, sums["time"] / n / 60.0, sums["rooms"] / float(n), sums["hits"] / n, sums["stuck"], _mean(mini_times), _mean(mini_hits), _mean(boss_times), _mean(boss_hits), _mean(boss_left)])
+	print("SUMMARY %s runs=%d reached_mini=%d beat_mini=%d reached_boss=%d beat_boss=%d income=%.0f run_minutes=%.1f rooms=%.1f hits=%.1f stuck_rooms=%d mini_ttk=%s mini_hits=%s boss_ttk=%s boss_hits=%s boss_left=%s%s" % [_config, n, sums["reached_mini"], sums["beat_mini"], sums["reached_boss"], sums["beat_boss"], sums["income"] / n, sums["time"] / n / 60.0, sums["rooms"] / float(n), sums["hits"] / n, sums["stuck"], _mean(mini_times), _mean(mini_hits), _mean(boss_times), _mean(boss_hits), _mean(boss_left), _rules_summary()])
+
+
+# Version 11: deaths, the rules met, broken and kept, the Auditors, reels taken, and in "eras" mode the
+# damage per second of each self over the combat rooms he cleared as it.
+func _rules_summary() -> String:
+	var deaths := 0
+	var seen := 0
+	var broken := 0
+	var kept := 0
+	var auditors := 0
+	var reels := 0
+	var by_rule := {}
+	var dealt := {}
+	var fought := {}
+	var rooms := {}
+	var readied := 0
+	var fallback := 0
+	for r in _results:
+		if str(r.get("death_in", "")) != "":
+			deaths += 1
+		seen += int(r.get("rules_seen", 0))
+		broken += int(r.get("rules_broken", 0))
+		kept += int(r.get("rules_kept", 0))
+		auditors += int(r.get("auditors", 0))
+		reels += int(r.get("reels_taken", 0))
+		readied += int(r.get("reels_readied", 0))
+		fallback += int(r.get("ready_fallback", 0))
+		for rule in r.get("broken_by", {}):
+			by_rule[rule] = by_rule.get(rule, 0) + r["broken_by"][rule]
+		for era in r.get("dealt", {}):
+			dealt[era] = dealt.get(era, 0.0) + r["dealt"][era]
+			fought[era] = fought.get(era, 0.0) + r["fought"][era]
+			rooms[era] = rooms.get(era, 0) + r["dps_rooms"][era]
+	var parts: Array[String] = []
+	for rule in by_rule:
+		parts.append("%s:%d" % [rule, by_rule[rule]])
+	var out := " deaths=%d rules_seen=%d rules_broken=%d rules_kept=%d broken_by=%s auditors=%d reels_taken=%d" % [deaths, seen, broken, kept, ",".join(parts) if not parts.is_empty() else "-", auditors, reels]
+	if not _eras:
+		return out
+	var era_parts: Array[String] = []
+	var room_parts: Array[String] = []
+	for era in [Eras.FOOTBALL, Eras.BUS]:
+		era_parts.append("%s:%s" % [era, _dps(dealt, fought, era)])
+		room_parts.append("%s:%d/%.0fs" % [era, rooms.get(era, 0), fought.get(era, 0.0)])
+	room_parts.push_front("old:%d/%.0fs" % [rooms.get("", 0), fought.get("", 0.0)])
+	return out + " old_dps=%s era_dps=%s dps_rooms=%s reels_readied=%d ready_fallback=%d" % [_dps(dealt, fought, ""), ",".join(era_parts), ",".join(room_parts), readied, fallback]
+
+
+func _dps(dealt: Dictionary, fought: Dictionary, era: String) -> String:
+	if fought.get(era, 0.0) <= 0.0:
+		return "-"
+	return "%.1f" % (dealt[era] / fought[era])
 
 
 func _mean(list: Array) -> String:
@@ -170,7 +239,13 @@ func _run(progress) -> Dictionary:
 	var pension_before: int = progress.data.pension
 	var map: FloorMap = scene.debug_map()
 	var r := {"reached_mini": false, "beat_mini": false, "reached_boss": false, "beat_boss": false, "income": 0, "time": 0.0, "rooms": 0, "stuck": 0, "hits": 0, "boss_ttk": 0.0, "mini_ttk": 0.0, "boss_hits": 0, "mini_hits": 0, "death_in": ""}
+	r.merge({"rules_seen": 0, "rules_broken": 0, "rules_kept": 0, "broken_by": {}, "auditors": 0, "reels_taken": 0, "reels_readied": 0, "ready_fallback": 0, "dealt": {"": 0.0, Eras.FOOTBALL: 0.0, Eras.BUS: 0.0}, "fought": {"": 0.0, Eras.FOOTBALL: 0.0, Eras.BUS: 0.0}, "dps_rooms": {"": 0, Eras.FOOTBALL: 0, Eras.BUS: 0}})
 	scene.player.hurt.connect(func(): r["hits"] += 1; _attribute(scene); _trace(bot))
+	var rules: RuleKeeper = scene.debug_rules()
+	bot.rules = rules
+	bot.obey = _obey
+	rules.rule_broken.connect(func(_view): r["rules_broken"] += 1)
+	var reel_was := ""
 	while true:
 		var at: int = scene.debug_current_id()
 		var kind: String = map.room(at).room_type
@@ -182,8 +257,25 @@ func _run(progress) -> Dictionary:
 		var hits_before: int = r["hits"]
 		var began: float = bot.clock
 		var had_enemies: bool = bot.enemies_here() > 0
+		var watch: RuleWatch = rules.watch_of(at)
+		var rule_open: bool = watch != null and watch.is_open()
+		if rule_open:
+			r["rules_seen"] += 1
+		var era: String = scene.player.era()
+		bot.begin_count()
 		var cleared: bool = await bot.fight_room()
 		var took: float = bot.clock - began
+		r["auditors"] += bot.auditors
+		if rule_open:
+			if watch.state == RuleWatch.State.KEPT:
+				r["rules_kept"] += 1
+			elif watch.state == RuleWatch.State.BROKEN or watch.state == RuleWatch.State.LIFTED:
+				r["broken_by"][watch.rule] = r["broken_by"].get(watch.rule, 0) + 1
+		# Damage per second over combat rooms he cleared, by the self he played them as.
+		if cleared and had_enemies and kind == RoomLayout.TYPE_COMBAT and r["dealt"].has(era):
+			r["dealt"][era] += bot.dealt
+			r["fought"][era] += bot.fought
+			r["dps_rooms"][era] += 1
 		if not cleared and bot.gave_up:
 			r["stuck"] += 1
 		if scene.is_over and not scene.is_cleared:
@@ -202,9 +294,28 @@ func _run(progress) -> Dictionary:
 		await create_timer(0.1).timeout
 		if scene.is_over:
 			break
+		var run: RunState = scene.player.run
+		if run.held_reel != "" and run.held_reel != reel_was:
+			r["reels_taken"] += 1
+		reel_was = run.held_reel
 		var next := _next_room(scene, map)
 		if next == -1:
 			break
+		if _eras and not scene.debug_progress().is_visited(next) and RuleKeeper.FIGHT_ROOMS.has(map.room(next).room_type):
+			var self_for: String = ERA_TURNS[_era_turn % ERA_TURNS.size()]
+			_era_turn += 1
+			if self_for != "":
+				# A DEV give, as F7 would: the reel for this turn's era.
+				run.held_reel = self_for
+				reel_was = self_for
+				var readied: int = await bot.ready_reel_at(next)
+				if readied == 2:
+					r["ready_fallback"] += 1
+				if readied > 0:
+					r["reels_readied"] += 1
+				if scene.debug_current_id() != at:
+					# A door on the way took him through on its own; that room is fought next.
+					continue
 		scene._enter_room(next)
 		await create_timer(0.1).timeout
 	r["income"] = progress.data.pension - pension_before
@@ -421,6 +532,81 @@ class Bot extends Node:
 	var _kept_goal := Vector2.INF
 	var _kept_left := 0.0
 	var _threat := Vector2.ZERO
+	# Version 11: the floor's rules, whether he keeps a No Cane or No Horseplay rule, the Auditors that
+	# came this room, enemy health lost and fight time this room, and a door he walks up to.
+	var rules: RuleKeeper
+	var obey := false
+	var auditors := 0
+	var dealt := 0.0
+	var fought := 0.0
+	var _hp_seen := {}
+	var _walk_goal := Vector2.INF
+
+	func begin_count() -> void:
+		auditors = 0
+		dealt = 0.0
+		fought = 0.0
+
+	# Every enemy's health as last seen; a drop counts as damage dealt unless it left by dismissal (a
+	# boss's fall, or the bot giving up). Overkill below 0 is not counted.
+	func _watch_health() -> void:
+		for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
+			var id := enemy.get_instance_id()
+			if _hp_seen.has(id):
+				continue
+			_hp_seen[id] = enemy.hp
+			if enemy.def != null and enemy.def.id == "auditor":
+				auditors += 1
+			enemy.health_changed.connect(_on_enemy_health.bind(enemy))
+
+	func _on_enemy_health(hp: float, enemy: Enemy) -> void:
+		var id := enemy.get_instance_id()
+		var last: float = _hp_seen.get(id, hp)
+		_hp_seen[id] = hp
+		if enemy._dismissed or is_inf(hp) or is_nan(hp):
+			return
+		var lost := maxf(last, 0.0) - maxf(hp, 0.0)
+		if lost > 0.0:
+			dealt += lost
+
+	# The rule of the room he stands in, while it is still open ("" when none).
+	func _open_rule() -> String:
+		if rules == null:
+			return ""
+		var watch: RuleWatch = rules.watch_of(scene.debug_current_id())
+		return watch.rule if watch != null and watch.is_open() else ""
+
+	# Walks within REEL_DOOR_GAP of the door into a room and presses flashback for one frame. Returns 0
+	# when no reel was readied, 1 when the press readied it, 2 when only a direct call did (the press
+	# missed; counted on the SUMMARY line so a broken press shows).
+	func ready_reel_at(target_id: int) -> int:
+		var view: RoomView = scene.debug_room_view()
+		var door: Door = view.door_to(target_id)
+		if door == null:
+			return 0
+		var at: int = scene.debug_current_id()
+		_walk_goal = door.global_position
+		var waited := 0.0
+		while not door.is_within(REEL_DOOR_GAP) and waited < 10.0 and scene.debug_current_id() == at and not scene.is_over:
+			await get_tree().physics_frame
+			waited += get_physics_process_delta_time()
+		_walk_goal = Vector2.INF
+		release_all()
+		if scene.debug_current_id() != at or scene.is_over:
+			return 0
+		if not door.is_within(REEL_DOOR_GAP):
+			print("REEL DOOR not reached in %.1f s, Grandpa at %s, door at %s" % [waited, str(_player.global_position), str(door.global_position)])
+			return 0
+		Input.action_press("flashback")
+		await get_tree().process_frame
+		await get_tree().physics_frame
+		Input.action_release("flashback")
+		await get_tree().process_frame
+		if rules.readied_door() == target_id:
+			return 1
+		if rules.try_ready_reel(view, scene.debug_progress(), scene.debug_map()) and rules.readied_door() == target_id:
+			return 2
+		return 0
 
 	func setup(s, sk: Dictionary, r: RandomNumberGenerator) -> void:
 		scene = s
@@ -443,7 +629,8 @@ class Bot extends Node:
 		gave_up = false
 		_since_progress = 0.0
 		_last_hp_total = -1.0
-		while enemies_here() > 0 and not scene.is_over:
+		# A room the view still fights in has an Auditor walking in (v11), though no enemy stands yet.
+		while (enemies_here() > 0 or scene.debug_room_view().is_fighting()) and not scene.is_over:
 			await get_tree().physics_frame
 			if _since_progress > ROOM_STUCK:
 				gave_up = true
@@ -457,7 +644,7 @@ class Bot extends Node:
 		return not gave_up and not scene.is_over
 
 	func release_all() -> void:
-		for action in ["move_left", "move_right", "move_up", "move_down", "attack", "dodge"]:
+		for action in ["move_left", "move_right", "move_up", "move_down", "attack", "dodge", "flashback"]:
 			Input.action_release(action)
 		_pressed = false
 		_dodge_pressed = false
@@ -484,8 +671,13 @@ class Bot extends Node:
 	func _physics_process(delta: float) -> void:
 		Engine.time_scale = 1.0
 		clock += delta
+		if _walk_goal != Vector2.INF and not _fighting and is_instance_valid(_player) and not scene.is_over:
+			_press_move(_walk_to(_walk_goal))
+			return
 		if not _fighting or scene.is_over or not is_instance_valid(_player):
 			return
+		fought += delta
+		_watch_health()
 		_track_progress(delta)
 		_count_kinds()
 		_move = Vector2.ZERO
@@ -1185,7 +1377,12 @@ class Bot extends Node:
 		return feet.direction_to(goal)
 
 	func _reach(target: Enemy) -> float:
-		return Player.ATTACK_REACH + minf(target.def.body_size.x, target.def.body_size.y) / 2.0
+		return _attack_reach() + minf(target.def.body_size.x, target.def.body_size.y) / 2.0
+
+	# An era's kick or punch reaches its own distance (v11); old Harold's cane ATTACK_REACH.
+	func _attack_reach() -> float:
+		var moves: EraMoves = _player._era_moves
+		return moves.reach if moves != null else Player.ATTACK_REACH
 
 	func _cell(at: Vector2) -> Vector2i:
 		return Vector2i(floori(at.x / RoomBackdrop.TILE), floori(at.y / RoomBackdrop.TILE))
@@ -1270,6 +1467,8 @@ class Bot extends Node:
 			_dodge_pressed = false
 		if _dodge_wish:
 			_dodge_wish = false
+			if obey and _open_rule() == RoomRule.NO_HORSEPLAY:
+				return
 			if _move != Vector2.ZERO:
 				Input.action_press("dodge")
 				if OS.get_cmdline_user_args().size() > 6 and OS.get_cmdline_user_args()[6] == "trace": print("DODGE t=%.2f move=%s cool=%.2f" % [clock, str(_move), _player._dodge._cooldown])
@@ -1284,7 +1483,9 @@ class Bot extends Node:
 			return
 		var rect := target.body_rect()
 		var me := _player.global_position
-		if me.distance_to(MeleeArc.closest_point(rect, me)) > Player.ATTACK_REACH - 4.0:
+		if me.distance_to(MeleeArc.closest_point(rect, me)) > _attack_reach() - 4.0:
+			return
+		if obey and _open_rule() == RoomRule.NO_CANE:
 			return
 		if target.def.shield_half_angle > 0.0 and Enemy.shield_covers(target.facing, me - target.global_position, target.def.shield_half_angle):
 			return

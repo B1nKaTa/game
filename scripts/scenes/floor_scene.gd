@@ -395,6 +395,10 @@ func debug_room_view() -> RoomView:
 	return _room_view
 
 
+func debug_rules() -> RuleKeeper:
+	return _rules
+
+
 func debug_feedback() -> CombatFeedback:
 	return _feedback
 
