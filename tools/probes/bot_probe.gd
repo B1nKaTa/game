@@ -54,6 +54,10 @@ var _rng := RandomNumberGenerator.new()
 
 
 func _initialize() -> void:
+	if str(ProjectSettings.get_setting("application/config/name")) == "Grandpa":
+		print("bot_probe.gd: refusing to run against the real save folder; use an exported copy with a renamed config/name.")
+		quit(2)
+		return
 	_start = Time.get_ticks_msec()
 	_main.call_deferred()
 

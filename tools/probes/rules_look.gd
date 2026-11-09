@@ -28,6 +28,10 @@ var pad_family := ""
 
 
 func _initialize() -> void:
+	if str(ProjectSettings.get_setting("application/config/name")) == "Grandpa":
+		print("rules_look.gd: refusing to run against the real save folder; use an exported copy with a renamed config/name.")
+		quit(2)
+		return
 	_start = Time.get_ticks_msec()
 	DirAccess.make_dir_recursive_absolute(OUT)
 	physics_frame.connect(func() -> void:
