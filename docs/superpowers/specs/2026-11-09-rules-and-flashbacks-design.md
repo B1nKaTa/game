@@ -125,7 +125,7 @@ Each era uses the **same buttons** as old Harold, so there is nothing new to lea
 | Throw (dentures button) | a **football** that bounces off walls up to 3 times and comes to rest; he must pick it up again | a **roll of bus tickets** that unspools into a short line that hurts enemies crossing it |
 | Bomb and potion | the same as old Harold | the same as old Harold |
 
-- **Damage balance:** each era's damage per second over a room should land within ±15% of old Harold's at the same point in the game. They play differently, not better. The bot measures this.
+- **Damage balance:** each era deals about 15% more damage per second than old Harold at the same point in the game, as an earned reward. The bot measures this.
 - **Items that change old Harold's own moves** (cane upgrades, Denture Adhesive and so on) don't apply to an era's moves. Stat items (damage, speed, health and so on) do.
 - **Art:** each era is a new character in the depth style, sized like Harold:
   - idle, walk, attack, dodge and throw anims;
@@ -178,7 +178,7 @@ Each era uses the **same buttons** as old Harold, so there is nothing new to lea
 - **The bot:**
   - takes reels and uses them at the next door;
   - plays eras with the same aim logic;
-  - one batch compares era damage per second against old Harold's, aiming for ±15%.
+  - one batch compares era damage per second against old Harold's, aiming for about 15% above old Harold.
 - **Screenshots:**
   - the announcement;
   - the icon pulsing;
