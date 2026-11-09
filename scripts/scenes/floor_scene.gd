@@ -21,6 +21,8 @@ const LANDINGS_BY_DEPTH := {
 	5: "res://data/floors/landing_5.tres",
 }
 const LANDING_LAYOUT := "res://data/rooms/landing/landing.tres"
+# The Auditor is on no floor's list: only a broken room rule sends him, so the scene names him here.
+const AUDITOR_PATH := "res://data/enemies/auditor.tres"
 # Pills healed on reaching the landing, up to his maximum.
 const LANDING_HEAL := 2
 const MESSAGE_TIME := 2.0
@@ -148,6 +150,7 @@ func _ready() -> void:
 	Input.mouse_mode = Settings.cursor_mode(true)
 	add_child(player)
 	_rules.setup(player, _hud, _run, Progress.record_rule)
+	_rules.rule_broken.connect(_on_rule_broken)
 	_feedback.watch_player(player)
 	var glow := Lighting.make_light(Color(1.0, 0.85, 0.6), 0.7, 0.8)
 	player.add_child(glow)
@@ -550,6 +553,14 @@ func _enter_room(target_id: int) -> void:
 	_run.effects.ctx.room = _room_view
 	_run.effects.room_enter(_room_view)
 	_rules.on_room_entered(_room_view, _map.room(target_id), first_visit)
+
+
+# The whistle blew: the Auditor walks in by the door Harold came in by (none in a start room, where
+# the room picks a spot of its own).
+func _on_rule_broken(view: RoomView) -> void:
+	if view != _room_view or is_over:
+		return
+	view.call_auditor(load(AUDITOR_PATH), view.door_to(_arrived_from))
 
 
 # The room's music: its path's theme, the landing's, or the Arcade's. A boss's music starts when it

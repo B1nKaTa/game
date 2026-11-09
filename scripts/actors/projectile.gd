@@ -1,6 +1,10 @@
 class_name Projectile
 extends Node2D
 
+# Where the shot ended, in global space: on a wall, on its target, or at the end of its life. Only the
+# Auditor's stamp listens, to leave its ink there.
+signal landed_at(at: Vector2)
+
 const HIT_RADIUS := 12.0
 const LIFETIME := 5.0
 # Shots fly above the dark of Lights Out, so one is never unseen.
@@ -56,6 +60,13 @@ const FAX := Color("3a3741")
 const FAX_TOP := Color("b29782")
 const FAX_PAPER := Color("ecddbd")
 const FAX_KEY := Color("f5f3d9")
+# The Auditor's thrown FINED stamp: a grey-brown block with a handle on top, turning slowly. Drawn in
+# code until it has art (LOOK_ART can take it then).
+const LOOK_FINED := "fined"
+const FINED_BLOCK := Color("7a6a58")
+const FINED_HANDLE := Color("5a4a3c")
+const FINED_INK := Color("3b2d5c")
+const FINED_SPIN := 2.5
 
 # A sedative dart slows Grandpa by this much for this long when it lands. Zero means a plain shot.
 var slow_fraction := 0.0
@@ -89,20 +100,31 @@ func _physics_process(delta: float) -> void:
 	_age += delta
 	if look == LOOK_STAR:
 		queue_redraw()
+	if look == LOOK_FINED:
+		rotation += FINED_SPIN * delta
 	if _age >= LIFETIME or not is_instance_valid(_target):
-		queue_free()
+		_land()
 		return
 	var next := global_position + _velocity * delta
 	var query := PhysicsRayQueryParameters2D.create(global_position, next, 1)
 	if not get_world_2d().direct_space_state.intersect_ray(query).is_empty():
-		queue_free()
+		_land()
 		return
 	global_position = next
 	if global_position.distance_to(_target.global_position) <= HIT_RADIUS:
 		var landed: bool = _target.take_hit(_damage, RunEffects.HURT_PROJECTILE)
 		if landed and is_dart() and _target.has_method("slow"):
 			_target.slow(slow_fraction, slow_time)
-		queue_free()
+		_land()
+
+
+# Every way a shot ends goes through here, so landed_at always comes once.
+func _land() -> void:
+	if is_queued_for_deletion():
+		return
+	if is_inside_tree():
+		landed_at.emit(global_position)
+	queue_free()
 
 
 # Which frame of the star's spin shows at this age.
@@ -120,6 +142,14 @@ func _draw() -> void:
 		draw_rect(Rect2(-7, -2.5, 10, 5), Color.BLACK, false, 1.0)
 		draw_rect(Rect2(-10, -1.5, 3, 3), DART_PLUNGER)
 		draw_line(Vector2(3, 0), Vector2(9, 0), DART_NEEDLE, 1.0)
+		return
+	if look == LOOK_FINED:
+		# A 12x9 block with its 4x4 handle on top and a strip of ink along its face, outlined dark.
+		draw_rect(Rect2(-2, -8.5, 4, 4), FINED_HANDLE)
+		draw_rect(Rect2(-2, -8.5, 4, 4), Color.BLACK, false, 1.0)
+		draw_rect(Rect2(-6, -4.5, 12, 9), FINED_BLOCK)
+		draw_rect(Rect2(-6, 2.5, 12, 2), FINED_INK)
+		draw_rect(Rect2(-6, -4.5, 12, 9), Color.BLACK, false, 1.0)
 		return
 	if LOOK_ART.has(look):
 		var art := PropArt.texture(LOOK_ART[look][0])

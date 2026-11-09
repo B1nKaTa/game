@@ -81,6 +81,11 @@ const STAIRWELL_ICON := "v"
 const FLOOR_SIGN_COLOR := Color("ece9e0")
 # A small potion has no shop price, so the Moving Boxes count it dearer than a Slip.
 const POTION_WORTH := 30
+# A broken room rule sends the Auditor: he walks in this long after the whistle, and now and then
+# leaves an item. The floor scene hands his def over, since room code names no enemy data.
+const AUDIT_DELAY := 2.0
+const AUDIT_ITEM_CHANCE := 0.25
+const AUDITOR_ID := "auditor"
 
 var _room: FloorRoom
 var _map: FloorMap
@@ -119,6 +124,12 @@ var _restored_groups := {}
 var _depth: DepthLook
 # The palette the room was built with, for the doors' jambs and the floor beyond them.
 var _palette: RoomPalette
+# The Auditor on his way: his def, the door he comes in by (or null), the time left until he walks in
+# (negative when none is coming), and whether one was ever called here, since only one ever comes.
+var _audit_def: EnemyDef
+var _audit_door: Door
+var _audit_left := -1.0
+var _audited := false
 
 
 # The room's id on its floor's map.
@@ -163,6 +174,55 @@ func hold_enemies(seconds: float) -> void:
 	for child in get_children():
 		if child is Enemy and not child.is_queued_for_deletion():
 			child.hold(seconds)
+
+
+# The whistle has blown. He is counted from now, so the room cannot clear before he walks in.
+func call_auditor(def: EnemyDef, from_door: Door) -> void:
+	if _audited or _finished or def == null:
+		return
+	_audited = true
+	_audit_def = def
+	_audit_door = from_door
+	_audit_left = AUDIT_DELAY
+	_alive += 1
+
+
+# Runs only while the room is in the tree, so leaving the room pauses his walk-in.
+func _physics_process(delta: float) -> void:
+	_tick_audit(delta)
+
+
+func _tick_audit(delta: float) -> void:
+	if _audit_left < 0.0:
+		return
+	_audit_left -= delta
+	if _audit_left > 0.0:
+		return
+	_audit_left = -1.0
+	var auditor := _spawn_enemy(_audit_def, summon_spot(_audit_spot()))
+	# His reserved place becomes him.
+	_alive -= 1
+	auditor.wait_for_room_start()
+	Sfx.play("door_open")
+
+
+# The door he comes in by, else where the last enemy fell, else the room's middle.
+func _audit_spot() -> Vector2:
+	if is_instance_valid(_audit_door):
+		return _audit_door.position
+	if _last_death_at != Vector2.ZERO:
+		return _last_death_at
+	return Vector2(_room.layout.size_in_cells()) * RoomBackdrop.TILE / 2.0
+
+
+# For tests.
+func debug_alive() -> int:
+	return _alive
+
+
+# For tests.
+func debug_set_alive(count: int) -> void:
+	_alive = count
 
 
 # The secret walls still standing in the room, for the Magnifying Glass's glint.
@@ -363,6 +423,9 @@ static func is_passing_effect(child: Node) -> bool:
 		return true
 	# The Seance Hotline
 	if SeanceProps.is_passing_effect(child):
+		return true
+	# Room rules: the Auditor's stamp ink (his stamp itself is a Projectile)
+	if child is InkBlot:
 		return true
 
 	return (child is Projectile or child is DeathBurst or child is Thermos or child is EnemyBlast
@@ -846,6 +909,8 @@ func _on_enemy_defeated(enemy: Enemy) -> void:
 			_drop_recipe(spot + Vector2(-RoomBackdrop.TILE, RoomBackdrop.TILE))
 	if _room.room_type == RoomLayout.TYPE_FLOOR_BOSS and enemy.def.is_boss and not enemy.is_summon:
 		_drop_boss_choice(spot)
+	if enemy.def.id == AUDITOR_ID and _rng.randf() < AUDIT_ITEM_CHANCE:
+		_drop_audit_item(spot)
 	if enemy.def.is_boss:
 		for other in get_tree().get_nodes_in_group("enemies"):
 			if other != enemy and other.get_parent() == self:
@@ -1259,6 +1324,19 @@ func _add_free_item(at: Vector2, item: ItemDef) -> Pickup:
 	pickup.set_text("Free: %s" % item.display_name)
 	pickup.get_meta(KEEP)["kind"] = KEEP_FREE
 	return pickup
+
+
+# The Auditor now and then leaves an item from an item room's pool, a cell beside where he fell, on
+# open floor off the doors.
+func _drop_audit_item(at: Vector2) -> void:
+	var items := RoomRules.pick_items(Content.items(), _run, 1, _rng, ItemRarity.ITEM_ROOM)
+	if items.is_empty():
+		return
+	var wanted: Array[Vector2i] = [_cell_of(at) + Vector2i(1, 0)]
+	var cells := _room.layout.open_spots_near(wanted, _choice_cells)
+	if cells.is_empty():
+		return
+	_add_free_item(RoomBackdrop.cell_center(cells[0]), items[0])
 
 
 # A floor boss leaves two free items from the run's usual pool, one each side of where it fell.
