@@ -34,16 +34,16 @@ static func for_era(id: String) -> EraMoves:
 			moves.dodge_hit_damage = 5.0
 			moves.dodge_push = 40.0
 		Eras.BUS:
-			# One heavy ticket-punch: 22.5 over a 0.42 s lock = 54/s on paper, under the cane's 63/s, since in
+			# One heavy ticket-punch: 25 over a 0.42 s lock = 60/s on paper, under the cane's 63/s, since in
 			# play every self swings about once a second between approaches and dodges, so weight per
 			# swing, not the lock, sets his pace (bot v12, tuned to about 15% above old Harold in play).
-			moves.combo_damage = [22.5]
+			moves.combo_damage = [25.0]
 			moves.reach = 46.0
 			moves.angle = 50.0
 			moves.push = 150.0
 			moves.lock_time = 0.42
 			# The shoulder barge knocks them down.
-			moves.dodge_hit_damage = 7.0
+			moves.dodge_hit_damage = 8.0
 			moves.dodge_push = 160.0
 			moves.dodge_stun = 0.2
 		_:
