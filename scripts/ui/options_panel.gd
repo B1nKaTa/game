@@ -24,6 +24,8 @@ const HINT_WIDTH := 220.0
 # The Input tab lists every action, so its rows are tighter and its text a size smaller.
 const INPUT_ROW_HEIGHT := 14.0
 const INPUT_FONT := 10
+# Where the rows of settings start, from the panel's top.
+const ROWS_TOP := 58.0
 const WAITING_TEXT := "Press a key..."
 const PAD_WAITING_TEXT := "Press a button..."
 # How long a cell waits for its new binding before giving up, so a pad alone can always back out.
@@ -75,6 +77,7 @@ var _tab: String = GameSettings.VIDEO
 var _draft: GameSettings
 var _keys_before := {}
 var _rows: VBoxContainer
+var _paper: FormPaper
 var _tab_buttons := {}
 var _note: Label
 # The tab and close hints, which name the device in use and follow a switch at every tab change.
@@ -113,7 +116,9 @@ func _ready() -> void:
 	_keys_before = KeyBindings.snapshot()
 	Settings.fullscreen_asked.connect(_toggle_fullscreen)
 	add_child(MenuStyle.backing())
-	add_child(MenuStyle.panel(AT, SIZE))
+	# The form is ruled under each row of settings (_show_tab rules it for the tab's rows).
+	_paper = MenuStyle.panel(AT, SIZE) as FormPaper
+	add_child(_paper)
 	var title := MenuStyle.label(tr("Options"), MenuStyle.TITLE_FONT, MenuStyle.GOLD)
 	title.position = AT + Vector2(12, 6)
 	add_child(title)
@@ -139,7 +144,7 @@ func _ready() -> void:
 	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(line)
 	_rows = VBoxContainer.new()
-	_rows.position = AT + Vector2(12, 58)
+	_rows.position = AT + Vector2(12, ROWS_TOP)
 	_rows.add_theme_constant_override("separation", 2)
 	add_child(_rows)
 	_note = MenuStyle.label("", 9, MenuStyle.DIM)
@@ -200,8 +205,17 @@ func _show_tab(tab: String) -> void:
 		child.free()
 	for each: String in _tab_buttons:
 		var button: Button = _tab_buttons[each]
-		button.add_theme_color_override("font_color", MenuStyle.GOLD if each == tab else MenuStyle.TEXT)
+		button.add_theme_color_override("font_color", MenuStyle.STAMP if each == tab else MenuStyle.TEXT)
 	_rows.add_theme_constant_override("separation", 2)
+	# A rule under every row: the Input tab's rows are tight (INPUT_ROW_HEIGHT, 1 px apart, under a
+	# header row), the others ROW_HEIGHT and 2 px apart.
+	if tab == GameSettings.INPUT:
+		_paper.rules_from = ROWS_TOP + INPUT_ROW_HEIGHT
+		_paper.rule_step = INPUT_ROW_HEIGHT + 1.0
+	else:
+		_paper.rules_from = ROWS_TOP + ROW_HEIGHT + 1.0
+		_paper.rule_step = ROW_HEIGHT + 2.0
+	_paper.queue_redraw()
 	if tab == GameSettings.INPUT:
 		_build_input_rows()
 	else:

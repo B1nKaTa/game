@@ -34,7 +34,7 @@ func _ready() -> void:
 	_opened_frame = Engine.get_process_frames()
 	add_child(MenuStyle.backing(MenuStyle.SHADE))
 	var holder := PanelContainer.new()
-	holder.add_theme_stylebox_override("panel", MenuStyle.box(MenuStyle.BACK, MenuStyle.GOLD))
+	holder.add_theme_stylebox_override("panel", MenuStyle.clipboard_box())
 	add_child(holder)
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 4)
