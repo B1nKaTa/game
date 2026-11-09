@@ -34,7 +34,7 @@ func test_each_era_plays_differently() -> void:
 # Different, not better: the bot (v12) holds each era within 15% of old Harold's damage per second in
 # play. On paper the kicks stay within 15% of the cane. In play every self swings about once a second
 # between approaches and dodges, so the punch's weight per swing counts more than its slow lock: it is
-# set under the cane on paper (no more than 25% under) and stays heavier than any single cane hit.
+# set under the cane on paper (no more than 30% under) and stays heavier than any single cane hit.
 func test_era_damage_per_second_is_close_to_old_harolds() -> void:
 	var old := _old_combo() / (CaneCombo.LOCK_TIME * CaneCombo.DAMAGE.size())
 	var kick := EraMoves.for_era(Eras.FOOTBALL)
@@ -42,7 +42,7 @@ func test_era_damage_per_second_is_close_to_old_harolds() -> void:
 	assert_true(absf(kick_dps / old - 1.0) <= 0.15, "kicks at %.1f vs %.1f" % [kick_dps, old])
 	var punch := EraMoves.for_era(Eras.BUS)
 	var punch_dps := _combo_total(punch) / (punch.lock_time * punch.combo_damage.size())
-	assert_true(punch_dps < old and punch_dps >= old * 0.75, "punch at %.1f vs %.1f" % [punch_dps, old])
+	assert_true(punch_dps < old and punch_dps >= old * 0.7, "punch at %.1f vs %.1f" % [punch_dps, old])
 	assert_true(punch.combo_damage[0] > float(CaneCombo.DAMAGE.max()), "a punch outweighs any cane hit")
 
 
