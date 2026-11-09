@@ -95,13 +95,14 @@ func to_dict() -> Dictionary:
 	var out := {}
 	for id in _watches:
 		out[str(id)] = _watches[id].to_dict()
-	return {"rooms": _rule_rooms.duplicate(), "watches": out}
+	return {"rooms": _rule_rooms.duplicate(), "watches": out, "seed": _seed}
 
 
 func load_dict(raw: Dictionary) -> void:
 	_watches.clear()
 	_rule_rooms.clear()
 	_hooked.clear()
+	_seed = str(raw.get("seed", ""))
 	for id in raw.get("rooms", []):
 		_rule_rooms.append(int(id))
 	var saved: Dictionary = raw.get("watches", {})

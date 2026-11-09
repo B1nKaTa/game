@@ -122,15 +122,18 @@ func test_a_new_floor_forgets_the_last_floors_rules() -> void:
 
 
 func test_the_rule_state_survives_the_checkpoint() -> void:
-	var parts := _keeper_with_rule(RoomRule.TEETH_IN)
-	var keeper: RuleKeeper = parts[0]
+	var keeper := RuleKeeper.new()
+	keeper.plan_floor(FloorMap.new(), 1, "floor seed 77")
+	keeper.set_watch(4, RuleWatch.new(RoomRule.TEETH_IN))
 	keeper.watch_of(4).announced = true
 	var copy := RuleKeeper.new()
 	copy.load_dict(keeper.to_dict())
 	assert_eq(copy.watch_of(4).rule, RoomRule.TEETH_IN)
 	assert_true(copy.watch_of(4).announced)
+	assert_eq(copy._seed, "floor seed 77", "a resumed floor picks its rules from the same seed")
 	copy.load_dict({})
 	assert_true(copy.watch_of(4) == null, "an old checkpoint has no rules")
+	assert_eq(copy._seed, "", "an old checkpoint has no seed")
 	keeper.free()
 	copy.free()
 
@@ -166,3 +169,9 @@ func test_the_floor_scene_hands_entries_to_the_keeper() -> void:
 	assert_true(resume.contains("_rules.load_dict("), "a resumed run gets its rules back before its first room")
 	var choose := source.substr(source.find("func _choose_path("), 2000)
 	assert_true(choose.contains("_rules.plan_floor(map, def.depth, seed_text)"))
+
+
+func test_the_rules_stop_when_the_run_ends() -> void:
+	var source := FileAccess.get_file_as_string("res://scripts/scenes/floor_scene.gd")
+	var end := source.substr(source.find("func _end_run("), 1200)
+	assert_true(end.contains("_rules.process_mode = Node.PROCESS_MODE_DISABLED"), "No Loitering cannot break, nor an Auditor come, after he dies")
