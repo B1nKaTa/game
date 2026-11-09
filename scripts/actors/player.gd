@@ -161,6 +161,8 @@ func has_sepia_glow() -> bool:
 # cane and dentures items don't touch an era's own moves. New moves every time, so a football left
 # lying in a room never holds back the next throw.
 func set_era(era_id: String) -> void:
+	if era_id != _era:
+		_free_era_thrown()
 	_era = era_id
 	_era_moves = EraMoves.for_era(era_id)
 	_era_dodge_hits.clear()

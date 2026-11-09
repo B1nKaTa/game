@@ -173,6 +173,22 @@ func test_the_cane_is_hidden_in_an_era() -> void:
 	assert_true(draw.contains("_era.is_empty()"))
 
 
+func test_ending_the_era_clears_what_he_threw() -> void:
+	var run := RunState.new([] as Array[UpgradeDef], {})
+	var player := Player.new()
+	player.setup(run)
+	player.set_era(Eras.FOOTBALL)
+	var ball := Node2D.new()
+	player.add_child(ball)
+	player._era_thrown.append(ball)
+	player.set_era(Eras.FOOTBALL)
+	assert_true(is_instance_valid(ball) and not ball.is_queued_for_deletion(), "same era keeps it")
+	player.set_era("")
+	assert_true(ball.is_queued_for_deletion())
+	assert_eq(player._era_thrown.size(), 0)
+	player.free()
+
+
 func test_set_era_changes_his_moves_but_not_the_run() -> void:
 	var run := RunState.new([] as Array[UpgradeDef], {})
 	var player := Player.new()
