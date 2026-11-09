@@ -23,11 +23,12 @@ func _ready() -> void:
 
 
 # Where the word's middle goes, from the door, given the door's height on screen and the camera's zoom:
-# on the door, or a cell below it when the word's top would reach into the HUD band.
+# on the door, or two cells below it when the word's top would reach into the HUD band. One cell put it
+# under his "Rules are rules.", which drops below his body there too (Enemy.say_spot).
 static func word_offset(door_screen_y: float, zoom: float) -> Vector2:
 	var on_door := Vector2(0.0, -4.0)
 	if door_screen_y + (on_door.y - SIZE) * zoom < Hud.BAND_BOTTOM:
-		return Vector2(0.0, RoomBackdrop.TILE)
+		return Vector2(0.0, RoomBackdrop.TILE * 2.0)
 	return on_door
 
 

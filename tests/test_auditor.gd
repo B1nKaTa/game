@@ -56,6 +56,20 @@ func test_his_door_flash_keeps_out_from_under_the_hud() -> void:
 	assert_true(AuditFlash.word_offset(Hud.BAND_BOTTOM + 4.0, 1.0).y > 0.0, "on a north door it shows below")
 
 
+# On a north door his "Rules are rules." drops below his body too (Enemy.say_spot), and the first shot
+# showed it right over the word.
+func test_on_a_north_door_the_word_clears_his_arrival_line() -> void:
+	var def: EnemyDef = load(AUDITOR)
+	for door_y in [Hud.BAND_BOTTOM - 12.0, Hud.BAND_BOTTOM + 4.0, Hud.BAND_BOTTOM + 12.0]:
+		var middle := AuditFlash.word_offset(door_y, 1.0)
+		if middle.y < 0.0:
+			continue
+		var line := Enemy.say_spot(Vector2(320.0, door_y), 1.0, def.body_size.y, 80.0, Vector2(640, 360))
+		var line_bottom := line.y + 3.0
+		var word_top := middle.y - AuditFlash.SIZE * 0.75 - 4.0
+		assert_true(word_top > line_bottom, "word top %.0f below the line's %.0f at door y %.0f" % [word_top, line_bottom, door_y])
+
+
 func test_he_walks_in_with_the_stamp_flash() -> void:
 	var view := _view()
 	view.call_auditor(load(AUDITOR), null)
