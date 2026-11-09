@@ -101,6 +101,19 @@ func test_the_reel_slot_fits_the_top_row() -> void:
 	assert_true(Hud.RIGHT_PANEL.encloses(rect), "inside the right panel")
 
 
+# The first real-window shot clipped "[Triangle]" to "[Triangle". Every default flashback label, keys and
+# each pad family, fits the slot's text room in the HUD's small font.
+func test_every_default_flashback_label_fits_the_reel_slot() -> void:
+	var room := ReelSlot.SIZE.x - ReelSlot.TEXT_AT.x
+	var labels: Array[String] = [KeyBindings.label_for("flashback")]
+	for family in [PadInput.XBOX, PadInput.PLAYSTATION, PadInput.PLAYSTATION_4]:
+		labels.append(KeyBindings.pad_label_for("flashback", family))
+	for label in labels:
+		var text := ReelSlot.text_for(Eras.BUS, label)
+		var width := HudStyle.font().get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, HudStyle.SMALL).x
+		assert_true(width <= room, "%s is %.0f px in %.0f" % [text, width, room])
+
+
 func test_the_hud_shows_the_reel_only_while_he_holds_one() -> void:
 	var run := RunState.new([] as Array[UpgradeDef], {})
 	var hud := Hud.new()
