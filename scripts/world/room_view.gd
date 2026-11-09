@@ -470,10 +470,15 @@ func doors() -> Array[Door]:
 	return _doors
 
 
-# The film reel a kept rule leaves where the last enemy fell. Picking it up always succeeds; the keeper
-# decides whether a held reel wastes it.
+# The film reel a kept rule leaves where the last enemy fell, or as near as its long name fits between the
+# walls, off the doors. Picking it up always succeeds; the keeper decides whether a held reel wastes it.
 func drop_reel(at: Vector2, era: String, on_take: Callable) -> Pickup:
-	var pickup := _add_pickup(clear_spot(at), tr("Reel: %s") % tr(Eras.title(era)), REEL_COLOR, on_take, false, "item_fanfare")
+	var taken: Array[Vector2i] = []
+	for child in get_children():
+		if child is Pickup and child.art_id != ART_COIN and not child.is_queued_for_deletion():
+			taken.append(_cell_of(child.position))
+	var spot := RoomBackdrop.cell_center(_room.layout.label_spot_near(_cell_of(at), taken))
+	var pickup := _add_pickup(spot, tr("Reel: %s") % tr(Eras.title(era)), REEL_COLOR, on_take, false, "item_fanfare")
 	pickup.art_id = ART_REEL
 	return pickup
 

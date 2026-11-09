@@ -127,6 +127,27 @@ func test_the_hud_shows_the_reel_only_while_he_holds_one() -> void:
 	hud.free()
 
 
+# The first real-window shot showed "Reel: Football on the Rec, 1960" running off the east wall, since the
+# reel lay where the last enemy fell. It lands as near there as its centred name fits, off the doors
+# (it is taken by walking over it), in every floor-1 fight room and from every wall.
+func test_a_reel_lands_where_its_name_fits_and_off_the_doors() -> void:
+	for layout in RoomCatalog.load_valid("res://data/rooms/floor_1/"):
+		if layout.room_type != RoomLayout.TYPE_COMBAT:
+			continue
+		var size := layout.size_in_cells()
+		for wanted in [Vector2i(1, size.y / 2), Vector2i(size.x - 2, size.y / 2), Vector2i(size.x / 2, 1), layout.door_cell(RoomLayout.EAST)]:
+			var cell: Vector2i = layout.label_spot_near(wanted)
+			assert_eq(layout.symbol_at(cell), RoomLayout.SYMBOL_FLOOR, "%s: %s is plain floor" % [layout.resource_path, cell])
+			assert_true(cell.x >= RoomLayout.LABEL_CELLS and cell.x + RoomLayout.LABEL_CELLS < size.x, "%s: name fits at %s" % [layout.resource_path, cell])
+			assert_true(cell.y > RoomLayout.UNDER_THE_HUD, "%s: under the HUD row at %s" % [layout.resource_path, cell])
+			assert_false(layout.touches_a_door(cell), "%s: off the doors at %s" % [layout.resource_path, cell])
+			# Another labelled pickup there already: the reel keeps its distance.
+			var taken: Array[Vector2i] = [cell]
+			var apart: Vector2i = layout.label_spot_near(wanted, taken)
+			assert_true(maxi(absi(apart.x - cell.x), absi(apart.y - cell.y)) >= RoomLayout.PICKUP_SPACING, "%s: spaced from %s at %s" % [layout.resource_path, cell, apart])
+	assert_true(FileAccess.get_file_as_string("res://scripts/world/room_view.gd").contains("label_spot_near(_cell_of(at), taken)"), "drop_reel uses it")
+
+
 # A map of a cleared room 0 with a door 30 px from Harold into the fight room 1 he hasn't seen.
 func _flashback_setup(target_type := RoomLayout.TYPE_COMBAT, gap := 30.0) -> Dictionary:
 	var map := FloorMap.new()

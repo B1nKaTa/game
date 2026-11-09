@@ -419,6 +419,25 @@ func lift_cell(taken: Array[Vector2i] = []) -> Vector2i:
 	return spots[0] if not spots.is_empty() else nearest_floor_cell(middle[0])
 
 
+# For a pickup taken by walking over it whose long name is drawn centred over it (the film reel): the
+# plain floor cell nearest wanted with LABEL_CELLS clear to both side walls, below the HUD's row, and
+# off the door cells, spaced from taken (other labelled pickups) as open_spots_near spaces them. A room
+# with no such cell falls back to the nearest open spot.
+func label_spot_near(wanted: Vector2i, taken: Array[Vector2i] = []) -> Vector2i:
+	var best := Vector2i(-1, -1)
+	var best_distance := INF
+	for cell in cells_of(SYMBOL_FLOOR):
+		if cell.x < LABEL_CELLS or not _label_fits(cell) or _touches_a_door(cell) or not _spaced_from(cell, taken):
+			continue
+		var distance := Vector2(cell - wanted).length_squared()
+		if distance < best_distance:
+			best_distance = distance
+			best = cell
+	if best == Vector2i(-1, -1):
+		best = _nearest_open_spot(wanted, taken)
+	return best if best != Vector2i(-1, -1) else nearest_floor_cell(wanted)
+
+
 func _nearest_open_spot(wanted: Vector2i, taken: Array[Vector2i]) -> Vector2i:
 	var best := Vector2i(-1, -1)
 	var best_distance := INF
