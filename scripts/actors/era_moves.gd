@@ -24,26 +24,28 @@ static func for_era(id: String) -> EraMoves:
 	moves.era = id
 	match id:
 		Eras.FOOTBALL:
-			# Quick, light kicks: 6 + 6 + 10 over three 0.12 s locks = 61/s.
-			moves.combo_damage = [6.0, 6.0, 10.0]
+			# Quick, light kicks: 5 + 5 + 10 over three 0.12 s locks = 56/s on paper; his pace (1.45) makes
+			# up the rest in play (bot v11).
+			moves.combo_damage = [5.0, 5.0, 10.0]
 			moves.reach = 34.0
 			moves.angle = 70.0
 			moves.push = 50.0
 			moves.lock_time = 0.12
 			# The spin turn hits whoever he passes through.
-			moves.dodge_hit_damage = 6.0
+			moves.dodge_hit_damage = 4.0
 			moves.dodge_push = 40.0
 		Eras.BUS:
-			# One heavy ticket-punch: 28 over a 0.42 s lock = 67/s.
-			moves.combo_damage = [28.0]
-			moves.reach = 52.0
+			# One heavy ticket-punch: 24 over a 0.42 s lock = 57/s on paper; its reach and the barge's
+			# knockdown make up the rest in play (bot v11).
+			moves.combo_damage = [24.0]
+			moves.reach = 48.0
 			moves.angle = 50.0
 			moves.push = 150.0
 			moves.lock_time = 0.42
 			# The shoulder barge knocks them down.
-			moves.dodge_hit_damage = 8.0
+			moves.dodge_hit_damage = 6.0
 			moves.dodge_push = 160.0
-			moves.dodge_stun = 0.6
+			moves.dodge_stun = 0.3
 		_:
 			return null
 	return moves
