@@ -12,7 +12,7 @@ const SLOW := 0.5
 const SLOW_TIME := 0.3
 # How often a slow is laid on him while he stands on it, so a long stand never piles slows up.
 const SLOW_EVERY := 0.2
-const INK := Color("3b2d5c")
+const INK := Color("241a3a")
 # Flat on the floor, under the bodies and over the backdrop, as the film trail lies.
 const Z := FilmTrail.Z
 
@@ -27,6 +27,10 @@ var _target: Node2D
 static func spawn_at(at: Vector2, parent, target = null) -> void:
 	if parent == null or not is_instance_valid(parent) or not parent.is_inside_tree():
 		return
+	if parent.has_method("is_open_ground") and not parent.is_open_ground(at):
+		if not parent.has_method("summon_spot"):
+			return
+		at = parent.summon_spot(at)
 	var blot := InkBlot.new()
 	blot.setup(target if is_instance_valid(target) else null)
 	parent.add_child(blot)
@@ -73,6 +77,6 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	var fade := clampf(_left / FADE, 0.0, 1.0)
-	draw_circle(Vector2.ZERO, RADIUS, Color(INK, 0.55 * fade))
-	draw_circle(Vector2(4, -3), RADIUS * 0.45, Color(INK, 0.4 * fade))
-	draw_circle(Vector2(-6, 5), 3.0, Color(INK, 0.45 * fade))
+	draw_circle(Vector2.ZERO, RADIUS, Color(INK, 0.8 * fade))
+	draw_circle(Vector2(4, -3), RADIUS * 0.45, Color(INK, 0.65 * fade))
+	draw_circle(Vector2(-6, 5), 3.0, Color(INK, 0.7 * fade))
