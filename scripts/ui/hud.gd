@@ -56,6 +56,9 @@ var _slips: Label
 var _thermoses: Label
 var _potion_slot: PotionSlot
 var _potion_label := ""
+# The film reel he holds, on the right panel's second row (ReelSlot.AT), and the key it names.
+var _reel_slot: ReelSlot
+var _reel_key := ""
 var _message: Label
 var _notice: Label
 var _notice_left := 0.0
@@ -189,6 +192,9 @@ func _ready() -> void:
 		_potion_slot = PotionSlot.new()
 		_potion_slot.position = POTION_SLOT_AT
 		add_child(_potion_slot)
+		_reel_slot = ReelSlot.new()
+		_reel_slot.position = ReelSlot.AT
+		add_child(_reel_slot)
 		_run.changed.connect(_refresh)
 		_timer = _add_label(TIMER_AT, TIMER_FONT)
 		_timer.size = Vector2(TIMER_WIDTH, 12)
@@ -246,6 +252,11 @@ func rule_announcing() -> bool:
 	return _rule_stamp.is_showing()
 
 
+# What the reel slot shows: the flashback key while he holds a reel, "" while he holds none.
+func reel_label() -> String:
+	return _reel_slot.label_text() if _reel_slot != null else ""
+
+
 func map_alpha() -> float:
 	return _map_back.modulate.a if _map_back != null else 1.0
 
@@ -293,7 +304,7 @@ func banner() -> String:
 
 func _process(delta: float) -> void:
 	# The potion slot names the active device's button, so it follows a switch of device.
-	if _run != null and _potion_slot != null and (KeyBindings.prompt_label("potion") != _potion_label or KeyBindings.prompt_label("case_file") != _case_label):
+	if _run != null and _potion_slot != null and (KeyBindings.prompt_label("potion") != _potion_label or KeyBindings.prompt_label("case_file") != _case_label or KeyBindings.prompt_label("flashback") != _reel_key):
 		_refresh()
 	if _potion_slot != null:
 		_potion_slot.show_buff(_run.buff, _run.buff_left)
@@ -369,6 +380,8 @@ func _refresh() -> void:
 		_thermoses.text = counter_text(_run.bombs)
 		_potion_label = KeyBindings.prompt_label("potion")
 		_potion_slot.show_potion(_run.potion, _potion_label)
+		_reel_key = KeyBindings.prompt_label("flashback")
+		_reel_slot.show_reel(_run.held_reel, _reel_key)
 		var names: PackedStringArray = []
 		for item in _run.items:
 			names.append(item.display_name)

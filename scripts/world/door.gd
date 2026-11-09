@@ -98,6 +98,23 @@ func is_shut() -> bool:
 	return locked or requires_key or chained
 
 
+# Whether Harold's feet are within radius of the door, as the flashback button asks (RuleKeeper).
+func is_within(radius: float) -> bool:
+	if _player == null or not is_instance_valid(_player):
+		return false
+	return _spot(self).distance_to(_spot(_player)) <= radius
+
+
+# Where a node stands on screen, or its own position when it is out of the tree (as in a test).
+static func _spot(node: Node2D) -> Vector2:
+	return node.global_position if node.is_inside_tree() else node.position
+
+
+# For tests.
+func debug_set_player(player: Node2D) -> void:
+	_player = player
+
+
 # How far the gate has risen, 0 shut to 1 open (DoorOpening).
 func gate() -> float:
 	return clampf(_gate, 0.0, 1.0)

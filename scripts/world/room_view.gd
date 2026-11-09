@@ -67,6 +67,9 @@ const ART_THERMOS := "pickup_thermos"
 const ART_POTION := "pickup_potion"
 const ART_PILL := "pickup_pill"
 const ART_RECIPE := "pickup_recipe"
+# The film reel a kept rule leaves (RuleKeeper); film_reel is the Cinema's enemy.
+const ART_REEL := "memory_reel"
+const REEL_COLOR := Color("d9a441")
 const SHOP_ART := {ShopRules.KIND_HEAL: ART_PILL, ShopRules.KIND_KEY: ART_SLIP, ShopRules.KIND_BOMB: ART_THERMOS}
 const ITEM_COLOR := Color("7dd3fc")
 const HEAL_COLOR := Color("e4524f")
@@ -458,6 +461,18 @@ func place_bomb(at: Vector2) -> void:
 	thermos.exploded.connect(bomb_exploded.emit)
 	thermos.exploded.connect(_run.effects.bomb.bind(at))
 	add_child(thermos)
+
+
+func doors() -> Array[Door]:
+	return _doors
+
+
+# The film reel a kept rule leaves where the last enemy fell. Picking it up always succeeds; the keeper
+# decides whether a held reel wastes it.
+func drop_reel(at: Vector2, era: String, on_take: Callable) -> Pickup:
+	var pickup := _add_pickup(clear_spot(at), tr("Reel: %s") % tr(Eras.title(era)), REEL_COLOR, on_take, false, "item_fanfare")
+	pickup.art_id = ART_REEL
+	return pickup
 
 
 func door_to(target_id: int) -> Door:

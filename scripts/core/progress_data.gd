@@ -107,6 +107,8 @@ var life_signs_seen: Dictionary = {}
 # How many room rules Harold has kept to a clear, and how many he has broken. Optional in a save.
 var rules_kept: int = 0
 var rules_broken: int = 0
+# The eras a film reel can hold (Eras). Optional in a save; an older one starts with Eras.STARTING.
+var eras_unlocked: Array[String] = Eras.STARTING.duplicate()
 
 # The first path at each depth, the only one open before that depth's first clear.
 const FIRST_PATH_BY_DEPTH := {1: "floor_1", 2: "sunset_shores", 3: "funeral_parlour", 4: "last_resort_cruise", 5: "terminal_zero"}
@@ -506,6 +508,7 @@ func to_dict() -> Dictionary:
 		"life_signs_seen": life_signs_seen,
 		"rules_kept": rules_kept,
 		"rules_broken": rules_broken,
+		"eras_unlocked": eras_unlocked.duplicate(),
 	}
 
 
@@ -620,6 +623,8 @@ static func from_dict(raw: Variant) -> ProgressData:
 	# The room rules' counts. An older save has kept and broken none.
 	data.rules_kept = maxi(int(raw.get("rules_kept", 0)), 0)
 	data.rules_broken = maxi(int(raw.get("rules_broken", 0)), 0)
+	# Only eras this build knows; none left (or an older save) gives the starting ones.
+	data.eras_unlocked = Eras.known_or_starting(raw.get("eras_unlocked", Eras.STARTING))
 
 	data._infer_first_paths()
 	return data

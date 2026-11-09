@@ -109,6 +109,7 @@ static func run_to_dict(run: RunState) -> Dictionary:
 		"perks": perks,
 		"promised": promised,
 		"offered": offered,
+		"held_reel": run.held_reel,
 	}
 
 
@@ -218,6 +219,8 @@ static func apply_run(run: RunState, raw: Dictionary, items: Array[ItemDef]) -> 
 	run.buff = Content.potion(buff) if not buff.is_empty() else null
 	run.buff_left = float(raw.get("buff_left", 0.0)) if run.buff != null else 0.0
 	run.cursed = bool(raw.get("cursed", false))
+	var reel := str(raw.get("held_reel", ""))
+	run.held_reel = reel if Eras.is_known(reel) else ""
 	run.restore_marks(raw.get("promised", []), raw.get("offered", []))
 	run.changed.emit()
 

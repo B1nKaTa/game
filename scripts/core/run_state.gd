@@ -60,6 +60,11 @@ var seeds: Array[String] = []
 # The Flashback Cinema's lobby card lines shown this run (LifeSigns), so none shows twice. The
 # checkpoint keeps them with the tally.
 var life_signs_shown: Array[String] = []
+# The film reel he carries (an Eras id, "" for none): one memory at a time. The checkpoint keeps it.
+var held_reel := ""
+# The era he relives in this room (Eras), "" for old Harold. Never saved: a checkpoint resumes in a
+# cleared room, where no flashback runs.
+var era := ""
 var _won_visits := {}
 var _promised := {}
 var _offered_recipes := {}
@@ -367,7 +372,23 @@ func tick_buff(delta: float) -> void:
 
 
 func move_speed() -> float:
-	return stats.move_speed * (1.0 + (buff.speed_bonus if buff != null else 0.0)) * effects.move_pace()
+	return stats.move_speed * (1.0 + (buff.speed_bonus if buff != null else 0.0)) * effects.move_pace() * Eras.speed_mult(era)
+
+
+# One memory at a time: a second reel is wasted, on purpose, to reward using them.
+func give_reel(era_id: String) -> bool:
+	if not held_reel.is_empty():
+		return false
+	held_reel = era_id
+	changed.emit()
+	return true
+
+
+func take_reel() -> String:
+	var reel := held_reel
+	held_reel = ""
+	changed.emit()
+	return reel
 
 
 # How fast the cane combo swings, as a multiple of its usual pace: the forms' and items' stats, and any

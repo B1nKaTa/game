@@ -17,6 +17,7 @@ const ACTIONS := [
 	{"action": "dodge", "label": "Dodge"},
 	{"action": "bomb", "label": "Place Thermos"},
 	{"action": "potion", "label": "Drink potion"},
+	{"action": "flashback", "label": "Flashback"},
 	{"action": "interact", "label": "Interact"},
 	{"action": "map", "label": "Floor map"},
 	{"action": "case_file", "label": "Case file"},

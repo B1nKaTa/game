@@ -16,6 +16,8 @@ const START_DEPTH := 3
 const START_KEYS := {KEY_F3: 3, KEY_F5: 4, KEY_F6: 5}
 const HINT := "DEV  F3/F5/F6: Floor 3/4/5 (max upgrades)"
 const WAITING_KEY := KEY_F4
+# In a floor, a debug build's F7 hands Harold a film reel (RuleKeeper), to try a flashback at once.
+const REEL_KEY := KEY_F7
 const WAITING_HINT := "F4: Dev Waiting Room (all departments)"
 const WAITING_HINT_ON := "F4: Back to the real save"
 # Shown on screen in every department while the dev Waiting Room's profile is on.

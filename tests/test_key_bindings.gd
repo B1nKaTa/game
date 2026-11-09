@@ -177,8 +177,9 @@ func _pad(index: int) -> InputEventJoypadButton:
 
 func test_a_controller_rebind_changes_only_the_controller_column() -> void:
 	_reset()
-	assert_eq(KeyBindings.rebind("dodge", _pad(JOY_BUTTON_Y)), "")
-	assert_eq(KeyBindings.pad_label_for("dodge", PadInput.XBOX), "Y")
+	# A button no action uses (Y is the flashback's now).
+	assert_eq(KeyBindings.rebind("dodge", _pad(JOY_BUTTON_RIGHT_STICK)), "")
+	assert_eq(KeyBindings.pad_label_for("dodge", PadInput.XBOX), "RS")
 	assert_eq(KeyBindings.label_for("dodge"), "Space", "the key stays")
 	_reset()
 

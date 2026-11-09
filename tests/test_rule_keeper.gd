@@ -168,7 +168,7 @@ func test_the_floor_scene_hands_entries_to_the_keeper() -> void:
 	var resume := source.substr(source.find("func _resume_map("), 3000)
 	assert_true(resume.contains("_rules.load_dict("), "a resumed run gets its rules back before its first room")
 	var choose := source.substr(source.find("func _choose_path("), 2000)
-	assert_true(choose.contains("_rules.plan_floor(map, def.depth, seed_text)"))
+	assert_true(choose.contains("_rules.plan_floor(map, def.depth, seed_text, _progress)"))
 
 
 func test_the_rules_stop_when_the_run_ends() -> void:

@@ -50,6 +50,8 @@ const SWEEP_EDGE := Color("8f7ce0")
 const SWEEP_BLADE := Color("e8ecf4")
 # How quickly the Telescope Cane's look ahead follows his aim, per second.
 const LOOK_EASE := 4.0
+# The warm film glow on him while a readied reel waits for its door (RuleKeeper).
+const SEPIA_GLOW := Color("d9b98a")
 
 var run: RunState
 var show_crosshair := false
@@ -77,6 +79,11 @@ var _visual: SpriteVisual
 # What he wears, drawn over the sprite. Made only once he wears something.
 var _look: GrandpaLook
 var _feet: Marker2D
+# The era he relives (Eras), "" for old Harold. Task 8 gives each era its moves and look.
+var _era := ""
+var _sepia_glow := false
+# The last line he said (say_line), until he has a speech bubble of his own.
+var last_line := ""
 # A gust that shoves him along for a while, as the bellows do. A dodge breaks free of it.
 var _push := Vector2.ZERO
 var _push_left := 0.0
@@ -121,6 +128,34 @@ func setup(run_state: RunState) -> void:
 # Doors and pickups use this point, because it is where he stands in the room.
 func feet() -> Node2D:
 	return _feet
+
+
+# Through the sprite's own tint, never modulate (the shader ignores it). Nothing else tints him, and his
+# hats, cardigan and cane are drawn by GrandpaLook and the cane, so white is his own look again.
+func set_sepia_glow(on: bool) -> void:
+	_sepia_glow = on
+	if _visual != null:
+		_visual.set_tint(SEPIA_GLOW if on else Color.WHITE)
+
+
+func has_sepia_glow() -> bool:
+	return _sepia_glow
+
+
+# The era he relives now. Only its pace (RunState.move_speed) changes here; Task 8 adds the moves.
+func set_era(era_id: String) -> void:
+	_era = era_id
+	if run != null:
+		run.era = era_id
+
+
+func era() -> String:
+	return _era
+
+
+# Harold has no speech bubble yet, so the RuleKeeper shows his line as a notice; this keeps it.
+func say_line(text: String) -> void:
+	last_line = text
 
 
 func _ready() -> void:

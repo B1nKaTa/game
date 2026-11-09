@@ -150,6 +150,7 @@ func _ready() -> void:
 	Input.mouse_mode = Settings.cursor_mode(true)
 	add_child(player)
 	_rules.setup(player, _hud, _run, Progress.record_rule)
+	_rules.set_unlocked(Progress.data.eras_unlocked)
 	_rules.rule_broken.connect(_on_rule_broken)
 	_feedback.watch_player(player)
 	var glow := Lighting.make_light(Color(1.0, 0.85, 0.6), 0.7, 0.8)
@@ -343,6 +344,7 @@ func _resume_map(resume: Dictionary) -> bool:
 	# checkpoint has no rules, and its floor posts none.
 	var rules: Variant = resume.get("rules", {})
 	_rules.load_dict(rules if rules is Dictionary else {})
+	_rules.set_floor(map, _progress)
 	return true
 
 
@@ -472,7 +474,6 @@ func _choose_path(index: int) -> void:
 		return
 	_floor_seed = seed_text
 	_run.seeds.append(seed_text)
-	_rules.plan_floor(map, def.depth, seed_text)
 	_restored.clear()
 	_safe_room = -1
 	_exit_side = _room_view.side_of_path(index)
@@ -488,6 +489,7 @@ func _choose_path(index: int) -> void:
 	_run.boss_room_pill_lost = false
 	_progress = FloorProgress.new(map)
 	_progress.enter(crossroads.id)
+	_rules.plan_floor(map, def.depth, seed_text, _progress)
 	# Each floor fills the Life Jacket again.
 	_run.start_floor()
 	_mini_map.setup(map, _progress, false, def.display_name)
