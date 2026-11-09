@@ -147,6 +147,9 @@ CUTS = {
     'seance_bingo_caller': {'windup': ('attack', [1, 2, 3], '655789ce'), 'attack': ('attack', [5, 6, 7], '655789ce')},
     # The squash with the soot rising, then the lunge and its puff.
     'seance_soot_ghost': {'windup': ('attack', [1, 2, 3], 'ef978010'), 'attack': ('attack', [4, 5, 6], 'ef978010')},
+    # The Auditor (2026-11-09, D:/grandpa-art/flashbacks/enemies): his rubber stamp held up overhead,
+    # then brought down in front of him.
+    'auditor': {'windup': ('attack', [3, 4, 5, 6], '04bb85d6'), 'attack': ('attack', [7, 8], '04bb85d6')},
     # The stamp lifted overhead, then the slam.
     'cinema_notary_public': {'windup': ('attack', [2, 3, 4], 'c85d6dd3'), 'attack': ('attack', [5, 6, 7], 'c85d6dd3')},
 }

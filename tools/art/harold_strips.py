@@ -26,6 +26,13 @@ FRAMES = {
 # Export frames 7 and 8 of the attack carry a dark slate lump behind his back (PixelLab drew a satchel
 # into the thrust). It is cleared on the placed 60 px canvas: on each row, every pixel left of his own
 # back outline, the column given here (rows 27 to 29 lean one pixel further back than the rest).
+# The flashback eras (2026-11-09 export D:/grandpa-art/flashbacks/hx): the kick and the punch are out in
+# export frames 5 and 6, so the attack opens there and draws back (7, 8), as old Harold's swing does.
+ERA_FRAMES = {
+    'idle': ('idle', range(1, 5)),
+    'walk': ('walk', range(1, 9)),
+    'attack': ('attack', [5, 6, 7, 8]),
+}
 LUMP_ROWS = {26: 23, 27: 23, 28: 23, 29: 23, 30: 22, 31: 22, 32: 22, 33: 22, 34: 22, 35: 22, 36: 22, 37: 22}
 TRIM = {'attack': {7: LUMP_ROWS, 8: LUMP_ROWS}}
 
@@ -58,12 +65,16 @@ def place(frame):
 
 def main():
     source, target = sys.argv[1], sys.argv[2]
+    # A third argument names a flashback state of the same export (Young_1960_football, Bus_1975_conductor),
+    # cut by ERA_FRAMES into its own folder (art/sprites/harold_1960, harold_1975).
+    state = sys.argv[3] if len(sys.argv) > 3 else 'Idle'
+    frames_for = FRAMES if state == 'Idle' else ERA_FRAMES
     os.makedirs(target, exist_ok=True)
-    for name, (anim, picks) in FRAMES.items():
-        folder = os.path.join(source, 'Idle', 'animations', anim, 'east')
+    for name, (anim, picks) in frames_for.items():
+        folder = os.path.join(source, state, 'animations', anim, 'east')
         frames = [place(load(os.path.join(folder, 'frame_%03d.png' % i))) for i in picks]
         for k, i in enumerate(picks):
-            if i in TRIM.get(name, {}):
+            if state == 'Idle' and i in TRIM.get(name, {}):
                 frames[k] = trim(frames[k], TRIM[name][i])
         join(frames, os.path.join(target, name + '.png'))
         print(name, len(frames))
