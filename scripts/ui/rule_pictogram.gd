@@ -46,7 +46,7 @@ static func image(rule: String) -> Image:
 			_rect(img, Rect2i(15, 14, 2, 1), INK)
 		RoomRule.EXHIBITS:
 			# A vase on a plinth: flared lip, thin neck, round belly.
-			_rect(img, Rect2i(10, 6, 5, 1), INK)
+			_rect(img, Rect2i(11, 6, 3, 1), INK)
 			_rect(img, Rect2i(11, 7, 3, 4), INK)
 			for y in range(10, 19):
 				for x in range(7, 18):
@@ -55,9 +55,10 @@ static func image(rule: String) -> Image:
 			img.set_pixel(10, 13, FACE)
 			_rect(img, Rect2i(8, 19, 9, 1), INK)
 		RoomRule.NO_LOITERING:
-			_figure(img, Vector2i(9, 5), false)
-			_ring(img, Vector2i(16, 11), 3, INK)
-			_line(img, Vector2i(16, 11), Vector2i(17, 9), INK)
+			_figure(img, Vector2i(9, 5))
+			_ring(img, Vector2i(17, 10), 3, INK)
+			_line(img, Vector2i(17, 10), Vector2i(17, 8), INK)
+			_line(img, Vector2i(17, 10), Vector2i(18, 10), INK)
 			return img
 	_slash(img)
 	return img
@@ -77,19 +78,20 @@ static func _slash(img: Image) -> void:
 # A star jump: arms up in a V and legs flung apart, all diagonals, so it never draws a plus.
 static func _star_jump(img: Image) -> void:
 	_rect(img, Rect2i(11, 4, 3, 3), INK)
-	_rect(img, Rect2i(12, 7, 1, 6), INK)
-	_line(img, Vector2i(12, 8), Vector2i(7, 4), INK)
-	_line(img, Vector2i(12, 8), Vector2i(17, 4), INK)
-	_line(img, Vector2i(12, 13), Vector2i(9, 19), INK)
-	_line(img, Vector2i(12, 13), Vector2i(15, 19), INK)
+	_rect(img, Rect2i(12, 7, 1, 7), INK)
+	_line(img, Vector2i(12, 9), Vector2i(8, 5), INK)
+	_line(img, Vector2i(12, 9), Vector2i(16, 5), INK)
+	_line(img, Vector2i(12, 14), Vector2i(9, 20), INK)
+	_line(img, Vector2i(12, 14), Vector2i(15, 20), INK)
 
 
-# A figure: head, body, and legs apart (jumping) or together (standing). Arms go out diagonally.
-static func _figure(img: Image, head: Vector2i, jumping: bool) -> void:
+# A standing figure: head, body, arms hanging at 45 degrees (an A shape) and legs apart. No limb runs
+# level across the body, so it never reads as a cross.
+static func _figure(img: Image, head: Vector2i) -> void:
 	_rect(img, Rect2i(head.x - 1, head.y, 3, 3), INK)
 	_rect(img, Rect2i(head.x, head.y + 3, 1, 6), INK)
-	_line(img, head + Vector2i(0, 4), head + Vector2i(-3, 2 if jumping else 7), INK)
-	_line(img, head + Vector2i(0, 4), head + Vector2i(3, 2 if jumping else 7), INK)
+	_line(img, head + Vector2i(0, 4), head + Vector2i(-3, 7), INK)
+	_line(img, head + Vector2i(0, 4), head + Vector2i(3, 7), INK)
 	_line(img, head + Vector2i(0, 9), head + Vector2i(-3, 13), INK)
 	_line(img, head + Vector2i(0, 9), head + Vector2i(3, 13), INK)
 

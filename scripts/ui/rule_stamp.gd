@@ -50,6 +50,9 @@ func announce(rule: String) -> void:
 
 
 func stamp(kind: String) -> void:
+	# A stamp that cuts into the announcement still hands the rule to the icon.
+	if _left > 0.0 and _kind.is_empty():
+		announce_done.emit(_rule)
 	_kind = kind
 	_total = STAMP_TIME
 	_left = STAMP_TIME
