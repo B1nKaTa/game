@@ -59,7 +59,6 @@ static func image(rule: String) -> Image:
 			_ring(img, Vector2i(17, 10), 3, INK)
 			_line(img, Vector2i(17, 10), Vector2i(17, 8), INK)
 			_line(img, Vector2i(17, 10), Vector2i(18, 10), INK)
-			return img
 	_slash(img)
 	return img
 

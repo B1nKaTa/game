@@ -89,6 +89,13 @@ func test_every_rule_has_a_pictogram_without_a_cross() -> void:
 		assert_true(inked > 10, "%s has ink to check" % rule)
 
 
+func test_every_pictogram_is_slashed() -> void:
+	for rule in RoomRule.ALL:
+		var image := RulePictogram.image(rule)
+		for i in range(6, 18):
+			assert_eq(image.get_pixel(i, i), RulePictogram.SLASH, "%s slash at %d" % [rule, i])
+
+
 func test_the_cross_check_catches_an_ink_plus_on_the_face() -> void:
 	var image := _disc_with_ink_plus()
 	assert_true(_has_plus(image))
