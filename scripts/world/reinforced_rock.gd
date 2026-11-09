@@ -60,6 +60,7 @@ func break_with_level(level: int) -> bool:
 	if level < needed_level:
 		resisted.emit()
 		return false
+	last_source = SOURCE_BLAST
 	_break()
 	return true
 

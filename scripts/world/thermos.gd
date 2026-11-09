@@ -87,9 +87,9 @@ func _explode() -> void:
 				enemy.take_damage(blast_damage(), push)
 	BreakableBlock.blame_harold = true
 	BreakableBlock.smash(get_tree(), global_position, radius, BreakableBlock.SOURCE_BLAST)
-	BreakableBlock.blame_harold = false
 	ReinforcedRock.blast(get_tree(), global_position, radius, level)
 	SecretWall.blast(get_tree(), global_position, radius)
+	BreakableBlock.blame_harold = false
 	Chest.blast(get_tree(), global_position, radius)
 	if is_instance_valid(_player) and global_position.distance_to(_player.feet().global_position) <= radius:
 		_player.take_hit(PLAYER_DAMAGE, RunEffects.HURT_OWN_BLAST)
