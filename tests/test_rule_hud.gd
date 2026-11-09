@@ -139,3 +139,17 @@ func test_the_stamp_words_are_short_enough_to_read_in_a_second() -> void:
 func test_the_rule_sounds_are_catalogued() -> void:
 	for name in ["rule_whistle", "rule_stamp", "reel_flicker"]:
 		assert_true(SoundBank.NAMES.has(name), name)
+
+
+# The first real-window shot ran "LEAVE CANES AT RECEPTION" well past both sides of the card. Every sign
+# fits the card, in one line or two.
+func test_every_sign_fits_its_card() -> void:
+	var font := HudStyle.font()
+	for rule in RoomRule.ALL:
+		var lines := RuleStamp.sign_lines(RoomRule.sign_text(rule), font, RuleStamp.SIGN_SIZE, RuleStamp.SIGN_ROOM)
+		assert_true(lines.size() >= 1 and lines.size() <= 2, "%s in %d lines" % [rule, lines.size()])
+		assert_eq(" ".join(lines), RoomRule.sign_text(rule), "no word lost")
+		for line in lines:
+			var width := font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, RuleStamp.SIGN_SIZE).x
+			assert_true(width <= RuleStamp.SIGN_ROOM, "%s: '%s' is %.0f px in %.0f" % [rule, line, width, RuleStamp.SIGN_ROOM])
+	assert_true(RuleStamp.SIGN_ROOM < RuleStamp.CARD.x, "inside the card")

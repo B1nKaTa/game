@@ -9,6 +9,9 @@ const KIND_GOOD := "good"
 const KIND_LIFTED := "lifted"
 const CENTER := Vector2(320, 150)
 const CARD := Vector2(200, 112)
+# The sign's words under the pictogram, kept inside the card with a margin each side.
+const SIGN_SIZE := 12
+const SIGN_ROOM := CARD.x - 16.0
 const PAPER := Color("efe6cf")
 const KIND_COLORS := {KIND_VIOLATION: Color("c43d2f"), KIND_GOOD: Color("3f8f4a"), KIND_LIFTED: Color("6b6258")}
 
@@ -31,6 +34,20 @@ static func text_of(kind: String) -> String:
 		KIND_LIFTED:
 			return "REGULATION LIFTED"
 	return ""
+
+
+# The sign in one line, or two split at the space nearest its middle when one line would run off the card.
+static func sign_lines(text: String, font: Font, font_size: int, room: float) -> PackedStringArray:
+	if font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x <= room:
+		return PackedStringArray([text])
+	var middle := text.length() / 2
+	var best := -1
+	for i in text.length():
+		if text[i] == " " and (best < 0 or absi(i - middle) < absi(best - middle)):
+			best = i
+	if best < 0:
+		return PackedStringArray([text])
+	return PackedStringArray([text.substr(0, best), text.substr(best + 1)])
 
 
 func _init() -> void:
@@ -95,6 +112,10 @@ func _draw() -> void:
 	draw_rect(Rect2(-CARD / 2, CARD), PAPER)
 	draw_rect(Rect2(-CARD / 2, CARD), Color("2b2622"), false, 2.0)
 	draw_texture_rect(_texture, Rect2(Vector2(-36, -50), Vector2(72, 72)), false)
-	var width := font.get_string_size(_sign, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
-	draw_string(font, Vector2(-width / 2, 40), _sign, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("2b2622"))
+	var lines := sign_lines(_sign, font, SIGN_SIZE, SIGN_ROOM)
+	var baseline := 40.0 if lines.size() == 1 else 34.0
+	for line in lines:
+		var width := font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, SIGN_SIZE).x
+		draw_string(font, Vector2(-width / 2, baseline), line, HORIZONTAL_ALIGNMENT_LEFT, -1, SIGN_SIZE, Color("2b2622"))
+		baseline += 16.0
 	draw_set_transform(Vector2.ZERO)
