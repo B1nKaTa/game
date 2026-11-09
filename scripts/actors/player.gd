@@ -863,16 +863,21 @@ func start_dodge(direction: Vector2) -> bool:
 func _era_dodge_strike() -> void:
 	if not is_inside_tree() or _feet == null:
 		return
+	# A hit that clears the room ends the era (RuleKeeper) and nulls _era_moves mid-loop, so the moves
+	# are held here and the strike stops once he is old Harold again.
+	var moves := _era_moves
 	for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
+		if _era_moves != moves:
+			return
 		var id := enemy.get_instance_id()
 		if _era_dodge_hits.has(id) or enemy.is_queued_for_deletion() or enemy.submerged or enemy.is_dead():
 			continue
 		if not enemy.body_rect().grow(ERA_DODGE_REACH).has_point(_feet.global_position):
 			continue
 		_era_dodge_hits[id] = true
-		era_hit(enemy, _era_moves.dodge_hit_damage, _dodge_direction * _era_moves.dodge_push, global_position)
-		if _era_moves.dodge_stun > 0.0 and is_instance_valid(enemy) and not enemy.is_dead() and not enemy.def.is_boss:
-			enemy.stun(_era_moves.dodge_stun)
+		era_hit(enemy, moves.dodge_hit_damage, _dodge_direction * moves.dodge_push, global_position)
+		if moves.dodge_stun > 0.0 and is_instance_valid(enemy) and not enemy.is_dead() and not enemy.def.is_boss:
+			enemy.stun(moves.dodge_stun)
 
 
 # Walking straight into a corner by a pixel or two steps him round it, sideways only, and only when

@@ -143,8 +143,18 @@ func test_cane_items_stay_off_the_era_moves() -> void:
 
 func test_the_barge_never_knocks_down_a_boss() -> void:
 	var source := _player_source()
-	var strike := source.substr(source.find("func _era_dodge_strike("), 900)
+	var strike := source.substr(source.find("func _era_dodge_strike("), 1300)
 	assert_true(strike.contains("not enemy.def.is_boss"))
+
+
+# The bot found a barge that cleared the room ending the era mid-strike and the next line reading a null
+# _era_moves.
+func test_a_barge_that_ends_the_era_stops_the_strike() -> void:
+	var source := _player_source()
+	var strike := source.substr(source.find("func _era_dodge_strike("), 1300)
+	assert_true(strike.contains("var moves := _era_moves"), "the moves are held for the strike")
+	assert_true(strike.contains("if _era_moves != moves:"), "the strike stops once the era ends")
+	assert_false(strike.contains("_era_moves.dodge_stun"), "no read of _era_moves after a hit")
 
 
 func test_the_cane_is_hidden_in_an_era() -> void:
