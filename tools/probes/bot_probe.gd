@@ -32,6 +32,9 @@ extends SceneTree
 # 40 px of the door, presses flashback for a frame and goes through. Era attacks use the era's reach.
 # It sums enemy health lost (dismissals left out) and fight time (summed physics delta) per combat room,
 # and prints old_dps and era_dps on the SUMMARY line.
+# Version 12 presses attack only once the last swing's lock is over (a press inside it was lost, and
+# old Harold's 0.2 s lock matched the 0.2 s press pace, so about half his presses could be), and adds
+# swings per second of fight time to each dps_rooms entry (<rooms>/<s>/<swings per s>sw).
 
 const WALL_LIMIT_MS := 1700000
 const SKILLS := {
@@ -160,6 +163,7 @@ func _rules_summary() -> String:
 	var dealt := {}
 	var fought := {}
 	var rooms := {}
+	var swung := {}
 	var readied := 0
 	var fallback := 0
 	for r in _results:
@@ -178,6 +182,7 @@ func _rules_summary() -> String:
 			dealt[era] = dealt.get(era, 0.0) + r["dealt"][era]
 			fought[era] = fought.get(era, 0.0) + r["fought"][era]
 			rooms[era] = rooms.get(era, 0) + r["dps_rooms"][era]
+			swung[era] = swung.get(era, 0) + r.get("swings", {}).get(era, 0)
 	var parts: Array[String] = []
 	for rule in by_rule:
 		parts.append("%s:%d" % [rule, by_rule[rule]])
@@ -188,8 +193,8 @@ func _rules_summary() -> String:
 	var room_parts: Array[String] = []
 	for era in [Eras.FOOTBALL, Eras.BUS]:
 		era_parts.append("%s:%s" % [era, _dps(dealt, fought, era)])
-		room_parts.append("%s:%d/%.0fs" % [era, rooms.get(era, 0), fought.get(era, 0.0)])
-	room_parts.push_front("old:%d/%.0fs" % [rooms.get("", 0), fought.get("", 0.0)])
+		room_parts.append("%s:%d/%.0fs/%.2fsw" % [era, rooms.get(era, 0), fought.get(era, 0.0), swung.get(era, 0) / maxf(fought.get(era, 0.0), 0.001)])
+	room_parts.push_front("old:%d/%.0fs/%.2fsw" % [rooms.get("", 0), fought.get("", 0.0), swung.get("", 0) / maxf(fought.get("", 0.0), 0.001)])
 	return out + " old_dps=%s era_dps=%s dps_rooms=%s reels_readied=%d ready_fallback=%d" % [_dps(dealt, fought, ""), ",".join(era_parts), ",".join(room_parts), readied, fallback]
 
 
@@ -239,7 +244,7 @@ func _run(progress) -> Dictionary:
 	var pension_before: int = progress.data.pension
 	var map: FloorMap = scene.debug_map()
 	var r := {"reached_mini": false, "beat_mini": false, "reached_boss": false, "beat_boss": false, "income": 0, "time": 0.0, "rooms": 0, "stuck": 0, "hits": 0, "boss_ttk": 0.0, "mini_ttk": 0.0, "boss_hits": 0, "mini_hits": 0, "death_in": ""}
-	r.merge({"rules_seen": 0, "rules_broken": 0, "rules_kept": 0, "broken_by": {}, "auditors": 0, "reels_taken": 0, "reels_readied": 0, "ready_fallback": 0, "dealt": {"": 0.0, Eras.FOOTBALL: 0.0, Eras.BUS: 0.0}, "fought": {"": 0.0, Eras.FOOTBALL: 0.0, Eras.BUS: 0.0}, "dps_rooms": {"": 0, Eras.FOOTBALL: 0, Eras.BUS: 0}})
+	r.merge({"rules_seen": 0, "rules_broken": 0, "rules_kept": 0, "broken_by": {}, "auditors": 0, "reels_taken": 0, "reels_readied": 0, "ready_fallback": 0, "dealt": {"": 0.0, Eras.FOOTBALL: 0.0, Eras.BUS: 0.0}, "fought": {"": 0.0, Eras.FOOTBALL: 0.0, Eras.BUS: 0.0}, "dps_rooms": {"": 0, Eras.FOOTBALL: 0, Eras.BUS: 0}, "swings": {"": 0, Eras.FOOTBALL: 0, Eras.BUS: 0}})
 	scene.player.hurt.connect(func(): r["hits"] += 1; _attribute(scene); _trace(bot))
 	var rules: RuleKeeper = scene.debug_rules()
 	bot.rules = rules
@@ -276,6 +281,7 @@ func _run(progress) -> Dictionary:
 			r["dealt"][era] += bot.dealt
 			r["fought"][era] += bot.fought
 			r["dps_rooms"][era] += 1
+			r["swings"][era] += bot.swings
 		if not cleared and bot.gave_up:
 			r["stuck"] += 1
 		if scene.is_over and not scene.is_cleared:
@@ -539,11 +545,13 @@ class Bot extends Node:
 	var auditors := 0
 	var dealt := 0.0
 	var fought := 0.0
+	var swings := 0
 	var _hp_seen := {}
 	var _walk_goal := Vector2.INF
 
 	func begin_count() -> void:
 		auditors = 0
+		swings = 0
 		dealt = 0.0
 		fought = 0.0
 
@@ -617,6 +625,11 @@ class Bot extends Node:
 
 	func _ready() -> void:
 		_player.aim_source = _aim
+		_player.swing_started.connect(_on_swing)
+
+	func _on_swing() -> void:
+		if _fighting:
+			swings += 1
 
 	func _aim() -> Vector2:
 		return _aim_at
@@ -1479,7 +1492,8 @@ class Bot extends Node:
 			Input.action_release("attack")
 			_pressed = false
 		_press_wait -= delta
-		if target == null or _press_wait > 0.0:
+		# v12: a press while the last swing still locks is lost (just_pressed), so he waits it out.
+		if target == null or _press_wait > 0.0 or _player._combo._lock > 0.0:
 			return
 		var rect := target.body_rect()
 		var me := _player.global_position
