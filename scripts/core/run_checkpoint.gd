@@ -109,7 +109,7 @@ static func run_to_dict(run: RunState) -> Dictionary:
 		"perks": perks,
 		"promised": promised,
 		"offered": offered,
-		"held_reel": run.held_reel,
+		"held_reel": run.held_reel if not run.held_reel.is_empty() else run.era,
 	}
 
 

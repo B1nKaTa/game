@@ -155,6 +155,17 @@ func test_a_run_round_trips() -> void:
 	assert_eq(back.stats.max_pills, run.stats.max_pills, "stats are worked out from the items again")
 
 
+func test_a_checkpoint_mid_flashback_saves_the_reel_being_lived() -> void:
+	var run := _fresh_run()
+	run.era = Eras.FOOTBALL
+	assert_eq(RunCheckpoint.run_to_dict(run)["held_reel"], Eras.FOOTBALL)
+	run.held_reel = Eras.BUS
+	assert_eq(RunCheckpoint.run_to_dict(run)["held_reel"], Eras.BUS, "a held reel wins")
+	var back := _fresh_run()
+	RunCheckpoint.apply_run(back, JSON.parse_string(JSON.stringify(RunCheckpoint.run_to_dict(run))), Content.items())
+	assert_eq(back.held_reel, Eras.BUS)
+
+
 func test_a_resumed_run_gets_its_items_effects_and_combos_back() -> void:
 	var run := _fresh_run()
 	run.effects.set_combos(Content.combos())
