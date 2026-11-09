@@ -1,7 +1,7 @@
 # Room Rules and Flashbacks: Design
 
 **Date:** 2026-11-09
-**Status:** agreed with the user in brainstorming; waiting for the user's review before planning.
+**Status:** approved by the user on 2026-11-09. Plan: docs/superpowers/plans/2026-11-09-rules-and-flashbacks.md.
 **Goal:** give the game a mechanical hook that comes from its theme. Grumpy old Harold, stuck in the afterlife's bureaucracy, decides whether to follow its rules. Following them earns him a moment of his youth.
 
 **One-line pitch:** *Obey the afterlife's petty rules to relive your youth, or break them and deal with the Auditor.*
