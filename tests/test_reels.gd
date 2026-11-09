@@ -6,9 +6,10 @@ func test_the_two_prototype_eras_start_unlocked() -> void:
 	assert_eq(ProgressData.new().eras_unlocked, Eras.STARTING)
 	assert_eq(Eras.title(Eras.FOOTBALL), "Football on the Rec, 1960")
 	assert_eq(Eras.title(Eras.BUS), "The No. 12 Bus, 1975")
-	assert_near(Eras.speed_mult(Eras.FOOTBALL), 1.45)
-	assert_near(Eras.speed_mult(Eras.BUS), 1.15)
+	assert_near(Eras.speed_mult(Eras.FOOTBALL), 1.25)
+	assert_near(Eras.speed_mult(Eras.BUS), 1.0)
 	assert_near(Eras.speed_mult(""), 1.0)
+	assert_true(Eras.speed_mult(Eras.FOOTBALL) > Eras.speed_mult(Eras.BUS), "the footballer is the quicker era")
 
 
 func test_a_reel_picks_an_unlocked_era_by_the_seed() -> void:
@@ -32,7 +33,8 @@ func test_an_era_sets_his_pace() -> void:
 	var run := RunState.new([] as Array[UpgradeDef], {})
 	var plain := run.move_speed()
 	run.era = Eras.FOOTBALL
-	assert_near(run.move_speed(), plain * 1.45)
+	assert_near(run.move_speed(), plain * Eras.speed_mult(Eras.FOOTBALL))
+	assert_true(run.move_speed() > plain, "the footballer is quicker than old Harold")
 	run.era = ""
 	assert_near(run.move_speed(), plain)
 

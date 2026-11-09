@@ -8,8 +8,8 @@ const BUS := "no12_bus_1975"
 const STARTING: Array[String] = [FOOTBALL, BUS]
 
 const _DATA := {
-	FOOTBALL: {"title": "Football on the Rec, 1960", "age": 18, "speed": 1.45, "art": "harold_1960"},
-	BUS: {"title": "The No. 12 Bus, 1975", "age": 40, "speed": 1.15, "art": "harold_1975"},
+	FOOTBALL: {"title": "Football on the Rec, 1960", "age": 18, "speed": 1.25, "art": "harold_1960"},
+	BUS: {"title": "The No. 12 Bus, 1975", "age": 40, "speed": 1.0, "art": "harold_1975"},
 }
 const RETURN_LINES := ["Those were the days.", "My knees remember that.", "Where did the years go?"]
 
