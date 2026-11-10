@@ -8,7 +8,9 @@ written cannot stop the others rendering.
 """
 import importlib
 
-MODULES = ["jb_timeless", "jb_1950s", "jb_1960s", "jb_1970s", "jb_1980s", "jb_1990s", "jb_chairman"]
+# The soundtrack in use: the Waiting Room from the jukebox set, every other place its own piece.
+# The jb_* decade modules (one shared theme in every song) were tried and set aside on 2026-11-10.
+MODULES = ["rb_waiting", "rb_front", "rb_middle", "rb_late", "rb_fights_1", "rb_fights_2", "rb_endings"]
 
 BAND_INFO = {}
 BROKEN = {}

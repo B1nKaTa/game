@@ -57,4 +57,8 @@ outside the project (paths in `band.py`, or the environment variables it names):
 - optionally the VSCO 2 Community Edition orchestra (CC0), converted once with
   `py tools/music/sfz2sf2.py <vsco_root> <out.sf2>`; without it, `orch_*` parts use General MIDI.
 
-The jukebox songs are not wired into the game yet: they render to a listening folder until chosen.
+In use (`jukebox.MODULES`): the Waiting Room from the jukebox set (`rb_waiting.py`), and every other
+place its own piece on its own idea, sharing no theme (`rb_front`, `rb_middle`, `rb_late`,
+`rb_fights_1`, `rb_fights_2`, `rb_endings`). The `jb_*` decade set, one theme in every song, was tried
+and set aside: heard everywhere, the theme wore thin. The band songs are not wired into the game yet:
+they render to a listening folder until chosen.

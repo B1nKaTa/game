@@ -201,7 +201,8 @@ class Band(synth.Song):
                "-o", "synth.reverb.width=0.9", "-o", "synth.reverb.level=0.75", "-F", raw] + fonts + [mid]
         subprocess.run(cmd, check=True)
         try:
-            seconds = _finish(raw, path, self.beats * self.spb if self.loop else None, self.loudness)
+            seconds = _finish(raw, path, self.beats * self.spb if self.loop else None, self.loudness,
+                              cut=None if self.loop else self.beats * self.spb + self.tail)
         finally:
             os.remove(raw)
             if not keep_midi:
@@ -216,8 +217,9 @@ def _vlq(n):
     return bytes(reversed(out))
 
 
-def _finish(raw, out_path, loop_seconds, loudness):
-    """Folds the tail onto the start (or trims trailing silence), sets the loudness, limits the peaks."""
+def _finish(raw, out_path, loop_seconds, loudness, cut=None):
+    """Folds the tail onto the start (or, for a sting, cuts it `cut` seconds in and trims trailing
+    silence), sets the loudness and limits the peaks."""
     with wave.open(raw) as w:
         ch = w.getnchannels(); data = array("h", w.readframes(w.getnframes()))
     if loop_seconds is not None:
@@ -226,11 +228,11 @@ def _finish(raw, out_path, loop_seconds, loudness):
         for i in range(n, len(data)):
             out[i % n] += data[i]
     else:
-        end = len(data)
+        end = len(data) if cut is None else min(len(data), int(cut * RATE) * ch)
         while end > ch and abs(data[end - 1]) < 8:
             end -= 1
         out = array("f", data[:end])
-        fade = min(len(out) // ch, int(0.05 * RATE))
+        fade = min(len(out) // ch, int(0.4 * RATE))
         for k in range(fade):
             for c in range(ch):
                 out[len(out) - (fade - k) * ch + c] *= k / fade
