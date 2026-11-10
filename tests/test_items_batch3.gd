@@ -209,7 +209,7 @@ func test_pressure_cooker_widens_the_blast_and_lengthens_the_fuse() -> void:
 	assert_true(thermos.tick_fuse(0.25))
 	thermos.free()
 	var room := FileAccess.get_file_as_string("res://scripts/world/room_view.gd")
-	assert_true(room.contains("thermos.fuse_time = Thermos.FUSE_TIME + _run.stats.fuse_bonus"), "the room lights the longer fuse")
+	assert_true(room.contains("fuse += _run.stats.fuse_bonus") and room.contains("thermos.fuse_time = fuse"), "the room lights the longer fuse")
 
 
 func test_tea_cosy_takes_only_his_own_blasts() -> void:
