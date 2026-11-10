@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/parrot.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+look = "parrot"
+color = Color(0.2, 0.75, 0.3, 1)
+
+[resource]
+script = ExtResource("1")
+id = "parrot"
+display_name = "Polly the Parrot"
+description = "A parrot on your shoulder copies your last attack a second later."
+rarity = "rare"
+tags = PackedStringArray("pets")
+build = "pets"
+kind = "pet"
+effect = SubResource("Effect")

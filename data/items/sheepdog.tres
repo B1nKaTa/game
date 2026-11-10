@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/sheepdog.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+look = "sheepdog"
+color = Color(0.92, 0.92, 0.88, 1)
+
+[resource]
+script = ExtResource("1")
+id = "sheepdog"
+display_name = "Old Shep"
+description = "A sheepdog herds enemies into a bunch in front of you every few seconds."
+rarity = "legendary"
+tags = PackedStringArray("pets")
+build = "pets"
+kind = "pet"
+effect = SubResource("Effect")
