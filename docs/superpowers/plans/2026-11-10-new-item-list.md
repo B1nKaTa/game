@@ -26,7 +26,7 @@
 - Item effects keep per-run state in plain member variables (RunEffects duplicates each effect per run). Once-a-run, per-floor and counter state goes through `save_state`/`load_state` (`state_of`, `load_members`).
 - Every new rule that changes damage, pays Pension, blocks, soaks or heals does nothing while `ctx.counting_exact` (damage, Pension, fuses) or `ctx.counting_pills` (blocks, soaks, heals) is set, as the old items do.
 - **Deleting old item files waits for the user's OK** (Task 26). Until then old files stay, retired by id.
-- Commits: imperative mood, one logical change, and the message ends with the line `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`. In PowerShell: `git commit -m "Subject" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"`. Do not push unless the user asks.
+- Commits: imperative mood, one logical change, and the message ends with the line `Co-Authored-By: Claude <noreply@anthropic.com>`. In PowerShell: `git commit -m "Subject" -m "Co-Authored-By: Claude <noreply@anthropic.com>"`. Do not push unless the user asks.
 - Read `LESSONS.md` before starting; append a dated one-liner for every new gotcha.
 
 ## Shared names
@@ -564,7 +564,7 @@ Expected: "N tests, 0 failed".
 
 ```powershell
 git add scripts/content/item_def.gd scripts/content/content.gd scripts/content/stat_effect.gd scripts/content/retired_content.gd scripts/core/player_stats.gd scripts/core/run_state.gd scripts/core/effect_context.gd scripts/core/run_checkpoint.gd scripts/scenes/floor_scene.gd tests/support/item_kit.gd tests/test_item_data.gd tests/test_stats.gd tests/test_recipes.gd tests/test_items_batch4.gd
-git commit -m "Add the new item list's data fields, retired registry, purse and 20-count rule" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "Add the new item list's data fields, retired registry, purse and 20-count rule" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
@@ -842,7 +842,7 @@ Run: `powershell -File tools/test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/ui/item_icons.gd scripts/ui/item_row.gd scripts/world/pickup.gd scripts/world/room_view.gd scripts/ui/hud.gd scripts/ui/case_file.gd scripts/core/case_file_data.gd docs/art/art-inventory.md tests/test_item_icons.gd
-git commit -m "Draw item icons on pickups, wares, the HUD row and the case file once they exist" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "Draw item icons on pickups, wares, the HUD row and the case file once they exist" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
@@ -1267,7 +1267,7 @@ Run: `powershell -File tools/test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/content/item_effect.gd scripts/core/run_effects.gd scripts/core/run_state.gd scripts/core/run_checkpoint.gd tests/support/test_active_effect.gd tests/test_active_items.gd
-git commit -m "Add the active item slot, its charge and the new effect hooks" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "Add the active item slot, its charge and the new effect hooks" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
@@ -1543,7 +1543,7 @@ Run: `powershell -File tools/test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/core/input_setup.gd scripts/core/pad_input.gd scripts/core/key_bindings.gd scripts/actors/player.gd scripts/ui/active_slot.gd scripts/ui/hud.gd scripts/scenes/floor_scene.gd scripts/world/room_view.gd scripts/core/case_file_data.gd scripts/ui/case_file.gd tests/test_key_bindings.gd tests/test_active_slot.gd
-git commit -m "Add the use-item key, the HUD active slot and dropping a swapped active" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "Add the use-item key, the HUD active slot and dropping a swapped active" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
@@ -1991,7 +1991,7 @@ Run: `powershell -File tools/test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/core/shot_guards.gd scripts/world/shot_guard.gd scripts/world/pet.gd scripts/items/pet_effect.gd scripts/core/run_state.gd scripts/core/run_effects.gd scripts/actors/projectile.gd tests/support/scale_effect.gd tests/test_pets.gd
-git commit -m "Add pets that follow Harold and shot guards that stop shots" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "Add pets that follow Harold and shot guards that stop shots" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
@@ -2301,7 +2301,7 @@ Run: `powershell -File tools/test.ps1` (expect 0 failed). If a remaining old tes
 
 ```powershell
 git add scripts/content/set_def.gd scripts/content/content.gd scripts/core/run_effects.gd scripts/core/player_stats.gd scripts/core/run_state.gd scripts/autoload/progress.gd scripts/scenes/floor_scene.gd scripts/ui/hud.gd scripts/content/retired_content.gd tests/test_sets.gd tests/test_run_checkpoint.gd tests/test_items_batch1.gd tests/test_items_batch2.gd tests/test_items_batch3.gd tests/test_items_batch4.gd
-git commit -m "Add set bonuses and retire the pair combos" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "Add set bonuses and retire the pair combos" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
@@ -2702,7 +2702,7 @@ Run: `powershell -File tools/test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/content/potion_def.gd scripts/content/content.gd scripts/core/potion_actions.gd scripts/core/potion_pool.gd scripts/core/run_state.gd scripts/core/run_effects.gd scripts/core/run_checkpoint.gd scripts/core/shop_rules.gd scripts/world/room_view.gd tests/support/lasting_effect.gd tests/test_run_potions.gd
-git commit -m "Add potion actions, lasting potion effects and the run potion pool" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "Add potion actions, lasting potion effects and the run potion pool" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
@@ -3056,7 +3056,7 @@ Run: `powershell -File tools/test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/world/room_view.gd scripts/world/pickup.gd scripts/core/health.gd scripts/core/run_state.gd scripts/actors/enemy.gd scripts/core/effect_context.gd scripts/core/chest_rules.gd tests/support/item_kit.gd tests/test_play_hooks.gd
-git commit -m "Add the play hooks the new items need: pickup amounts, half pills, fetch and copy" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "Add the play hooks the new items need: pickup amounts, half pills, fetch and copy" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
@@ -3386,7 +3386,7 @@ Run: `powershell -File tools/test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/world/thrown_thermos.gd scripts/world/bomblet.gd scripts/world/walking_frame.gd scripts/world/thermos.gd scripts/world/room_view.gd scripts/actors/player.gd tests/test_thermos_hooks.gd
-git commit -m "Add blast counts, thrown Thermoses, bomblets and the walking frame" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "Add blast counts, thrown Thermoses, bomblets and the walking frame" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
@@ -3878,7 +3878,7 @@ Run: `powershell -File tools/test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/world/ally_auditor.gd scripts/core/run_state.gd scripts/core/run_checkpoint.gd scripts/core/rule_picker.gd scripts/world/rule_keeper.gd scripts/ui/rule_stamp.gd scripts/ui/reel_slot.gd scripts/ui/hud.gd scripts/world/room_rules.gd scripts/world/room_view.gd scripts/scenes/floor_scene.gd scripts/core/run_effects.gd tests/support/event_effect.gd tests/test_rule_item_hooks.gd
-git commit -m "Add the rules and memory hooks the new items need" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "Add the rules and memory hooks the new items need" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
@@ -4176,7 +4176,7 @@ Run: `powershell -File tools/test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/items/hit_scale_effect.gd scripts/items/tea_urn.gd scripts/items/flask_holster.gd scripts/items/bottomless_flask.gd scripts/items/second_brew.gd scripts/items/tea_break.gd scripts/items/hot_soup_thermos.gd data/items/tea_urn.tres data/items/flask_holster.tres data/items/bottomless_flask.tres data/items/second_brew.tres data/items/thermos_lob.tres data/items/tea_break.tres data/items/hot_soup_thermos.tres data/items/pressure_cooker.tres data/items/tea_cosy.tres scripts/content/retired_content.gd tests/test_items_thermos.gd tests/test_items_batch3.gd tests/test_resume_item_state.gd
-git commit -m "Add the Thermos build's items" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "Add the Thermos build's items" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
@@ -4521,7 +4521,7 @@ Run: `powershell -File tools/test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/items/filing_cabinet.gd scripts/items/in_triplicate.gd scripts/items/key_cutter.gd scripts/items/loose_paperwork.gd scripts/items/rubber_stamp_collection.gd scripts/items/paper_cuts.gd scripts/items/desk_drawer.gd data/items/filing_cabinet.tres data/items/in_triplicate.tres data/items/key_cutter.tres data/items/loose_paperwork.tres data/items/rubber_stamp_collection.tres data/items/paper_cuts.tres data/items/locksmiths_apron.tres data/items/desk_drawer.tres scripts/content/retired_content.gd tests/test_items_slips.gd
-git commit -m "Add the Slip build's items" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "Add the Slip build's items" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
@@ -4790,7 +4790,7 @@ Run: `powershell -File tools/test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/items/money_belt.gd scripts/items/piggy_bank.gd scripts/items/compound_interest.gd scripts/items/coin_purse_cane.gd scripts/items/hagglers_hat.gd scripts/items/gold_fillings.gd scripts/items/inheritance_letter.gd data/items/money_belt.tres data/items/piggy_bank.tres data/items/compound_interest.tres data/items/coin_purse_cane.tres data/items/senior_discount.tres data/items/hagglers_hat.tres data/items/coupon_booklet.tres data/items/gold_fillings.tres data/items/inheritance_letter.tres scripts/content/retired_content.gd tests/test_items_pension.gd tests/test_items_batch1.gd tests/test_items_batch3.gd tests/test_reworked_items.gd
-git commit -m "Add the Pension build's items" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "Add the Pension build's items" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
@@ -5138,7 +5138,7 @@ Run: `powershell -File tools/test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/items/rex.gd scripts/items/mittens.gd scripts/items/ferret.gd scripts/items/sheepdog.gd scripts/items/parrot.gd scripts/items/racing_pigeon.gd data/items/rex.tres data/items/mittens.tres data/items/ferret.tres data/items/sheepdog.tres data/items/parrot.tres data/items/racing_pigeon.tres scripts/content/retired_content.gd tests/test_items_pets_fighting.gd
-git commit -m "Add the pets that fight and fetch" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "Add the pets that fight and fetch" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
@@ -5489,7 +5489,7 @@ Run: `powershell -File tools/test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/items/budgie.gd scripts/items/tortoise.gd scripts/items/moths.gd scripts/items/pet_rock.gd scripts/items/pet_cemetery_plot.gd data/items/budgie.tres data/items/tortoise.tres data/items/moths.tres data/items/pet_rock.tres data/items/dog_treats.tres data/items/pet_cemetery_plot.tres scripts/content/retired_content.gd tests/test_items_pets_guarding.gd
-git commit -m "Add the guarding pets and the pet buffs" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "Add the guarding pets and the pet buffs" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
@@ -5637,7 +5637,7 @@ Run: `powershell -File tools/test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/items/chattering_bounce.gd scripts/items/fizzy_tablet.gd scripts/items/dentures_in_glass.gd data/items/strong_dentures.tres data/items/chattering_bounce.tres data/items/boomerang_bite.tres data/items/spare_set.tres data/items/shark_tooth.tres data/items/glue_gun.tres data/items/windup_teeth.tres data/items/fizzy_tablet.tres data/items/dentures_in_glass.tres scripts/content/retired_content.gd tests/test_items_dentures.gd tests/test_items_batch1.gd tests/test_items_batch4.gd tests/test_reworked_items.gd tests/test_dentures.gd
-git commit -m "Add the dentures build's items" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "Add the dentures build's items" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
@@ -5807,7 +5807,7 @@ Run: `powershell -File tools/test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/items/lightning_rod.gd scripts/items/cane_hook.gd scripts/items/rusty_hinge.gd scripts/items/obituary_clippings.gd scripts/items/brass_topper.gd scripts/items/knitting_needles.gd data/items/lightning_rod.tres data/items/cane_hook.tres data/items/cane_sword.tres data/items/brass_topper.tres data/items/rolling_pin.tres data/items/reapers_scythe.tres data/items/knitting_needles.tres data/items/rusty_hinge.tres data/items/bingo_dabber.tres data/items/obituary_clippings.tres tests/test_items_cane.gd tests/test_items_batch1.gd tests/test_items_batch4.gd
-git commit -m "Add the cane build's items" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "Add the cane build's items" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
@@ -5974,7 +5974,7 @@ Run: `powershell -File tools/test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/items/heart_monitor.gd scripts/items/titanium_hip.gd scripts/items/bad_hip.gd scripts/items/pill_organizer.gd scripts/core/coach_tips.gd data/items/heart_monitor.tres data/items/pocket_watch.tres data/items/wheelchair_wheels.tres data/items/titanium_hip.tres data/items/pogo_cane.tres data/items/velcro_shoes.tres data/items/afterimage.tres data/items/bad_hip.tres data/items/rocking_chair.tres data/items/hospital_bracelet.tres data/items/comfort_care_lanyard.tres data/items/pill_organizer.tres data/items/casserole_dish.tres data/items/life_alert_button.tres data/items/life_jacket.tres data/items/eternal_warranty.tres tests/test_items_dodge_pills.gd tests/test_items_batch1.gd tests/test_items_batch2.gd tests/test_items_batch3.gd tests/test_reworked_items.gd
-git commit -m "Add the dodge and pills builds' items" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "Add the dodge and pills builds' items" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
@@ -6257,7 +6257,7 @@ Run: `powershell -File tools/test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/items/unpaid_bill.gd scripts/items/glass_hip.gd scripts/items/cactus_brooch.gd scripts/items/polyester_suit.gd scripts/items/alarm_clock.gd scripts/items/early_bird_special.gd scripts/items/bureaucrats_stamp.gd scripts/items/bifocals.gd scripts/content/retired_content.gd scripts/core/coach_tips.gd data/items/unpaid_bill.tres data/items/glass_hip.tres data/items/cactus_brooch.tres data/items/photo_of_grandkids.tres data/items/nitro_tablets.tres data/items/polyester_suit.tres data/items/prune_juice.tres data/items/floor_plan.tres data/items/magnifying_glass.tres data/items/alarm_clock.tres data/items/early_bird_special.tres data/items/bureaucrats_stamp.tres data/items/bifocals.tres data/items/last_orders.tres data/items/complaint_form.tres tests/test_items_risk_any.gd tests/test_items_batch4.gd tests/test_reworked_items.gd
-git commit -m "Add the risk build's items and rework the any-build items" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "Add the risk build's items and rework the any-build items" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
@@ -6555,7 +6555,7 @@ Run: `powershell -File tools/test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/items/model_citizen.gd scripts/items/repeat_offender.gd scripts/items/fine_print.gd scripts/items/brown_envelope.gd scripts/items/turned_auditor.gd scripts/items/gold_star.gd scripts/items/those_were_the_days.gd scripts/items/rose_tinted.gd scripts/items/scrapbook.gd scripts/core/coach_tips.gd data/items/model_citizen.tres data/items/repeat_offender.tres data/items/fine_print.tres data/items/brown_envelope.tres data/items/turned_auditor.tres data/items/gold_star.tres data/items/photo_album.tres data/items/old_projector.tres data/items/those_were_the_days.tres data/items/rose_tinted.tres data/items/scrapbook.tres tests/test_items_rules_memory.gd
-git commit -m "Add the rules and memories builds' items" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "Add the rules and memories builds' items" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
@@ -6936,7 +6936,7 @@ Run: `powershell -File tools/test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/items/hearing_aid_feedback.gd scripts/items/walking_frame.gd scripts/items/exchange_desk.gd scripts/items/photocopier.gd scripts/items/megaphone.gd scripts/items/dinner_bell.gd scripts/items/harmonica.gd scripts/items/lottery_scratcher.gd scripts/content/retired_content.gd scripts/core/coach_tips.gd data/items/hearing_aid_feedback.tres data/items/walking_frame.tres data/items/exchange_desk.tres data/items/photocopier.tres data/items/megaphone.tres data/items/dinner_bell.tres data/items/harmonica.tres data/items/lottery_scratcher.tres tests/test_items_actives.gd tests/test_items_batch3.gd tests/test_items_batch4.gd tests/test_reworked_items.gd
-git commit -m "Add the active items" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "Add the active items" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
@@ -7172,7 +7172,7 @@ Run: `powershell -File tools/test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/items/potion_smelling_salts.gd scripts/items/potion_dutch_courage.gd scripts/items/potion_pet_food.gd data/potions/double_brew.tres data/potions/locksmiths_tonic.tres data/potions/topsy_turvy.tres data/potions/gold_top.tres data/potions/smelling_salts.tres data/potions/dutch_courage.tres data/potions/pet_food.tres tests/test_potion_items.gd
-git commit -m "Add the run potions" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "Add the run potions" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
@@ -7435,7 +7435,7 @@ Run: `powershell -File tools/test.ps1` (expect 0 failed).
 
 ```powershell
 git add data/sets scripts/items/set_civil_servant.gd scripts/items/set_old_soldier.gd scripts/items/set_daredevil.gd scripts/items/stray_cat.gd tests/test_set_items.gd
-git commit -m "Add the eleven set bonuses" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "Add the eleven set bonuses" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
@@ -7584,7 +7584,7 @@ Run: `powershell -File tools/test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/content/retired_content.gd data/items data/bounties scripts/core/dev_start.gd tests
-git commit -m "Switch the pool to the new item list and reassign the posters" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "Switch the pool to the new item list and reassign the posters" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 Read `git diff --cached --name-status` before committing: only the files this task names may be staged.
@@ -7731,7 +7731,7 @@ Run: `powershell -File tools/test.ps1` (expect 0 failed), then `powershell -File
 
 ```powershell
 git add scripts/core/run_checkpoint.gd scripts/core/progress_data.gd scripts/world/room_view.gd tools/smoke_driver.gd tests/test_new_item_migration.gd
-git commit -m "Load old saves and checkpoints onto the new item list" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "Load old saves and checkpoints onto the new item list" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
@@ -7758,7 +7758,7 @@ Run: `powershell -File tools/test.ps1` (expect 0 failed and no `Could not load c
 - [ ] **Step 4: Commit**
 
 ```powershell
-git commit -m "Delete the retired item, combo and script files" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "Delete the retired item, combo and script files" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
@@ -7776,7 +7776,7 @@ git commit -m "Delete the retired item, combo and script files" -m "Co-Authored-
 
 ```powershell
 git add LESSONS.md docs/superpowers/plans/2026-11-10-new-item-list.md
-git commit -m "Record the new item list's income check and build notes" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+git commit -m "Record the new item list's income check and build notes" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 - [ ] **Step 6: Review before merge.** The new item list is a large round: ask for an independent review of the branch before it is merged (`superpowers:requesting-code-review`), then hand it to the user to play.
