@@ -29,6 +29,8 @@ var skull := false
 # for anything that stays (coins, items, shop wares).
 var carry_kind := ""
 var carry_amount := 1
+# Which potion a carried potion is, so the next room lays down the same one. "" for any other pickup.
+var carry_id := ""
 # Its picture in res://art/props/ (PropArt), such as pickup_coin, or "" to draw the coloured disc. The
 # name label is still drawn in code over it.
 var art_id := ""

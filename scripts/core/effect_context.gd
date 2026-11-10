@@ -156,7 +156,7 @@ func stun(enemy: Enemy, seconds: float) -> void:
 
 # A small pickup lying in the room: one of RoomRules.DROP_KEY, DROP_BOMB, DROP_POTION, DROP_COIN or
 # DROP_HEAL. For a coin, amount is its Pension; for a heal, its pills.
-func drop(kind: String, at: Vector2, amount := 1) -> void:
+func drop(kind: String, at: Vector2, amount := 1, id := "") -> void:
 	if counting_pills and kind == RoomRules.DROP_HEAL:
 		return
 	if counting_exact and kind == RoomRules.DROP_COIN:
@@ -164,7 +164,7 @@ func drop(kind: String, at: Vector2, amount := 1) -> void:
 	if on_drop.is_valid():
 		on_drop.call(kind, at)
 	if has_room():
-		room.drop_for_item(kind, at, amount)
+		room.drop_for_item(kind, at, amount, id)
 
 
 # Puts an ItemFx node (or any effect node) into the room at a spot. Without a room the node is freed,

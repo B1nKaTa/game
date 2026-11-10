@@ -146,12 +146,14 @@ func room_type() -> String:
 
 
 # A small pickup an item lays in the room: a Slip, a Thermos, a small potion or a coin of amount.
-func drop_for_item(kind: String, at: Vector2, amount := 1) -> void:
+func drop_for_item(kind: String, at: Vector2, amount := 1, id := "") -> void:
 	var spot := clear_spot(at)
 	if kind == RoomRules.DROP_COIN:
 		_drop_coin(spot, amount)
 	elif kind == RoomRules.DROP_HEAL:
 		_add_heal(spot, amount)
+	elif kind == RoomRules.DROP_POTION and Content.potion(id) != null:
+		_drop_potion(spot, Content.potion(id))
 	else:
 		_drop_consumable(spot, kind)
 
@@ -274,9 +276,14 @@ func take_leftover() -> Dictionary:
 	var best := cheapest_waiting(get_children())
 	if best == null:
 		return {}
-	var taken := {"kind": best.carry_kind, "amount": best.carry_amount}
+	var taken := carry_record(best)
 	best.queue_free()
 	return taken
+
+
+# What the next room lays out for a carried pickup: {"kind", "amount", "id"}; id names a potion.
+static func carry_record(pickup: Pickup) -> Dictionary:
+	return {"kind": pickup.carry_kind, "amount": pickup.carry_amount, "id": pickup.carry_id}
 
 
 # Two cells into the room from where he stands, toward its middle, on open floor clear of the doors,
@@ -988,6 +995,7 @@ func _drop_potion(at: Vector2, def: PotionDef) -> Pickup:
 	var potion := _add_pickup(at, def.display_name, def.color, func(): _take_consumable(func(): _run.give_potion(def)), false, "pill_heal")
 	potion.can_take = _run.can_take_potion
 	potion.carry_kind = RoomRules.DROP_POTION
+	potion.carry_id = def.id
 	potion.art_id = ART_POTION
 	return potion
 

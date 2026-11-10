@@ -25,6 +25,6 @@ func on_room_enter(ctx: EffectContext, room: Node) -> void:
 	var at := ctx.feet()
 	if room != null and room.has_method("spot_inside"):
 		at = room.spot_inside(at)
-	ctx.drop(box["kind"], at, int(box["amount"]))
+	ctx.drop(box["kind"], at, int(box["amount"]), str(box.get("id", "")))
 	ctx.add_fx(ItemFx.make_pop("MOVED IN", COLOR), at)
 	ctx.play_sound("thermos_pickup")

@@ -194,6 +194,25 @@ static func apply_tally(run: RunState, raw: Variant) -> void:
 		run.hits_taken = maxi(int(hits), 0)
 
 
+# Puts a drunk potion's lasting parts back, each with its saved state and without its on-drink. Ids that
+# match no potion with an effect are skipped.
+static func restore_lasting(run: RunState, lasting: Variant, potions: Array[PotionDef]) -> void:
+	if not lasting is Array:
+		return
+	for entry in lasting:
+		if not entry is Dictionary:
+			continue
+		var def: PotionDef = null
+		for candidate in potions:
+			if candidate.id == str(entry.get("id", "")):
+				def = candidate
+		if def == null or def.effect == null:
+			continue
+		var copy: ItemEffect = def.effect.duplicate()
+		copy.load_state(entry.get("state", {}) if entry.get("state", {}) is Dictionary else {})
+		run.effects.add_lasting(def.id, copy, false)
+
+
 # Puts a saved run back on a run made fresh by Progress.make_run. Ids that match nothing are skipped.
 static func apply_run(run: RunState, raw: Dictionary, items: Array[ItemDef]) -> void:
 	var perks := {}
@@ -218,17 +237,7 @@ static func apply_run(run: RunState, raw: Dictionary, items: Array[ItemDef]) -> 
 	run.lost_max_pills = maxi(int(raw.get("lost_max_pills", 0)), 0)
 	var effects: Variant = raw.get("effects", {})
 	run.effects.load_state(effects if effects is Dictionary else {})
-	var lasting: Variant = (effects.get("lasting", []) if effects is Dictionary else [])
-	if lasting is Array:
-		for entry in lasting:
-			if not entry is Dictionary:
-				continue
-			var def := Content.potion(str(entry.get("id", "")))
-			if def == null or def.effect == null:
-				continue
-			var copy: ItemEffect = def.effect.duplicate()
-			copy.load_state(entry.get("state", {}) if entry.get("state", {}) is Dictionary else {})
-			run.effects.add_lasting(def.id, copy, false)
+	restore_lasting(run, effects.get("lasting", []) if effects is Dictionary else [], Content.potions())
 	run.refresh_stats()
 	run.health.max_pills = maxi(int(raw.get("max_pills", run.health.max_pills)), 1)
 	run.health.pills = clampi(int(raw.get("pills", run.health.pills)), 1, run.health.max_pills)

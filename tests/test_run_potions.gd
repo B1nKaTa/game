@@ -129,3 +129,67 @@ func test_the_room_rolls_its_potion_drops_and_sells_potions() -> void:
 	assert_true(source.contains("PotionPool.roll(Content.potions(), _rng.randf(), _rng.randf())"))
 	assert_true(source.contains("ShopRules.KIND_POTION:"))
 	assert_true(source.contains("ShopRules.stock(Content.items(), _run, _rng, _floor_def.pension_mult, Content.potions())"))
+
+
+func test_a_carried_potion_keeps_its_id() -> void:
+	var lying := Pickup.new()
+	lying.carry_kind = RoomRules.DROP_POTION
+	lying.carry_id = "rare_test"
+	var record := RoomView.carry_record(lying)
+	assert_eq(record["kind"], RoomRules.DROP_POTION)
+	assert_eq(record["id"], "rare_test")
+	var plain := Pickup.new()
+	plain.carry_kind = RoomRules.DROP_KEY
+	assert_eq(RoomView.carry_record(plain)["id"], "", "other pickups carry no potion id")
+	lying.free()
+	plain.free()
+	var boxes := FileAccess.get_file_as_string("res://scripts/items/moving_boxes.gd")
+	assert_true(boxes.contains("ctx.drop(box[\"kind\"], at, int(box[\"amount\"]), str(box.get(\"id\", \"\")))"), "the box hands the id on")
+	var room := FileAccess.get_file_as_string("res://scripts/world/room_view.gd")
+	assert_true(room.contains("elif kind == RoomRules.DROP_POTION and Content.potion(id) != null:"), "the next room lays that potion, else rolls")
+	assert_true(room.contains("potion.carry_id = def.id"))
+
+
+func test_a_lasting_effect_comes_back_once_from_a_checkpoint() -> void:
+	var kit := ItemKit.new()
+	var run := kit.make_run()
+	var salts := _potion("salts_test", PotionDef.ACTION_SALTS)
+	var part := Lasting.new()
+	part.rooms = 3
+	salts.effect = part
+	assert_true(_drink(run, salts))
+	run.effects.room_clear(null)
+	var raw: Dictionary = JSON.parse_string(JSON.stringify(RunCheckpoint.run_to_dict(run)))
+	var back_kit := ItemKit.new()
+	var back := back_kit.make_run()
+	RunCheckpoint.apply_run(back, raw, Content.items())
+	var potions: Array[PotionDef] = [salts]
+	RunCheckpoint.restore_lasting(back, raw["effects"]["lasting"], potions)
+	assert_eq(back.effects.lasting_entries().size(), 1, "back exactly once")
+	assert_eq(back.effects.lasting_entries()[0][1].left, 2, "its state, not a fresh drink")
+	assert_eq(back_kit.notices.size(), 0, "on_drink did not run again")
+	var unknown: Array[PotionDef] = []
+	var other := back_kit.make_run()
+	RunCheckpoint.restore_lasting(other, raw["effects"]["lasting"], unknown)
+	assert_eq(other.effects.lasting_entries().size(), 0, "an id no potion has is skipped")
+
+
+func test_a_spent_lasting_effect_is_gone_after_the_next_hook() -> void:
+	var run := ItemKit.new().make_run()
+	var salts := _potion("salts_test", PotionDef.ACTION_SALTS)
+	salts.effect = Lasting.new()
+	var potions: Array[PotionDef] = [salts]
+	RunCheckpoint.restore_lasting(run, [{"id": "salts_test", "state": {"left": 0}}], potions)
+	assert_eq(run.effects.lasting_entries().size(), 1)
+	run.effects.room_enter(null)
+	assert_eq(run.effects.lasting_entries().size(), 0)
+
+
+func test_cash_in_pays_nothing_while_counting_exact() -> void:
+	var kit := ItemKit.new()
+	var run := kit.make_run()
+	run.keys = 5
+	run.bombs = 5
+	run.effects.ctx.counting_exact = true
+	assert_true(_drink(run, _potion("milk_test", PotionDef.ACTION_CASH_IN, "rare")))
+	assert_eq(kit.paid, 0)
