@@ -111,6 +111,10 @@ func _physics_process(delta: float) -> void:
 		_land()
 		return
 	global_position = next
+	# A pet, a sheet of paperwork or a walking frame in the way stops it here.
+	if ShotGuards.try_block(get_tree(), global_position):
+		_land()
+		return
 	if global_position.distance_to(_target.global_position) <= HIT_RADIUS:
 		var landed: bool = _target.take_hit(_damage, RunEffects.HURT_PROJECTILE)
 		if landed and is_dart() and _target.has_method("slow"):

@@ -143,6 +143,21 @@ func enemy_pension_mult() -> float:
 	return TicketRules.CURSED_PENSION_MULT if cursed else 1.0
 
 
+# Pet items held, and pets that came with no item (the Animal Lover's stray cat).
+func pet_count() -> int:
+	var count := stats.extra_pets
+	for item in items:
+		if item.is_pet():
+			count += 1
+	return count
+
+
+# What a pet's hit is multiplied by: the bonuses added (Tin of Dog Treats, Animal Lover), then each
+# effect's scale (Tin of Pet Food, Dinner Bell).
+func pet_damage_mult() -> float:
+	return (1.0 + stats.pet_damage_bonus) * effects.pet_damage_scale()
+
+
 func has_perk(id: String) -> bool:
 	return perks.has(id)
 

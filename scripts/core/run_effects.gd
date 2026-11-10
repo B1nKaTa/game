@@ -74,10 +74,22 @@ static func is_his_hit(source: String) -> bool:
 func add(item: ItemDef, gain := true) -> void:
 	if item.effect != null:
 		var copy: ItemEffect = item.effect.duplicate()
+		_seat_pet(copy)
 		_entries.append([item.id, copy])
 		if gain:
 			copy.on_gain(ctx)
 	_form_combos(gain)
+
+
+# A pet's slot round his feet: how many pets were seated before it.
+func _seat_pet(copy: ItemEffect) -> void:
+	if not copy is PetEffect:
+		return
+	var seated := 0
+	for effect in _all():
+		if effect is PetEffect:
+			seated += 1
+	copy.slot = seated
 
 
 func clear() -> void:
