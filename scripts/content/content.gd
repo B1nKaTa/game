@@ -108,6 +108,14 @@ static func potions_for_sale() -> Array[PotionDef]:
 	return list
 
 
+static func run_potions() -> Array[PotionDef]:
+	var list: Array[PotionDef] = []
+	for def in potions():
+		if def.is_run_potion():
+			list.append(def)
+	return list
+
+
 static func upgrades_for(merchant_id: String) -> Array[UpgradeDef]:
 	var list: Array[UpgradeDef] = []
 	for upgrade in upgrades():

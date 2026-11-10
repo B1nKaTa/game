@@ -51,6 +51,8 @@ var _sets: Array[SetDef] = []
 # Each entry is [set id, its ItemEffect copy].
 var _set_effects: Array = []
 var _hit_depth := 0
+# A drunk potion's lasting parts: [potion id, its ItemEffect copy], dropped once spent.
+var _lasting: Array = []
 # The effect whose on_lethal said yes to the hit landing now.
 var _saver: ItemEffect
 var _damage_this_room := 0
@@ -105,6 +107,21 @@ func clear() -> void:
 	_combo_effects.clear()
 	_sets.clear()
 	_set_effects.clear()
+	_lasting.clear()
+
+
+func add_lasting(potion_id: String, effect: ItemEffect, gain := true) -> void:
+	_lasting.append([potion_id, effect])
+	if gain:
+		effect.on_drink(ctx)
+
+
+func lasting_entries() -> Array:
+	return _lasting
+
+
+func _prune_lasting() -> void:
+	_lasting = _lasting.filter(func(entry): return not entry[1].is_spent())
 
 
 # The effect copy this run holds for an item, or null.
@@ -240,12 +257,16 @@ func save_state() -> Dictionary:
 	var set_ids: Array = []
 	for def in _sets:
 		set_ids.append(def.id)
+	var lasting: Array = []
+	for entry in _lasting:
+		lasting.append({"id": entry[0], "state": entry[1].save_state()})
 	return {
 		"items": held,
 		"combos": formed,
 		"formed_sets": set_ids,
 		"sets": formed_sets,
 		"active": _active_effect.save_state() if _active_effect != null else {},
+		"lasting": lasting,
 	}
 
 
@@ -290,6 +311,8 @@ func _all() -> Array[ItemEffect]:
 		list.append(_active_effect)
 	list.append_array(_combo_effects)
 	for entry in _set_effects:
+		list.append(entry[1])
+	for entry in _lasting:
 		list.append(entry[1])
 	return list
 
@@ -346,12 +369,14 @@ func floor_start() -> void:
 	var run := _run()
 	if run != null and not ctx.is_landing():
 		run.fill_active()
+	_prune_lasting()
 
 
 func room_enter(room: Node) -> void:
 	_damage_this_room = 0
 	for effect in _all():
 		effect.on_room_enter(ctx, room)
+	_prune_lasting()
 
 
 func room_leave(room: Node) -> void:
@@ -384,6 +409,7 @@ func room_clear(room: Node) -> void:
 	var run := _run()
 	if run != null:
 		run.charge_active()
+	_prune_lasting()
 
 
 func damage_this_room() -> int:

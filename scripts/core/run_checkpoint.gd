@@ -218,6 +218,17 @@ static func apply_run(run: RunState, raw: Dictionary, items: Array[ItemDef]) -> 
 	run.lost_max_pills = maxi(int(raw.get("lost_max_pills", 0)), 0)
 	var effects: Variant = raw.get("effects", {})
 	run.effects.load_state(effects if effects is Dictionary else {})
+	var lasting: Variant = (effects.get("lasting", []) if effects is Dictionary else [])
+	if lasting is Array:
+		for entry in lasting:
+			if not entry is Dictionary:
+				continue
+			var def := Content.potion(str(entry.get("id", "")))
+			if def == null or def.effect == null:
+				continue
+			var copy: ItemEffect = def.effect.duplicate()
+			copy.load_state(entry.get("state", {}) if entry.get("state", {}) is Dictionary else {})
+			run.effects.add_lasting(def.id, copy, false)
 	run.refresh_stats()
 	run.health.max_pills = maxi(int(raw.get("max_pills", run.health.max_pills)), 1)
 	run.health.pills = clampi(int(raw.get("pills", run.health.pills)), 1, run.health.max_pills)

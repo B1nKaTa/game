@@ -458,7 +458,16 @@ func give_potion(def: PotionDef) -> bool:
 func can_drink_potion() -> bool:
 	if potion == null:
 		return false
+	if not potion.action.is_empty() or potion.effect != null:
+		return PotionActions.can_drink(self, potion)
 	return potion.has_buff() or health.pills < health.max_pills
+
+
+func swap_slips_and_thermoses() -> void:
+	var slips := keys
+	keys = bombs
+	bombs = slips
+	changed.emit()
 
 
 func drink_potion() -> bool:
@@ -471,6 +480,8 @@ func drink_potion() -> bool:
 	if drunk.has_buff():
 		buff = drunk
 		buff_left = drunk.duration
+	if not drunk.action.is_empty() or drunk.effect != null:
+		PotionActions.apply(self, drunk)
 	changed.emit()
 	return true
 

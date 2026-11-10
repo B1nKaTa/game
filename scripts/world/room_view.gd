@@ -70,7 +70,8 @@ const ART_RECIPE := "pickup_recipe"
 # The film reel a kept rule leaves (RuleKeeper); film_reel is the Cinema's enemy.
 const ART_REEL := "memory_reel"
 const REEL_COLOR := Color("d9a441")
-const SHOP_ART := {ShopRules.KIND_HEAL: ART_PILL, ShopRules.KIND_KEY: ART_SLIP, ShopRules.KIND_BOMB: ART_THERMOS}
+const SHOP_ART := {ShopRules.KIND_HEAL: ART_PILL, ShopRules.KIND_KEY: ART_SLIP, ShopRules.KIND_BOMB: ART_THERMOS,
+		ShopRules.KIND_POTION: ART_POTION}
 const ITEM_COLOR := Color("7dd3fc")
 const HEAL_COLOR := Color("e4524f")
 const COIN_SCATTER := 10.0
@@ -977,12 +978,18 @@ func _drop_consumable(at: Vector2, kind: String) -> void:
 			thermos.carry_kind = kind
 			thermos.art_id = ART_THERMOS
 		RoomRules.DROP_POTION:
-			# It fills the potion slot, and waits on the floor while the slot is full.
-			var small := Content.potion(RoomRules.SMALL_POTION_ID)
-			var potion := _add_pickup(at, RoomRules.POTION_NAME, HEAL_COLOR, func(): _take_consumable(func(): _run.give_potion(small)), false, "pill_heal")
-			potion.can_take = _run.can_take_potion
-			potion.carry_kind = kind
-			potion.art_id = ART_POTION
+			_drop_potion(at, PotionPool.roll(Content.potions(), _rng.randf(), _rng.randf()))
+
+
+# A potion lying in the room. It fills the potion slot, and waits on the floor while the slot is full.
+func _drop_potion(at: Vector2, def: PotionDef) -> Pickup:
+	if def == null:
+		def = Content.potion(RoomRules.SMALL_POTION_ID)
+	var potion := _add_pickup(at, def.display_name, def.color, func(): _take_consumable(func(): _run.give_potion(def)), false, "pill_heal")
+	potion.can_take = _run.can_take_potion
+	potion.carry_kind = RoomRules.DROP_POTION
+	potion.art_id = ART_POTION
+	return potion
 
 
 # kind is the RunEffects pickup kind the items hear, or "" for one they do not.
@@ -1173,7 +1180,7 @@ func _create_vault_extras() -> void:
 
 
 func _create_shop() -> void:
-	var stock := ShopRules.stock(Content.items(), _run, _rng, _floor_def.pension_mult)
+	var stock := ShopRules.stock(Content.items(), _run, _rng, _floor_def.pension_mult, Content.potions())
 	_run.effects.shop_open(stock)
 	var cells := _room.layout.cells_of("S")
 	# A Ticket Stub Book's extra ware lies on open floor near the others.
@@ -1285,6 +1292,12 @@ func _add_shop_entry(at: Vector2, entry: Dictionary) -> void:
 			color = BOMB_COLOR
 			give = func(): _take_consumable(_run.add_bomb, RunEffects.BOMB)
 			allowed = _run.can_add_bomb
+		ShopRules.KIND_POTION:
+			var potion: PotionDef = entry["potion"]
+			label = potion.display_name
+			color = potion.color
+			give = func(): _run.give_potion(potion)
+			allowed = _run.can_take_potion
 	var text := "%s: %d" % [label, price]
 	if price <= 0:
 		text = "Free: %s" % label
@@ -1293,7 +1306,7 @@ func _add_shop_entry(at: Vector2, entry: Dictionary) -> void:
 	var pickup := _add_pickup(at, text, color, func(): _buy(price, give), true)
 	pickup.prompt = SHOP_PROMPT
 	pickup.art_id = SHOP_ART.get(entry["kind"], "")
-	var item_id: String = entry["item"].id if entry.get("item") != null else ""
+	var item_id: String = entry["item"].id if entry.get("item") != null else (entry["potion"].id if entry.get("potion") != null else "")
 	pickup.set_meta(KEEP, {"kind": KEEP_SHOP, "shop": entry["kind"], "price": price, "id": item_id,
 			"half": entry.get("half", false)})
 	if entry["kind"] == ShopRules.KIND_ITEM:
@@ -1692,8 +1705,13 @@ func _restore_entry(entry: Dictionary) -> void:
 			var kind := str(entry.get("shop", ""))
 			if kind == ShopRules.KIND_ITEM and item == null:
 				return
+			var shop_potion: PotionDef = null
+			if kind == ShopRules.KIND_POTION:
+				shop_potion = Content.potion(str(entry.get("id", "")))
+				if shop_potion == null:
+					return
 			_add_shop_entry(at, {"kind": kind, "price": int(entry.get("price", 0)), "item": item,
-					"half": bool(entry.get("half", false))})
+					"potion": shop_potion, "half": bool(entry.get("half", false))})
 		KEEP_RECIPE:
 			if item != null:
 				_add_recipe_pickup(at, item)
