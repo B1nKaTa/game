@@ -40,9 +40,47 @@ func test_floor_one_has_exactly_one_combat_rule_room() -> void:
 		assert_eq(map.room(ids[0]).room_type, RoomLayout.TYPE_COMBAT, "seed %s" % seed_text)
 
 
-func test_the_prototype_posts_no_rules_below_floor_one() -> void:
+func test_every_floor_posts_rules() -> void:
+	assert_eq(RulePicker.rule_room_count(2, 6), 2, "depth 2 by the default enabled depth")
+	assert_eq(RulePicker.rule_room_count(4, 10), 4, "deep floors: 40%")
+	assert_eq(RulePicker.rule_room_count(5, 3), 2, "at least 2")
 	for seed_text in SEEDS:
-		assert_eq(RulePicker.rule_rooms(_floor_map(seed_text), 2, seed_text).size(), 0)
+		var map := _floor_map(seed_text)
+		var ids := RulePicker.rule_rooms(map, 2, seed_text)
+		assert_eq(ids.size(), mini(2, _combat_count(map)), "seed %s" % seed_text)
+		for id in ids:
+			assert_eq(map.room(id).room_type, RoomLayout.TYPE_COMBAT)
+			assert_true(id != map.start_id)
+
+
+func _combat_count(map: FloorMap) -> int:
+	var n := 0
+	for room in map.rooms:
+		if room.room_type == RoomLayout.TYPE_COMBAT and room.id != map.start_id:
+			n += 1
+	return n
+
+
+# FloorMap.main_path holds room ids in order from the start.
+func test_a_first_run_meets_its_rule_in_the_first_three_fights() -> void:
+	for seed_text in SEEDS:
+		var map := _floor_map(seed_text)
+		var early := RulePicker.early_candidates(map)
+		assert_true(early.size() >= 1 and early.size() <= RulePicker.EARLY_ROOMS, "seed %s" % seed_text)
+		var on_path := map.main_path.filter(func(id): return map.room(id).room_type == RoomLayout.TYPE_COMBAT and id != map.start_id)
+		for i in early.size():
+			assert_eq(early[i], on_path[i], "in main-path order")
+		var ids := RulePicker.rule_rooms(map, 1, seed_text, 0, true)
+		assert_eq(ids.size(), 1)
+		assert_true(early.has(ids[0]), "seed %s: room %d" % [seed_text, ids[0]])
+		assert_eq(RulePicker.rule_rooms(map, 1, seed_text, 0, true), ids, "same seed, same room")
+
+
+func test_later_runs_place_rules_as_before() -> void:
+	# The old draw: the default (not early) picks are unchanged by this round, so a seed replays the same.
+	for seed_text in SEEDS:
+		var map := _floor_map(seed_text)
+		assert_eq(RulePicker.rule_rooms(map, 1, seed_text), RulePicker.rule_rooms(map, 1, seed_text, 0, false))
 
 
 func test_the_counts_follow_the_depth_table() -> void:

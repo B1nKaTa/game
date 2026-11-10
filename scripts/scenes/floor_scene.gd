@@ -109,6 +109,9 @@ func _ready() -> void:
 	_rng.randomize()
 	_rules = RuleKeeper.new()
 	add_child(_rules)
+	# A new save's first run meets a rule early (RulePicker.early_candidates). Progress.start_run runs
+	# later in _ready, so a brand-new save still reads run_count 0 here.
+	_rules.first_run = Progress.data.run_count <= 0 and not Progress.is_dev_run()
 	# An interrupted run comes back from its checkpoint, and never starts a new run on the way.
 	var resume := Progress.resume
 	Progress.resume = {}

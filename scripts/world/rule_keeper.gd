@@ -24,6 +24,8 @@ const ERA_WAITING := -2
 const FIGHT_ROOMS := [RoomLayout.TYPE_COMBAT, RoomLayout.TYPE_MINI_BOSS, RoomLayout.TYPE_FLOOR_BOSS]
 
 var current_id := -1
+# A save's first run: the floor's first rule room is one of its first fights (FloorScene sets it).
+var first_run := false
 var _watches := {}  # room id -> RuleWatch
 var _rule_rooms: Array[int] = []
 # Room id -> the view whose finished and prop_broken signals are connected, so a room comes back
@@ -61,12 +63,17 @@ func setup(player: Player, hud: Hud, run: RunState, record_rule: Callable) -> vo
 	rule_kept.connect(_on_rule_kept)
 
 
+# A step at STILL_SPEED or more is moving; so is any moment he is held where he stands.
+static func counts_as_moving(speed: float, held: bool) -> bool:
+	return held or speed >= STILL_SPEED
+
+
 # Each new map plans its rule rooms afresh, and forgets the last map's, whose room ids mean other rooms.
 func plan_floor(map: FloorMap, depth: int, seed_text: String, progress: FloorProgress = null) -> void:
 	_seed = seed_text
 	_watches.clear()
 	_hooked.clear()
-	_rule_rooms = RulePicker.rule_rooms(map, depth, seed_text, _run.stats.extra_rule_rooms if _run != null else 0)
+	_rule_rooms = RulePicker.rule_rooms(map, depth, seed_text, _run.stats.extra_rule_rooms if _run != null else 0, first_run)
 	set_floor(map, progress)
 
 
@@ -290,7 +297,7 @@ func _process(delta: float) -> void:
 		return
 	if not watch.is_open() or not _view.is_fighting() or _hud.rule_announcing():
 		return
-	if watch.tick_still(delta, _player.velocity.length() >= STILL_SPEED):
+	if watch.tick_still(delta, counts_as_moving(_player.velocity.length(), _player.is_held_still())):
 		report(RoomRule.ACTION_LOITER)
 	var held := {}
 	var button := RoomRule.button_of(watch.rule)

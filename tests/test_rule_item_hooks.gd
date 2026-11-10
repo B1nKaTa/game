@@ -66,7 +66,7 @@ func test_extra_rule_rooms_post_rules_deeper_too() -> void:
 	assert_eq(RulePicker.rule_room_count(1, 1, 1, 1), 1, "never more than the floor's combat rooms")
 
 
-func test_rules_items_are_offered_only_where_rules_are_posted() -> void:
+func test_rules_items_are_offered_on_every_floor() -> void:
 	var run := ItemKit.new().make_run()
 	var badge := _stat("badge_test")
 	badge.build = "rules"
@@ -77,7 +77,9 @@ func test_rules_items_are_offered_only_where_rules_are_posted() -> void:
 	run.floor_depth = 1
 	assert_eq(RoomRules.offerable(all, run).size(), 3)
 	run.floor_depth = 2
-	assert_eq(RoomRules.offerable(all, run), [plain] as Array[ItemDef])
+	assert_eq(RoomRules.offerable(all, run).size(), 3, "rules post on every floor now")
+	run.floor_depth = 5
+	assert_eq(RoomRules.offerable(all, run).size(), 3)
 	var book := _stat("book")
 	book.extra_rule_rooms = 1
 	run.add_item(book)
@@ -184,4 +186,4 @@ func test_the_scene_and_room_wire_the_auditor_items() -> void:
 	var room := FileAccess.get_file_as_string("res://scripts/world/room_view.gd")
 	assert_true(room.contains("_run.effects.auditor(auditor)"))
 	var keeper := FileAccess.get_file_as_string("res://scripts/world/rule_keeper.gd")
-	assert_true(keeper.contains("RulePicker.rule_rooms(map, depth, seed_text, _run.stats.extra_rule_rooms if _run != null else 0)"))
+	assert_true(keeper.contains("RulePicker.rule_rooms(map, depth, seed_text, _run.stats.extra_rule_rooms if _run != null else 0, first_run)"))

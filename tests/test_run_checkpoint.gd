@@ -291,7 +291,7 @@ func test_the_first_crossroads_writes_and_resumes_a_start_checkpoint() -> void:
 # A checkpoint this build cannot rebuild starts a new run instead, and must not stay to be offered again.
 func test_a_failed_resume_deletes_the_checkpoint() -> void:
 	var source := FileAccess.get_file_as_string("res://scripts/scenes/floor_scene.gd")
-	var ready := source.substr(source.find("func _ready"), 900)
+	var ready := source.substr(source.find("func _ready"), 1200)
 	var tried := ready.find("_resume_map(resume)")
 	var cleared := ready.find("Progress.clear_checkpoint()")
 	var fresh := ready.find("_start_run()")

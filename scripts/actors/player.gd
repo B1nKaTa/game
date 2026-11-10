@@ -417,6 +417,11 @@ func is_self_stunned() -> bool:
 	return _self_stun_left > 0.0
 
 
+# Held where he stands against his will (red tape, the Polyester Suit's spark), for No Loitering.
+func is_held_still() -> bool:
+	return is_taped() or is_self_stunned()
+
+
 # Where the camera centres on him: his feet, and with the Telescope Cane a little ahead of where he aims.
 # FloorScene, the Waiting Room and Enemy.target_in_view all read this, so what counts as on screen is
 # what the camera shows.

@@ -13,6 +13,25 @@ func test_the_player_tells_when_a_swing_or_dodge_starts() -> void:
 	assert_true(dodge.contains("dodge_started.emit()"))
 
 
+# Red tape and the Polyester Suit's spark hold his feet against his will; that time never counts as loitering.
+func test_being_held_is_not_loitering() -> void:
+	var watch := RuleWatch.new(RoomRule.NO_LOITERING)
+	watch.state = RuleWatch.State.ACTIVE
+	for i in 200:
+		assert_false(watch.tick_still(0.02, RuleKeeper.counts_as_moving(0.0, true)), "held for %.2f s" % (i * 0.02))
+	assert_true(RuleKeeper.counts_as_moving(RuleKeeper.STILL_SPEED, false))
+	assert_false(RuleKeeper.counts_as_moving(0.0, false))
+
+
+func test_a_player_held_still_says_so() -> void:
+	var player := Player.new()
+	player.setup(ItemKit.new().make_run())
+	assert_false(player.is_held_still())
+	player.stun_self(1.0)
+	assert_true(player.is_held_still())
+	player.free()
+
+
 func test_a_prop_knows_whether_harold_broke_it() -> void:
 	var block := BreakableBlock.new()
 	block.last_source = BreakableBlock.SOURCE_CANE
