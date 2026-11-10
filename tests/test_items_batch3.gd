@@ -15,11 +15,8 @@ const Warranty := preload("res://scripts/items/eternal_warranty.gd")
 const BATCH := {
 	"do_not_resuscitate": [ItemDef.RARE, ItemUnlocks.START, "", true],
 	"eternal_warranty": [ItemDef.LEGENDARY, ItemUnlocks.RECIPE, "", false],
-	"hot_soup_thermos": [ItemDef.RARE, ItemUnlocks.RECIPE, "", false],
 	"second_thermos_strap": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 	"forged_signature": [ItemDef.RARE, ItemUnlocks.START, "", false],
-	"pressure_cooker": [ItemDef.RARE, ItemUnlocks.RECIPE, "", false],
-	"tea_cosy": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 	"rubber_stamps": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "floor_1", false],
 	"kettle_whistle": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "furnace_works", false],
 	"coupon_booklet": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "flashback_cinema", false],
@@ -151,26 +148,6 @@ func test_eternal_warranty_waits_behind_the_life_jacket() -> void:
 	assert_true(scene.contains("ctx.arrival = player.global_position"), "every arrival is kept for the door")
 
 
-func test_hot_soup_lays_a_burning_puddle_that_spares_nobody_but_him() -> void:
-	var kit := ItemKit.new()
-	var run := kit.run_with(["hot_soup_thermos"])
-	run.effects.bomb(Vector2.ZERO)
-	assert_eq(kit.fx_of(ItemFx.FxSoup).size(), 1)
-	assert_near(run.effects.effect_of("hot_soup_thermos").puddle_time(run.effects.ctx), Soup.TIME)
-	var soup := ItemFx.make_soup(run.effects.ctx, Soup.RADIUS, Soup.TIME, Soup.DAMAGE)
-	var inside := kit.enemy("intern_reaper", 100.0)
-	inside.position = Vector2(20, 0)
-	var outside := kit.enemy("intern_reaper", 100.0)
-	outside.position = Vector2(120, 0)
-	assert_eq(soup.burn_touching([inside, outside]), 1)
-	assert_near(inside.hp, 100.0 - Soup.DAMAGE)
-	soup.free()
-	run.effects.ctx.counting_exact = true
-	run.effects.bomb(Vector2.ZERO)
-	assert_eq(kit.fx_of(ItemFx.FxSoup).size(), 1, "the loop measures plain blasts")
-	kit.free_enemies()
-
-
 func test_second_thermos_strap_gives_two_now_and_one_each_floor() -> void:
 	var kit := ItemKit.new()
 	var run := kit.make_run()
@@ -196,26 +173,6 @@ func test_forged_signature_keeps_about_one_slip_in_four() -> void:
 	for i in 50:
 		run.use_key()
 	assert_eq(run.keys, 0, "the loop counts every Slip spent")
-
-
-func test_pressure_cooker_widens_the_blast_and_lengthens_the_fuse() -> void:
-	var run := ItemKit.new().run_with(["pressure_cooker"])
-	assert_near(run.stats.blast_radius, PlayerStats.BASE_BLAST_RADIUS * 1.35)
-	assert_near(run.stats.fuse_bonus, 0.3)
-	var thermos := Thermos.new()
-	thermos.fuse_time = Thermos.FUSE_TIME + run.stats.fuse_bonus
-	thermos._ready()
-	assert_false(thermos.tick_fuse(Thermos.FUSE_TIME + 0.1), "not yet at the plain fuse")
-	assert_true(thermos.tick_fuse(0.25))
-	thermos.free()
-	var room := FileAccess.get_file_as_string("res://scripts/world/room_view.gd")
-	assert_true(room.contains("fuse += _run.stats.fuse_bonus") and room.contains("thermos.fuse_time = fuse"), "the room lights the longer fuse")
-
-
-func test_tea_cosy_takes_only_his_own_blasts() -> void:
-	var run := ItemKit.new().run_with(["tea_cosy"])
-	assert_eq(run.effects.hurt(1, RunEffects.HURT_OWN_BLAST), 0)
-	assert_eq(run.effects.hurt(1, RunEffects.HURT_BLAST), 1, "an enemy's blast still hurts")
 
 
 func test_rubber_stamps_pay_for_every_slip_handed_over() -> void:

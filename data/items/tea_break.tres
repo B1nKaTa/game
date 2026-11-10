@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/tea_break.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "tea_break"
+display_name = "Tea Break"
+description = "A blast that hits 3 or more enemies heals half a pill."
+rarity = "rare"
+tags = PackedStringArray("thermos")
+build = "thermos"
+kind = "passive"
+effect = SubResource("Effect")

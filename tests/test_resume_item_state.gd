@@ -9,7 +9,7 @@ func _resume(run: RunState, kit: ItemKit) -> RunState:
 	var raw: Dictionary = JSON.parse_string(JSON.stringify(RunCheckpoint.run_to_dict(run)))
 	var back := kit.make_run()
 	back.effects.set_combos(Content.combos())
-	RunCheckpoint.apply_run(back, raw, Content.items())
+	RunCheckpoint.apply_run(back, raw, Content.all_items())
 	return back
 
 
