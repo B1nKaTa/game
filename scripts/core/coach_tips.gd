@@ -118,6 +118,14 @@ const TIPS := {
 	"dentures_in_glass": "Teeth out, cane faster. Throw them, then get stuck in.",
 	"polyester_suit": "Hits harder, but it sparks and you'll freeze up now and then. Don't swing next to anything big.",
 	"harmonica": "Land three combo finishers quickly and it heals you a little. Once a room. Tunefully.",
+	"filing_cabinet": "Keep your Slips. Every one in the drawer hits for you.",
+	"in_triplicate": "Pick up every Slip you see. Each one counts twice.",
+	"key_cutter": "A Slip every floor. Don't hoard what you can spend.",
+	"loose_paperwork": "Carry five Slips and the shots can't touch you. Paper's tougher than it looks.",
+	"rubber_stamp_collection": "Spend your Slips and get paid for it. Open everything.",
+	"paper_cuts": "Finish the combo down a line of them. The slip goes all the way through.",
+	"locksmiths_apron": "Urns for one Slip now. Open every one you find.",
+	"desk_drawer": "First Slip, a Thermos. First Thermos, a Slip. Pick up both in every room.",
 }
 
 const DEFAULT_TIP := "Pick something off the rack and I'll tell you what it's good for."

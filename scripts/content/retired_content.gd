@@ -5,7 +5,7 @@ extends RefCounted
 # agrees to delete it (the new item list's plan, Task 26): Content.items() leaves it out, Content.all_items()
 # still loads it. RENAMED maps an old id to the new item that took its place, for saves and checkpoints.
 
-const RETIRED_ITEMS: Array[String] = ["second_thermos_strap"]
+const RETIRED_ITEMS: Array[String] = ["second_thermos_strap", "rubber_stamps"]
 # The pair combos of the hundred items. The new list's set bonuses take their place; ComboDef stays.
 const RETIRED_COMBOS: Array[String] = ["bingo_night", "card_shark", "dentists_nightmare", "early_riser",
 	"family_visit", "full_set", "last_rites", "mobility_scooter", "night_shift", "paper_trail",
