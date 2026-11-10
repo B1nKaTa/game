@@ -37,3 +37,24 @@ written in the wrong order.
 - `catalog.py`: every song by the id the game asks for, with its key and tempo.
 
 Which song plays where is `MusicRules` (`scripts/core/music_rules.gd`); `MusicPlayer` plays it.
+
+## Harold's Jukebox (real instruments)
+
+A second set of songs is played by sampled instruments instead of the synth: `band.py` records a
+song's notes, writes MIDI and renders it with FluidSynth through SoundFonts. The soundtrack's idea is
+Harold's life on a jukebox: each depth is the next decade (1950s to 1990s), every path keeps its joke
+in that decade's style, and Harold's whistle carries the hold theme (`jb_theme.py`) through all of it.
+
+```
+py tools/music/render_band.py <out_dir> [song ...]
+```
+
+renders and checks the `jb_*.py` songs listed in `jukebox.py`, by the game's own song ids. It needs,
+outside the project (paths in `band.py`, or the environment variables it names):
+
+- FluidSynth 2.6.2 for Windows (the release zip, not the source),
+- GeneralUser GS (`GeneralUser-GS.sf2`; free for commercial use),
+- optionally the VSCO 2 Community Edition orchestra (CC0), converted once with
+  `py tools/music/sfz2sf2.py <vsco_root> <out.sf2>`; without it, `orch_*` parts use General MIDI.
+
+The jukebox songs are not wired into the game yet: they render to a listening folder until chosen.
