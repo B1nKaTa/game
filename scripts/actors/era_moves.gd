@@ -5,6 +5,8 @@ extends RefCounted
 # Player builds a fresh one at every set_era, so a football left in a room never holds back the next throw.
 
 const TICKET_ROLL_COOLDOWN := 2.5
+const DISC_COOLDOWN := 1.5
+const MARROW_COOLDOWN := 2.0
 
 var era := ""
 var combo_damage: Array[float] = []
@@ -15,6 +17,8 @@ var lock_time := 0.2
 var dodge_hit_damage := 0.0
 var dodge_push := 0.0
 var dodge_stun := 0.0
+var dodge_length := 1.0
+var throw_cooldown := TICKET_ROLL_COOLDOWN
 var _ball: EraBall
 var _roll_left := 0.0
 
@@ -46,6 +50,32 @@ static func for_era(id: String) -> EraMoves:
 			moves.dodge_hit_damage = 8.0
 			moves.dodge_push = 160.0
 			moves.dodge_stun = 0.2
+			moves.throw_cooldown = TICKET_ROLL_COOLDOWN
+		Eras.DANCE:
+			# One spin, all round and close: 9 over a 0.14 s lock = 64/s on paper, a hair over the cane's
+			# 63/s, but it lands on everyone in reach at once.
+			moves.combo_damage = [9.0]
+			moves.reach = 30.0
+			moves.angle = 180.0
+			moves.push = 40.0
+			moves.lock_time = 0.14
+			# The slide runs long and nudges whoever he slides into.
+			moves.dodge_hit_damage = 3.0
+			moves.dodge_push = 30.0
+			moves.dodge_length = 1.3
+			moves.throw_cooldown = DISC_COOLDOWN
+		Eras.ALLOTMENT:
+			# A slow, strong spade thrust well past the cane: 30 over a 0.5 s lock = 60/s on paper; like the
+			# punch, its weight per swing sets his pace in play (about 15% above old Harold).
+			moves.combo_damage = [30.0]
+			moves.reach = 64.0
+			moves.angle = 15.0
+			moves.push = 110.0
+			moves.lock_time = 0.5
+			# A shove with the spade's handle.
+			moves.dodge_hit_damage = 6.0
+			moves.dodge_push = 120.0
+			moves.throw_cooldown = MARROW_COOLDOWN
 		_:
 			return null
 	return moves
@@ -67,7 +97,11 @@ func make_throw(aim: Vector2) -> Node2D:
 		_ball = EraBall.new()
 		_ball.direction = aim
 		return _ball
-	_roll_left = TICKET_ROLL_COOLDOWN
+	_roll_left = throw_cooldown
+	if era == Eras.DANCE or era == Eras.ALLOTMENT:
+		var shot: EraShot = EraShot.for_disc() if era == Eras.DANCE else EraShot.for_marrow()
+		shot.direction = aim
+		return shot
 	var line := TicketLine.new()
 	line.direction = aim
 	return line

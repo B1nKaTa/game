@@ -56,9 +56,6 @@ const LOOK_EASE := 4.0
 const SEPIA_GLOW := Color("d9b98a")
 # The hit source the items hear for an era's moves: stat-like items still answer it, cane and denture ones don't.
 const ERA_HIT := "era"
-# Until each era has its own art: old Harold's sprite, warmed (1960) or cooled (1975), so playtests can tell.
-const FOOTBALL_TINT := Color("ffd9a0")
-const BUS_TINT := Color("c9d8ff")
 # How far beyond his feet the spin or barge reaches into a body it passes, and the barge's extra pace.
 const ERA_DODGE_REACH := 6.0
 const BARGE_PACE := 1.2
@@ -198,11 +195,12 @@ func swing_push(push: float, from_era: bool) -> float:
 	return push * run.stats.swing_push_mult
 
 
-# White for old Harold or an era with its own art; until then, old Harold's sprite warmed or cooled.
+# White for old Harold or an era with its own art; until then, old Harold's sprite in that era's own tint
+# (Eras.tint), so playtests can tell the four apart.
 func _era_tint() -> Color:
 	if _era.is_empty() or SpriteVisual.has_anim(Eras.art_id(_era), "idle"):
 		return Color.WHITE
-	return FOOTBALL_TINT if _era == Eras.FOOTBALL else BUS_TINT
+	return Eras.tint(_era)
 
 
 # An era move landing on an enemy, with the stat items (damage, wounded and boss multipliers) as a swing
@@ -895,7 +893,7 @@ func start_dodge(direction: Vector2) -> bool:
 		return false
 	# Velcro Shoes give a second dodge, so the count is read at every start.
 	_dodge.charges = run.stats.dodge_charges
-	if not _dodge.try_start(run.stats.dodge_cooldown, DodgeTimer.DURATION * run.stats.dodge_length):
+	if not _dodge.try_start(run.stats.dodge_cooldown, DodgeTimer.DURATION * run.stats.dodge_length * (_era_moves.dodge_length if _era_moves != null else 1.0)):
 		return false
 	_dodge_direction = direction
 	_close_call_spent = false

@@ -501,7 +501,7 @@ func _play_era(_view: RoomView, tag: String) -> void:
 	await _wait(0.12)
 	var thrown: Node2D = null
 	for child in scene.get_children():
-		if child is EraBall or child is TicketLine:
+		if child is EraBall or child is TicketLine or child is EraShot:
 			thrown = child
 	await _shot("07%s_%s_throw" % [tag, era], thrown if thrown != null else player)
 	await _wait(0.45)

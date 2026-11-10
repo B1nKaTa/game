@@ -203,7 +203,7 @@ func test_set_era_changes_his_moves_but_not_the_run() -> void:
 		assert_eq(player._visual.art_id(), Eras.art_id(Eras.BUS), "his own 1975 art")
 		assert_eq(player._visual._tint, Color.WHITE)
 	else:
-		assert_eq(player._visual._tint, Player.BUS_TINT, "no era art yet: old Harold, tinted")
+		assert_eq(player._visual._tint, Eras.tint(Eras.BUS), "no era art yet: old Harold, tinted")
 	player.set_era("")
 	assert_eq(player.era(), "")
 	assert_true(player._era_moves == null)
@@ -273,3 +273,75 @@ func test_a_ball_he_cannot_reach_goes_by_itself() -> void:
 	var physics := source.substr(source.find("func _physics_process("), 400)
 	assert_true(physics.contains("if rest_tick(delta) or"), "it frees itself when rest_tick says so")
 	ball.free()
+
+
+func test_the_new_eras_play_unlike_the_old_ones() -> void:
+	var spin := EraMoves.for_era(Eras.DANCE)
+	var spade := EraMoves.for_era(Eras.ALLOTMENT)
+	var kick := EraMoves.for_era(Eras.FOOTBALL)
+	var punch := EraMoves.for_era(Eras.BUS)
+	assert_near(spin.angle, 180.0, "the spin hits all round")
+	assert_true(spin.reach < kick.reach, "close round him")
+	assert_true(spin.combo_damage[0] < kick.combo_damage[-1], "weaker a hit than the kick combo's finisher")
+	assert_true(spin.lock_time < CaneCombo.LOCK_TIME, "quick")
+	assert_true(spade.reach > Player.ATTACK_REACH * 1.4 and spade.reach > punch.reach, "reaches well past the cane")
+	assert_true(spade.angle < 20.0, "a thrust, not a sweep")
+	assert_true(spade.lock_time > punch.lock_time, "slow")
+	assert_true(spade.combo_damage[0] > punch.combo_damage[0], "the heaviest hit")
+	assert_near(spin.dodge_length, 1.3, "the slide runs long")
+	assert_true(spade.dodge_push > Player.ATTACK_PUSH, "the handle shove pushes")
+
+
+func test_the_new_eras_sit_in_the_damage_bands() -> void:
+	var old := _old_combo() / (CaneCombo.LOCK_TIME * CaneCombo.DAMAGE.size())
+	var spin := EraMoves.for_era(Eras.DANCE)
+	var spin_dps := _combo_total(spin) / (spin.lock_time * spin.combo_damage.size())
+	assert_true(spin_dps >= old and spin_dps <= old * 1.2, "spin at %.1f vs %.1f" % [spin_dps, old])
+	var spade := EraMoves.for_era(Eras.ALLOTMENT)
+	var spade_dps := _combo_total(spade) / (spade.lock_time * spade.combo_damage.size())
+	assert_true(spade_dps < old and spade_dps >= old * 0.75, "spade at %.1f vs %.1f" % [spade_dps, old])
+	assert_true(spade.combo_damage[0] > float(CaneCombo.DAMAGE.max()))
+
+
+func test_the_record_and_the_marrow_wait_their_cooldowns() -> void:
+	for id in [Eras.DANCE, Eras.ALLOTMENT]:
+		var moves := EraMoves.for_era(id)
+		assert_true(moves.throw_ready())
+		var shot := moves.make_throw(Vector2.RIGHT)
+		assert_true(shot is EraShot, id)
+		assert_false(moves.throw_ready())
+		moves.tick(moves.throw_cooldown - 0.1)
+		assert_false(moves.throw_ready())
+		moves.tick(0.2)
+		assert_true(moves.throw_ready())
+		shot.free()
+	assert_near(EraMoves.for_era(Eras.DANCE).throw_cooldown, EraMoves.DISC_COOLDOWN)
+	assert_near(EraMoves.for_era(Eras.ALLOTMENT).throw_cooldown, EraMoves.MARROW_COOLDOWN)
+
+
+func test_the_record_passes_through_and_the_marrow_splashes() -> void:
+	var disc := EraShot.for_disc()
+	assert_true(disc.pierce and disc.splash_radius == 0.0)
+	var marrow := EraShot.for_marrow()
+	assert_false(marrow.pierce)
+	assert_near(marrow.splash_radius, 24.0)
+	var bodies := [Rect2(100, 0, 10, 10), Rect2(118, 0, 10, 10), Rect2(200, 0, 10, 10)]
+	assert_eq(EraShot.splash_targets(Vector2(105, 5), bodies, marrow.splash_radius), [0, 1], "the two within 24 px")
+	disc.free()
+	marrow.free()
+
+
+func test_an_era_without_art_shows_old_harold_tinted() -> void:
+	for id in Eras.STARTING:
+		if not SpriteVisual.has_anim(Eras.art_id(id), "idle"):
+			assert_true(Eras.tint(id) != Color.WHITE, "%s is told apart by a tint" % id)
+	assert_eq(Eras.tint(""), Color.WHITE)
+
+
+func test_the_new_shots_are_cleared_with_the_room_and_hit_enemies_only() -> void:
+	var shot := EraShot.for_disc()
+	assert_true(RoomView.is_passing_effect(shot))
+	shot.free()
+	var source := FileAccess.get_file_as_string("res://scripts/actors/era_shot.gd")
+	assert_true(source.contains("get_nodes_in_group(\"enemies\")"))
+	assert_false(source.contains("take_hit"), "never the player")

@@ -73,11 +73,12 @@ func _process(_d: float) -> bool:
 var _results: Array = []
 var _config := ""
 var _path := 0
-# Version 11: the case flags, and which self the next fight room is played as (0 old, 1 and 2 the eras).
+# Version 11: the case flags, and which self the next fight room is played as (0 old, then each era in
+# ERA_TURNS: football 1960, dance hall 1962, bus 1975, allotment 1988).
 var _eras := false
 var _obey := false
 var _era_turn := 0
-const ERA_TURNS: Array[String] = ["", Eras.FOOTBALL, Eras.BUS]
+const ERA_TURNS: Array[String] = ["", Eras.FOOTBALL, Eras.DANCE, Eras.BUS, Eras.ALLOTMENT]
 # How near the door (his middle to the door, as Door.is_within measures) he stands to press flashback.
 const REEL_DOOR_GAP := 40.0
 
@@ -195,11 +196,19 @@ func _rules_summary() -> String:
 		return out
 	var era_parts: Array[String] = []
 	var room_parts: Array[String] = []
-	for era in [Eras.FOOTBALL, Eras.BUS]:
+	for era in Eras.STARTING:
 		era_parts.append("%s:%s" % [era, _dps(dealt, fought, era)])
 		room_parts.append("%s:%d/%.0fs/%.2fsw" % [era, rooms.get(era, 0), fought.get(era, 0.0), swung.get(era, 0) / maxf(fought.get(era, 0.0), 0.001)])
 	room_parts.push_front("old:%d/%.0fs/%.2fsw" % [rooms.get("", 0), fought.get("", 0.0), swung.get("", 0) / maxf(fought.get("", 0.0), 0.001)])
 	return out + " old_dps=%s era_dps=%s dps_rooms=%s reels_readied=%d ready_fallback=%d" % [_dps(dealt, fought, ""), ",".join(era_parts), ",".join(room_parts), readied, fallback]
+
+
+# One entry per self (old Harold as "", then each era) holding the same starting value.
+func _per_self(start: Variant) -> Dictionary:
+	var out := {"": start}
+	for era in Eras.STARTING:
+		out[era] = start
+	return out
 
 
 func _dps(dealt: Dictionary, fought: Dictionary, era: String) -> String:
@@ -248,7 +257,7 @@ func _run(progress) -> Dictionary:
 	var pension_before: int = progress.data.pension
 	var map: FloorMap = scene.debug_map()
 	var r := {"reached_mini": false, "beat_mini": false, "reached_boss": false, "beat_boss": false, "income": 0, "time": 0.0, "rooms": 0, "stuck": 0, "hits": 0, "boss_ttk": 0.0, "mini_ttk": 0.0, "boss_hits": 0, "mini_hits": 0, "death_in": ""}
-	r.merge({"rules_seen": 0, "rules_broken": 0, "rules_kept": 0, "broken_by": {}, "auditors": 0, "reels_taken": 0, "reels_readied": 0, "ready_fallback": 0, "dealt": {"": 0.0, Eras.FOOTBALL: 0.0, Eras.BUS: 0.0}, "fought": {"": 0.0, Eras.FOOTBALL: 0.0, Eras.BUS: 0.0}, "dps_rooms": {"": 0, Eras.FOOTBALL: 0, Eras.BUS: 0}, "swings": {"": 0, Eras.FOOTBALL: 0, Eras.BUS: 0}})
+	r.merge({"rules_seen": 0, "rules_broken": 0, "rules_kept": 0, "broken_by": {}, "auditors": 0, "reels_taken": 0, "reels_readied": 0, "ready_fallback": 0, "dealt": _per_self(0.0), "fought": _per_self(0.0), "dps_rooms": _per_self(0), "swings": _per_self(0)})
 	scene.player.hurt.connect(func(): r["hits"] += 1; _attribute(scene); _trace(bot))
 	var rules: RuleKeeper = scene.debug_rules()
 	bot.rules = rules

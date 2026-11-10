@@ -1,15 +1,41 @@
 extends TestCase
 
 
-func test_the_two_prototype_eras_start_unlocked() -> void:
-	assert_eq(Eras.STARTING, [Eras.FOOTBALL, Eras.BUS] as Array[String])
+func test_four_eras_start_unlocked() -> void:
+	assert_eq(Eras.STARTING, [Eras.FOOTBALL, Eras.DANCE, Eras.BUS, Eras.ALLOTMENT] as Array[String])
 	assert_eq(ProgressData.new().eras_unlocked, Eras.STARTING)
 	assert_eq(Eras.title(Eras.FOOTBALL), "Football on the Rec, 1960")
+	assert_eq(Eras.title(Eras.DANCE), "The Dance Hall, 1962")
 	assert_eq(Eras.title(Eras.BUS), "The No. 12 Bus, 1975")
+	assert_eq(Eras.title(Eras.ALLOTMENT), "The Allotment, 1988")
 	assert_near(Eras.speed_mult(Eras.FOOTBALL), 1.25)
+	assert_near(Eras.speed_mult(Eras.DANCE), 1.1)
 	assert_near(Eras.speed_mult(Eras.BUS), 1.0)
+	assert_near(Eras.speed_mult(Eras.ALLOTMENT), 1.0)
 	assert_near(Eras.speed_mult(""), 1.0)
-	assert_true(Eras.speed_mult(Eras.FOOTBALL) > Eras.speed_mult(Eras.BUS), "the footballer is the quicker era")
+
+
+# Born 1942: every era's age is its year minus that.
+func test_his_ages_agree_with_one_birth_year() -> void:
+	assert_eq(Eras.BIRTH_YEAR, 1942)
+	assert_eq(Eras.age(Eras.FOOTBALL), 18)
+	assert_eq(Eras.age(Eras.DANCE), 20)
+	assert_eq(Eras.age(Eras.BUS), 33)
+	assert_eq(Eras.age(Eras.ALLOTMENT), 46)
+
+
+# The starting eras are always held; other saved ids are kept only if this build knows them.
+func test_an_older_save_gains_the_new_eras() -> void:
+	var base := ProgressData.new().to_dict()
+	var raw := base.duplicate(true)
+	raw["eras_unlocked"] = [Eras.FOOTBALL, Eras.BUS]
+	assert_eq(ProgressData.from_dict(raw).eras_unlocked, Eras.STARTING)
+	raw["eras_unlocked"] = [Eras.BUS, "moon_landing_1969"]
+	assert_eq(ProgressData.from_dict(raw).eras_unlocked, Eras.STARTING, "unknown ids drop")
+	raw["eras_unlocked"] = "not a list"
+	assert_eq(ProgressData.from_dict(raw).eras_unlocked, Eras.STARTING)
+	base.erase("eras_unlocked")
+	assert_eq(ProgressData.from_dict(base).eras_unlocked, Eras.STARTING)
 
 
 func test_a_reel_picks_an_unlocked_era_by_the_seed() -> void:
@@ -57,15 +83,13 @@ func test_unknown_saved_eras_are_dropped() -> void:
 	var base := {"version": ProgressData.VERSION, "pension": 0, "upgrades": {}, "opening_seen": false}
 	var raw := base.duplicate()
 	raw["eras_unlocked"] = [Eras.BUS, "moon_landing_1969"]
-	assert_eq(ProgressData.from_dict(raw).eras_unlocked, [Eras.BUS] as Array[String])
-	assert_eq(ProgressData.from_dict(base).eras_unlocked, Eras.STARTING, "an older save starts with both")
+	assert_eq(ProgressData.from_dict(raw).eras_unlocked, Eras.STARTING, "the starting eras are always held")
+	assert_eq(ProgressData.from_dict(base).eras_unlocked, Eras.STARTING, "an older save starts with all four")
 	raw["eras_unlocked"] = ["moon_landing_1969"]
 	assert_eq(ProgressData.from_dict(raw).eras_unlocked, Eras.STARTING, "nothing known left falls back")
-	raw["eras_unlocked"] = "not a list"
-	assert_eq(ProgressData.from_dict(raw).eras_unlocked, Eras.STARTING)
 	var data := ProgressData.new()
 	data.eras_unlocked = [Eras.BUS] as Array[String]
-	assert_eq(ProgressData.from_dict(data.to_dict()).eras_unlocked, [Eras.BUS] as Array[String])
+	assert_eq(ProgressData.from_dict(data.to_dict()).eras_unlocked, Eras.STARTING)
 
 
 func test_the_flashback_action_is_f_and_pad_y() -> void:
