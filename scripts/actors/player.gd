@@ -481,6 +481,10 @@ func _charge_sounds() -> void:
 		Sfx.play("charge_ready")
 
 
+func aim_point() -> Vector2:
+	return _aim_point()
+
+
 func _aim_point() -> Vector2:
 	if aim_source.is_valid():
 		return aim_source.call()

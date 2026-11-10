@@ -478,6 +478,8 @@ func clear_passing_effects() -> void:
 		var is_flying_coin: bool = child is Pickup and child.is_flying()
 		if child is Thermos and child.is_fuse_burning():
 			_run.add_bomb()
+		if child is ThrownThermos:
+			_run.add_bomb()
 		if is_passing_effect(child) or is_flying_coin:
 			child.queue_free()
 
@@ -517,14 +519,35 @@ static func is_passing_effect(child: Node) -> bool:
 
 
 func place_bomb(at: Vector2) -> void:
+	# The Overarm Bowler throws it; the full loop places and times its Thermoses as they are.
+	if _run.stats.throws_thermos and not _run.effects.ctx.counting_exact:
+		var wanted := ThrownThermos.landing(at, _player.aim_point())
+		var query := PhysicsRayQueryParameters2D.create(at, wanted, 1)
+		var wall := get_world_2d().direct_space_state.intersect_ray(query)
+		var thrown := ThrownThermos.new()
+		thrown.from = at
+		thrown.to = wall["position"] - (wanted - at).normalized() * 6.0 if not wall.is_empty() else wanted
+		thrown.room = self
+		add_child(thrown)
+		return
+	var fuse := Thermos.FUSE_TIME
+	if not _run.effects.ctx.counting_exact:
+		fuse += _run.stats.fuse_bonus
+	_place_thermos(at, fuse)
+
+
+# A thrown Thermos has landed: it bursts there, after the Pressure Cooker's extra fuse if he has one.
+func land_thrown_bomb(at: Vector2) -> void:
+	_place_thermos(at, maxf(_run.stats.fuse_bonus, 0.01))
+
+
+func _place_thermos(at: Vector2, fuse: float) -> void:
 	var thermos := Thermos.new()
 	thermos.setup(_player)
 	thermos.level = _run.stats.thermos_level
 	thermos.damage_mult = _run.stats.thermos_damage_mult
 	thermos.radius = _run.stats.blast_radius
-	# The Pressure Cooker's longer fuse. The full loop times its Thermoses by the plain fuse.
-	if not _run.effects.ctx.counting_exact:
-		thermos.fuse_time = Thermos.FUSE_TIME + _run.stats.fuse_bonus
+	thermos.fuse_time = fuse
 	thermos.position = at
 	thermos.exploded.connect(bomb_exploded.emit)
 	thermos.exploded.connect(_run.effects.bomb.bind(at))

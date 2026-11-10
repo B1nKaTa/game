@@ -78,13 +78,17 @@ func _process(delta: float) -> void:
 
 func _explode() -> void:
 	_blast_left = BLAST_SHOW_TIME
+	var hits := 0
 	for enemy: Enemy in get_tree().get_nodes_in_group("enemies"):
 		if not enemy.is_queued_for_deletion() and in_blast(global_position, enemy.body_rect(), radius):
+			hits += 1
 			var push := global_position.direction_to(enemy.global_position) * PUSH
 			if is_instance_valid(_player) and _player.run != null:
 				_player.run.effects.land(enemy, blast_damage(), RunEffects.THERMOS, push)
 			else:
 				enemy.take_damage(blast_damage(), push)
+	if is_instance_valid(_player) and _player.run != null:
+		_player.run.effects.blast_hits(global_position, hits)
 	BreakableBlock.blame_harold = true
 	BreakableBlock.smash(get_tree(), global_position, radius, BreakableBlock.SOURCE_BLAST)
 	ReinforcedRock.blast(get_tree(), global_position, radius, level)
