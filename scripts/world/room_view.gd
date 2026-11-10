@@ -280,6 +280,9 @@ func _tick_ally(delta: float) -> bool:
 
 
 func _spawn_ally() -> void:
+	# The room may have cleared within his wait: he does not walk into a cleared room.
+	if _finished:
+		return
 	var ally := AllyAuditor.make(_run.effects.ctx)
 	add_child(ally)
 	ally.global_position = summon_spot(_audit_spot_for(_ally_door))

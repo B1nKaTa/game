@@ -185,3 +185,59 @@ func test_the_scene_and_room_wire_the_auditor_items() -> void:
 	assert_true(room.contains("_run.effects.auditor(auditor)"))
 	var keeper := FileAccess.get_file_as_string("res://scripts/world/rule_keeper.gd")
 	assert_true(keeper.contains("RulePicker.rule_rooms(map, depth, seed_text, _run.stats.extra_rule_rooms if _run != null else 0)"))
+
+
+func test_a_flashback_end_is_told_once_whether_a_room_or_the_floor_ends_it() -> void:
+	var run := _run_with_events()
+	var keeper := RuleKeeper.new()
+	keeper._run = run
+	var view := RoomView.new()
+	keeper._start_era(Eras.FOOTBALL, 4)
+	keeper._on_room_finished(view, 4)
+	assert_eq(run.era, "")
+	keeper.set_floor(null, null)
+	var ends: Array = run.effects.effect_of("events").events.filter(func(e): return e == RunEffects.EVENT_FLASHBACK_END)
+	assert_eq(ends.size(), 1, "a room's end, then a floor change with no era: once")
+	keeper._start_era(Eras.BUS, 5)
+	keeper.set_floor(null, null)
+	assert_eq(run.era, "")
+	ends = run.effects.effect_of("events").events.filter(func(e): return e == RunEffects.EVENT_FLASHBACK_END)
+	assert_eq(ends.size(), 2, "the floor ending an era tells the items too")
+	view.free()
+	keeper.free()
+
+
+func test_the_ally_auditor_does_not_walk_into_a_cleared_room() -> void:
+	var view := RoomView.new()
+	view._finished = true
+	view._spawn_ally()
+	assert_eq(view.get_child_count(), 0)
+	view.free()
+
+
+func test_the_let_off_and_the_ally_are_not_asked_while_the_loop_counts() -> void:
+	var run := _run_with_events(1)
+	var item := _stat("sider")
+	var sider := EventEffect.new()
+	sider.sides = true
+	item.effect = sider
+	run.add_item(item)
+	run.effects.ctx.counting_exact = true
+	assert_false(run.effects.excuses_rule_break())
+	assert_false(run.effects.sides_with_you())
+	run.effects.ctx.counting_exact = false
+	assert_true(run.effects.excuses_rule_break(), "not spent while counting")
+	assert_true(run.effects.sides_with_you())
+
+
+func test_a_rules_recipe_is_not_offered_where_no_rules_are_posted() -> void:
+	var run := ItemKit.new().make_run()
+	var badge := _stat("badge_recipe")
+	badge.build = "rules"
+	badge.craft_price = 10
+	var all: Array[ItemDef] = [badge]
+	var rng := RandomNumberGenerator.new()
+	run.floor_depth = 2
+	assert_true(RoomRules.pick_recipe(all, {}, run, rng) == null)
+	run.floor_depth = 1
+	assert_eq(RoomRules.pick_recipe(all, {}, run, rng), badge)
