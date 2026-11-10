@@ -74,7 +74,7 @@ The path is built in `scripts/core/case_file_data.gd`:
 They are drawn in `scripts/ui/case_file.gd:615-617` (CaseCell):
 - `draw_texture_rect(load(path), rect.grow(-2), false)` draws the icon stretched into **26x26** inside a 30x30 cell, without keeping the aspect ratio.
 - A known item with no icon shows a colour chip and its initials.
-- The Bestiary has 71 enemies (all 72 defs except `training_dummy`). There are 100 items.
+- The Bestiary has 71 enemies (all 72 defs except `training_dummy`). There are 107 items.
 
 ### 1.4 Rooms: floors, walls, decor and props
 
@@ -740,11 +740,13 @@ The mimic's sleeping look is the locked chest.
 
 ### 2.12 Item icons (on hold, not counted)
 
-There are 100 items in `data/items`. Their art would go in three places:
+There are 107 items in `data/items`. Their art would go in three places:
 
 1. `res://art/icons/items/<id>.png`. The case file has this hook already; the icon is drawn at 26x26.
 2. Item pickups in rooms, shop wares, boss and urn choices (`pickup.gd`). Today these are a disc in the rarity colour, and there is no hook (H7).
 3. The HUD item row, which is text today.
+
+Hooked (new item list): `Pickup.icon_id` draws the icon at 20x20 for room items and item wares; the HUD row (`ItemRow`) draws 12x12 icons; the active slot draws 14x14. All read `ItemIcons.texture`.
 
 One PX per item at 32 px, scaled down for the HUD, would be about 100 gens plus rerolls.
 

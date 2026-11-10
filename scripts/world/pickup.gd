@@ -10,6 +10,7 @@ const FLY_START_SPEED := 120.0
 const FLY_ACCELERATION := 700.0
 const FLY_MAX_SPEED := 420.0
 const PROMPT_TEXT := "Take"
+const ICON_SIZE := 20.0
 # Bone white, so the skull stands out from the cursed name's purple on any floor.
 const SKULL_COLOR := Color("ece9e0")
 
@@ -31,6 +32,8 @@ var carry_amount := 1
 # Its picture in res://art/props/ (PropArt), such as pickup_coin, or "" to draw the coloured disc. The
 # name label is still drawn in code over it.
 var art_id := ""
+# An item's id, whose icon (ItemIcons) is drawn instead of the disc once its PNG exists. "" for none.
+var icon_id := ""
 var _label := ""
 var _color := Color.WHITE
 var _player: Node2D
@@ -193,7 +196,15 @@ static func draw_skull(canvas: CanvasItem, at: Vector2, color: Color) -> void:
 
 # A plain coloured disc. Pickups with a shape of their own, such as chests, draw that instead.
 
+func draws_icon() -> bool:
+	return ItemIcons.texture(icon_id) != null
+
+
 func _draw_body() -> void:
+	var icon := ItemIcons.texture(icon_id)
+	if icon != null:
+		draw_texture_rect(icon, Rect2(Vector2(-ICON_SIZE, -ICON_SIZE) / 2.0, Vector2(ICON_SIZE, ICON_SIZE)), false)
+		return
 	var art := PropArt.texture(art_id) if not art_id.is_empty() else null
 	if art != null:
 		PropArt.draw(self, art)

@@ -50,6 +50,7 @@ const BANNER_COLOR := Color("ffd24a")
 var _run: RunState
 var _status: Label
 var _items: Label
+var _item_row: ItemRow
 var _case_hint: Label
 var _case_label := ""
 var _slips: Label
@@ -114,6 +115,19 @@ static func items_text(names: PackedStringArray) -> String:
 	return "Items: %d   %s" % [names.size(), ", ".join(newest)]
 
 
+# The newest few items, newest first, with each one's icon or null.
+static func item_row_entries(items: Array[ItemDef]) -> Array[Dictionary]:
+	var entries: Array[Dictionary] = []
+	for i in mini(ITEMS_SHOWN, items.size()):
+		var item := items[items.size() - 1 - i]
+		entries.append({"name": item.display_name, "icon": ItemIcons.texture(item.id)})
+	return entries
+
+
+func item_row_uses_icons() -> bool:
+	return _item_row != null and _item_row.visible
+
+
 static func case_hint_text(key_label: String) -> String:
 	return "%s: %s" % [key_label, CASE_FILE_HINT]
 
@@ -163,6 +177,9 @@ func _ready() -> void:
 	_items.clip_text = true
 	_items.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_items.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_item_row = ItemRow.new()
+	_item_row.visible = false
+	add_child(_item_row)
 	_case_hint = _add_label(ITEM_ROW_AT, ITEM_ROW_FONT)
 	_case_hint.add_theme_color_override("font_color", HudStyle.DIM_TEXT)
 	_case_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -386,12 +403,20 @@ func _refresh() -> void:
 		for item in _run.items:
 			names.append(item.display_name)
 		_items.text = items_text(names)
+		var entries := item_row_entries(_run.items)
+		var with_icons := entries.any(func(entry): return entry["icon"] != null)
+		_item_row.visible = with_icons
+		_items.visible = not with_icons
+		if with_icons:
+			_item_row.show_pieces(ItemRow.pieces(_run.items.size(), entries))
 		_case_label = KeyBindings.prompt_label("case_file")
 		_case_hint.text = case_hint_text(_case_label)
 		var font := HudStyle.font()
 		var rects := item_row_rects(font.get_string_size(_case_hint.text, HORIZONTAL_ALIGNMENT_LEFT, -1, ITEM_ROW_FONT).x + 6.0)
 		_items.position = rects[0].position
 		_items.size = rects[0].size
+		_item_row.position = rects[0].position
+		_item_row.size = rects[0].size
 		_case_hint.position = rects[1].position
 		_case_hint.size = rects[1].size
 	_status.text = text

@@ -77,6 +77,16 @@ static func step_tab(tab: int, step: int) -> int:
 	return posmod(tab + step, tab_count())
 
 
+# A cell's picture: an item's icon through ItemIcons, an enemy's from its icon path, or null.
+static func cell_texture(cell: Dictionary) -> Texture2D:
+	if cell.get("item") != null:
+		return ItemIcons.texture(str(cell.get("id", "")))
+	var icon_path := str(cell.get("icon", ""))
+	if not icon_path.is_empty() and ResourceLoader.exists(icon_path):
+		return load(icon_path) as Texture2D
+	return null
+
+
 func current_tab() -> String:
 	return CaseFileData.TABS[_tab]
 
@@ -612,9 +622,9 @@ class CaseCell extends Button:
 		var known: bool = cell.get("known", false)
 		var font := ThemeDB.fallback_font
 		draw_rect(rect, Color(0.85, 0.79, 0.65))
-		var icon_path := str(cell.get("icon", ""))
-		if known and ResourceLoader.exists(icon_path):
-			draw_texture_rect(load(icon_path), rect.grow(-2), false)
+		var picture := CaseFile.cell_texture(cell)
+		if known and picture != null:
+			draw_texture_rect(picture, rect.grow(-2), false)
 		elif known:
 			var chip: Color = cell.get("color", Color.WHITE)
 			draw_rect(rect.grow(-3), chip)

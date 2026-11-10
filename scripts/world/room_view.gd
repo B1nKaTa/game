@@ -1567,6 +1567,7 @@ func _add_item_pickup(at: Vector2, item: ItemDef) -> Pickup:
 func _mark_item(pickup: Pickup, item: ItemDef) -> void:
 	pickup.label_color = ItemRarity.name_color(item)
 	pickup.skull = item.cursed
+	pickup.icon_id = item.id
 
 
 # Which rarity table this room's item rewards roll on: a vault's, a treasure room's, else an item

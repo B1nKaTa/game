@@ -20,7 +20,7 @@ const TAB_NAMES := {
 	TAB_LOG: "Log",
 }
 const NO_CASE := "No active case. Harold is between runs."
-const ITEM_ICON_DIR := "res://art/icons/items/"
+const ITEM_ICON_DIR := ItemIcons.DIR
 const ENEMY_ICON_DIR := "res://art/icons/enemies/"
 const UNKNOWN_NAME := "???"
 const UNKNOWN_COLOR := Color(0.16, 0.13, 0.11)
@@ -88,7 +88,7 @@ static func item_cell(item: ItemDef, known: bool, count: int) -> Dictionary:
 		"color": ItemRarity.name_color(item) if known else UNKNOWN_COLOR,
 		"known": known,
 		"count": count,
-		"icon": icon_path(ITEM_ICON_DIR, item.id),
+		"icon": ItemIcons.path(item.id),
 		"item": item,
 	}
 
