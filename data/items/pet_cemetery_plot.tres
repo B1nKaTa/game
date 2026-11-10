@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/pet_cemetery_plot.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "pet_cemetery_plot"
+display_name = "Pet Cemetery Plot"
+description = "Every pet you have makes all your hits 8% harder."
+rarity = "legendary"
+tags = PackedStringArray("pets")
+build = "pets"
+kind = "passive"
+effect = SubResource("Effect")

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/budgie.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+look = "budgie"
+color = Color(0.55, 0.85, 0.3, 1)
+
+[resource]
+script = ExtResource("1")
+id = "budgie"
+display_name = "Joey the Budgie"
+description = "A budgie circles you and blocks a shot every 3 seconds."
+rarity = "common"
+tags = PackedStringArray("pets")
+build = "pets"
+kind = "pet"
+effect = SubResource("Effect")

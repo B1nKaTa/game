@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/pet_rock.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+look = "pet_rock"
+color = Color(0.55, 0.55, 0.55, 1)
+
+[resource]
+script = ExtResource("1")
+id = "pet_rock"
+display_name = "Pet Rock"
+description = "Counts as a pet. Pet items make it bigger, and big enough it blocks shots."
+rarity = "common"
+tags = PackedStringArray("pets")
+build = "pets"
+kind = "pet"
+effect = SubResource("Effect")
