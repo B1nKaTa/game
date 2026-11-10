@@ -637,6 +637,7 @@ func _close_panel() -> void:
 	_panel.queue_free()
 	_panel = null
 	_panel_closed_frame = Engine.get_process_frames()
+	player.note_panel_closed()
 	player.set_physics_process(true)
 	_dolores_has_her_word()
 	_refresh_poster_board()

@@ -807,6 +807,7 @@ func _close_card_table() -> void:
 	_card_panel_closed_frame = Engine.get_process_frames()
 	if is_over:
 		return
+	player.note_panel_closed()
 	player.set_physics_process(true)
 	_big_map.enabled = true
 	Input.mouse_mode = Settings.cursor_mode(true)

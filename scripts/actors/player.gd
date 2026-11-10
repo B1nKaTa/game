@@ -544,17 +544,28 @@ var _unpaused_at := -10
 # game on that same press. A press is only the active's when the game was not paused a frame ago.
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_UNPAUSED:
-		_unpaused_at = Engine.get_physics_frames()
+		note_panel_closed()
+
+
+# Stamps the guard. Called by the unpause above, and by any scene that closes a panel on a B press
+# without unpausing the tree (the card table, a Waiting Room panel: they only stop his physics).
+func note_panel_closed() -> void:
+	_unpaused_at = Engine.get_physics_frames()
 
 
 static func use_press_counts(now_frame: int, unpaused_frame: int) -> bool:
 	return now_frame - unpaused_frame > 1
 
 
+# Whether a use press seen now would count, for the guard and for tests that cannot press a key.
+func use_press_allowed() -> bool:
+	return use_press_counts(Engine.get_physics_frames(), _unpaused_at)
+
+
 func _handle_active() -> void:
 	if not InputMap.has_action("use_item") or not Input.is_action_just_pressed("use_item"):
 		return
-	if not use_press_counts(Engine.get_physics_frames(), _unpaused_at):
+	if not use_press_allowed():
 		return
 	var used := run.active
 	if run.use_active():

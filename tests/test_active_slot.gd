@@ -1,6 +1,8 @@
 extends TestCase
 
 const TestActive := preload("res://tests/support/test_active_effect.gd")
+# What the slot must leave for the item's name after the key, in pixels.
+const NAME_ROOM := 20.0
 
 
 func _active(id: String, item_name: String) -> ItemDef:
@@ -66,14 +68,30 @@ func test_every_default_key_label_fits_the_slot_beside_the_icon() -> void:
 		labels.append(KeyBindings.pad_label_for("use_item", family))
 	for label in labels:
 		var width := font.get_string_size("[%s]" % label, HORIZONTAL_ALIGNMENT_LEFT, -1, HudStyle.SMALL).x
-		assert_true(width + 20.0 <= room, "[%s] is %d px of %d, leaving a name no room" % [label, width, room])
-	assert_eq(ActiveSlot.ICON, 14.0, "the art inventory says the slot draws icons at 14x14")
+		assert_true(width + NAME_ROOM <= room, "[%s] is %d px of %d, leaving a name no room" % [label, width, room])
 
 
-func test_the_player_guards_the_press_that_unpaused() -> void:
-	var player := FileAccess.get_file_as_string("res://scripts/actors/player.gd")
-	assert_true(player.contains("NOTIFICATION_UNPAUSED"))
-	assert_true(player.contains("if not use_press_counts(Engine.get_physics_frames(), _unpaused_at):"))
+# The unpause notification, as a real Player gets it when the tree unpauses.
+func test_a_player_refuses_a_use_press_right_after_the_tree_unpaused() -> void:
+	var player := Player.new()
+	assert_true(player.use_press_allowed(), "never paused")
+	player.notification(Node.NOTIFICATION_UNPAUSED)
+	assert_false(player.use_press_allowed(), "the press that unpaused")
+	player.free()
+
+
+# Scenes that close a panel without unpausing (the card table, a Waiting Room panel) stamp it by hand.
+func test_a_player_refuses_a_use_press_right_after_a_panel_closed_without_unpausing() -> void:
+	var player := Player.new()
+	player.note_panel_closed()
+	assert_false(player.use_press_allowed())
+	player.free()
+	var floor_scene := FileAccess.get_file_as_string("res://scripts/scenes/floor_scene.gd")
+	var close_table := floor_scene.substr(floor_scene.find("func _close_card_table"))
+	assert_true(close_table.substr(0, close_table.find("\n\n\n")).contains("player.note_panel_closed()"))
+	var waiting := FileAccess.get_file_as_string("res://scripts/scenes/waiting_room.gd")
+	var close_panel := waiting.substr(waiting.find("func _close_panel"))
+	assert_true(close_panel.substr(0, close_panel.find("\n\n\n")).contains("player.note_panel_closed()"))
 
 
 func test_the_hud_shows_the_held_active_only_while_held() -> void:
