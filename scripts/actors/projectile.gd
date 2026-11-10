@@ -112,7 +112,7 @@ func _physics_process(delta: float) -> void:
 		return
 	global_position = next
 	# A pet, a sheet of paperwork or a walking frame in the way stops it here.
-	if ShotGuards.try_block(get_tree(), global_position):
+	if ShotGuards.try_block(get_tree(), global_position, _counting_pills()):
 		_land()
 		return
 	if global_position.distance_to(_target.global_position) <= HIT_RADIUS:
@@ -120,6 +120,12 @@ func _physics_process(delta: float) -> void:
 		if landed and is_dart() and _target.has_method("slow"):
 			_target.slow(slow_fraction, slow_time)
 		_land()
+
+
+# Whether the run he belongs to is in the full loop's pill-counting mode (a decoy has no run).
+func _counting_pills() -> bool:
+	var run: Variant = _target.get("run") if is_instance_valid(_target) else null
+	return run is RunState and run.effects.ctx.counting_pills
 
 
 # Every way a shot ends goes through here, so landed_at always comes once.

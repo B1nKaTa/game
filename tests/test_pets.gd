@@ -123,8 +123,46 @@ func test_a_guard_blocks_a_shot_in_reach_only_when_ready_and_spends() -> void:
 	guard.free()
 
 
+func test_no_guard_blocks_or_spends_while_pills_are_counted() -> void:
+	var guard := ShotGuard.new()
+	guard.radius = 10.0
+	var state := {"spent": 0}
+	guard.check = func() -> bool: return true
+	guard.spend = func() -> void: state["spent"] += 1
+	guard.global_position = Vector2(300, 300)
+	assert_true(ShotGuards.try_block_in([guard], Vector2(305, 300), false), "ready and in reach: blocked")
+	assert_eq(state["spent"], 1)
+	assert_false(ShotGuards.try_block_in([guard], Vector2(305, 300), true), "pills are being counted")
+	assert_eq(state["spent"], 1, "nothing spent while counting")
+	guard.free()
+
+
+func test_a_shot_reads_the_counting_switch_from_the_run_it_aims_at() -> void:
+	var kit := ItemKit.new()
+	var run := kit.make_run()
+	var target := PillTarget.new()
+	target.run = run
+	var shot := Projectile.new()
+	shot.setup(Vector2.RIGHT, 100.0, target, 1)
+	assert_false(shot._counting_pills())
+	run.effects.ctx.counting_pills = true
+	assert_true(shot._counting_pills())
+	shot.free()
+	target.free()
+	var decoy := Node2D.new()
+	var other := Projectile.new()
+	other.setup(Vector2.RIGHT, 100.0, decoy, 1)
+	assert_false(other._counting_pills(), "a decoy has no run")
+	other.free()
+	decoy.free()
+
+
+class PillTarget extends Node2D:
+	var run: RunState
+
+
 func test_projectiles_ask_the_guards_before_their_target() -> void:
 	var source := FileAccess.get_file_as_string("res://scripts/actors/projectile.gd")
-	var guard_at := source.find("ShotGuards.try_block(get_tree(), global_position)")
+	var guard_at := source.find("ShotGuards.try_block(get_tree(), global_position, _counting_pills())")
 	assert_true(guard_at > 0)
 	assert_true(guard_at < source.find("_target.take_hit("), "a guard stops the shot before it reaches him")
