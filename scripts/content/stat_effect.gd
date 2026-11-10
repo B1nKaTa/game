@@ -109,3 +109,23 @@ extends Resource
 @export var names_bosses: bool = false
 # Pixels the camera looks ahead of him, the way he aims (Telescope Cane).
 @export var look_ahead_bonus: float = 0.0
+# The new item list. How many more Thermoses the scaling items count past PlayerStats.SCALE_CAP.
+@export var thermos_scale_bonus: int = 0
+# More rule rooms on every floor, deeper floors too (By the Book), and more reels a kept rule drops.
+@export var extra_rule_rooms: int = 0
+@export var bonus_kept_reels: int = 0
+# More reels he may hold (Photo Album, Nostalgic), and more fight rooms a flashback lasts (Old Projector).
+@export var extra_reels: int = 0
+@export var extra_era_rooms: int = 0
+# Sets of dentures added to the most any item gives (Full Set).
+@export var bonus_teeth_sets: int = 0
+# Pets: their hits' share on top (Tin of Dog Treats, Animal Lover), their walk, and pets that come with no item.
+@export var pet_damage_bonus: float = 0.0
+@export var pet_speed_bonus: float = 0.0
+@export var extra_pets: int = 0
+# Whether every heal that restores a pill also heals half a pill (Hypochondriac).
+@export var half_heal_bonus: bool = false
+# Slips taken off what opening anything costs, never below one (Locksmith's Apron).
+@export var slip_cost_cut: int = 0
+# Whether the Thermos key throws instead of placing (Overarm Bowler).
+@export var throws_thermos: bool = false

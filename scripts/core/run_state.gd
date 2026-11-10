@@ -65,6 +65,16 @@ var held_reel := ""
 # The era he relives in this room (Eras), "" for old Harold. Never saved: a checkpoint resumes in a
 # cleared room, where no flashback runs.
 var era := ""
+# What the bank held when this run began, so the items that read "Pension carried" read only what this
+# run brought in (EffectContext.purse). -1 until known: a checkpoint from before it existed.
+var pension_at_start := 0
+# The depth of the floor or landing he is on, for the items offered only where rules are posted.
+var floor_depth := 0
+# This run's rules kept and broken, and flashbacks started, for the rules and memory items. The save's
+# lifetime counts (ProgressData.rules_kept) are separate.
+var rules_kept := 0
+var rules_broken := 0
+var flashbacks_played := 0
 var _won_visits := {}
 var _promised := {}
 var _offered_recipes := {}
@@ -320,6 +330,30 @@ func use_bomb() -> bool:
 	bombs -= 1
 	changed.emit()
 	return true
+
+
+func add_keys(count: int) -> void:
+	if count <= 0:
+		return
+	keys = mini(keys + count, MAX_CONSUMABLE)
+	changed.emit()
+
+
+func add_bombs(count: int) -> void:
+	if count <= 0:
+		return
+	bombs = mini(bombs + count, MAX_CONSUMABLE)
+	changed.emit()
+
+
+# What the items that scale per Thermos or Slip carried count: never more than PlayerStats.SCALE_CAP,
+# and for Thermoses the Flask Holster and the Tea Lady count a few more.
+func scaled_bombs() -> int:
+	return mini(bombs, PlayerStats.SCALE_CAP + stats.thermos_scale_bonus)
+
+
+func scaled_keys() -> int:
+	return mini(keys, PlayerStats.SCALE_CAP)
 
 
 # Whether a heal lying on the floor may be picked up now.

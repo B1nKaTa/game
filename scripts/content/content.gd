@@ -23,7 +23,21 @@ static func load_dir(path: String) -> Array:
 	return loaded
 
 
+# The pool: every shipped item but the retired ones.
 static func items() -> Array[ItemDef]:
+	return pool_of(all_items(), RetiredContent.RETIRED_ITEMS)
+
+
+static func pool_of(all: Array[ItemDef], retired: Array) -> Array[ItemDef]:
+	var list: Array[ItemDef] = []
+	for item in all:
+		if not retired.has(item.id):
+			list.append(item)
+	return list
+
+
+# Every item file, retired or not, for old tests and save migration.
+static func all_items() -> Array[ItemDef]:
 	var list: Array[ItemDef] = []
 	for resource in load_dir(ITEMS_DIR):
 		if resource is ItemDef:
@@ -37,7 +51,7 @@ static func combos() -> Array[ComboDef]:
 	if not DirAccess.dir_exists_absolute(COMBOS_DIR):
 		return list
 	for resource in load_dir(COMBOS_DIR):
-		if resource is ComboDef:
+		if resource is ComboDef and not RetiredContent.RETIRED_COMBOS.has(resource.id):
 			list.append(resource)
 	return list
 

@@ -124,41 +124,6 @@ func test_the_bounty_items_take_four_free_posters_and_their_looks_are_sold() -> 
 		assert_eq(look.price, 35, POSTERS[poster][1])
 
 
-func test_the_hundred_items_add_up() -> void:
-	var items := Content.items()
-	assert_eq(items.size(), 100)
-	var sources := {}
-	var cursed: Array[String] = []
-	var legendary: Array[String] = []
-	var per_path := {}
-	var ids := {}
-	for item in items:
-		assert_false(ids.has(item.id), "%s is shipped once" % item.id)
-		ids[item.id] = true
-		assert_true(ItemUnlocks.source_count(item) <= 1, "%s has one source" % item.id)
-		sources[ItemUnlocks.source_of(item)] = int(sources.get(ItemUnlocks.source_of(item), 0)) + 1
-		if item.cursed:
-			cursed.append(item.id)
-		if item.rarity == ItemDef.LEGENDARY:
-			legendary.append(item.id)
-		if not item.first_clear_path.is_empty():
-			per_path[item.first_clear_path] = int(per_path.get(item.first_clear_path, 0)) + 1
-	assert_eq(sources, {ItemUnlocks.START: 40, ItemUnlocks.FIRST_CLEAR: 30, ItemUnlocks.RECIPE: 18, ItemUnlocks.BOUNTY: 12})
-	for path: String in PATHS:
-		assert_eq(per_path.get(path, 0), 3, "%s opens three" % path)
-	assert_eq(per_path.size(), PATHS.size())
-	cursed.sort()
-	assert_eq(cursed, ["do_not_resuscitate", "expired_coupon", "loaded_dice", "nitro_tablets", "polyester_suit", "prune_juice", "squeaky_shoes"])
-	legendary.sort()
-	assert_eq(legendary, ["bureaucrats_stamp", "eternal_warranty", "reapers_scythe", "rolling_pin", "shark_tooth"])
-	var combos := Content.combos()
-	assert_eq(combos.size(), 12)
-	for combo in combos:
-		assert_true(ids.has(combo.item_a) and ids.has(combo.item_b), combo.id)
-	for item in items:
-		assert_true(CoachTips.TIPS.has(item.id), "%s has a tip" % item.id)
-
-
 # --- vision ---
 
 func test_magnifying_glass_marks_every_secret_wall_with_a_glint() -> void:

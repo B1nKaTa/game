@@ -39,7 +39,7 @@ func run_with(ids: Array) -> RunState:
 
 
 static func item(id: String) -> ItemDef:
-	for def in Content.items():
+	for def in Content.all_items():
 		if def.id == id:
 			return def
 	push_error("No shipped item %s" % id)
@@ -55,6 +55,7 @@ func wire(run: RunState) -> void:
 	ctx.on_slow_time = _on_slow
 	ctx.pay_pension = _on_pay
 	ctx.spend_pension = _on_spend
+	ctx.pension_balance = _on_balance
 	ctx.enemy_source = _enemy_list
 
 
@@ -110,6 +111,10 @@ func _on_slow(share: float, seconds: float) -> void:
 
 func _on_pay(amount: int) -> void:
 	paid += amount
+
+
+func _on_balance() -> int:
+	return pension
 
 
 func _on_spend(amount: int) -> bool:

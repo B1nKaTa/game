@@ -4,8 +4,14 @@ extends StatEffect
 const COMMON := "common"
 const RARE := "rare"
 const LEGENDARY := "legendary"
-# What tags may name. They group items for the combos and the Coach's tips.
-const TAGS := ["cane", "bite", "dodge", "defence", "money", "thermos", "vision", "room", "boss"]
+const KIND_PASSIVE := "passive"
+const KIND_PET := "pet"
+const KIND_ACTIVE := "active"
+# The builds of the new list. Sets count items by build; every new item's tags are [build].
+const BUILDS := ["thermos", "slip", "pension", "pets", "bite", "cane", "dodge", "pills", "risk", "rules", "memory", "any"]
+# What tags may name. They group items for the Coach's tips; the builds are tags too.
+const TAGS := ["cane", "bite", "dodge", "defence", "money", "thermos", "vision", "room", "boss",
+	"slip", "pension", "pets", "pills", "risk", "rules", "memory", "any"]
 
 @export var id: String = ""
 @export var display_name: String = ""
@@ -21,6 +27,12 @@ const TAGS := ["cane", "bite", "dodge", "defence", "money", "thermos", "vision",
 # A strong effect with a real drawback, which its description always names.
 @export var cursed: bool = false
 @export var tags: PackedStringArray = PackedStringArray()
+# The build it belongs to (BUILDS), and how it is held: a passive, a pet, or an active in the use slot.
+@export var build: String = "any"
+@export var kind: String = KIND_PASSIVE
+# An active's recharge: fight rooms cleared to fill it, or once a floor when charge_per_floor is set.
+@export var charge_rooms: int = 0
+@export var charge_per_floor: bool = false
 # What the item does at moments of play, if anything beyond its stats.
 @export var effect: ItemEffect
 
@@ -31,3 +43,17 @@ func needs_recipe() -> bool:
 
 func has_tag(tag: String) -> bool:
 	return tags.has(tag)
+
+
+func is_active() -> bool:
+	return kind == KIND_ACTIVE
+
+
+func is_pet() -> bool:
+	return kind == KIND_PET
+
+
+# Rules and memory passives only make sense on floors that post room rules (RunState.rules_posted). An
+# active of the rules build (the Megaphone) works anywhere.
+func needs_rules() -> bool:
+	return (build == "rules" or build == "memory") and kind != KIND_ACTIVE

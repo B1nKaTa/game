@@ -14,6 +14,8 @@ var feedback: CombatFeedback
 # scene. pay_pension takes an int; spend_pension takes an int and returns whether it was spent.
 var pay_pension := Callable()
 var spend_pension := Callable()
+# Reads the bank's Pension. Set by the scene; tests wire it to the kit.
+var pension_balance := Callable()
 # Listeners for tests and probes. Each gets the same arguments as the call it is named after.
 var on_notice := Callable()
 var on_fx := Callable()
@@ -95,6 +97,24 @@ func spend(amount: int) -> bool:
 	if spend_pension.is_valid():
 		return bool(spend_pension.call(amount))
 	return false
+
+
+# The Pension this run brought in and still has: the bank above what it held when the run began, never
+# below zero or above the bank. "Pension you carry" on an item means this.
+func purse() -> int:
+	var state := run()
+	if state == null or not pension_balance.is_valid():
+		return 0
+	var balance := maxi(int(pension_balance.call()), 0)
+	return clampi(balance - state.pension_at_start, 0, balance)
+
+
+func spend_from_purse(amount: int) -> bool:
+	if amount <= 0:
+		return true
+	if purse() < amount:
+		return false
+	return spend(amount)
 
 
 # Every living enemy in the room.

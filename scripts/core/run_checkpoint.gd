@@ -110,6 +110,11 @@ static func run_to_dict(run: RunState) -> Dictionary:
 		"promised": promised,
 		"offered": offered,
 		"held_reel": run.held_reel if not run.held_reel.is_empty() else run.era,
+		"pension_at_start": run.pension_at_start,
+		"floor_depth": run.floor_depth,
+		"rules_kept": run.rules_kept,
+		"rules_broken": run.rules_broken,
+		"flashbacks_played": run.flashbacks_played,
 	}
 
 
@@ -222,6 +227,11 @@ static func apply_run(run: RunState, raw: Dictionary, items: Array[ItemDef]) -> 
 	var reel := str(raw.get("held_reel", ""))
 	run.held_reel = reel if Eras.is_known(reel) else ""
 	run.restore_marks(raw.get("promised", []), raw.get("offered", []))
+	run.pension_at_start = int(raw.get("pension_at_start", -1))
+	run.floor_depth = maxi(int(raw.get("floor_depth", 0)), 0)
+	run.rules_kept = maxi(int(raw.get("rules_kept", 0)), 0)
+	run.rules_broken = maxi(int(raw.get("rules_broken", 0)), 0)
+	run.flashbacks_played = maxi(int(raw.get("flashbacks_played", 0)), 0)
 	run.changed.emit()
 
 

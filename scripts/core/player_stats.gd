@@ -26,6 +26,8 @@ const MIN_NOTICE_MULT := 0.25
 const MIN_HEAL_REACH := 0.25
 # The camera never looks further ahead of him than this, so he always stays well inside the view.
 const MAX_LOOK_AHEAD := 64.0
+# What the items that scale per Thermos or Slip carried count at most. Holding stays at RunState.MAX_CONSUMABLE.
+const SCALE_CAP := 20
 
 var max_pills: int = BASE_PILLS
 var move_speed: float = BASE_SPEED
@@ -107,6 +109,18 @@ var never_dark := false
 var shows_floor_plan := false
 var names_bosses := false
 var look_ahead := 0.0
+# The new item list's stats. See StatEffect.
+var thermos_scale_bonus := 0
+var extra_rule_rooms := 0
+var bonus_kept_reels := 0
+var extra_reels := 0
+var extra_era_rooms := 0
+var pet_damage_bonus := 0.0
+var pet_speed_bonus := 0.0
+var extra_pets := 0
+var half_heal_bonus := false
+var slip_cost_cut := 0
+var throws_thermos := false
 
 
 # choices maps a form id to its milestone option. A form at or past its milestone with no entry
@@ -171,6 +185,18 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 	var plan := false
 	var bosses_named := false
 	var look := 0.0
+	var scale_bonus := 0
+	var rule_rooms := 0
+	var kept_reels := 0
+	var reels := 0
+	var era_rooms := 0
+	var bonus_sets := 0
+	var pet_damage := 0.0
+	var pet_speed := 0.0
+	var pets := 0
+	var half_heal := false
+	var cost_cut := 0
+	var throws := false
 	var effects: Array = []
 	for upgrade in upgrades:
 		var level := int(levels.get(upgrade.id, 0))
@@ -221,6 +247,19 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 		coin_reach += effect.coin_reach_bonus * count
 		dark_light += effect.dark_light_bonus * count
 		look += effect.look_ahead_bonus * count
+		scale_bonus += effect.thermos_scale_bonus * count
+		rule_rooms += effect.extra_rule_rooms * count
+		kept_reels += effect.bonus_kept_reels * count
+		reels += effect.extra_reels * count
+		era_rooms += effect.extra_era_rooms * count
+		bonus_sets += effect.bonus_teeth_sets * count
+		pet_damage += effect.pet_damage_bonus * count
+		pet_speed += effect.pet_speed_bonus * count
+		pets += effect.extra_pets * count
+		cost_cut += effect.slip_cost_cut * count
+		if count > 0:
+			half_heal = half_heal or effect.half_heal_bonus
+			throws = throws or effect.throws_thermos
 		if count > 0 and effect.max_pills_cap > 0:
 			pill_cap = effect.max_pills_cap if pill_cap == 0 else mini(pill_cap, effect.max_pills_cap)
 		if count > 0:
@@ -293,7 +332,7 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 	stats.teeth_glue_time = glue
 	stats.teeth_boomerang = boomerang
 	stats.teeth_floor_bite = floor_bite
-	stats.teeth_sets = sets
+	stats.teeth_sets = sets + maxi(bonus_sets, 0)
 	stats.dodge_charges = 1 + maxi(charges, 0)
 	stats.charge_full_speed = full_charge
 	stats.notice_mult = maxf(1.0 + notice, MIN_NOTICE_MULT)
@@ -312,6 +351,17 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 	stats.shows_floor_plan = plan
 	stats.names_bosses = bosses_named
 	stats.look_ahead = clampf(look, 0.0, MAX_LOOK_AHEAD)
+	stats.thermos_scale_bonus = maxi(scale_bonus, 0)
+	stats.extra_rule_rooms = maxi(rule_rooms, 0)
+	stats.bonus_kept_reels = maxi(kept_reels, 0)
+	stats.extra_reels = maxi(reels, 0)
+	stats.extra_era_rooms = maxi(era_rooms, 0)
+	stats.pet_damage_bonus = maxf(pet_damage, 0.0)
+	stats.pet_speed_bonus = maxf(pet_speed, 0.0)
+	stats.extra_pets = maxi(pets, 0)
+	stats.half_heal_bonus = half_heal
+	stats.slip_cost_cut = maxi(cost_cut, 0)
+	stats.throws_thermos = throws
 	return stats
 
 

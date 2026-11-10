@@ -5,7 +5,7 @@ extends TestCase
 
 
 func _item(id: String) -> ItemDef:
-	for item in Content.items():
+	for item in Content.all_items():
 		if item.id == id:
 			return item
 	return null

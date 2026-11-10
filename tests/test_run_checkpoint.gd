@@ -112,7 +112,7 @@ func test_the_floor_scene_saves_and_restores_the_pension() -> void:
 
 
 func _item(id: String) -> ItemDef:
-	for item in Content.items():
+	for item in Content.all_items():
 		if item.id == id:
 			return item
 	return null
@@ -125,13 +125,13 @@ func _fresh_run() -> RunState:
 func test_a_run_round_trips() -> void:
 	var run := _fresh_run()
 	run.add_item(_item("bifocals"))
-	run.add_item(_item("alert_bracelet"))
+	run.add_item(_item("hospital_bracelet"))
 	run.keys = 4
 	run.bombs = 7
 	run.give_potion(Content.potion("swift_tea"))
 	run.cursed = true
 	run.health.hit(1)
-	run.promise(_item("dentures"))
+	run.promise(_item("spare_set"))
 	run.offer_recipe("bifocals")
 	run.perks = {"some_perk": true}
 	var raw := RunCheckpoint.run_to_dict(run)
@@ -142,14 +142,14 @@ func test_a_run_round_trips() -> void:
 	assert_eq(RunCheckpoint.run_to_dict(back), RunCheckpoint.run_to_dict(run))
 	assert_eq(back.items.size(), 2)
 	assert_eq(back.items[0].id, "bifocals", "items keep their order")
-	assert_eq(back.items[1].id, "alert_bracelet")
+	assert_eq(back.items[1].id, "hospital_bracelet")
 	assert_eq(back.health.pills, run.health.pills)
 	assert_eq(back.health.max_pills, run.health.max_pills)
 	assert_eq(back.keys, 4)
 	assert_eq(back.bombs, 7)
 	assert_eq(back.potion.id, "swift_tea")
 	assert_true(back.cursed)
-	assert_true(back.is_promised("dentures"))
+	assert_true(back.is_promised("spare_set"))
 	assert_true(back.was_recipe_offered("bifocals"))
 	assert_true(back.has_perk("some_perk"))
 	assert_eq(back.stats.max_pills, run.stats.max_pills, "stats are worked out from the items again")

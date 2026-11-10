@@ -178,6 +178,7 @@ func _start_run() -> void:
 	Progress.start_run()
 	_augustine_seen_before = Progress.data.bosses_beaten.has(EndingRules.AUGUSTINE)
 	_run = Progress.make_run()
+	_run.pension_at_start = Progress.data.pension
 	# Before the first room is built, so every enemy of a cursed run is spawned tougher.
 	_run.cursed = Progress.take_cursed_run()
 	_wire_item_pension()
@@ -201,6 +202,11 @@ func _start_run() -> void:
 func _wire_item_pension() -> void:
 	_run.effects.ctx.pay_pension = _on_pension_earned
 	_run.effects.ctx.spend_pension = Progress.spend
+	_run.effects.ctx.pension_balance = _bank_balance
+
+
+func _bank_balance() -> int:
+	return Progress.data.pension
 
 
 func _show_start_notes() -> void:
@@ -229,6 +235,7 @@ func _start_map() -> void:
 		_map = FloorMap.with_only_crossroads(load(CROSSROADS_LAYOUT))
 		_map_kind = MAP_START
 	# A landing or the first Crossroads posts no rules.
+	_run.floor_depth = _depth
 	_rules.plan_floor(FloorMap.new(), _depth, "")
 
 
@@ -354,6 +361,8 @@ func _resume_run(resume: Dictionary) -> void:
 	_run = Progress.make_run()
 	_wire_item_pension()
 	RunCheckpoint.apply_run(_run, resume.get("run", {}), Content.items())
+	if _run.pension_at_start < 0:
+		_run.pension_at_start = Progress.data.pension
 	RunCheckpoint.apply_rng(_rng, resume.get("rng", {}))
 	# The ending's tracking, with the Pension the rooms paid from run_earned for older files.
 	RunCheckpoint.apply_ending(_run, resume.get("ending", {"pension_earned": resume.get("run_earned", 0)}))
@@ -493,6 +502,7 @@ func _choose_path(index: int) -> void:
 	_run.boss_room_pill_lost = false
 	_progress = FloorProgress.new(map)
 	_progress.enter(crossroads.id)
+	_run.floor_depth = def.depth
 	_rules.plan_floor(map, def.depth, seed_text, _progress)
 	# Each floor fills the Life Jacket again.
 	_run.start_floor()
@@ -887,6 +897,7 @@ func _go_down() -> void:
 	_current_id = -1
 	_map_kind = MAP_LANDING
 	_floor_seed = ""
+	_run.floor_depth = _depth
 	_rules.plan_floor(FloorMap.new(), _depth, "")
 	_restored.clear()
 	_safe_room = -1
