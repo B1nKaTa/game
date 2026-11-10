@@ -458,58 +458,6 @@ func test_night_light_doubles_his_light_in_the_dark() -> void:
 	lit.free()
 
 
-func test_retirement_plan_pays_half_on_a_death() -> void:
-	var kit := ItemKit.new()
-	var run := _with_combos(kit, ["golden_parachute", "pension_statement"])
-	assert_true(run.effects.has_combo("retirement_plan"))
-	assert_eq(run.parachute_pay(100), 50)
-	assert_eq(_with_combos(kit, ["golden_parachute"]).parachute_pay(100), 25)
-
-
-func test_soup_of_the_day_keeps_the_puddles_twice_as_long() -> void:
-	var kit := ItemKit.new()
-	var run := _with_combos(kit, ["hot_soup_thermos", "second_thermos_strap"])
-	assert_true(run.effects.has_combo("soup_of_the_day"))
-	assert_near(run.effects.effect_of("hot_soup_thermos").puddle_time(run.effects.ctx), Soup.TIME * 2.0)
-
-
-func test_card_shark_adds_to_the_poker_table() -> void:
-	var kit := ItemKit.new()
-	var run := _with_combos(kit, ["loaded_dice", "bingo_card"])
-	assert_true(run.effects.has_combo("card_shark"))
-	var stats := run.stats
-	assert_near(ArcadeOdds.win_bonus(ArcadeOdds.POKER, stats.arcade_win_bonus, stats.poker_win_bonus), 0.15)
-	assert_near(ArcadeOdds.win_bonus(ArcadeOdds.BLACKJACK, stats.arcade_win_bonus, stats.poker_win_bonus), 0.05)
-	assert_near(ArcadeOdds.win_bonus(ArcadeOdds.SLOT, stats.arcade_win_bonus, stats.poker_win_bonus), 0.1)
-
-
-func test_last_rites_makes_the_life_jacket_work_twice_a_floor() -> void:
-	var kit := ItemKit.new()
-	var run := _with_combos(kit, ["do_not_resuscitate", "life_jacket"])
-	assert_true(run.effects.has_combo("last_rites"))
-	assert_eq(run.health.lethal_saves, 2, "both saves work on the floor it formed on")
-	var player := _player(run)
-	player.take_hit(5)
-	run.health.tick(5.0)
-	player.take_hit(5)
-	assert_false(run.health.is_dead())
-	run.health.tick(5.0)
-	player.take_hit(5)
-	assert_true(run.health.is_dead())
-	run.start_floor()
-	assert_eq(run.health.lethal_saves, 2)
-	player.free()
-
-
-func test_night_shift_keeps_the_lights_on() -> void:
-	var kit := ItemKit.new()
-	var run := _with_combos(kit, ["hearing_aid", "night_light"])
-	assert_true(run.effects.has_combo("night_shift"))
-	var player := _player(run)
-	assert_true(LightsOut.kept_lit(player))
-	player.free()
-
-
 func test_while_the_loop_counts_exactly_items_pay_nothing() -> void:
 	var kit := ItemKit.new()
 	var run := kit.make_run()

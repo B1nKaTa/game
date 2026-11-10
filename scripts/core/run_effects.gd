@@ -6,6 +6,7 @@ extends RefCounted
 # effect, so one run's counters never reach another's.
 
 signal combo_formed(combo: ComboDef)
+signal set_formed(set_def: SetDef)
 
 # Where one of his hits came from.
 const SWING := "swing"
@@ -45,6 +46,10 @@ var _entries: Array = []
 var _combo_defs: Array[ComboDef] = []
 var _combos: Array[ComboDef] = []
 var _combo_effects: Array[ItemEffect] = []
+var _set_defs: Array[SetDef] = []
+var _sets: Array[SetDef] = []
+# Each entry is [set id, its ItemEffect copy].
+var _set_effects: Array = []
 var _hit_depth := 0
 # The effect whose on_lethal said yes to the hit landing now.
 var _saver: ItemEffect
@@ -79,6 +84,7 @@ func add(item: ItemDef, gain := true) -> void:
 		if gain:
 			copy.on_gain(ctx)
 	_form_combos(gain)
+	_form_sets(gain)
 
 
 # A pet's slot round his feet: how many pets were seated before it.
@@ -97,6 +103,8 @@ func clear() -> void:
 	_entries.clear()
 	_combos.clear()
 	_combo_effects.clear()
+	_sets.clear()
+	_set_effects.clear()
 
 
 # The effect copy this run holds for an item, or null.
@@ -104,6 +112,9 @@ func effect_of(item_id: String) -> ItemEffect:
 	if _active_effect != null and item_id == _active_id:
 		return _active_effect
 	for entry in _entries:
+		if entry[0] == item_id:
+			return entry[1]
+	for entry in _set_effects:
 		if entry[0] == item_id:
 			return entry[1]
 	return null
@@ -149,6 +160,65 @@ func _form_combos(gain := true) -> void:
 		combo_formed.emit(combo)
 
 
+func set_sets(defs: Array[SetDef]) -> void:
+	_set_defs = defs
+	_form_sets()
+
+
+func active_sets() -> Array[SetDef]:
+	return _sets
+
+
+func has_set(id: String) -> bool:
+	for def in _sets:
+		if def.id == id:
+			return true
+	return false
+
+
+func set_names() -> PackedStringArray:
+	var names := PackedStringArray()
+	for def in _sets:
+		names.append(def.display_name)
+	return names
+
+
+# The combos' and sets' names, for the big map's summary.
+func bonus_names() -> PackedStringArray:
+	var names := combo_names()
+	names.append_array(set_names())
+	return names
+
+
+# A resumed run's sets, formed again by id without a second on_gain, whatever the count is now.
+func restore_sets(ids: Array) -> void:
+	for id in ids:
+		for def in _set_defs:
+			if def.id == str(id) and not _sets.has(def):
+				_form_set(def, false)
+
+
+func _form_sets(gain := true) -> void:
+	var run := _run()
+	if run == null:
+		return
+	for def in _set_defs:
+		if not _sets.has(def) and def.is_met(run.items, run.active):
+			_form_set(def, gain)
+			set_formed.emit(def)
+
+
+func _form_set(def: SetDef, gain: bool) -> void:
+	_sets.append(def)
+	if def.effect == null:
+		return
+	var copy: ItemEffect = def.effect.duplicate()
+	_seat_pet(copy)
+	_set_effects.append([def.id, copy])
+	if gain:
+		copy.on_gain(ctx)
+
+
 # What the run checkpoint keeps of every effect copy: item id or combo id -> its save_state, only those
 # that keep something.
 func save_state() -> Dictionary:
@@ -162,9 +232,19 @@ func save_state() -> Dictionary:
 		var state := _combo_effects[i].save_state()
 		if not state.is_empty():
 			formed[_combo_id_of(_combo_effects[i])] = state
+	var formed_sets := {}
+	for entry in _set_effects:
+		var set_state: Dictionary = entry[1].save_state()
+		if not set_state.is_empty():
+			formed_sets[entry[0]] = set_state
+	var set_ids: Array = []
+	for def in _sets:
+		set_ids.append(def.id)
 	return {
 		"items": held,
 		"combos": formed,
+		"formed_sets": set_ids,
+		"sets": formed_sets,
 		"active": _active_effect.save_state() if _active_effect != null else {},
 	}
 
@@ -172,6 +252,8 @@ func save_state() -> Dictionary:
 # Hands each effect copy what save_state kept for it, or {} when nothing was, so every copy of a resumed
 # run hears load_state once.
 func load_state(raw: Dictionary) -> void:
+	var formed_ids: Variant = raw.get("formed_sets", [])
+	restore_sets(formed_ids if formed_ids is Array else [])
 	var held: Variant = raw.get("items", {})
 	var formed: Variant = raw.get("combos", {})
 	for entry in _entries:
@@ -180,6 +262,10 @@ func load_state(raw: Dictionary) -> void:
 	for copy in _combo_effects:
 		var state: Variant = formed.get(_combo_id_of(copy), {}) if formed is Dictionary else {}
 		copy.load_state(state if state is Dictionary else {})
+	var set_states: Variant = raw.get("sets", {})
+	for entry in _set_effects:
+		var state: Variant = set_states.get(entry[0], {}) if set_states is Dictionary else {}
+		entry[1].load_state(state if state is Dictionary else {})
 	if _active_effect != null:
 		var active_state: Variant = raw.get("active", {})
 		_active_effect.load_state(active_state if active_state is Dictionary else {})
@@ -203,6 +289,8 @@ func _all() -> Array[ItemEffect]:
 	if _active_effect != null:
 		list.append(_active_effect)
 	list.append_array(_combo_effects)
+	for entry in _set_effects:
+		list.append(entry[1])
 	return list
 
 
@@ -438,6 +526,7 @@ func set_active(item: ItemDef, gain := true) -> void:
 		_active_effect = item.effect.duplicate()
 		if gain:
 			_active_effect.on_gain(ctx)
+	_form_sets(gain)
 
 
 func clear_active() -> void:

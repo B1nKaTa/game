@@ -45,6 +45,7 @@ const TIMER_FONT := 8
 const BANNER_TOP := 60.0
 const BANNER_TIME := 2.5
 const BANNER_TEXT := "COMBO: %s"
+const SET_BANNER_TEXT := "SET: %s"
 const BANNER_COLOR := Color("ffd24a")
 
 var _run: RunState
@@ -144,6 +145,10 @@ static func item_row_rects(hint_width: float) -> Array[Rect2]:
 
 static func banner_text(combo_name: String) -> String:
 	return BANNER_TEXT % combo_name
+
+
+static func set_banner_text(set_name: String) -> String:
+	return SET_BANNER_TEXT % set_name
 
 
 static func counter_text(amount: int) -> String:
@@ -321,6 +326,12 @@ func show_notice(text: String) -> void:
 # "COMBO: <name>" for a moment, as a combo forms.
 func show_combo(combo_name: String) -> void:
 	_banner.text = banner_text(combo_name)
+	_banner_left = BANNER_TIME
+
+
+# "SET: <name>" for a moment, as a set bonus forms.
+func show_set(set_name: String) -> void:
+	_banner.text = set_banner_text(set_name)
 	_banner_left = BANNER_TIME
 
 

@@ -126,7 +126,7 @@ var throws_thermos := false
 # choices maps a form id to its milestone option. A form at or past its milestone with no entry
 # reads as option A, and the chosen option's effect counts once, whatever the level.
 # combos are the ComboDefs the run has formed. Their numbers count once each, as an item's do.
-static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Array[ItemDef], choices: Dictionary = {}, combos: Array[ComboDef] = []) -> PlayerStats:
+static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Array[ItemDef], choices: Dictionary = {}, combos: Array[ComboDef] = [], sets: Array[SetDef] = []) -> PlayerStats:
 	var pills := 0
 	var speed := 0.0
 	var cut := 0.0
@@ -166,7 +166,7 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 	var glue := 0.0
 	var boomerang := false
 	var floor_bite := false
-	var sets := 1
+	var teeth_count := 1
 	var charges := 0
 	var full_charge := false
 	var notice := 0.0
@@ -207,6 +207,8 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 		effects.append([item, 1])
 	for combo in combos:
 		effects.append([combo, 1])
+	for set_def in sets:
+		effects.append([set_def, 1])
 	for entry in effects:
 		var effect: StatEffect = entry[0]
 		var count: int = entry[1]
@@ -286,7 +288,7 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 			glue = maxf(glue, effect.teeth_glue_time)
 			boomerang = boomerang or effect.teeth_boomerang
 			floor_bite = floor_bite or effect.teeth_floor_bite
-			sets = maxi(sets, effect.teeth_sets)
+			teeth_count = maxi(teeth_count, effect.teeth_sets)
 			full_charge = full_charge or effect.charge_full_speed
 			corners = corners or effect.dodge_rounds_corners
 			steady = steady or effect.steady_feet
@@ -332,7 +334,7 @@ static func compute(upgrades: Array[UpgradeDef], levels: Dictionary, items: Arra
 	stats.teeth_glue_time = glue
 	stats.teeth_boomerang = boomerang
 	stats.teeth_floor_bite = floor_bite
-	stats.teeth_sets = sets + maxi(bonus_sets, 0)
+	stats.teeth_sets = teeth_count + maxi(bonus_sets, 0)
 	stats.dodge_charges = 1 + maxi(charges, 0)
 	stats.charge_full_speed = full_charge
 	stats.notice_mult = maxf(1.0 + notice, MIN_NOTICE_MULT)

@@ -307,7 +307,7 @@ func clear_items() -> void:
 # save, so a form filed or refiled since then counts here. A higher maximum adds the pills it gains,
 # and a lower one never leaves him holding more pills than it allows (Health.raise_max).
 func refresh_stats() -> void:
-	stats = PlayerStats.compute(_upgrades, _levels, items, _choices, effects.active_combos())
+	stats = PlayerStats.compute(_upgrades, _levels, items, _choices, effects.active_combos(), effects.active_sets())
 	_apply_pill_rules()
 	health.heal_bonus = stats.heal_bonus
 

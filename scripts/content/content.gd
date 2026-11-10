@@ -5,6 +5,7 @@ const ITEMS_DIR := "res://data/items/"
 const UPGRADES_DIR := "res://data/upgrades/"
 const POTIONS_DIR := "res://data/potions/"
 const COMBOS_DIR := "res://data/combos/"
+const SETS_DIR := "res://data/sets/"
 
 
 static func load_dir(path: String) -> Array:
@@ -52,6 +53,17 @@ static func combos() -> Array[ComboDef]:
 		return list
 	for resource in load_dir(COMBOS_DIR):
 		if resource is ComboDef and not RetiredContent.RETIRED_COMBOS.has(resource.id):
+			list.append(resource)
+	return list
+
+
+# An empty or missing folder gives none.
+static func sets() -> Array[SetDef]:
+	var list: Array[SetDef] = []
+	if not DirAccess.dir_exists_absolute(SETS_DIR):
+		return list
+	for resource in load_dir(SETS_DIR):
+		if resource is SetDef:
 			list.append(resource)
 	return list
 

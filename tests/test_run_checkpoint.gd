@@ -167,16 +167,21 @@ func test_a_checkpoint_mid_flashback_saves_the_reel_being_lived() -> void:
 
 
 func test_a_resumed_run_gets_its_items_effects_and_combos_back() -> void:
+	var combo := ComboDef.new()
+	combo.id = "test_pair"
+	combo.item_a = "casserole_dish"
+	combo.item_b = "tea_cosy"
+	var combos: Array[ComboDef] = [combo]
 	var run := _fresh_run()
-	run.effects.set_combos(Content.combos())
-	run.add_item(_item("bingo_card"))
-	run.add_item(_item("bingo_dabber"))
+	run.effects.set_combos(combos)
+	run.add_item(_item("casserole_dish"))
+	run.add_item(_item("tea_cosy"))
 	var raw: Dictionary = JSON.parse_string(JSON.stringify(RunCheckpoint.run_to_dict(run)))
 	var back := _fresh_run()
-	back.effects.set_combos(Content.combos())
+	back.effects.set_combos(combos)
 	RunCheckpoint.apply_run(back, raw, Content.items())
-	assert_true(back.effects.effect_of("bingo_card") != null, "the item's effect is held again")
-	assert_true(back.effects.has_combo("bingo_night"), "the combo forms again")
+	assert_true(back.effects.effect_of("casserole_dish") != null, "the item's effect is held again")
+	assert_true(back.effects.has_combo("test_pair"), "the combo forms again")
 	assert_eq(back.items.size(), 2)
 
 

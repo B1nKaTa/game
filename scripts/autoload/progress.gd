@@ -461,6 +461,7 @@ func make_run() -> RunState:
 	run.unlocked_items = data.items_unlocked
 	run.paths_cleared = data.paths_cleared
 	run.effects.set_combos(Content.combos())
+	run.effects.set_sets(Content.sets())
 
 	run.perks = Mementos.perks(data)
 	run.apply_perks()

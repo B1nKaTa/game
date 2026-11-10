@@ -452,21 +452,6 @@ func test_photo_of_the_grandkids_doubles_his_damage_on_his_last_pill() -> void:
 	kit.free_enemies()
 
 
-func test_family_visit_heals_a_whole_pill_on_a_last_pill_kill_once_a_room() -> void:
-	var kit := ItemKit.new()
-	var run := _with_combos(kit, ["photo_of_grandkids", "casserole_dish"])
-	assert_true(run.effects.has_combo("family_visit"))
-	var enemy := kit.enemy()
-	run.effects.room_enter(null)
-	run.health.pills = 1
-	run.effects.kill(enemy, RunEffects.SWING)
-	assert_eq(run.health.pills, 2, "a whole pill")
-	run.health.pills = 1
-	run.effects.kill(enemy, RunEffects.SWING)
-	assert_eq(run.health.pills, 1, "once a room")
-	kit.free_enemies()
-
-
 func test_complaint_form_stuns_a_boss_when_full_and_never_twice_in_a_row() -> void:
 	assert_near(Complaint.fill_of(100.0, 1000.0), 0.5)
 	assert_near(Complaint.fill_of(900.0, 1000.0), 1.0)
@@ -541,15 +526,6 @@ func test_the_stamp_takes_a_share_of_a_boss_and_never_skips_a_phase() -> void:
 	run.effects.land(dummy, 10.0, RunEffects.SWING)
 	assert_false(dummy.is_dead(), "nor is the Training Yard's dummy")
 	kit.free_enemies()
-
-
-func test_paper_trail_recharges_the_stamp_in_twenty_seconds() -> void:
-	var kit := ItemKit.new()
-	var run := _with_combos(kit, ["bureaucrats_stamp", "rubber_stamps"])
-	assert_true(run.effects.has_combo("paper_trail"))
-	assert_near(run.effects.effect_of("bureaucrats_stamp").recharge_time(run.effects.ctx), Stamp.COMBO_RECHARGE)
-	var plain := ItemKit.new().run_with(["bureaucrats_stamp"])
-	assert_near(plain.effects.effect_of("bureaucrats_stamp").recharge_time(plain.effects.ctx), Stamp.RECHARGE)
 
 
 func test_lawyers_card_blocks_a_bosss_first_hit_in_each_phase() -> void:
@@ -638,16 +614,3 @@ func test_harmonica_heals_half_a_pill_for_a_quick_chord_once_a_room() -> void:
 	var before := kit.fx_of(ItemFx.FxNote).size()
 	run.effects.swing_end(finisher)
 	assert_eq(kit.fx_of(ItemFx.FxNote).size(), before, "a finisher that hits nothing plays nothing")
-
-
-func test_early_riser_makes_the_rush_last_twenty_seconds() -> void:
-	var kit := ItemKit.new()
-	var run := _with_combos(kit, ["early_bird_special", "alarm_clock"])
-	assert_true(run.effects.has_combo("early_riser"))
-	kit.enemy()
-	run.effects.room_enter(null)
-	run.effects.tick(EarlyBird.RUSH + 1.0)
-	assert_true(run.move_speed() > run.stats.move_speed, "still rushing after ten")
-	run.effects.tick(EarlyBird.COMBO_RUSH - EarlyBird.RUSH)
-	assert_near(run.move_speed(), run.stats.move_speed)
-	kit.free_enemies()

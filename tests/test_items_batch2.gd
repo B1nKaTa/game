@@ -420,25 +420,3 @@ func test_while_the_loop_counts_pills_items_neither_block_nor_heal() -> void:
 	var driver := FileAccess.get_file_as_string("res://tools/smoke_driver.gd")
 	assert_true(driver.contains("run.effects.ctx.counting_pills = true"), "the full loop sets it")
 	kit.free_enemies()
-
-
-func test_mobility_scooter_lays_a_fire_trail_that_burns_now_and_then() -> void:
-	var kit := ItemKit.new()
-	var run := _with_combos(kit, ["titanium_hip", "wheelchair_wheels"])
-	assert_true(run.effects.has_combo("mobility_scooter"))
-	assert_false(_with_combos(kit, ["wheelchair_wheels"]).effects.has_combo("mobility_scooter"))
-	var scooter := Scooter.new()
-	assert_true(scooter.trail(run.effects.ctx, Vector2.ZERO))
-	assert_false(scooter.trail(run.effects.ctx, Vector2(Scooter.STEP - 1.0, 0)), "not every frame")
-	assert_true(scooter.trail(run.effects.ctx, Vector2(Scooter.STEP, 0)))
-	assert_eq(kit.fx_of(ItemFx.FxBurn).size(), 2)
-	var burn := ItemFx.make_burn(run.effects.ctx, Scooter.RADIUS, Scooter.TIME, Scooter.DAMAGE)
-	var enemy := kit.enemy("intern_reaper", 100.0)
-	enemy.position = Vector2(4, 0)
-	assert_eq(burn.burn_touching([enemy]), 1)
-	assert_near(enemy.hp, 100.0 - Scooter.DAMAGE)
-	assert_eq(burn.burn_touching([enemy]), 0, "not again at once")
-	burn.age += ItemFx.FxBurn.BURN_EVERY
-	assert_eq(burn.burn_touching([enemy]), 1)
-	burn.free()
-	kit.free_enemies()

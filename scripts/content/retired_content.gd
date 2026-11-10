@@ -6,7 +6,10 @@ extends RefCounted
 # still loads it. RENAMED maps an old id to the new item that took its place, for saves and checkpoints.
 
 const RETIRED_ITEMS: Array[String] = []
-const RETIRED_COMBOS: Array[String] = []
+# The pair combos of the hundred items. The new list's set bonuses take their place; ComboDef stays.
+const RETIRED_COMBOS: Array[String] = ["bingo_night", "card_shark", "dentists_nightmare", "early_riser",
+	"family_visit", "full_set", "last_rites", "mobility_scooter", "night_shift", "paper_trail",
+	"retirement_plan", "soup_of_the_day"]
 const RENAMED := {
 	"second_thermos_strap": "flask_holster",
 	"rubber_stamps": "rubber_stamp_collection",
