@@ -10,7 +10,7 @@ import importlib
 
 # The soundtrack in use: the Waiting Room from the jukebox set, every other place its own piece.
 # The jb_* decade modules (one shared theme in every song) were tried and set aside on 2026-11-10.
-MODULES = ["rb_waiting", "rb_front", "rb_middle", "rb_late", "rb_fights_1", "rb_fights_2", "rb_endings", "rb2_floors"]  # later modules win an id
+MODULES = ["rb_waiting", "rb_front", "rb_middle", "rb_late", "rb_fights_1", "rb_fights_2", "rb_endings", "rb2_floors", "rb2_paths"]  # later modules win an id
 
 BAND_INFO = {}
 BROKEN = {}
