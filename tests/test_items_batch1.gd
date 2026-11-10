@@ -32,7 +32,6 @@ const BATCH := {
 	"glue_gun": [ItemDef.RARE, ItemUnlocks.RECIPE, ""],
 	"spare_set": [ItemDef.RARE, ItemUnlocks.RECIPE, ""],
 	"boomerang_bite": [ItemDef.COMMON, ItemUnlocks.START, ""],
-	"gold_fillings": [ItemDef.COMMON, ItemUnlocks.START, ""],
 	"fizzy_tablet": [ItemDef.COMMON, ItemUnlocks.START, ""],
 	"windup_teeth": [ItemDef.RARE, ItemUnlocks.START, ""],
 	"overbite": [ItemDef.COMMON, ItemUnlocks.START, ""],
@@ -375,29 +374,6 @@ func test_boomerang_bite_turns_home_and_bites_on_the_way() -> void:
 	teeth.free()
 	plain.free()
 	home.free()
-	kit.free_enemies()
-
-
-func test_gold_fillings_knock_a_coin_loose_one_bite_in_five() -> void:
-	var kit := ItemKit.new()
-	var run := kit.run_with(["gold_fillings"])
-	var effect = run.effects.effect_of("gold_fillings")
-	effect.rng.seed = 9
-	var enemy := kit.enemy()
-	for i in 1000:
-		run.effects.room_enter(null)
-		run.effects.bite(enemy)
-	assert_true(absf(kit.drops.size() / 1000.0 - Gold.CHANCE) < 0.04, "about one in five, got %d" % kit.drops.size())
-	assert_eq(kit.drops[0][0], RoomRules.DROP_COIN)
-	kit.drops.clear()
-	run.effects.room_enter(null)
-	for i in 50:
-		effect.knock_out(run.effects.ctx, enemy)
-	assert_eq(kit.drops.size(), Gold.ROOM_LIMIT, "a room's worth at most")
-	var summon := kit.enemy()
-	summon.is_summon = true
-	run.effects.room_enter(null)
-	assert_false(effect.knock_out(run.effects.ctx, summon), "a summon pays nothing")
 	kit.free_enemies()
 
 

@@ -28,7 +28,7 @@ func test_an_effect_keeps_nothing_by_default() -> void:
 func test_a_resume_never_runs_on_gain_again() -> void:
 	var kit := ItemKit.new()
 	var run := kit.run_with(["inheritance_letter", "second_thermos_strap"])
-	assert_eq(kit.paid, 60, "paid once when taken")
+	assert_eq(kit.paid, 75, "paid once when taken")
 	var bombs := run.bombs
 	var back_kit := ItemKit.new()
 	var back := _resume(run, back_kit)

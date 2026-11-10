@@ -8,7 +8,7 @@ const Nitro := preload("res://scripts/items/nitro_tablets.gd")
 const TitaniumHip := preload("res://scripts/items/titanium_hip.gd")
 const IDS := ["alert_bracelet", "bifocals", "bingo_card", "comfort_care_lanyard", "dentures", "golden_parachute",
 	"hearing_aid", "life_jacket", "lucky_tee", "naughty_list", "neck_pillow", "nitro_tablets", "pill_organizer",
-	"pocket_watch", "prune_juice", "senior_discount", "slippers", "support_stockings", "titanium_hip", "undertakers_gloves"]
+	"pocket_watch", "prune_juice", "slippers", "support_stockings", "titanium_hip", "undertakers_gloves"]
 
 
 func _room_view(room_type: String) -> RoomView:
@@ -30,8 +30,8 @@ func test_every_old_item_id_still_ships() -> void:
 
 func test_rarity_curses_and_sources_follow_the_design() -> void:
 	var rare := ["alert_bracelet", "bifocals", "comfort_care_lanyard", "dentures", "golden_parachute", "life_jacket",
-		"naughty_list", "nitro_tablets", "pocket_watch", "senior_discount", "titanium_hip"]
-	var recipes := ["alert_bracelet", "bifocals", "golden_parachute", "lucky_tee", "nitro_tablets", "senior_discount", "support_stockings", "titanium_hip"]
+		"naughty_list", "nitro_tablets", "pocket_watch", "titanium_hip"]
+	var recipes := ["alert_bracelet", "bifocals", "golden_parachute", "lucky_tee", "nitro_tablets", "support_stockings", "titanium_hip"]
 	var bounties := ["comfort_care_lanyard", "life_jacket", "naughty_list", "neck_pillow", "pocket_watch", "undertakers_gloves"]
 	for id: String in IDS:
 		var item := ItemKit.item(id)

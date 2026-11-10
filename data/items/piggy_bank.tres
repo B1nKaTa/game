@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/piggy_bank.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "piggy_bank"
+display_name = "Piggy Bank"
+description = "A hit that would cost a pill costs 20 Pension instead, while you have it."
+rarity = "rare"
+tags = PackedStringArray("pension")
+build = "pension"
+kind = "passive"
+effect = SubResource("Effect")

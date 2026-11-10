@@ -1,9 +1,7 @@
 extends ItemEffect
 
-# Matinee Pass: the cheapest item for sale in each shop costs half, marked as such. Heals, Slips and
-# Thermoses keep their prices, and a free item stays free.
-
-const SHARE := 0.5
+# Haggler's Hat: the cheapest item for sale in every shop is free. Heals, Slips, Thermoses and potions keep
+# their prices.
 
 
 func on_shop_open(_ctx: EffectContext, stock: Array[Dictionary]) -> void:
@@ -15,5 +13,4 @@ func on_shop_open(_ctx: EffectContext, stock: Array[Dictionary]) -> void:
 			cheapest = entry
 	if cheapest.is_empty():
 		return
-	cheapest["price"] = ShopRules.price_after(int(cheapest["price"]), SHARE)
-	cheapest["half"] = true
+	cheapest["price"] = 0

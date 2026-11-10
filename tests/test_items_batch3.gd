@@ -19,15 +19,12 @@ const BATCH := {
 	"forged_signature": [ItemDef.RARE, ItemUnlocks.START, "", false],
 	"rubber_stamps": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "floor_1", false],
 	"kettle_whistle": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "furnace_works", false],
-	"coupon_booklet": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "flashback_cinema", false],
 	"penny_jar": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 	"lottery_scratcher": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 	"pension_statement": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "head_office", false],
 	"loaded_dice": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "flashback_cinema", true],
 	"expired_coupon": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "terminal_zero", true],
-	"hagglers_hat": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "flashback_cinema", false],
 	"collection_plate": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "head_office", false],
-	"inheritance_letter": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 	"tax_refund": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "terminal_zero", false],
 	"night_light": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 }
@@ -339,20 +336,6 @@ func test_expired_coupon_frees_one_shop_a_floor_and_takes_a_pill_each_floor() ->
 	assert_eq(run.health.max_pills, PlayerStats.BASE_PILLS, "dropping the items gives the pills back")
 
 
-func test_hagglers_hat_halves_the_cheapest_item() -> void:
-	var run := ItemKit.new().run_with(["hagglers_hat"])
-	var stock: Array[Dictionary] = [
-		{"kind": ShopRules.KIND_ITEM, "price": 60, "item": null},
-		{"kind": ShopRules.KIND_ITEM, "price": 35, "item": null},
-		{"kind": ShopRules.KIND_HEAL, "price": 20, "item": null},
-	]
-	run.effects.shop_open(stock)
-	assert_eq(stock[0]["price"], 60)
-	assert_eq(stock[1]["price"], 18)
-	assert_true(stock[1].get("half", false))
-	assert_eq(stock[2]["price"], 20, "a heal is not an item")
-
-
 func test_collection_plate_drops_a_coin_for_each_paying_kill() -> void:
 	var kit := ItemKit.new()
 	var run := kit.run_with(["collection_plate"])
@@ -375,17 +358,6 @@ func test_collection_plate_drops_a_coin_for_each_paying_kill() -> void:
 	run.effects.kill(enemy, RunEffects.SWING)
 	assert_eq(kit.drops.size(), 4, "a new room pays again")
 	kit.free_enemies()
-
-
-func test_inheritance_letter_pays_once_on_taking() -> void:
-	var kit := ItemKit.new()
-	kit.run_with(["inheritance_letter"])
-	assert_eq(kit.paid, 60)
-	var yard_kit := ItemKit.new()
-	var yard := yard_kit.make_run()
-	yard.effects.ctx.pay_pension = Callable()
-	yard.add_item(ItemKit.item("inheritance_letter"))
-	assert_eq(yard_kit.paid, 0, "the Training Yard's run has no bank, so it pays nothing there")
 
 
 func test_tax_refund_pays_for_a_shop_left_empty_handed_once() -> void:

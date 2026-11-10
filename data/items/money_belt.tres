@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/money_belt.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "money_belt"
+display_name = "Money Belt"
+description = "Every 50 Pension you carry makes all your hits 5% harder, up to 50%."
+rarity = "legendary"
+tags = PackedStringArray("pension")
+build = "pension"
+kind = "passive"
+effect = SubResource("Effect")
