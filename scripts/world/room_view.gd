@@ -1564,6 +1564,16 @@ func _add_item_pickup(at: Vector2, item: ItemDef) -> Pickup:
 	return pickup
 
 
+# A swapped-out active, a cell beside him, waiting to be taken back with the charge it had.
+func drop_active(item: ItemDef, charge: int, at: Vector2) -> Pickup:
+	var spot := clear_spot(at + Vector2(RoomBackdrop.TILE, 0))
+	var pickup := _add_pickup(spot, item.display_name, ItemRarity.color_of(item.rarity), func(): _run.add_item(item, charge), true, "item_fanfare")
+	pickup.can_take = func(): return not _run.has_item(item.id)
+	pickup.set_meta(KEEP, {"kind": KEEP_ITEM, "id": item.id, "charge": charge})
+	_mark_item(pickup, item)
+	return pickup
+
+
 func _mark_item(pickup: Pickup, item: ItemDef) -> void:
 	pickup.label_color = ItemRarity.name_color(item)
 	pickup.skull = item.cursed
@@ -1662,6 +1672,9 @@ func _restore_entry(entry: Dictionary) -> void:
 	match str(entry.get("kind", "")):
 		KEEP_ITEM, KEEP_FREE:
 			if item == null:
+				return
+			if entry.has("charge") and item.is_active():
+				drop_active(item, int(entry["charge"]), at - Vector2(RoomBackdrop.TILE, 0))
 				return
 			var pickup := _add_free_item(at, item) if entry["kind"] == KEEP_FREE else _add_item_pickup(at, item)
 			var group_id := str(entry.get("group", ""))

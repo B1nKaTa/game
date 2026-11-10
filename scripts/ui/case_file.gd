@@ -257,7 +257,7 @@ func _rebuild() -> void:
 # --- Harold ---
 
 func _held() -> Array[Dictionary]:
-	return CaseFileData.held_cells(_run.items) if _run != null else []
+	return CaseFileData.held_cells(_run.items, _run.active) if _run != null else []
 
 
 func _build_harold() -> void:
@@ -644,6 +644,12 @@ class CaseCell extends Button:
 			var tag := Rect2(size.x - badge_width - 4.0, size.y - 10.0, badge_width + 4.0, 10.0)
 			draw_rect(tag, CaseFile.STAMP)
 			draw_string(font, tag.position + Vector2(2, 8), badge, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color.WHITE)
+		if known and cell.get("use", false):
+			var use_text := tr("USE")
+			var use_width := font.get_string_size(use_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x
+			var use_tag := Rect2(1.0, size.y - 11.0, use_width + 4.0, 10.0)
+			draw_rect(use_tag, CaseFile.PAPER)
+			draw_string(font, use_tag.position + Vector2(2, 8), use_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, CaseFile.INK)
 		if has_focus():
 			draw_rect(rect.grow(1), MenuStyle.GOLD, false, 2.0)
 		elif selected:

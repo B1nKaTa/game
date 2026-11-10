@@ -147,6 +147,7 @@ func _ready() -> void:
 	ctx.hud = _hud
 	ctx.feedback = _feedback
 	_run.effects.combo_formed.connect(_on_combo_formed)
+	_run.active_swapped.connect(_on_active_swapped)
 	Input.mouse_mode = Settings.cursor_mode(true)
 	add_child(player)
 	_rules.setup(player, _hud, _run, Progress.record_rule)
@@ -910,6 +911,12 @@ func _go_down() -> void:
 	_hud.show_notice("You catch your breath. +%d pills" % healed if healed > 0 else "You catch your breath.")
 	# After the landing's own heal, so an item's landing rule has the last word.
 	_run.effects.floor_start()
+
+
+# Taking an active while holding one drops the old one at his feet, keeping its charge.
+func _on_active_swapped(old: ItemDef, charge: int) -> void:
+	if _room_view != null and is_instance_valid(_room_view):
+		_room_view.drop_active(old, charge, player.feet().global_position)
 
 
 # A combo forms: its banner shows, and the paused map lists it from now on.

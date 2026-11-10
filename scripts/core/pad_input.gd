@@ -39,6 +39,8 @@ const DEFAULT_BUTTONS := {
 	"bomb": JOY_BUTTON_RIGHT_SHOULDER,
 	"potion": JOY_BUTTON_LEFT_SHOULDER,
 	"flashback": JOY_BUTTON_Y,
+	# B backs out of panels (BACK_ACTION, its own action); in play it uses the held active.
+	"use_item": JOY_BUTTON_B,
 	"map": JOY_BUTTON_BACK,
 	# The DualSense's touchpad press. An Xbox pad has no such button, so it is named for both and can be rebound.
 	"case_file": JOY_BUTTON_TOUCHPAD,

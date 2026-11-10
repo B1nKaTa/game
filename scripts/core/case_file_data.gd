@@ -67,8 +67,13 @@ static func icon_path(dir: String, id: String) -> String:
 # --- Harold ---
 
 # The held items as grid cells, one per kind in pickup order, with a count where he holds more than one.
-static func held_cells(items: Array[ItemDef]) -> Array[Dictionary]:
+static func held_cells(items: Array[ItemDef], active: ItemDef = null) -> Array[Dictionary]:
 	var cells: Array[Dictionary] = []
+	if active != null:
+		var first := item_cell(active, true, 1)
+		first["badge"] = true
+		first["use"] = true
+		cells.append(first)
 	var at := {}
 	for item in items:
 		if at.has(item.id):

@@ -10,6 +10,7 @@ signal teeth_caught
 signal hurt
 signal bomb_requested(at: Vector2)
 signal potion_drunk(potion: PotionDef)
+signal active_used(item: ItemDef)
 # For the room rules: a swing or a dodge began, whether or not it lands.
 signal swing_started
 signal dodge_started
@@ -459,6 +460,7 @@ func _physics_process(delta: float) -> void:
 	_handle_attacks()
 	_handle_bomb()
 	_handle_potion()
+	_handle_active()
 	_handle_movement()
 	touch_bodies()
 	_leave_dodge_ghosts(delta)
@@ -533,6 +535,31 @@ func _handle_potion() -> void:
 		if _visual != null:
 			_visual.flash(drunk.color, 0.25)
 		potion_drunk.emit(drunk)
+
+
+var _unpaused_at := -10
+
+
+# B also backs out of the big map, the pause menu, the case file and the card table, which unpause the
+# game on that same press. A press is only the active's when the game was not paused a frame ago.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_UNPAUSED:
+		_unpaused_at = Engine.get_physics_frames()
+
+
+static func use_press_counts(now_frame: int, unpaused_frame: int) -> bool:
+	return now_frame - unpaused_frame > 1
+
+
+func _handle_active() -> void:
+	if not InputMap.has_action("use_item") or not Input.is_action_just_pressed("use_item"):
+		return
+	if not use_press_counts(Engine.get_physics_frames(), _unpaused_at):
+		return
+	var used := run.active
+	if run.use_active():
+		Sfx.play("item_fanfare")
+		active_used.emit(used)
 
 
 # The teeth only hold back another throw. His cane never leaves his hand, so a swing, the combo and

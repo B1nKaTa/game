@@ -213,14 +213,15 @@ func test_rebinding_walking_keeps_the_d_pad() -> void:
 
 func test_both_columns_survive_saving_and_loading() -> void:
 	_reset()
-	KeyBindings.rebind("dodge", _pad(JOY_BUTTON_B))
+	# The left stick press: B is the use-item button now.
+	KeyBindings.rebind("dodge", _pad(JOY_BUTTON_LEFT_STICK))
 	KeyBindings.rebind("throw", _pad(JOY_BUTTON_Y))
 	KeyBindings.rebind("bomb", _key(KEY_F))
 	assert_true(KeyBindings.save_to(PATH))
 	KeyBindings.reset_to_defaults()
 	assert_eq(KeyBindings.pad_label_for("dodge", PadInput.XBOX), "A")
 	KeyBindings.load_from(PATH)
-	assert_eq(KeyBindings.pad_label_for("dodge", PadInput.XBOX), "B")
+	assert_eq(KeyBindings.pad_label_for("dodge", PadInput.XBOX), "LS")
 	assert_eq(KeyBindings.pad_label_for("throw", PadInput.XBOX), "Y")
 	assert_eq(KeyBindings.label_for("bomb"), "F")
 	_reset()

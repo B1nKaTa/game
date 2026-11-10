@@ -17,6 +17,7 @@ static func ensure() -> void:
 	_action("case_file", _key(KEY_TAB))
 	_action("bomb", _key(KEY_Q))
 	_action("potion", _key(KEY_H))
+	_action("use_item", _key(KEY_R))
 	_action("flashback", _key(KEY_F))
 	_action("pause", _key(KEY_ESCAPE))
 	_action("attack", _mouse(MOUSE_BUTTON_LEFT))

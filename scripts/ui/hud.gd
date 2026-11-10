@@ -60,6 +60,8 @@ var _potion_label := ""
 # The film reel he holds, on the right panel's second row (ReelSlot.AT), and the key it names.
 var _reel_slot: ReelSlot
 var _reel_key := ""
+var _active_slot: ActiveSlot
+var _active_key := ""
 var _message: Label
 var _notice: Label
 var _notice_left := 0.0
@@ -212,6 +214,8 @@ func _ready() -> void:
 		_reel_slot = ReelSlot.new()
 		_reel_slot.position = ReelSlot.AT
 		add_child(_reel_slot)
+		_active_slot = ActiveSlot.new()
+		add_child(_active_slot)
 		_run.changed.connect(_refresh)
 		_timer = _add_label(TIMER_AT, TIMER_FONT)
 		_timer.size = Vector2(TIMER_WIDTH, 12)
@@ -274,6 +278,11 @@ func reel_label() -> String:
 	return _reel_slot.label_text() if _reel_slot != null else ""
 
 
+# What the active slot says: its key and the active's name, "" while none is held.
+func active_label() -> String:
+	return _active_slot.label_text_shown() if _active_slot != null else ""
+
+
 func map_alpha() -> float:
 	return _map_back.modulate.a if _map_back != null else 1.0
 
@@ -321,7 +330,7 @@ func banner() -> String:
 
 func _process(delta: float) -> void:
 	# The potion slot names the active device's button, so it follows a switch of device.
-	if _run != null and _potion_slot != null and (KeyBindings.prompt_label("potion") != _potion_label or KeyBindings.prompt_label("case_file") != _case_label or KeyBindings.prompt_label("flashback") != _reel_key):
+	if _run != null and _potion_slot != null and (KeyBindings.prompt_label("potion") != _potion_label or KeyBindings.prompt_label("case_file") != _case_label or KeyBindings.prompt_label("flashback") != _reel_key or KeyBindings.prompt_label("use_item") != _active_key):
 		_refresh()
 	if _potion_slot != null:
 		_potion_slot.show_buff(_run.buff, _run.buff_left)
@@ -421,6 +430,12 @@ func _refresh() -> void:
 		_case_hint.size = rects[1].size
 	_status.text = text
 	_layout_top_row()
+	if _run != null and _active_slot != null:
+		_active_key = KeyBindings.prompt_label("use_item")
+		var slot := ActiveSlot.slot_rect(left_panel_rect().end.x)
+		_active_slot.position = slot.position
+		_active_slot.size = slot.size
+		_active_slot.show_active(_run.active, _run.active_charge, _run.active_needed(), _active_key)
 	_frame.queue_redraw()
 
 
