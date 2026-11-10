@@ -119,6 +119,11 @@ var _lane_heaviest := false
 # Set while one of Grandpa's hits lands with the Undertaker's Work Gloves: dying to it, it leaves
 # nothing harmful behind. Behaviors read it in on_killed.
 var harmless_death := false
+# Set by items when the Auditor walks in: more pills a hit costs (Repeat Offender), what his Pension is
+# multiplied by, and whether he always leaves an item (Brown Envelope).
+var extra_damage := 0
+var coin_mult := 1.0
+var leaves_item := false
 # How much sooner it notices Grandpa: sleepers wake this many times as far, and a room's wait as he
 # walks in is cut by it (Squeaky Shoes). Set by the room from his stats when it spawns.
 var notice_mult := 1.0
@@ -151,7 +156,7 @@ func max_hp() -> float:
 
 # What an attack costs Grandpa: its own damage when it names one, the enemy's usual damage otherwise.
 func attack_damage(damage := -1) -> int:
-	return damage if damage >= 0 else def.damage
+	return (damage if damage >= 0 else def.damage) + extra_damage
 
 
 func _ready() -> void:
@@ -451,7 +456,7 @@ static func clamp_inside_room(point: Vector2, cells: Vector2i) -> Vector2:
 func coin_value() -> int:
 	if is_summon or is_group_follower or _blew_itself_up or def.pension_drop <= 0:
 		return 0
-	return ceili(def.pension_drop * _pension_mult - 0.0001)
+	return ceili(def.pension_drop * _pension_mult * coin_mult - 0.0001)
 
 
 static func shield_covers(facing_way: Vector2, to_attacker: Vector2, half_angle_deg: float) -> bool:

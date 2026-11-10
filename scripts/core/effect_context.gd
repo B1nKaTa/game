@@ -21,6 +21,9 @@ var on_notice := Callable()
 var on_fx := Callable()
 var on_sound := Callable()
 var on_drop := Callable()
+# Tests answer fetch_pickup and copy_pickup through these; in play the room does.
+var fetcher := Callable()
+var copier := Callable()
 var on_slow_time := Callable()
 # Where enemies come from when there is no room in the tree, as in tests: returns an Array of Enemy.
 var enemy_source := Callable()
@@ -165,6 +168,37 @@ func drop(kind: String, at: Vector2, amount := 1, id := "") -> void:
 		on_drop.call(kind, at)
 	if has_room():
 		room.drop_for_item(kind, at, amount, id)
+
+
+# A free item lying in the room at a spot (Lottery Scratcher's rare prize), promised so nothing else
+# offers it. Listeners hear it as the kind "item".
+func drop_item(item: ItemDef, at: Vector2) -> void:
+	if on_drop.is_valid():
+		on_drop.call("item", at)
+	if has_room():
+		room.drop_free_item(item, at)
+
+
+# Calls the nearest waiting coin, Slip or Thermos to him (Racing Pigeon). Returns whether one came.
+func fetch_pickup() -> bool:
+	if fetcher.is_valid():
+		return bool(fetcher.call())
+	return has_room() and room.fetch_nearest_pickup(feet())
+
+
+# Lays a copy of the waiting pickup nearest him (Photocopier). Returns whether one was copied.
+func copy_pickup() -> bool:
+	if copier.is_valid():
+		return bool(copier.call())
+	return has_room() and room.copy_nearest_pickup(feet())
+
+
+# Half a pill off him (Unpaid Bill), never his last. Nothing while the full loop counts pills.
+func lose_half() -> bool:
+	var state := run()
+	if state == null or counting_pills:
+		return false
+	return state.health.lose_half(true)
 
 
 # Puts an ItemFx node (or any effect node) into the room at a spot. Without a room the node is freed,

@@ -79,12 +79,21 @@ static func display_name(kind: String) -> String:
 	return NAMES.get(kind, NAMES[LOCKED])
 
 
-static func prompt_for(kind: String) -> String:
+static func prompt_for(kind: String, cut := 0) -> String:
+	if kind == URN and slips_for(kind, cut) == 1:
+		return PROMPTS[LOCKED]
 	return PROMPTS.get(kind, PROMPTS[LOCKED])
 
 
 static func slips_needed(kind: String) -> int:
 	return int(SLIPS_NEEDED.get(kind, 1))
+
+
+# What opening costs with cut Slips taken off (Locksmith's Apron): never below one for anything that
+# costs a Slip at all.
+static func slips_for(kind: String, cut := 0) -> int:
+	var need := slips_needed(kind)
+	return need if need <= 1 else maxi(need - maxi(cut, 0), 1)
 
 
 # Lunchboxes, locked chests and urns open with the interact key. A mimic answers it too, by waking.
@@ -96,8 +105,8 @@ static func opens_by_blast(kind: String) -> bool:
 	return kind == SAFE
 
 
-static func can_open(kind: String, slips: int) -> bool:
-	return opens_by_hand(kind) and slips >= slips_needed(kind)
+static func can_open(kind: String, slips: int, cut := 0) -> bool:
+	return opens_by_hand(kind) and slips >= slips_for(kind, cut)
 
 
 # What else a lunchbox holds besides its coin: a small potion, a Thermos, or nothing.

@@ -158,6 +158,63 @@ func drop_for_item(kind: String, at: Vector2, amount := 1, id := "") -> void:
 		_drop_consumable(spot, kind)
 
 
+func drop_free_item(item: ItemDef, at: Vector2) -> void:
+	_run.promise(item)
+	_add_free_item(clear_spot(at), item)
+
+
+static func nearest_pickup(pickups: Array, at: Vector2, kinds: Array) -> Pickup:
+	var best: Pickup = null
+	for node in pickups:
+		var pickup := node as Pickup
+		if pickup == null or not pickup.is_waiting() or not kinds.has(pickup.fetch_kind):
+			continue
+		if pickup.can_take.is_valid() and not pickup.can_take.call():
+			continue
+		if best == null or pickup.global_position.distance_to(at) < best.global_position.distance_to(at):
+			best = pickup
+	return best
+
+
+static func nearest_copyable(pickups: Array, at: Vector2) -> Pickup:
+	var best: Pickup = null
+	for node in pickups:
+		var pickup := node as Pickup
+		if pickup == null or not pickup.is_waiting() or pickup.copy_kind.is_empty():
+			continue
+		if best == null or pickup.global_position.distance_to(at) < best.global_position.distance_to(at):
+			best = pickup
+	return best
+
+
+func fetch_nearest_pickup(at: Vector2) -> bool:
+	var pickup := nearest_pickup(get_children(), at, ["coin", "key", "bomb"])
+	if pickup == null:
+		return false
+	pickup.fly()
+	return true
+
+
+# Lays a copy of the nearest copyable pickup a cell beside it. A potion stays the same potion.
+func copy_nearest_pickup(at: Vector2) -> bool:
+	var pickup := nearest_copyable(get_children(), at)
+	if pickup == null:
+		return false
+	var spot := clear_spot(pickup.position + Vector2(RoomBackdrop.TILE, 0))
+	match pickup.copy_kind:
+		"coin":
+			_place_coin(spot, pickup.copy_amount)
+		"key":
+			_drop_consumable(spot, RoomRules.DROP_KEY)
+		"bomb":
+			_drop_consumable(spot, RoomRules.DROP_BOMB)
+		"heal":
+			_add_heal(spot, pickup.copy_amount)
+		"potion":
+			_drop_potion(spot, pickup.copy_potion)
+	return true
+
+
 # Where the room's last enemy fell, for what an item leaves after a clear.
 func last_death_spot() -> Vector2:
 	return _last_death_at
@@ -946,7 +1003,7 @@ func _on_enemy_defeated(enemy: Enemy) -> void:
 			_drop_recipe(spot + Vector2(-RoomBackdrop.TILE, RoomBackdrop.TILE))
 	if _room.room_type == RoomLayout.TYPE_FLOOR_BOSS and enemy.def.is_boss and not enemy.is_summon:
 		_drop_boss_choice(spot)
-	if enemy.def.id == AUDITOR_ID and _rng.randf() < AUDIT_ITEM_CHANCE:
+	if enemy.def.id == AUDITOR_ID and (enemy.leaves_item or _rng.randf() < AUDIT_ITEM_CHANCE):
 		_drop_audit_item(spot)
 	if enemy.def.is_boss:
 		for other in get_tree().get_nodes_in_group("enemies"):
@@ -958,18 +1015,26 @@ func _on_enemy_defeated(enemy: Enemy) -> void:
 
 # source is a RunState.PENSION_* id, or "" for Pension that only the general rate touches.
 func _drop_coin(at: Vector2, base_amount: int, source := "") -> void:
-	var amount := _run.pension_amount(base_amount, source)
+	_place_coin(at, _run.pension_amount(base_amount, source))
+
+
+# A coin of this Pension (already worked out) lying at a spot.
+func _place_coin(at: Vector2, amount: int) -> Pickup:
 	var coin := _add_pickup(at + Vector2(_rng.randf_range(-COIN_SCATTER, COIN_SCATTER), _rng.randf_range(-COIN_SCATTER, COIN_SCATTER)), "+%d" % amount, PENSION_COLOR, func(): _collect_pension(amount))
 	coin.art_id = ART_COIN
+	coin.fetch_kind = "coin"
+	coin.copy_kind = "coin"
+	coin.copy_amount = amount
 	# A coin lying in a pocket only a bomb opens would fly out through the stones.
 	if not _room.layout.coin_can_fly_from(_cell_of(at)):
-		return
+		return coin
 	coin.flies = true
 	# The Penny Jar calls coins from further off.
 	coin.magnet_radius = Pickup.MAGNET_RADIUS * _run.stats.coin_reach_mult
 	_coins.append(coin)
 	if _finished:
 		coin.fly()
+	return coin
 
 
 func _drop_consumable(at: Vector2, kind: String) -> void:
@@ -978,11 +1043,15 @@ func _drop_consumable(at: Vector2, kind: String) -> void:
 			var slip := _add_pickup(at, RoomRules.KEY_NAME, KEY_COLOR, func(): _take_consumable(_run.add_key, RunEffects.SLIP), false, "slip_pickup")
 			slip.can_take = _run.can_add_key
 			slip.carry_kind = kind
+			slip.fetch_kind = "key"
+			slip.copy_kind = "key"
 			slip.art_id = ART_SLIP
 		RoomRules.DROP_BOMB:
 			var thermos := _add_pickup(at, RoomRules.BOMB_NAME, BOMB_COLOR, func(): _take_consumable(_run.add_bomb, RunEffects.BOMB), false, "thermos_pickup")
 			thermos.can_take = _run.can_add_bomb
 			thermos.carry_kind = kind
+			thermos.fetch_kind = "bomb"
+			thermos.copy_kind = "bomb"
 			thermos.art_id = ART_THERMOS
 		RoomRules.DROP_POTION:
 			_drop_potion(at, PotionPool.roll(Content.potions(), _rng.randf(), _rng.randf()))
@@ -996,15 +1065,20 @@ func _drop_potion(at: Vector2, def: PotionDef) -> Pickup:
 	potion.can_take = _run.can_take_potion
 	potion.carry_kind = RoomRules.DROP_POTION
 	potion.carry_id = def.id
+	potion.copy_kind = "potion"
+	potion.copy_potion = def
 	potion.art_id = ART_POTION
 	return potion
 
 
-# kind is the RunEffects pickup kind the items hear, or "" for one they do not.
+# kind is the RunEffects pickup kind the items hear, or "" for one they do not. The items may make one
+# pickup more than one (In Triplicate); each still respects the hold cap.
 func _take_consumable(add: Callable, kind := "") -> void:
-	add.call()
+	var amount := 1
 	if not kind.is_empty():
-		_run.effects.pickup(kind, 1)
+		amount = maxi(_run.effects.pickup(kind, 1), 0)
+	for i in amount:
+		add.call()
 	consumable_taken.emit()
 
 
@@ -1031,6 +1105,8 @@ func _add_heal(at: Vector2, pills: int) -> Pickup:
 	heal.collect_radius = Pickup.COLLECT_RADIUS * _run.stats.heal_reach_mult
 	heal.carry_kind = RoomRules.DROP_HEAL
 	heal.carry_amount = pills
+	heal.copy_kind = "heal"
+	heal.copy_amount = pills
 	heal.art_id = ART_PILL
 	return heal
 
@@ -1416,23 +1492,23 @@ func _create_chest(cell: Vector2i, kind: String) -> Chest:
 	var chest := Chest.new()
 	chest.kind = kind
 	chest.setup(ChestRules.display_name(kind), PENSION_COLOR, _player.feet(), kind != ChestRules.SAFE)
-	chest.prompt = ChestRules.prompt_for(kind)
+	chest.prompt = ChestRules.prompt_for(kind, _run.stats.slip_cost_cut)
 	chest.position = RoomBackdrop.cell_center(cell)
 	chest.set_meta(KEEP, {"kind": KEEP_CHEST, "chest": kind})
 	match kind:
 		ChestRules.LUNCHBOX:
 			chest.collected.connect(_open_lunchbox.bind(cell))
 		ChestRules.URN:
-			chest.can_take = func(): return ChestRules.can_open(kind, _run.keys)
+			chest.can_take = func(): return ChestRules.can_open(kind, _run.keys, _run.stats.slip_cost_cut)
 			chest.collected.connect(_open_urn.bind(cell))
 		ChestRules.SAFE:
 			chest.blasted_open.connect(_open_safe)
 		ChestRules.MIMIC:
 			# It shows a Locked Chest's prompt rules, so nothing gives it away but its breathing.
-			chest.can_take = func(): return ChestRules.can_open(ChestRules.LOCKED, _run.keys)
+			chest.can_take = func(): return ChestRules.can_open(ChestRules.LOCKED, _run.keys, _run.stats.slip_cost_cut)
 			chest.woke.connect(_wake_mimic)
 		_:
-			chest.can_take = func(): return ChestRules.can_open(ChestRules.LOCKED, _run.keys)
+			chest.can_take = func(): return ChestRules.can_open(ChestRules.LOCKED, _run.keys, _run.stats.slip_cost_cut)
 			chest.collected.connect(_open_locked.bind(cell))
 	add_child(chest)
 	return chest
@@ -1458,14 +1534,14 @@ func _open_lunchbox(cell: Vector2i) -> void:
 
 
 func _open_locked(cell: Vector2i) -> void:
-	if _spend_slips(ChestRules.slips_needed(ChestRules.LOCKED)):
+	if _spend_slips(ChestRules.slips_for(ChestRules.LOCKED, _run.stats.slip_cost_cut)):
 		_create_treasure(cell)
 		_pay_chest_condolences()
 
 
 # Two Slips buy a pick of two items from the run's usual pool. Taking one clears the other away.
 func _open_urn(cell: Vector2i) -> void:
-	if not _spend_slips(ChestRules.slips_needed(ChestRules.URN)):
+	if not _spend_slips(ChestRules.slips_for(ChestRules.URN, _run.stats.slip_cost_cut)):
 		return
 	var picked := RoomRules.pick_items(Content.items(), _run, ChestRules.URN_CHOICES, _rng, ItemRarity.URN)
 	var wanted: Array[Vector2i] = []

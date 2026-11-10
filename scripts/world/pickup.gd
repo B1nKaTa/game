@@ -31,6 +31,12 @@ var carry_kind := ""
 var carry_amount := 1
 # Which potion a carried potion is, so the next room lays down the same one. "" for any other pickup.
 var carry_id := ""
+# What a Racing Pigeon may fetch ("coin", "key" or "bomb") and what a Photocopier may copy ("coin", "key",
+# "bomb", "heal" or "potion"), with a copy's amount and potion. "" for neither.
+var fetch_kind := ""
+var copy_kind := ""
+var copy_amount := 1
+var copy_potion: PotionDef
 # Its picture in res://art/props/ (PropArt), such as pickup_coin, or "" to draw the coloured disc. The
 # name label is still drawn in code over it.
 var art_id := ""

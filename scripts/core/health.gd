@@ -20,6 +20,10 @@ var heal_bonus := 0
 var lethal_saves := 0
 # A half pill healed and waiting for its other half. See heal_half.
 var half_pills := 0
+# Halves of a pill lost, from the items that cost half a pill (Unpaid Bill). Two make a pill.
+var half_lost := 0
+# Whether every heal that restores a pill also heals half a pill (Hypochondriac).
+var half_heal_bonus := false
 
 
 func _init(start_pills: int) -> void:
@@ -51,7 +55,7 @@ func shrug_off() -> void:
 	_invuln = INVULN_TIME
 
 
-func heal(amount: int) -> void:
+func heal(amount: int, from_half := false) -> void:
 	if is_dead():
 		return
 	var bonus := 0
@@ -61,6 +65,11 @@ func heal(amount: int) -> void:
 	if amount > 0:
 		bonus += heal_bonus
 	pills = mini(pills + amount + bonus, max_pills)
+	if half_heal_bonus and amount > 0 and not from_half and pills < max_pills:
+		half_pills += 1
+		if half_pills >= 2:
+			half_pills = 0
+			pills = mini(pills + 1, max_pills)
 	changed.emit()
 
 
@@ -71,7 +80,25 @@ func heal_half() -> void:
 	half_pills += 1
 	if half_pills >= 2:
 		half_pills = 0
-		heal(1)
+		heal(1, true)
+
+
+# Half a pill lost. Every second half takes a whole pill, never the last when never_last is set.
+# Returns whether a whole pill went.
+func lose_half(never_last := true) -> bool:
+	if is_dead():
+		return false
+	half_lost += 1
+	if half_lost < 2:
+		return false
+	half_lost = 0
+	if never_last and pills <= 1:
+		return false
+	pills = maxi(pills - 1, 0)
+	changed.emit()
+	if pills == 0:
+		died.emit()
+	return true
 
 
 func raise_max(new_max: int) -> void:

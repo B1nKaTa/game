@@ -20,6 +20,11 @@ var spent := 0
 var pension := 0
 # The enemies effects see through ctx.enemies(). Free them with free_enemies() at the end.
 var enemies: Array = []
+# What ctx.fetch_pickup and ctx.copy_pickup answer, and how often each came.
+var can_fetch := false
+var fetches := 0
+var can_copy := false
+var copies := 0
 
 
 # A run with no forms, wired to this kit.
@@ -57,6 +62,8 @@ func wire(run: RunState) -> void:
 	ctx.spend_pension = _on_spend
 	ctx.pension_balance = _on_balance
 	ctx.enemy_source = _enemy_list
+	ctx.fetcher = _on_fetch
+	ctx.copier = _on_copy
 
 
 # An enemy out of the tree, as tests use them. hp overrides its health when above zero.
@@ -87,6 +94,18 @@ func fx_of(kind: Script) -> Array[Dictionary]:
 
 func _enemy_list() -> Array:
 	return enemies
+
+
+func _on_fetch() -> bool:
+	if can_fetch:
+		fetches += 1
+	return can_fetch
+
+
+func _on_copy() -> bool:
+	if can_copy:
+		copies += 1
+	return can_copy
 
 
 func _on_notice(text: String) -> void:
