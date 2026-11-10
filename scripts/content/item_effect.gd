@@ -160,6 +160,53 @@ func tick(_ctx: EffectContext, _delta: float) -> void:
 	pass
 
 
+# --- the new item list ---
+
+# Whether an active may be used now (Harmonica waits for a missing pill). Only an active's effect is asked.
+func can_use(_ctx: EffectContext) -> bool:
+	return true
+
+
+# The active is used. Return true when it did something, which spends its charge; false keeps it.
+func use(_ctx: EffectContext) -> bool:
+	return false
+
+
+# What pets' hits are multiplied by at this moment (Dinner Bell, Tin of Pet Food). 1.0 for no change.
+func pet_damage_scale(_ctx: EffectContext) -> float:
+	return 1.0
+
+
+# One of his Thermos blasts landed on count enemies (Tea Break).
+func on_blast_hits(_ctx: EffectContext, _at: Vector2, _count: int) -> void:
+	pass
+
+
+# A room rule has just been broken. Return true to let it off with a warning: no Auditor (Fine Print).
+func excuses_rule_break(_ctx: EffectContext) -> bool:
+	return false
+
+
+# Whether the Auditor a broken rule sends fights for Harold instead (Clipboard of Your Own).
+func sides_with_you(_ctx: EffectContext) -> bool:
+	return false
+
+
+# The Auditor has walked into the room (Repeat Offender, Brown Envelope).
+func on_auditor(_ctx: EffectContext, _auditor: Enemy) -> void:
+	pass
+
+
+# A potion's lasting part is dropped once this is true.
+func is_spent() -> bool:
+	return false
+
+
+# A potion's lasting part, the moment it is drunk.
+func on_drink(_ctx: EffectContext) -> void:
+	pass
+
+
 # --- a resumed run ---
 
 # What of this copy's run a checkpoint must keep, as plain values (a once-a-run flag, a per-floor flag,

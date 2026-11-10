@@ -2,6 +2,7 @@ class_name RunState
 extends RefCounted
 
 signal changed
+signal active_swapped(old: ItemDef, charge: int)
 
 const STARTING_BOMBS := 1
 const MAX_CONSUMABLE := 99
@@ -16,6 +17,9 @@ const PENSION_BOSS := "boss"
 var stats: PlayerStats
 var health: Health
 var items: Array[ItemDef] = []
+# The one active he holds (ItemDef.KIND_ACTIVE), not in items, and its charge in fight rooms cleared.
+var active: ItemDef
+var active_charge := 0
 # What the held items do at moments of play, in pickup order, and the combos they form.
 var effects: RunEffects
 var keys := 0
@@ -166,14 +170,71 @@ func was_recipe_offered(id: String) -> bool:
 	return _offered_recipes.has(id)
 
 
-func add_item(item: ItemDef) -> void:
+# An active goes to the active slot, swapping out any held one, which keeps its charge
+# (active_swapped). active_charge_left is the charge a dropped active is taken back with; -1 is full.
+func add_item(item: ItemDef, active_charge_left := -1) -> void:
 	found.append(item.id)
+	if item.is_active():
+		take_active(item, active_charge_left)
+		return
 	var saves_before := stats.floor_lethal_saves
 	items.append(item)
 	effects.add(item)
 	refresh_stats()
 	# A Life Jacket picked up mid-floor works on this floor already, as does a combo that adds a save.
 	health.lethal_saves += maxi(stats.floor_lethal_saves - saves_before, 0)
+
+
+func take_active(item: ItemDef, charge := -1) -> void:
+	var old := active
+	var old_charge := active_charge
+	active = item
+	active_charge = active_needed() if charge < 0 else clampi(charge, 0, active_needed())
+	effects.set_active(item)
+	refresh_stats()
+	if old != null:
+		active_swapped.emit(old, old_charge)
+
+
+# A resumed run's active, put back without a second on_gain.
+func restore_active(item: ItemDef, charge: int) -> void:
+	active = item
+	active_charge = clampi(charge, 0, active_needed())
+	effects.set_active(item, false)
+
+
+# Fight rooms the held active needs, 1 for a once-a-floor one, 0 with none.
+func active_needed() -> int:
+	if active == null:
+		return 0
+	return 1 if active.charge_per_floor else maxi(active.charge_rooms, 1)
+
+
+func active_ready() -> bool:
+	return active != null and active_charge >= active_needed()
+
+
+# A fight room cleared.
+func charge_active() -> void:
+	if active == null or active.charge_per_floor or active_ready():
+		return
+	active_charge += 1
+	changed.emit()
+
+
+# A floor start fills a once-a-floor active.
+func fill_active() -> void:
+	if active != null and active.charge_per_floor and not active_ready():
+		active_charge = active_needed()
+		changed.emit()
+
+
+func use_active() -> bool:
+	if not active_ready() or not effects.use_active():
+		return false
+	active_charge = 0
+	changed.emit()
+	return true
 
 
 func note_met(enemy_id: String) -> void:
@@ -218,6 +279,8 @@ func parachute_pay(earned: int) -> int:
 # maximum never leaves him holding more pills than it allows.
 func clear_items() -> void:
 	items.clear()
+	active = null
+	active_charge = 0
 	effects.clear()
 	lost_max_pills = 0
 	refresh_stats()
@@ -262,6 +325,8 @@ func has_item(id: String) -> bool:
 	for item in items:
 		if item.id == id:
 			return true
+	if active != null and active.id == id:
+		return true
 	return false
 
 

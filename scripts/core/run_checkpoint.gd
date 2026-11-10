@@ -99,6 +99,8 @@ static func run_to_dict(run: RunState) -> Dictionary:
 		"half_pills": run.health.half_pills,
 		"lost_max_pills": run.lost_max_pills,
 		"items": item_ids,
+		"active": run.active.id if run.active != null else "",
+		"active_charge": run.active_charge,
 		"effects": run.effects.save_state(),
 		"keys": run.keys,
 		"bombs": run.bombs,
@@ -206,6 +208,12 @@ static func apply_run(run: RunState, raw: Dictionary, items: Array[ItemDef]) -> 
 		for item in items:
 			if item.id == str(id):
 				run.restore_item(item)
+				break
+	var active_id := str(raw.get("active", ""))
+	if not active_id.is_empty():
+		for item in items:
+			if item.id == active_id and item.is_active():
+				run.restore_active(item, int(raw.get("active_charge", 0)))
 				break
 	run.lost_max_pills = maxi(int(raw.get("lost_max_pills", 0)), 0)
 	var effects: Variant = raw.get("effects", {})

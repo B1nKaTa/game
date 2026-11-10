@@ -14,6 +14,12 @@ const COMBO_3 := "combo_3"
 const BITE := "bite"
 const THERMOS := "thermos"
 const ITEM := "item"
+# A pet's bite and the turned Auditor's clipboard. Neither is one of his hits.
+const PET := "pet"
+const ALLY := "ally"
+# His own hits: what the "+N% to all your hits" items scale. "era" is Player.ERA_HIT, named here since
+# this core script must not name Player.
+const HIS_HITS := [SWING, CHARGE, COMBO_3, BITE, THERMOS, ITEM, "era"]
 # What a pickup was.
 const PENSION := "pension"
 const HEAL := "heal"
@@ -43,6 +49,9 @@ var _hit_depth := 0
 # The effect whose on_lethal said yes to the hit landing now.
 var _saver: ItemEffect
 var _damage_this_room := 0
+# The held active's id and effect copy.
+var _active_id := ""
+var _active_effect: ItemEffect
 
 
 func _init(run_state: RunState = null) -> void:
@@ -52,6 +61,10 @@ func _init(run_state: RunState = null) -> void:
 
 func _run() -> RunState:
 	return _run_ref.get_ref() if _run_ref != null else null
+
+
+static func is_his_hit(source: String) -> bool:
+	return HIS_HITS.has(source)
 
 
 # --- the held items and combos ---
@@ -68,6 +81,7 @@ func add(item: ItemDef, gain := true) -> void:
 
 
 func clear() -> void:
+	clear_active()
 	_entries.clear()
 	_combos.clear()
 	_combo_effects.clear()
@@ -75,6 +89,8 @@ func clear() -> void:
 
 # The effect copy this run holds for an item, or null.
 func effect_of(item_id: String) -> ItemEffect:
+	if _active_effect != null and item_id == _active_id:
+		return _active_effect
 	for entry in _entries:
 		if entry[0] == item_id:
 			return entry[1]
@@ -134,7 +150,11 @@ func save_state() -> Dictionary:
 		var state := _combo_effects[i].save_state()
 		if not state.is_empty():
 			formed[_combo_id_of(_combo_effects[i])] = state
-	return {"items": held, "combos": formed}
+	return {
+		"items": held,
+		"combos": formed,
+		"active": _active_effect.save_state() if _active_effect != null else {},
+	}
 
 
 # Hands each effect copy what save_state kept for it, or {} when nothing was, so every copy of a resumed
@@ -148,6 +168,9 @@ func load_state(raw: Dictionary) -> void:
 	for copy in _combo_effects:
 		var state: Variant = formed.get(_combo_id_of(copy), {}) if formed is Dictionary else {}
 		copy.load_state(state if state is Dictionary else {})
+	if _active_effect != null:
+		var active_state: Variant = raw.get("active", {})
+		_active_effect.load_state(active_state if active_state is Dictionary else {})
 
 
 func _combo_id_of(copy: ItemEffect) -> String:
@@ -165,6 +188,8 @@ func _all() -> Array[ItemEffect]:
 	var list: Array[ItemEffect] = []
 	for entry in _entries:
 		list.append(entry[1])
+	if _active_effect != null:
+		list.append(_active_effect)
 	list.append_array(_combo_effects)
 	return list
 
@@ -218,6 +243,9 @@ func kill(enemy: Enemy, source: String) -> void:
 func floor_start() -> void:
 	for effect in _all():
 		effect.on_floor_start(ctx)
+	var run := _run()
+	if run != null and not ctx.is_landing():
+		run.fill_active()
 
 
 func room_enter(room: Node) -> void:
@@ -253,6 +281,9 @@ func swing_pace() -> float:
 func room_clear(room: Node) -> void:
 	for effect in _all():
 		effect.on_room_clear(ctx, room, _damage_this_room)
+	var run := _run()
+	if run != null:
+		run.charge_active()
 
 
 func damage_this_room() -> int:
@@ -379,7 +410,66 @@ func shop_open(stock: Array[Dictionary]) -> void:
 
 
 func tick(delta: float) -> void:
-	for entry in _entries:
-		entry[1].tick(ctx, delta)
-	for effect in _combo_effects:
+	for effect in _all():
 		effect.tick(ctx, delta)
+
+
+# --- the active slot ---
+
+# The held active's effect. gain is false when a resumed run gets it back.
+func set_active(item: ItemDef, gain := true) -> void:
+	clear_active()
+	if item == null:
+		return
+	_active_id = item.id
+	if item.effect != null:
+		_active_effect = item.effect.duplicate()
+		if gain:
+			_active_effect.on_gain(ctx)
+
+
+func clear_active() -> void:
+	_active_id = ""
+	_active_effect = null
+
+
+func active_effect() -> ItemEffect:
+	return _active_effect
+
+
+func use_active() -> bool:
+	if _active_effect == null or not _active_effect.can_use(ctx):
+		return false
+	return _active_effect.use(ctx)
+
+
+func blast_hits(at: Vector2, count: int) -> void:
+	for effect in _all():
+		effect.on_blast_hits(ctx, at, count)
+
+
+# The first effect that says yes is the only one asked.
+func excuses_rule_break() -> bool:
+	for effect in _all():
+		if effect.excuses_rule_break(ctx):
+			return true
+	return false
+
+
+func sides_with_you() -> bool:
+	for effect in _all():
+		if effect.sides_with_you(ctx):
+			return true
+	return false
+
+
+func auditor(enemy: Enemy) -> void:
+	for effect in _all():
+		effect.on_auditor(ctx, enemy)
+
+
+func pet_damage_scale() -> float:
+	var scale := 1.0
+	for effect in _all():
+		scale *= effect.pet_damage_scale(ctx)
+	return scale
