@@ -619,9 +619,10 @@ func test_no_png_means_no_icon_and_a_test_icon_is_used() -> void:
 func test_a_pickup_draws_its_icon_only_when_there_is_one() -> void:
 	ItemIcons.clear_test()
 	var pickup := Pickup.new()
-	pickup.icon_id = "tea_urn"
-	assert_false(pickup.draws_icon(), "no PNG yet: the disc stays")
-	ItemIcons.set_for_test("tea_urn", _icon())
+	# A made-up id: real icons are arriving in art/icons/items/ (LESSONS 2026-11-09).
+	pickup.icon_id = "no_icon_test_item"
+	assert_false(pickup.draws_icon(), "no PNG: the disc stays")
+	ItemIcons.set_for_test("no_icon_test_item", _icon())
 	assert_true(pickup.draws_icon())
 	pickup.free()
 	ItemIcons.clear_test()
@@ -635,13 +636,13 @@ func test_room_item_pickups_and_wares_name_their_icon() -> void:
 
 func test_the_item_row_keeps_names_until_an_icon_exists() -> void:
 	ItemIcons.clear_test()
-	var items: Array[ItemDef] = [_item("a", "Alpha"), _item("b", "Beta"), _item("c", "Gamma"), _item("d", "Delta")]
+	var items: Array[ItemDef] = [_item("test_a", "Alpha"), _item("test_b", "Beta"), _item("test_c", "Gamma"), _item("test_d", "Delta")]
 	var entries := Hud.item_row_entries(items)
 	assert_eq(entries.size(), Hud.ITEMS_SHOWN)
 	assert_eq(entries[0]["name"], "Delta", "newest first")
 	assert_true(entries[0]["icon"] == null)
 	var icon := _icon()
-	ItemIcons.set_for_test("c", icon)
+	ItemIcons.set_for_test("test_c", icon)
 	entries = Hud.item_row_entries(items)
 	var pieces := ItemRow.pieces(items.size(), entries)
 	assert_eq(pieces[0], ["text", "Items: 4   "])
@@ -653,11 +654,11 @@ func test_the_item_row_keeps_names_until_an_icon_exists() -> void:
 
 func test_the_case_file_takes_its_item_icons_from_item_icons() -> void:
 	ItemIcons.clear_test()
-	var item := _item("tea_urn", "Tea Urn")
+	var item := _item("no_icon_test_item", "Test Item")
 	var cell := CaseFileData.item_cell(item, true, 1)
 	assert_true(CaseFile.cell_texture(cell) == null)
 	var icon := _icon()
-	ItemIcons.set_for_test("tea_urn", icon)
+	ItemIcons.set_for_test("no_icon_test_item", icon)
 	assert_eq(CaseFile.cell_texture(cell), icon)
 	ItemIcons.clear_test()
 ```
