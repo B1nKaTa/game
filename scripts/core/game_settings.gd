@@ -48,8 +48,8 @@ const DEFAULTS := {
 		"minimap_opacity": [100, 20, 100],
 		"run_timer": false,
 		# Every enemy's red attack warnings, bosses' and mini bosses' too (AttackWarnings). Safe-spot
-		# marks always show.
-		"attack_warnings": false,
+		# marks always show. On by default since the player build; a file saved earlier keeps its own value.
+		"attack_warnings": true,
 		"language": "en",
 	},
 }

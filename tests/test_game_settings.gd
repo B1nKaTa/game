@@ -40,6 +40,7 @@ func test_defaults_match_the_spec() -> void:
 	assert_eq(s.value(GameSettings.GAME, "hide_minimap_in_combat"), false)
 	assert_eq(s.value(GameSettings.GAME, "minimap_opacity"), 100)
 	assert_eq(s.value(GameSettings.GAME, "run_timer"), false)
+	assert_eq(s.value(GameSettings.GAME, "attack_warnings"), true, "new players see the red warnings")
 	assert_eq(s.value(GameSettings.GAME, "language"), "en")
 
 
@@ -180,3 +181,15 @@ func test_the_fullscreen_keys_are_the_window_keys() -> void:
 	var source := FileAccess.get_file_as_string("res://scripts/ui/options_panel.gd")
 	var waiting := source.substr(source.find("func _input("), 900)
 	assert_true(waiting.contains("GameSettings.is_window_key(event)"), "the waiting cell turns them away")
+
+
+# A file saved before this build holds attack_warnings=false (save_to writes every key) and keeps it.
+func test_a_saved_file_keeps_its_attack_warnings() -> void:
+	var path := OS.get_temp_dir().path_join("grandpa_settings_warn_test.cfg")
+	var old := GameSettings.new()
+	old.set_value(GameSettings.GAME, "attack_warnings", false)
+	assert_true(old.save_to(path))
+	var loaded := GameSettings.new()
+	assert_true(loaded.load_from(path))
+	assert_eq(loaded.value(GameSettings.GAME, "attack_warnings"), false)
+	DirAccess.remove_absolute(path)

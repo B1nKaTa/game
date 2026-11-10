@@ -10,8 +10,15 @@ const LINES := [
 	"He picks up his cane.",
 ]
 
+const HINT := "Click or press %s to continue. %s to skip."
+
 var _index := 0
 var _label: Label
+var _done := false
+
+
+static func next_index(index: int, skip: bool) -> int:
+	return LINES.size() if skip else mini(index + 1, LINES.size())
 
 
 func _ready() -> void:
@@ -31,7 +38,7 @@ func _ready() -> void:
 	layer.add_child(_label)
 	_label.text = LINES[0]
 	var hint := Label.new()
-	hint.text = "Click or press Space to continue"
+	hint.text = tr(HINT) % [KeyBindings.label_for("dodge"), KeyBindings.label_for("pause")]
 	hint.position = Vector2(40, 325)
 	hint.size = Vector2(560, 20)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -41,9 +48,15 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("attack") or event.is_action_pressed("dodge") or event.is_action_pressed("interact") or event.is_action_pressed("ui_accept"):
-		_index += 1
-		if _index >= LINES.size():
-			Game.finish_opening()
-		else:
-			_label.text = LINES[_index]
+	if _done:
+		return
+	var skip := event.is_action_pressed("pause") or event.is_action_pressed(PadInput.BACK_ACTION) or event.is_action_pressed("ui_cancel")
+	var next := event.is_action_pressed("attack") or event.is_action_pressed("dodge") or event.is_action_pressed("interact") or event.is_action_pressed("ui_accept")
+	if not skip and not next:
+		return
+	_index = next_index(_index, skip)
+	if _index >= LINES.size():
+		_done = true
+		Game.finish_opening()
+	else:
+		_label.text = LINES[_index]
