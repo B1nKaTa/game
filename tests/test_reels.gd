@@ -170,6 +170,7 @@ func _flashback_setup(target_type := RoomLayout.TYPE_COMBAT, gap := 30.0) -> Dic
 	var door := Door.new()
 	var feet := Node2D.new()
 	door.setup(1, "?", feet)
+	door.locked = false
 	feet.position = Vector2(gap, 0)
 	view._doors.append(door)
 	return {"map": map, "progress": progress, "run": run, "player": player, "keeper": keeper, "view": view, "door": door, "feet": feet}
