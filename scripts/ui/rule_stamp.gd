@@ -7,13 +7,14 @@ const STAMP_TIME := 1.0
 const KIND_VIOLATION := "violation"
 const KIND_GOOD := "good"
 const KIND_LIFTED := "lifted"
+const KIND_WARNING := "warning"
 const CENTER := Vector2(320, 150)
 const CARD := Vector2(200, 112)
 # The sign's words under the pictogram, kept inside the card with a margin each side.
 const SIGN_SIZE := 12
 const SIGN_ROOM := CARD.x - 16.0
 const PAPER := Color("efe6cf")
-const KIND_COLORS := {KIND_VIOLATION: Color("c43d2f"), KIND_GOOD: Color("3f8f4a"), KIND_LIFTED: Color("6b6258")}
+const KIND_COLORS := {KIND_VIOLATION: Color("c43d2f"), KIND_GOOD: Color("3f8f4a"), KIND_LIFTED: Color("6b6258"), KIND_WARNING: Color("5b6b85")}
 
 signal announce_done(rule: String)
 
@@ -33,6 +34,8 @@ static func text_of(kind: String) -> String:
 			return "GOOD CONDUCT"
 		KIND_LIFTED:
 			return "REGULATION LIFTED"
+		KIND_WARNING:
+			return "WARNING"
 	return ""
 
 

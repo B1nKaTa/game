@@ -11,15 +11,16 @@ const DEEP_SHARE := 0.4
 const DEEP_MIN := 2
 
 
-static func rule_room_count(depth: int, combat_rooms: int, enabled_depth := ENABLED_DEPTH) -> int:
-	if depth > enabled_depth or combat_rooms <= 0:
+# extra more rooms on every floor (By the Book), deeper floors too, never more than its combat rooms.
+static func rule_room_count(depth: int, combat_rooms: int, enabled_depth := ENABLED_DEPTH, extra := 0) -> int:
+	if combat_rooms <= 0:
 		return 0
-	var wanted: int = BY_DEPTH.get(depth, maxi(DEEP_MIN, roundi(combat_rooms * DEEP_SHARE)))
-	return mini(wanted, combat_rooms)
+	var wanted: int = 0 if depth > enabled_depth else BY_DEPTH.get(depth, maxi(DEEP_MIN, roundi(combat_rooms * DEEP_SHARE)))
+	return mini(wanted + maxi(extra, 0), combat_rooms)
 
 
 # Combat rooms only: never loot, shop, treasure, item, healing, secret, vault, mini-boss or boss rooms.
-static func rule_rooms(map: FloorMap, depth: int, seed_text: String) -> Array[int]:
+static func rule_rooms(map: FloorMap, depth: int, seed_text: String, extra := 0) -> Array[int]:
 	var combat: Array[int] = []
 	for room in map.rooms:
 		if room.room_type == RoomLayout.TYPE_COMBAT and room.id != map.start_id:
@@ -28,7 +29,7 @@ static func rule_rooms(map: FloorMap, depth: int, seed_text: String) -> Array[in
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(seed_text + ":rule_rooms")
 	var picked: Array[int] = []
-	for i in rule_room_count(depth, combat.size()):
+	for i in rule_room_count(depth, combat.size(), ENABLED_DEPTH, extra):
 		picked.append(combat.pop_at(rng.randi_range(0, combat.size() - 1)))
 	picked.sort()
 	return picked

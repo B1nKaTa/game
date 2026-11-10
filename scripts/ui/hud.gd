@@ -418,7 +418,7 @@ func _refresh() -> void:
 		_potion_label = KeyBindings.prompt_label("potion")
 		_potion_slot.show_potion(_run.potion, _potion_label)
 		_reel_key = KeyBindings.prompt_label("flashback")
-		_reel_slot.show_reel(_run.held_reel, _reel_key)
+		_reel_slot.show_reel(_run.held_reel, _reel_key, _run.held_reels.size())
 		var names: PackedStringArray = []
 		for item in _run.items:
 			names.append(item.display_name)

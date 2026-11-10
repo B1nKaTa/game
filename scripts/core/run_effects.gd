@@ -36,6 +36,11 @@ const HURT_OWN_BLAST := "own_blast"
 const HURT_CONTACT := "contact"
 # What items tell each other through event(): a BINGO from the card or the dabber.
 const EVENT_BINGO := "bingo"
+# The room rules and flashbacks tell the items through event() as well.
+const EVENT_RULE_KEPT := "rule_kept"
+const EVENT_RULE_BROKEN := "rule_broken"
+const EVENT_FLASHBACK_START := "flashback_start"
+const EVENT_FLASHBACK_END := "flashback_end"
 # Item hits that set off item hits stop this deep, so two effects can never feed each other forever.
 const MAX_HIT_DEPTH := 2
 

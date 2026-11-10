@@ -578,7 +578,11 @@ func _enter_room(target_id: int) -> void:
 func _on_rule_broken(view: RoomView) -> void:
 	if view != _room_view or is_over:
 		return
-	view.call_auditor(load(AUDITOR_PATH), view.door_to(_arrived_from))
+	var door := view.door_to(_arrived_from)
+	if _run.effects.sides_with_you():
+		view.call_ally_auditor(door)
+	else:
+		view.call_auditor(load(AUDITOR_PATH), door)
 
 
 # The room's music: its path's theme, the landing's, or the Arcade's. A boss's music starts when it

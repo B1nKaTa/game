@@ -64,8 +64,16 @@ var seeds: Array[String] = []
 # The Flashback Cinema's lobby card lines shown this run (LifeSigns), so none shows twice. The
 # checkpoint keeps them with the tally.
 var life_signs_shown: Array[String] = []
-# The film reel he carries (an Eras id, "" for none): one memory at a time. The checkpoint keeps it.
-var held_reel := ""
+# The film reels he carries (Eras ids), at most reel_cap(): one memory at a time unless an item says more.
+# held_reel is the first, as the HUD, the keeper and older checkpoints know it. The checkpoint keeps them.
+var held_reels: Array[String] = []
+var held_reel: String:
+	get:
+		return held_reels[0] if not held_reels.is_empty() else ""
+	set(value):
+		held_reels.clear()
+		if not value.is_empty():
+			held_reels.append(value)
 # The era he relives in this room (Eras), "" for old Harold. Never saved: a checkpoint resumes in a
 # cleared room, where no flashback runs.
 var era := ""
@@ -503,20 +511,28 @@ func move_speed() -> float:
 	return stats.move_speed * (1.0 + (buff.speed_bonus if buff != null else 0.0)) * effects.move_pace() * Eras.speed_mult(era)
 
 
-# One memory at a time: a second reel is wasted, on purpose, to reward using them.
+func reel_cap() -> int:
+	return 1 + stats.extra_reels
+
+
+# A reel past his cap is wasted, on purpose, to reward using them.
 func give_reel(era_id: String) -> bool:
-	if not held_reel.is_empty():
+	if held_reels.size() >= reel_cap():
 		return false
-	held_reel = era_id
+	held_reels.append(era_id)
 	changed.emit()
 	return true
 
 
 func take_reel() -> String:
-	var reel := held_reel
-	held_reel = ""
+	var reel: String = "" if held_reels.is_empty() else str(held_reels.pop_front())
 	changed.emit()
 	return reel
+
+
+# Whether this floor posts room rules, for the rules and memory items (RoomRules.offerable).
+func rules_posted() -> bool:
+	return floor_depth <= RulePicker.ENABLED_DEPTH or stats.extra_rule_rooms > 0
 
 
 # How fast the cane combo swings, as a multiple of its usual pace: the forms' and items' stats, and any

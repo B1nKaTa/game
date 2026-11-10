@@ -19,6 +19,8 @@ const USE_RADIUS := 48.0
 const READY_NOTICE := "Memory ready: go through the door"
 const HELD_NOTICE := "Already holding a memory"
 const WRONG_PLACE := "Use a memory at a door to a room you haven't fought in"
+# An era whose room cleared and that waits for its next fight room (Old Projector).
+const ERA_WAITING := -2
 const FIGHT_ROOMS := [RoomLayout.TYPE_COMBAT, RoomLayout.TYPE_MINI_BOSS, RoomLayout.TYPE_FLOOR_BOSS]
 
 var current_id := -1
@@ -39,6 +41,7 @@ var _progress: FloorProgress
 # The room a readied reel waits to play in (-1 for none), and the room an era plays in now.
 var _readied_door := -1
 var _era_room := -1
+var _era_rooms_left := 0
 var _unlocked: Array = Eras.STARTING
 # The wrong-place hint shows once per run (the keeper lasts the run).
 var _hinted := false
@@ -63,7 +66,7 @@ func plan_floor(map: FloorMap, depth: int, seed_text: String, progress: FloorPro
 	_seed = seed_text
 	_watches.clear()
 	_hooked.clear()
-	_rule_rooms = RulePicker.rule_rooms(map, depth, seed_text)
+	_rule_rooms = RulePicker.rule_rooms(map, depth, seed_text, _run.stats.extra_rule_rooms if _run != null else 0)
 	set_floor(map, progress)
 
 
@@ -81,6 +84,16 @@ func set_floor(map: FloorMap, progress: FloorProgress) -> void:
 
 func set_unlocked(unlocked: Array) -> void:
 	_unlocked = unlocked
+
+
+func era_waiting() -> bool:
+	return _era_room == ERA_WAITING
+
+
+# A longer flashback (Old Projector) takes the next fight room he walks into for the first time.
+func _claim_era_room(room_id: int) -> void:
+	if _era_room == ERA_WAITING:
+		_era_room = room_id
 
 
 func readied_door() -> int:
@@ -106,6 +119,8 @@ func on_room_entered(view: RoomView, room: FloorRoom, first_visit: bool) -> void
 		_set_glow(false)
 		if going == room.id and first_visit and view.is_fighting() and not _run.held_reel.is_empty():
 			_start_era(_run.take_reel(), room.id)
+	if first_visit and view.is_fighting():
+		_claim_era_room(room.id)
 	if first_visit and _rule_rooms.has(room.id) and view.is_fighting() and not _watches.has(room.id):
 		var ready := {"has_bomb": _run.bombs > 0, "has_potion": _run.potion != null, "has_breakables": view.has_breakables()}
 		_watches[room.id] = RuleWatch.new(RulePicker.pick_rule(_seed, room.id, ready))
@@ -134,12 +149,18 @@ func report(action: String) -> void:
 	if watch == null or not watch.report(action):
 		return
 	Sfx.play("rule_whistle")
-	if _hud != null:
-		_hud.stamp_rule(RuleStamp.KIND_VIOLATION)
-		_hud.break_rule()
 	if _record_rule.is_valid():
 		_record_rule.call(false)
-	rule_broken.emit(_view)
+	if _run != null:
+		_run.rules_broken += 1
+		_run.effects.event(RunEffects.EVENT_RULE_BROKEN)
+	# Fine Print lets the first break of a floor off: no Auditor, a warning stamp.
+	var excused := _run != null and _run.effects.excuses_rule_break()
+	if _hud != null:
+		_hud.stamp_rule(RuleStamp.KIND_WARNING if excused else RuleStamp.KIND_VIOLATION)
+		_hud.break_rule()
+	if not excused:
+		rule_broken.emit(_view)
 
 
 func to_dict() -> Dictionary:
@@ -188,8 +209,9 @@ func try_ready_reel(view: RoomView, progress: FloorProgress, map: FloorMap) -> b
 func _on_rule_kept(view: RoomView, at: Vector2) -> void:
 	if view == null or not is_instance_valid(view):
 		return
-	var era := Eras.pick(_unlocked, _seed, current_id)
-	view.drop_reel(at, era, _reel_taken.bind(era))
+	for i in 1 + (_run.stats.bonus_kept_reels if _run != null else 0):
+		var era := Eras.pick(_unlocked, _seed if i == 0 else "%s:%d" % [_seed, i], current_id)
+		view.drop_reel(at, era, _reel_taken.bind(era))
 
 
 # A reel picked up: his if his pocket is empty, or it fades, since he holds one memory at a time.
@@ -203,11 +225,15 @@ func _reel_taken(era: String) -> void:
 func _start_era(era: String, room_id: int) -> void:
 	_run.era = era
 	_era_room = room_id
+	_era_rooms_left = _run.stats.extra_era_rooms if _run != null else 0
 	SepiaFlicker.play(get_parent())
 	Sfx.play("reel_flicker")
 	if _player != null:
 		_player.set_era(era)
 	era_started.emit(era)
+	if _run != null:
+		_run.flashbacks_played += 1
+		_run.effects.event(RunEffects.EVENT_FLASHBACK_START)
 
 
 func _end_era() -> void:
@@ -218,6 +244,8 @@ func _end_era() -> void:
 		_player.say_line(line)
 	# Harold has no speech bubble yet, so his line shows as a notice.
 	_notice(line)
+	if _run != null:
+		_run.effects.event(RunEffects.EVENT_FLASHBACK_END)
 	_stop_era()
 
 
@@ -228,6 +256,7 @@ func _stop_era() -> void:
 		era = _run.era
 		_run.era = ""
 	_era_room = -1
+	_era_rooms_left = 0
 	if _player != null:
 		_player.set_era("")
 	era_ended.emit(era)
@@ -272,7 +301,11 @@ func _process(delta: float) -> void:
 
 func _on_room_finished(view: RoomView, room_id: int) -> void:
 	if _era_room == room_id:
-		_end_era()
+		if _era_rooms_left > 0:
+			_era_rooms_left -= 1
+			_era_room = ERA_WAITING
+		else:
+			_end_era()
 	var watch := watch_of(room_id)
 	if watch == null or not watch.is_open():
 		return
@@ -283,6 +316,9 @@ func _on_room_finished(view: RoomView, room_id: int) -> void:
 	if kept:
 		if _record_rule.is_valid():
 			_record_rule.call(true)
+		if _run != null:
+			_run.rules_kept += 1
+			_run.effects.event(RunEffects.EVENT_RULE_KEPT)
 		rule_kept.emit(view, view.last_death_spot())
 
 

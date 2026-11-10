@@ -134,6 +134,8 @@ var _audit_def: EnemyDef
 var _audit_door: Door
 var _audit_left := -1.0
 var _audited := false
+var _ally_left := -1.0
+var _ally_door: Door
 
 
 # The room's id on its floor's map.
@@ -253,6 +255,36 @@ func call_auditor(def: EnemyDef, from_door: Door) -> void:
 # Runs only while the room is in the tree, so leaving the room pauses his walk-in.
 func _physics_process(delta: float) -> void:
 	_tick_audit(delta)
+	if _tick_ally(delta):
+		_spawn_ally()
+
+
+# Clipboard of Your Own: the Auditor walks in on his side after the same wait, and the room stays his to clear.
+func call_ally_auditor(from_door: Door) -> void:
+	if _audited or _finished:
+		return
+	_audited = true
+	_ally_door = from_door
+	_ally_left = AUDIT_DELAY
+
+
+# Counts the ally Auditor's walk-in down. True on the one frame he is due.
+func _tick_ally(delta: float) -> bool:
+	if _ally_left < 0.0:
+		return false
+	_ally_left -= delta
+	if _ally_left > 0.0:
+		return false
+	_ally_left = -1.0
+	return true
+
+
+func _spawn_ally() -> void:
+	var ally := AllyAuditor.make(_run.effects.ctx)
+	add_child(ally)
+	ally.global_position = summon_spot(_audit_spot_for(_ally_door))
+	finished.connect(ally.queue_free, CONNECT_ONE_SHOT)
+	Sfx.play("door_open")
 
 
 func _tick_audit(delta: float) -> void:
@@ -264,6 +296,7 @@ func _tick_audit(delta: float) -> void:
 	_audit_left = -1.0
 	var at := summon_spot(_audit_spot())
 	var auditor := _spawn_enemy(_audit_def, at)
+	_run.effects.auditor(auditor)
 	# His reserved place becomes him.
 	_alive -= 1
 	auditor.wait_for_room_start()
@@ -277,8 +310,12 @@ func _tick_audit(delta: float) -> void:
 
 # The door he comes in by, else where the last enemy fell, else the room's middle.
 func _audit_spot() -> Vector2:
-	if is_instance_valid(_audit_door):
-		return _audit_door.position
+	return _audit_spot_for(_audit_door)
+
+
+func _audit_spot_for(door: Door) -> Vector2:
+	if is_instance_valid(door):
+		return door.position
 	if _last_death_at != Vector2.ZERO:
 		return _last_death_at
 	return Vector2(_room.layout.size_in_cells()) * RoomBackdrop.TILE / 2.0

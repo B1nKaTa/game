@@ -112,6 +112,7 @@ static func run_to_dict(run: RunState) -> Dictionary:
 		"promised": promised,
 		"offered": offered,
 		"held_reel": run.held_reel if not run.held_reel.is_empty() else run.era,
+		"held_reels": _reels_to_keep(run),
 		"pension_at_start": run.pension_at_start,
 		"floor_depth": run.floor_depth,
 		"rules_kept": run.rules_kept,
@@ -123,6 +124,14 @@ static func run_to_dict(run: RunState) -> Dictionary:
 # What the run did so far for EndingRules (RunState's run-only tracking), kept apart from run_to_dict
 # since play time goes on counting after a save. Won Arcade visits come back as a count, since visit
 # numbers start again in the resumed scene.
+# The reels held, and the era being lived when a slot is free for it, as the single held_reel did.
+static func _reels_to_keep(run: RunState) -> Array:
+	var reels: Array = Array(run.held_reels)
+	if not run.era.is_empty() and reels.size() < run.reel_cap():
+		reels.append(run.era)
+	return reels
+
+
 static func ending_to_dict(run: RunState) -> Dictionary:
 	var paths := {}
 	for depth in run.paths_taken:
@@ -252,8 +261,15 @@ static func apply_run(run: RunState, raw: Dictionary, items: Array[ItemDef]) -> 
 	run.buff = Content.potion(buff) if not buff.is_empty() else null
 	run.buff_left = float(raw.get("buff_left", 0.0)) if run.buff != null else 0.0
 	run.cursed = bool(raw.get("cursed", false))
-	var reel := str(raw.get("held_reel", ""))
-	run.held_reel = reel if Eras.is_known(reel) else ""
+	var reels: Variant = raw.get("held_reels", null)
+	run.held_reels.clear()
+	if reels is Array:
+		for reel in reels:
+			if Eras.is_known(str(reel)) and run.held_reels.size() < run.reel_cap():
+				run.held_reels.append(str(reel))
+	else:
+		var reel := str(raw.get("held_reel", ""))
+		run.held_reel = reel if Eras.is_known(reel) else ""
 	run.restore_marks(raw.get("promised", []), raw.get("offered", []))
 	run.pension_at_start = int(raw.get("pension_at_start", -1))
 	run.floor_depth = maxi(int(raw.get("floor_depth", 0)), 0)

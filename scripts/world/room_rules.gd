@@ -133,6 +133,8 @@ static func offerable(all: Array[ItemDef], run: RunState, source := ItemRarity.I
 	for item in all:
 		if item.cursed and not ItemRarity.allows_cursed(source):
 			continue
+		if item.needs_rules() and not run.rules_posted():
+			continue
 		if run.can_offer(item) and not run.has_item(item.id) and not run.is_promised(item.id):
 			options.append(item)
 	return options

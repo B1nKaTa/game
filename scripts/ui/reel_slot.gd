@@ -22,8 +22,10 @@ var _held := false
 var _label: Label
 
 
-static func text_for(era: String, key: String) -> String:
-	return "" if era.is_empty() else "[%s]" % key
+static func text_for(era: String, key: String, count := 1) -> String:
+	if era.is_empty():
+		return ""
+	return "[%s]" % key + (" x%d" % count if count > 1 else "")
 
 
 func _ready() -> void:
@@ -41,10 +43,10 @@ func _ready() -> void:
 	add_child(_label)
 
 
-func show_reel(era: String, key: String) -> void:
+func show_reel(era: String, key: String, count := 1) -> void:
 	_ready()
 	_held = not era.is_empty()
-	_label.text = text_for(era, key)
+	_label.text = text_for(era, key, count)
 	queue_redraw()
 
 
