@@ -1022,12 +1022,13 @@ func _drop_coin(at: Vector2, base_amount: int, source := "") -> void:
 func _place_coin(at: Vector2, amount: int) -> Pickup:
 	var coin := _add_pickup(at + Vector2(_rng.randf_range(-COIN_SCATTER, COIN_SCATTER), _rng.randf_range(-COIN_SCATTER, COIN_SCATTER)), "+%d" % amount, PENSION_COLOR, func(): _collect_pension(amount))
 	coin.art_id = ART_COIN
+	# A coin lying in a pocket only a bomb opens would fly out through the stones, so it is neither
+	# fetched nor copied either.
+	if not _room.layout.coin_can_fly_from(_cell_of(at)):
+		return coin
 	coin.fetch_kind = "coin"
 	coin.copy_kind = "coin"
 	coin.copy_amount = amount
-	# A coin lying in a pocket only a bomb opens would fly out through the stones.
-	if not _room.layout.coin_can_fly_from(_cell_of(at)):
-		return coin
 	coin.flies = true
 	# The Penny Jar calls coins from further off.
 	coin.magnet_radius = Pickup.MAGNET_RADIUS * _run.stats.coin_reach_mult

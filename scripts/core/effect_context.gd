@@ -52,6 +52,11 @@ func run() -> RunState:
 	return _run_ref.get_ref() if _run_ref != null else null
 
 
+# Whether pill bonuses may apply right now: false while the full loop counts pills.
+func pills_not_counted() -> bool:
+	return not counting_pills
+
+
 func has_player() -> bool:
 	return is_instance_valid(player) and player.is_inside_tree()
 
@@ -188,6 +193,9 @@ func fetch_pickup() -> bool:
 
 # Lays a copy of the waiting pickup nearest him (Photocopier). Returns whether one was copied.
 func copy_pickup() -> bool:
+	# A copied coin pays Pension and a copied heal gives pills, which the full loop counts itself.
+	if counting_exact or counting_pills:
+		return false
 	if copier.is_valid():
 		return bool(copier.call())
 	return has_room() and room.copy_nearest_pickup(feet())

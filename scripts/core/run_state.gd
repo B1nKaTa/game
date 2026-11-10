@@ -96,8 +96,9 @@ func _init(upgrades: Array[UpgradeDef], levels: Dictionary, choices: Dictionary 
 	_apply_pill_rules()
 	health = Health.new(stats.max_pills)
 	health.changed.connect(changed.emit)
+	health.pill_bonus_allowed = effects.ctx.pills_not_counted
 	health.heal_bonus = stats.heal_bonus
-	health.half_heal_bonus = stats.half_heal_bonus and not effects.ctx.counting_pills
+	health.half_heal_bonus = stats.half_heal_bonus
 	health.lethal_saves = stats.floor_lethal_saves
 	bombs = STARTING_BOMBS + stats.bonus_bombs
 
@@ -311,7 +312,7 @@ func refresh_stats() -> void:
 	stats = PlayerStats.compute(_upgrades, _levels, items, _choices, effects.active_combos(), effects.active_sets())
 	_apply_pill_rules()
 	health.heal_bonus = stats.heal_bonus
-	health.half_heal_bonus = stats.half_heal_bonus and not effects.ctx.counting_pills
+	health.half_heal_bonus = stats.half_heal_bonus
 
 	if stats.max_pills != health.max_pills:
 		health.raise_max(stats.max_pills)

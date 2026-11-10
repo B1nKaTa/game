@@ -24,6 +24,9 @@ var half_pills := 0
 var half_lost := 0
 # Whether every heal that restores a pill also heals half a pill (Hypochondriac).
 var half_heal_bonus := false
+# Asked at every heal whether the half-heal bonus may apply; the run points it at its context, so the
+# full loop counting pills turns the bonus off at the moment of the heal. Unset means allowed.
+var pill_bonus_allowed := Callable()
 
 
 func _init(start_pills: int) -> void:
@@ -65,12 +68,16 @@ func heal(amount: int, from_half := false) -> void:
 	if amount > 0:
 		bonus += heal_bonus
 	pills = mini(pills + amount + bonus, max_pills)
-	if half_heal_bonus and amount > 0 and not from_half and pills < max_pills:
+	if half_heal_bonus and amount > 0 and not from_half and pills < max_pills and _bonus_allowed():
 		half_pills += 1
 		if half_pills >= 2:
 			half_pills = 0
 			pills = mini(pills + 1, max_pills)
 	changed.emit()
+
+
+func _bonus_allowed() -> bool:
+	return not pill_bonus_allowed.is_valid() or bool(pill_bonus_allowed.call())
 
 
 # Half a pill, from the items that heal by halves. Every second half heals a whole pill.
