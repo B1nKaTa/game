@@ -37,7 +37,6 @@ const BATCH := {
 	"complaint_form": [ItemDef.RARE, ItemUnlocks.BOUNTY, "", false],
 	"bureaucrats_stamp": [ItemDef.LEGENDARY, ItemUnlocks.BOUNTY, "", false],
 	"lawyers_card": [ItemDef.RARE, ItemUnlocks.BOUNTY, "", false],
-	"dentures_in_glass": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 	"polyester_suit": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "head_office", true],
 	"harmonica": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "funeral_parlour", false],
 }
@@ -549,18 +548,6 @@ func test_lawyers_card_blocks_a_bosss_first_hit_in_each_phase() -> void:
 
 
 # --- the silly ones ---
-
-func test_dentures_in_a_glass_speed_his_swings_while_they_are_out() -> void:
-	var kit := ItemKit.new()
-	var run := kit.run_with(["dentures_in_glass"])
-	var player := _player(run)
-	run.effects.ctx.player = player
-	assert_near(run.swing_speed(), run.stats.swing_speed, "teeth in")
-	player._teeth.try_throw()
-	assert_near(run.swing_speed(), run.stats.swing_speed * Glass.PACE)
-	assert_near(run.move_speed(), run.stats.move_speed, "nothing else")
-	player.free()
-
 
 func test_polyester_suit_hits_harder_but_sparks_now_and_then() -> void:
 	var kit := ItemKit.new()

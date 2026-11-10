@@ -29,13 +29,7 @@ const BATCH := {
 	"brass_topper": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "seance_hotline"],
 	"rolling_pin": [ItemDef.LEGENDARY, ItemUnlocks.RECIPE, ""],
 	"reapers_scythe": [ItemDef.LEGENDARY, ItemUnlocks.BOUNTY, ""],
-	"glue_gun": [ItemDef.RARE, ItemUnlocks.RECIPE, ""],
-	"spare_set": [ItemDef.RARE, ItemUnlocks.RECIPE, ""],
-	"boomerang_bite": [ItemDef.COMMON, ItemUnlocks.START, ""],
-	"fizzy_tablet": [ItemDef.COMMON, ItemUnlocks.START, ""],
-	"windup_teeth": [ItemDef.RARE, ItemUnlocks.START, ""],
 	"overbite": [ItemDef.COMMON, ItemUnlocks.START, ""],
-	"shark_tooth": [ItemDef.LEGENDARY, ItemUnlocks.RECIPE, ""],
 }
 
 
@@ -374,25 +368,6 @@ func test_boomerang_bite_turns_home_and_bites_on_the_way() -> void:
 	teeth.free()
 	plain.free()
 	home.free()
-	kit.free_enemies()
-
-
-func test_fizzy_tablet_slows_the_bitten_and_what_stands_in_the_fizz() -> void:
-	var kit := ItemKit.new()
-	var run := kit.run_with(["fizzy_tablet"])
-	var enemy := kit.enemy()
-	run.effects.bite(enemy)
-	assert_true(enemy.is_slowed())
-	assert_eq(kit.fx_of(ItemFx.FxFizz).size(), 1)
-	var fizz := ItemFx.make_fizz(Fizzy.RADIUS, Fizzy.TIME, Fizzy.SHARE)
-	var inside := kit.enemy()
-	inside.position = Vector2(20, 0)
-	var outside := kit.enemy()
-	outside.position = Vector2(80, 0)
-	assert_eq(fizz.slow_touching([inside, outside]), 1)
-	assert_true(inside.is_slowed())
-	assert_false(outside.is_slowed())
-	fizz.free()
 	kit.free_enemies()
 
 

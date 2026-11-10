@@ -6,7 +6,9 @@
 script = ExtResource("1")
 id = "windup_teeth"
 display_name = "Chattering Wind-Up Teeth"
-description = "Dentures lying on the floor bite anything that walks over them. Wind them up and stand well back."
+description = "Dentures lying on the floor bite anything that walks over them."
 rarity = "rare"
-tags = PackedStringArray("bite", "room")
+tags = PackedStringArray("bite")
+build = "bite"
+kind = "passive"
 teeth_floor_bite = true

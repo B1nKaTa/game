@@ -48,6 +48,8 @@ const TIPS := {
 	"spare_set": "Two sets, two lanes. Throw down the middle of a pair.",
 	"boomerang_bite": "Throw past them and step aside. The teeth bite coming home.",
 	"gold_fillings": "Every bite might pay. Keep the teeth busy.",
+	"strong_dentures": "Line them up and throw through the lot. Teeth first, questions later.",
+	"chattering_bounce": "Throw into a crowd. They hop from one to the next.",
 	"fizzy_tablet": "Bite the fast ones first. The fizz takes the hurry out of them.",
 	"windup_teeth": "Drop the teeth in a doorway. Let them come to you.",
 	"overbite": "Longer throws. Pick them off from across the room.",

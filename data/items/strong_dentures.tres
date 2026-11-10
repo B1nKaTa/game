@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "strong_dentures"
+display_name = "Extra Strong Dentures"
+description = "Thrown dentures bite 50% harder and through 2 enemies."
+rarity = "rare"
+tags = PackedStringArray("bite")
+build = "bite"
+kind = "passive"
+bite_damage_bonus = 0.5
+bites_through = 2
