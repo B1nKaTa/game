@@ -296,6 +296,8 @@ func _tick_audit(delta: float) -> void:
 	_audit_left = -1.0
 	var at := summon_spot(_audit_spot())
 	var auditor := _spawn_enemy(_audit_def, at)
+	if auditor._behavior is AuditorBehavior:
+		(auditor._behavior as AuditorBehavior).tempo = AuditorBehavior.cooldown_mult(_floor_def.depth if _floor_def != null else 1)
 	_run.effects.auditor(auditor)
 	# His reserved place becomes him.
 	_alive -= 1

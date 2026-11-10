@@ -185,3 +185,38 @@ func test_the_floor_scene_sends_him_by_the_door_harold_came_in_by() -> void:
 	assert_true(source.contains("_rules.rule_broken.connect(_on_rule_broken)"))
 	var broken := source.substr(source.find("func _on_rule_broken("), 400)
 	assert_true(broken.contains("view.door_to(_arrived_from)"), "he comes in by the door Harold came in by")
+
+
+func _view_on(floor_path: String) -> RoomView:
+	var room := FloorRoom.new()
+	room.layout = load("res://data/rooms/floor_1/combat_01.tres")
+	room.room_type = RoomLayout.TYPE_COMBAT
+	var view := RoomView.new()
+	view.setup(room, null, load(floor_path), RunState.new([] as Array[UpgradeDef], {}), null, RandomNumberGenerator.new(), null, null)
+	return view
+
+
+# He takes the floor's health rate like every enemy: 160 on floor 1, 352 on a 2.2 floor.
+func test_his_health_follows_the_floor() -> void:
+	for path in ["res://data/floors/floor_1.tres", "res://data/floors/last_resort_cruise.tres"]:
+		var floor_def: FloorDef = load(path)
+		var view := _view_on(path)
+		view.call_auditor(load(AUDITOR), null)
+		view._tick_audit(RoomView.AUDIT_DELAY + 0.1)
+		var him: Enemy = _auditors(view)[0]
+		assert_near(him.max_hp(), 160.0 * floor_def.health_mult, path)
+		view.free()
+
+
+func test_he_presses_harder_deeper_but_never_on_floor_one() -> void:
+	assert_near(AuditorBehavior.cooldown_mult(1), 1.0)
+	assert_near(AuditorBehavior.cooldown_mult(2), 0.94)
+	assert_near(AuditorBehavior.cooldown_mult(4), 0.82)
+	assert_near(AuditorBehavior.cooldown_mult(5), 0.76)
+	assert_near(AuditorBehavior.cooldown_mult(9), 0.76, "never quicker than the floor-5 rate")
+	var view := _view_on("res://data/floors/last_resort_cruise.tres")
+	view.call_auditor(load(AUDITOR), null)
+	view._tick_audit(RoomView.AUDIT_DELAY + 0.1)
+	var him: Enemy = _auditors(view)[0]
+	assert_near((him._behavior as AuditorBehavior).tempo, 0.82, "floor 4")
+	view.free()

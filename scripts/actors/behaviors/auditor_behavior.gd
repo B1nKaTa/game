@@ -1,3 +1,4 @@
+class_name AuditorBehavior
 extends EnemyBehavior
 
 # The Auditor walks Harold down. Close in, a clipboard swing; further off, a thrown FINED stamp that
@@ -13,10 +14,20 @@ const STAMP_SPEED := 120.0
 const ARRIVAL_LINE := "Rules are rules."
 const ARRIVAL_TIME := 1.4
 
+# Deeper floors' regulars press harder, so does he: shorter rests between attacks, never shorter windups,
+# so his warnings read the same. Floor 1 is exactly as before.
+const DEPTH_STEP := 0.06
+const MIN_TEMPO := 0.76
+
+var tempo := 1.0
 var _swing := Telegraph.new()
 var _throw := Telegraph.new()
 var _swing_cooldown := 0.8
 var _throw_cooldown := 1.5
+
+
+static func cooldown_mult(depth: int) -> float:
+	return clampf(1.0 - DEPTH_STEP * float(depth - 1), MIN_TEMPO, 1.0)
 
 
 func on_ready(enemy: Enemy) -> void:
@@ -29,7 +40,7 @@ func tick(enemy: Enemy, delta: float) -> void:
 			enemy.clear_warning()
 			if enemy.distance_to_target() <= SWING_RANGE + 8.0:
 				enemy.hit_target(enemy.def.damage)
-			_swing_cooldown = SWING_COOLDOWN
+			_swing_cooldown = SWING_COOLDOWN * tempo
 		return
 	if _throw.is_active():
 		if _throw.tick(delta):
@@ -38,7 +49,7 @@ func tick(enemy: Enemy, delta: float) -> void:
 			if shot != null:
 				shot.look = Projectile.LOOK_FINED
 				shot.landed_at.connect(InkBlot.spawn_at.bind(enemy.get_parent(), enemy.target))
-			_throw_cooldown = THROW_COOLDOWN
+			_throw_cooldown = THROW_COOLDOWN * tempo
 		return
 	_swing_cooldown -= delta
 	_throw_cooldown -= delta
