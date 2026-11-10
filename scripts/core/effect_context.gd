@@ -186,6 +186,9 @@ func drop_item(item: ItemDef, at: Vector2) -> void:
 
 # Calls the nearest waiting coin, Slip or Thermos to him (Racing Pigeon). Returns whether one came.
 func fetch_pickup() -> bool:
+	# A fetched coin pays Pension and a fetched heal gives pills, which the full loop counts itself.
+	if counting_exact or counting_pills:
+		return false
 	if fetcher.is_valid():
 		return bool(fetcher.call())
 	return has_room() and room.fetch_nearest_pickup(feet())

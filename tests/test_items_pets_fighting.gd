@@ -144,3 +144,6 @@ func test_the_pigeon_fetches_a_pickup_now_and_then() -> void:
 	assert_eq(kit.fetches, 1)
 	run.effects.tick(0.5)
 	assert_eq(kit.fetches, 2)
+	run.effects.ctx.counting_exact = true
+	run.effects.tick(5.0)
+	assert_eq(kit.fetches, 2, "the pigeon fetches nothing while the full loop counts")
