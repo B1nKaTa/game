@@ -1,0 +1,1130 @@
+{
+ "note": "The approved new item list (2026-11-10 review), the four cut entries left out and the review's changes made. Item and potion names and descriptions are used word for word; sets are formed, never dropped.",
+ "items": [
+  {
+   "id": "tea_urn",
+   "name": "Tea Urn",
+   "kind": "passive",
+   "build": "thermos",
+   "rarity": "legendary",
+   "cursed": false,
+   "desc": "Every Thermos you carry makes all your hits 5% harder."
+  },
+  {
+   "id": "flask_holster",
+   "name": "Flask Holster",
+   "kind": "passive",
+   "build": "thermos",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Carry 4 more Thermoses, and get 2 now."
+  },
+  {
+   "id": "bottomless_flask",
+   "name": "Bottomless Flask",
+   "kind": "passive",
+   "build": "thermos",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Every 2nd fight room you clear gives a Thermos back."
+  },
+  {
+   "id": "hot_soup_thermos",
+   "name": "Hot Soup Thermos",
+   "kind": "passive",
+   "build": "thermos",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Thermos blasts leave a puddle of burning soup for 3 seconds."
+  },
+  {
+   "id": "pressure_cooker",
+   "name": "Pressure Cooker",
+   "kind": "passive",
+   "build": "thermos",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Thermos blasts are 50% bigger, but the fuse is 0.3 seconds longer."
+  },
+  {
+   "id": "tea_cosy",
+   "name": "Tea Cosy",
+   "kind": "passive",
+   "build": "thermos",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Your own Thermos blasts never hurt you."
+  },
+  {
+   "id": "second_brew",
+   "name": "Second Brew",
+   "kind": "passive",
+   "build": "thermos",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "When a Thermos explodes, a few little bombs fly out and go off a second time."
+  },
+  {
+   "id": "thermos_lob",
+   "name": "Overarm Bowler",
+   "kind": "passive",
+   "build": "thermos",
+   "rarity": "legendary",
+   "cursed": false,
+   "desc": "Thermoses are thrown, not placed, and burst where they land."
+  },
+  {
+   "id": "tea_break",
+   "name": "Tea Break",
+   "kind": "passive",
+   "build": "thermos",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "A blast that hits 3 or more enemies heals half a pill."
+  },
+  {
+   "id": "filing_cabinet",
+   "name": "Filing Cabinet",
+   "kind": "passive",
+   "build": "slip",
+   "rarity": "legendary",
+   "cursed": false,
+   "desc": "Every Slip you carry makes all your hits 5% harder."
+  },
+  {
+   "id": "in_triplicate",
+   "name": "In Triplicate",
+   "kind": "passive",
+   "build": "slip",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Every Slip you pick up counts as 2."
+  },
+  {
+   "id": "key_cutter",
+   "name": "Duplicate Key Cutter",
+   "kind": "passive",
+   "build": "slip",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Get 3 Slips now, and start every floor with 1 more."
+  },
+  {
+   "id": "loose_paperwork",
+   "name": "Loose Paperwork",
+   "kind": "passive",
+   "build": "slip",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Each Slip you carry, up to 5, is a sheet of paper circling you that blocks one shot, then grows back after a room."
+  },
+  {
+   "id": "rubber_stamp_collection",
+   "name": "Rubber Stamp Collection",
+   "kind": "passive",
+   "build": "slip",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Every Slip you spend pays 15 Pension."
+  },
+  {
+   "id": "paper_cuts",
+   "name": "Paper Cuts",
+   "kind": "passive",
+   "build": "slip",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Your combo finisher flings a paper slip that cuts through every enemy in a line. It costs nothing."
+  },
+  {
+   "id": "locksmiths_apron",
+   "name": "Locksmith's Apron",
+   "kind": "passive",
+   "build": "slip",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Urns, chests and locked doors cost one Slip fewer, never less than one."
+  },
+  {
+   "id": "desk_drawer",
+   "name": "Desk Drawer",
+   "kind": "passive",
+   "build": "slip",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Picking up a Slip also gives a Thermos, and picking up a Thermos also gives a Slip, once per room each."
+  },
+  {
+   "id": "money_belt",
+   "name": "Money Belt",
+   "kind": "passive",
+   "build": "pension",
+   "rarity": "legendary",
+   "cursed": false,
+   "desc": "Every 50 Pension you carry makes all your hits 5% harder, up to 50%."
+  },
+  {
+   "id": "piggy_bank",
+   "name": "Piggy Bank",
+   "kind": "passive",
+   "build": "pension",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "A hit that would cost a pill costs 20 Pension instead, while you have it."
+  },
+  {
+   "id": "compound_interest",
+   "name": "Compound Interest",
+   "kind": "passive",
+   "build": "pension",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "At the start of every floor, the Pension you carry grows by 15%."
+  },
+  {
+   "id": "senior_discount",
+   "name": "Senior Discount Card",
+   "kind": "passive",
+   "build": "pension",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Everything in shops is 25% cheaper."
+  },
+  {
+   "id": "hagglers_hat",
+   "name": "Haggler's Hat",
+   "kind": "passive",
+   "build": "pension",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "One item in every shop is free."
+  },
+  {
+   "id": "coupon_booklet",
+   "name": "Coupon Booklet",
+   "kind": "passive",
+   "build": "pension",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Shops sell one more item."
+  },
+  {
+   "id": "gold_fillings",
+   "name": "Gold Fillings",
+   "kind": "passive",
+   "build": "pension",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Each bite has a 25% chance to knock a coin loose."
+  },
+  {
+   "id": "coin_purse_cane",
+   "name": "Coin Purse Cane",
+   "kind": "passive",
+   "build": "pension",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Every 10 Pension you pick up loads a coin, and your next swing fires it as a shot."
+  },
+  {
+   "id": "inheritance_letter",
+   "name": "Inheritance Letter",
+   "kind": "passive",
+   "build": "pension",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Pays 75 Pension the moment you open it."
+  },
+  {
+   "id": "rex",
+   "name": "Rex, the Late Dog",
+   "kind": "pet",
+   "build": "pets",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Your old dog trots beside you and bites the nearest enemy every second."
+  },
+  {
+   "id": "mittens",
+   "name": "Mittens",
+   "kind": "pet",
+   "build": "pets",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "The late cat pounces on any enemy below a quarter of its health and finishes it."
+  },
+  {
+   "id": "budgie",
+   "name": "Joey the Budgie",
+   "kind": "pet",
+   "build": "pets",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "A budgie circles you and blocks a shot every 3 seconds."
+  },
+  {
+   "id": "tortoise",
+   "name": "Shelley the Tortoise",
+   "kind": "pet",
+   "build": "pets",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "A tortoise plods after you. Shots that hit her stop, and she can't be hurt."
+  },
+  {
+   "id": "racing_pigeon",
+   "name": "Racing Pigeon",
+   "kind": "pet",
+   "build": "pets",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "A pigeon fetches Pension, Slips and Thermoses from anywhere in the room."
+  },
+  {
+   "id": "moths",
+   "name": "Pocketful of Moths",
+   "kind": "pet",
+   "build": "pets",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Two moths circle you, nibble enemies they touch and block shots."
+  },
+  {
+   "id": "ferret",
+   "name": "Trouser Ferret",
+   "kind": "pet",
+   "build": "pets",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Every dodge, a ferret leaps out and bites the nearest enemy hard."
+  },
+  {
+   "id": "sheepdog",
+   "name": "Old Shep",
+   "kind": "pet",
+   "build": "pets",
+   "rarity": "legendary",
+   "cursed": false,
+   "desc": "A sheepdog herds enemies into a bunch in front of you every few seconds."
+  },
+  {
+   "id": "parrot",
+   "name": "Polly the Parrot",
+   "kind": "pet",
+   "build": "pets",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "A parrot on your shoulder copies your last attack a second later."
+  },
+  {
+   "id": "pet_rock",
+   "name": "Pet Rock",
+   "kind": "pet",
+   "build": "pets",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Counts as a pet. Pet items make it bigger, and big enough it blocks shots."
+  },
+  {
+   "id": "dog_treats",
+   "name": "Tin of Dog Treats",
+   "kind": "passive",
+   "build": "pets",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Your pets hit 50% harder and move faster."
+  },
+  {
+   "id": "pet_cemetery_plot",
+   "name": "Pet Cemetery Plot",
+   "kind": "passive",
+   "build": "pets",
+   "rarity": "legendary",
+   "cursed": false,
+   "desc": "Every pet you have makes all your hits 8% harder."
+  },
+  {
+   "id": "strong_dentures",
+   "name": "Extra Strong Dentures",
+   "kind": "passive",
+   "build": "bite",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Thrown dentures bite 50% harder and through 2 enemies."
+  },
+  {
+   "id": "boomerang_bite",
+   "name": "Boomerang Bite",
+   "kind": "passive",
+   "build": "bite",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "The dentures fly back by themselves, biting on the way."
+  },
+  {
+   "id": "spare_set",
+   "name": "Spare Set",
+   "kind": "passive",
+   "build": "bite",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Throw two sets of dentures at once, in a spread."
+  },
+  {
+   "id": "shark_tooth",
+   "name": "Shark Tooth Implant",
+   "kind": "passive",
+   "build": "bite",
+   "rarity": "legendary",
+   "cursed": false,
+   "desc": "Bites make enemies bleed, and bleeds stack."
+  },
+  {
+   "id": "glue_gun",
+   "name": "Denture Glue Gun",
+   "kind": "passive",
+   "build": "bite",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "The dentures stick to the first enemy they bite and keep biting for 2 seconds."
+  },
+  {
+   "id": "chattering_bounce",
+   "name": "Chattering Ricochet",
+   "kind": "passive",
+   "build": "bite",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "After each bite, the dentures jump to the next nearest enemy, up to 3 times."
+  },
+  {
+   "id": "windup_teeth",
+   "name": "Chattering Wind-Up Teeth",
+   "kind": "passive",
+   "build": "bite",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Dentures lying on the floor bite anything that walks over them."
+  },
+  {
+   "id": "fizzy_tablet",
+   "name": "Fizzy Cleaning Tablet",
+   "kind": "passive",
+   "build": "bite",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Bites fizz and slow enemies by half for 2 seconds."
+  },
+  {
+   "id": "dentures_in_glass",
+   "name": "Dentures in a Glass",
+   "kind": "passive",
+   "build": "bite",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "While your dentures are out, your swings are 25% faster."
+  },
+  {
+   "id": "cane_sword",
+   "name": "Cane Sword",
+   "kind": "passive",
+   "build": "cane",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "A fully charged swing also sends a shockwave forward."
+  },
+  {
+   "id": "brass_topper",
+   "name": "Brass Cane Topper",
+   "kind": "passive",
+   "build": "cane",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Combo finishers hit in a ring all around you."
+  },
+  {
+   "id": "lightning_rod",
+   "name": "Lightning Rod Cane",
+   "kind": "passive",
+   "build": "cane",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "A fully charged swing calls a bolt down on every enemy it hits."
+  },
+  {
+   "id": "rolling_pin",
+   "name": "Grandma's Rolling Pin",
+   "kind": "passive",
+   "build": "cane",
+   "rarity": "legendary",
+   "cursed": false,
+   "desc": "Every swing becomes a slow, huge overhead smash that also hits behind you."
+  },
+  {
+   "id": "reapers_scythe",
+   "name": "The Reaper's Other Scythe",
+   "kind": "passive",
+   "build": "cane",
+   "rarity": "legendary",
+   "cursed": false,
+   "desc": "Fully charged swings become a wide spinning sweep all around you."
+  },
+  {
+   "id": "knitting_needles",
+   "name": "Knitting Needles",
+   "kind": "passive",
+   "build": "cane",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Every swing also pokes two needles forward."
+  },
+  {
+   "id": "cane_hook",
+   "name": "Shepherd's Crook Handle",
+   "kind": "passive",
+   "build": "cane",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Your combo finisher hooks the enemies it hits and pulls them to you."
+  },
+  {
+   "id": "rusty_hinge",
+   "name": "Rusty Hinge",
+   "kind": "passive",
+   "build": "cane",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "The third swing of a combo stuns for a full second."
+  },
+  {
+   "id": "bingo_dabber",
+   "name": "Bingo Dabber",
+   "kind": "passive",
+   "build": "cane",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Hits dab a mark on an enemy, and the fifth mark bursts for a big hit."
+  },
+  {
+   "id": "obituary_clippings",
+   "name": "Obituary Clippings",
+   "kind": "passive",
+   "build": "cane",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Each kill in a room makes your hits there 5% harder, up to 50%. A counter shows it."
+  },
+  {
+   "id": "pocket_watch",
+   "name": "Funeral Director's Pocket Watch",
+   "kind": "passive",
+   "build": "dodge",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "A narrow dodge slows time to a crawl for a second."
+  },
+  {
+   "id": "wheelchair_wheels",
+   "name": "Wheelchair Wheels",
+   "kind": "passive",
+   "build": "dodge",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Dodges become a longer roll that runs over enemies on the way."
+  },
+  {
+   "id": "titanium_hip",
+   "name": "Titanium Hip",
+   "kind": "passive",
+   "build": "dodge",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Dodge through an enemy and it takes a full swing's damage."
+  },
+  {
+   "id": "pogo_cane",
+   "name": "Pogo Cane",
+   "kind": "passive",
+   "build": "dodge",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "A close-call dodge makes the dodge ready again at once."
+  },
+  {
+   "id": "velcro_shoes",
+   "name": "Velcro Shoes",
+   "kind": "passive",
+   "build": "dodge",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Dodge twice in a row."
+  },
+  {
+   "id": "afterimage",
+   "name": "Afterimage",
+   "kind": "passive",
+   "build": "dodge",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "A pale copy of you stays where a dodge began, and enemies go for it for a second."
+  },
+  {
+   "id": "bad_hip",
+   "name": "Bad Hip",
+   "kind": "passive",
+   "build": "dodge",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Every dodge leaves a big cough cloud that slows enemies by half for 3 seconds."
+  },
+  {
+   "id": "rocking_chair",
+   "name": "Rocking Chair Rhythm",
+   "kind": "passive",
+   "build": "dodge",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Right after a dodge, the next swing hits twice as hard."
+  },
+  {
+   "id": "heart_monitor",
+   "name": "Heart Monitor",
+   "kind": "passive",
+   "build": "pills",
+   "rarity": "legendary",
+   "cursed": false,
+   "desc": "Every pill of maximum health makes your hits 6% harder."
+  },
+  {
+   "id": "hospital_bracelet",
+   "name": "Hospital Bracelet",
+   "kind": "passive",
+   "build": "pills",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "One more pill."
+  },
+  {
+   "id": "comfort_care_lanyard",
+   "name": "Comfort Care Lanyard",
+   "kind": "passive",
+   "build": "pills",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "One more pill, and every heal gives one more."
+  },
+  {
+   "id": "pill_organizer",
+   "name": "Spare Pill Organizer",
+   "kind": "passive",
+   "build": "pills",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Heals taken at full health are stored, up to 3, and each soaks one hit."
+  },
+  {
+   "id": "casserole_dish",
+   "name": "Casserole Dish",
+   "kind": "passive",
+   "build": "pills",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "The first kill in every room heals half a pill."
+  },
+  {
+   "id": "life_alert_button",
+   "name": "Life Alert Button",
+   "kind": "passive",
+   "build": "pills",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "The first hit in every room is blocked."
+  },
+  {
+   "id": "life_jacket",
+   "name": "Life Jacket",
+   "kind": "passive",
+   "build": "pills",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Once per floor, a hit that would finish you leaves one pill."
+  },
+  {
+   "id": "eternal_warranty",
+   "name": "Eternal Warranty",
+   "kind": "passive",
+   "build": "pills",
+   "rarity": "legendary",
+   "cursed": false,
+   "desc": "Once per run, death puts you back at the room's door with every pill."
+  },
+  {
+   "id": "photo_of_grandkids",
+   "name": "Photo of the Grandkids",
+   "kind": "passive",
+   "build": "risk",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "On your last pill, all your damage is doubled."
+  },
+  {
+   "id": "nitro_tablets",
+   "name": "Nitroglycerin Tablets",
+   "kind": "passive",
+   "build": "risk",
+   "rarity": "rare",
+   "cursed": true,
+   "desc": "40% more damage, but any hit of two pills or more sets them off around you."
+  },
+  {
+   "id": "polyester_suit",
+   "name": "Polyester Suit",
+   "kind": "passive",
+   "build": "risk",
+   "rarity": "common",
+   "cursed": true,
+   "desc": "Cane hits 35% harder, but a swing sometimes shocks you still for half a second, with a crackle."
+  },
+  {
+   "id": "prune_juice",
+   "name": "Prune Juice",
+   "kind": "passive",
+   "build": "risk",
+   "rarity": "common",
+   "cursed": true,
+   "desc": "Your dodge recovers twice as fast, but every dodge costs 1 Pension."
+  },
+  {
+   "id": "unpaid_bill",
+   "name": "Unpaid Bill",
+   "kind": "passive",
+   "build": "risk",
+   "rarity": "rare",
+   "cursed": true,
+   "desc": "50% more damage, but every fight room you enter takes 10 Pension, and with none it takes half a pill."
+  },
+  {
+   "id": "glass_hip",
+   "name": "Glass Hip",
+   "kind": "passive",
+   "build": "risk",
+   "rarity": "rare",
+   "cursed": true,
+   "desc": "Walk and swing 30% faster, but every hit costs one more half pill."
+  },
+  {
+   "id": "model_citizen",
+   "name": "Model Citizen's Badge",
+   "kind": "passive",
+   "build": "rules",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Every rule you keep this run makes your hits 6% harder."
+  },
+  {
+   "id": "repeat_offender",
+   "name": "Repeat Offender",
+   "kind": "passive",
+   "build": "rules",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Every rule you break this run makes your hits 6% harder. The Auditor hits harder too."
+  },
+  {
+   "id": "fine_print",
+   "name": "Fine Print",
+   "kind": "passive",
+   "build": "rules",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "The first rule you break on each floor is let off with a warning: no Auditor."
+  },
+  {
+   "id": "brown_envelope",
+   "name": "Brown Envelope",
+   "kind": "passive",
+   "build": "rules",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "The Auditor drops twice the Pension and always an item."
+  },
+  {
+   "id": "turned_auditor",
+   "name": "Clipboard of Your Own",
+   "kind": "passive",
+   "build": "rules",
+   "rarity": "legendary",
+   "cursed": false,
+   "desc": "When you break a rule, the Auditor arrives on your side and fights for you that room."
+  },
+  {
+   "id": "gold_star",
+   "name": "Gold Star Sticker",
+   "kind": "passive",
+   "build": "rules",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Keeping a rule also drops a full pill."
+  },
+  {
+   "id": "photo_album",
+   "name": "Photo Album",
+   "kind": "passive",
+   "build": "memory",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Hold two reels instead of one."
+  },
+  {
+   "id": "old_projector",
+   "name": "Old Projector",
+   "kind": "passive",
+   "build": "memory",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "A flashback lasts one more room."
+  },
+  {
+   "id": "those_were_the_days",
+   "name": "Those Were the Days",
+   "kind": "passive",
+   "build": "memory",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Ending a flashback heals one pill."
+  },
+  {
+   "id": "rose_tinted",
+   "name": "Rose-Tinted Glasses",
+   "kind": "passive",
+   "build": "memory",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "In a flashback, all your damage is 30% higher."
+  },
+  {
+   "id": "scrapbook",
+   "name": "Scrapbook",
+   "kind": "passive",
+   "build": "memory",
+   "rarity": "legendary",
+   "cursed": false,
+   "desc": "Every flashback you play this run makes old Harold's hits 8% harder."
+  },
+  {
+   "id": "floor_plan",
+   "name": "Floor Plan",
+   "kind": "passive",
+   "build": "any",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "The map shows every room of a floor when you arrive."
+  },
+  {
+   "id": "magnifying_glass",
+   "name": "Magnifying Glass",
+   "kind": "passive",
+   "build": "any",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Secret walls glint at you from across the room."
+  },
+  {
+   "id": "alarm_clock",
+   "name": "Alarm Clock",
+   "kind": "passive",
+   "build": "any",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Walking into a fight room stuns every enemy there for a second."
+  },
+  {
+   "id": "early_bird_special",
+   "name": "Early Bird Special",
+   "kind": "passive",
+   "build": "any",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "For the first 10 seconds in a fight room you walk and swing 25% faster."
+  },
+  {
+   "id": "bureaucrats_stamp",
+   "name": "Bureaucrat's Stamp",
+   "kind": "passive",
+   "build": "any",
+   "rarity": "legendary",
+   "cursed": false,
+   "desc": "Every 30 seconds your next hit files a regular enemy away for good. On a boss it takes 10% of its health."
+  },
+  {
+   "id": "bifocals",
+   "name": "Suspicious Bifocals",
+   "kind": "passive",
+   "build": "any",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Your hits finish off any regular enemy below 15% health."
+  },
+  {
+   "id": "last_orders",
+   "name": "Last Orders",
+   "kind": "passive",
+   "build": "any",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "The last enemy left in a room takes double damage."
+  },
+  {
+   "id": "complaint_form",
+   "name": "Complaint Form",
+   "kind": "passive",
+   "build": "any",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Your hits on a boss fill a form, and a full form stuns it for 2 seconds."
+  },
+  {
+   "id": "cactus_brooch",
+   "name": "Cactus Brooch",
+   "kind": "passive",
+   "build": "any",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Enemies that touch you take a hit and are pushed away."
+  },
+  {
+   "id": "hearing_aid_feedback",
+   "name": "Hearing Aid",
+   "kind": "active",
+   "build": "any",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Use: a feedback screech stuns every enemy in the room for 2 seconds. Recharges over 3 rooms."
+  },
+  {
+   "id": "harmonica",
+   "name": "Harmonica",
+   "kind": "active",
+   "build": "pills",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Use: play the one song he knows and heal a pill. Recharges over 4 rooms."
+  },
+  {
+   "id": "lottery_scratcher",
+   "name": "Lottery Scratcher",
+   "kind": "active",
+   "build": "pension",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Use: scratch for a random pickup: Pension, a Slip, a Thermos, a heal or, rarely, an item. Once per floor."
+  },
+  {
+   "id": "walking_frame",
+   "name": "Walking Frame",
+   "kind": "active",
+   "build": "any",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Use: plant your frame. For 6 seconds it blocks every shot and enemy. Recharges over 2 rooms."
+  },
+  {
+   "id": "exchange_desk",
+   "name": "Exchange Desk",
+   "kind": "active",
+   "build": "slip",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Use: swap the number of Slips and Thermoses you carry. Recharges over 2 rooms."
+  },
+  {
+   "id": "photocopier",
+   "name": "Photocopier",
+   "kind": "active",
+   "build": "any",
+   "rarity": "legendary",
+   "cursed": false,
+   "desc": "Use: copy a pickup lying on the floor. Recharges over 6 rooms."
+  },
+  {
+   "id": "megaphone",
+   "name": "Megaphone",
+   "kind": "active",
+   "build": "rules",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Use: shout a complaint that pushes every enemy in front of you back and stuns them. Recharges over 2 rooms."
+  },
+  {
+   "id": "dinner_bell",
+   "name": "Dinner Bell",
+   "kind": "active",
+   "build": "pets",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Use: your pets go wild for 5 seconds, hitting three times as hard. Recharges over 2 rooms."
+  },
+  {
+   "id": "double_brew",
+   "name": "Double Brew",
+   "kind": "potion",
+   "build": "thermos",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Drink: doubles the Thermoses you carry."
+  },
+  {
+   "id": "locksmiths_tonic",
+   "name": "Locksmith's Tonic",
+   "kind": "potion",
+   "build": "slip",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Drink: doubles the Slips you carry."
+  },
+  {
+   "id": "topsy_turvy",
+   "name": "Topsy-Turvy Tonic",
+   "kind": "potion",
+   "build": "any",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Drink: swap your Slips and Thermoses."
+  },
+  {
+   "id": "gold_top",
+   "name": "Gold Top Milk",
+   "kind": "potion",
+   "build": "pension",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Drink: every Slip and Thermos you carry pays 10 Pension, and you keep them."
+  },
+  {
+   "id": "smelling_salts",
+   "name": "Smelling Salts",
+   "kind": "potion",
+   "build": "any",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Drink: enemies in the next fight room start stunned for 3 seconds."
+  },
+  {
+   "id": "dutch_courage",
+   "name": "Dutch Courage",
+   "kind": "potion",
+   "build": "risk",
+   "rarity": "rare",
+   "cursed": false,
+   "desc": "Drink: 60% more damage for the next 2 rooms, but every hit you take costs double."
+  },
+  {
+   "id": "pet_food",
+   "name": "Tin of Pet Food",
+   "kind": "potion",
+   "build": "pets",
+   "rarity": "common",
+   "cursed": false,
+   "desc": "Drink, or rather serve: your pets hit twice as hard for the rest of the floor."
+  },
+  {
+   "id": "set_tea_lady",
+   "name": "Tea Lady",
+   "kind": "set",
+   "build": "thermos",
+   "rarity": "set",
+   "cursed": false,
+   "desc": "With 3 Thermos items: carry 3 more Thermoses, and blasts are 25% bigger."
+  },
+  {
+   "id": "set_civil_servant",
+   "name": "Civil Servant",
+   "kind": "set",
+   "build": "slip",
+   "rarity": "set",
+   "cursed": false,
+   "desc": "With 3 Slip items: every fight room cleared has a 1 in 3 chance to drop a Slip."
+  },
+  {
+   "id": "set_penny_pincher",
+   "name": "Penny Pincher",
+   "kind": "set",
+   "build": "pension",
+   "rarity": "set",
+   "cursed": false,
+   "desc": "With 3 Pension items: Pension flies to you from anywhere in the room, and shops are 15% cheaper."
+  },
+  {
+   "id": "set_animal_lover",
+   "name": "Animal Lover",
+   "kind": "set",
+   "build": "pets",
+   "rarity": "set",
+   "cursed": false,
+   "desc": "With 3 pets: every pet hits 50% harder, and a stray cat joins for good."
+  },
+  {
+   "id": "set_full_set",
+   "name": "Full Set",
+   "kind": "set",
+   "build": "bite",
+   "rarity": "set",
+   "cursed": false,
+   "desc": "With 3 dentures items: throw a second set every time."
+  },
+  {
+   "id": "set_old_soldier",
+   "name": "Old Soldier",
+   "kind": "set",
+   "build": "cane",
+   "rarity": "set",
+   "cursed": false,
+   "desc": "With 3 cane items: every combo finisher sends a shockwave."
+  },
+  {
+   "id": "set_spry",
+   "name": "Spry",
+   "kind": "set",
+   "build": "dodge",
+   "rarity": "set",
+   "cursed": false,
+   "desc": "With 3 dodge items: one more dodge in a row, and dodging is untouchable for longer."
+  },
+  {
+   "id": "set_hypochondriac",
+   "name": "Hypochondriac",
+   "kind": "set",
+   "build": "pills",
+   "rarity": "set",
+   "cursed": false,
+   "desc": "With 3 pill items: one more pill, and every heal gives half a pill more."
+  },
+  {
+   "id": "set_daredevil",
+   "name": "Daredevil",
+   "kind": "set",
+   "build": "risk",
+   "rarity": "set",
+   "cursed": false,
+   "desc": "With 3 risk items: every kill heals half a pill, once a room."
+  },
+  {
+   "id": "set_rulebook",
+   "name": "By the Book",
+   "kind": "set",
+   "build": "rules",
+   "rarity": "set",
+   "cursed": false,
+   "desc": "With 3 rules items: every floor has one more rule room, and each pays out double."
+  },
+  {
+   "id": "set_nostalgic",
+   "name": "Nostalgic",
+   "kind": "set",
+   "build": "memory",
+   "rarity": "set",
+   "cursed": false,
+   "desc": "With 3 memory items: every rule room you keep drops a reel, even while you hold two."
+  }
+ ]
+}

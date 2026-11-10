@@ -11,9 +11,20 @@
 ## Global Constraints
 
 - Worktree: `C:\GameDev\game\.worktrees\new-items`, branch `new-items` (from `rules-flashbacks`). Every path below is relative to it.
-- Godot: `$GODOT = "D:\new-etf\Godot_v4.7.2-stable_win64.exe\Godot_v4.7.2-stable_win64_console.exe"` (or `$env:GODOT` when set). A fresh worktree needs `& $GODOT --headless --path . --import` once.
-- Quick test run (PowerShell, from the worktree): `& $GODOT --headless --path . --script res://tests/run_tests.gd -- --only=<file-name fragment>`. `--only` matches test **file** names. Check the "N tests, M failed" line, and that N is more than 0.
-- Full suite: `powershell -File tools/test.ps1` (read the "N tests, M failed" line; the runner also fails on any `SCRIPT ERROR` or `Parse Error`). Full loop: `powershell -File tools/smoke.ps1` (must print `SMOKE PASS`).
+- **Godot never runs on the worktree.** Any `--path` run of a project named "Grandpa" (import, one test file, the suite, the full loop, a probe) writes Godot's logs into `%APPDATA%\Godot\app_userdata\Grandpa\` (LESSONS 2026-11-05, 2026-11-07). Every launch in this plan runs in a `git archive` copy renamed `GrandpaItemsCopy`, made by `tools/probes/export_copy.ps1`, which also imports it. Refresh the copy before every run, from the worktree in PowerShell:
+
+  ```powershell
+  $GODOT = "D:\new-etf\Godot_v4.7.2-stable_win64.exe\Godot_v4.7.2-stable_win64_console.exe"
+  $COPY = "D:\grandpa-verify\items"
+  git add <this task's new and changed files>
+  $snap = git stash create
+  if (-not $snap) { $snap = "HEAD" }
+  powershell -File tools/probes/export_copy.ps1 -Dest items -Name GrandpaItemsCopy -Commit $snap
+  ```
+
+  (`git stash create` makes a commit of the index and working tree without touching either, so a failing test can be run before its task commits. Files must be `git add`-ed to be in it.) Expect the line `EXPORTED <hash> to D:\grandpa-verify\items as GrandpaItemsCopy`.
+- Quick test run, after refreshing the copy: `& $GODOT --headless --path $COPY --script res://tests/run_tests.gd -- --only=<file-name fragment>`. `--only` matches test **file** names. Check the "N tests, M failed" line, and that N is more than 0. In the tasks, "Run: `-- --only=x`" is short for this command.
+- Full suite, after refreshing the copy: `powershell -File $COPY\tools\test.ps1` (read the "N tests, M failed" line; the runner also fails on any `SCRIPT ERROR` or `Parse Error`). Full loop: `powershell -File $COPY\tools\smoke.ps1` (must print `SMOKE PASS`). Both scripts run Godot on the folder they sit in, so the copy's own scripts keep to the copy.
 - **Never run Godot while the user plays:** before every launch run `Get-Process *godot* -ErrorAction SilentlyContinue`; a windowed Godot (no `--headless` in its command line) means stop and wait. One heavy Godot job at a time.
 - **Never write to `%APPDATA%\Godot\app_userdata\Grandpa\`.** Tests use `OS.get_temp_dir()`.
 - Never name another video game anywhere (code, comments, data, assets, commits).
@@ -39,14 +50,14 @@ Every task uses these names exactly. A task's "Interfaces" block repeats the one
 | `ItemDef.build`, `kind`, `charge_rooms`, `charge_per_floor` | item_def.gd | new exports |
 | `ItemDef.is_active()`, `is_pet()`, `needs_rules()` | item_def.gd | `needs_rules` is build `rules` or `memory`, not an active |
 | `RetiredContent.RETIRED_ITEMS`, `RETIRED_COMBOS`, `RENAMED`, `RETIRED_RECIPE_PRICES`, `current_id(id)`, `is_retired(id)` | scripts/content/retired_content.gd | the registry |
-| `Content.items()` (pool), `Content.all_items()`, `Content.sets()`, `Content.run_potions()` | content.gd | |
+| `Content.items()` (pool), `Content.all_items()`, `Content.pool_of(all, retired)`, `Content.sets()`, `Content.run_potions()` | content.gd | |
 | `PlayerStats.SCALE_CAP` (20) | player_stats.gd | |
 | stats `thermos_scale_bonus`, `extra_rule_rooms`, `bonus_kept_reels`, `extra_reels`, `extra_era_rooms`, `bonus_teeth_sets`, `pet_damage_bonus`, `pet_speed_bonus`, `extra_pets`, `half_heal_bonus`, `slip_cost_cut`, `throws_thermos` | StatEffect and PlayerStats | same name on both |
 | `RunState.scaled_bombs()`, `scaled_keys()`, `add_keys(n)`, `add_bombs(n)` | run_state.gd | |
 | `RunState.pension_at_start`, `floor_depth`, `rules_kept`, `rules_broken`, `flashbacks_played` | run_state.gd | |
 | `RunState.held_reels`, `held_reel` (property), `reel_cap()` | run_state.gd | |
-| `RunState.active`, `active_charge`, `active_swapped(old, charge)`, `add_item(item, active_charge := -1)`, `take_active`, `active_needed`, `active_ready`, `charge_active`, `fill_active`, `use_active` | run_state.gd | |
-| `RunState.pet_count()`, `pet_damage_mult()`, `rules_posted()` | run_state.gd | |
+| `RunState.active`, `active_charge`, `active_swapped(old, charge)`, `add_item(item, active_charge_left := -1)`, `take_active`, `active_needed`, `active_ready`, `charge_active`, `fill_active`, `use_active` | run_state.gd | |
+| `RunState.pet_count()`, `pet_damage_mult()`, `rules_posted()`, `swap_slips_and_thermoses()` | run_state.gd | |
 | `EffectContext.pension_balance`, `purse()`, `spend_from_purse(n)`, `drop_item(item, at)`, `fetcher`, `fetch_pickup()`, `copier`, `copy_pickup()`, `lose_half()` | effect_context.gd | |
 | `RunEffects.PET`, `ALLY`, `HIS_HITS`, `is_his_hit(source)` (static), `EVENT_RULE_KEPT`, `EVENT_RULE_BROKEN`, `EVENT_FLASHBACK_START`, `EVENT_FLASHBACK_END` | run_effects.gd | |
 | `RunEffects.set_active`, `clear_active`, `active_effect`, `use_active`, `add_lasting`, `lasting_entries`, `set_sets`, `active_sets`, `has_set`, `restore_sets`, `set_formed`, `bonus_names`, `blast_hits`, `excuses_rule_break`, `sides_with_you`, `auditor`, `pet_damage_scale` | run_effects.gd | |
@@ -54,7 +65,7 @@ Every task uses these names exactly. A task's "Interfaces" block repeats the one
 | `HitScaleEffect` (`bonus(ctx)`) | scripts/items/hit_scale_effect.gd | "+N% to his hits" items (Task 11) |
 | `ItemIcons.path`, `texture`, `set_for_test`, `clear_test` | scripts/ui/item_icons.gd | |
 | `ActiveSlot` | scripts/ui/active_slot.gd | HUD slot |
-| `Pet`, `PetEffect`, `ShotGuard`, `ShotGuards` | world/pet.gd, items/pet_effect.gd, world/shot_guard.gd, core/shot_guards.gd | |
+| `Pet`, `PetEffect` (`nearest`, `nearest_where`, `strike`), `ShotGuard`, `ShotGuards` | world/pet.gd, items/pet_effect.gd, world/shot_guard.gd, core/shot_guards.gd | |
 | `SetDef` | scripts/content/set_def.gd | |
 | `PotionDef.action`, `run_rarity`, `effect`, `ACTION_*`; `PotionActions`; `PotionPool` | potion_def.gd, core/potion_actions.gd, core/potion_pool.gd | |
 | `ThrownThermos`, `Bomblet`, `WalkingFrame`, `AllyAuditor` | scripts/world/ | |
@@ -88,7 +99,7 @@ kind = "<passive|pet|active>"
 effect = SubResource("Effect")
 ```
 
-Without a script, drop the second `ext_resource`, the `sub_resource` and the `effect` line and set `load_steps=2`. Add stat lines (`bonus_pills = 1` and so on), `cursed = true`, `charge_rooms = 3` or `charge_per_floor = true` as the task says. The description is the list's `desc`, word for word, unless a task says otherwise. Leave unlock fields (`craft_price`, `from_bounty`, `first_clear_path`) out of new items until Task 23, except where a task gives them. A kept item (same id) keeps its unlock lines.
+Without a script, drop the second `ext_resource`, the `sub_resource` and the `effect` line and set `load_steps=2`. Add stat lines (`bonus_pills = 1` and so on), `cursed = true`, `charge_rooms = 3` or `charge_per_floor = true` as the task says. `display_name` and `description` are the `name` and `desc` of the item's entry in `docs/superpowers/specs/2026-11-10-new-item-list-items.json` (the approved list, with the review's changes and without the four cut entries), word for word; `rarity`, `build`, `kind` and `cursed` come from there too. Task 24's test checks every shipped item against that file. Leave unlock fields (`craft_price`, `from_bounty`, `first_clear_path`) out of new items until Task 24, except where a task gives them. A kept item (same id) keeps its unlock lines.
 
 For pets the sub-resource also sets the look: `look = "<id>"` and `color = Color(r, g, b, 1)` under `script = ExtResource("2")`.
 
@@ -105,7 +116,7 @@ For pets the sub-resource also sets the look: `look = "<id>"` and `color = Color
 ### Task 1: Item data fields, the retired registry, the 20-count rule, the purse and run counters
 
 **Files:**
-- Modify: `scripts/content/item_def.gd`, `scripts/content/content.gd`, `scripts/content/stat_effect.gd`, `scripts/core/player_stats.gd`, `scripts/core/run_state.gd`, `scripts/core/effect_context.gd`, `scripts/core/run_checkpoint.gd`, `scripts/scenes/floor_scene.gd`, `tests/support/item_kit.gd`, `tests/test_stats.gd`, `tests/test_items_batch4.gd`
+- Modify: `scripts/content/item_def.gd`, `scripts/content/content.gd`, `scripts/content/stat_effect.gd`, `scripts/core/player_stats.gd`, `scripts/core/run_state.gd`, `scripts/core/effect_context.gd`, `scripts/core/run_checkpoint.gd`, `scripts/scenes/floor_scene.gd`, `tests/support/item_kit.gd`, `tests/test_stats.gd`, `tests/test_recipes.gd`, `tests/test_items_batch4.gd`, `tests/test_run_checkpoint.gd`, `tests/test_deep_rewards.gd`
 - Create: `scripts/content/retired_content.gd`, `tests/test_item_data.gd`
 
 **Interfaces:**
@@ -139,16 +150,20 @@ func test_new_item_fields_default_to_a_plain_passive() -> void:
 		assert_true(ItemDef.TAGS.has(build), "%s is a tag too" % build)
 
 
-func test_retired_ids_leave_the_pool_but_stay_loadable() -> void:
-	var pool := {}
-	for item in Content.items():
-		pool[item.id] = true
-	var every := {}
-	for item in Content.all_items():
-		every[item.id] = true
-	for id: String in RetiredContent.RETIRED_ITEMS:
-		assert_false(pool.has(id), "%s is retired" % id)
-	assert_true(every.size() >= pool.size())
+func _named(id: String) -> ItemDef:
+	var item := ItemDef.new()
+	item.id = id
+	return item
+
+
+func test_the_pool_leaves_retired_ids_out() -> void:
+	var all: Array[ItemDef] = [_named("kept_a"), _named("gone_b"), _named("kept_c")]
+	var pool := Content.pool_of(all, ["gone_b"])
+	assert_eq(pool.size(), 2)
+	assert_eq(pool[0].id, "kept_a")
+	assert_eq(pool[1].id, "kept_c")
+	assert_eq(Content.pool_of(all, []).size(), 3)
+	assert_eq(Content.items().size(), Content.pool_of(Content.all_items(), RetiredContent.RETIRED_ITEMS).size())
 	assert_eq(RetiredContent.current_id("second_thermos_strap"), "flask_holster")
 	assert_eq(RetiredContent.current_id("dentures"), "strong_dentures")
 	assert_eq(RetiredContent.current_id("tea_cosy"), "tea_cosy", "a kept id maps to itself")
@@ -271,7 +286,7 @@ func test_the_floor_scene_sets_the_purse_and_depth() -> void:
 
 - [ ] **Step 2: Run it to see it fail**
 
-Run: `& $GODOT --headless --path . --script res://tests/run_tests.gd -- --only=item_data`
+Run: `& $GODOT --headless --path $COPY --script res://tests/run_tests.gd -- --only=item_data`
 Expected: FAIL (parse errors: `build`, `RetiredContent`, `scaled_bombs` are not declared).
 
 - [ ] **Step 3: Item fields.** In `scripts/content/item_def.gd`, replace the `TAGS` line and add the new exports and functions:
@@ -354,9 +369,13 @@ static func is_retired(id: String) -> bool:
 ```gdscript
 # The pool: every shipped item but the retired ones.
 static func items() -> Array[ItemDef]:
+	return pool_of(all_items(), RetiredContent.RETIRED_ITEMS)
+
+
+static func pool_of(all: Array[ItemDef], retired: Array) -> Array[ItemDef]:
 	var list: Array[ItemDef] = []
-	for item in all_items():
-		if not RetiredContent.is_retired(item.id):
+	for item in all:
+		if not retired.has(item.id):
 			list.append(item)
 	return list
 
@@ -550,20 +569,22 @@ func _on_balance() -> int:
 
 In `tests/test_stats.gd`, `test_shipped_content_loads`: replace `assert_eq(Content.items().size(), 100)` with `assert_true(Content.items().size() >= 52, "the pool loads")`. In `tests/test_recipes.gd`, `test_shipped_recipe_items_have_prices_and_base_items_do_not`: replace `assert_eq(base, 70)` with `assert_true(base >= 47, "the open items")` (Task 24 sets the exact count). In `tests/test_items_batch4.gd`, delete the whole function `test_the_hundred_items_add_up` (from its `func` line down to the blank lines before `# --- vision ---`); Task 24 adds the new pool's count test.
 
+Old tests that look an item up in the pool, moved now so the batches can retire ids one by one: in `tests/test_run_checkpoint.gd` and `tests/test_deep_rewards.gd`, `_item()` loops `Content.all_items()`; in `tests/test_run_checkpoint.gd` `test_a_run_round_trips`, `_item("alert_bracelet")` and the `back.items[1].id` check become `"hospital_bracelet"`, and `run.promise(_item("dentures"))` / `back.is_promised("dentures")` become `"spare_set"` (both kept, both shipped today).
+
 - [ ] **Step 12: Run the new and the touched tests**
 
-Run: `& $GODOT --headless --path . --script res://tests/run_tests.gd -- --only=item_data` then `-- --only=stats`, `-- --only=run_checkpoint`, `-- --only=items_batch4`.
+Run: `& $GODOT --headless --path $COPY --script res://tests/run_tests.gd -- --only=item_data` then `-- --only=stats`, `-- --only=run_checkpoint`, `-- --only=items_batch4`.
 Expected: all PASS.
 
 - [ ] **Step 13: Full suite**
 
-Run: `powershell -File tools/test.ps1`
+Run: `powershell -File $COPY\tools\test.ps1`
 Expected: "N tests, 0 failed".
 
 - [ ] **Step 14: Commit**
 
 ```powershell
-git add scripts/content/item_def.gd scripts/content/content.gd scripts/content/stat_effect.gd scripts/content/retired_content.gd scripts/core/player_stats.gd scripts/core/run_state.gd scripts/core/effect_context.gd scripts/core/run_checkpoint.gd scripts/scenes/floor_scene.gd tests/support/item_kit.gd tests/test_item_data.gd tests/test_stats.gd tests/test_recipes.gd tests/test_items_batch4.gd
+git add scripts/content/item_def.gd scripts/content/content.gd scripts/content/stat_effect.gd scripts/content/retired_content.gd scripts/core/player_stats.gd scripts/core/run_state.gd scripts/core/effect_context.gd scripts/core/run_checkpoint.gd scripts/scenes/floor_scene.gd tests/support/item_kit.gd tests/test_item_data.gd tests/test_stats.gd tests/test_recipes.gd tests/test_items_batch4.gd tests/test_run_checkpoint.gd tests/test_deep_rewards.gd
 git commit -m "Add the new item list's data fields, retired registry, purse and 20-count rule" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
@@ -665,7 +686,7 @@ func test_the_case_file_takes_its_item_icons_from_item_icons() -> void:
 
 - [ ] **Step 2: Run it to see it fail**
 
-Run: `& $GODOT --headless --path . --script res://tests/run_tests.gd -- --only=item_icons`
+Run: `& $GODOT --headless --path $COPY --script res://tests/run_tests.gd -- --only=item_icons`
 Expected: FAIL (`ItemIcons` not declared).
 
 - [ ] **Step 3: ItemIcons.** Create `scripts/ui/item_icons.gd`:
@@ -838,7 +859,7 @@ Expected: all PASS.
 
 - [ ] **Step 9: Full suite, then commit**
 
-Run: `powershell -File tools/test.ps1` (expect 0 failed).
+Run: `powershell -File $COPY\tools\test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/ui/item_icons.gd scripts/ui/item_row.gd scripts/world/pickup.gd scripts/world/room_view.gd scripts/ui/hud.gd scripts/ui/case_file.gd scripts/core/case_file_data.gd docs/art/art-inventory.md tests/test_item_icons.gd
@@ -1263,7 +1284,7 @@ Expected: all PASS.
 
 - [ ] **Step 9: Full suite, then commit**
 
-Run: `powershell -File tools/test.ps1` (expect 0 failed).
+Run: `powershell -File $COPY\tools\test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/content/item_effect.gd scripts/core/run_effects.gd scripts/core/run_state.gd scripts/core/run_checkpoint.gd tests/support/test_active_effect.gd tests/test_active_items.gd
@@ -1367,6 +1388,13 @@ func test_the_case_file_shows_the_active_first() -> void:
 	assert_false(cells[1].get("use", false))
 
 
+func test_a_b_press_that_closed_a_menu_never_uses_the_active() -> void:
+	assert_false(Player.use_press_counts(100, 100), "the press that unpaused")
+	assert_false(Player.use_press_counts(101, 100), "the frame after it")
+	assert_true(Player.use_press_counts(102, 100))
+	assert_true(Player.use_press_counts(5, -10), "never paused")
+
+
 func test_the_player_uses_the_active_and_the_floor_drops_a_swapped_one() -> void:
 	var player := FileAccess.get_file_as_string("res://scripts/actors/player.gd")
 	assert_true(player.contains("Input.is_action_just_pressed(\"use_item\")"))
@@ -1389,14 +1417,32 @@ In `tests/test_key_bindings.gd`, `test_both_columns_survive_saving_and_loading`:
 - [ ] **Step 4: The player.** In `scripts/actors/player.gd` add `signal active_used(item: ItemDef)` under `signal potion_drunk`, call `_handle_active()` right after `_handle_potion()` in `_physics_process`, and add
 
 ```gdscript
+var _unpaused_at := -10
+
+
+# B also backs out of the big map, the pause menu, the case file and the card table, which unpause the
+# game on that same press. A press is only the active's when the game was not paused a frame ago.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_UNPAUSED:
+		_unpaused_at = Engine.get_physics_frames()
+
+
+static func use_press_counts(now_frame: int, unpaused_frame: int) -> bool:
+	return now_frame - unpaused_frame > 1
+
+
 func _handle_active() -> void:
 	if not InputMap.has_action("use_item") or not Input.is_action_just_pressed("use_item"):
+		return
+	if not use_press_counts(Engine.get_physics_frames(), _unpaused_at):
 		return
 	var used := run.active
 	if run.use_active():
 		Sfx.play("item_fanfare")
 		active_used.emit(used)
 ```
+
+If `Player` already has a `_notification`, add the `NOTIFICATION_UNPAUSED` branch to it instead.
 
 - [ ] **Step 5: The slot.** Create `scripts/ui/active_slot.gd`:
 
@@ -1488,9 +1534,10 @@ func _draw() -> void:
 		draw_line(Vector2(x, bar.position.y), Vector2(x, bar.end.y), Color.BLACK, 1.0)
 ```
 
-- [ ] **Step 6: The HUD.** In `scripts/ui/hud.gd` add `var _active_slot: ActiveSlot` and `var _active_key := ""`; in `_ready()` inside `if _run != null:` after the reel slot: `_active_slot = ActiveSlot.new()`, `add_child(_active_slot)`. In `_refresh()` inside `if _run != null:` after `_reel_slot.show_reel(...)`:
+- [ ] **Step 6: The HUD.** In `scripts/ui/hud.gd` add `var _active_slot: ActiveSlot` and `var _active_key := ""`; in `_ready()` inside `if _run != null:` after the reel slot: `_active_slot = ActiveSlot.new()`, `add_child(_active_slot)`. At the end of `_refresh()`, after `_layout_top_row()` (the slot sits after the left panel, whose width that call sets), in a block of its own so a HUD with no run (the Waiting Room, `Hud.new()` in tests) never touches the slot:
 
 ```gdscript
+	if _run != null and _active_slot != null:
 		_active_key = KeyBindings.prompt_label("use_item")
 		var slot := ActiveSlot.slot_rect(left_panel_rect().end.x)
 		_active_slot.position = slot.position
@@ -1498,7 +1545,7 @@ func _draw() -> void:
 		_active_slot.show_active(_run.active, _run.active_charge, _run.active_needed(), _active_key)
 ```
 
-(this must come after `_layout_top_row()` runs, so move it below that call in `_refresh`). In `_process`, add `or KeyBindings.prompt_label("use_item") != _active_key` to the key-change check that calls `_refresh()`. Add
+`tests/test_floor_map_view.gd` and `tests/test_game_options.gd` build a `Hud` with no run and must still pass. In `_process`, add `or KeyBindings.prompt_label("use_item") != _active_key` to the key-change check that calls `_refresh()`. Add
 
 ```gdscript
 # What the active slot says: its key and the active's name, "" while none is held.
@@ -1539,7 +1586,7 @@ Expected: all PASS.
 
 - [ ] **Step 10: Full suite, then commit**
 
-Run: `powershell -File tools/test.ps1` (expect 0 failed).
+Run: `powershell -File $COPY\tools\test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/core/input_setup.gd scripts/core/pad_input.gd scripts/core/key_bindings.gd scripts/actors/player.gd scripts/ui/active_slot.gd scripts/ui/hud.gd scripts/scenes/floor_scene.gd scripts/world/room_view.gd scripts/core/case_file_data.gd scripts/ui/case_file.gd tests/test_key_bindings.gd tests/test_active_slot.gd
@@ -1653,6 +1700,7 @@ func test_a_pet_finds_the_nearest_enemy_in_reach() -> void:
 	assert_eq(effect.nearest(run.effects.ctx, 160.0), boss)
 	assert_eq(effect.nearest(run.effects.ctx, 160.0, true), near, "regular only skips the boss")
 	assert_true(effect.nearest(run.effects.ctx, 5.0) == null)
+	assert_eq(effect.nearest_where(run.effects.ctx, 160.0, func(enemy: Enemy) -> bool: return enemy == far), far)
 	kit.free_enemies()
 
 
@@ -1921,10 +1969,15 @@ func mult(ctx: EffectContext) -> float:
 
 
 func nearest(ctx: EffectContext, reach: float, regular_only := false) -> Enemy:
+	return nearest_where(ctx, reach, func(enemy: Enemy) -> bool: return not (regular_only and enemy.def.is_boss))
+
+
+# The enemy nearest his feet within reach that wanted says yes to, or null.
+func nearest_where(ctx: EffectContext, reach: float, wanted: Callable) -> Enemy:
 	var best: Enemy = null
 	var best_distance := reach
 	for enemy in ctx.enemies_near(ctx.feet(), reach):
-		if regular_only and enemy.def.is_boss:
+		if not bool(wanted.call(enemy)):
 			continue
 		var distance := enemy.global_position.distance_to(ctx.feet())
 		if distance <= best_distance:
@@ -1987,7 +2040,7 @@ Expected: PASS.
 
 - [ ] **Step 9: Full suite, then commit**
 
-Run: `powershell -File tools/test.ps1` (expect 0 failed).
+Run: `powershell -File $COPY\tools\test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/core/shot_guards.gd scripts/world/shot_guard.gd scripts/world/pet.gd scripts/items/pet_effect.gd scripts/core/run_state.gd scripts/core/run_effects.gd scripts/actors/projectile.gd tests/support/scale_effect.gd tests/test_pets.gd
@@ -2140,7 +2193,8 @@ extends StatEffect
 
 
 func count_in(items: Array[ItemDef], active: ItemDef = null) -> int:
-	var held: Array[ItemDef] = items.duplicate()
+	var held: Array[ItemDef] = []
+	held.assign(items)
 	if active != null:
 		held.append(active)
 	var count := 0
@@ -2268,7 +2322,7 @@ const RETIRED_COMBOS: Array[String] = ["bingo_night", "card_shark", "dentists_ni
 	"retirement_plan", "soup_of_the_day"]
 ```
 
-Delete these test functions, whose shipped combos are retired: in `tests/test_items_batch1.gd` `test_full_set_makes_both_sets_bite_through_three`, `test_dentists_nightmare_knocks_a_coin_out_each_glued_second`, `test_bingo_night_heals_half_a_pill_on_every_bingo`; in `tests/test_items_batch2.gd` `test_mobility_scooter_lays_a_fire_trail_that_burns_now_and_then`; in `tests/test_items_batch3.gd` `test_retirement_plan_pays_half_on_a_death`, `test_soup_of_the_day_keeps_the_puddles_twice_as_long`, `test_card_shark_adds_to_the_poker_table`, `test_last_rites_makes_the_life_jacket_work_twice_a_floor`, `test_night_shift_keeps_the_lights_on`; in `tests/test_items_batch4.gd` `test_family_visit_heals_a_whole_pill_on_a_last_pill_kill_once_a_room`, `test_paper_trail_recharges_the_stamp_in_twenty_seconds`, `test_early_riser_makes_the_rush_last_twenty_seconds`. In `tests/test_run_checkpoint.gd`, rewrite `test_a_resumed_run_gets_its_items_effects_and_combos_back` with a combo of its own:
+Delete these test functions, whose shipped combos are retired: in `tests/test_items_batch1.gd` `test_full_set_makes_both_sets_bite_through_three`, `test_dentists_nightmare_knocks_a_coin_out_each_glued_second`, `test_bingo_night_heals_half_a_pill_on_every_bingo`, `test_the_batchs_combos_ship_with_both_items` (it asserts three shipped combos exist); in `tests/test_items_batch2.gd` `test_mobility_scooter_lays_a_fire_trail_that_burns_now_and_then`; in `tests/test_items_batch3.gd` `test_retirement_plan_pays_half_on_a_death`, `test_soup_of_the_day_keeps_the_puddles_twice_as_long`, `test_card_shark_adds_to_the_poker_table`, `test_last_rites_makes_the_life_jacket_work_twice_a_floor`, `test_night_shift_keeps_the_lights_on`; in `tests/test_items_batch4.gd` `test_family_visit_heals_a_whole_pill_on_a_last_pill_kill_once_a_room`, `test_paper_trail_recharges_the_stamp_in_twenty_seconds`, `test_early_riser_makes_the_rush_last_twenty_seconds`. In `tests/test_run_checkpoint.gd`, rewrite `test_a_resumed_run_gets_its_items_effects_and_combos_back` with a combo of its own:
 
 ```gdscript
 func test_a_resumed_run_gets_its_items_effects_and_combos_back() -> void:
@@ -2297,7 +2351,7 @@ Expected: PASS.
 
 - [ ] **Step 9: Full suite, then commit**
 
-Run: `powershell -File tools/test.ps1` (expect 0 failed). If a remaining old test still names a retired combo, delete that test function too and list it in the commit body.
+Run: `powershell -File $COPY\tools\test.ps1` (expect 0 failed). These are all the tests that read shipped combos (`grep -n "has_combo\|Content.combos" tests/*.gd` lists them; `test_combos.gd` builds its own and `test_every_shipped_combo_names_two_shipped_items` passes with none).
 
 ```powershell
 git add scripts/content/set_def.gd scripts/content/content.gd scripts/core/run_effects.gd scripts/core/player_stats.gd scripts/core/run_state.gd scripts/autoload/progress.gd scripts/scenes/floor_scene.gd scripts/ui/hud.gd scripts/content/retired_content.gd tests/test_sets.gd tests/test_run_checkpoint.gd tests/test_items_batch1.gd tests/test_items_batch2.gd tests/test_items_batch3.gd tests/test_items_batch4.gd
@@ -2549,14 +2603,21 @@ static func apply(run: RunState, def: PotionDef) -> void:
 		PotionDef.ACTION_DOUBLE_SLIPS:
 			run.add_keys(run.keys)
 		PotionDef.ACTION_SWAP:
-			var slips := run.keys
-			run.keys = run.bombs
-			run.bombs = slips
-			run.changed.emit()
+			run.swap_slips_and_thermoses()
 		PotionDef.ACTION_CASH_IN:
 			run.effects.ctx.pay(CASH_PER * (run.scaled_keys() + run.scaled_bombs()))
 	if def.effect != null:
 		run.effects.add_lasting(def.id, def.effect.duplicate())
+```
+
+In `scripts/core/run_state.gd` add (Topsy-Turvy Tonic and the Exchange Desk both call it):
+
+```gdscript
+func swap_slips_and_thermoses() -> void:
+	var slips := keys
+	keys = bombs
+	bombs = slips
+	changed.emit()
 ```
 
 In `RunState.can_drink_potion()`, before the heal rule: `if not potion.action.is_empty() or potion.effect != null:` / `return PotionActions.can_drink(self, potion)`. In `drink_potion()`, after the buff lines: `if not drunk.action.is_empty() or drunk.effect != null:` / `PotionActions.apply(self, drunk)`.
@@ -2657,7 +2718,7 @@ static func _pick(all: Array[PotionDef], rarity: String, roll_pick: float) -> Po
 - [ ] **Step 8: Shops and drops.** `scripts/core/shop_rules.gd`: `const KIND_POTION := "potion"`; `stock(all_items, run, rng, pension_mult := 1.0, potions: Array[PotionDef] = [])`; after the item entries:
 
 ```gdscript
-	var potion := PotionPool.shop_roll(potions, rng.randf(), rng.randf()) if not potions.is_empty() else null
+	var potion: PotionDef = PotionPool.shop_roll(potions, rng.randf(), rng.randf()) if not potions.is_empty() else null
 	if potion != null:
 		entries.append({"kind": KIND_POTION, "price": price_after(PotionPool.shop_price(potion, pension_mult), discount), "item": null, "potion": potion})
 ```
@@ -2698,7 +2759,7 @@ Expected: PASS. `test_shop` builds stock without potions, so its counts stand.
 
 - [ ] **Step 10: Full suite, then commit**
 
-Run: `powershell -File tools/test.ps1` (expect 0 failed).
+Run: `powershell -File $COPY\tools\test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/content/potion_def.gd scripts/content/content.gd scripts/core/potion_actions.gd scripts/core/potion_pool.gd scripts/core/run_state.gd scripts/core/run_effects.gd scripts/core/run_checkpoint.gd scripts/core/shop_rules.gd scripts/world/room_view.gd tests/support/lasting_effect.gd tests/test_run_potions.gd
@@ -2884,7 +2945,7 @@ func lose_half(never_last := true) -> bool:
 	return true
 ```
 
-In `RunState.refresh_stats()` and `_init`, beside `health.heal_bonus = stats.heal_bonus`: `health.half_heal_bonus = stats.half_heal_bonus`.
+In `RunState.refresh_stats()` and `_init`, beside `health.heal_bonus = stats.heal_bonus`: `health.half_heal_bonus = stats.half_heal_bonus and not effects.ctx.counting_pills` (the full loop counts every pill a heal gives).
 
 - [ ] **Step 4: Enemy.** In `scripts/actors/enemy.gd` add under `var harmless_death`:
 
@@ -3052,7 +3113,7 @@ Expected: PASS.
 
 - [ ] **Step 10: Full suite, then commit**
 
-Run: `powershell -File tools/test.ps1` (expect 0 failed).
+Run: `powershell -File $COPY\tools\test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/world/room_view.gd scripts/world/pickup.gd scripts/core/health.gd scripts/core/run_state.gd scripts/actors/enemy.gd scripts/core/effect_context.gd scripts/core/chest_rules.gd tests/support/item_kit.gd tests/test_play_hooks.gd
@@ -3069,7 +3130,7 @@ git commit -m "Add the play hooks the new items need: pickup amounts, half pills
 
 **Interfaces:**
 - Consumes: `RunEffects.blast_hits` (Task 3), stat `throws_thermos` (Task 1), `ShotGuards` (Task 5).
-- Produces: `Thermos._explode` calls `effects.blast_hits(global_position, hits)`; `Player.aim_point() -> Vector2`; `ThrownThermos.REACH := 160.0`, `FLIGHT := 0.4`, `static landing(from, aim_point, reach := REACH) -> Vector2`, `static height(progress) -> float`; `Bomblet.COUNT := 3`, `SPREAD := 40.0`, `DELAY := 0.35`, `RADIUS := 26.0`, `SHARE := 0.5`, `PUSH := 80.0`, `static spots(at, first_angle) -> Array[Vector2]`, `static burst(ctx, at, damage, radius := RADIUS) -> int`, `static make(ctx, at, damage) -> Bomblet`; `WalkingFrame.AHEAD := 24.0`, `SIZE := Vector2(40, 10)`, `LIFE := 6.0`, `static make(feet, aim) -> WalkingFrame`, `blocks_shot(at) -> bool`.
+- Produces: `Thermos._explode` calls `effects.blast_hits(global_position, hits)`; `Player.aim_point() -> Vector2`; `ThrownThermos.REACH := 160.0`, `FLIGHT := 0.4`, `static landing(from, aim_point, reach := REACH) -> Vector2`, `static height(progress) -> float`; `Bomblet.COUNT := 3`, `SPREAD := 40.0`, `DELAY := 0.35`, `RADIUS := 26.0`, `SHARE := 0.5`, `PUSH := 80.0`, `static spots(at, first_angle) -> Array[Vector2]`, `static burst(ctx, at, damage, radius := RADIUS) -> int`, `static make(ctx, at, damage) -> Bomblet`; `WalkingFrame.AHEAD := 24.0`, `SIZE := Vector2(40, 10)`, `LIFE := 6.0`, `static make(feet, aim, ctx := null) -> WalkingFrame`, `blocks_shot(at) -> bool`.
 
 - [ ] **Step 1: Write the failing test** `tests/test_thermos_hooks.gd`
 
@@ -3137,6 +3198,14 @@ func test_the_walking_frame_stands_across_his_aim_and_guards() -> void:
 	assert_true(RoomView.is_passing_effect(frame))
 	root.remove_child(frame)
 	frame.free()
+	var kit := ItemKit.new()
+	var run := kit.make_run()
+	run.effects.ctx.counting_pills = true
+	var counted := WalkingFrame.make(Vector2(300, 300), Vector2.RIGHT, run.effects.ctx)
+	root.add_child(counted)
+	assert_false(counted.blocks_shot(Vector2(300 + WalkingFrame.AHEAD, 300)), "the full loop counts every shot")
+	root.remove_child(counted)
+	counted.free()
 ```
 
 - [ ] **Step 2: Run it to see it fail**
@@ -3328,9 +3397,14 @@ const RUBBER := Color("3a3741")
 var _age := 0.0
 
 
-static func make(feet: Vector2, aim: Vector2) -> WalkingFrame:
+# Set by make; the full loop counts every pill a shot costs, so then the frame stops no shot.
+var ctx: EffectContext
+
+
+static func make(feet: Vector2, aim: Vector2, context: EffectContext = null) -> WalkingFrame:
 	var frame := WalkingFrame.new()
-	var way := aim.normalized() if not aim.is_zero_approx() else Vector2.RIGHT
+	frame.ctx = context
+	var way: Vector2 = aim.normalized() if not aim.is_zero_approx() else Vector2.RIGHT
 	frame.position = feet + way * AHEAD
 	frame.rotation = way.angle() + PI / 2.0
 	return frame
@@ -3352,7 +3426,7 @@ func _init() -> void:
 
 
 func blocks_shot(at: Vector2) -> bool:
-	if not is_inside_tree():
+	if not is_inside_tree() or (ctx != null and ctx.counting_pills):
 		return false
 	return Rect2(-SIZE / 2.0, SIZE).has_point(to_local(at))
 
@@ -3382,7 +3456,7 @@ Expected: PASS.
 
 - [ ] **Step 8: Full suite, then commit**
 
-Run: `powershell -File tools/test.ps1` (expect 0 failed).
+Run: `powershell -File $COPY\tools\test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/world/thrown_thermos.gd scripts/world/bomblet.gd scripts/world/walking_frame.gd scripts/world/thermos.gd scripts/world/room_view.gd scripts/actors/player.gd tests/test_thermos_hooks.gd
@@ -3598,6 +3672,17 @@ func test_the_ally_auditor_walks_up_and_swings_on_his_own_time() -> void:
 	kit.free_enemies()
 
 
+func test_the_ally_auditor_is_due_once_after_the_usual_wait() -> void:
+	var view := RoomView.new()
+	view.call_ally_auditor(null)
+	assert_false(view._tick_ally(1.0))
+	assert_true(view._tick_ally(RoomView.AUDIT_DELAY - 0.9), "due after the hostile one's wait")
+	assert_false(view._tick_ally(5.0), "once")
+	view.call_ally_auditor(null)
+	assert_false(view._tick_ally(5.0), "a room calls one Auditor, either kind")
+	view.free()
+
+
 func test_the_scene_and_room_wire_the_auditor_items() -> void:
 	var scene := FileAccess.get_file_as_string("res://scripts/scenes/floor_scene.gd")
 	assert_true(scene.contains("_run.effects.sides_with_you()"))
@@ -3655,7 +3740,7 @@ func give_reel(era_id: String) -> bool:
 
 
 func take_reel() -> String:
-	var reel := "" if held_reels.is_empty() else held_reels.pop_front()
+	var reel: String = "" if held_reels.is_empty() else str(held_reels.pop_front())
 	changed.emit()
 	return reel
 
@@ -3855,7 +3940,29 @@ func call_ally_auditor(from_door: Door) -> void:
 	_ally_left = AUDIT_DELAY
 ```
 
-and at the end of `_tick_audit(delta)` handle `_ally_left` the same way as `_audit_left` (count down; at zero spawn `AllyAuditor.make(_run.effects.ctx)` at `summon_spot(_audit_spot_for(_ally_door))`, add it as a child, `finished.connect(ally.queue_free, CONNECT_ONE_SHOT)`, play `door_open`). Factor the door spot out of `_audit_spot()` into `_audit_spot_for(door: Door) -> Vector2` so both use it. Right after the hostile Auditor spawns (`var auditor := _spawn_enemy(_audit_def, at)`), add `_run.effects.auditor(auditor)`.
+and a timer of its own, since `_tick_audit` returns early while no hostile Auditor is due:
+
+```gdscript
+# Counts the ally Auditor's walk-in down. True on the one frame he is due.
+func _tick_ally(delta: float) -> bool:
+	if _ally_left < 0.0:
+		return false
+	_ally_left -= delta
+	if _ally_left > 0.0:
+		return false
+	_ally_left = -1.0
+	return true
+
+
+func _spawn_ally() -> void:
+	var ally := AllyAuditor.make(_run.effects.ctx)
+	add_child(ally)
+	ally.global_position = summon_spot(_audit_spot_for(_ally_door))
+	finished.connect(ally.queue_free, CONNECT_ONE_SHOT)
+	Sfx.play("door_open")
+```
+
+`_physics_process(delta)` becomes `_tick_audit(delta)` then `if _tick_ally(delta):` / `_spawn_ally()`. Factor the door spot out of `_audit_spot()` into `_audit_spot_for(door: Door) -> Vector2` so both use it. Right after the hostile Auditor spawns (`var auditor := _spawn_enemy(_audit_def, at)`), add `_run.effects.auditor(auditor)`.
 
 In `scripts/scenes/floor_scene.gd` `_on_rule_broken`:
 
@@ -3874,7 +3981,7 @@ Expected: PASS.
 
 - [ ] **Step 13: Full suite, then commit**
 
-Run: `powershell -File tools/test.ps1` (expect 0 failed).
+Run: `powershell -File $COPY\tools\test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/world/ally_auditor.gd scripts/core/run_state.gd scripts/core/run_checkpoint.gd scripts/core/rule_picker.gd scripts/world/rule_keeper.gd scripts/ui/rule_stamp.gd scripts/ui/reel_slot.gd scripts/ui/hud.gd scripts/world/room_rules.gd scripts/world/room_view.gd scripts/scenes/floor_scene.gd scripts/core/run_effects.gd tests/support/event_effect.gd tests/test_rule_item_hooks.gd
@@ -3885,7 +3992,7 @@ git commit -m "Add the rules and memory hooks the new items need" -m "Co-Authore
 
 ## Phase B: the items, by build
 
-Each batch task follows the same shape: new `.tres` files from the template, scripts in `scripts/items/`, kept items rewritten in place, renamed old ids added to `RetiredContent.RETIRED_ITEMS`, the old tests that assert a changed rule retired, one new test file, then the suite and a commit. "Retire old tests" means: remove each named kept id from the old file's `BATCH` (or `IDS`) dictionary or list, and delete each named test function. A kept item keeps its unlock line (`craft_price`, `from_bounty` or `first_clear_path`) as it is. Every new id gets the `CoachTips.TIPS` line its task gives (`scripts/core/coach_tips.gd`; `test_training_yard.test_the_coach_has_a_tip_for_every_item` checks every pool item), added at the end of the `TIPS` dictionary, and every task adds `scripts/core/coach_tips.gd` to its commit.
+Each batch task follows the same shape: new `.tres` files from the template, scripts in `scripts/items/`, kept items rewritten in place, renamed old ids added to `RetiredContent.RETIRED_ITEMS`, the old tests that assert a changed rule retired, one new test file, then the suite and a commit. "Retire old tests" means: remove each named kept id from the old file's `BATCH` (or `IDS`) dictionary or list, and delete each named test function. A kept item keeps its unlock line (`craft_price`, `from_bounty` or `first_clear_path`) as it is. Every item's name, description, rarity, build, kind and curse come from `docs/superpowers/specs/2026-11-10-new-item-list-items.json` (look the id up there; kept items are rewritten to match it too). Every new id gets the `CoachTips.TIPS` line its task gives (`scripts/core/coach_tips.gd`; `test_training_yard.test_the_coach_has_a_tip_for_every_item` checks every pool item), added at the end of the `TIPS` dictionary, and every task adds `scripts/core/coach_tips.gd` to its commit.
 
 ### Task 11: Thermos items (9)
 
@@ -4172,10 +4279,10 @@ Expected: PASS.
 
 - [ ] **Step 8: Full suite, then commit**
 
-Run: `powershell -File tools/test.ps1` (expect 0 failed).
+Run: `powershell -File $COPY\tools\test.ps1` (expect 0 failed).
 
 ```powershell
-git add scripts/items/hit_scale_effect.gd scripts/items/tea_urn.gd scripts/items/flask_holster.gd scripts/items/bottomless_flask.gd scripts/items/second_brew.gd scripts/items/tea_break.gd scripts/items/hot_soup_thermos.gd data/items/tea_urn.tres data/items/flask_holster.tres data/items/bottomless_flask.tres data/items/second_brew.tres data/items/thermos_lob.tres data/items/tea_break.tres data/items/hot_soup_thermos.tres data/items/pressure_cooker.tres data/items/tea_cosy.tres scripts/content/retired_content.gd tests/test_items_thermos.gd tests/test_items_batch3.gd tests/test_resume_item_state.gd
+git add scripts/items/hit_scale_effect.gd scripts/items/tea_urn.gd scripts/items/flask_holster.gd scripts/items/bottomless_flask.gd scripts/items/second_brew.gd scripts/items/tea_break.gd scripts/items/hot_soup_thermos.gd data/items/tea_urn.tres data/items/flask_holster.tres data/items/bottomless_flask.tres data/items/second_brew.tres data/items/thermos_lob.tres data/items/tea_break.tres data/items/hot_soup_thermos.tres data/items/pressure_cooker.tres data/items/tea_cosy.tres scripts/content/retired_content.gd tests/test_items_thermos.gd tests/test_items_batch3.gd tests/test_resume_item_state.gd scripts/core/coach_tips.gd
 git commit -m "Add the Thermos build's items" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
@@ -4458,7 +4565,7 @@ const PAPER := Color("f2ecd8")
 
 
 func on_swing(ctx: EffectContext, swing: SwingAttack) -> void:
-	if not swing.finisher or swing.from_era:
+	if not swing.finisher or swing.from_era or ctx.counting_exact:
 		return
 	var slip := ItemFx.make_needle(ctx, swing.direction, DAMAGE, DISTANCE)
 	slip.stops_at_first = false
@@ -4517,10 +4624,10 @@ Expected: PASS.
 
 - [ ] **Step 6: Full suite, then commit**
 
-Run: `powershell -File tools/test.ps1` (expect 0 failed).
+Run: `powershell -File $COPY\tools\test.ps1` (expect 0 failed).
 
 ```powershell
-git add scripts/items/filing_cabinet.gd scripts/items/in_triplicate.gd scripts/items/key_cutter.gd scripts/items/loose_paperwork.gd scripts/items/rubber_stamp_collection.gd scripts/items/paper_cuts.gd scripts/items/desk_drawer.gd data/items/filing_cabinet.tres data/items/in_triplicate.tres data/items/key_cutter.tres data/items/loose_paperwork.tres data/items/rubber_stamp_collection.tres data/items/paper_cuts.tres data/items/locksmiths_apron.tres data/items/desk_drawer.tres scripts/content/retired_content.gd tests/test_items_slips.gd
+git add scripts/items/filing_cabinet.gd scripts/items/in_triplicate.gd scripts/items/key_cutter.gd scripts/items/loose_paperwork.gd scripts/items/rubber_stamp_collection.gd scripts/items/paper_cuts.gd scripts/items/desk_drawer.gd data/items/filing_cabinet.tres data/items/in_triplicate.tres data/items/key_cutter.tres data/items/loose_paperwork.tres data/items/rubber_stamp_collection.tres data/items/paper_cuts.tres data/items/locksmiths_apron.tres data/items/desk_drawer.tres scripts/content/retired_content.gd tests/test_items_slips.gd scripts/core/coach_tips.gd
 git commit -m "Add the Slip build's items" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
@@ -4777,7 +4884,7 @@ func load_state(state: Dictionary) -> void:
 	"hagglers_hat": "One thing in every shop is free. Look for the dearest.",
 ```
 
-- [ ] **Step 5: Retire old tests.** `tests/test_items_batch1.gd`: remove `gold_fillings` from `BATCH`; delete `test_gold_fillings_knock_a_coin_loose_one_bite_in_five`. `tests/test_items_batch3.gd`: remove `coupon_booklet`, `hagglers_hat`, `inheritance_letter` from `BATCH`; delete `test_hagglers_hat_halves_the_cheapest_item` and `test_inheritance_letter_pays_once_on_taking`. `tests/test_reworked_items.gd`: remove `senior_discount` from `IDS` and from the `rare` and `recipes` lists in `test_rarity_curses_and_sources_follow_the_design`.
+- [ ] **Step 5: Retire old tests.** `tests/test_items_batch1.gd`: remove `gold_fillings` from `BATCH`; delete `test_gold_fillings_knock_a_coin_loose_one_bite_in_five`. `tests/test_items_batch3.gd`: remove `coupon_booklet`, `hagglers_hat`, `inheritance_letter` from `BATCH`; delete `test_hagglers_hat_halves_the_cheapest_item` and `test_inheritance_letter_pays_once_on_taking`. `tests/test_reworked_items.gd`: remove `senior_discount` from `IDS` and from the `rare` and `recipes` lists in `test_rarity_curses_and_sources_follow_the_design`. `tests/test_resume_item_state.gd` `test_a_resume_never_runs_on_gain_again`: `assert_eq(kit.paid, 60, "paid once when taken")` becomes `assert_eq(kit.paid, 75, "paid once when taken")`.
 
 - [ ] **Step 6: Run the tests**
 
@@ -4786,10 +4893,10 @@ Expected: PASS.
 
 - [ ] **Step 7: Full suite, then commit**
 
-Run: `powershell -File tools/test.ps1` (expect 0 failed).
+Run: `powershell -File $COPY\tools\test.ps1` (expect 0 failed).
 
 ```powershell
-git add scripts/items/money_belt.gd scripts/items/piggy_bank.gd scripts/items/compound_interest.gd scripts/items/coin_purse_cane.gd scripts/items/hagglers_hat.gd scripts/items/gold_fillings.gd scripts/items/inheritance_letter.gd data/items/money_belt.tres data/items/piggy_bank.tres data/items/compound_interest.tres data/items/coin_purse_cane.tres data/items/senior_discount.tres data/items/hagglers_hat.tres data/items/coupon_booklet.tres data/items/gold_fillings.tres data/items/inheritance_letter.tres scripts/content/retired_content.gd tests/test_items_pension.gd tests/test_items_batch1.gd tests/test_items_batch3.gd tests/test_reworked_items.gd
+git add scripts/items/money_belt.gd scripts/items/piggy_bank.gd scripts/items/compound_interest.gd scripts/items/coin_purse_cane.gd scripts/items/hagglers_hat.gd scripts/items/gold_fillings.gd scripts/items/inheritance_letter.gd data/items/money_belt.tres data/items/piggy_bank.tres data/items/compound_interest.tres data/items/coin_purse_cane.tres data/items/senior_discount.tres data/items/hagglers_hat.tres data/items/coupon_booklet.tres data/items/gold_fillings.tres data/items/inheritance_letter.tres scripts/content/retired_content.gd tests/test_items_pension.gd tests/test_items_batch1.gd tests/test_items_batch3.gd tests/test_reworked_items.gd tests/test_resume_item_state.gd scripts/core/coach_tips.gd
 git commit -m "Add the Pension build's items" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
@@ -4963,20 +5070,14 @@ func tick(ctx: EffectContext, delta: float) -> void:
 	if _left > 0.0:
 		return
 	_left = EVERY
-	if ctx.counting_exact:
-		return
-	var best: Enemy = null
-	for enemy in ctx.enemies_near(ctx.feet(), REACH):
-		if enemy.def.is_boss or enemy.hp >= enemy.max_hp() * BELOW:
-			continue
-		if best == null or enemy.global_position.distance_to(ctx.feet()) < best.global_position.distance_to(ctx.feet()):
-			best = enemy
-	if best == null:
-		return
-	var body := pet()
-	if body != null:
-		body.lunge_to(best.global_position)
-	ctx.hit_enemy(best, best.hp + 1.0, RunEffects.PET)
+	var target := nearest_where(ctx, REACH, _is_low)
+	if target != null:
+		# Her pounce finishes it, whatever the pet multiplier is.
+		strike(ctx, target, (target.hp + 1.0) / maxf(mult(ctx), 0.01))
+
+
+static func _is_low(enemy: Enemy) -> bool:
+	return not enemy.def.is_boss and enemy.hp < enemy.max_hp() * BELOW
 ```
 
 `scripts/items/ferret.gd`:
@@ -5134,10 +5235,10 @@ Expected: PASS.
 
 - [ ] **Step 6: Full suite, then commit**
 
-Run: `powershell -File tools/test.ps1` (expect 0 failed).
+Run: `powershell -File $COPY\tools\test.ps1` (expect 0 failed).
 
 ```powershell
-git add scripts/items/rex.gd scripts/items/mittens.gd scripts/items/ferret.gd scripts/items/sheepdog.gd scripts/items/parrot.gd scripts/items/racing_pigeon.gd data/items/rex.tres data/items/mittens.tres data/items/ferret.tres data/items/sheepdog.tres data/items/parrot.tres data/items/racing_pigeon.tres scripts/content/retired_content.gd tests/test_items_pets_fighting.gd
+git add scripts/items/rex.gd scripts/items/mittens.gd scripts/items/ferret.gd scripts/items/sheepdog.gd scripts/items/parrot.gd scripts/items/racing_pigeon.gd data/items/rex.tres data/items/mittens.tres data/items/ferret.tres data/items/sheepdog.tres data/items/parrot.tres data/items/racing_pigeon.tres scripts/content/retired_content.gd tests/test_items_pets_fighting.gd scripts/core/coach_tips.gd
 git commit -m "Add the pets that fight and fetch" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
@@ -5485,10 +5586,10 @@ Expected: PASS.
 
 - [ ] **Step 6: Full suite, then commit**
 
-Run: `powershell -File tools/test.ps1` (expect 0 failed).
+Run: `powershell -File $COPY\tools\test.ps1` (expect 0 failed).
 
 ```powershell
-git add scripts/items/budgie.gd scripts/items/tortoise.gd scripts/items/moths.gd scripts/items/pet_rock.gd scripts/items/pet_cemetery_plot.gd data/items/budgie.tres data/items/tortoise.tres data/items/moths.tres data/items/pet_rock.tres data/items/dog_treats.tres data/items/pet_cemetery_plot.tres scripts/content/retired_content.gd tests/test_items_pets_guarding.gd
+git add scripts/items/budgie.gd scripts/items/tortoise.gd scripts/items/moths.gd scripts/items/pet_rock.gd scripts/items/pet_cemetery_plot.gd data/items/budgie.tres data/items/tortoise.tres data/items/moths.tres data/items/pet_rock.tres data/items/dog_treats.tres data/items/pet_cemetery_plot.tres scripts/content/retired_content.gd tests/test_items_pets_guarding.gd scripts/core/coach_tips.gd
 git commit -m "Add the guarding pets and the pet buffs" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
@@ -5624,7 +5725,7 @@ func _next(ctx: EffectContext, from: Enemy) -> Enemy:
 	"chattering_bounce": "Throw into a crowd. They hop from one to the next.",
 ```
 
-- [ ] **Step 5: Retire old tests.** `tests/test_items_batch1.gd`: remove `boomerang_bite`, `spare_set`, `shark_tooth`, `glue_gun`, `windup_teeth`, `fizzy_tablet` from `BATCH`; delete `test_fizzy_tablet_slows_the_bitten_and_what_stands_in_the_fizz`. `tests/test_items_batch4.gd`: remove `dentures_in_glass` from `BATCH`; delete `test_dentures_in_a_glass_speed_his_swings_while_they_are_out`. `tests/test_reworked_items.gd`: remove `"dentures"` from `IDS` and from the `rare` list. If `tests/test_dentures.gd` finds the item through `Content.items()`, switch it to `ItemKit.item("strong_dentures")`.
+- [ ] **Step 5: Retire old tests.** `tests/test_items_batch1.gd`: remove `boomerang_bite`, `spare_set`, `shark_tooth`, `glue_gun`, `windup_teeth`, `fizzy_tablet` from `BATCH`; delete `test_fizzy_tablet_slows_the_bitten_and_what_stands_in_the_fizz`. `tests/test_items_batch4.gd`: remove `dentures_in_glass` from `BATCH`; delete `test_dentures_in_a_glass_speed_his_swings_while_they_are_out`. `tests/test_reworked_items.gd`: remove `"dentures"` from `IDS` and from the `rare` list. In `tests/test_dentures.gd` (its `_shipped_item` reads the pool), both `_shipped_item("dentures")` calls, in `test_extra_strong_dentures_bite_harder_and_through_two` and `test_the_item_and_adhesive_add_up`, become `_shipped_item("strong_dentures")`.
 
 - [ ] **Step 6: Run the tests**
 
@@ -5633,10 +5734,10 @@ Expected: PASS.
 
 - [ ] **Step 7: Full suite, then commit**
 
-Run: `powershell -File tools/test.ps1` (expect 0 failed).
+Run: `powershell -File $COPY\tools\test.ps1` (expect 0 failed).
 
 ```powershell
-git add scripts/items/chattering_bounce.gd scripts/items/fizzy_tablet.gd scripts/items/dentures_in_glass.gd data/items/strong_dentures.tres data/items/chattering_bounce.tres data/items/boomerang_bite.tres data/items/spare_set.tres data/items/shark_tooth.tres data/items/glue_gun.tres data/items/windup_teeth.tres data/items/fizzy_tablet.tres data/items/dentures_in_glass.tres scripts/content/retired_content.gd tests/test_items_dentures.gd tests/test_items_batch1.gd tests/test_items_batch4.gd tests/test_reworked_items.gd tests/test_dentures.gd
+git add scripts/items/chattering_bounce.gd scripts/items/fizzy_tablet.gd scripts/items/dentures_in_glass.gd data/items/strong_dentures.tres data/items/chattering_bounce.tres data/items/boomerang_bite.tres data/items/spare_set.tres data/items/shark_tooth.tres data/items/glue_gun.tres data/items/windup_teeth.tres data/items/fizzy_tablet.tres data/items/dentures_in_glass.tres scripts/content/retired_content.gd tests/test_items_dentures.gd tests/test_items_batch1.gd tests/test_items_batch4.gd tests/test_reworked_items.gd tests/test_dentures.gd scripts/core/coach_tips.gd
 git commit -m "Add the dentures build's items" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
@@ -5726,6 +5827,7 @@ func test_obituaries_add_five_percent_a_kill_up_to_half_and_say_so() -> void:
 	for i in 12:
 		run.effects.kill(kit.enemy(), RunEffects.SWING)
 	assert_near(run.effects.hit_damage(enemy, 10.0, RunEffects.SWING), 15.0)
+	assert_near(run.effects.hit_damage(enemy, 10.0, RunEffects.PET), 10.0, "a pet's bite is not his hit")
 	kit.free_enemies()
 ```
 
@@ -5785,7 +5887,7 @@ func on_hit(ctx: EffectContext, enemy: Enemy, _amount: float, source: String) ->
 	enemy.apply_push(way * PULL, TIME)
 ```
 
-`rusty_hinge.gd`: `const STUN_TIME := 1.0`, `const AGAIN_AFTER := 2.5`. `obituary_clippings.gd`: `const PER_KILL := 0.05`, and in `on_kill`, after counting a kill, `ctx.add_fx(ItemFx.make_pop("+%d%%" % roundi(PER_KILL * 100.0 * kills_counted), COLOR), ctx.feet())` (use the script's own counter name for `kills_counted`; the pop shows the running total, at most +50%). Update the brass topper's and knitting needles' header comments to their list names.
+`rusty_hinge.gd`: `const STUN_TIME := 1.0`, `const AGAIN_AFTER := 2.5`. `obituary_clippings.gd`: `const PER_KILL := 0.05` (its `on_kill` already pops the running total, so nothing is added there), and its `hit_damage` starts `if ctx.counting_exact or not RunEffects.is_his_hit(source):` / `return amount` (rename its `_source` parameter to `source`), as section 1 of the spec says: a pet's or the ally's hit is not his. Update the brass topper's and knitting needles' header comments to their list names.
 
 - [ ] **Step 4: The data.** New (build `cane`, tags `["cane"]`): `lightning_rod.tres` ("Lightning Rod Cane", rare, script), `cane_hook.tres` ("Shepherd's Crook Handle", common, script, `first_clear_path = "last_resort_cruise"`). Kept, rewritten in place (list description, build, tags; stats and unlock lines stay): `cane_sword`, `brass_topper` (display_name "Brass Cane Topper"), `rolling_pin`, `reapers_scythe`, `knitting_needles` (display_name "Knitting Needles"), `rusty_hinge`, `bingo_dabber`, `obituary_clippings`. Coach tips:
 
@@ -5803,10 +5905,10 @@ Expected: PASS.
 
 - [ ] **Step 7: Full suite, then commit**
 
-Run: `powershell -File tools/test.ps1` (expect 0 failed).
+Run: `powershell -File $COPY\tools\test.ps1` (expect 0 failed).
 
 ```powershell
-git add scripts/items/lightning_rod.gd scripts/items/cane_hook.gd scripts/items/rusty_hinge.gd scripts/items/obituary_clippings.gd scripts/items/brass_topper.gd scripts/items/knitting_needles.gd data/items/lightning_rod.tres data/items/cane_hook.tres data/items/cane_sword.tres data/items/brass_topper.tres data/items/rolling_pin.tres data/items/reapers_scythe.tres data/items/knitting_needles.tres data/items/rusty_hinge.tres data/items/bingo_dabber.tres data/items/obituary_clippings.tres tests/test_items_cane.gd tests/test_items_batch1.gd tests/test_items_batch4.gd
+git add scripts/items/lightning_rod.gd scripts/items/cane_hook.gd scripts/items/rusty_hinge.gd scripts/items/obituary_clippings.gd scripts/items/brass_topper.gd scripts/items/knitting_needles.gd data/items/lightning_rod.tres data/items/cane_hook.tres data/items/cane_sword.tres data/items/brass_topper.tres data/items/rolling_pin.tres data/items/reapers_scythe.tres data/items/knitting_needles.tres data/items/rusty_hinge.tres data/items/bingo_dabber.tres data/items/obituary_clippings.tres tests/test_items_cane.gd tests/test_items_batch1.gd tests/test_items_batch4.gd scripts/core/coach_tips.gd
 git commit -m "Add the cane build's items" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
@@ -5970,7 +6072,7 @@ Expected: PASS.
 
 - [ ] **Step 7: Full suite, then commit**
 
-Run: `powershell -File tools/test.ps1` (expect 0 failed).
+Run: `powershell -File $COPY\tools\test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/items/heart_monitor.gd scripts/items/titanium_hip.gd scripts/items/bad_hip.gd scripts/items/pill_organizer.gd scripts/core/coach_tips.gd data/items/heart_monitor.tres data/items/pocket_watch.tres data/items/wheelchair_wheels.tres data/items/titanium_hip.tres data/items/pogo_cane.tres data/items/velcro_shoes.tres data/items/afterimage.tres data/items/bad_hip.tres data/items/rocking_chair.tres data/items/hospital_bracelet.tres data/items/comfort_care_lanyard.tres data/items/pill_organizer.tres data/items/casserole_dish.tres data/items/life_alert_button.tres data/items/life_jacket.tres data/items/eternal_warranty.tres tests/test_items_dodge_pills.gd tests/test_items_batch1.gd tests/test_items_batch2.gd tests/test_items_batch3.gd tests/test_reworked_items.gd
@@ -5983,7 +6085,7 @@ git commit -m "Add the dodge and pills builds' items" -m "Co-Authored-By: Claude
 
 **Files:**
 - Create: `scripts/items/unpaid_bill.gd`, `scripts/items/glass_hip.gd`, `scripts/items/cactus_brooch.gd`, `data/items/unpaid_bill.tres`, `data/items/glass_hip.tres`, `data/items/cactus_brooch.tres`, `tests/test_items_risk_any.gd`
-- Modify: `data/items/` `photo_of_grandkids.tres`, `nitro_tablets.tres`, `polyester_suit.tres`, `prune_juice.tres`, `floor_plan.tres`, `magnifying_glass.tres`, `alarm_clock.tres`, `early_bird_special.tres`, `bureaucrats_stamp.tres`, `bifocals.tres`, `last_orders.tres`, `complaint_form.tres`; `scripts/items/polyester_suit.gd`, `scripts/items/alarm_clock.gd`, `scripts/items/early_bird_special.gd`, `scripts/items/bureaucrats_stamp.gd`, `scripts/items/bifocals.gd`, `scripts/content/retired_content.gd`, `scripts/core/coach_tips.gd`; `tests/test_items_batch4.gd`, `tests/test_reworked_items.gd`, `tests/test_resume_item_state.gd`
+- Modify: `scripts/items/photo_of_grandkids.gd`, `scripts/items/last_orders.gd`, `data/items/` `photo_of_grandkids.tres`, `nitro_tablets.tres`, `polyester_suit.tres`, `prune_juice.tres`, `floor_plan.tres`, `magnifying_glass.tres`, `alarm_clock.tres`, `early_bird_special.tres`, `bureaucrats_stamp.tres`, `bifocals.tres`, `last_orders.tres`, `complaint_form.tres`; `scripts/items/polyester_suit.gd`, `scripts/items/alarm_clock.gd`, `scripts/items/early_bird_special.gd`, `scripts/items/bureaucrats_stamp.gd`, `scripts/items/bifocals.gd`, `scripts/content/retired_content.gd`, `scripts/core/coach_tips.gd`; `tests/test_items_batch4.gd`, `tests/test_reworked_items.gd`, `tests/test_resume_item_state.gd`
 
 **Interfaces:**
 - Consumes: `HitScaleEffect` (Task 11); `ctx.spend_from_purse`, `ctx.lose_half` (Tasks 1, 8).
@@ -6057,6 +6159,17 @@ func test_the_glass_hip_is_quick_and_every_second_hit_costs_a_pill_more() -> voi
 	assert_eq(run.effects.hurt(1, RunEffects.HURT_ENEMY), 2)
 	assert_eq(run.effects.hurt(1, RunEffects.HURT_ENEMY), 1)
 	assert_eq(run.effects.hurt(0, RunEffects.HURT_ENEMY), 0, "a blocked hit costs nothing")
+
+
+func test_the_photo_and_last_orders_scale_his_hits_only() -> void:
+	var kit := ItemKit.new()
+	var run := kit.run_with(["photo_of_grandkids", "last_orders"])
+	var last := kit.enemy()
+	run.health.pills = 1
+	assert_near(run.effects.hit_damage(last, 10.0, RunEffects.SWING), 40.0, "last pill and last enemy")
+	assert_near(run.effects.hit_damage(last, 10.0, RunEffects.PET), 10.0)
+	assert_near(run.effects.hit_damage(last, 10.0, RunEffects.ALLY), 10.0)
+	kit.free_enemies()
 
 
 func test_the_alarm_clock_stuns_a_full_second() -> void:
@@ -6217,7 +6330,7 @@ func tick(ctx: EffectContext, delta: float) -> void:
 			enemy.apply_push(away * PUSH, PUSH_TIME)
 ```
 
-Kept scripts: `polyester_suit.gd` `const STUN := 0.5` (keep its `small_blast` sound); `alarm_clock.gd` `const STUN := 1.0`; `early_bird_special.gd` `const BOOST := 1.25`, drop `COMBO_RUSH` and `COMBO`, `rush_time()` returns `RUSH`; `bureaucrats_stamp.gd` `const BOSS_SHARE := 0.1`, drop `COMBO_RECHARGE`, `COMBO` and its branch (`recharge_time()` returns `RECHARGE`); `bifocals.gd` becomes
+Kept scripts: `photo_of_grandkids.gd` and `last_orders.gd`: their `hit_damage` returns `amount` unless `RunEffects.is_his_hit(source)` (rename each `_source` parameter to `source`); `polyester_suit.gd` `const STUN := 0.5` (keep its `small_blast` sound); `alarm_clock.gd` `const STUN := 1.0`; `early_bird_special.gd` `const BOOST := 1.25`, drop `COMBO_RUSH` and `COMBO`, `rush_time()` returns `RUSH`; `bureaucrats_stamp.gd` `const BOSS_SHARE := 0.1`, drop `COMBO_RECHARGE`, `COMBO` and its branch (`recharge_time()` returns `RECHARGE`); `bifocals.gd` becomes
 
 ```gdscript
 extends ItemEffect
@@ -6253,10 +6366,10 @@ Expected: PASS.
 
 - [ ] **Step 7: Full suite, then commit**
 
-Run: `powershell -File tools/test.ps1` (expect 0 failed).
+Run: `powershell -File $COPY\tools\test.ps1` (expect 0 failed).
 
 ```powershell
-git add scripts/items/unpaid_bill.gd scripts/items/glass_hip.gd scripts/items/cactus_brooch.gd scripts/items/polyester_suit.gd scripts/items/alarm_clock.gd scripts/items/early_bird_special.gd scripts/items/bureaucrats_stamp.gd scripts/items/bifocals.gd scripts/content/retired_content.gd scripts/core/coach_tips.gd data/items/unpaid_bill.tres data/items/glass_hip.tres data/items/cactus_brooch.tres data/items/photo_of_grandkids.tres data/items/nitro_tablets.tres data/items/polyester_suit.tres data/items/prune_juice.tres data/items/floor_plan.tres data/items/magnifying_glass.tres data/items/alarm_clock.tres data/items/early_bird_special.tres data/items/bureaucrats_stamp.tres data/items/bifocals.tres data/items/last_orders.tres data/items/complaint_form.tres tests/test_items_risk_any.gd tests/test_items_batch4.gd tests/test_reworked_items.gd
+git add scripts/items/unpaid_bill.gd scripts/items/glass_hip.gd scripts/items/cactus_brooch.gd scripts/items/photo_of_grandkids.gd scripts/items/last_orders.gd scripts/items/polyester_suit.gd scripts/items/alarm_clock.gd scripts/items/early_bird_special.gd scripts/items/bureaucrats_stamp.gd scripts/items/bifocals.gd scripts/content/retired_content.gd scripts/core/coach_tips.gd data/items/unpaid_bill.tres data/items/glass_hip.tres data/items/cactus_brooch.tres data/items/photo_of_grandkids.tres data/items/nitro_tablets.tres data/items/polyester_suit.tres data/items/prune_juice.tres data/items/floor_plan.tres data/items/magnifying_glass.tres data/items/alarm_clock.tres data/items/early_bird_special.tres data/items/bureaucrats_stamp.tres data/items/bifocals.tres data/items/last_orders.tres data/items/complaint_form.tres tests/test_items_risk_any.gd tests/test_items_batch4.gd tests/test_reworked_items.gd
 git commit -m "Add the risk build's items and rework the any-build items" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
@@ -6406,7 +6519,10 @@ func bonus(ctx: EffectContext) -> float:
 	return PER * run.rules_broken if run != null else 0.0
 
 
-func on_auditor(_ctx: EffectContext, auditor: Enemy) -> void:
+# The full loop counts every pill a hit costs, so there he hits as usual.
+func on_auditor(ctx: EffectContext, auditor: Enemy) -> void:
+	if ctx.counting_pills:
+		return
 	auditor.extra_damage += EXTRA
 ```
 
@@ -6425,8 +6541,9 @@ func on_floor_start(_ctx: EffectContext) -> void:
 	used = false
 
 
-func excuses_rule_break(_ctx: EffectContext) -> bool:
-	if used:
+# The full loop breaks rules to check the Auditor walks in, so there nothing is let off.
+func excuses_rule_break(ctx: EffectContext) -> bool:
+	if used or ctx.counting_exact:
 		return false
 	used = true
 	return true
@@ -6450,7 +6567,10 @@ extends ItemEffect
 const MULT := 2.0
 
 
-func on_auditor(_ctx: EffectContext, auditor: Enemy) -> void:
+# The full loop counts Pension and the Auditor's drops exactly, so there he pays as usual.
+func on_auditor(ctx: EffectContext, auditor: Enemy) -> void:
+	if ctx.counting_exact:
+		return
 	auditor.coin_mult = MULT
 	auditor.leaves_item = true
 ```
@@ -6464,8 +6584,9 @@ extends ItemEffect
 # first, so a let-off break sends nobody.
 
 
-func sides_with_you(_ctx: EffectContext) -> bool:
-	return true
+# The full loop checks a hostile Auditor walks in, so there he stays hostile.
+func sides_with_you(ctx: EffectContext) -> bool:
+	return not ctx.counting_exact
 ```
 
 `gold_star.gd`:
@@ -6551,7 +6672,7 @@ Expected: PASS.
 
 - [ ] **Step 6: Full suite, then commit**
 
-Run: `powershell -File tools/test.ps1` (expect 0 failed).
+Run: `powershell -File $COPY\tools\test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/items/model_citizen.gd scripts/items/repeat_offender.gd scripts/items/fine_print.gd scripts/items/brown_envelope.gd scripts/items/turned_auditor.gd scripts/items/gold_star.gd scripts/items/those_were_the_days.gd scripts/items/rose_tinted.gd scripts/items/scrapbook.gd scripts/core/coach_tips.gd data/items/model_citizen.tres data/items/repeat_offender.tres data/items/fine_print.tres data/items/brown_envelope.tres data/items/turned_auditor.tres data/items/gold_star.tres data/items/photo_album.tres data/items/old_projector.tres data/items/those_were_the_days.tres data/items/rose_tinted.tres data/items/scrapbook.tres tests/test_items_rules_memory.gd
@@ -6564,11 +6685,11 @@ git commit -m "Add the rules and memories builds' items" -m "Co-Authored-By: Cla
 
 **Files:**
 - Create: `scripts/items/hearing_aid_feedback.gd`, `scripts/items/walking_frame.gd`, `scripts/items/exchange_desk.gd`, `scripts/items/photocopier.gd`, `scripts/items/megaphone.gd`, `scripts/items/dinner_bell.gd`, and `data/items/` `hearing_aid_feedback.tres`, `walking_frame.tres`, `exchange_desk.tres`, `photocopier.tres`, `megaphone.tres`, `dinner_bell.tres`, `tests/test_items_actives.gd`
-- Modify: `scripts/items/harmonica.gd`, `scripts/items/lottery_scratcher.gd`, `data/items/harmonica.tres`, `data/items/lottery_scratcher.tres`, `scripts/content/retired_content.gd`, `scripts/core/coach_tips.gd`, `tests/test_items_batch3.gd`, `tests/test_items_batch4.gd`, `tests/test_reworked_items.gd`
+- Modify: `scripts/core/dev_start.gd`, `scripts/items/harmonica.gd`, `scripts/items/lottery_scratcher.gd`, `data/items/harmonica.tres`, `data/items/lottery_scratcher.tres`, `scripts/content/retired_content.gd`, `scripts/core/coach_tips.gd`, `tests/test_items_batch3.gd`, `tests/test_items_batch4.gd`, `tests/test_reworked_items.gd`
 
 **Interfaces:**
 - Consumes: the active slot (Tasks 3, 4); `WalkingFrame` (Task 9); `ctx.copy_pickup`, `ctx.drop_item` (Task 8); `RoomRules.pick_items`; `ItemFx`.
-- Produces: `Megaphone.in_cone(from, aim, at, reach, half_angle_deg) -> bool` (static, in `megaphone.gd`, reached by `load()`); `LotteryScratcher.prize(roll) -> String` (static, in `lottery_scratcher.gd`: `"coin"`, `"key"`, `"bomb"`, `"heal"` or `"item"`).
+- Produces: `static func in_cone(from, aim, at, reach, half_angle_deg) -> bool` in `scripts/items/megaphone.gd` and `static func prize(roll) -> String` in `scripts/items/lottery_scratcher.gd` (neither script has a class_name: tests reach them as `load("res://scripts/items/megaphone.gd").in_cone(...)`; `prize` returns `"coin"`, `"key"`, `"bomb"`, `"heal"` or `"item"`).
 
 - [ ] **Step 1: Write the failing test** `tests/test_items_actives.gd`
 
@@ -6804,7 +6925,7 @@ extends ItemEffect
 
 func use(ctx: EffectContext) -> bool:
 	var aim := ctx.player.aim_direction() if ctx.has_player() else Vector2.RIGHT
-	var frame := WalkingFrame.make(ctx.feet(), aim)
+	var frame := WalkingFrame.make(ctx.feet(), aim, ctx)
 	ctx.add_fx(frame, frame.position)
 	return true
 ```
@@ -6823,11 +6944,7 @@ func can_use(ctx: EffectContext) -> bool:
 
 
 func use(ctx: EffectContext) -> bool:
-	var run := ctx.run()
-	var slips := run.keys
-	run.keys = run.bombs
-	run.bombs = slips
-	run.changed.emit()
+	ctx.run().swap_slips_and_thermoses()
 	ctx.play_sound("form_filed")
 	return true
 ```
@@ -6910,7 +7027,7 @@ func tick(_ctx: EffectContext, delta: float) -> void:
 	_left = maxf(_left - delta, 0.0)
 ```
 
-- [ ] **Step 4: The data.** From the template, kind `active`: `hearing_aid_feedback.tres` ("Hearing Aid", rare, build `any`, `charge_rooms = 3`), `walking_frame.tres` ("Walking Frame", common, `any`, 2), `exchange_desk.tres` ("Exchange Desk", rare, `slip`, 2), `photocopier.tres` ("Photocopier", legendary, `any`, 6), `megaphone.tres` ("Megaphone", rare, `rules`, 2), `dinner_bell.tres` ("Dinner Bell", rare, `pets`, 2). Kept, rewritten in place: `harmonica.tres` (`kind = "active"`, `build = "pills"`, `charge_rooms = 4`, tags `["pills"]`, list description; it keeps `first_clear_path = "funeral_parlour"`), `lottery_scratcher.tres` (`kind = "active"`, `build = "pension"`, `charge_per_floor = true`, tags `["pension"]`). `RETIRED_ITEMS` gets `"hearing_aid"`. Coach tips (the harmonica's and the scratcher's lines are replaced):
+- [ ] **Step 4: The data.** From the template, kind `active`: `hearing_aid_feedback.tres` ("Hearing Aid", rare, build `any`, `charge_rooms = 3`), `walking_frame.tres` ("Walking Frame", common, `any`, 2), `exchange_desk.tres` ("Exchange Desk", rare, `slip`, 2), `photocopier.tres` ("Photocopier", legendary, `any`, 6), `megaphone.tres` ("Megaphone", rare, `rules`, 2), `dinner_bell.tres` ("Dinner Bell", rare, `pets`, 2). Kept, rewritten in place: `harmonica.tres` (`kind = "active"`, `build = "pills"`, `charge_rooms = 4`, tags `["pills"]`, list description; it keeps `first_clear_path = "funeral_parlour"`), `lottery_scratcher.tres` (`kind = "active"`, `build = "pension"`, `charge_per_floor = true`, tags `["pension"]`). `RETIRED_ITEMS` gets `"hearing_aid"`, so the dev kit moves off it now (`tests/test_dev_start.gd` checks the kit): `scripts/core/dev_start.gd` `const ITEMS := ["pill_organizer", "velcro_shoes", "hearing_aid_feedback"]` (Orthopedic Slippers retire in Task 24 too). Coach tips (the harmonica's and the scratcher's lines are replaced):
 
 ```gdscript
 	"hearing_aid_feedback": "Save the screech for a crowd. Everyone stops.",
@@ -6927,15 +7044,15 @@ func tick(_ctx: EffectContext, delta: float) -> void:
 
 - [ ] **Step 6: Run the tests**
 
-Run: `-- --only=items_actives`, `-- --only=active`, `-- --only=item_sounds`, `-- --only=resume_item_state`, `-- --only=items_batch`
+Run: `-- --only=items_actives`, `-- --only=dev_start`, `-- --only=active`, `-- --only=item_sounds`, `-- --only=resume_item_state`, `-- --only=items_batch`
 Expected: PASS.
 
 - [ ] **Step 7: Full suite, then commit**
 
-Run: `powershell -File tools/test.ps1` (expect 0 failed).
+Run: `powershell -File $COPY\tools\test.ps1` (expect 0 failed).
 
 ```powershell
-git add scripts/items/hearing_aid_feedback.gd scripts/items/walking_frame.gd scripts/items/exchange_desk.gd scripts/items/photocopier.gd scripts/items/megaphone.gd scripts/items/dinner_bell.gd scripts/items/harmonica.gd scripts/items/lottery_scratcher.gd scripts/content/retired_content.gd scripts/core/coach_tips.gd data/items/hearing_aid_feedback.tres data/items/walking_frame.tres data/items/exchange_desk.tres data/items/photocopier.tres data/items/megaphone.tres data/items/dinner_bell.tres data/items/harmonica.tres data/items/lottery_scratcher.tres tests/test_items_actives.gd tests/test_items_batch3.gd tests/test_items_batch4.gd tests/test_reworked_items.gd
+git add scripts/core/dev_start.gd scripts/items/hearing_aid_feedback.gd scripts/items/walking_frame.gd scripts/items/exchange_desk.gd scripts/items/photocopier.gd scripts/items/megaphone.gd scripts/items/dinner_bell.gd scripts/items/harmonica.gd scripts/items/lottery_scratcher.gd scripts/content/retired_content.gd scripts/core/coach_tips.gd data/items/hearing_aid_feedback.tres data/items/walking_frame.tres data/items/exchange_desk.tres data/items/photocopier.tres data/items/megaphone.tres data/items/dinner_bell.tres data/items/harmonica.tres data/items/lottery_scratcher.tres tests/test_items_actives.gd tests/test_items_batch3.gd tests/test_items_batch4.gd tests/test_reworked_items.gd
 git commit -m "Add the active items" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
@@ -7058,8 +7175,10 @@ func on_room_enter(ctx: EffectContext, _room: Node) -> void:
 	var enemies := ctx.enemies()
 	if enemies.is_empty():
 		return
-	for enemy in enemies:
-		ctx.stun(enemy, STUN)
+	# The full loop times its rooms, so there the salts are spent with no stun.
+	if not ctx.counting_exact:
+		for enemy in enemies:
+			ctx.stun(enemy, STUN)
 	spent = true
 
 
@@ -7168,7 +7287,7 @@ Expected: PASS. `test_potions` and the Bon Voyage tests use `Content.potions_for
 
 - [ ] **Step 6: Full suite, then commit**
 
-Run: `powershell -File tools/test.ps1` (expect 0 failed).
+Run: `powershell -File $COPY\tools\test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/items/potion_smelling_salts.gd scripts/items/potion_dutch_courage.gd scripts/items/potion_pet_food.gd data/potions/double_brew.tres data/potions/locksmiths_tonic.tres data/potions/topsy_turvy.tres data/potions/gold_top.tres data/potions/smelling_salts.tres data/potions/dutch_courage.tres data/potions/pet_food.tres tests/test_potion_items.gd
@@ -7342,7 +7461,7 @@ const AHEAD := 18.0
 
 
 func on_swing(ctx: EffectContext, swing: SwingAttack) -> void:
-	if not swing.finisher or swing.from_era:
+	if not swing.finisher or swing.from_era or ctx.counting_exact:
 		return
 	ctx.add_fx(ItemFx.make_wave(ctx, swing.direction, DAMAGE, DISTANCE), ctx.feet() + swing.direction * AHEAD)
 ```
@@ -7431,7 +7550,7 @@ Expected: PASS.
 
 - [ ] **Step 6: Full suite, then commit**
 
-Run: `powershell -File tools/test.ps1` (expect 0 failed).
+Run: `powershell -File $COPY\tools\test.ps1` (expect 0 failed).
 
 ```powershell
 git add data/sets scripts/items/set_civil_servant.gd scripts/items/set_old_soldier.gd scripts/items/set_daredevil.gd scripts/items/stray_cat.gd tests/test_set_items.gd
@@ -7444,7 +7563,7 @@ git commit -m "Add the eleven set bonuses" -m "Co-Authored-By: Claude <noreply@a
 ### Task 24: Retire every old item, give the new items their unlock sources, and reassign the posters
 
 **Files:**
-- Modify: `scripts/content/retired_content.gd`; `data/items/` (unlock lines on 24 new items, listed below); `data/bounties/` `augustine.tres`, `celestine.tres`, `crabtree.tres`, `lorraine.tres`, `projectionist.tres`, `tired_undertaker.tres`, `chairman_of_the_board.tres`, `madame_zara.tres`, `reverend.tres`, `senior_adjuster.tres`; `scripts/core/dev_start.gd`; `tests/test_stats.gd`, `tests/test_recipes.gd`, `tests/test_deep_rewards.gd`, `tests/test_run_checkpoint.gd`, `tests/test_reels.gd`, `tests/test_path_migration.gd`, `tests/test_reworked_items.gd`, `tests/test_items_batch2.gd`, `tests/test_items_batch4.gd`
+- Modify: `scripts/content/retired_content.gd`; `data/items/` (unlock lines on 24 new items, listed below); `data/bounties/` `augustine.tres`, `celestine.tres`, `crabtree.tres`, `lorraine.tres`, `projectionist.tres`, `tired_undertaker.tres`, `chairman_of_the_board.tres`, `madame_zara.tres`, `reverend.tres`, `senior_adjuster.tres`; `tests/test_stats.gd`, `tests/test_recipes.gd`, `tests/test_bounties.gd`, `tests/test_reworked_items.gd`, `tests/test_items_batch2.gd`, `tests/test_items_batch4.gd`
 - Create: `tests/test_new_item_pool.gd`
 
 **Interfaces:**
@@ -7535,7 +7654,50 @@ func test_the_posters_pay_the_new_rewards() -> void:
 			assert_eq(def.extra_id, POSTERS[def.id], def.id)
 	assert_eq(ItemKit.item("tea_urn").craft_price, 350)
 	assert_true(ItemKit.item("photocopier").from_bounty)
+
+
+# Every shipped item, run potion and set says what the approved list says, word for word.
+func test_every_entry_matches_the_approved_list() -> void:
+	var raw: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://docs/superpowers/specs/2026-11-10-new-item-list-items.json"))
+	assert_true(raw is Dictionary)
+	if not raw is Dictionary:
+		return
+	var seen := 0
+	for entry: Dictionary in raw["items"]:
+		var id := str(entry["id"])
+		match str(entry["kind"]):
+			"potion":
+				var def := Content.potion(id)
+				assert_true(def != null, id)
+				if def != null:
+					assert_eq(def.display_name, entry["name"], id)
+					assert_eq(def.description, entry["desc"], id)
+					assert_eq(def.run_rarity, entry["rarity"], id)
+			"set":
+				var found: SetDef = null
+				for def in Content.sets():
+					if def.id == id:
+						found = def
+				assert_true(found != null, id)
+				if found != null:
+					assert_eq(found.display_name, entry["name"], id)
+					assert_eq(found.description, entry["desc"], id)
+					assert_eq(found.build, entry["build"], id)
+			_:
+				var item := ItemKit.item(id)
+				assert_true(item != null and LIST.has(id), id)
+				if item != null:
+					assert_eq(item.display_name, entry["name"], id)
+					assert_eq(item.description, entry["desc"], id)
+					assert_eq(item.rarity, entry["rarity"], id)
+					assert_eq(item.build, entry["build"], id)
+					assert_eq(item.kind, entry["kind"], id)
+					assert_eq(item.cursed, bool(entry["cursed"]), id)
+		seen += 1
+	assert_eq(seen, 125)
 ```
+
+The data file sits under `docs/`, which the test reads with `FileAccess`: the `git archive` copy has every tracked file, and `export_presets.cfg` already keeps `docs/*` out of the exe (`exclude_filter`).
 
 - [ ] **Step 2: Run it to see it fail**
 
@@ -7563,15 +7725,13 @@ const RETIRED_ITEMS: Array[String] = ["alert_bracelet", "banana_peel", "bingo_ca
 
 - [ ] **Step 5: Posters.** Change each poster's `extra_id` (its `extra_kind` stays): `augustine.tres` → `"photocopier"`, `celestine.tres` → `"sheepdog"`, `crabtree.tres` → `"thermos_lob"`, `lorraine.tres` → `"parrot"`, `projectionist.tres` → `"old_projector"`, `tired_undertaker.tres` → `"pet_cemetery_plot"` (all `item`); `chairman_of_the_board.tres` → `"money_belt"`, `madame_zara.tres` → `"heart_monitor"`, `reverend.tres` → `"tea_urn"`, `senior_adjuster.tres` → `"filing_cabinet"` (all `recipe`). Grep `scripts/` and `tests/` for any text that names a poster's old reward (for example a poster line in `scripts/core/bounty_board.gd` or a cosmetic note) and update it to the new item's name.
 
-- [ ] **Step 6: The dev kit.** `scripts/core/dev_start.gd`: `const ITEMS := ["pill_organizer", "velcro_shoes", "hearing_aid_feedback"]`.
+- [ ] **Step 6: The posters' tests.** `tests/test_bounties.gd`: in `test_beating_the_boss_then_collecting_pays_and_retires`, `data.has_recipe("support_stockings")` becomes `"filing_cabinet"`; in `test_a_recipe_already_found_pays_half_again_instead`, `data.find_recipe("support_stockings")` becomes `"filing_cabinet"`; in `test_collecting_an_item_poster_unlocks_the_item`, `"undertakers_gloves"` becomes `"pet_cemetery_plot"`; in `test_a_poster_retired_before_it_paid_an_item_gives_the_item_on_load`, `"support_stockings"` becomes `"filing_cabinet"`; in `test_a_won_item_joins_the_pool_only_once_won`, `undertakers_gloves.tres` and its id become `pet_cemetery_plot`; in `test_the_paid_notice_names_the_extra`, `"support_stockings"` becomes `"filing_cabinet"`; in `test_the_deep_floors_posters_pay_what_the_spec_says`, the `wanted` table's `lorraine`, `celestine`, `madame_zara`, `augustine` and `chairman_of_the_board` become `"parrot"`, `"sheepdog"`, `"heart_monitor"`, `"photocopier"` and `"money_belt"`.
 
 - [ ] **Step 7: Old tests that read the old pool.**
   - `tests/test_stats.gd`: `assert_eq(Content.items().size(), 107)`. `tests/test_recipes.gd`: `assert_eq(base, 47)`.
-  - `tests/test_deep_rewards.gd`: `_item()` reads `Content.all_items()`; `test_the_new_rewards_are_shipped_as_the_posters_need` keeps only the `life_jacket` lines.
-  - `tests/test_run_checkpoint.gd`: `_item()` reads `Content.all_items()`, and every `RunCheckpoint.apply_run(..., Content.items())` in it, in `tests/test_reels.gd` and in `tests/test_path_migration.gd` passes `Content.all_items()`, so their old ids still resume until Task 26.
   - `tests/test_reworked_items.gd`: delete `test_every_old_item_id_still_ships`.
   - `tests/test_items_batch2.gd`: delete `test_lorraines_poster_pays_the_gravity_boots_and_her_hat_is_sold`. `tests/test_items_batch4.gd`: delete `test_the_bounty_items_take_four_free_posters_and_their_looks_are_sold`.
-  - Run the suite; any other failure that comes from a test reading `Content.items()` for a retired id is fixed the same way (read `Content.all_items()`), and listed in the commit body.
+  - These are all the tests that read a retired id from the pool, checked with `grep -n -E '"(<the 48 ids>)"' tests/*.gd` on 2026-11-10: every other hit reaches the item through `ItemKit.item`, `load("res://data/items/...")` or a fake `ItemDef`, which work until Task 26.
 
 - [ ] **Step 8: Run the tests**
 
@@ -7580,7 +7740,7 @@ Expected: PASS.
 
 - [ ] **Step 9: Full suite, then commit**
 
-Run: `powershell -File tools/test.ps1` (expect 0 failed).
+Run: `powershell -File $COPY\tools\test.ps1` (expect 0 failed).
 
 ```powershell
 git add scripts/content/retired_content.gd data/items data/bounties scripts/core/dev_start.gd tests
@@ -7594,7 +7754,7 @@ Read `git diff --cached --name-status` before committing: only the files this ta
 ### Task 25: Old saves and checkpoints load cleanly; the full loop follows the new items
 
 **Files:**
-- Modify: `scripts/core/run_checkpoint.gd`, `scripts/core/progress_data.gd`, `scripts/world/room_view.gd` (`_item_by_id`), `tools/smoke_driver.gd`
+- Modify: `scripts/core/run_checkpoint.gd`, `scripts/core/progress_data.gd`, `scripts/world/room_view.gd` (`_item_by_id`), `tools/smoke_driver.gd`, `tests/test_resume_item_state.gd`, `tests/test_path_migration.gd`
 - Create: `tests/test_new_item_migration.gd`
 
 **Interfaces:**
@@ -7718,19 +7878,48 @@ Put the refund after `pension` is read, so it adds to the loaded amount.
 
 - [ ] **Step 5: A room's snapshot.** `RoomView._item_by_id(id)` first maps `id = RetiredContent.current_id(id)` and returns null for `RetiredContent.is_retired(id)`; then it searches `Content.items()` as today.
 
-- [ ] **Step 6: The full loop.** In `tools/smoke_driver.gd`: `_check_pad_map` loops `["floor_plan"]` only (the Fortune Teller's Card is retired); the landing-heal check's `run.has_item("neck_pillow")` branch goes (no item heals fully on a landing now). Grep the driver for every other old id (`grep -n -E "\"(<the 48 retired ids joined by |>)\"" tools/smoke_driver.gd`) and replace each with a kept item of the same mechanic, or drop the check when nothing kept does it; list each in the commit body. Its pill-blocking switch keeps the Spare Pill Organizer empty through `stored`, which Task 18 kept.
+- [ ] **Step 6: The full loop.** In `tools/smoke_driver.gd`: `_check_pad_map` loops `["floor_plan"]` only (the Fortune Teller's Card is retired); the landing-heal check's `run.has_item("neck_pillow")` branch goes (no item heals fully on a landing now). Those two are the driver's only retired ids (checked on 2026-11-10 with a grep of all 48). Its pill-blocking switch keeps the Spare Pill Organizer empty through `stored`, which Task 18 kept.
+
+- [ ] **Step 6b: Old tests that resume retired ids.** A resume now skips retired ids and maps renamed ones, so these tests move to kept items. `tests/test_path_migration.gd` `test_a_resumed_run_on_the_new_path_keeps_its_items_pills_and_money`: the `ON_GOLF` case's held list becomes `["bifocals", "brass_topper"]` (its Medical Alert Bracelet is retired; pills and maximum come from the checkpoint and stay). `tests/test_resume_item_state.gd`: delete `test_a_resumed_run_keeps_the_expired_coupons_pills_and_free_shop` and `test_a_resumed_tax_refund_remembers_the_shops_that_paid`; in `test_a_resume_never_runs_on_gain_again`, `"second_thermos_strap"` becomes `"flask_holster"` (both places); and replace two tests with
+
+```gdscript
+func test_a_resumed_run_keeps_counters_and_floor_flags() -> void:
+	var kit := ItemKit.new()
+	var run := kit.run_with(["pill_organizer", "bottomless_flask", "glass_hip", "fine_print"])
+	_fx(run, "pill_organizer").stored = 2
+	_fx(run, "bottomless_flask").cleared = 3
+	_fx(run, "glass_hip")._halves = 1
+	_fx(run, "fine_print").used = true
+	var back := _resume(run, ItemKit.new())
+	assert_eq(_fx(back, "pill_organizer").stored, 2)
+	assert_eq(_fx(back, "bottomless_flask").cleared, 3)
+	assert_eq(_fx(back, "glass_hip")._halves, 1)
+	assert_true(_fx(back, "fine_print").used)
+	# Values come back as the type each member has, never as JSON's floats.
+	assert_eq(typeof(_fx(back, "bottomless_flask").cleared), TYPE_INT)
+
+
+func test_the_checkpoint_round_trip_still_matches_with_effect_state() -> void:
+	var kit := ItemKit.new()
+	var run := kit.run_with(["eternal_warranty", "bureaucrats_stamp", "fine_print", "bottomless_flask"])
+	run.effects.lethal()
+	run.effects.floor_start()
+	run.effects.room_clear(null)
+	var back := _resume(run, ItemKit.new())
+	assert_eq(RunCheckpoint.run_to_dict(back), RunCheckpoint.run_to_dict(run))
+```
 
 - [ ] **Step 7: Run the tests**
 
-Run: `-- --only=new_item_migration`, `-- --only=run_checkpoint`, `-- --only=save`, `-- --only=path_migration`, `-- --only=reels`
+Run: `-- --only=new_item_migration`, `-- --only=resume_item_state`, `-- --only=run_checkpoint`, `-- --only=save`, `-- --only=path_migration`, `-- --only=reels`
 Expected: PASS.
 
 - [ ] **Step 8: Full suite and the full loop, then commit**
 
-Run: `powershell -File tools/test.ps1` (expect 0 failed), then `powershell -File tools/smoke.ps1` (expect `SMOKE PASS`; read the whole tail, LESSONS 2026-11-03). Run the full loop three times, since it picks up whatever items it is offered (LESSONS 2026-11-02).
+Run: `powershell -File $COPY\tools\test.ps1` (expect 0 failed), then `powershell -File $COPY\tools\smoke.ps1` (expect `SMOKE PASS`; read the whole tail, LESSONS 2026-11-03). Run the full loop three times, since it picks up whatever items it is offered (LESSONS 2026-11-02).
 
 ```powershell
-git add scripts/core/run_checkpoint.gd scripts/core/progress_data.gd scripts/world/room_view.gd tools/smoke_driver.gd tests/test_new_item_migration.gd
+git add scripts/core/run_checkpoint.gd scripts/core/progress_data.gd scripts/world/room_view.gd tools/smoke_driver.gd tests/test_new_item_migration.gd tests/test_resume_item_state.gd tests/test_path_migration.gd
 git commit -m "Load old saves and checkpoints onto the new item list" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
@@ -7744,7 +7933,7 @@ git commit -m "Load old saves and checkpoints onto the new item list" -m "Co-Aut
 - Items (48): `data/items/` `alert_bracelet.tres`, `banana_peel.tres`, `bingo_card.tres`, `bingo_hall_pass.tres`, `bubble_wrap.tres`, `bunion_pads.tres`, `collection_plate.tres`, `dentures.tres`, `do_not_resuscitate.tres`, `expired_coupon.tres`, `forged_signature.tres`, `fortune_card.tres`, `golden_parachute.tres`, `gravity_boots.tres`, `grief_counselor.tres`, `hearing_aid.tres`, `hot_water_bottle.tres`, `hover_round.tres`, `kettle_whistle.tres`, `knitted_cardigan.tres`, `lawyers_card.tres`, `loaded_dice.tres`, `lucky_tee.tres`, `mothball_pockets.tres`, `moving_boxes.tres`, `naughty_list.tres`, `neck_pillow.tres`, `night_light.tres`, `overbite.tres`, `penny_jar.tres`, `pension_statement.tres`, `pill_crusher.tres`, `reading_glasses.tres`, `rubber_ferrule.tres`, `rubber_stamps.tres`, `second_opinion.tres`, `second_thermos_strap.tres`, `shoe_horn.tres`, `slippers.tres`, `squeaky_shoes.tres`, `support_stockings.tres`, `sympathy_card.tres`, `tax_refund.tres`, `telescope_cane.tres`, `thick_skull.tres`, `undertakers_gloves.tres`, `walker_tennis_balls.tres`, `wreath_of_thorns.tres`.
 - Combos (12): every file in `data/combos/` (`bingo_night`, `card_shark`, `dentists_nightmare`, `early_riser`, `family_visit`, `full_set`, `last_rites`, `mobility_scooter`, `night_shift`, `paper_trail`, `retirement_plan`, `soup_of_the_day`, each `.tres`). The folder itself may go; `Content.combos()` copes with it missing.
 - Item scripts only those use (each with its `.gd.uid`): `scripts/items/` `alert_bracelet`, `banana_peel`, `bingo_card`, `bingo_hall_pass`, `bingo_night`, `bubble_wrap`, `collection_plate`, `dentists_nightmare`, `do_not_resuscitate`, `expired_coupon`, `family_visit`, `forged_signature`, `fortune_card`, `grief_counselor`, `hot_water_bottle`, `kettle_whistle`, `knitted_cardigan`, `lawyers_card`, `mobility_scooter`, `mothball_pockets`, `moving_boxes`, `naughty_list`, `neck_pillow`, `pension_statement`, `pill_crusher`, `reading_glasses`, `rubber_stamps`, `second_opinion`, `second_thermos_strap`, `shoe_horn`, `sympathy_card`, `tax_refund`, `thick_skull`, `wreath_of_thorns`. **Not** `scripts/world/collection_plate.gd` (an enemy's thrown plate) and no other world script.
-- Tests only about them: in `tests/test_items_batch1.gd` the functions for walker tennis balls, reading glasses, rubber ferrule, shoe horn and overbite, the batch meta tests (`test_the_batch_ships_with_its_rarity_tags_and_one_source`, `test_every_batch_text_is_two_sentences_and_has_a_coach_tip`, `test_the_batchs_combos_ship_with_both_items`), `BATCH`, and the preload of `dentists_nightmare.gd`; in `tests/test_items_batch2.gd` the functions for hover round, squeaky shoes, banana peel, bunion pads, gravity boots, knitted cardigan, sympathy card, pill crusher, hot water bottle, bubble wrap, thick skull and second opinion, the meta tests, `BATCH`, and the preloads of `banana_peel.gd`, `sympathy_card.gd`, `hot_water_bottle.gd`, `mobility_scooter.gd`; in `tests/test_items_batch3.gd` the functions for do not resuscitate, the full loop's whole pills (if it names a retired id), second thermos strap, forged signature, rubber stamps, kettle whistle, penny jar, pension statement, loaded dice, the house-still-wins test, expired coupon, collection plate, tax refund and night light, `test_no_poster_pays_a_batch_item`, the meta tests, `BATCH`, and the preloads of `second_thermos_strap.gd`, `kettle_whistle.gd`, `pension_statement.gd`; in `tests/test_items_batch4.gd` the functions for the fortune teller, mothball pockets, telescope cane, grief counselor, wreath of thorns, bingo hall pass, moving boxes and lawyer's card, the meta tests, `BATCH`, and the preloads of `mothball_pockets.gd`, `fortune_card.gd`, `grief_counselor.gd`, `wreath_of_thorns.gd`, `bingo_hall_pass.gd`; in `tests/test_reworked_items.gd` every function naming a retired id, `IDS` and its meta tests, and the preload of `naughty_list.gd`; in `tests/test_contact.gd` the lawyer's card, bubble wrap, thick skull, mothball pockets and wreath of thorns functions; in `tests/test_deep_rewards.gd` the neck pillow, lucky tee and golden parachute functions; in `tests/test_resume_item_state.gd` the expired coupon and tax refund functions, with `test_a_resumed_run_keeps_counters_and_floor_flags` and `test_the_checkpoint_round_trip_still_matches_with_effect_state` rewritten on kept items (`pill_organizer.stored`, `bottomless_flask.cleared`, `glass_hip._halves`, `fine_print.used`, `eternal_warranty`, `bureaucrats_stamp`); in `tests/test_item_sounds.gd` the retired ids in `KEY_SOUNDS`, `test_a_free_shop_rings_the_till_once`, and `test_paying_items_ring_the_coin` and `test_the_stamps_sound_like_stamps` rewritten on `inheritance_letter` and `rubber_stamp_collection`. Any test left naming a retired id (`tests/test_eras.gd`, `tests/test_training_yard.gd`, `tests/test_path_migration.gd`, `tests/test_run_checkpoint.gd`, `tests/test_dentures.gd`) uses a kept item of the same mechanic instead.
+- Tests only about them: in `tests/test_items_batch1.gd` the functions for walker tennis balls, reading glasses, rubber ferrule, shoe horn and overbite, the batch meta tests (`test_the_batch_ships_with_its_rarity_tags_and_one_source`, `test_every_batch_text_is_two_sentences_and_has_a_coach_tip`), `BATCH`, and the preload of `dentists_nightmare.gd` (Task 6 already removed `test_the_batchs_combos_ship_with_both_items`); in `tests/test_items_batch2.gd` the functions for hover round, squeaky shoes, banana peel, bunion pads, gravity boots, knitted cardigan, sympathy card, pill crusher, hot water bottle, bubble wrap, thick skull and second opinion, the meta tests, `BATCH`, and the preloads of `banana_peel.gd`, `sympathy_card.gd`, `hot_water_bottle.gd`, `mobility_scooter.gd`; in `tests/test_items_batch3.gd` the functions for do not resuscitate, the full loop's whole pills (if it names a retired id), second thermos strap, forged signature, rubber stamps, kettle whistle, penny jar, pension statement, loaded dice, the house-still-wins test, expired coupon, collection plate, tax refund and night light, `test_no_poster_pays_a_batch_item`, the meta tests, `BATCH`, and the preloads of `second_thermos_strap.gd`, `kettle_whistle.gd`, `pension_statement.gd`; in `tests/test_items_batch4.gd` the functions for the fortune teller, mothball pockets, telescope cane, grief counselor, wreath of thorns, bingo hall pass, moving boxes and lawyer's card, the meta tests, `BATCH`, and the preloads of `mothball_pockets.gd`, `fortune_card.gd`, `grief_counselor.gd`, `wreath_of_thorns.gd`, `bingo_hall_pass.gd`; in `tests/test_reworked_items.gd` every function naming a retired id, `IDS` and its meta tests, and the preload of `naughty_list.gd`; in `tests/test_contact.gd` the lawyer's card, bubble wrap, thick skull, mothball pockets and wreath of thorns functions; in `tests/test_deep_rewards.gd` the neck pillow, lucky tee and golden parachute functions; (`tests/test_resume_item_state.gd` was moved to kept items in Task 25); in `tests/test_item_sounds.gd` the retired ids in `KEY_SOUNDS`, `test_a_free_shop_rings_the_till_once`, and `test_paying_items_ring_the_coin` and `test_the_stamps_sound_like_stamps` rewritten on `inheritance_letter` and `rubber_stamp_collection`. The other tests that name a retired id, each moved to a kept item of the same mechanic: `tests/test_eras.gd` line 221 `kit.run_with(["rolling_pin", "rubber_ferrule", "walker_tennis_balls"])` becomes `["rolling_pin", "cane_sword", "knitting_needles"]`; `tests/test_training_yard.gd` `test_the_rack_never_lists_bounty_items` uses `"pocket_watch"` for `"undertakers_gloves"`, and the test that loads `res://data/items/slippers.tres` loads `glass_hip.tres` and checks `run.has_item("glass_hip")` (it walks 30% faster, as the slippers did faster); `tests/test_item_system.gd` `test_items_without_an_effect_add_nothing_to_the_list` uses `"hospital_bracelet"` for `"golden_parachute"`; `tests/test_seance_enemies.gd` loses its `Mothball` preload and the `Mothball.is_ghost` assertion (`ContactRule` keeps its own ghost rule); `tests/test_deep_rewards.gd` keeps only the life jacket in `test_the_new_rewards_are_shipped_as_the_posters_need`. (`tests/test_run_checkpoint.gd`, `tests/test_path_migration.gd` and `tests/test_dentures.gd` moved in Tasks 1, 25 and 16.) Check with the 48-id grep of `tests/*.gd` that nothing else is left.
 - `CoachTips.TIPS` lines for retired ids.
 
 **Keep:** `RetiredContent` (its `RENAMED` and `RETIRED_RECIPE_PRICES` still migrate old saves; `RETIRED_ITEMS` stays as the record), `ComboDef` and its code, `Content.all_items()`.
@@ -7753,7 +7942,7 @@ git commit -m "Load old saves and checkpoints onto the new item list" -m "Co-Aut
 - [ ] **Step 2: Delete in one command with its commit** (LESSONS 2026-11-08: a staged `git rm` rides into the next commit otherwise): `git rm <the .tres and .gd and .gd.uid files>` then edit the tests and tips, then `git add tests scripts/core/coach_tips.gd` and read `git diff --cached --name-status`.
 - [ ] **Step 3: Full suite and the full loop**
 
-Run: `powershell -File tools/test.ps1` (expect 0 failed and no `Could not load content file` errors), then `powershell -File tools/smoke.ps1` (expect `SMOKE PASS`).
+Run: `powershell -File $COPY\tools\test.ps1` (expect 0 failed and no `Could not load content file` errors), then `powershell -File $COPY\tools\smoke.ps1` (expect `SMOKE PASS`).
 
 - [ ] **Step 4: Commit**
 
@@ -7768,10 +7957,10 @@ git commit -m "Delete the retired item, combo and script files" -m "Co-Authored-
 **Files:**
 - Modify: `LESSONS.md` (new gotchas), `docs/superpowers/plans/2026-11-10-new-item-list.md` (an "As built" note at the end)
 
-- [ ] **Step 1: The suite and the full loop.** `powershell -File tools/test.ps1` (0 failed), then `powershell -File tools/smoke.ps1` three times (`SMOKE PASS` each; read each tail).
-- [ ] **Step 2: Income.** The money items change Pension per clear. One heavy job at a time, with no windowed Godot running: `& $GODOT --headless --path . --script res://tools/probes/income_probe.gd -- 0 1 none 16`, then the same with `money_belt,compound_interest,coin_purse_cane,inheritance_letter` and with `rubber_stamp_collection,gold_fillings`, and at depth 3 (`-- 0 3 ...`). Write the Pension per clear of each next to "none" in the As built note. If one item alone adds more than about a tenth to a full clear (the 2026-11-05 bar), say so in the note and propose a number; do not change it without the user.
-- [ ] **Step 3: Look at the new looks.** The pets, the paper sheets, the walking frame, the bomblets, the thrown Thermos, the ally Auditor and the active slot are drawn in code. In a windowed run of a `git archive` copy (never the worktree, never while the user plays), shoot each once with `tools/probes/items_look.gd` adapted to give the item, and check: nothing reads as a cross, plus or halo at 1x; the active slot fits between the panels with every counter at 99 (LESSONS 2026-11-03); the "[R] ..." label fits.
-- [ ] **Step 4: Export build.** Follow `docs/release/build-steps.md` in full and in order (archive, music, stamp, import, export), into `D:\grandpa-build\`. Start the exe once into the Waiting Room, and check the title corner shows the commit. Compare the exe size with the last build (LESSONS 2026-11-10). Keep `editor/export/convert_text_resources_to_binary` off.
+- [ ] **Step 1: The suite and the full loop.** `powershell -File $COPY\tools\test.ps1` (0 failed), then `powershell -File $COPY\tools\smoke.ps1` three times (`SMOKE PASS` each; read each tail).
+- [ ] **Step 2: Income.** The money items change Pension per clear. One heavy job at a time, with no windowed Godot running: `& $GODOT --headless --path $COPY --script res://tools/probes/income_probe.gd -- 0 1 none 16`, then the same with `money_belt,compound_interest,coin_purse_cane,inheritance_letter` and with `rubber_stamp_collection,gold_fillings`, and at depth 3 (`-- 0 3 ...`). Write the Pension per clear of each next to "none" in the As built note. If one item alone adds more than about a tenth to a full clear (the 2026-11-05 bar), say so in the note and propose a number; do not change it without the user.
+- [ ] **Step 3: Look at the new looks.** The pets, the paper sheets, the walking frame, the bomblets, the thrown Thermos, the ally Auditor and the active slot are drawn in code. In a windowed run of the `GrandpaItemsCopy` copy (refreshed as in Global Constraints; never the worktree, never while the user plays), shoot each once with `tools/probes/items_look.gd` adapted to give the item, and check: nothing reads as a cross, plus or halo at 1x; the active slot fits between the panels with every counter at 99 (LESSONS 2026-11-03); the "[R] ..." label fits.
+- [ ] **Step 4: No export here.** `docs/release/build-steps.md` imports and exports a copy that must keep the name "Grandpa", which writes Godot's logs into the real user folder, and starting the exe would use the real save. Both are the user's (or the main session's, with the user's go-ahead). Report the verified commit hash for that build, and note in the As built section that the build follows build-steps.md in full (music step included; compare the exe size with the last build, LESSONS 2026-11-10).
 - [ ] **Step 5: Notes and commit.** Append each new gotcha to `LESSONS.md` as a dated one-liner. Add an "As built" section to this plan with the income table and anything that changed.
 
 ```powershell

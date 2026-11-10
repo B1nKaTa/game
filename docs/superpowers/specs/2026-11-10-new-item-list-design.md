@@ -9,8 +9,10 @@ needs for them, and says how the pools, saves and old content change.
 
 ## Ground rules
 
-- **Source of truth:** the review list (`ITEMS` in the review page). Each item keeps its id, name, build,
-  kind, rarity and player-facing description from it. Where the description is vague, this document
+- **Source of truth:** the review list, committed as `2026-11-10-new-item-list-items.json` beside this
+  file (125 entries: the cut four left out, the review's changes made). Each item, run potion and set
+  keeps its id, name, build, kind, rarity, curse and player-facing description from it, word for word,
+  and a test checks every shipped one against it. Where the description is vague, this document
   picks a number and says so in the "Choices" column or the section's notes.
 - **Cut, never built:** `kettle_whistle`, `red_tape`, `sticky_lid`, `sugar_lumps`.
 - **Changed by the review:**
@@ -92,7 +94,9 @@ checks and the Coach keep working.
   Thermos, and both shoulder buttons are taken (RB the Thermos, LB the potion), so neither the asked-for
   keys nor a shoulder is free. R is free on the keyboard (no script or test binds it). B is free in play;
   in panels it is the menu's back button (`ui_pad_back`), which is a different action and does not clash,
-  as A is both the dodge and `ui_accept`. `tests/test_key_bindings.gd` rebinds the dodge to B as a
+  as A is both the dodge and `ui_accept`. B also closes the big map, the pause menu, the case file and the
+  card table, which unpause the game on that press, so a use-item press counts only when the game was
+  not paused the physics frame before (`Player.use_press_counts`). `tests/test_key_bindings.gd` rebinds the dodge to B as a
   "free" button in one test, so that test moves to the left stick press (LESSONS 2026-11-09). It is listed
   in `KeyBindings.ACTIONS` as "Use item", so it can be rebound.
 - **HUD:** an `ActiveSlot` sits in the top band between the left panel and the right panel (x from the
@@ -538,4 +542,6 @@ Offered only on floors that post rules (2.8).
 - The full loop (`tools/smoke.ps1`) passes after the switch-over, and keeps every new block, heal and
   payout quiet while it counts.
 - An income check (`tools/probes/income_probe.gd`) with the money items before the user plays.
-- One heavy Godot job at a time, and never while the user plays.
+- One heavy Godot job at a time, and never while the user plays. Every Godot run (tests, the full loop,
+  probes, a windowed look) happens in a renamed `git archive` copy, so nothing writes into the real user
+  folder; the export build and starting the exe are left to the user.
