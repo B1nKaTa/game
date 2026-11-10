@@ -25,8 +25,13 @@ Tag the commit first if the build goes to players (`git tag playtest-1`), so it 
 The songs are not in git. Render them into the copy:
 
 ```
-py tools/music/render.py D:\grandpa-build\src\audio\music
+py tools/music/render_band.py D:\grandpa-build\src\audio\music
 ```
+
+This plays the songs through FluidSynth and the SoundFonts, which must be on this machine (their
+paths are at the top of `tools/music/band.py`). It prints one line per song and a check line under
+it. Every check line must end in `ok`, and the folder must hold 24 songs. The older `render.py`
+still renders the first soundtrack with the built-in synth and needs nothing installed.
 
 ## 3. Stamp
 
