@@ -14,7 +14,11 @@ func _plain_run() -> RunState:
 
 
 func _items(count: int) -> Array[ItemDef]:
-	var all := Content.items()
+	# Not the actives: a run holds one in its slot, outside the item row.
+	var all: Array[ItemDef] = []
+	for item in Content.items():
+		if not item.is_active():
+			all.append(item)
 	var list: Array[ItemDef] = []
 	for i in count:
 		list.append(all[i % all.size()])
