@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = "swift_tea"
 display_name = "Swift Tea"
-short_name = "Tea"
+short_name = "Swift"
 description = "Move 40% faster for 15 seconds."
 speed_bonus = 0.4
 duration = 15.0

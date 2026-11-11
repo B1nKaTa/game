@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = "healing_tonic"
 display_name = "Healing Tonic"
-short_name = "Heal"
+short_name = "Tonic"
 description = "Restores 2 pills when you drink it."
 heal = 2
 price = 20
