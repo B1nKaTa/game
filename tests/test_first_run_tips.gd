@@ -466,3 +466,108 @@ func test_the_tip_words_follow_the_device_in_use() -> void:
 	coach._process(0.1)
 	assert_true(hud.tip_text().begins_with(FirstRunTips.PAD_MOVE), hud.tip_text())
 	_free_rig(rig)
+
+
+# Each rule, with the tip ids it must hide.
+const RULE_TIPS := {
+	RoomRule.NO_CANE: ["swing", "charge"],
+	RoomRule.NO_HORSEPLAY: ["dodge"],
+	RoomRule.TEETH_IN: ["throw"],
+	RoomRule.NO_EXPLOSIVES: ["thermos"],
+	RoomRule.NO_FOOD: ["potion"],
+	RoomRule.EXHIBITS: [],
+	RoomRule.NO_LOITERING: [],
+}
+
+
+func test_the_tip_ids_the_rule_table_names_are_real() -> void:
+	for rule in RULE_TIPS:
+		for id in RULE_TIPS[rule]:
+			assert_true(FirstRunTips.ORDER.has(id), id)
+
+
+func test_no_rule_is_missing_from_the_table() -> void:
+	for rule in RoomRule.ALL:
+		assert_true(RULE_TIPS.has(rule), rule)
+
+
+func test_a_rule_hides_exactly_the_tips_it_forbids() -> void:
+	for rule in RULE_TIPS:
+		var got: Array[String] = FirstRunTips.forbidden_by(rule)
+		var want: Array = RULE_TIPS[rule]
+		assert_eq(got.size(), want.size(), rule)
+		for id in want:
+			assert_true(got.has(id), "%s hides %s" % [rule, id])
+
+
+func test_a_tip_the_rule_forbids_is_never_chosen_even_with_the_rule_tip_done() -> void:
+	# Every basic still waiting, in a fight, RULE done: whatever the rule forbids must not come up.
+	for rule in RULE_TIPS:
+		var forbidden: Array[String] = FirstRunTips.forbidden_by(rule)
+		var done := {FirstRunTips.RULE: true, FirstRunTips.MOVE: true}
+		var facts := _facts({"fighting": true, "rule_on": true, "forbidden": forbidden, "has_potion": true, "hurt": true})
+		var seen: Array[String] = []
+		for step in FirstRunTips.ORDER.size():
+			var id := FirstRunTips.next_tip(done, facts)
+			if id.is_empty():
+				break
+			assert_false(forbidden.has(id), "%s: %s was chosen" % [rule, id])
+			seen.append(id)
+			done[id] = true
+		for id in forbidden:
+			assert_false(seen.has(id), "%s: %s must not show" % [rule, id])
+			assert_false(done.has(id), "%s: %s is not marked" % [rule, id])
+
+
+func test_a_forbidden_tip_is_not_given_up_and_returns_in_the_next_room() -> void:
+	var done := {FirstRunTips.MOVE: true, FirstRunTips.SWING: true}
+	var skipped := {}
+	var horseplay := _facts({"fighting": true, "forbidden": FirstRunTips.forbidden_by(RoomRule.NO_HORSEPLAY)})
+	assert_eq(FirstRunTips.next_tip(done, horseplay, skipped), FirstRunTips.CHARGE, "dodge waits, charge may show")
+	assert_true(skipped.is_empty())
+	assert_eq(FirstRunTips.next_tip(done, _facts({"fighting": true}), skipped), FirstRunTips.DODGE, "a free room brings it back")
+
+
+func test_a_no_cane_room_still_teaches_the_dodge() -> void:
+	var done := {FirstRunTips.MOVE: true}
+	var facts := _facts({"fighting": true, "forbidden": FirstRunTips.forbidden_by(RoomRule.NO_CANE)})
+	assert_eq(FirstRunTips.next_tip(done, facts), FirstRunTips.DODGE)
+
+
+func test_a_flashback_hides_swing_charge_and_throw() -> void:
+	var done := {FirstRunTips.MOVE: true}
+	var era := _facts({"fighting": true, "era": true})
+	assert_eq(FirstRunTips.next_tip(done, era), FirstRunTips.DODGE, "dodge is fine in a flashback")
+	done[FirstRunTips.DODGE] = true
+	assert_eq(FirstRunTips.next_tip(done, era), "", "no swing, charge or throw tips as a younger Harold")
+	assert_eq(FirstRunTips.next_tip(done, _facts({"fighting": true})), FirstRunTips.SWING, "old Harold gets them back")
+
+
+func test_the_coach_reports_the_rule_and_the_flashback() -> void:
+	var rig := _rig()
+	var coach: TipCoach = rig["coach"]
+	var keeper: RuleKeeper = rig["rules"]
+	keeper.set_watch(0, RuleWatch.new(RoomRule.NO_HORSEPLAY))
+	keeper.current_id = 0
+	rig["view"]._alive = 1
+	assert_eq(coach.facts()["forbidden"], [FirstRunTips.DODGE] as Array[String])
+	assert_false(coach.facts()["era"])
+	rig["run"].era = "dance_hall_1962"
+	assert_true(coach.facts()["era"])
+	_free_rig(rig)
+
+
+func test_a_tip_on_screen_is_dropped_at_once_when_the_room_forbids_it() -> void:
+	var rig := _rig()
+	var coach: TipCoach = rig["coach"]
+	var hud: Hud = rig["hud"]
+	coach.done = {FirstRunTips.RULE: true, FirstRunTips.MOVE: true, FirstRunTips.SWING: true}
+	rig["view"]._alive = 1
+	coach._process(0.1)
+	assert_eq(hud.tip_text(), FirstRunTips.text_for(FirstRunTips.DODGE, false, ""))
+	var keeper: RuleKeeper = rig["rules"]
+	keeper.set_watch(0, RuleWatch.new(RoomRule.NO_HORSEPLAY))
+	keeper.current_id = 0
+	coach._process(0.1)
+	assert_ne_text(hud.tip_text(), FirstRunTips.text_for(FirstRunTips.DODGE, false, ""))
+	_free_rig(rig)

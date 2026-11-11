@@ -136,11 +136,17 @@ func _on_map_changed(is_open: bool) -> void:
 func facts() -> Dictionary:
 	var fighting := _view != null and is_instance_valid(_view) and _view.is_fighting()
 	var watch: RuleWatch = _rules.watch_of(_rules.current_id) if _rules != null else null
+	var forbidden: Array[String] = []
+	if watch != null and watch.state == RuleWatch.State.ACTIVE and fighting:
+		forbidden = FirstRunTips.forbidden_by(watch.rule)
 	return {
 		"fighting": fighting,
 		"room_type": _room_type,
 		# Only an unbroken rule: once it is broken the Auditor is already there.
 		"rule_on": watch != null and watch.state == RuleWatch.State.ACTIVE and fighting,
+		# What an active rule forbids is never tipped, even after the rule tip itself is done or given up.
+		"forbidden": forbidden,
+		"era": _run != null and not _run.era.is_empty(),
 		"announcing": _hud != null and _hud.rule_announcing(),
 		"has_reel": _run != null and not _run.held_reel.is_empty(),
 		"has_potion": _run != null and _run.potion != null,
@@ -177,7 +183,7 @@ func _process(delta: float) -> void:
 			_shown = ""
 	var next := FirstRunTips.next_tip(done, now, _skipped)
 	# A line on screen stays its minimum time even if its moment has passed.
-	if next != _shown and not _shown.is_empty() and _shown_time < MIN_SHOW_TIME:
+	if next != _shown and not _shown.is_empty() and _shown_time < MIN_SHOW_TIME and not FirstRunTips.withheld(now).has(_shown):
 		next = _shown
 	if next != _shown:
 		_shown = next

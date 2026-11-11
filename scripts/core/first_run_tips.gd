@@ -39,17 +39,52 @@ const TEXTS := {
 	MAP: "Open the map.",
 }
 const PAD_MOVE := "Left stick"
+# Not shown while he relives an era (RunState.era).
+const ERA_BLOCKED: Array[String] = [SWING, CHARGE, THROW]
 # The running TipCoach's note_done, set by it; empty when none runs (so the hooks cost nothing).
 static var listener := Callable()
 
 
 # facts: fighting, room_type, rule_on, announcing, has_reel, has_potion, has_active, hurt, has_bomb, swings, cleared_one.
 # skipped: tips given up for this run (shown long enough, not done); they count as passed over.
+# A tip withheld (see withheld) is passed over too, but neither done nor given up: it comes back later.
 static func next_tip(done: Dictionary, facts: Dictionary, skipped := {}) -> String:
+	var held := withheld(facts)
+	var passed := done.merged(skipped).merged(held)
 	for id in ORDER:
-		if not done.has(id) and not skipped.has(id) and _applies(id, done.merged(skipped), facts):
+		if not done.has(id) and not skipped.has(id) and not held.has(id) and _applies(id, passed, facts):
 			return id
 	return ""
+
+
+# The tips that must not show now: those whose action the room's active rule forbids (facts "forbidden",
+# from forbidden_by), and those that make no sense in a flashback (facts "era": no charged swing, no
+# teeth, and his cane is another cane).
+static func withheld(facts: Dictionary) -> Dictionary:
+	var held := {}
+	for id in facts.get("forbidden", []):
+		held[id] = true
+	if facts.get("era", false):
+		for id in ERA_BLOCKED:
+			held[id] = true
+	return held
+
+
+# The tips an active room rule would have him break by following them.
+static func forbidden_by(rule: String) -> Array[String]:
+	var out: Array[String] = []
+	match RoomRule.action_of(rule):
+		RoomRule.ACTION_SWING:
+			out.assign([SWING, CHARGE])
+		RoomRule.ACTION_DODGE:
+			out.assign([DODGE])
+		RoomRule.ACTION_THROW:
+			out.assign([THROW])
+		RoomRule.ACTION_BOMB:
+			out.assign([THERMOS])
+		RoomRule.ACTION_POTION:
+			out.assign([POTION])
+	return out
 
 
 static func _applies(id: String, done: Dictionary, facts: Dictionary) -> bool:
