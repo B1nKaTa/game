@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "photo_album"
+display_name = "Photo Album"
+description = "Hold two reels instead of one."
+rarity = "rare"
+tags = PackedStringArray("memory")
+build = "memory"
+kind = "passive"
+extra_reels = 1
