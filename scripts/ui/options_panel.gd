@@ -27,6 +27,8 @@ const INPUT_FONT := 10
 # Where the rows of settings start, from the panel's top.
 const ROWS_TOP := 58.0
 const WAITING_TEXT := "Press a key..."
+const SHOW_TIPS_TEXT := "Show control tips again"
+const TIPS_RESET_TEXT := "Tips will show again"
 const PAD_WAITING_TEXT := "Press a button..."
 # How long a cell waits for its new binding before giving up, so a pad alone can always back out.
 const WAIT_TIME := 5.0
@@ -221,6 +223,8 @@ func _show_tab(tab: String) -> void:
 	else:
 		for key: String in TAB_KEYS[tab]:
 			_build_row(tab, key)
+		if tab == GameSettings.GAME:
+			_build_tips_row()
 	_note.text = tr(TAB_NOTES.get(tab, ""))
 	_tab_hint_label.text = _tab_hint()
 	_esc_hint.text = tr("%s: close without keeping") % _back_name()
@@ -271,6 +275,22 @@ func _build_row(section: String, key: String) -> void:
 		choice.pressed.connect(_on_choice.bind(section, key, choice, 1))
 		choice.gui_input.connect(_on_choice_input.bind(section, key, choice))
 		row.add_child(choice)
+
+
+# The Game tab's last row: puts the first run's control tips back for this save.
+func _build_tips_row() -> void:
+	var row := _row("")
+	var button := MenuStyle.button(tr(SHOW_TIPS_TEXT))
+	button.custom_minimum_size.x = 210
+	button.disabled = Progress.data == null
+	button.pressed.connect(_on_show_tips.bind(button))
+	row.add_child(button)
+
+
+func _on_show_tips(button: Button) -> void:
+	Progress.reset_tips()
+	button.text = tr(TIPS_RESET_TEXT)
+	button.disabled = true
 
 
 func _on_off(on: bool) -> String:

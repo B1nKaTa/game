@@ -1,0 +1,244 @@
+extends TestCase
+
+
+func _facts(over := {}) -> Dictionary:
+	var f := {"fighting": false, "room_type": RoomLayout.TYPE_COMBAT, "rule_on": false, "announcing": false,
+		"has_reel": false, "has_potion": false, "hurt": false, "has_bomb": false, "swings": 0, "cleared_one": false}
+	f.merge(over, true)
+	return f
+
+
+func test_the_first_tip_is_walking() -> void:
+	assert_eq(FirstRunTips.next_tip({}, _facts()), FirstRunTips.MOVE)
+
+
+func test_a_fight_teaches_swing_then_dodge_then_throw() -> void:
+	var done := {FirstRunTips.MOVE: true}
+	assert_eq(FirstRunTips.next_tip(done, _facts({"fighting": true})), FirstRunTips.SWING)
+	done[FirstRunTips.SWING] = true
+	assert_eq(FirstRunTips.next_tip(done, _facts({"fighting": true})), FirstRunTips.DODGE)
+	done[FirstRunTips.DODGE] = true
+	assert_eq(FirstRunTips.next_tip(done, _facts({"fighting": true})), FirstRunTips.THROW)
+	done[FirstRunTips.THROW] = true
+	assert_eq(FirstRunTips.next_tip(done, _facts({"fighting": true, "swings": 3})), "", "charge waits for a few swings")
+	assert_eq(FirstRunTips.next_tip(done, _facts({"fighting": true, "swings": 4})), FirstRunTips.CHARGE)
+
+
+func test_the_rule_and_the_reel_come_first_when_they_happen() -> void:
+	assert_eq(FirstRunTips.next_tip({}, _facts({"rule_on": true, "fighting": true})), FirstRunTips.RULE)
+	assert_eq(FirstRunTips.next_tip({}, _facts({"rule_on": true, "announcing": true})), FirstRunTips.MOVE, "not over the notice")
+	assert_eq(FirstRunTips.next_tip({}, _facts({"has_reel": true})), FirstRunTips.REEL)
+	assert_eq(FirstRunTips.next_tip({}, _facts({"has_reel": true, "fighting": true})), FirstRunTips.MOVE, "a reel is used at a door, not mid-fight")
+
+
+func test_the_rest_wait_for_their_moment() -> void:
+	var basics := {}
+	for id in [FirstRunTips.MOVE, FirstRunTips.SWING, FirstRunTips.DODGE, FirstRunTips.THROW, FirstRunTips.CHARGE]:
+		basics[id] = true
+	assert_eq(FirstRunTips.next_tip(basics, _facts()), "")
+	assert_eq(FirstRunTips.next_tip(basics, _facts({"has_potion": true})), "", "a potion at full pills waits")
+	assert_eq(FirstRunTips.next_tip(basics, _facts({"has_potion": true, "hurt": true})), FirstRunTips.POTION)
+	assert_eq(FirstRunTips.next_tip(basics, _facts({"room_type": RoomLayout.TYPE_ITEM})), FirstRunTips.INTERACT)
+	assert_eq(FirstRunTips.next_tip(basics, _facts({"has_bomb": true, "cleared_one": true})), FirstRunTips.THERMOS)
+	basics[FirstRunTips.THERMOS] = true
+	assert_eq(FirstRunTips.next_tip(basics, _facts({"cleared_one": true})), FirstRunTips.MAP)
+	assert_eq(FirstRunTips.next_tip(basics, _facts({"cleared_one": true, "fighting": true})), "")
+
+
+func test_every_done_tip_stays_quiet() -> void:
+	var all := {}
+	for id in FirstRunTips.ORDER:
+		all[id] = true
+	var busy := _facts({"fighting": true, "rule_on": true, "has_reel": true, "has_potion": true, "hurt": true,
+		"has_bomb": true, "swings": 9, "cleared_one": true, "room_type": RoomLayout.TYPE_SHOP})
+	assert_eq(FirstRunTips.next_tip(all, busy), "")
+
+
+func test_every_tip_has_text_naming_its_key() -> void:
+	for id in FirstRunTips.ORDER:
+		var text := FirstRunTips.text_for(id, false, "")
+		assert_false(text.is_empty(), id)
+		var action: String = FirstRunTips.ACTIONS.get(id, "")
+		if not action.is_empty():
+			assert_true(text.begins_with(KeyBindings.label_for(action) + ": "), "%s: %s" % [id, text])
+	assert_true(FirstRunTips.text_for(FirstRunTips.MOVE, false, "").ends_with(": Walk"))
+
+
+func test_a_new_save_has_no_tips_done_and_an_old_one_has_them_all() -> void:
+	assert_true(ProgressData.new().tips_done.is_empty())
+	var fresh := ProgressData.new().to_dict()
+	assert_true(ProgressData.from_dict(fresh).tips_done.is_empty(), "a new save made by this build")
+	var old := ProgressData.new().to_dict()
+	old.erase("tips_done")
+	old["run_count"] = 3
+	var loaded := ProgressData.from_dict(old)
+	for id in FirstRunTips.ORDER:
+		assert_true(loaded.tips_done.has(id), id)
+	old["run_count"] = 0
+	assert_true(ProgressData.from_dict(old).tips_done.is_empty(), "an old save never played still learns")
+
+
+func test_marking_and_resetting() -> void:
+	var data := ProgressData.new()
+	assert_true(data.mark_tip(FirstRunTips.DODGE))
+	assert_false(data.mark_tip(FirstRunTips.DODGE), "once")
+	assert_false(data.mark_tip("no_such_tip"))
+	assert_true(ProgressData.from_dict(data.to_dict()).tips_done.has(FirstRunTips.DODGE))
+	data.reset_tips()
+	assert_true(data.tips_done.is_empty())
+
+
+func test_the_hud_shows_one_tip() -> void:
+	var hud := Hud.new()
+	hud.setup(ItemKit.new().make_run())
+	hud._ready()
+	assert_eq(hud.tip_text(), "")
+	hud.show_tip("Space: Dodge.")
+	assert_eq(hud.tip_text(), "Space: Dodge.")
+	hud.clear_tip()
+	assert_eq(hud.tip_text(), "")
+	assert_false(Hud.TIP_RECT.intersects(Rect2(Vector2.ZERO, Vector2(640, Hud.BAND_BOTTOM))), "clear of the top band")
+	hud.free()
+
+
+func test_the_coach_marks_what_he_does() -> void:
+	var run := ItemKit.new().make_run()
+	var player := Player.new()
+	player.setup(run)
+	var coach := TipCoach.new()
+	var marked: Array[String] = []
+	coach.mark = func(id: String) -> void: marked.append(id)
+	coach.setup(player, null, run, null)
+	player.dodge_started.emit()
+	player.teeth_thrown.emit()
+	player.swing_landed.emit(true, false)
+	assert_eq(marked, [FirstRunTips.DODGE, FirstRunTips.THROW, FirstRunTips.CHARGE] as Array[String])
+	player.swing_landed.emit(false, false)
+	assert_eq(marked.size(), 3, "a plain swing is not a charge")
+	coach.free()
+	player.free()
+
+
+func test_a_held_active_gets_a_use_tip_that_waits_for_it() -> void:
+	var basics := {}
+	for id in [FirstRunTips.MOVE, FirstRunTips.SWING, FirstRunTips.DODGE, FirstRunTips.THROW, FirstRunTips.CHARGE]:
+		basics[id] = true
+	assert_eq(FirstRunTips.next_tip(basics, _facts()), "", "no active, no tip")
+	assert_eq(FirstRunTips.next_tip(basics, _facts({"has_active": true})), FirstRunTips.USE_ITEM)
+	assert_true(FirstRunTips.text_for(FirstRunTips.USE_ITEM, false, "").ends_with(": Use your item"))
+	assert_eq(FirstRunTips.ACTIONS[FirstRunTips.USE_ITEM], "use_item")
+
+
+func test_the_coach_marks_the_use_tip_when_the_item_is_used() -> void:
+	var run := ItemKit.new().make_run()
+	var player := Player.new()
+	player.setup(run)
+	var coach := TipCoach.new()
+	var marked: Array[String] = []
+	coach.mark = func(id: String) -> void: marked.append(id)
+	coach.setup(player, null, run, null)
+	player.active_used.emit(null)
+	assert_eq(marked, [FirstRunTips.USE_ITEM] as Array[String])
+	coach.free()
+	player.free()
+
+
+func test_tips_only_run_where_a_real_player_plays() -> void:
+	assert_true(FirstRunTips.should_coach(false, 0, false, false))
+	assert_true(FirstRunTips.should_coach(false, FirstRunTips.ORDER.size() - 1, false, false))
+	assert_false(FirstRunTips.should_coach(false, FirstRunTips.ORDER.size(), false, false), "all done")
+	assert_false(FirstRunTips.should_coach(true, 0, false, false), "a dev run")
+	assert_false(FirstRunTips.should_coach(false, 0, true, false), "a script run")
+	assert_false(FirstRunTips.should_coach(false, 0, false, true), "the full loop")
+
+
+func _every_label_set() -> Array:
+	InputSetup.ensure()
+	var sets: Array = [[false, PadInput.XBOX]]
+	for family in [PadInput.XBOX, PadInput.PLAYSTATION, PadInput.PLAYSTATION_4]:
+		sets.append([true, family])
+	return sets
+
+
+func test_the_longest_tip_fits_its_line_on_every_device() -> void:
+	var font := HudStyle.font()
+	var widest := 0.0
+	for pair in _every_label_set():
+		for id in FirstRunTips.ORDER:
+			var text := FirstRunTips.text_for(id, pair[0], pair[1])
+			var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, Hud.TIP_FONT).x
+			widest = maxf(widest, width)
+			assert_true(width <= Hud.TIP_RECT.size.x - 8.0, "%s on %s is %f wide" % [id, str(pair), width])
+	assert_true(widest > 100.0, "the check measured real text")
+
+
+func test_the_tip_line_overlaps_no_other_hud_piece() -> void:
+	var run := ItemKit.new().make_run()
+	var hud := Hud.new()
+	hud.setup(run)
+	hud._ready()
+	var tip := Hud.TIP_RECT
+	var others := {
+		"top band": Rect2(Vector2.ZERO, Vector2(640, Hud.BAND_BOTTOM)),
+		"left panel": hud.left_panel_rect(),
+		"right panel": Hud.RIGHT_PANEL,
+		"map panel": Hud.MAP_PANEL,
+		"small map": FloorMapView.MINI_RECT,
+		"reel slot": Rect2(ReelSlot.AT, ReelSlot.SIZE),
+		"active slot": ActiveSlot.slot_rect(hud.left_panel_rect().end.x),
+		"rule icon": Rect2(RuleIcon.AT, Vector2(RulePictogram.SIZE + 4, RulePictogram.SIZE + 4)),
+		"rule card": Rect2(RuleStamp.CENTER - RuleStamp.CARD / 2.0, RuleStamp.CARD),
+		"notice": Rect2(0, Hud.NOTICE_TOP, 640, 20),
+		"combo banner": Rect2(0, Hud.BANNER_TOP, 640, 24),
+		"boss name": Rect2(0, Hud.BOSS_NAME_TOP, 640, 20),
+		"boss bar": Rect2(Vector2((640.0 - Hud.BOSS_BAR_SIZE.x) / 2.0 - 4.0, Hud.BOSS_BAR_TOP - 4.0), Hud.BOSS_BAR_SIZE + Vector2(8, 8)),
+		"cutscene hint": Rect2(CutscenePlayer.BOX.position - Vector2(0, 16), Vector2(640, 16)),
+	}
+	for name in others:
+		assert_false(tip.intersects(others[name]), "the tip line overlaps the %s" % name)
+	# Clear of the south door's opening, which sits in the bottom wall row.
+	assert_true(tip.end.y <= 360.0 - 36.0, "above the south wall row")
+	hud.free()
+
+
+func test_the_opening_hint_names_the_device_in_use() -> void:
+	InputSetup.ensure()
+	ActiveDevice.reset()
+	var script: GDScript = load("res://scripts/scenes/opening.gd")
+	var keys: String = script.hint_text()
+	assert_true(keys.contains(KeyBindings.label_for("dodge")))
+	ActiveDevice.using_pad = true
+	ActiveDevice.family = PadInput.PLAYSTATION
+	var pad: String = script.hint_text()
+	ActiveDevice.reset()
+	assert_true(pad.contains(KeyBindings.pad_label_for("dodge", PadInput.PLAYSTATION)), pad)
+	assert_true(pad.contains(KeyBindings.pad_label_for("pause", PadInput.PLAYSTATION)), pad)
+	assert_ne_text(pad, keys)
+
+
+func assert_ne_text(a: String, b: String) -> void:
+	assert_false(a == b, "the two hints differ")
+
+
+func test_the_options_panel_has_the_tips_button() -> void:
+	var source := FileAccess.get_file_as_string("res://scripts/ui/options_panel.gd")
+	assert_true(source.contains("tr(SHOW_TIPS_TEXT)") and source.contains("Progress.reset_tips()") and source.contains("tr(TIPS_RESET_TEXT)"))
+
+
+func test_the_coach_goes_quiet_when_the_run_ends() -> void:
+	var run := ItemKit.new().make_run()
+	var hud := Hud.new()
+	hud.setup(run)
+	hud._ready()
+	var player := Player.new()
+	player.setup(run)
+	var coach := TipCoach.new()
+	coach.setup(player, hud, run, null)
+	coach._process(0.1)
+	assert_eq(hud.tip_text(), FirstRunTips.text_for(FirstRunTips.MOVE, false, ""), "the first tip shows")
+	player.process_mode = Node.PROCESS_MODE_DISABLED
+	coach._process(0.1)
+	assert_eq(hud.tip_text(), "", "the run is over")
+	coach.free()
+	player.free()
+	hud.free()

@@ -41,6 +41,10 @@ const HINT_GAP := 10.0
 const TIMER_AT := Vector2(474, 22)
 const TIMER_WIDTH := 44.0
 const TIMER_FONT := 8
+# The first run's control tip: one line, bottom centre, above the boss bar's name and clear of the
+# bottom wall row (a south door's opening).
+const TIP_RECT := Rect2(120, 292, 400, 16)
+const TIP_FONT := 8
 # The banner a combo shows as it forms, under the notice line.
 const BANNER_TOP := 60.0
 const BANNER_TIME := 2.5
@@ -66,6 +70,7 @@ var _active_key := ""
 var _message: Label
 var _notice: Label
 var _notice_left := 0.0
+var _tip: Label
 var _banner: Label
 var _banner_left := 0.0
 var _boss_name: Label
@@ -196,6 +201,11 @@ func _ready() -> void:
 	_notice = _add_label(Vector2(0, NOTICE_TOP), HudStyle.SMALL)
 	_notice.size = Vector2(640, 20)
 	_notice.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_tip = _add_label(TIP_RECT.position, TIP_FONT)
+	_tip.size = TIP_RECT.size
+	_tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_tip.clip_text = true
+	_tip.autowrap_mode = TextServer.AUTOWRAP_OFF
 	_banner = _add_label(Vector2(0, BANNER_TOP), HudStyle.LARGE)
 	_banner.size = Vector2(640, 24)
 	_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -321,6 +331,20 @@ func show_notice(text: String) -> void:
 		Sfx.play("notice_pop")
 	_notice.text = text
 	_notice_left = NOTICE_TIME
+
+
+# The first run's control tip, one line that stays until it is cleared.
+func show_tip(text: String) -> void:
+	if _tip != null:
+		_tip.text = text
+
+
+func clear_tip() -> void:
+	show_tip("")
+
+
+func tip_text() -> String:
+	return _tip.text if _tip != null else ""
 
 
 # "COMBO: <name>" for a moment, as a combo forms.

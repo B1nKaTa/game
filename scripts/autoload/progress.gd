@@ -249,6 +249,20 @@ func mark_coach_met() -> void:
 	_store.save_progress(data)
 
 
+# A control tip was done: saved at once, so quitting mid-run never brings it back.
+func mark_tip_done(id: String) -> void:
+	if data != null and data.mark_tip(id):
+		_store.save_progress(data)
+
+
+# The Options button "Show control tips again".
+func reset_tips() -> void:
+	if data == null:
+		return
+	data.reset_tips()
+	_store.save_progress(data)
+
+
 func take_bounty(def: BountyDef) -> bool:
 	if not BountyBoard.take(def, data):
 		return false

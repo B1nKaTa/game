@@ -101,6 +101,8 @@ var _cutscene: CutscenePlayer
 var _ending_id := ""
 # The floor's room rules. Made first in _ready, so a resumed run can load them back before any room.
 var _rules: RuleKeeper
+# The first run's control tips; none in a dev run, a script run or the full loop, or once all are done.
+var _tips: TipCoach
 
 
 func _ready() -> void:
@@ -157,6 +159,7 @@ func _ready() -> void:
 	_rules.setup(player, _hud, _run, Progress.record_rule)
 	_rules.set_unlocked(Progress.data.eras_unlocked)
 	_rules.rule_broken.connect(_on_rule_broken)
+	_start_tips()
 	_feedback.watch_player(player)
 	var glow := Lighting.make_light(Color(1.0, 0.85, 0.6), 0.7, 0.8)
 	player.add_child(glow)
@@ -574,6 +577,8 @@ func _enter_room(target_id: int) -> void:
 	_run.effects.ctx.room = _room_view
 	_run.effects.room_enter(_room_view)
 	_rules.on_room_entered(_room_view, _map.room(target_id), first_visit)
+	if _tips != null:
+		_tips.set_room(_room_view, _map.room(target_id).room_type)
 
 
 # The whistle blew: the Auditor walks in by the door Harold came in by (none in a start room, where
@@ -948,6 +953,17 @@ func landing_heal() -> int:
 
 func _landing_map() -> FloorMap:
 	return FloorMap.with_landing_and_crossroads(load(LANDING_LAYOUT), load(CROSSROADS_LAYOUT))
+
+
+# A save's first run teaches its controls on the spot (FirstRunTips.should_coach says where not).
+func _start_tips() -> void:
+	if not FirstRunTips.should_coach(Progress.is_dev_run(), Progress.data.tips_done.size(), RunMode.is_script_run(), OS.get_cmdline_user_args().has("--smoke")):
+		return
+	_tips = TipCoach.new()
+	_tips.mark = Progress.mark_tip_done
+	_tips.done = Progress.data.tips_done.duplicate()
+	_tips.setup(player, _hud, _run, _rules)
+	add_child(_tips)
 
 
 func _end_run(message: String) -> void:

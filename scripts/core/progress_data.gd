@@ -109,6 +109,9 @@ var rules_kept: int = 0
 var rules_broken: int = 0
 # The eras a film reel can hold (Eras). Optional in a save; an older one starts with Eras.STARTING.
 var eras_unlocked: Array[String] = Eras.STARTING.duplicate()
+# The first run's control tips done (FirstRunTips ids). A save older than this field that has played a
+# run counts them all done.
+var tips_done: Dictionary = {}
 
 # The first path at each depth, the only one open before that depth's first clear.
 const FIRST_PATH_BY_DEPTH := {1: "floor_1", 2: "sunset_shores", 3: "funeral_parlour", 4: "last_resort_cruise", 5: "terminal_zero"}
@@ -509,6 +512,7 @@ func to_dict() -> Dictionary:
 		"rules_kept": rules_kept,
 		"rules_broken": rules_broken,
 		"eras_unlocked": eras_unlocked.duplicate(),
+		"tips_done": tips_done.duplicate(),
 	}
 
 
@@ -625,9 +629,28 @@ static func from_dict(raw: Variant) -> ProgressData:
 	data.rules_broken = maxi(int(raw.get("rules_broken", 0)), 0)
 	# Only eras this build knows; none left (or an older save) gives the starting ones.
 	data.eras_unlocked = Eras.known_or_starting(raw.get("eras_unlocked", Eras.STARTING))
+	# Control tips: an older save that has played a run is past them.
+	if raw.has("tips_done"):
+		for id in _id_set(raw.get("tips_done")):
+			if FirstRunTips.ORDER.has(id):
+				data.tips_done[id] = true
+	elif data.run_count > 0:
+		for id in FirstRunTips.ORDER:
+			data.tips_done[id] = true
 
 	data._infer_first_paths()
 	return data
+
+
+func mark_tip(id: String) -> bool:
+	if tips_done.has(id) or not FirstRunTips.ORDER.has(id):
+		return false
+	tips_done[id] = true
+	return true
+
+
+func reset_tips() -> void:
+	tips_done.clear()
 
 
 # A lobby card's line was shown: it is stamped one later than every line seen before, so the next run

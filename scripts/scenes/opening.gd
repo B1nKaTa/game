@@ -21,6 +21,11 @@ static func next_index(index: int, skip: bool) -> int:
 	return LINES.size() if skip else mini(index + 1, LINES.size())
 
 
+# The hint names the buttons of the device in use, a pad's own names on a pad.
+static func hint_text() -> String:
+	return TranslationServer.translate(HINT) % [KeyBindings.prompt_label("dodge"), KeyBindings.prompt_label("pause")]
+
+
 func _ready() -> void:
 	MusicPlayer.play(MusicRules.opening())
 	var layer := CanvasLayer.new()
@@ -38,7 +43,7 @@ func _ready() -> void:
 	layer.add_child(_label)
 	_label.text = LINES[0]
 	var hint := Label.new()
-	hint.text = tr(HINT) % [KeyBindings.label_for("dodge"), KeyBindings.label_for("pause")]
+	hint.text = hint_text()
 	hint.position = Vector2(40, 325)
 	hint.size = Vector2(560, 20)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
