@@ -52,9 +52,11 @@ static func for_era(id: String) -> EraMoves:
 			moves.dodge_stun = 0.2
 			moves.throw_cooldown = TICKET_ROLL_COOLDOWN
 		Eras.DANCE:
-			# One spin, all round and close: 9 over a 0.14 s lock = 64/s on paper, a hair over the cane's
-			# 63/s, but it lands on everyone in reach at once.
-			moves.combo_damage = [9.0]
+			# One spin, all round and close: 12 over a 0.14 s lock = 86/s on paper, well over the cane's 63/s,
+			# since in play its quick lock is lost to approaches. Bot, 2026-11-11 ("max good 40 0 1 eras"):
+			# at 9 damage it read 16% under old Harold (1 batch, 34 rooms); at 12, +16% pooled over 12
+			# batches (411 rooms; single batches +8% to +30%).
+			moves.combo_damage = [12.0]
 			moves.reach = 30.0
 			moves.angle = 180.0
 			moves.push = 40.0
@@ -65,8 +67,10 @@ static func for_era(id: String) -> EraMoves:
 			moves.dodge_length = 1.3
 			moves.throw_cooldown = DISC_COOLDOWN
 		Eras.ALLOTMENT:
-			# A slow, strong spade thrust well past the cane: 30 over a 0.5 s lock = 60/s on paper; like the
-			# punch, its weight per swing sets his pace in play (about 15% above old Harold).
+			# A slow, strong spade thrust well past the cane: 30 over a 0.5 s lock = 60/s on paper. Bot,
+			# 2026-11-11 ("max good 40 0 1 eras"): +32% to +36% over old Harold in play at every setting
+			# tried (damage 30, 26, 22 at lock 0.5; 26 at lock 0.8 and 1.0), so damage and lock do not move
+			# it; its reach probably sets its pace. Left as designed; pulling it to +15% needs a shorter reach.
 			moves.combo_damage = [30.0]
 			moves.reach = 64.0
 			moves.angle = 15.0

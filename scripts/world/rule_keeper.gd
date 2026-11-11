@@ -115,6 +115,14 @@ func watch_of(room_id: int) -> RuleWatch:
 	return _watches.get(room_id)
 
 
+# The full loop's checks measure rooms exactly, so it lifts a room's rule before pressing anything there.
+func lift_rule(room_id: int) -> void:
+	_watches.erase(room_id)
+	_rule_rooms.erase(room_id)
+	if room_id == current_id and _hud != null:
+		_hud.clear_rule()
+
+
 func on_room_entered(view: RoomView, room: FloorRoom, first_visit: bool) -> void:
 	_leave_view()
 	current_id = room.id

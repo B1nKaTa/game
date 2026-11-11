@@ -194,3 +194,17 @@ func test_the_rules_stop_when_the_run_ends() -> void:
 	var source := FileAccess.get_file_as_string("res://scripts/scenes/floor_scene.gd")
 	var end := source.substr(source.find("func _end_run("), 1200)
 	assert_true(end.contains("_rules.process_mode = Node.PROCESS_MODE_DISABLED"), "No Loitering cannot break, nor an Auditor come, after he dies")
+
+
+# The full loop's way to quiet a room it measures: the rule goes, nothing counts, no Auditor comes.
+func test_a_lifted_rule_is_gone() -> void:
+	var keeper := RuleKeeper.new()
+	keeper.set_watch(4, RuleWatch.new(RoomRule.NO_HORSEPLAY))
+	keeper.current_id = 4
+	var calls: Array = []
+	keeper.rule_broken.connect(func(_view): calls.append(1))
+	keeper.lift_rule(4)
+	assert_true(keeper.watch_of(4) == null)
+	keeper.report(RoomRule.ACTION_DODGE)
+	assert_eq(calls.size(), 0)
+	keeper.free()

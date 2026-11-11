@@ -282,7 +282,7 @@ func test_the_new_eras_play_unlike_the_old_ones() -> void:
 	var punch := EraMoves.for_era(Eras.BUS)
 	assert_near(spin.angle, 180.0, "the spin hits all round")
 	assert_true(spin.reach < kick.reach, "close round him")
-	assert_true(spin.combo_damage[0] < kick.combo_damage[-1], "weaker a hit than the kick combo's finisher")
+	assert_true(spin.combo_damage[0] < punch.combo_damage[0], "lighter a hit than the punch")
 	assert_true(spin.lock_time < CaneCombo.LOCK_TIME, "quick")
 	assert_true(spade.reach > Player.ATTACK_REACH * 1.4 and spade.reach > punch.reach, "reaches well past the cane")
 	assert_true(spade.angle < 20.0, "a thrust, not a sweep")
@@ -296,7 +296,9 @@ func test_the_new_eras_sit_in_the_damage_bands() -> void:
 	var old := _old_combo() / (CaneCombo.LOCK_TIME * CaneCombo.DAMAGE.size())
 	var spin := EraMoves.for_era(Eras.DANCE)
 	var spin_dps := _combo_total(spin) / (spin.lock_time * spin.combo_damage.size())
-	assert_true(spin_dps >= old and spin_dps <= old * 1.2, "spin at %.1f vs %.1f" % [spin_dps, old])
+	# Paper bands follow the bot's era batches (2026-11-11), see the notes in era_moves.gd: the spin sits
+	# well over the cane on paper because its quick lock is lost to approaches in play (+16% measured).
+	assert_true(spin_dps >= old * 1.2 and spin_dps <= old * 1.5, "spin at %.1f vs %.1f" % [spin_dps, old])
 	var spade := EraMoves.for_era(Eras.ALLOTMENT)
 	var spade_dps := _combo_total(spade) / (spade.lock_time * spade.combo_damage.size())
 	assert_true(spade_dps < old and spade_dps >= old * 0.75, "spade at %.1f vs %.1f" % [spade_dps, old])

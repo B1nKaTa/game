@@ -311,6 +311,8 @@ func _clear_whole_floor(scene: Node, path_index: int) -> void:
 	var map: FloorMap = scene.debug_map()
 	var depth: int = scene.debug_depth()
 	var choices_before := _boss_choices_checked
+	if depth == 2:
+		_check_rules_deeper(scene)
 	if depth == 1 and path_index == CEMETERY_PATH and not _checked_graveyard:
 		await _check_graveyard_fights(scene)
 	if depth == 2 and path_index == OPEN_DEEP_PATH and not _checked_care_home:
@@ -522,6 +524,7 @@ func _check_big_room_view(scene: Node) -> void:
 
 
 func _walk_back_and_return(scene: Node, here_id: int) -> void:
+	_quiet_rules(scene)
 	await _wait(0.5)
 	var map: FloorMap = scene.debug_map()
 	var pension_before: int = Progress.data.pension
@@ -632,6 +635,20 @@ func _resting_pickups() -> int:
 	return count
 
 
+# Rules post on every floor: a check that presses buttons or counts exactly lifts the room's rule first,
+# so no Auditor walks into a room it measures. One check below (_check_rules_deeper) keeps a rule.
+func _quiet_rules(scene: Node) -> void:
+	scene.debug_rules().lift_rule(scene.debug_current_id())
+
+
+# Rule rooms stand on the deeper floors too, and are combat rooms (a rule hook the loop can lift).
+func _check_rules_deeper(scene: Node) -> void:
+	var keeper: RuleKeeper = scene.debug_rules()
+	_check(keeper._rule_rooms.size() >= 1, "depth %d posts rules, got %s" % [scene.debug_depth(), str(keeper._rule_rooms)])
+	for id in keeper._rule_rooms:
+		_check(scene.debug_map().room(id).room_type == RoomLayout.TYPE_COMBAT, "a rule room is a combat room")
+
+
 func _clear_room(scene: Node) -> void:
 	await _wait(0.1)
 	var room_id: int = scene.debug_current_id()
@@ -656,9 +673,20 @@ func _clear_room(scene: Node) -> void:
 	_boss_choice_count = -1
 	if is_floor_boss_room:
 		view.boss_choice_dropped.connect(_on_boss_choice_dropped)
+	_quiet_rules(scene)
 	for enemy in get_tree().get_nodes_in_group("enemies"):
 		enemy.take_damage(INF, Vector2.ZERO)
 	await _wait(0.1)
+	# An Auditor already on his way (the whistle blew before the rule was lifted) walks in after
+	# AUDIT_DELAY: wait for him and send him off too.
+	var kills := 0
+	while view.is_fighting() and kills < 3:
+		kills += 1
+		await _wait(RoomView.AUDIT_DELAY + 0.3)
+		for enemy in get_tree().get_nodes_in_group("enemies"):
+			enemy.take_damage(INF, Vector2.ZERO)
+		await _wait(0.1)
+	_check(not view.is_fighting(), "room %d is cleared once its enemies are down" % room_id)
 	if boss_here:
 		_check(not hud.is_boss_bar_visible(), "boss bar is hidden after the boss falls")
 	if is_floor_boss_room:
@@ -1448,6 +1476,7 @@ func _props_in(view: Node, script: Script) -> Array:
 
 
 func _check_props_room(scene: Node) -> void:
+	_quiet_rules(scene)
 	_checked_props = true
 	var map: FloorMap = scene.debug_map()
 	var back_id: int = scene.debug_current_id()
@@ -1606,6 +1635,7 @@ func _dismiss_all() -> void:
 
 
 func _check_fight_room(scene: Node) -> void:
+	_quiet_rules(scene)
 	_checked_fight = true
 	var back_id: int = scene.debug_current_id()
 	var health: Health = scene.player.run.health
@@ -2229,6 +2259,7 @@ func _press(action: String) -> void:
 
 # The real key drinks the potion, healing waits until it helps and a buff runs out.
 func _check_potion_drinking(scene: Node) -> void:
+	_quiet_rules(scene)
 	_checked_potions = true
 	var run: RunState = scene.player.run
 	var health: Health = run.health
@@ -2481,6 +2512,7 @@ func _strikes_in(view: Node) -> Array:
 
 
 func _check_graveyard_fights(scene: Node) -> void:
+	_quiet_rules(scene)
 	_checked_graveyard = true
 	var back_id: int = scene.debug_current_id()
 	var health: Health = scene.player.run.health
@@ -2808,6 +2840,7 @@ func _take_the_stairwell(scene: Node) -> void:
 # --- Sunset Shores: wet floors, sedatives, the care home's staff and bosses ---
 
 func _check_care_home_fights(scene: Node) -> void:
+	_quiet_rules(scene)
 	_checked_care_home = true
 	var back_id: int = scene.debug_current_id()
 	var health: Health = scene.player.run.health
@@ -3058,6 +3091,7 @@ func _check_matron(scene: Node, health: Health) -> void:
 # --- The Furnace Works: vents, burning ground, the boiler hall's staff and bosses ---
 
 func _check_furnace_fights(scene: Node) -> void:
+	_quiet_rules(scene)
 	_checked_furnace = true
 	var health: Health = scene.player.run.health
 	var pills_before := health.max_pills
