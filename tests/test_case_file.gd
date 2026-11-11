@@ -275,7 +275,8 @@ func test_the_item_row_shows_the_count_and_the_newest_three() -> void:
 		names.append(item.display_name)
 	var text := Hud.items_text(names)
 	assert_true(text.begins_with("Items: 100   "))
-	assert_eq(text.trim_prefix("Items: 100   ").split(", ").size(), 3, "only the newest three names")
+	var newest := PackedStringArray([names[99], names[98], names[97]])
+	assert_eq(text, "Items: 100   " + ", ".join(newest), "only the newest three names, newest first")
 	assert_eq(Hud.case_hint_text("Tab"), "Tab: Case file")
 
 
