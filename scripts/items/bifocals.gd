@@ -1,12 +1,13 @@
 extends ItemEffect
 
-# Suspicious Bifocals: any hit on an enemy under a quarter of its health lands half again as hard.
+# Suspicious Bifocals: a hit of his that leaves a regular enemy below BELOW of its health finishes it. Never
+# a boss. The full loop counts damage exactly.
 
-const BELOW := 0.25
-const MULT := 1.5
+const BELOW := 0.15
 
 
-func hit_damage(_ctx: EffectContext, enemy: Enemy, amount: float, _source: String) -> float:
-	if enemy.hp / maxf(enemy.max_hp(), 1.0) < BELOW:
-		return amount * MULT
-	return amount
+func on_hit(ctx: EffectContext, enemy: Enemy, _amount: float, source: String) -> void:
+	if ctx.counting_exact or enemy.is_dead() or enemy.def.is_boss or not RunEffects.is_his_hit(source):
+		return
+	if enemy.hp < enemy.max_hp() * BELOW:
+		ctx.hit_enemy(enemy, enemy.hp + 1.0, RunEffects.ITEM)

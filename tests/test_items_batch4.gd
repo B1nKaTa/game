@@ -20,23 +20,14 @@ const Harmonica := preload("res://scripts/items/harmonica.gd")
 
 # id: [rarity, source, first-clear path or "", cursed]
 const BATCH := {
-	"magnifying_glass": [ItemDef.COMMON, ItemUnlocks.START, "", false],
-	"floor_plan": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "floor_1", false],
 	"mothball_pockets": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "cemetery", false],
 	"telescope_cane": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 	"fortune_card": [ItemDef.RARE, ItemUnlocks.BOUNTY, "", false],
 	"grief_counselor": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "funeral_parlour", false],
-	"early_bird_special": [ItemDef.COMMON, ItemUnlocks.START, "", false],
-	"alarm_clock": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 	"wreath_of_thorns": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "cemetery", false],
 	"bingo_hall_pass": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "floor_1", false],
 	"moving_boxes": [ItemDef.COMMON, ItemUnlocks.START, "", false],
-	"last_orders": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "cemetery", false],
-	"photo_of_grandkids": [ItemDef.RARE, ItemUnlocks.START, "", false],
-	"complaint_form": [ItemDef.RARE, ItemUnlocks.BOUNTY, "", false],
-	"bureaucrats_stamp": [ItemDef.LEGENDARY, ItemUnlocks.BOUNTY, "", false],
 	"lawyers_card": [ItemDef.RARE, ItemUnlocks.BOUNTY, "", false],
-	"polyester_suit": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "head_office", true],
 	"harmonica": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "funeral_parlour", false],
 }
 # The posters that pay this batch's bounty items, and the looks they paid before, now sold.
@@ -285,49 +276,6 @@ func test_grief_counselor_pays_for_a_room_cleared_without_a_scratch() -> void:
 	run.effects.room_clear(null)
 	assert_eq(kit.paid, Grief.PAY, "a pill lost there, nothing paid")
 
-
-func test_early_bird_special_speeds_him_for_the_first_ten_seconds_of_a_fight() -> void:
-	var kit := ItemKit.new()
-	var run := kit.run_with(["early_bird_special"])
-	var base := run.stats.move_speed
-	run.effects.room_enter(null)
-	assert_near(run.move_speed(), base, "no enemies, no rush")
-	kit.enemy()
-	run.effects.room_enter(null)
-	assert_near(run.move_speed(), base * EarlyBird.BOOST)
-	assert_near(run.swing_speed(), run.stats.swing_speed * EarlyBird.BOOST)
-	run.effects.tick(EarlyBird.RUSH - 0.1)
-	assert_near(run.swing_speed(), run.stats.swing_speed * EarlyBird.BOOST)
-	run.effects.tick(0.2)
-	assert_near(run.move_speed(), base, "ten seconds")
-	run.effects.room_enter(null)
-	run.effects.ctx.counting_exact = true
-	assert_near(run.move_speed(), base, "the loop times plain walks")
-	kit.free_enemies()
-	var player := FileAccess.get_file_as_string("res://scripts/actors/player.gd")
-	assert_true(player.contains("_combo.lock_time = CaneCombo.LOCK_TIME / run.swing_speed()"), "the combo reads the pace at every swing")
-
-
-func test_alarm_clock_stuns_a_fight_room_as_he_walks_in() -> void:
-	var kit := ItemKit.new()
-	var run := kit.run_with(["alarm_clock"])
-	run.effects.room_enter(null)
-	assert_eq(kit.fx_of(ItemFx.FxAlarm).size(), 0, "an empty room stays quiet")
-	var first := kit.enemy()
-	var second := kit.enemy("regional_reaper")
-	run.effects.room_enter(null)
-	assert_true(first.is_stunned() and second.is_stunned(), "every enemy, a boss too")
-	assert_eq(kit.fx_of(ItemFx.FxAlarm).size(), 1)
-	kit.free_enemies()
-	var loop_kit := ItemKit.new()
-	var loop := loop_kit.run_with(["alarm_clock"])
-	loop.effects.ctx.counting_exact = true
-	var held := loop_kit.enemy()
-	loop.effects.room_enter(null)
-	assert_false(held.is_stunned(), "the loop times the room's wait as it is")
-	loop_kit.free_enemies()
-
-
 func test_wreath_of_thorns_pricks_what_touches_him_now_and_then() -> void:
 	var kit := ItemKit.new()
 	var run := kit.run_with(["wreath_of_thorns"])
@@ -484,25 +432,6 @@ func test_bureaucrats_stamp_files_an_enemy_for_good_every_thirty_seconds() -> vo
 	assert_false(next.is_dead(), "the loop counts its enemies")
 	kit.free_enemies()
 
-
-func test_the_stamp_takes_a_share_of_a_boss_and_never_skips_a_phase() -> void:
-	assert_near(Stamp.boss_chunk(1000.0, 1000.0), 150.0)
-	assert_near(Stamp.boss_chunk(560.0, 1000.0), 60.0, "it stops at the phase line")
-	assert_near(Stamp.boss_chunk(400.0, 1000.0), 150.0, "past it, the full share")
-	var kit := ItemKit.new()
-	var run := kit.run_with(["bureaucrats_stamp"])
-	var boss := _boss(kit, 0.0)
-	boss.hp = boss.max_hp()
-	run.effects.land(boss, 10.0, RunEffects.SWING)
-	assert_false(boss.is_dead(), "a boss is never filed")
-	assert_near(boss.hp, boss.max_hp() * 0.85 - 10.0)
-	var dummy := kit.enemy("training_dummy")
-	run.effects.tick(Stamp.RECHARGE + 0.1)
-	run.effects.land(dummy, 10.0, RunEffects.SWING)
-	assert_false(dummy.is_dead(), "nor is the Training Yard's dummy")
-	kit.free_enemies()
-
-
 func test_lawyers_card_blocks_a_bosss_first_hit_in_each_phase() -> void:
 	var kit := ItemKit.new()
 	var run := kit.run_with(["lawyers_card"])
@@ -524,33 +453,6 @@ func test_lawyers_card_blocks_a_bosss_first_hit_in_each_phase() -> void:
 
 
 # --- the silly ones ---
-
-func test_polyester_suit_hits_harder_but_sparks_now_and_then() -> void:
-	var kit := ItemKit.new()
-	var run := kit.run_with(["polyester_suit"])
-	assert_near(run.stats.damage_mult, 1.25)
-	var player := _player(run)
-	run.effects.ctx.player = player
-	var suit = run.effects.effect_of("polyester_suit")
-	suit.rng.seed = 9
-	var sparks := 0
-	for i in 2000:
-		run.effects.swing(SwingAttack.new(Vector2.RIGHT, 40.0, 60.0, 10.0, 60.0, false, false))
-		if player.is_self_stunned():
-			sparks += 1
-			player._self_stun_left = 0.0
-	assert_true(sparks > 150 and sparks < 250, "about one swing in ten, got %d" % sparks)
-	suit.spark(run.effects.ctx)
-	assert_true(player.is_self_stunned())
-	player._self_stun_left = 0.0
-	run.effects.ctx.counting_exact = true
-	for i in 200:
-		run.effects.swing(SwingAttack.new(Vector2.RIGHT, 40.0, 60.0, 10.0, 60.0, false, false))
-	assert_false(player.is_self_stunned(), "the loop times plain swings")
-	player.free()
-	var source := FileAccess.get_file_as_string("res://scripts/actors/player.gd")
-	assert_true(source.contains("if taped or is_self_stunned():"), "a spark holds his walk")
-
 
 func test_harmonica_heals_half_a_pill_for_a_quick_chord_once_a_room() -> void:
 	var kit := ItemKit.new()

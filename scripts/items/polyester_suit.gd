@@ -4,7 +4,7 @@ extends ItemEffect
 # him for STUN. The full loop times his swings and walks, so there it never sparks.
 
 const CHANCE := 0.1
-const STUN := 0.3
+const STUN := 0.5
 const SPARK := Color("8fd8ff")
 const TEXT := "ZAP!"
 

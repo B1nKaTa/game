@@ -4,13 +4,11 @@ extends ItemEffect
 # enemy leaves for good, with no last act (no death blast, no split), and its room counts it as fallen
 # as any kill, paying what that enemy pays and nothing more. A boss (or the Training Yard's dummy) is
 # never filed: it loses BOSS_SHARE of its health instead, and never past the line into its next phase,
-# so no phase is skipped. With the Rubber Stamp Collection (Paper Trail) it recharges in COMBO_RECHARGE.
+# so no phase is skipped.
 # Item hits never set it off, and the full loop counts enemies and damage exactly, so there it waits.
 
 const RECHARGE := 30.0
-const COMBO_RECHARGE := 20.0
-const COMBO := "paper_trail"
-const BOSS_SHARE := 0.15
+const BOSS_SHARE := 0.1
 # Every boss changes phase at half health.
 const PHASE_LINE := 0.5
 const COLOR := Color("e0262f")
@@ -21,9 +19,8 @@ var ready := true
 var left := 0.0
 
 
-func recharge_time(ctx: EffectContext) -> float:
-	var run := ctx.run()
-	return COMBO_RECHARGE if run != null and run.effects.has_combo(COMBO) else RECHARGE
+func recharge_time(_ctx: EffectContext) -> float:
+	return RECHARGE
 
 
 func tick(ctx: EffectContext, delta: float) -> void:

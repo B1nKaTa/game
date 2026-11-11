@@ -13,7 +13,10 @@ const FIRST_VISIT: Array[String] = [
 
 const TIPS := {
 	"alert_bracelet": "One more pill, and an alarm when you're down to your last. Use the stun to get out, not in.",
-	"bifocals": "See their health? Good. Finish the weak ones first, that's where it hits hardest.",
+	"bifocals": "Get them low and the glasses finish them off.",
+	"unpaid_bill": "Every fight room costs a tenner. Hit hard and earn it back.",
+	"glass_hip": "Quick on your feet. Don't get hit, it costs you extra.",
+	"cactus_brooch": "Let them come close. They won't like what they find.",
 	"bingo_card": "Every fifth coin's a big one. Pick them all up. Every one counts.",
 	"comfort_care_lanyard": "Every heal gives a bit extra. Take hits early, heal late.",
 	"dentures": "Line them up and throw through the lot. Teeth first, questions later.",

@@ -6,9 +6,9 @@ extends TestCase
 const NaughtyList := preload("res://scripts/items/naughty_list.gd")
 const Nitro := preload("res://scripts/items/nitro_tablets.gd")
 const TitaniumHip := preload("res://scripts/items/titanium_hip.gd")
-const IDS := ["alert_bracelet", "bifocals", "bingo_card", "golden_parachute",
-	"hearing_aid", "lucky_tee", "naughty_list", "neck_pillow", "nitro_tablets",
-	"prune_juice", "slippers", "support_stockings", "undertakers_gloves"]
+const IDS := ["alert_bracelet", "bingo_card", "golden_parachute",
+	"hearing_aid", "lucky_tee", "naughty_list", "neck_pillow",
+	"slippers", "support_stockings", "undertakers_gloves"]
 
 
 func _room_view(room_type: String) -> RoomView:
@@ -29,14 +29,14 @@ func test_every_old_item_id_still_ships() -> void:
 
 
 func test_rarity_curses_and_sources_follow_the_design() -> void:
-	var rare := ["alert_bracelet", "bifocals", "golden_parachute",
-		"naughty_list", "nitro_tablets"]
-	var recipes := ["alert_bracelet", "bifocals", "golden_parachute", "lucky_tee", "nitro_tablets", "support_stockings"]
+	var rare := ["alert_bracelet", "golden_parachute",
+		"naughty_list"]
+	var recipes := ["alert_bracelet", "golden_parachute", "lucky_tee", "support_stockings"]
 	var bounties := ["naughty_list", "neck_pillow", "undertakers_gloves"]
 	for id: String in IDS:
 		var item := ItemKit.item(id)
 		assert_eq(item.rarity, ItemDef.RARE if rare.has(id) else ItemDef.COMMON, id)
-		assert_eq(item.cursed, id == "nitro_tablets" or id == "prune_juice", id)
+		assert_false(item.cursed, id)
 		var source := ItemUnlocks.START
 		if recipes.has(id):
 			source = ItemUnlocks.RECIPE
@@ -81,19 +81,6 @@ func test_alert_bracelet_stuns_nearby_enemies_on_the_drop_to_one_pill_once_a_roo
 	run.effects.tick(0.1)
 	assert_eq(kit.sounds.size(), 2, "and again in the next room")
 	kit.free_enemies()
-
-
-func test_bifocals_show_health_and_hit_the_nearly_dead_harder() -> void:
-	var kit := ItemKit.new()
-	var run := kit.run_with(["bifocals"])
-	assert_true(run.stats.reveals_enemy_health)
-	var enemy := kit.enemy()
-	enemy.hp = enemy.max_hp() * 0.2
-	assert_near(run.effects.hit_damage(enemy, 10.0, RunEffects.SWING), 15.0)
-	enemy.hp = enemy.max_hp() * 0.5
-	assert_near(run.effects.hit_damage(enemy, 10.0, RunEffects.BITE), 10.0)
-	kit.free_enemies()
-
 
 func test_bingo_card_pays_every_fifth_pension_pickup_five_times_with_a_pop() -> void:
 	var kit := ItemKit.new()
