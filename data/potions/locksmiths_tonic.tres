@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="PotionDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/potion_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "locksmiths_tonic"
+display_name = "Locksmith's Tonic"
+short_name = "Slips x2"
+description = "Drink: doubles the Slips you carry."
+color = Color(0.85, 0.72, 0.3, 1)
+action = "double_slips"
+run_rarity = "rare"

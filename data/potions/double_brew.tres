@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="PotionDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/potion_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "double_brew"
+display_name = "Double Brew"
+short_name = "Brew x2"
+description = "Drink: doubles the Thermoses you carry."
+color = Color(0.66, 0.41, 0.18, 1)
+action = "double_bombs"
+run_rarity = "rare"

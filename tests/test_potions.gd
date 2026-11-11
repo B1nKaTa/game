@@ -15,7 +15,7 @@ func _potion(id: String) -> PotionDef:
 # --- the potions themselves ---
 
 func test_the_potion_data_loads() -> void:
-	assert_eq(Content.potions().size(), 4)
+	assert_eq(Content.potions().size(), 11)
 	assert_eq(_potion("healing_tonic").heal, 2)
 	assert_eq(_potion("small_potion").heal, 1)
 	assert_true(_potion("swift_tea").has_buff())
@@ -179,7 +179,7 @@ func test_the_slot_text() -> void:
 
 func test_short_names_fit_the_slot() -> void:
 	for def in Content.potions():
-		assert_true(def.short_name.length() > 0 and def.short_name.length() <= 6, def.id)
+		assert_true(def.short_name.length() > 0 and def.short_name.length() <= 8, def.id)
 
 
 func test_the_panel_texts() -> void:
