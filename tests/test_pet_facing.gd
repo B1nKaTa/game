@@ -62,3 +62,24 @@ func test_a_lunge_to_the_left_turns_it() -> void:
 	assert_eq(pet.facing, 1, "and back")
 	_free_all(nodes)
 
+func test_an_orbiting_pet_faces_its_circle_not_his_steps() -> void:
+	var nodes := _pet_following(Vector2(100, 100), Vector2(100, 100))
+	var pet: Pet = nodes[0]
+	pet.orbit_speed = 2.0
+	pet.orbit_angle = 0.2
+	pet._process(0.016)
+	assert_eq(pet.facing, -1, "low on the right of its circle it is moving left")
+	var turns := 0
+	var was := pet.facing
+	for i in 20:
+		# He steps 2 px left and right in turn, against and with the circle: the moth must not follow that.
+		nodes[1].global_position.x += 2.0 if i % 2 == 0 else -2.0
+		pet._process(0.016)
+		if pet.facing != was:
+			turns += 1
+			was = pet.facing
+	assert_eq(turns, 0, "his steps never flip it within a third of a second")
+	pet.orbit_angle = PI + 0.2
+	pet._process(0.016)
+	assert_eq(pet.facing, 1, "on the far side of the circle it moves right")
+	_free_all(nodes)

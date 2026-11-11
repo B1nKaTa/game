@@ -83,6 +83,10 @@ func _process(delta: float) -> void:
 		global_position = step_toward(global_position, _lunge_to, speed * LUNGE_PACE, delta)
 	elif orbit_speed != 0.0:
 		global_position = home()
+		# An orbiter faces the way it circles. Its position also carries Harold's own steps, which run
+		# on another clock and would flip it back and forth while he walks.
+		_face(-sin(orbit_angle) * signf(orbit_speed))
+		return
 	else:
 		global_position = step_toward(global_position, home(), speed, delta)
 	_face(global_position.x - before.x)
