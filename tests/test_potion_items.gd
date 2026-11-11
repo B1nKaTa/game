@@ -61,9 +61,17 @@ func test_dutch_courage_hits_harder_hurts_double_for_two_clears() -> void:
 	run.effects.room_clear(null)
 	assert_eq(run.effects.lasting_entries().size(), 1)
 	var raw: Dictionary = JSON.parse_string(JSON.stringify(RunCheckpoint.run_to_dict(run)))
-	var back := ItemKit.new().make_run()
+	var back_kit := ItemKit.new()
+	var back := back_kit.make_run()
 	RunCheckpoint.apply_run(back, raw, Content.items())
 	assert_eq(back.effects.lasting_entries().size(), 1, "it survives a resume")
+	var back_enemy := back_kit.enemy()
+	assert_near(back.effects.hit_damage(back_enemy, 10.0, RunEffects.SWING), 16.0)
+	assert_eq(back.effects.hurt(1, RunEffects.HURT_ENEMY), 2, "still costs double after the resume")
+	back.effects.room_clear(null)
+	assert_eq(back.effects.lasting_entries().size(), 0, "one room was left, and the resumed run ends it")
+	assert_eq(back.effects.hurt(1, RunEffects.HURT_ENEMY), 1)
+	back_kit.free_enemies()
 	run.effects.room_clear(null)
 	assert_eq(run.effects.lasting_entries().size(), 0)
 	assert_eq(run.effects.hurt(1, RunEffects.HURT_ENEMY), 1)
@@ -78,3 +86,58 @@ func test_pet_food_doubles_pets_until_the_floor_ends() -> void:
 	assert_near(run.pet_damage_mult(), 2.0)
 	run.effects.floor_start()
 	assert_near(run.pet_damage_mult(), 1.0)
+
+
+func _resumed(run: RunState) -> RunState:
+	var raw: Dictionary = JSON.parse_string(JSON.stringify(RunCheckpoint.run_to_dict(run)))
+	var back := ItemKit.new().make_run()
+	RunCheckpoint.apply_run(back, raw, Content.items())
+	return back
+
+
+func test_smelling_salts_come_back_unspent_and_end_when_they_should() -> void:
+	var run := ItemKit.new().make_run()
+	assert_true(_drink(run, "smelling_salts"))
+	var back := _resumed(run)
+	assert_eq(back.effects.lasting_entries().size(), 1, "unspent salts survive a resume")
+	var kit := ItemKit.new()
+	kit.wire(back)
+	var enemy := kit.enemy()
+	back.effects.room_enter(null)
+	assert_true(enemy.is_stunned(), "the resumed salts still stun")
+	assert_eq(back.effects.lasting_entries().size(), 0)
+	kit.free_enemies()
+	# Spent before the checkpoint, they do not come back.
+	var spent_kit := ItemKit.new()
+	var spent_run := spent_kit.make_run()
+	assert_true(_drink(spent_run, "smelling_salts"))
+	spent_kit.enemy()
+	spent_run.effects.room_enter(null)
+	assert_eq(_resumed(spent_run).effects.lasting_entries().size(), 0)
+	spent_kit.free_enemies()
+
+
+func test_pet_food_comes_back_and_ends_with_the_floor() -> void:
+	var run := ItemKit.new().run_with(["rex"])
+	assert_true(_drink(run, "pet_food"))
+	var back := _resumed(run)
+	assert_near(back.pet_damage_mult(), 2.0)
+	back.effects.floor_start()
+	assert_near(back.pet_damage_mult(), 1.0)
+
+
+func test_a_potion_that_cannot_work_stays_in_the_slot() -> void:
+	var run := ItemKit.new().make_run()
+	run.keys = 3
+	run.bombs = 3
+	assert_false(_drink(run, "topsy_turvy"), "equal counts: nothing to swap")
+	assert_eq(run.potion.id, "topsy_turvy")
+	assert_false(_drink(run, "pet_food"), "no pet to feed")
+	assert_eq(run.potion.id, "pet_food")
+	run.bombs = RunState.MAX_CONSUMABLE
+	assert_false(_drink(run, "double_brew"), "already at the cap")
+	assert_eq(run.potion.id, "double_brew")
+	run.keys = 0
+	run.bombs = 0
+	assert_false(_drink(run, "gold_top"), "nothing to cash in")
+	assert_eq(run.potion.id, "gold_top")

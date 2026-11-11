@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = "topsy_turvy"
 display_name = "Topsy-Turvy Tonic"
-short_name = "Swap"
+short_name = "Flip"
 description = "Drink: swap your Slips and Thermoses."
 color = Color(0.6, 0.45, 0.85, 1)
 action = "swap"

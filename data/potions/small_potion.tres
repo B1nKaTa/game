@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = "small_potion"
 display_name = "Small Potion"
-short_name = "Small"
+short_name = "Mini"
 description = "Restores 1 pill. Found in barrels, never sold."
 heal = 1
 color = Color(0.894, 0.322, 0.31, 1)

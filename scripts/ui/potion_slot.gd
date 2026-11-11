@@ -7,8 +7,9 @@ extends Control
 const SIZE := Vector2(110, 16)
 const FLASK_AT := Vector2(0, 0)
 const TEXT_AT := Vector2(15, 2)
-const NAME_WIDTH_WITH_BUFF := 48.0
 const BUFF_TEXT_AT := Vector2(64, 2)
+# All the room between the name and the timer: nothing else in the slot moves for it.
+const NAME_WIDTH_WITH_BUFF := BUFF_TEXT_AT.x - TEXT_AT.x
 const EMPTY_COLOR := Color(0.7, 0.7, 0.78, 0.55)
 const NAME_FONT := 11
 const BUFF_FONT := 9

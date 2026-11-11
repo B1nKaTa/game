@@ -171,15 +171,38 @@ func test_taking_the_potion_key_swaps_with_its_owner() -> void:
 
 func test_the_slot_text() -> void:
 	assert_eq(PotionSlot.name_text("H", null), "[H] -")
-	assert_eq(PotionSlot.name_text("H", _potion("swift_tea")), "[H] Swift")
+	assert_eq(PotionSlot.name_text("H", _potion("swift_tea")), "[H] Tea")
 	assert_eq(PotionSlot.buff_text(null, 5.0), "")
 	assert_eq(PotionSlot.buff_text(_potion("fury_liniment"), 0.0), "")
 	assert_eq(PotionSlot.buff_text(_potion("fury_liniment"), 11.2), "Fury 12s")
 
 
+# Measured, not counted: the exact text the slot draws, in the font and size it draws it in, against the
+# name label's width with a buff timer showing and without, for the longest key label of every pad family.
 func test_short_names_fit_the_slot() -> void:
+	var keys: Array[String] = [KeyBindings.label_for("potion")]
+	for family in [PadInput.XBOX, PadInput.PLAYSTATION, PadInput.PLAYSTATION_4]:
+		keys.append(KeyBindings.pad_label_for("potion", family))
+	var with_buff := PotionSlot.NAME_WIDTH_WITH_BUFF
+	var without := PotionSlot.SIZE.x - PotionSlot.TEXT_AT.x
 	for def in Content.potions():
-		assert_true(def.short_name.length() > 0 and def.short_name.length() <= 8, def.id)
+		assert_true(def.short_name.length() > 0, def.id)
+		for key in keys:
+			var text := PotionSlot.name_text(key, def)
+			var width := HudStyle.font().get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, HudStyle.SMALL).x
+			assert_true(width <= with_buff, "%s is %.0f px in %.0f beside a buff" % [text, width, with_buff])
+			assert_true(width <= without, "%s is %.0f px in %.0f" % [text, width, without])
+
+
+# The buff timer beside the name fits its own room, at the full 15 seconds and at two digits.
+func test_buff_timers_fit_beside_the_name() -> void:
+	var room := PotionSlot.SIZE.x - PotionSlot.BUFF_TEXT_AT.x
+	for def in Content.potions():
+		if not def.has_buff():
+			continue
+		var text := PotionSlot.buff_text(def, def.duration)
+		var width := HudStyle.font().get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, HudStyle.SMALL).x
+		assert_true(width <= room, "%s is %.0f px in %.0f" % [text, width, room])
 
 
 func test_the_panel_texts() -> void:
