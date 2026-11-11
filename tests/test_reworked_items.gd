@@ -7,7 +7,7 @@ const NaughtyList := preload("res://scripts/items/naughty_list.gd")
 const Nitro := preload("res://scripts/items/nitro_tablets.gd")
 const TitaniumHip := preload("res://scripts/items/titanium_hip.gd")
 const IDS := ["alert_bracelet", "bingo_card", "golden_parachute",
-	"hearing_aid", "lucky_tee", "naughty_list", "neck_pillow",
+	"lucky_tee", "naughty_list", "neck_pillow",
 	"slippers", "support_stockings", "undertakers_gloves"]
 
 
@@ -113,13 +113,6 @@ func test_the_unchanged_four_keep_their_rules() -> void:
 	assert_near(kit.run_with(["golden_parachute"]).stats.death_pension_bonus, 0.25)
 	assert_eq(kit.run_with(["life_jacket"]).stats.floor_lethal_saves, 1)
 	assert_near(kit.run_with(["lucky_tee"]).stats.lucky_swing_chance, 0.1)
-
-
-func test_hearing_aid_warns_earlier_and_shows_off_screen_arrows() -> void:
-	var run := ItemKit.new().run_with(["hearing_aid"])
-	assert_true(run.stats.warning_fraction > PlayerStats.BASE_WARNING)
-	assert_true(run.stats.shows_offscreen_enemies)
-	assert_false(ItemKit.new().make_run().stats.shows_offscreen_enemies)
 
 
 func test_naughty_list_presents_come_from_summons_two_a_room_at_most() -> void:

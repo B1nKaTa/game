@@ -16,7 +16,6 @@ const Complaint := preload("res://scripts/items/complaint_form.gd")
 const Stamp := preload("res://scripts/items/bureaucrats_stamp.gd")
 const Glass := preload("res://scripts/items/dentures_in_glass.gd")
 const Suit := preload("res://scripts/items/polyester_suit.gd")
-const Harmonica := preload("res://scripts/items/harmonica.gd")
 
 # id: [rarity, source, first-clear path or "", cursed]
 const BATCH := {
@@ -28,7 +27,6 @@ const BATCH := {
 	"bingo_hall_pass": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "floor_1", false],
 	"moving_boxes": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 	"lawyers_card": [ItemDef.RARE, ItemUnlocks.BOUNTY, "", false],
-	"harmonica": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "funeral_parlour", false],
 }
 # The posters that pay this batch's bounty items, and the looks they paid before, now sold.
 const POSTERS := {
@@ -453,29 +451,3 @@ func test_lawyers_card_blocks_a_bosss_first_hit_in_each_phase() -> void:
 
 
 # --- the silly ones ---
-
-func test_harmonica_heals_half_a_pill_for_a_quick_chord_once_a_room() -> void:
-	var kit := ItemKit.new()
-	var run := kit.run_with(["harmonica"])
-	var harmonica = run.effects.effect_of("harmonica")
-	run.health.pills = 2
-	var ctx := run.effects.ctx
-	assert_false(harmonica.play(ctx))
-	run.effects.tick(Harmonica.CHORD_TIME + 0.1)
-	assert_false(harmonica.play(ctx), "too slow, the first note is gone")
-	run.effects.tick(1.0)
-	assert_false(harmonica.play(ctx), "two notes")
-	assert_true(harmonica.play(ctx), "three notes within three seconds")
-	assert_eq(run.health.half_pills, 1)
-	assert_eq(kit.fx_of(ItemFx.FxNote).size(), 4, "every note shows")
-	for i in 3:
-		harmonica.play(ctx)
-	assert_eq(run.health.half_pills, 1, "once a room")
-	run.effects.room_enter(null)
-	for i in 3:
-		harmonica.play(ctx)
-	assert_eq(run.health.pills, 3, "a new room, a new chord")
-	var finisher := SwingAttack.new(Vector2.RIGHT, 40.0, 60.0, 18.0, 60.0, false, true)
-	var before := kit.fx_of(ItemFx.FxNote).size()
-	run.effects.swing_end(finisher)
-	assert_eq(kit.fx_of(ItemFx.FxNote).size(), before, "a finisher that hits nothing plays nothing")

@@ -7,7 +7,6 @@ extends TestCase
 const Soup := preload("res://scripts/items/hot_soup_thermos.gd")
 const Strap := preload("res://scripts/items/second_thermos_strap.gd")
 const Kettle := preload("res://scripts/items/kettle_whistle.gd")
-const Lottery := preload("res://scripts/items/lottery_scratcher.gd")
 const Statement := preload("res://scripts/items/pension_statement.gd")
 const Warranty := preload("res://scripts/items/eternal_warranty.gd")
 
@@ -19,7 +18,6 @@ const BATCH := {
 	"rubber_stamps": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "floor_1", false],
 	"kettle_whistle": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "furnace_works", false],
 	"penny_jar": [ItemDef.COMMON, ItemUnlocks.START, "", false],
-	"lottery_scratcher": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 	"pension_statement": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "head_office", false],
 	"loaded_dice": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "flashback_cinema", true],
 	"expired_coupon": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "terminal_zero", true],
@@ -240,24 +238,6 @@ func test_penny_jar_calls_coins_from_twice_as_far() -> void:
 	assert_false(Pickup.should_magnet(true, Pickup.MAGNET_RADIUS * 1.9))
 	var room := FileAccess.get_file_as_string("res://scripts/world/room_view.gd")
 	assert_true(room.contains("coin.magnet_radius = Pickup.MAGNET_RADIUS * _run.stats.coin_reach_mult"))
-
-
-func test_lottery_scratcher_pays_zero_to_a_hundred_each_floor() -> void:
-	var kit := ItemKit.new()
-	var run := kit.run_with(["lottery_scratcher"])
-	var lottery = run.effects.effect_of("lottery_scratcher")
-	lottery.rng.seed = 4
-	var total := 0
-	for i in 400:
-		var won: int = lottery.scratch(run.effects.ctx)
-		assert_true(won >= 0 and won <= Lottery.MOST, "won %d" % won)
-		total += won
-	assert_eq(kit.paid, total)
-	assert_true(total > 400 * 24 and total < 400 * 36, "about 30 a floor, got %d" % total)
-	kit.notices.clear()
-	run.effects.floor_start()
-	assert_eq(kit.notices.size(), 1, "each new floor scratches once")
-	assert_eq(Lottery.notice_for(0), "Lottery Scratcher: not a winner. Better luck next floor.")
 
 
 func test_pension_statement_pays_a_share_of_the_run_on_each_clear() -> void:

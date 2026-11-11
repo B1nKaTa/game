@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/dinner_bell.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "dinner_bell"
+display_name = "Dinner Bell"
+description = "Use: your pets go wild for 5 seconds, hitting three times as hard. Recharges over 2 rooms."
+rarity = "rare"
+tags = PackedStringArray("pets")
+build = "pets"
+kind = "active"
+charge_rooms = 2
+effect = SubResource("Effect")

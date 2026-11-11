@@ -1,39 +1,49 @@
 extends ItemEffect
 
-# Lottery Scratcher: each new floor (not a landing) pays a random 0 to MOST Pension, and says so. That
-# is five tickets a run, about 150 Pension on average, near a tenth of a full clear. The spec's 0 to
-# 100 added about 17% (income_probe, 2026-11-05).
+# Lottery Scratcher (active, once a floor): scratch for one prize at his feet: a coin of COIN Pension, a
+# Slip, a Thermos, a one-pill heal or, rarely, a free item (a coin when no item is left to offer).
 
-const MOST := 60
-
+const COIN := 25
+const EDGES := [[0.40, "coin"], [0.60, "key"], [0.80, "bomb"], [0.95, "heal"], [1.01, "item"]]
+const AHEAD := Vector2(16, 0)
 var rng := RandomNumberGenerator.new()
+
+
+static func prize(roll: float) -> String:
+	for edge in EDGES:
+		if roll < edge[0]:
+			return edge[1]
+	return "item"
 
 
 func on_gain(_ctx: EffectContext) -> void:
 	rng.randomize()
 
 
-func on_floor_start(ctx: EffectContext) -> void:
-	if ctx.is_landing():
-		return
-	scratch(ctx)
-
-
-func scratch(ctx: EffectContext) -> int:
-	var won := rng.randi_range(0, MOST)
-	ctx.pay(won)
-	ctx.notice(notice_for(won))
-	if won > 0:
-		ctx.play_sound("slot_win")
-	return won
-
-
-static func notice_for(won: int) -> String:
-	if won <= 0:
-		return "Lottery Scratcher: not a winner. Better luck next floor."
-	return "Lottery Scratcher: you win %d Pension!" % won
-
-
-# A resumed run never hears on_gain, so the dice are shuffled here instead.
 func load_state(_state: Dictionary) -> void:
 	rng.randomize()
+
+
+func use(ctx: EffectContext) -> bool:
+	var run := ctx.run()
+	# A coin and a heal do nothing while the full loop counts, so the charge is kept.
+	if run == null or ctx.counting_exact or ctx.counting_pills:
+		return false
+	var at := ctx.feet() + AHEAD
+	match prize(rng.randf()):
+		"key":
+			ctx.drop(RoomRules.DROP_KEY, at)
+		"bomb":
+			ctx.drop(RoomRules.DROP_BOMB, at)
+		"heal":
+			ctx.drop(RoomRules.DROP_HEAL, at, 1)
+		"item":
+			var picked := RoomRules.pick_items(Content.items(), run, 1, rng, ItemRarity.ITEM_ROOM)
+			if picked.is_empty():
+				ctx.drop(RoomRules.DROP_COIN, at, run.pension_amount(COIN, RunState.PENSION_REWARD))
+			else:
+				ctx.drop_item(picked[0], at)
+		_:
+			ctx.drop(RoomRules.DROP_COIN, at, run.pension_amount(COIN, RunState.PENSION_REWARD))
+	ctx.play_sound("slot_win")
+	return true
