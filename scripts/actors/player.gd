@@ -250,6 +250,7 @@ func _ready() -> void:
 	if not run.look.is_empty():
 		refresh_look()
 	run.health.died.connect(died.emit)
+	run.health.died.connect(_play_death)
 
 
 # Redraws what he wears from run.look, as after a change at the Decor Office.
@@ -266,6 +267,56 @@ func refresh_look() -> void:
 
 # The HURT_ id of the last hit that landed, read by the balance bot to tell touches from attacks.
 var last_hurt_source := ""
+
+# Harold's feedback anims, each only when the art shown has its strip (else today's look).
+const HURT_ANIM_TIME := 0.25
+const DEATH_ANIM_TIME := 0.9
+
+
+# anim when that art has the strip, else "": SpriteVisual would show the attack strip instead.
+static func feedback_anim(art_id: String, anim: String) -> String:
+	return anim if SpriteVisual.has_anim(art_id, anim) else ""
+
+
+func _shown_art() -> String:
+	return _visual.art_id() if _visual != null else ""
+
+
+# How long the game-over waits for his fall: 0 without a death strip.
+func death_anim_time() -> float:
+	return DEATH_ANIM_TIME if not _death_art().is_empty() else 0.0
+
+
+# The art that falls: the one shown when it has a death strip, else (a younger self, who has none) old
+# Harold's, so a death in a flashback still plays his fall. "" when neither has one.
+func _death_art() -> String:
+	var shown := _shown_art()
+	if not feedback_anim(shown, "death").is_empty():
+		return shown
+	var old_art := GrandpaLook.outfit_art(run.look if run != null else {})
+	return old_art if not feedback_anim(old_art, "death").is_empty() else ""
+
+
+# The ghost copies stand in for a dodge anim until the shown art has one.
+func uses_dodge_ghosts() -> bool:
+	return feedback_anim(_shown_art(), "dodge").is_empty()
+
+
+# The scene disables him once he dies, so his sprite alone keeps running to finish the fall, then holds
+# its last frame (SpriteVisual.once_frame).
+func _play_death() -> void:
+	if _visual == null or _visual.anim() == "death":
+		return
+	var art := _death_art()
+	if art.is_empty():
+		return
+	if art != _shown_art():
+		_visual.set_tint(Color.WHITE)
+		_visual.set_art(art)
+		if _look != null:
+			_look.visible = true
+	_visual.process_mode = Node.PROCESS_MODE_ALWAYS
+	_visual.play_once("death", DEATH_ANIM_TIME)
 
 
 # Every hit on him comes through here. source is one of RunEffects' HURT_ ids, for the items that care
@@ -295,6 +346,10 @@ func take_hit(amount: int, source := RunEffects.HURT_ENEMY) -> bool:
 		last_hurt_source = source
 		if _visual != null:
 			_visual.flash(HURT_COLOR, HurtLook.RED_TIME)
+			if run.health.is_dead():
+				_play_death()
+			elif not feedback_anim(_shown_art(), "hurt").is_empty() and not _dodge.is_active():
+				_visual.play_once("hurt", HURT_ANIM_TIME)
 		hurt.emit()
 	return landed
 
@@ -516,6 +571,8 @@ static func move_aim_point(from: Vector2, last_move: Vector2) -> Vector2:
 func _leave_dodge_ghosts(delta: float) -> void:
 	if not _dodge.is_active():
 		_ghost_left = 0.0
+		return
+	if not uses_dodge_ghosts():
 		return
 	_ghost_left -= delta
 	if _ghost_left > 0.0 or get_parent() == null:
@@ -893,13 +950,16 @@ func start_dodge(direction: Vector2) -> bool:
 		return false
 	# Velcro Shoes give a second dodge, so the count is read at every start.
 	_dodge.charges = run.stats.dodge_charges
-	if not _dodge.try_start(run.stats.dodge_cooldown, DodgeTimer.DURATION * run.stats.dodge_length * (_era_moves.dodge_length if _era_moves != null else 1.0)):
+	var dodge_time: float = DodgeTimer.DURATION * run.stats.dodge_length * (_era_moves.dodge_length if _era_moves != null else 1.0)
+	if not _dodge.try_start(run.stats.dodge_cooldown, dodge_time):
 		return false
 	_dodge_direction = direction
 	_close_call_spent = false
 	Sfx.play("dodge")
 	run.effects.dodge(direction)
 	dodge_started.emit()
+	if _visual != null and not uses_dodge_ghosts():
+		_visual.play_once("dodge", dodge_time)
 	if _era_moves != null:
 		_era_dodge_hits.clear()
 	return true

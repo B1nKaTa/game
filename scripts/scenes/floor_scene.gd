@@ -971,6 +971,12 @@ func _end_run(message: String) -> void:
 		_room_view.process_mode = Node.PROCESS_MODE_DISABLED
 	# No rule breaks, and no Auditor comes, once the run is over.
 	_rules.process_mode = Node.PROCESS_MODE_DISABLED
+	# His fall plays out before the message (no wait without a death strip, and none in script runs,
+	# the full loop or tests).
+	if player != null and player.run.health.is_dead() and not MusicPlayer.is_quiet() and not RunMode.is_script_run():
+		var fall := player.death_anim_time()
+		if fall > 0.0:
+			await get_tree().create_timer(fall).timeout
 	if not _scene_before_message.is_empty():
 		await _play_cutscene(_scene_before_message, _scene_first_time)
 		_cutscene.queue_free()
