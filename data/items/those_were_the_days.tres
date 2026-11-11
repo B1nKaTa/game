@@ -16,3 +16,4 @@ tags = PackedStringArray("memory")
 build = "memory"
 kind = "passive"
 effect = SubResource("Effect")
+first_clear_path = "sunset_shores"

@@ -12,4 +12,4 @@ floor_boss = false
 pension = 160
 condolences = 10
 extra_kind = "item"
-extra_id = "gravity_boots"
+extra_id = "parrot"

@@ -12,3 +12,4 @@ tags = PackedStringArray("thermos")
 build = "thermos"
 kind = "passive"
 throws_thermos = true
+from_bounty = true

@@ -16,3 +16,4 @@ tags = PackedStringArray("pills")
 build = "pills"
 kind = "passive"
 effect = SubResource("Effect")
+craft_price = 350

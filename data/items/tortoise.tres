@@ -18,3 +18,4 @@ tags = PackedStringArray("pets")
 build = "pets"
 kind = "pet"
 effect = SubResource("Effect")
+first_clear_path = "last_resort_cruise"

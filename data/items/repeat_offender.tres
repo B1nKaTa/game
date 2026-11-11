@@ -16,3 +16,4 @@ tags = PackedStringArray("rules")
 build = "rules"
 kind = "passive"
 effect = SubResource("Effect")
+first_clear_path = "head_office"

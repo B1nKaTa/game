@@ -217,7 +217,7 @@ func test_a_checkpoint_on_a_retired_path_resumes_at_the_start_of_the_new_floor()
 
 
 func test_a_resumed_run_on_the_new_path_keeps_its_items_pills_and_money() -> void:
-	var cases := {ON_MALL: [["bifocals", "coupon_booklet"], 3, 5, 333], ON_GOLF: [["bifocals", "alert_bracelet", "brass_topper"], 4, 6, 512]}
+	var cases := {ON_MALL: [["bifocals", "coupon_booklet"], 3, 5, 333], ON_GOLF: [["bifocals", "hospital_bracelet", "brass_topper"], 4, 6, 512]}
 	for path in cases:
 		var resume := _checkpoint(path)
 		var want: Array = cases[path]

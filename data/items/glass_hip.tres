@@ -19,3 +19,4 @@ kind = "passive"
 move_speed_bonus = 0.3
 swing_speed_bonus = 0.3
 effect = SubResource("Effect")
+first_clear_path = "terminal_zero"

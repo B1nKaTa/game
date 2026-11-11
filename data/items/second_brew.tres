@@ -16,3 +16,4 @@ tags = PackedStringArray("thermos")
 build = "thermos"
 kind = "passive"
 effect = SubResource("Effect")
+first_clear_path = "furnace_works"

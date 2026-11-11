@@ -60,16 +60,6 @@ func test_every_batch_text_is_two_sentences_and_has_a_coach_tip() -> void:
 	assert_true(ItemKit.item("squeaky_shoes").description.contains("but"), "the curse says its drawback")
 
 
-func test_lorraines_poster_pays_the_gravity_boots_and_her_hat_is_sold() -> void:
-	var poster: BountyDef
-	for def in BountyBoard.all():
-		if def.id == "lorraine":
-			poster = def
-	assert_eq(poster.extra_kind, BountyDef.EXTRA_ITEM)
-	assert_eq(poster.extra_id, "gravity_boots")
-	assert_true(CosmeticDef.find("captains_hat", CosmeticDef.all()).is_sold(), "the hat moved to the Decor Office")
-
-
 func test_afterimage_draws_ordinary_enemies_and_lets_them_go() -> void:
 	var kit := ItemKit.new()
 	var run := kit.run_with(["afterimage"])

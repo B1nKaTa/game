@@ -17,3 +17,4 @@ build = "any"
 kind = "active"
 charge_rooms = 6
 effect = SubResource("Effect")
+from_bounty = true

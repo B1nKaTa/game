@@ -16,3 +16,4 @@ tags = PackedStringArray("slip")
 build = "slip"
 kind = "passive"
 effect = SubResource("Effect")
+craft_price = 350

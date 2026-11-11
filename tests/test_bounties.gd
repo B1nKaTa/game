@@ -91,7 +91,7 @@ func test_beating_the_boss_then_collecting_pays_and_retires() -> void:
 	assert_eq(paid["pension"], 40)
 	assert_eq(data.pension, 40)
 	assert_eq(data.condolences, ProgressData.FIRST_MINI_BOSS_CONDOLENCES + 10)
-	assert_true(data.has_recipe("support_stockings"))
+	assert_true(data.has_recipe("filing_cabinet"))
 	assert_eq(data.bounty_taken, "")
 	assert_false(BountyBoard.can_take(poster, data), "retired for good")
 	assert_false(BountyBoard.posters(BountyBoard.all(), _floors(), data).has(poster))
@@ -124,7 +124,7 @@ func test_beating_another_boss_does_not_win_the_poster() -> void:
 
 func test_a_recipe_already_found_pays_half_again_instead() -> void:
 	var data := ProgressData.new()
-	data.find_recipe("support_stockings")
+	data.find_recipe("filing_cabinet")
 	var poster := _poster("senior_adjuster")
 	BountyBoard.take(poster, data)
 	data.record_boss_beaten("senior_adjuster", false)
@@ -140,7 +140,7 @@ func test_collecting_an_item_poster_unlocks_the_item() -> void:
 	data.record_boss_beaten("tired_undertaker", true)
 	var paid := BountyBoard.collect(poster, data)
 	assert_true(paid["extra_was_new"])
-	assert_true(data.is_unlocked("undertakers_gloves"))
+	assert_true(data.is_unlocked("pet_cemetery_plot"))
 
 
 func test_collecting_a_cosmetic_poster_owns_the_cosmetic() -> void:
@@ -172,17 +172,17 @@ func test_a_poster_retired_before_it_paid_an_item_gives_the_item_on_load() -> vo
 	assert_true(BountyBoard.grant_retired_items(BountyBoard.all(), data))
 	assert_true(data.is_unlocked("reapers_scythe"))
 	assert_true(data.cosmetics_owned.has("reaper_hood"), "the hood he won stays his")
-	assert_false(data.is_unlocked("support_stockings"), "a recipe poster unlocks nothing by itself")
+	assert_false(data.is_unlocked("filing_cabinet"), "a recipe poster unlocks nothing by itself")
 	assert_false(BountyBoard.grant_retired_items(BountyBoard.all(), data), "once only")
 	var progress := FileAccess.get_file_as_string("res://scripts/autoload/progress.gd")
 	assert_true(progress.contains("BountyBoard.grant_retired_items(BountyBoard.all(), data)"), "every load checks")
 
 
 func test_a_won_item_joins_the_pool_only_once_won() -> void:
-	var gloves: ItemDef = load("res://data/items/undertakers_gloves.tres")
+	var gloves: ItemDef = load("res://data/items/pet_cemetery_plot.tres")
 	var run := _run()
 	assert_false(run.can_offer(gloves))
-	run.unlocked_items = {"undertakers_gloves": true}
+	run.unlocked_items = {"pet_cemetery_plot": true}
 	assert_true(run.can_offer(gloves))
 
 
@@ -209,7 +209,7 @@ func test_each_poster_button_says_what_it_does() -> void:
 
 
 func test_the_paid_notice_names_the_extra() -> void:
-	var paid := {"pension": 40, "condolences": 10, "extra_kind": BountyDef.EXTRA_RECIPE, "extra_id": "support_stockings", "extra_was_new": true}
+	var paid := {"pension": 40, "condolences": 10, "extra_kind": BountyDef.EXTRA_RECIPE, "extra_id": "filing_cabinet", "extra_was_new": true}
 	assert_eq(BountyPanel.paid_text(_poster("senior_adjuster"), paid), "Paid: 40 Pension, 10 Condolences, and a recipe for Agnes")
 
 
@@ -255,10 +255,10 @@ func test_progress_drops_an_unknown_poster_on_load() -> void:
 # Mini bosses' posters pay a look and floor bosses' an item or a recipe, on the deep floors as above.
 func test_the_deep_floors_posters_pay_what_the_spec_says() -> void:
 	var wanted := {
-		"lorraine": "gravity_boots", "commodore_wellington": "life_jacket",
-		"celestine": "lawyers_card", "madame_zara": "lucky_tee",
-		"sergeant_wanda": "complaint_form", "augustine": "neck_pillow",
-		"doreen": "bureaucrats_stamp", "chairman_of_the_board": "golden_parachute",
+		"lorraine": "parrot", "commodore_wellington": "life_jacket",
+		"celestine": "sheepdog", "madame_zara": "heart_monitor",
+		"sergeant_wanda": "complaint_form", "augustine": "photocopier",
+		"doreen": "bureaucrats_stamp", "chairman_of_the_board": "money_belt",
 	}
 	# These mini bosses' posters pay an item now, and the looks they paid moved to the Decor Office.
 	var item_posters := ["lorraine", "celestine", "sergeant_wanda", "doreen"]

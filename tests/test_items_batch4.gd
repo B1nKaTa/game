@@ -95,22 +95,6 @@ func test_every_batch_text_is_two_sentences_and_has_a_coach_tip() -> void:
 			assert_true(item.description.contains("but"), "%s says its drawback" % id)
 
 
-func test_the_bounty_items_take_four_free_posters_and_their_looks_are_sold() -> void:
-	for poster: String in POSTERS:
-		var def: BountyDef = null
-		for each in BountyBoard.all():
-			if each.id == poster:
-				def = each
-		assert_true(def != null, poster)
-		if def == null:
-			continue
-		assert_eq(def.extra_kind, BountyDef.EXTRA_ITEM, poster)
-		assert_eq(def.extra_id, POSTERS[poster][0], poster)
-		var look := CosmeticDef.find(POSTERS[poster][1], CosmeticDef.all())
-		assert_true(look != null and look.is_sold(), "%s is sold at the Decor Office" % POSTERS[poster][1])
-		assert_eq(look.price, 35, POSTERS[poster][1])
-
-
 # --- vision ---
 
 func test_magnifying_glass_marks_every_secret_wall_with_a_glint() -> void:

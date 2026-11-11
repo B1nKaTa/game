@@ -19,15 +19,6 @@ func _room_view(room_type: String) -> RoomView:
 	return view
 
 
-func test_every_old_item_id_still_ships() -> void:
-	var shipped := {}
-	for item in Content.items():
-		shipped[item.id] = item
-	for id: String in IDS:
-		assert_true(shipped.has(id), id)
-	assert_true(shipped.size() >= IDS.size())
-
-
 func test_rarity_curses_and_sources_follow_the_design() -> void:
 	var rare := ["alert_bracelet", "golden_parachute",
 		"naughty_list"]

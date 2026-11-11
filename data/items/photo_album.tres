@@ -12,3 +12,4 @@ tags = PackedStringArray("memory")
 build = "memory"
 kind = "passive"
 extra_reels = 1
+first_clear_path = "flashback_cinema"

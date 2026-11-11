@@ -12,4 +12,4 @@ floor_boss = true
 pension = 100
 condolences = 20
 extra_kind = "item"
-extra_id = "undertakers_gloves"
+extra_id = "pet_cemetery_plot"

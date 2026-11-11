@@ -12,3 +12,4 @@ tags = PackedStringArray("memory")
 build = "memory"
 kind = "passive"
 extra_era_rooms = 1
+from_bounty = true

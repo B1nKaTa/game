@@ -16,3 +16,4 @@ tags = PackedStringArray("pets")
 build = "pets"
 kind = "passive"
 effect = SubResource("Effect")
+from_bounty = true

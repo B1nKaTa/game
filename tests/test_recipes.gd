@@ -32,9 +32,9 @@ func test_shipped_recipe_items_have_prices_and_base_items_do_not() -> void:
 		assert_true(item.needs_recipe(), item.id)
 	var base := 0
 	for item in Content.items():
-		if not item.needs_recipe() and not item.from_bounty:
+		if not item.needs_recipe() and not item.from_bounty and item.first_clear_path.is_empty():
 			base += 1
-	assert_true(base >= 47, "the open items")
+	assert_eq(base, 47)
 
 
 func test_recipe_items_stay_out_of_rotation_until_crafted() -> void:

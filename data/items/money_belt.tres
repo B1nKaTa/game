@@ -16,3 +16,4 @@ tags = PackedStringArray("pension")
 build = "pension"
 kind = "passive"
 effect = SubResource("Effect")
+craft_price = 350
