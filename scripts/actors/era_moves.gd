@@ -40,7 +40,8 @@ static func for_era(id: String) -> EraMoves:
 		Eras.BUS:
 			# One heavy ticket-punch: 25 over a 0.42 s lock = 60/s on paper, under the cane's 63/s, since in
 			# play every self swings about once a second between approaches and dodges, so weight per
-			# swing, not the lock, sets his pace (bot v12, tuned to about 15% above old Harold in play).
+			# swing, not the lock, sets his pace (bot v12 read about 15% above old Harold in play; the
+			# 2026-11-11 batches, pooled over 12, read +26%).
 			moves.combo_damage = [25.0]
 			moves.reach = 46.0
 			moves.angle = 50.0
@@ -68,9 +69,11 @@ static func for_era(id: String) -> EraMoves:
 			moves.throw_cooldown = DISC_COOLDOWN
 		Eras.ALLOTMENT:
 			# A slow, strong spade thrust well past the cane: 30 over a 0.5 s lock = 60/s on paper. Bot,
-			# 2026-11-11 ("max good 40 0 1 eras"): +32% to +36% over old Harold in play at every setting
-			# tried (damage 30, 26, 22 at lock 0.5; 26 at lock 0.8 and 1.0), so damage and lock do not move
-			# it; its reach probably sets its pace. Left as designed; pulling it to +15% needs a shorter reach.
+			# 2026-11-11 ("max good 40 0 1 eras"): +30% to +36% over old Harold in play at every setting
+			# tried (damage 30, 26, 22 at lock 0.5; 26 at lock 0.8 and 1.0). The bot's reading is room health
+			# over clear time, so it does not move with damage or lock once two hits kill; its reach probably
+			# sets its pace. These numbers are a choice, not a calibration: the spade's real edge over old
+			# Harold is unmeasured and wants a person's feel test (a shorter reach is the lever not yet tried).
 			moves.combo_damage = [30.0]
 			moves.reach = 64.0
 			moves.angle = 15.0
