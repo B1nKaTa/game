@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="SetDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/set_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "set_penny_pincher"
+display_name = "Penny Pincher"
+description = "With 3 Pension items: Pension flies to you from anywhere in the room, and shops are 15% cheaper."
+build = "pension"
+coin_reach_bonus = 20.0
+shop_discount = 0.15

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SetDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/set_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/set_daredevil.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "set_daredevil"
+display_name = "Daredevil"
+description = "With 3 risk items: every kill heals half a pill, once a room."
+build = "risk"
+effect = SubResource("Effect")

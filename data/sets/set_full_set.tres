@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="SetDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/set_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "set_full_set"
+display_name = "Full Set"
+description = "With 3 dentures items: throw a second set every time."
+build = "bite"
+bonus_teeth_sets = 1

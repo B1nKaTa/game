@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SetDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/set_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/set_civil_servant.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "set_civil_servant"
+display_name = "Civil Servant"
+description = "With 3 Slip items: every fight room cleared has a 1 in 3 chance to drop a Slip."
+build = "slip"
+effect = SubResource("Effect")
