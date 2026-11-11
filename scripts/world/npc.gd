@@ -143,6 +143,7 @@ func _process(delta: float) -> void:
 			_actor_look.queue_redraw()
 	_near = NpcTalk.answers(_feet().distance_to(global_position), TALK_RADIUS, _rival_distances())
 	if _near and Input.is_action_just_pressed("interact"):
+		FirstRunTips.interacted(self)
 		talk()
 
 

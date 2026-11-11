@@ -17,8 +17,7 @@ const THERMOS := "thermos"
 const USE_ITEM := "use_item"
 const MAP := "map"
 # The first that applies shows. The rule and the reel come first: they are over soon.
-const ORDER: Array[String] = [RULE, REEL, MOVE, SWING, DODGE, THROW, CHARGE, POTION, USE_ITEM, INTERACT, THERMOS, MAP]
-const CHARGE_AFTER_SWINGS := 4
+const ORDER: Array[String] = [RULE, REEL, MOVE, SWING, DODGE, CHARGE, THROW, POTION, USE_ITEM, INTERACT, THERMOS, MAP]
 const QUIET_ROOMS: Array[String] = [RoomLayout.TYPE_ITEM, RoomLayout.TYPE_SHOP, RoomLayout.TYPE_TREASURE]
 # The button each tip names ("" for none; MOVE names the four walk keys).
 const ACTIONS := {
@@ -28,24 +27,27 @@ const ACTIONS := {
 const TEXTS := {
 	RULE: "Keep the room's rule for a film reel. Break it and the Auditor comes.",
 	REEL: "At a door to a new fight: relive a memory.",
-	MOVE: "Walk",
+	MOVE: "Walk around the room.",
 	SWING: "Swing the cane. Three swings make a combo.",
 	DODGE: "Dodge. It's not running away. It's tactical.",
 	THROW: "Throw the teeth. They come back. Usually.",
 	CHARGE: "Hold to charge a big swing.",
 	POTION: "Drink your potion.",
-	USE_ITEM: "Use your item",
+	USE_ITEM: "Use the item in your top slot.",
 	INTERACT: "Pick up, open, talk.",
 	THERMOS: "Put down a Thermos. It blows up rocks and cracked walls.",
 	MAP: "Open the map.",
 }
 const PAD_MOVE := "Left stick"
+# The running TipCoach's note_done, set by it; empty when none runs (so the hooks cost nothing).
+static var listener := Callable()
 
 
 # facts: fighting, room_type, rule_on, announcing, has_reel, has_potion, has_active, hurt, has_bomb, swings, cleared_one.
-static func next_tip(done: Dictionary, facts: Dictionary) -> String:
+# skipped: tips given up for this run (shown long enough, not done); they count as passed over.
+static func next_tip(done: Dictionary, facts: Dictionary, skipped := {}) -> String:
 	for id in ORDER:
-		if not done.has(id) and _applies(id, done, facts):
+		if not done.has(id) and not skipped.has(id) and _applies(id, done.merged(skipped), facts):
 			return id
 	return ""
 
@@ -66,7 +68,7 @@ static func _applies(id: String, done: Dictionary, facts: Dictionary) -> bool:
 		THROW:
 			return fighting and done.has(DODGE)
 		CHARGE:
-			return fighting and int(facts.get("swings", 0)) >= CHARGE_AFTER_SWINGS
+			return fighting and done.has(SWING)
 		POTION:
 			return facts.get("has_potion", false) and facts.get("hurt", false)
 		USE_ITEM:
@@ -84,6 +86,13 @@ static func _applies(id: String, done: Dictionary, facts: Dictionary) -> bool:
 # full loop) whose save still has tips left.
 static func should_coach(dev_run: bool, done_count: int, script_run: bool, smoke: bool) -> bool:
 	return not dev_run and not script_run and not smoke and done_count < ORDER.size()
+
+
+# Tells the coach, if one is running, that he really took, opened or talked to something (not that he
+# pressed the key at nothing). Called by the pickup, chest, NPC, key door and Arcade table.
+static func interacted(_from: Node) -> void:
+	if listener.is_valid():
+		listener.call(INTERACT)
 
 
 # The line for a tip, naming the bound key or pad button as every prompt does.

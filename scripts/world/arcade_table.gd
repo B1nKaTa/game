@@ -92,6 +92,7 @@ func _process(_delta: float) -> void:
 		return
 	_near = global_position.distance_to(_feet.global_position) <= USE_RADIUS
 	if _near and plays_left > 0 and Input.is_action_just_pressed("interact"):
+		FirstRunTips.interacted(self)
 		play_wanted.emit(game)
 
 

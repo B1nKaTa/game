@@ -139,6 +139,7 @@ func _process(delta: float) -> void:
 	if Input.is_action_just_pressed("interact") and can_spend_key(requires_key, locked, _near, _player_has_key()):
 		requires_key = false
 		key_spent.emit()
+		FirstRunTips.interacted(self)
 		return
 	if should_enter(locked, requires_key, _used, _armed, _near, chained):
 		_used = true

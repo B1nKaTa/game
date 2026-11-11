@@ -2,11 +2,18 @@ class_name TipCoach
 extends Node
 
 # Shows the first run's control tips (FirstRunTips) on the HUD and marks each done the moment he does
-# the thing, whether or not its tip was showing. Polls map and interact in _process, since the full loop
-# presses actions without events.
+# the thing, whether or not its tip was showing. A tip that stays on screen too long is given up for
+# this run (never saved, so it comes back next run), so it cannot starve the tips behind it; a tip
+# shown stays at least MIN_SHOW_TIME before another replaces it.
 
 const MOVE_TIME := 0.6
 const MOVING_SPEED := 4.0
+# Shown seconds after which a tip is passed over for the rest of the run.
+const GIVE_UP_TIME := 12.0
+const MIN_SHOW_TIME := 2.5
+# Swings this far apart (the combo's lock plus its window, with slack) still count as one combo.
+const COMBO_GAP := 0.9
+const COMBO_SWINGS := 3
 
 # Set by FloorScene to Progress.mark_tip_done; empty in tests, so nothing is saved.
 var mark := Callable()
@@ -17,11 +24,25 @@ var _run: RunState
 var _rules: RuleKeeper
 var _view: RoomView
 var _room_type := ""
-var _swings := 0
+var _combo_swings := 0
+var _since_swing := 0.0
 var _moved := 0.0
 var _cleared_one := false
-var _was_fighting := false
 var _shown := ""
+var _shown_time := 0.0
+# Tips given up this run. Not saved.
+var _skipped: Dictionary = {}
+
+
+# FirstRunTips.interacted reaches note_done while this node lives, when he really takes, opens or talks
+# to something.
+func _enter_tree() -> void:
+	FirstRunTips.listener = note_done
+
+
+func _exit_tree() -> void:
+	if FirstRunTips.listener == note_done:
+		FirstRunTips.listener = Callable()
 
 
 func setup(player: Player, hud: Hud, run: RunState, rules: RuleKeeper) -> void:
@@ -44,6 +65,15 @@ func setup(player: Player, hud: Hud, run: RunState, rules: RuleKeeper) -> void:
 func set_room(view: RoomView, room_type: String) -> void:
 	_view = view
 	_room_type = room_type
+	# A fight counts as cleared when its room finishes, not when the fight merely pauses between waves
+	# or he leaves the room.
+	if view != null and not view.finished.is_connected(_on_room_finished):
+		view.finished.connect(_on_room_finished)
+
+
+# The big map: its opening is the MAP tip's thing done.
+func watch_map(view: FloorMapView) -> void:
+	view.opened_changed.connect(_on_map_changed)
 
 
 func note_done(id: String) -> void:
@@ -57,9 +87,15 @@ func note_done(id: String) -> void:
 		_hud.clear_tip()
 
 
+func is_skipped(id: String) -> bool:
+	return _skipped.has(id)
+
+
 func _on_swing() -> void:
-	_swings += 1
-	note_done(FirstRunTips.SWING)
+	_since_swing = 0.0
+	_combo_swings += 1
+	if _combo_swings >= COMBO_SWINGS:
+		note_done(FirstRunTips.SWING)
 
 
 func _on_swing_ended(heavy: bool, _finisher: bool) -> void:
@@ -88,20 +124,29 @@ func _on_era(_era: String) -> void:
 	note_done(FirstRunTips.REEL)
 
 
+func _on_room_finished() -> void:
+	_cleared_one = true
+
+
+func _on_map_changed(is_open: bool) -> void:
+	if is_open:
+		note_done(FirstRunTips.MAP)
+
+
 func facts() -> Dictionary:
 	var fighting := _view != null and is_instance_valid(_view) and _view.is_fighting()
 	var watch: RuleWatch = _rules.watch_of(_rules.current_id) if _rules != null else null
 	return {
 		"fighting": fighting,
 		"room_type": _room_type,
-		"rule_on": watch != null and watch.is_open() and fighting,
+		# Only an unbroken rule: once it is broken the Auditor is already there.
+		"rule_on": watch != null and watch.state == RuleWatch.State.ACTIVE and fighting,
 		"announcing": _hud != null and _hud.rule_announcing(),
 		"has_reel": _run != null and not _run.held_reel.is_empty(),
 		"has_potion": _run != null and _run.potion != null,
 		"has_active": _run != null and _run.active != null,
 		"hurt": _run != null and _run.health.pills < _run.health.max_pills,
 		"has_bomb": _run != null and _run.bombs > 0,
-		"swings": _swings,
 		"cleared_one": _cleared_one,
 	}
 
@@ -118,19 +163,26 @@ func _process(delta: float) -> void:
 		_moved += delta
 		if _moved >= MOVE_TIME:
 			note_done(FirstRunTips.MOVE)
-	if Input.is_action_just_pressed("map"):
-		note_done(FirstRunTips.MAP)
-	if Input.is_action_just_pressed("interact"):
-		note_done(FirstRunTips.INTERACT)
+	_since_swing += delta
+	if _since_swing > COMBO_GAP:
+		_combo_swings = 0
 	var now := facts()
-	var fighting: bool = now["fighting"]
-	if _was_fighting and not fighting:
-		_cleared_one = true
-	_was_fighting = fighting
 	# The rule tip is done once the room it was shown in stops posting its rule.
 	if _shown == FirstRunTips.RULE and not now["rule_on"] and not now["announcing"]:
 		note_done(FirstRunTips.RULE)
-	var next := FirstRunTips.next_tip(done, now)
+	if not _shown.is_empty():
+		_shown_time += delta
+		if _shown_time >= GIVE_UP_TIME:
+			_skipped[_shown] = true
+			_shown = ""
+	var next := FirstRunTips.next_tip(done, now, _skipped)
+	# A line on screen stays its minimum time even if its moment has passed.
+	if next != _shown and not _shown.is_empty() and _shown_time < MIN_SHOW_TIME:
+		next = _shown
 	if next != _shown:
 		_shown = next
-		_hud.show_tip(FirstRunTips.text_for(next, ActiveDevice.using_pad, ActiveDevice.family) if not next.is_empty() else "")
+		_shown_time = 0.0
+	# Built every frame, so a switch of device or a rebinding changes the words at once.
+	var text := FirstRunTips.text_for(_shown, ActiveDevice.using_pad, ActiveDevice.family) if not _shown.is_empty() else ""
+	if text != _hud.tip_text():
+		_hud.show_tip(text)

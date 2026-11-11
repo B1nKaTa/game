@@ -135,6 +135,8 @@ func _process(delta: float) -> void:
 		_prompt_label = KeyBindings.prompt_label("interact")
 		queue_redraw()
 	if should_collect(requires_interact, in_range, Input.is_action_just_pressed("interact")):
+		if requires_interact:
+			FirstRunTips.interacted(self)
 		collect()
 
 

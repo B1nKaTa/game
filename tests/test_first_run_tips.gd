@@ -12,16 +12,33 @@ func test_the_first_tip_is_walking() -> void:
 	assert_eq(FirstRunTips.next_tip({}, _facts()), FirstRunTips.MOVE)
 
 
-func test_a_fight_teaches_swing_then_dodge_then_throw() -> void:
+func test_a_fight_teaches_swing_then_dodge_then_charge_then_throw() -> void:
 	var done := {FirstRunTips.MOVE: true}
 	assert_eq(FirstRunTips.next_tip(done, _facts({"fighting": true})), FirstRunTips.SWING)
 	done[FirstRunTips.SWING] = true
 	assert_eq(FirstRunTips.next_tip(done, _facts({"fighting": true})), FirstRunTips.DODGE)
 	done[FirstRunTips.DODGE] = true
+	assert_eq(FirstRunTips.next_tip(done, _facts({"fighting": true})), FirstRunTips.CHARGE)
+	done[FirstRunTips.CHARGE] = true
 	assert_eq(FirstRunTips.next_tip(done, _facts({"fighting": true})), FirstRunTips.THROW)
 	done[FirstRunTips.THROW] = true
-	assert_eq(FirstRunTips.next_tip(done, _facts({"fighting": true, "swings": 3})), "", "charge waits for a few swings")
-	assert_eq(FirstRunTips.next_tip(done, _facts({"fighting": true, "swings": 4})), FirstRunTips.CHARGE)
+	assert_eq(FirstRunTips.next_tip(done, _facts({"fighting": true})), "")
+
+
+func test_charge_shows_without_the_throw_done() -> void:
+	var done := {FirstRunTips.MOVE: true, FirstRunTips.SWING: true, FirstRunTips.DODGE: true}
+	assert_false(done.has(FirstRunTips.THROW))
+	assert_eq(FirstRunTips.next_tip(done, _facts({"fighting": true})), FirstRunTips.CHARGE)
+
+
+func test_a_skipped_tip_is_passed_over_and_the_next_shows() -> void:
+	var done := {FirstRunTips.MOVE: true}
+	var skipped := {FirstRunTips.SWING: true}
+	assert_eq(FirstRunTips.next_tip(done, _facts({"fighting": true}), skipped), FirstRunTips.DODGE, "the next in the chain follows a given-up swing tip")
+	skipped[FirstRunTips.DODGE] = true
+	assert_eq(FirstRunTips.next_tip(done, _facts({"fighting": true}), skipped), FirstRunTips.CHARGE)
+	skipped[FirstRunTips.CHARGE] = true
+	assert_eq(FirstRunTips.next_tip(done, _facts({"fighting": true}), skipped), FirstRunTips.THROW)
 
 
 func test_the_rule_and_the_reel_come_first_when_they_happen() -> void:
@@ -61,7 +78,7 @@ func test_every_tip_has_text_naming_its_key() -> void:
 		var action: String = FirstRunTips.ACTIONS.get(id, "")
 		if not action.is_empty():
 			assert_true(text.begins_with(KeyBindings.label_for(action) + ": "), "%s: %s" % [id, text])
-	assert_true(FirstRunTips.text_for(FirstRunTips.MOVE, false, "").ends_with(": Walk"))
+	assert_true(FirstRunTips.text_for(FirstRunTips.MOVE, false, "").ends_with(": Walk around the room."))
 
 
 func test_a_new_save_has_no_tips_done_and_an_old_one_has_them_all() -> void:
@@ -125,7 +142,7 @@ func test_a_held_active_gets_a_use_tip_that_waits_for_it() -> void:
 		basics[id] = true
 	assert_eq(FirstRunTips.next_tip(basics, _facts()), "", "no active, no tip")
 	assert_eq(FirstRunTips.next_tip(basics, _facts({"has_active": true})), FirstRunTips.USE_ITEM)
-	assert_true(FirstRunTips.text_for(FirstRunTips.USE_ITEM, false, "").ends_with(": Use your item"))
+	assert_true(FirstRunTips.text_for(FirstRunTips.USE_ITEM, false, "").ends_with(": Use the item in your top slot."))
 	assert_eq(FirstRunTips.ACTIONS[FirstRunTips.USE_ITEM], "use_item")
 
 
@@ -220,6 +237,24 @@ func assert_ne_text(a: String, b: String) -> void:
 	assert_false(a == b, "the two hints differ")
 
 
+# OptionsPanel names the Progress autoload, so tests cannot build it; its button calls Progress.reset_tips,
+# which this runs on a Progress of its own with a test save file.
+func test_the_options_button_reaches_a_progress_that_clears_and_saves() -> void:
+	var path := "user://test_tips_save.json"
+	var store := SaveStore.new(path)
+	store.delete_all()
+	var progress: Node = load("res://scripts/autoload/progress.gd").new()
+	progress._store = store
+	progress.data = ProgressData.new()
+	progress.mark_tip_done(FirstRunTips.DODGE)
+	assert_true(store.load_progress().tips_done.has(FirstRunTips.DODGE), "saved the moment it is done")
+	progress.reset_tips()
+	assert_true(progress.data.tips_done.is_empty())
+	assert_true(store.load_progress().tips_done.is_empty(), "and the reset is saved")
+	store.delete_all()
+	progress.free()
+
+
 func test_the_options_panel_has_the_tips_button() -> void:
 	var source := FileAccess.get_file_as_string("res://scripts/ui/options_panel.gd")
 	assert_true(source.contains("tr(SHOW_TIPS_TEXT)") and source.contains("Progress.reset_tips()") and source.contains("tr(TIPS_RESET_TEXT)"))
@@ -242,3 +277,192 @@ func test_the_coach_goes_quiet_when_the_run_ends() -> void:
 	coach.free()
 	player.free()
 	hud.free()
+
+
+# A coach on a real player, HUD, room and rule keeper, with the marked ids collected in "marked".
+func _rig() -> Dictionary:
+	InputSetup.ensure()
+	ActiveDevice.reset()
+	var run := ItemKit.new().make_run()
+	var hud := Hud.new()
+	hud.setup(run)
+	hud._ready()
+	var player := Player.new()
+	player.setup(run)
+	var view := RoomView.new()
+	var rules := RuleKeeper.new()
+	var coach := TipCoach.new()
+	var marked: Array[String] = []
+	coach.mark = func(id: String) -> void: marked.append(id)
+	coach.setup(player, hud, run, rules)
+	coach.set_room(view, RoomLayout.TYPE_COMBAT)
+	return {"coach": coach, "hud": hud, "player": player, "view": view, "rules": rules, "marked": marked, "run": run}
+
+
+func _free_rig(rig: Dictionary) -> void:
+	ActiveDevice.reset()
+	for key in ["coach", "hud", "player", "view", "rules"]:
+		rig[key].free()
+
+
+func _run_for(coach: TipCoach, seconds: float) -> void:
+	for i in int(seconds):
+		coach._process(1.0)
+
+
+func test_a_tip_shown_too_long_is_given_up_for_the_run_and_not_saved() -> void:
+	var rig := _rig()
+	var coach: TipCoach = rig["coach"]
+	var hud: Hud = rig["hud"]
+	var marked: Array[String] = rig["marked"]
+	rig["view"]._alive = 1
+	coach._process(0.1)
+	assert_eq(hud.tip_text(), FirstRunTips.text_for(FirstRunTips.MOVE, false, ""))
+	_run_for(coach, TipCoach.GIVE_UP_TIME - 1.0)
+	assert_eq(hud.tip_text(), FirstRunTips.text_for(FirstRunTips.MOVE, false, ""), "still up just before the limit")
+	_run_for(coach, 2.0)
+	assert_true(coach.is_skipped(FirstRunTips.MOVE))
+	assert_false(coach.done.has(FirstRunTips.MOVE), "given up is not done")
+	assert_true(marked.is_empty(), "and nothing is saved")
+	assert_eq(hud.tip_text(), FirstRunTips.text_for(FirstRunTips.SWING, false, ""), "the next tip shows")
+	_free_rig(rig)
+
+
+func test_a_tip_stays_its_minimum_time_before_another_replaces_it() -> void:
+	var rig := _rig()
+	var coach: TipCoach = rig["coach"]
+	var hud: Hud = rig["hud"]
+	coach._process(0.1)
+	var move := FirstRunTips.text_for(FirstRunTips.MOVE, false, "")
+	assert_eq(hud.tip_text(), move)
+	var keeper: RuleKeeper = rig["rules"]
+	keeper.set_watch(0, RuleWatch.new("x"))
+	keeper.current_id = 0
+	rig["view"]._alive = 1
+	coach._process(0.1)
+	assert_eq(hud.tip_text(), move, "the rule tip waits for the minimum time")
+	coach._process(TipCoach.MIN_SHOW_TIME)
+	assert_eq(hud.tip_text(), FirstRunTips.text_for(FirstRunTips.RULE, false, ""))
+	_free_rig(rig)
+
+
+func test_swing_is_done_on_the_third_swing_of_a_combo() -> void:
+	var rig := _rig()
+	var player: Player = rig["player"]
+	var marked: Array[String] = rig["marked"]
+	player.swing_started.emit()
+	player.swing_started.emit()
+	assert_true(marked.is_empty(), "two swings do not finish the combo tip")
+	player.swing_started.emit()
+	assert_eq(marked, [FirstRunTips.SWING] as Array[String])
+	_free_rig(rig)
+
+
+func test_slow_clicks_never_make_a_combo() -> void:
+	var rig := _rig()
+	var player: Player = rig["player"]
+	var coach: TipCoach = rig["coach"]
+	var marked: Array[String] = rig["marked"]
+	for i in 4:
+		player.swing_started.emit()
+		coach._process(TipCoach.COMBO_GAP + 0.1)
+	assert_true(marked.is_empty())
+	_free_rig(rig)
+
+
+func test_a_press_with_nothing_to_interact_with_marks_nothing() -> void:
+	var rig := _rig()
+	var coach: TipCoach = rig["coach"]
+	var marked: Array[String] = rig["marked"]
+	Input.action_press("interact")
+	coach._process(0.1)
+	Input.action_release("interact")
+	assert_false(marked.has(FirstRunTips.INTERACT))
+	_free_rig(rig)
+
+
+func test_a_real_interaction_marks_the_interact_tip() -> void:
+	var rig := _rig()
+	var coach: TipCoach = rig["coach"]
+	var marked: Array[String] = rig["marked"]
+	coach._enter_tree()
+	FirstRunTips.interacted(null)
+	coach._exit_tree()
+	FirstRunTips.interacted(null)
+	assert_eq(marked, [FirstRunTips.INTERACT] as Array[String])
+	_free_rig(rig)
+
+
+func test_opening_the_big_map_marks_the_map_tip() -> void:
+	var rig := _rig()
+	var coach: TipCoach = rig["coach"]
+	var marked: Array[String] = rig["marked"]
+	var map := FloorMapView.new()
+	coach.watch_map(map)
+	map.opened_changed.emit(false)
+	assert_true(marked.is_empty(), "closing is not opening")
+	map.opened_changed.emit(true)
+	assert_eq(marked, [FirstRunTips.MAP] as Array[String])
+	map.free()
+	_free_rig(rig)
+
+
+func test_a_fight_counts_as_cleared_only_when_its_room_finishes() -> void:
+	var rig := _rig()
+	var coach: TipCoach = rig["coach"]
+	var view: RoomView = rig["view"]
+	view._alive = 1
+	assert_true(coach.facts()["fighting"])
+	view._alive = 0
+	coach._process(0.1)
+	assert_false(coach.facts()["cleared_one"], "a gap between waves is no clear")
+	var other := RoomView.new()
+	view._alive = 1
+	coach._process(0.1)
+	coach.set_room(other, RoomLayout.TYPE_COMBAT)
+	coach._process(0.1)
+	assert_false(coach.facts()["cleared_one"], "leaving a room mid-fight is no clear")
+	other.finished.emit()
+	assert_true(coach.facts()["cleared_one"], "the room he is in finishing is a clear")
+	other.free()
+	_free_rig(rig)
+
+
+func test_the_rule_tip_is_done_when_the_rule_closes_and_never_shows_once_broken() -> void:
+	var rig := _rig()
+	var coach: TipCoach = rig["coach"]
+	var hud: Hud = rig["hud"]
+	var marked: Array[String] = rig["marked"]
+	var keeper: RuleKeeper = rig["rules"]
+	var watch := RuleWatch.new("x")
+	keeper.set_watch(0, watch)
+	keeper.current_id = 0
+	rig["view"]._alive = 1
+	coach._process(0.1)
+	assert_eq(hud.tip_text(), FirstRunTips.text_for(FirstRunTips.RULE, false, ""))
+	watch.finish()
+	coach._process(0.1)
+	assert_eq(marked, [FirstRunTips.RULE] as Array[String])
+	_free_rig(rig)
+	var again := _rig()
+	var broken := RuleWatch.new("x")
+	broken.state = RuleWatch.State.BROKEN
+	again["rules"].set_watch(0, broken)
+	again["rules"].current_id = 0
+	again["view"]._alive = 1
+	again["coach"]._process(0.1)
+	assert_false(again["coach"].facts()["rule_on"], "the Auditor is already there")
+	assert_ne_text(again["hud"].tip_text(), FirstRunTips.text_for(FirstRunTips.RULE, false, ""))
+	_free_rig(again)
+
+
+func test_the_tip_words_follow_the_device_in_use() -> void:
+	var rig := _rig()
+	var coach: TipCoach = rig["coach"]
+	var hud: Hud = rig["hud"]
+	coach._process(0.1)
+	assert_true(hud.tip_text().begins_with(KeyBindings.label_for("move_up")))
+	ActiveDevice.using_pad = true
+	coach._process(0.1)
+	assert_true(hud.tip_text().begins_with(FirstRunTips.PAD_MOVE), hud.tip_text())
+	_free_rig(rig)

@@ -168,6 +168,8 @@ func _ready() -> void:
 	_mini_map = _add_map_view(false)
 	_big_map = _add_map_view(true)
 	_big_map.opened_changed.connect(_on_big_map_changed)
+	if _tips != null:
+		_tips.watch_map(_big_map)
 	_big_map.combo_names = _run.effects.bonus_names()
 	# An item taken mid-floor can change what the maps show (Floor Plan, Fortune Teller's Card).
 	_run.changed.connect(_refresh_map_items)
