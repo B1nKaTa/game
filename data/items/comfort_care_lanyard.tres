@@ -6,9 +6,10 @@
 script = ExtResource("1")
 id = "comfort_care_lanyard"
 display_name = "Comfort Care Lanyard"
-description = "One more pill, and every heal gives one more. Visiting hours are over."
+description = "One more pill, and every heal gives one more."
 from_bounty = true
 rarity = "rare"
-tags = PackedStringArray("defence")
+tags = PackedStringArray("pills")
+build = "pills"
 bonus_pills = 1
 heal_bonus = 1

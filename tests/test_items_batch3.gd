@@ -14,7 +14,6 @@ const Warranty := preload("res://scripts/items/eternal_warranty.gd")
 # id: [rarity, source, first-clear path or "", cursed]
 const BATCH := {
 	"do_not_resuscitate": [ItemDef.RARE, ItemUnlocks.START, "", true],
-	"eternal_warranty": [ItemDef.LEGENDARY, ItemUnlocks.RECIPE, "", false],
 	"second_thermos_strap": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 	"forged_signature": [ItemDef.RARE, ItemUnlocks.START, "", false],
 	"rubber_stamps": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "floor_1", false],

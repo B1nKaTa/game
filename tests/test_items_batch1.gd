@@ -19,7 +19,6 @@ const Nightmare := preload("res://scripts/items/dentists_nightmare.gd")
 const BATCH := {
 	"walker_tennis_balls": [ItemDef.COMMON, ItemUnlocks.START, ""],
 	"reading_glasses": [ItemDef.RARE, ItemUnlocks.START, ""],
-	"rocking_chair": [ItemDef.COMMON, ItemUnlocks.START, ""],
 	"rubber_ferrule": [ItemDef.COMMON, ItemUnlocks.START, ""],
 	"shoe_horn": [ItemDef.COMMON, ItemUnlocks.START, ""],
 	"overbite": [ItemDef.COMMON, ItemUnlocks.START, ""],

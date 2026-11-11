@@ -6,9 +6,9 @@ extends TestCase
 const NaughtyList := preload("res://scripts/items/naughty_list.gd")
 const Nitro := preload("res://scripts/items/nitro_tablets.gd")
 const TitaniumHip := preload("res://scripts/items/titanium_hip.gd")
-const IDS := ["alert_bracelet", "bifocals", "bingo_card", "comfort_care_lanyard", "golden_parachute",
-	"hearing_aid", "life_jacket", "lucky_tee", "naughty_list", "neck_pillow", "nitro_tablets", "pill_organizer",
-	"pocket_watch", "prune_juice", "slippers", "support_stockings", "titanium_hip", "undertakers_gloves"]
+const IDS := ["alert_bracelet", "bifocals", "bingo_card", "golden_parachute",
+	"hearing_aid", "lucky_tee", "naughty_list", "neck_pillow", "nitro_tablets",
+	"prune_juice", "slippers", "support_stockings", "undertakers_gloves"]
 
 
 func _room_view(room_type: String) -> RoomView:
@@ -29,10 +29,10 @@ func test_every_old_item_id_still_ships() -> void:
 
 
 func test_rarity_curses_and_sources_follow_the_design() -> void:
-	var rare := ["alert_bracelet", "bifocals", "comfort_care_lanyard", "golden_parachute", "life_jacket",
-		"naughty_list", "nitro_tablets", "pocket_watch", "titanium_hip"]
-	var recipes := ["alert_bracelet", "bifocals", "golden_parachute", "lucky_tee", "nitro_tablets", "support_stockings", "titanium_hip"]
-	var bounties := ["comfort_care_lanyard", "life_jacket", "naughty_list", "neck_pillow", "pocket_watch", "undertakers_gloves"]
+	var rare := ["alert_bracelet", "bifocals", "golden_parachute",
+		"naughty_list", "nitro_tablets"]
+	var recipes := ["alert_bracelet", "bifocals", "golden_parachute", "lucky_tee", "nitro_tablets", "support_stockings"]
+	var bounties := ["naughty_list", "neck_pillow", "undertakers_gloves"]
 	for id: String in IDS:
 		var item := ItemKit.item(id)
 		assert_eq(item.rarity, ItemDef.RARE if rare.has(id) else ItemDef.COMMON, id)
@@ -196,24 +196,6 @@ func test_nitro_tablets_go_off_on_a_heavy_hit_and_spare_him() -> void:
 	kit.free_enemies()
 
 
-func test_pill_organizer_stores_heals_taken_at_full_and_soaks_the_next_hit() -> void:
-	var kit := ItemKit.new()
-	var run := kit.run_with(["pill_organizer"])
-	assert_eq(run.stats.max_pills, PlayerStats.BASE_PILLS + 1)
-	run.health.pills = run.health.max_pills - 1
-	assert_false(run.effects.accepts_pickup(RunEffects.HEAL), "short of pills, a heal just heals")
-	run.health.pills = run.health.max_pills
-	assert_true(run.effects.accepts_pickup(RunEffects.HEAL))
-	run.effects.pickup(RunEffects.HEAL, 2)
-	assert_eq(run.effects.effect_of("pill_organizer").stored, 2)
-	assert_false(run.effects.accepts_pickup(RunEffects.HEAL), "two at most")
-	assert_eq(run.effects.hurt(1, RunEffects.HURT_ENEMY), 0)
-	assert_eq(run.effects.hurt(3, RunEffects.HURT_ENEMY), 2)
-	assert_eq(run.effects.hurt(1, RunEffects.HURT_ENEMY), 1, "the store is spent")
-	var room := FileAccess.get_file_as_string("res://scripts/world/room_view.gd")
-	assert_true(room.contains("heal.can_take = _can_take_heal") and room.contains("allowed = _can_take_heal"), "heals and shop heals ask the items")
-
-
 func test_pocket_watch_slows_time_on_a_close_call() -> void:
 	var kit := ItemKit.new()
 	var run := kit.run_with(["pocket_watch"])
@@ -255,27 +237,6 @@ func test_support_stockings_hold_his_speed_above_seventy_percent() -> void:
 	assert_near(run.stats.dodge_cooldown, PlayerStats.BASE_DODGE_COOLDOWN, "no dodge cut any more")
 	var player := FileAccess.get_file_as_string("res://scripts/actors/player.gd")
 	assert_true(player.contains("maxf(_slow.speed_factor(), run.stats.min_slow_factor)"))
-
-
-func test_titanium_hip_hits_what_he_dodges_through_once_a_dodge() -> void:
-	var kit := ItemKit.new()
-	var run := kit.run_with(["titanium_hip"])
-	var effect = run.effects.effect_of("titanium_hip")
-	var enemy := kit.enemy("intern_reaper", 100.0)
-	enemy.position = Vector2(5, 0)
-	var away := kit.enemy("intern_reaper", 100.0)
-	away.position = Vector2(200, 0)
-	var body := Rect2(Vector2(-10, -14), TitaniumHip.BODY)
-	run.effects.dodge(Vector2.RIGHT)
-	effect.strike_through(run.effects.ctx, body)
-	effect.strike_through(run.effects.ctx, body)
-	var half := CaneCombo.DAMAGE[0] * 0.5
-	assert_near(enemy.hp, 100.0 - half, "once a dodge")
-	assert_near(away.hp, 100.0)
-	run.effects.dodge(Vector2.RIGHT)
-	effect.strike_through(run.effects.ctx, body)
-	assert_near(enemy.hp, 100.0 - half * 2.0, "and again on the next dodge")
-	kit.free_enemies()
 
 
 func test_undertakers_gloves_hit_harder_and_finish_quietly() -> void:

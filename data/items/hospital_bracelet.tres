@@ -6,7 +6,8 @@
 script = ExtResource("1")
 id = "hospital_bracelet"
 display_name = "Hospital Bracelet"
-description = "One more pill. It has your name on it, spelled nearly right."
+description = "One more pill."
 rarity = "common"
-tags = PackedStringArray("defence")
+tags = PackedStringArray("pills")
+build = "pills"
 bonus_pills = 1

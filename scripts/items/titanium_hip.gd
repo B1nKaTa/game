@@ -1,9 +1,9 @@
 extends ItemEffect
 
-# Titanium Hip: dodging through an enemy hits it for half a swing, once each a dodge, and walking past
+# Titanium Hip: dodging through an enemy hits it for a full plain swing, once each a dodge, and walking past
 # a queue barrier sets off its metal detector.
 
-const SHARE := 0.5
+const SHARE := 1.0
 # His body while he rolls, round his middle.
 const BODY := Vector2(20, 28)
 const DETECTOR_REACH := 20.0
@@ -28,7 +28,7 @@ func tick(ctx: EffectContext, _delta: float) -> void:
 	_check_detectors(ctx)
 
 
-# Every enemy his body overlaps that this dodge has not hit yet takes half a swing.
+# Every enemy his body overlaps that this dodge has not hit yet takes a full swing.
 func strike_through(ctx: EffectContext, body: Rect2) -> void:
 	var run := ctx.run()
 	if run == null:

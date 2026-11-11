@@ -75,6 +75,7 @@ const TIPS := {
 	"bubble_wrap": "First shot each floor bounces off. Walk into the first one if you must.",
 	"thick_skull": "Blasts hurt less. Less. Still keep your head down, son.",
 	"second_opinion": "Save the first heal of a floor for when you're really hurt.",
+	"heart_monitor": "More pills, harder hits. Look after your heart.",
 	"hospital_bracelet": "One more pill. Nothing clever. Just don't waste it.",
 	"do_not_resuscitate": "One pill, triple damage. Don't get hit. That's the whole plan, son.",
 	"eternal_warranty": "Die once and it sends you back to the door. Once. Don't make a habit of it.",

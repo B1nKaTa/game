@@ -6,8 +6,9 @@
 script = ExtResource("1")
 id = "life_jacket"
 display_name = "Life Jacket"
-description = "Once per floor, a hit that would finish you leaves one pill. Whistle included."
+description = "Once per floor, a hit that would finish you leaves one pill."
 from_bounty = true
 rarity = "rare"
-tags = PackedStringArray("defence")
+tags = PackedStringArray("pills")
+build = "pills"
 floor_lethal_saves = 1
