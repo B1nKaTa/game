@@ -135,3 +135,9 @@ func test_every_pet_has_a_sprite_the_prop_art_can_load() -> void:
 		assert_false(look.is_empty(), item.id)
 		assert_true(PropArt.texture("pet_" + look) != null, "pet_%s.png loads" % look)
 	assert_true(pets >= 10, "ten pets: %d" % pets)
+	# The Animal Lover set adds a pet that comes with no item; its look needs a sprite too.
+	for set_def in Content.sets():
+		var set_look := str(set_def.effect.get("look")) if set_def.effect != null else ""
+		if set_def.id == "set_animal_lover":
+			assert_eq(set_look, "stray_cat")
+			assert_true(PropArt.texture("pet_stray_cat") != null, "pet_stray_cat.png loads")
