@@ -175,8 +175,7 @@ func set_era(era_id: String) -> void:
 		_visual.set_tint(SEPIA_GLOW if _sepia_glow else _era_tint())
 		_visual.set_art(art)
 	# His hats and cardigan are old Harold's.
-	if _look != null:
-		_look.visible = era_id.is_empty()
+	sync_look()
 	queue_redraw()
 
 
@@ -263,6 +262,7 @@ func refresh_look() -> void:
 		_look.z_index = 0
 	_look.setup(run.look)
 	_visual.set_art(GrandpaLook.outfit_art(run.look))
+	sync_look()
 
 
 # The HURT_ id of the last hit that landed, read by the balance bot to tell touches from attacks.
@@ -297,6 +297,25 @@ func _death_art() -> String:
 	return old_art if not feedback_anim(old_art, "death").is_empty() else ""
 
 
+# True while an attack's one-shot is playing.
+func _swing_is_drawn() -> bool:
+	return _visual != null and _visual.anim() == "attack" and _visual.is_playing_once()
+
+
+# His hats and cardigan are old Harold's and are drawn at his standing head, so they are off in a
+# younger self, and while a hurt, dodge or death one-shot moves his head. Death never shows them again.
+# Called when any of those start, and every step, so nothing stays hidden after a one-shot ends or is replaced.
+func sync_look() -> void:
+	if _look == null or _visual == null:
+		return
+	var moving_head: bool = _visual.anim() == "death" or ((_visual.anim() == "hurt" or _visual.anim() == "dodge") and _visual.is_playing_once())
+	_look.visible = _era.is_empty() and not moving_head
+
+
+func is_look_shown() -> bool:
+	return _look != null and _look.visible
+
+
 # The ghost copies stand in for a dodge anim until the shown art has one.
 func uses_dodge_ghosts() -> bool:
 	return feedback_anim(_shown_art(), "dodge").is_empty()
@@ -313,10 +332,10 @@ func _play_death() -> void:
 	if art != _shown_art():
 		_visual.set_tint(Color.WHITE)
 		_visual.set_art(art)
-		if _look != null:
-			_look.visible = true
 	_visual.process_mode = Node.PROCESS_MODE_ALWAYS
 	_visual.play_once("death", DEATH_ANIM_TIME)
+	# His hat and glasses sit at a standing head: they stay off him for good once he falls.
+	sync_look()
 
 
 # Every hit on him comes through here. source is one of RunEffects' HURT_ ids, for the items that care
@@ -348,8 +367,10 @@ func take_hit(amount: int, source := RunEffects.HURT_ENEMY) -> bool:
 			_visual.flash(HURT_COLOR, HurtLook.RED_TIME)
 			if run.health.is_dead():
 				_play_death()
-			elif not feedback_anim(_shown_art(), "hurt").is_empty() and not _dodge.is_active():
+			elif not feedback_anim(_shown_art(), "hurt").is_empty() and not _swing_is_drawn():
+				# (A dodge never gets here: take_hit returned above.) A hit in mid-swing leaves the swing drawn.
 				_visual.play_once("hurt", HURT_ANIM_TIME)
+				sync_look()
 		hurt.emit()
 	return landed
 
@@ -513,6 +534,7 @@ func _physics_process(delta: float) -> void:
 	_visual.set_facing_left(_aim.x < 0.0)
 	if _look != null:
 		_look.set_facing(_aim.x)
+		sync_look()
 	_visual.set_alpha(HurtLook.alpha_for(_dodge.is_active(), run.health.invulnerability_left()))
 	ease_look_ahead(delta)
 	_handle_attacks()
@@ -960,6 +982,7 @@ func start_dodge(direction: Vector2) -> bool:
 	dodge_started.emit()
 	if _visual != null and not uses_dodge_ghosts():
 		_visual.play_once("dodge", dodge_time)
+		sync_look()
 	if _era_moves != null:
 		_era_dodge_hits.clear()
 	return true
