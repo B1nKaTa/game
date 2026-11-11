@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="SetDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/set_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "set_nostalgic"
+display_name = "Nostalgic"
+description = "With 3 memory items: every rule room you keep drops a reel, even while you hold two."
+build = "memory"
+extra_reels = 1

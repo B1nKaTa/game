@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/photocopier.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "photocopier"
+display_name = "Photocopier"
+description = "Use: copy a pickup lying on the floor. Recharges over 6 rooms."
+rarity = "legendary"
+tags = PackedStringArray("any")
+build = "any"
+kind = "active"
+charge_rooms = 6
+effect = SubResource("Effect")
+from_bounty = true

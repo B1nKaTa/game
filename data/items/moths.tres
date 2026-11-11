@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/moths.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+look = "moths"
+color = Color(0.85, 0.82, 0.7, 1)
+
+[resource]
+script = ExtResource("1")
+id = "moths"
+display_name = "Pocketful of Moths"
+description = "Two moths circle you, nibble enemies they touch and block shots."
+rarity = "common"
+tags = PackedStringArray("pets")
+first_clear_path = "cemetery"
+build = "pets"
+kind = "pet"
+effect = SubResource("Effect")

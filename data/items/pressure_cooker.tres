@@ -6,9 +6,11 @@
 script = ExtResource("1")
 id = "pressure_cooker"
 display_name = "Pressure Cooker"
-description = "Thermos blasts reach 35% further, but the fuse burns 0.3 seconds longer. Good things come to those who wait."
+description = "Thermos blasts are 50% bigger, but the fuse is 0.3 seconds longer."
 rarity = "rare"
 tags = PackedStringArray("thermos")
+build = "thermos"
+kind = "passive"
 craft_price = 210
-blast_radius_bonus = 0.35
+blast_radius_bonus = 0.5
 fuse_bonus = 0.3

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SetDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/set_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/set_old_soldier.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "set_old_soldier"
+display_name = "Old Soldier"
+description = "With 3 cane items: every combo finisher sends a shockwave."
+build = "cane"
+effect = SubResource("Effect")

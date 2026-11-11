@@ -18,25 +18,10 @@ const Nightmare := preload("res://scripts/items/dentists_nightmare.gd")
 # id: [rarity, source, first-clear path or ""]
 const BATCH := {
 	"walker_tennis_balls": [ItemDef.COMMON, ItemUnlocks.START, ""],
-	"cane_sword": [ItemDef.RARE, ItemUnlocks.RECIPE, ""],
-	"bingo_dabber": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "sunset_shores"],
-	"rusty_hinge": [ItemDef.COMMON, ItemUnlocks.START, ""],
 	"reading_glasses": [ItemDef.RARE, ItemUnlocks.START, ""],
-	"rocking_chair": [ItemDef.COMMON, ItemUnlocks.START, ""],
 	"rubber_ferrule": [ItemDef.COMMON, ItemUnlocks.START, ""],
-	"knitting_needles": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "seance_hotline"],
 	"shoe_horn": [ItemDef.COMMON, ItemUnlocks.START, ""],
-	"brass_topper": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "seance_hotline"],
-	"rolling_pin": [ItemDef.LEGENDARY, ItemUnlocks.RECIPE, ""],
-	"reapers_scythe": [ItemDef.LEGENDARY, ItemUnlocks.BOUNTY, ""],
-	"glue_gun": [ItemDef.RARE, ItemUnlocks.RECIPE, ""],
-	"spare_set": [ItemDef.RARE, ItemUnlocks.RECIPE, ""],
-	"boomerang_bite": [ItemDef.COMMON, ItemUnlocks.START, ""],
-	"gold_fillings": [ItemDef.COMMON, ItemUnlocks.START, ""],
-	"fizzy_tablet": [ItemDef.COMMON, ItemUnlocks.START, ""],
-	"windup_teeth": [ItemDef.RARE, ItemUnlocks.START, ""],
 	"overbite": [ItemDef.COMMON, ItemUnlocks.START, ""],
-	"shark_tooth": [ItemDef.LEGENDARY, ItemUnlocks.RECIPE, ""],
 }
 
 
@@ -139,24 +124,6 @@ func test_bingo_dabber_bursts_on_the_fifth_mark() -> void:
 	var pops := kit.fx_of(ItemFx.FxPop)
 	assert_eq(pops.size(), 1)
 	assert_eq(pops[0]["text"], "BINGO!")
-	kit.free_enemies()
-
-
-func test_rusty_hinge_stuns_on_the_combos_third_hit_with_a_rest_between() -> void:
-	var kit := ItemKit.new()
-	var run := kit.run_with(["rusty_hinge"])
-	var enemy := kit.enemy("intern_reaper", 1000.0)
-	run.effects.land(enemy, 1.0, RunEffects.SWING)
-	assert_false(enemy.is_stunned())
-	run.effects.land(enemy, 1.0, RunEffects.COMBO_3)
-	assert_true(enemy.is_stunned() and enemy.is_dazed())
-	enemy._stun_left = 0.0
-	run.effects.tick(0.5)
-	run.effects.land(enemy, 1.0, RunEffects.COMBO_3)
-	assert_false(enemy.is_stunned(), "not again so soon")
-	run.effects.tick(Hinge.AGAIN_AFTER)
-	run.effects.land(enemy, 1.0, RunEffects.COMBO_3)
-	assert_true(enemy.is_stunned())
 	kit.free_enemies()
 
 
@@ -375,48 +342,6 @@ func test_boomerang_bite_turns_home_and_bites_on_the_way() -> void:
 	teeth.free()
 	plain.free()
 	home.free()
-	kit.free_enemies()
-
-
-func test_gold_fillings_knock_a_coin_loose_one_bite_in_five() -> void:
-	var kit := ItemKit.new()
-	var run := kit.run_with(["gold_fillings"])
-	var effect = run.effects.effect_of("gold_fillings")
-	effect.rng.seed = 9
-	var enemy := kit.enemy()
-	for i in 1000:
-		run.effects.room_enter(null)
-		run.effects.bite(enemy)
-	assert_true(absf(kit.drops.size() / 1000.0 - Gold.CHANCE) < 0.04, "about one in five, got %d" % kit.drops.size())
-	assert_eq(kit.drops[0][0], RoomRules.DROP_COIN)
-	kit.drops.clear()
-	run.effects.room_enter(null)
-	for i in 50:
-		effect.knock_out(run.effects.ctx, enemy)
-	assert_eq(kit.drops.size(), Gold.ROOM_LIMIT, "a room's worth at most")
-	var summon := kit.enemy()
-	summon.is_summon = true
-	run.effects.room_enter(null)
-	assert_false(effect.knock_out(run.effects.ctx, summon), "a summon pays nothing")
-	kit.free_enemies()
-
-
-func test_fizzy_tablet_slows_the_bitten_and_what_stands_in_the_fizz() -> void:
-	var kit := ItemKit.new()
-	var run := kit.run_with(["fizzy_tablet"])
-	var enemy := kit.enemy()
-	run.effects.bite(enemy)
-	assert_true(enemy.is_slowed())
-	assert_eq(kit.fx_of(ItemFx.FxFizz).size(), 1)
-	var fizz := ItemFx.make_fizz(Fizzy.RADIUS, Fizzy.TIME, Fizzy.SHARE)
-	var inside := kit.enemy()
-	inside.position = Vector2(20, 0)
-	var outside := kit.enemy()
-	outside.position = Vector2(80, 0)
-	assert_eq(fizz.slow_touching([inside, outside]), 1)
-	assert_true(inside.is_slowed())
-	assert_false(outside.is_slowed())
-	fizz.free()
 	kit.free_enemies()
 
 

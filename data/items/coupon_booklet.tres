@@ -5,9 +5,11 @@
 [resource]
 script = ExtResource("1")
 id = "coupon_booklet"
-display_name = "Ticket Stub Book"
-description = "Shops sell one more item. Every stub says Admit One, and nobody ever checks which one."
+display_name = "Coupon Booklet"
+description = "Shops sell one more item."
 rarity = "common"
-tags = PackedStringArray("money")
+tags = PackedStringArray("pension")
+build = "pension"
+kind = "passive"
 first_clear_path = "flashback_cinema"
 shop_extra_items = 1

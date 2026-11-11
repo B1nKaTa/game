@@ -6,8 +6,8 @@ extends ItemEffect
 const MULT := 2.0
 
 
-func hit_damage(ctx: EffectContext, enemy: Enemy, amount: float, _source: String) -> float:
-	if ctx.counting_exact or enemy.def.is_boss or not is_last(ctx, enemy):
+func hit_damage(ctx: EffectContext, enemy: Enemy, amount: float, source: String) -> float:
+	if ctx.counting_exact or not RunEffects.is_his_hit(source) or enemy.def.is_boss or not is_last(ctx, enemy):
 		return amount
 	return amount * MULT
 

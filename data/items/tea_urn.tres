@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/tea_urn.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "tea_urn"
+display_name = "Tea Urn"
+description = "Every Thermos you carry makes all your hits 5% harder."
+rarity = "legendary"
+tags = PackedStringArray("thermos")
+build = "thermos"
+kind = "passive"
+effect = SubResource("Effect")
+craft_price = 350

@@ -598,8 +598,10 @@ func _check_shop(scene: Node) -> void:
 	for pickup in get_tree().get_nodes_in_group("pickups"):
 		if pickup.prompt == RoomView.SHOP_PROMPT:
 			stock += 1
-	# Heal, Slip and Thermos are always sold. Items already found this run are not, so up to two may be missing.
-	_check(stock >= 3 and stock <= 5, "the shop shows its stock, found %d" % stock)
+	# Heal, Slip and Thermos are always sold, and a potion is. Items already found this run are not, so up to
+	# two may be missing; extra wares from a held item add to the top.
+	var most := 2 + 4 + (scene.player.run.stats.shop_extra_items as int)
+	_check(stock >= 3 and stock <= most, "the shop shows its stock, found %d" % stock)
 	_saw_shop = true
 
 
@@ -916,10 +918,10 @@ func _check_pad_play() -> void:
 	_checked_controller = not _failed
 
 
-# The map items' changes (the Floor Plan's whole floor, the Fortune Teller's boss tags) are drawn on
+# The map item's change (the Floor Plan's whole floor) is drawn on
 # the big map, which the pad's View button opens and B closes, with nothing in it to focus.
 func _check_pad_map(scene: Node, player: Player) -> void:
-	for id in ["floor_plan", "fortune_card"]:
+	for id in ["floor_plan"]:
 		for item in Content.items():
 			if item.id == id and not player.run.has_item(id):
 				player.run.add_item(item)
@@ -988,7 +990,7 @@ func _check_dev_start_at(start_depth: int) -> void:
 	for def: UpgradeDef in Content.upgrades():
 		_check(Progress.data.level_of(def.id) == def.max_level(), "%s is at its top level" % def.id)
 	var run: RunState = scene.player.run
-	_check(run.keys == DevStart.KEYS and run.bombs == DevStart.BOMBS and run.items.size() >= DevStart.ITEMS.size(), "the dev kit is carried")
+	_check(run.keys == DevStart.KEYS and run.bombs == DevStart.BOMBS and run.items.size() + (1 if run.active != null else 0) >= DevStart.ITEMS.size(), "the dev kit is carried")
 	_check(run.potion != null and run.potion.id == DevStart.BREWED_POTION, "the dev brew is in the slot")
 	var map: FloorMap = scene.debug_map()
 	var landing: FloorRoom = map.room(scene.debug_current_id())
@@ -2343,9 +2345,10 @@ func _check_vault_room(scene: Node) -> void:
 		names[pickup._label] = true
 		if pickup.requires_interact:
 			choices += 1
-		if pickup._label == RoomRules.POTION_NAME:
+		# A potion drop holds whichever potion the pool rolled, so it is found by its kind, not its name.
+		if pickup.carry_kind == RoomRules.DROP_POTION:
 			potion = pickup
-	_check(names.has(RoomRules.POTION_NAME) and names.has(RoomRules.BOMB_NAME) and names.has(RoomRules.KEY_NAME), "a vault holds a potion, a Thermos and a Slip in the open, found %s in %s" % [str(names.keys()), scene.debug_map().room(scene.debug_current_id()).layout.resource_path])
+	_check(potion != null and names.has(RoomRules.BOMB_NAME) and names.has(RoomRules.KEY_NAME), "a vault holds a potion, a Thermos and a Slip in the open, found %s in %s" % [str(names.keys()), scene.debug_map().room(scene.debug_current_id()).layout.resource_path])
 	# This check takes every item it passes, where a player takes one of each choice, so by a late vault
 	# the run may have few left to offer. The vault must still lay out all it can, up to its three.
 	var can_offer := _offerable_items(run, ItemRarity.VAULT)
@@ -2353,17 +2356,18 @@ func _check_vault_room(scene: Node) -> void:
 , "a vault offers a choice of items, found %d interactive pickups with %d items left to offer" % [choices, can_offer])
 	if potion == null:
 		return
-	# A small potion fills the slot, and stays on the floor while the slot is full.
+	# A potion fills the slot, and stays on the floor while the slot is full.
+	var potion_id := potion.carry_id
 	run.potion = null
 	run.give_potion(Content.potion("swift_tea"))
 	_put_feet(scene, potion.global_position)
 	await _wait(0.25)
-	_check(not _gone(potion), "a full slot leaves the small potion on the floor")
+	_check(not _gone(potion), "a full slot leaves the potion on the floor")
 	_check(run.potion.id == "swift_tea", "and keeps the potion it has")
 	run.potion = null
 	run.changed.emit()
 	await _wait(0.25)
-	_check(run.potion != null and run.potion.id == RoomRules.SMALL_POTION_ID, "an empty slot takes the small potion")
+	_check(run.potion != null and run.potion.id == potion_id, "an empty slot takes the potion lying there")
 	_check(_gone(potion), "and the pickup is gone")
 	run.potion = null
 	run.changed.emit()
@@ -2777,9 +2781,11 @@ func _check_boss_choice(scene: Node, view: RoomView, pool_before: int) -> void:
 		return
 	var run: RunState = scene.player.run
 	var items_before := run.items.size()
+	var active_before: ItemDef = run.active
 	choices[0].collect()
 	await _wait(0.05)
-	_check(run.items.size() == items_before + 1, "taking one of the boss's items adds it")
+	# An active item goes to the active slot, not the item list.
+	_check(run.items.size() == items_before + 1 or run.active != active_before, "taking one of the boss's items adds it")
 	_check(_gone(choices[1]), "taking one of the boss's items clears the other away")
 
 
@@ -2821,8 +2827,7 @@ func _take_the_stairwell(scene: Node) -> void:
 	_check(scene.debug_mini_map().floor_name() == floor_below and scene.debug_big_map().floor_name() == floor_below, "both maps name %s" % floor_below)
 	_check(get_tree().get_nodes_in_group("enemies").is_empty(), "nothing waits to fight on the landing")
 	# With the boarding pass hung, landing_heal is one more than LANDING_HEAL.
-	# The Neck Pillow heals him fully on a landing.
-	var expected := health.max_pills if run.has_item("neck_pillow") else pills_before + mini(scene.landing_heal() + bonus, missing)
+	var expected := pills_before + mini(scene.landing_heal() + bonus, missing)
 	_check(health.pills == expected, "the landing heals him, %d to %d" % [pills_before, health.pills])
 
 	_check(run.items.size() == items_before and run.keys == keys_before, "his items and Slips come down with him")

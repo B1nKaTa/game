@@ -32,19 +32,34 @@ func test_every_stock_entry_has_a_price() -> void:
 
 func test_owned_and_promised_items_are_not_sold() -> void:
 	var all: Array[ItemDef] = []
-	# Only items open from the start, since a fresh run has cleared no path.
+	var actives: Array[ItemDef] = []
+	# Only items open from the start, since a fresh run has cleared no path. A run holds one active, so
+	# the actives are kept apart (below): a second one would swap the first out of the slot.
 	for item in Content.items():
 		if not item.needs_recipe() and not item.from_bounty and item.first_clear_path.is_empty():
-			all.append(item)
+			if item.is_active():
+				actives.append(item)
+			else:
+				all.append(item)
 	var run := _run()
 	for i in all.size() - 1:
 		if i % 2 == 0:
 			run.add_item(all[i])
 		else:
 			run.promise(all[i])
+	# He holds one active; the one he held before was swapped out and he no longer owns it.
+	assert_true(actives.size() >= 2)
+	run.add_item(actives[0])
+	run.add_item(actives[1])
 	var stock := ShopRules.stock(all, run, _rng())
 	assert_eq(stock.size(), 4, "only one item is left to sell")
 	assert_eq(stock[0]["item"], all[-1])
+	var with_actives := ShopRules.stock([actives[0], actives[1]], run, _rng())
+	var offered: Array = []
+	for entry in with_actives:
+		offered.append(entry["item"])
+	assert_false(offered.has(actives[1]), "the held active is never sold")
+	assert_true(offered.has(actives[0]), "a swapped-out active can be sold again")
 
 
 func test_a_promised_item_can_still_be_taken() -> void:

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/loose_paperwork.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "loose_paperwork"
+display_name = "Loose Paperwork"
+description = "Each Slip you carry, up to 5, is a sheet of paper circling you that blocks one shot, then grows back after a room."
+rarity = "rare"
+tags = PackedStringArray("slip")
+build = "slip"
+kind = "passive"
+effect = SubResource("Effect")

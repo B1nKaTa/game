@@ -385,7 +385,7 @@ func _build_log() -> void:
 	list.custom_minimum_size.x = left.size.x - 10
 	list.add_theme_constant_override("separation", 0)
 	scroll.add_child(list)
-	var names := CaseFileData.names_by_id(_items, _enemies)
+	var names := CaseFileData.names_by_id(Content.all_items(), _enemies)
 	for i in entries.size():
 		var entry: Dictionary = entries[i]
 		var button := _ink_button(RunLog.headline(entry))

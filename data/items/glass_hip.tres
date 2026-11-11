@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/glass_hip.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "glass_hip"
+display_name = "Glass Hip"
+description = "Walk and swing 30% faster, but every hit costs one more half pill."
+rarity = "rare"
+cursed = true
+tags = PackedStringArray("risk")
+build = "risk"
+kind = "passive"
+move_speed_bonus = 0.3
+swing_speed_bonus = 0.3
+effect = SubResource("Effect")
+first_clear_path = "terminal_zero"

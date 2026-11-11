@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/unpaid_bill.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "unpaid_bill"
+display_name = "Unpaid Bill"
+description = "50% more damage, but every fight room you enter takes 10 Pension, and with none it takes half a pill."
+rarity = "rare"
+cursed = true
+tags = PackedStringArray("risk")
+build = "risk"
+kind = "passive"
+effect = SubResource("Effect")
+first_clear_path = "terminal_zero"

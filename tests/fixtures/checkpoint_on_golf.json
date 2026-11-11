@@ -33,7 +33,7 @@
   "lost_max_pills": 0,
   "items": [
    "bifocals",
-   "alert_bracelet",
+   "hospital_bracelet",
    "brass_topper"
   ],
   "effects": {},
@@ -67,7 +67,7 @@
    ],
    "found": [
     "bifocals",
-    "alert_bracelet",
+    "hospital_bracelet",
     "brass_topper"
    ],
    "hits": 4,

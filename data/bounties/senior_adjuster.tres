@@ -12,4 +12,4 @@ floor_boss = false
 pension = 40
 condolences = 10
 extra_kind = "recipe"
-extra_id = "support_stockings"
+extra_id = "filing_cabinet"

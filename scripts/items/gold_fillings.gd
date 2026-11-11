@@ -1,9 +1,9 @@
 extends ItemEffect
 
-# Gold Fillings: a bite knocks a one-Pension coin loose one time in five. Only enemies that pay at all
+# Gold Fillings: a bite knocks a one-Pension coin loose one time in four. Only enemies that pay at all
 # drop one (never summons), and never more than ROOM_LIMIT a room, since a boss can be bitten for long.
 
-const CHANCE := 0.2
+const CHANCE := 0.25
 const ROOM_LIMIT := 6
 const GOLD := Color("ffd24a")
 

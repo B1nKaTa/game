@@ -6,9 +6,9 @@
 script = ExtResource("1")
 id = "velcro_shoes"
 display_name = "Velcro Shoes"
-description = "Dodge twice back to back, but the dodge takes 30% longer to come back. No laces, no excuses."
+description = "Dodge twice in a row."
 rarity = "common"
 tags = PackedStringArray("dodge")
+build = "dodge"
 first_clear_path = "terminal_zero"
-dodge_cooldown_cut = -0.3
 bonus_dodge_charges = 1

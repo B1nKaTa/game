@@ -3,7 +3,7 @@ extends ItemEffect
 # Alarm Clock: walking into a fight room rings it, and every enemy there is stunned for STUN once the
 # room's usual wait is over. The full loop times that wait, so there it only rings.
 
-const STUN := 0.5
+const STUN := 1.0
 
 
 func on_room_enter(ctx: EffectContext, _room: Node) -> void:

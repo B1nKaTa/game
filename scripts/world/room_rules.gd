@@ -145,6 +145,8 @@ static func offerable(all: Array[ItemDef], run: RunState, source := ItemRarity.I
 static func pick_recipe(all: Array[ItemDef], found: Dictionary, run: RunState, rng: RandomNumberGenerator) -> ItemDef:
 	var options: Array[ItemDef] = []
 	for item in all:
+		if item.needs_rules() and not run.rules_posted():
+			continue
 		if item.needs_recipe() and not found.has(item.id) and not run.was_recipe_offered(item.id):
 			options.append(item)
 	if options.is_empty():

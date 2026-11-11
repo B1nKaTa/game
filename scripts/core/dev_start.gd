@@ -26,7 +26,7 @@ const PROFILE_LABEL := "DEV PROFILE"
 const PENSION := 300
 const KEYS := 3
 const BOMBS := 5
-const ITEMS := ["pill_organizer", "slippers", "hearing_aid"]
+const ITEMS := ["pill_organizer", "velcro_shoes", "hearing_aid_feedback"]
 const BREWED_POTION := "healing_tonic"
 # For the dev Waiting Room, the profile also counts every path cleared, so every department is open at
 # once, and the depths deeper than the start get their clears, so every wanted poster shows. It only ever

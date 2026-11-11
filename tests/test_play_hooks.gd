@@ -125,6 +125,22 @@ func test_copying_does_nothing_while_the_full_loop_counts() -> void:
 	assert_true(ctx.copy_pickup())
 
 
+func test_fetching_does_nothing_while_the_full_loop_counts() -> void:
+	var kit := ItemKit.new()
+	var run := kit.make_run()
+	var ctx := run.effects.ctx
+	kit.can_fetch = true
+	ctx.counting_pills = true
+	assert_false(ctx.fetch_pickup(), "a fetched heal would add pills the loop did not count")
+	ctx.counting_pills = false
+	ctx.counting_exact = true
+	assert_false(ctx.fetch_pickup(), "a fetched coin would add uncounted Pension")
+	assert_eq(kit.fetches, 0)
+	ctx.counting_exact = false
+	assert_true(ctx.fetch_pickup())
+	assert_eq(kit.fetches, 1)
+
+
 func test_the_half_heal_bonus_reads_the_counting_flag_at_the_heal() -> void:
 	var run := ItemKit.new().make_run()
 	var hypo := ItemDef.new()

@@ -6,7 +6,9 @@
 script = ExtResource("1")
 id = "boomerang_bite"
 display_name = "Boomerang Bite"
-description = "The dentures fly straight back by themselves, biting on the way. They always find their way home."
+description = "The dentures fly back by themselves, biting on the way."
 rarity = "common"
 tags = PackedStringArray("bite")
+build = "bite"
+kind = "passive"
 teeth_boomerang = true

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="PotionDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/potion_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/potion_pet_food.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "pet_food"
+display_name = "Tin of Pet Food"
+short_name = "Pets"
+description = "Drink, or rather serve: your pets hit twice as hard for the rest of the floor."
+color = Color(0.7, 0.5, 0.35, 1)
+action = "pet_food"
+run_rarity = "common"
+effect = SubResource("Effect")

@@ -6,8 +6,10 @@
 script = ExtResource("1")
 id = "glue_gun"
 display_name = "Denture Glue Gun"
-description = "The dentures stick to the first enemy they bite and keep biting for 2 seconds. Not for use on gums."
+description = "The dentures stick to the first enemy they bite and keep biting for 2 seconds."
 rarity = "rare"
 tags = PackedStringArray("bite")
+build = "bite"
+kind = "passive"
 craft_price = 200
 teeth_glue_time = 2.0

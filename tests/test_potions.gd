@@ -15,7 +15,7 @@ func _potion(id: String) -> PotionDef:
 # --- the potions themselves ---
 
 func test_the_potion_data_loads() -> void:
-	assert_eq(Content.potions().size(), 4)
+	assert_eq(Content.potions().size(), 11)
 	assert_eq(_potion("healing_tonic").heal, 2)
 	assert_eq(_potion("small_potion").heal, 1)
 	assert_true(_potion("swift_tea").has_buff())
@@ -177,9 +177,52 @@ func test_the_slot_text() -> void:
 	assert_eq(PotionSlot.buff_text(_potion("fury_liniment"), 11.2), "Fury 12s")
 
 
+# Measured, not counted: the exact text the slot draws, in the font and size it draws it in, against the
+# name label's width with a buff timer showing and without. Every potion fits with the keyboard key and
+# without a buff beside every pad family's label; the seven run potions also fit with a buff beside
+# every pad label. The three potions that existed before the run potions keep the names players know;
+# beside a pad label and a buff they overflow by what they always did (a known, older limit, measured
+# before this build), and may not grow past it.
+# Pixels past the with-buff width beside the widest pad label, measured with these names (Tonic, Small, Swift).
+const OLDER_OVERFLOW := {"healing_tonic": 5.0, "small_potion": 4.0, "swift_tea": 3.0}
+
 func test_short_names_fit_the_slot() -> void:
+	var pad_keys: Array[String] = []
+	for family in [PadInput.XBOX, PadInput.PLAYSTATION, PadInput.PLAYSTATION_4]:
+		pad_keys.append(KeyBindings.pad_label_for("potion", family))
+	var with_buff := PotionSlot.NAME_WIDTH_WITH_BUFF
+	var without := PotionSlot.SIZE.x - PotionSlot.TEXT_AT.x
+	var run_ids: Array[String] = []
+	for def in Content.run_potions():
+		run_ids.append(def.id)
+	assert_eq(run_ids.size(), 7)
 	for def in Content.potions():
-		assert_true(def.short_name.length() > 0 and def.short_name.length() <= 6, def.id)
+		assert_true(def.short_name.length() > 0, def.id)
+		var board := _text_width(KeyBindings.label_for("potion"), def)
+		assert_true(board <= with_buff, "%s is %.0f px in %.0f beside a buff" % [def.id, board, with_buff])
+		var worst := 0.0
+		for key in pad_keys:
+			var width := _text_width(key, def)
+			assert_true(width <= without, "%s with %s is %.0f px in %.0f" % [def.id, key, width, without])
+			worst = maxf(worst, width - with_buff)
+		var cap := float(OLDER_OVERFLOW.get(def.id, 0.0))
+		assert_true(worst <= cap + 0.05, "%s overflows by %.1f px beside a buff and a pad label (older limit %.1f)" % [def.id, worst, cap])
+		if run_ids.has(def.id):
+			assert_false(OLDER_OVERFLOW.has(def.id), "%s is a run potion, so it has no older limit" % def.id)
+
+
+func _text_width(key: String, def: PotionDef) -> float:
+	return HudStyle.font().get_string_size(PotionSlot.name_text(key, def), HORIZONTAL_ALIGNMENT_LEFT, -1, HudStyle.SMALL).x
+
+# The buff timer beside the name fits its own room, at the full 15 seconds and at two digits.
+func test_buff_timers_fit_beside_the_name() -> void:
+	var room := PotionSlot.SIZE.x - PotionSlot.BUFF_TEXT_AT.x
+	for def in Content.potions():
+		if not def.has_buff():
+			continue
+		var text := PotionSlot.buff_text(def, def.duration)
+		var width := HudStyle.font().get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, HudStyle.SMALL).x
+		assert_true(width <= room, "%s is %.0f px in %.0f" % [text, width, room])
 
 
 func test_the_panel_texts() -> void:

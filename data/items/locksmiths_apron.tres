@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "locksmiths_apron"
+display_name = "Locksmith's Apron"
+description = "Urns, chests and locked doors cost one Slip fewer, never less than one."
+rarity = "common"
+tags = PackedStringArray("slip")
+build = "slip"
+kind = "passive"
+slip_cost_cut = 1

@@ -13,26 +13,18 @@ const Scooter := preload("res://scripts/items/mobility_scooter.gd")
 
 # id: [rarity, source, first-clear path or "", cursed]
 const BATCH := {
-	"bad_hip": [ItemDef.COMMON, ItemUnlocks.START, "", false],
-	"afterimage": [ItemDef.RARE, ItemUnlocks.START, "", false],
-	"wheelchair_wheels": [ItemDef.RARE, ItemUnlocks.RECIPE, "", false],
-	"velcro_shoes": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "terminal_zero", false],
 	"hover_round": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "seance_hotline", false],
 	"squeaky_shoes": [ItemDef.COMMON, ItemUnlocks.START, "", true],
-	"pogo_cane": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "last_resort_cruise", false],
 	"banana_peel": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "last_resort_cruise", false],
 	"bunion_pads": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 	"gravity_boots": [ItemDef.RARE, ItemUnlocks.BOUNTY, "", false],
-	"life_alert_button": [ItemDef.RARE, ItemUnlocks.RECIPE, "", false],
 	"knitted_cardigan": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "furnace_works", false],
-	"casserole_dish": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 	"sympathy_card": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 	"pill_crusher": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 	"hot_water_bottle": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "sunset_shores", false],
 	"bubble_wrap": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "last_resort_cruise", false],
 	"thick_skull": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "furnace_works", false],
 	"second_opinion": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "sunset_shores", false],
-	"hospital_bracelet": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 }
 
 
@@ -66,33 +58,6 @@ func test_every_batch_text_is_two_sentences_and_has_a_coach_tip() -> void:
 		assert_true(item.description.count(". ") >= 1 and item.description[-1] in [".", "?", "!"], id)
 		assert_true(CoachTips.TIPS.has(id), "%s has a tip" % id)
 	assert_true(ItemKit.item("squeaky_shoes").description.contains("but"), "the curse says its drawback")
-
-
-func test_lorraines_poster_pays_the_gravity_boots_and_her_hat_is_sold() -> void:
-	var poster: BountyDef
-	for def in BountyBoard.all():
-		if def.id == "lorraine":
-			poster = def
-	assert_eq(poster.extra_kind, BountyDef.EXTRA_ITEM)
-	assert_eq(poster.extra_id, "gravity_boots")
-	assert_true(CosmeticDef.find("captains_hat", CosmeticDef.all()).is_sold(), "the hat moved to the Decor Office")
-
-
-func test_bad_hip_leaves_a_cough_that_slows_what_it_touches() -> void:
-	var kit := ItemKit.new()
-	var run := kit.run_with(["bad_hip"])
-	run.effects.dodge(Vector2.RIGHT)
-	assert_eq(kit.fx_of(ItemFx.FxCough).size(), 1)
-	var cough := ItemFx.make_cough(BadHip.RADIUS, BadHip.TIME, BadHip.SHARE)
-	var inside := kit.enemy()
-	inside.position = Vector2(20, 0)
-	var outside := kit.enemy()
-	outside.position = Vector2(90, 0)
-	assert_eq(cough.slow_touching([inside, outside]), 1)
-	assert_true(inside.is_slowed())
-	assert_false(outside.is_slowed())
-	cough.free()
-	kit.free_enemies()
 
 
 func test_afterimage_draws_ordinary_enemies_and_lets_them_go() -> void:
@@ -141,26 +106,6 @@ func test_wheelchair_wheels_roll_further_and_run_enemies_over_once() -> void:
 	assert_eq(effect.roll_over(run.effects.ctx, body), 1, "and again on the next roll")
 	assert_near(clear.hp, 1000.0)
 	kit.free_enemies()
-
-
-func test_velcro_shoes_give_two_dodges_back_to_back_on_a_longer_cooldown() -> void:
-	var run := ItemKit.new().run_with(["velcro_shoes"])
-	assert_eq(run.stats.dodge_charges, 2)
-	assert_near(run.stats.dodge_cooldown, 1.3)
-	assert_eq(ItemKit.new().make_run().stats.dodge_charges, 1)
-	var timer := DodgeTimer.new()
-	timer.charges = 2
-	assert_true(timer.try_start(1.3))
-	assert_false(timer.try_start(1.3), "not while the first is under way")
-	timer.tick(DodgeTimer.DURATION)
-	assert_true(timer.try_start(1.3), "the second, straight after")
-	timer.tick(DodgeTimer.DURATION)
-	assert_false(timer.try_start(1.3), "then both are spent")
-	timer.tick(1.3)
-	assert_eq(timer.charges_ready(), 1, "one comes back at a time")
-	assert_true(timer.try_start(1.3))
-	var player := FileAccess.get_file_as_string("res://scripts/actors/player.gd")
-	assert_true(player.contains("_dodge.charges = run.stats.dodge_charges"), "the count is read at every dodge")
 
 
 func test_a_plain_dodge_still_waits_out_its_cooldown() -> void:

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/mittens.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+look = "mittens"
+color = Color(0.62, 0.6, 0.58, 1)
+
+[resource]
+script = ExtResource("1")
+id = "mittens"
+display_name = "Mittens"
+description = "The late cat pounces on any enemy below a quarter of its health and finishes it."
+rarity = "rare"
+tags = PackedStringArray("pets")
+build = "pets"
+kind = "pet"
+effect = SubResource("Effect")
+first_clear_path = "funeral_parlour"

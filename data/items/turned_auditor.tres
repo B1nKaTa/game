@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/turned_auditor.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "turned_auditor"
+display_name = "Clipboard of Your Own"
+description = "When you break a rule, the Auditor arrives on your side and fights for you that room."
+rarity = "legendary"
+tags = PackedStringArray("rules")
+build = "rules"
+kind = "passive"
+effect = SubResource("Effect")

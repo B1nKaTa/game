@@ -259,8 +259,6 @@ func _end_era() -> void:
 		_player.say_line(line)
 	# Harold has no speech bubble yet, so his line shows as a notice.
 	_notice(line)
-	if _run != null:
-		_run.effects.event(RunEffects.EVENT_FLASHBACK_END)
 	_stop_era()
 
 
@@ -270,6 +268,9 @@ func _stop_era() -> void:
 	if _run != null:
 		era = _run.era
 		_run.era = ""
+		# Every way an era ends passes here, so the items hear its end exactly once.
+		if not era.is_empty():
+			_run.effects.event(RunEffects.EVENT_FLASHBACK_END)
 	_era_room = -1
 	_era_rooms_left = 0
 	if _player != null:

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/flask_holster.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "flask_holster"
+display_name = "Flask Holster"
+description = "Carry 4 more Thermoses, and get 2 now."
+rarity = "common"
+tags = PackedStringArray("thermos")
+build = "thermos"
+kind = "passive"
+thermos_scale_bonus = 4
+effect = SubResource("Effect")

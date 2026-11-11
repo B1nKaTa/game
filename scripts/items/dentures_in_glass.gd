@@ -3,7 +3,7 @@ extends ItemEffect
 # Dentures in a Glass: while his dentures are out of his mouth, thrown or lying in the room, his cane
 # combo swings PACE faster. Nothing else.
 
-const PACE := 1.15
+const PACE := 1.25
 
 
 func swing_pace(ctx: EffectContext) -> float:

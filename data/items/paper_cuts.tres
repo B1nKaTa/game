@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/paper_cuts.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "paper_cuts"
+display_name = "Paper Cuts"
+description = "Your combo finisher flings a paper slip that cuts through every enemy in a line. It costs nothing."
+rarity = "rare"
+tags = PackedStringArray("slip")
+build = "slip"
+kind = "passive"
+effect = SubResource("Effect")

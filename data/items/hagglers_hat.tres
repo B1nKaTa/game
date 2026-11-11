@@ -9,9 +9,11 @@ script = ExtResource("2")
 [resource]
 script = ExtResource("1")
 id = "hagglers_hat"
-display_name = "Matinee Pass"
-description = "Each shop's cheapest item is half price. Matinee prices, for anyone who looks old enough. He does."
+display_name = "Haggler's Hat"
+description = "One item in every shop is free."
 rarity = "common"
-tags = PackedStringArray("money")
+tags = PackedStringArray("pension")
+build = "pension"
+kind = "passive"
 first_clear_path = "flashback_cinema"
 effect = SubResource("Effect")

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="SetDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/set_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/stray_cat.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+look = "stray_cat"
+color = Color(0.85, 0.6, 0.35, 1)
+
+[resource]
+script = ExtResource("1")
+id = "set_animal_lover"
+display_name = "Animal Lover"
+description = "With 3 pets: every pet hits 50% harder, and a stray cat joins for good."
+build = "pets"
+pet_damage_bonus = 0.5
+extra_pets = 1
+effect = SubResource("Effect")

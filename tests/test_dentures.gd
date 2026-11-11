@@ -232,7 +232,7 @@ func test_adhesive_levels_raise_bite_range_and_return() -> void:
 
 
 func test_extra_strong_dentures_bite_harder_and_through_two() -> void:
-	var item := _shipped_item("dentures")
+	var item := _shipped_item("strong_dentures")
 	assert_true(item != null, "Extra Strong Dentures ship")
 	if item == null:
 		return
@@ -246,7 +246,7 @@ func test_extra_strong_dentures_bite_harder_and_through_two() -> void:
 
 func test_the_item_and_adhesive_add_up() -> void:
 	var adhesive := _shipped_upgrade("denture_adhesive")
-	var item := _shipped_item("dentures")
+	var item := _shipped_item("strong_dentures")
 	if adhesive == null or item == null:
 		assert_true(false, "both ship")
 		return

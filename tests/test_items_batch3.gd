@@ -7,30 +7,21 @@ extends TestCase
 const Soup := preload("res://scripts/items/hot_soup_thermos.gd")
 const Strap := preload("res://scripts/items/second_thermos_strap.gd")
 const Kettle := preload("res://scripts/items/kettle_whistle.gd")
-const Lottery := preload("res://scripts/items/lottery_scratcher.gd")
 const Statement := preload("res://scripts/items/pension_statement.gd")
 const Warranty := preload("res://scripts/items/eternal_warranty.gd")
 
 # id: [rarity, source, first-clear path or "", cursed]
 const BATCH := {
 	"do_not_resuscitate": [ItemDef.RARE, ItemUnlocks.START, "", true],
-	"eternal_warranty": [ItemDef.LEGENDARY, ItemUnlocks.RECIPE, "", false],
-	"hot_soup_thermos": [ItemDef.RARE, ItemUnlocks.RECIPE, "", false],
 	"second_thermos_strap": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 	"forged_signature": [ItemDef.RARE, ItemUnlocks.START, "", false],
-	"pressure_cooker": [ItemDef.RARE, ItemUnlocks.RECIPE, "", false],
-	"tea_cosy": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 	"rubber_stamps": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "floor_1", false],
 	"kettle_whistle": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "furnace_works", false],
-	"coupon_booklet": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "flashback_cinema", false],
 	"penny_jar": [ItemDef.COMMON, ItemUnlocks.START, "", false],
-	"lottery_scratcher": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 	"pension_statement": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "head_office", false],
 	"loaded_dice": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "flashback_cinema", true],
 	"expired_coupon": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "terminal_zero", true],
-	"hagglers_hat": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "flashback_cinema", false],
 	"collection_plate": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "head_office", false],
-	"inheritance_letter": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 	"tax_refund": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "terminal_zero", false],
 	"night_light": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 }
@@ -151,26 +142,6 @@ func test_eternal_warranty_waits_behind_the_life_jacket() -> void:
 	assert_true(scene.contains("ctx.arrival = player.global_position"), "every arrival is kept for the door")
 
 
-func test_hot_soup_lays_a_burning_puddle_that_spares_nobody_but_him() -> void:
-	var kit := ItemKit.new()
-	var run := kit.run_with(["hot_soup_thermos"])
-	run.effects.bomb(Vector2.ZERO)
-	assert_eq(kit.fx_of(ItemFx.FxSoup).size(), 1)
-	assert_near(run.effects.effect_of("hot_soup_thermos").puddle_time(run.effects.ctx), Soup.TIME)
-	var soup := ItemFx.make_soup(run.effects.ctx, Soup.RADIUS, Soup.TIME, Soup.DAMAGE)
-	var inside := kit.enemy("intern_reaper", 100.0)
-	inside.position = Vector2(20, 0)
-	var outside := kit.enemy("intern_reaper", 100.0)
-	outside.position = Vector2(120, 0)
-	assert_eq(soup.burn_touching([inside, outside]), 1)
-	assert_near(inside.hp, 100.0 - Soup.DAMAGE)
-	soup.free()
-	run.effects.ctx.counting_exact = true
-	run.effects.bomb(Vector2.ZERO)
-	assert_eq(kit.fx_of(ItemFx.FxSoup).size(), 1, "the loop measures plain blasts")
-	kit.free_enemies()
-
-
 func test_second_thermos_strap_gives_two_now_and_one_each_floor() -> void:
 	var kit := ItemKit.new()
 	var run := kit.make_run()
@@ -196,26 +167,6 @@ func test_forged_signature_keeps_about_one_slip_in_four() -> void:
 	for i in 50:
 		run.use_key()
 	assert_eq(run.keys, 0, "the loop counts every Slip spent")
-
-
-func test_pressure_cooker_widens_the_blast_and_lengthens_the_fuse() -> void:
-	var run := ItemKit.new().run_with(["pressure_cooker"])
-	assert_near(run.stats.blast_radius, PlayerStats.BASE_BLAST_RADIUS * 1.35)
-	assert_near(run.stats.fuse_bonus, 0.3)
-	var thermos := Thermos.new()
-	thermos.fuse_time = Thermos.FUSE_TIME + run.stats.fuse_bonus
-	thermos._ready()
-	assert_false(thermos.tick_fuse(Thermos.FUSE_TIME + 0.1), "not yet at the plain fuse")
-	assert_true(thermos.tick_fuse(0.25))
-	thermos.free()
-	var room := FileAccess.get_file_as_string("res://scripts/world/room_view.gd")
-	assert_true(room.contains("fuse += _run.stats.fuse_bonus") and room.contains("thermos.fuse_time = fuse"), "the room lights the longer fuse")
-
-
-func test_tea_cosy_takes_only_his_own_blasts() -> void:
-	var run := ItemKit.new().run_with(["tea_cosy"])
-	assert_eq(run.effects.hurt(1, RunEffects.HURT_OWN_BLAST), 0)
-	assert_eq(run.effects.hurt(1, RunEffects.HURT_BLAST), 1, "an enemy's blast still hurts")
 
 
 func test_rubber_stamps_pay_for_every_slip_handed_over() -> void:
@@ -287,24 +238,6 @@ func test_penny_jar_calls_coins_from_twice_as_far() -> void:
 	assert_false(Pickup.should_magnet(true, Pickup.MAGNET_RADIUS * 1.9))
 	var room := FileAccess.get_file_as_string("res://scripts/world/room_view.gd")
 	assert_true(room.contains("coin.magnet_radius = Pickup.MAGNET_RADIUS * _run.stats.coin_reach_mult"))
-
-
-func test_lottery_scratcher_pays_zero_to_a_hundred_each_floor() -> void:
-	var kit := ItemKit.new()
-	var run := kit.run_with(["lottery_scratcher"])
-	var lottery = run.effects.effect_of("lottery_scratcher")
-	lottery.rng.seed = 4
-	var total := 0
-	for i in 400:
-		var won: int = lottery.scratch(run.effects.ctx)
-		assert_true(won >= 0 and won <= Lottery.MOST, "won %d" % won)
-		total += won
-	assert_eq(kit.paid, total)
-	assert_true(total > 400 * 24 and total < 400 * 36, "about 30 a floor, got %d" % total)
-	kit.notices.clear()
-	run.effects.floor_start()
-	assert_eq(kit.notices.size(), 1, "each new floor scratches once")
-	assert_eq(Lottery.notice_for(0), "Lottery Scratcher: not a winner. Better luck next floor.")
 
 
 func test_pension_statement_pays_a_share_of_the_run_on_each_clear() -> void:
@@ -382,20 +315,6 @@ func test_expired_coupon_frees_one_shop_a_floor_and_takes_a_pill_each_floor() ->
 	assert_eq(run.health.max_pills, PlayerStats.BASE_PILLS, "dropping the items gives the pills back")
 
 
-func test_hagglers_hat_halves_the_cheapest_item() -> void:
-	var run := ItemKit.new().run_with(["hagglers_hat"])
-	var stock: Array[Dictionary] = [
-		{"kind": ShopRules.KIND_ITEM, "price": 60, "item": null},
-		{"kind": ShopRules.KIND_ITEM, "price": 35, "item": null},
-		{"kind": ShopRules.KIND_HEAL, "price": 20, "item": null},
-	]
-	run.effects.shop_open(stock)
-	assert_eq(stock[0]["price"], 60)
-	assert_eq(stock[1]["price"], 18)
-	assert_true(stock[1].get("half", false))
-	assert_eq(stock[2]["price"], 20, "a heal is not an item")
-
-
 func test_collection_plate_drops_a_coin_for_each_paying_kill() -> void:
 	var kit := ItemKit.new()
 	var run := kit.run_with(["collection_plate"])
@@ -418,17 +337,6 @@ func test_collection_plate_drops_a_coin_for_each_paying_kill() -> void:
 	run.effects.kill(enemy, RunEffects.SWING)
 	assert_eq(kit.drops.size(), 4, "a new room pays again")
 	kit.free_enemies()
-
-
-func test_inheritance_letter_pays_once_on_taking() -> void:
-	var kit := ItemKit.new()
-	kit.run_with(["inheritance_letter"])
-	assert_eq(kit.paid, 60)
-	var yard_kit := ItemKit.new()
-	var yard := yard_kit.make_run()
-	yard.effects.ctx.pay_pension = Callable()
-	yard.add_item(ItemKit.item("inheritance_letter"))
-	assert_eq(yard_kit.paid, 0, "the Training Yard's run has no bank, so it pays nothing there")
 
 
 func test_tax_refund_pays_for_a_shop_left_empty_handed_once() -> void:

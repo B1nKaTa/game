@@ -1,10 +1,10 @@
 extends ItemEffect
 
-# Rusty Hinge: the third hit of a combo stuns for half a second. The same enemy can be stunned again only
+# Rusty Hinge: the third hit of a combo stuns for a full second. The same enemy can be stunned again only
 # after AGAIN_AFTER, so a boss is never held for good.
 
-const STUN_TIME := 0.5
-const AGAIN_AFTER := 1.5
+const STUN_TIME := 1.0
+const AGAIN_AFTER := 2.5
 const RUST := Color("c8743a")
 
 var _time := 0.0

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/key_cutter.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "key_cutter"
+display_name = "Duplicate Key Cutter"
+description = "Get 3 Slips now, and start every floor with 1 more."
+rarity = "common"
+tags = PackedStringArray("slip")
+build = "slip"
+kind = "passive"
+effect = SubResource("Effect")

@@ -6,8 +6,10 @@
 script = ExtResource("1")
 id = "spare_set"
 display_name = "Spare Set"
-description = "Throw two sets of dentures at once, in a small spread. You never know when you'll need a spare."
+description = "Throw two sets of dentures at once, in a spread."
 rarity = "rare"
 tags = PackedStringArray("bite")
+build = "bite"
+kind = "passive"
 craft_price = 220
 teeth_sets = 2

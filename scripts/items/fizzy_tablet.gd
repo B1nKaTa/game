@@ -1,10 +1,10 @@
 extends ItemEffect
 
-# Fizzy Cleaning Tablet: a bite slows the bitten enemy for a second and leaves a fizz on the floor that
+# Fizzy Cleaning Tablet: a bite slows the bitten enemy for TIME seconds and leaves a fizz on the floor that
 # slows anything standing in it while it lasts.
 
 const RADIUS := 20.0
-const TIME := 1.0
+const TIME := 2.0
 const SHARE := 0.5
 
 

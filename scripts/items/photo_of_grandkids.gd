@@ -22,8 +22,8 @@ static func on_last_pill(ctx: EffectContext) -> bool:
 	return run != null and run.health.pills == 1 and not run.health.is_dead()
 
 
-func hit_damage(ctx: EffectContext, enemy: Enemy, amount: float, _source: String) -> float:
-	if ctx.counting_exact or not on_last_pill(ctx):
+func hit_damage(ctx: EffectContext, enemy: Enemy, amount: float, source: String) -> float:
+	if ctx.counting_exact or not RunEffects.is_his_hit(source) or not on_last_pill(ctx):
 		return amount
 	if _time >= _next_pop:
 		_next_pop = _time + POP_EVERY

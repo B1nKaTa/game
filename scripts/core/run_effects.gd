@@ -582,6 +582,9 @@ func blast_hits(at: Vector2, count: int) -> void:
 
 # The first effect that says yes is the only one asked.
 func excuses_rule_break() -> bool:
+	# The full loop's own Auditor check must stay as it is: nothing is asked or spent while it counts.
+	if ctx.counting_exact:
+		return false
 	for effect in _all():
 		if effect.excuses_rule_break(ctx):
 			return true
@@ -589,6 +592,8 @@ func excuses_rule_break() -> bool:
 
 
 func sides_with_you() -> bool:
+	if ctx.counting_exact:
+		return false
 	for effect in _all():
 		if effect.sides_with_you(ctx):
 			return true

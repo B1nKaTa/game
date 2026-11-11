@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="PotionDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/potion_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "topsy_turvy"
+display_name = "Topsy-Turvy Tonic"
+short_name = "Flip"
+description = "Drink: swap your Slips and Thermoses."
+color = Color(0.6, 0.45, 0.85, 1)
+action = "swap"
+run_rarity = "common"

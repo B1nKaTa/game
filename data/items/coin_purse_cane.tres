@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/coin_purse_cane.gd" id="2"]
+
+[sub_resource type="Resource" id="Effect"]
+script = ExtResource("2")
+
+[resource]
+script = ExtResource("1")
+id = "coin_purse_cane"
+display_name = "Coin Purse Cane"
+description = "Every 10 Pension you pick up loads a coin, and your next swing fires it as a shot."
+rarity = "rare"
+tags = PackedStringArray("pension")
+build = "pension"
+kind = "passive"
+effect = SubResource("Effect")
