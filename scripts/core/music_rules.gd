@@ -3,7 +3,7 @@ extends RefCounted
 
 # Which song plays where. The scenes say where Grandpa is and get back a song id; MusicPlayer plays
 # res://audio/music/<id>.wav if it is there and stays quiet if not. The songs are rendered by
-# tools/music (see its README), and these ids are its catalog's names.
+# tools/music/render_band.py (see the README there), and these ids are its songs' names.
 
 const DIR := "res://audio/music/"
 const TITLE := "take_a_number"
@@ -29,7 +29,7 @@ const PATH_THEMES := {
 	"terminal_zero": "terminal_zero",
 	"head_office": "head_office",
 }
-# Floor bosses by depth. Each quotes the hold theme its own way.
+# Floor bosses by depth.
 const FLOOR_BOSSES := {
 	1: "boss_depth_1",
 	2: "boss_depth_2",
