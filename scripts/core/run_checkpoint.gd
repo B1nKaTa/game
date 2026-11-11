@@ -232,16 +232,25 @@ static func apply_run(run: RunState, raw: Dictionary, items: Array[ItemDef]) -> 
 	# Through restore_item, so each item's effect and any combo come back too, without a second on_gain.
 	# Each effect's own state (a once-a-run flag, a counter, a recharge) comes back after them. The pills
 	# and saves are set from the file below.
-	for id in raw.get("items", []):
+	# An old id is mapped to its new item, a retired or unknown one is left out. A renamed active goes to the
+	# active slot, with a full charge since its old charge meant something else.
+	for raw_id in raw.get("items", []):
+		var id := RetiredContent.current_id(str(raw_id))
+		if RetiredContent.is_retired(id):
+			continue
 		for item in items:
-			if item.id == str(id):
+			if item.id != id:
+				continue
+			if item.is_active():
+				run.restore_active(item, 99)
+			else:
 				run.restore_item(item)
-				break
-	var active_id := str(raw.get("active", ""))
-	if not active_id.is_empty():
+			break
+	var raw_active := RetiredContent.current_id(str(raw.get("active", "")))
+	if not raw_active.is_empty() and not RetiredContent.is_retired(raw_active):
 		for item in items:
-			if item.id == active_id and item.is_active():
-				run.restore_active(item, int(raw.get("active_charge", 0)))
+			if item.id == raw_active and item.is_active():
+				run.restore_active(item, int(raw.get("active_charge", 99)) if str(raw.get("active", "")) == raw_active else 99)
 				break
 	run.lost_max_pills = maxi(int(raw.get("lost_max_pills", 0)), 0)
 	var effects: Variant = raw.get("effects", {})

@@ -888,10 +888,10 @@ func _check_pad_play() -> void:
 	_checked_controller = not _failed
 
 
-# The map items' changes (the Floor Plan's whole floor, the Fortune Teller's boss tags) are drawn on
+# The map item's change (the Floor Plan's whole floor) is drawn on
 # the big map, which the pad's View button opens and B closes, with nothing in it to focus.
 func _check_pad_map(scene: Node, player: Player) -> void:
-	for id in ["floor_plan", "fortune_card"]:
+	for id in ["floor_plan"]:
 		for item in Content.items():
 			if item.id == id and not player.run.has_item(id):
 				player.run.add_item(item)
@@ -2789,8 +2789,7 @@ func _take_the_stairwell(scene: Node) -> void:
 	_check(scene.debug_mini_map().floor_name() == floor_below and scene.debug_big_map().floor_name() == floor_below, "both maps name %s" % floor_below)
 	_check(get_tree().get_nodes_in_group("enemies").is_empty(), "nothing waits to fight on the landing")
 	# With the boarding pass hung, landing_heal is one more than LANDING_HEAL.
-	# The Neck Pillow heals him fully on a landing.
-	var expected := health.max_pills if run.has_item("neck_pillow") else pills_before + mini(scene.landing_heal() + bonus, missing)
+	var expected := pills_before + mini(scene.landing_heal() + bonus, missing)
 	_check(health.pills == expected, "the landing heals him, %d to %d" % [pills_before, health.pills])
 
 	_check(run.items.size() == items_before and run.keys == keys_before, "his items and Slips come down with him")

@@ -1870,8 +1870,9 @@ func _restore_entry(entry: Dictionary) -> void:
 			_create_chest(cell, kind)
 
 
-func _item_by_id(id: String) -> ItemDef:
-	if id.is_empty():
+func _item_by_id(raw_id: String) -> ItemDef:
+	var id := RetiredContent.current_id(raw_id)
+	if id.is_empty() or RetiredContent.is_retired(id):
 		return null
 	for item in Content.items():
 		if item.id == id:

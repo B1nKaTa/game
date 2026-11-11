@@ -27,7 +27,7 @@ func test_an_effect_keeps_nothing_by_default() -> void:
 
 func test_a_resume_never_runs_on_gain_again() -> void:
 	var kit := ItemKit.new()
-	var run := kit.run_with(["inheritance_letter", "second_thermos_strap"])
+	var run := kit.run_with(["inheritance_letter", "flask_holster"])
 	assert_eq(kit.paid, 75, "paid once when taken")
 	var bombs := run.bombs
 	var back_kit := ItemKit.new()
@@ -35,7 +35,7 @@ func test_a_resume_never_runs_on_gain_again() -> void:
 	assert_eq(back_kit.paid, 0, "the Inheritance Letter does not pay again")
 	assert_eq(back.bombs, bombs, "the Strap gives no more Thermoses")
 	assert_true(back.effects.effect_of("inheritance_letter") != null, "the effects are held again")
-	assert_true(back.effects.effect_of("second_thermos_strap") != null)
+	assert_true(back.effects.effect_of("flask_holster") != null)
 
 
 func test_a_resumed_run_keeps_the_warranty_used() -> void:
@@ -45,23 +45,6 @@ func test_a_resumed_run_keeps_the_warranty_used() -> void:
 	var back := _resume(run, ItemKit.new())
 	assert_true(_fx(back, "eternal_warranty").used)
 	assert_false(back.effects.lethal(), "and never again in the same run")
-
-
-func test_a_resumed_run_keeps_the_expired_coupons_pills_and_free_shop() -> void:
-	var kit := ItemKit.new()
-	var run := kit.run_with(["expired_coupon"])
-	var full := run.stats.max_pills
-	run.effects.floor_start()
-	var stock: Array[Dictionary] = [{"kind": ShopRules.KIND_HEAL, "price": 20}]
-	run.effects.shop_open(stock)
-	assert_eq(stock[0]["price"], 0)
-	var back := _resume(run, ItemKit.new())
-	assert_eq(back.lost_max_pills, 1, "the pill taken for good stays taken")
-	assert_eq(back.stats.max_pills, full - 1)
-	assert_eq(back.health.max_pills, full - 1)
-	var again: Array[Dictionary] = [{"kind": ShopRules.KIND_HEAL, "price": 20}]
-	back.effects.shop_open(again)
-	assert_eq(again[0]["price"], 20, "this floor's free shop was used")
 
 
 func test_a_resumed_run_keeps_the_stamps_recharge() -> void:
@@ -78,39 +61,18 @@ func test_a_resumed_run_keeps_the_stamps_recharge() -> void:
 
 func test_a_resumed_run_keeps_counters_and_floor_flags() -> void:
 	var kit := ItemKit.new()
-	var run := kit.run_with(["bingo_card", "bingo_hall_pass", "bubble_wrap", "second_opinion", "pill_organizer", "knitted_cardigan"])
-	for i in 3:
-		run.effects.pickup(RunEffects.PENSION, 2)
-	var fx_bingo_hall_pass: Variant = _fx(run, "bingo_hall_pass")
-	fx_bingo_hall_pass.cleared = 2
-	var fx_bubble_wrap: Variant = _fx(run, "bubble_wrap")
-	fx_bubble_wrap.popped = true
-	var fx_second_opinion: Variant = _fx(run, "second_opinion")
-	fx_second_opinion.used = true
-	var fx_pill_organizer: Variant = _fx(run, "pill_organizer")
-	fx_pill_organizer.stored = 2
-	var fx_knitted_cardigan: Variant = _fx(run, "knitted_cardigan")
-	fx_knitted_cardigan._halves = 1
+	var run := kit.run_with(["pill_organizer", "bottomless_flask", "glass_hip", "fine_print"])
+	_fx(run, "pill_organizer").stored = 2
+	_fx(run, "bottomless_flask").cleared = 3
+	_fx(run, "glass_hip")._halves = 1
+	_fx(run, "fine_print").used = true
 	var back := _resume(run, ItemKit.new())
-	assert_eq(_fx(back, "bingo_card")._count, 3)
-	assert_eq(_fx(back, "bingo_hall_pass").cleared, 2)
-	assert_true(_fx(back, "bubble_wrap").popped)
-	assert_true(_fx(back, "second_opinion").used)
 	assert_eq(_fx(back, "pill_organizer").stored, 2)
-	assert_eq(_fx(back, "knitted_cardigan")._halves, 1)
+	assert_eq(_fx(back, "bottomless_flask").cleared, 3)
+	assert_eq(_fx(back, "glass_hip")._halves, 1)
+	assert_true(_fx(back, "fine_print").used)
 	# Values come back as the type each member has, never as JSON's floats.
-	assert_eq(typeof(_fx(back, "bingo_card")._count), TYPE_INT)
-
-
-func test_a_resumed_tax_refund_remembers_the_shops_that_paid() -> void:
-	var kit := ItemKit.new()
-	var run := kit.run_with(["tax_refund"])
-	assert_true(_fx(run, "tax_refund").leave_shop(run.effects.ctx, 7, 0))
-	var back := _resume(run, ItemKit.new())
-	var refund = back.effects.effect_of("tax_refund")
-	assert_false(refund.leave_shop(back.effects.ctx, 7, 0), "shop 7 already paid on this floor")
-	back.effects.floor_start()
-	assert_true(refund.leave_shop(back.effects.ctx, 7, 0), "a new floor's room 7 is another shop")
+	assert_eq(typeof(_fx(back, "bottomless_flask").cleared), TYPE_INT)
 
 
 func test_a_resume_shuffles_the_dice_of_effects_that_shuffled_on_gain() -> void:
@@ -123,10 +85,10 @@ func test_a_resume_shuffles_the_dice_of_effects_that_shuffled_on_gain() -> void:
 
 func test_the_checkpoint_round_trip_still_matches_with_effect_state() -> void:
 	var kit := ItemKit.new()
-	var run := kit.run_with(["eternal_warranty", "bureaucrats_stamp", "tax_refund", "expired_coupon"])
+	var run := kit.run_with(["eternal_warranty", "bureaucrats_stamp", "fine_print", "bottomless_flask"])
 	run.effects.lethal()
 	run.effects.floor_start()
-	_fx(run, "tax_refund").leave_shop(run.effects.ctx, 4, 0)
+	run.effects.room_clear(null)
 	var back := _resume(run, ItemKit.new())
 	assert_eq(RunCheckpoint.run_to_dict(back), RunCheckpoint.run_to_dict(run))
 

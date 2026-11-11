@@ -538,6 +538,14 @@ static func from_dict(raw: Variant) -> ProgressData:
 	data.items_unlocked = _id_set(raw.get("items_unlocked"))
 	var crafted: Variant = raw.get("crafted_for_next_run", "")
 	data.crafted_for_next_run = crafted if crafted is String else ""
+	data.recipes_found = _renamed_keys(data.recipes_found)
+	data.items_unlocked = _renamed_keys(data.items_unlocked)
+	# A crafted item whose recipe left the game is paid back; a renamed one waits as its new item.
+	if RetiredContent.RETIRED_RECIPE_PRICES.has(data.crafted_for_next_run):
+		data.pension += int(RetiredContent.RETIRED_RECIPE_PRICES[data.crafted_for_next_run])
+		data.crafted_for_next_run = ""
+	else:
+		data.crafted_for_next_run = RetiredContent.current_id(data.crafted_for_next_run)
 	data.floors_cleared = maxi(int(raw.get("floors_cleared", 0)), 0)
 	data.deep_clears = {}
 	var deep: Variant = raw.get("deep_clears", {})
@@ -601,6 +609,7 @@ static func from_dict(raw: Variant) -> ProgressData:
 	if not raw.has("items_seen"):
 		for id in data.items_unlocked:
 			data.items_seen[id] = 0
+	data.items_seen = _renamed_keys(data.items_seen)
 	data.enemies_seen = _count_map(raw.get("enemies_seen"))
 	if not raw.has("enemies_seen"):
 		for id in data.bosses_beaten:
@@ -716,6 +725,19 @@ static func _count_map(raw: Variant) -> Dictionary:
 			if raw[id] is int or raw[id] is float:
 				counts[str(id)] = maxi(int(raw[id]), 0)
 	return counts
+
+
+# The same table with every renamed item id (RetiredContent.RENAMED) under its new id. Counts add up.
+static func _renamed_keys(table: Dictionary) -> Dictionary:
+	var out := {}
+	for key in table:
+		var id := RetiredContent.current_id(str(key))
+		var value: Variant = table[key]
+		if out.has(id) and (value is int or value is float):
+			out[id] = int(out[id]) + int(value)
+		else:
+			out[id] = value
+	return out
 
 
 static func _id_set(raw: Variant) -> Dictionary:
