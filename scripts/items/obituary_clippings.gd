@@ -4,7 +4,7 @@ extends ItemEffect
 # and walking into another room starts the count again. Summons count for nothing, so a boss's endless
 # helpers never stack it. The full loop measures damage exactly, so there it adds nothing.
 
-const PER_KILL := 0.04
+const PER_KILL := 0.05
 const MOST_KILLS := 10
 const COLOR := Color("d8d2c0")
 
@@ -22,7 +22,7 @@ func on_kill(ctx: EffectContext, enemy: Enemy, _source: String) -> void:
 	ctx.add_fx(ItemFx.make_pop("+%d%%" % roundi(kills * PER_KILL * 100.0), COLOR), ctx.feet())
 
 
-func hit_damage(ctx: EffectContext, _enemy: Enemy, amount: float, _source: String) -> float:
-	if ctx.counting_exact:
+func hit_damage(ctx: EffectContext, _enemy: Enemy, amount: float, source: String) -> float:
+	if ctx.counting_exact or not RunEffects.is_his_hit(source):
 		return amount
 	return amount * (1.0 + kills * PER_KILL)

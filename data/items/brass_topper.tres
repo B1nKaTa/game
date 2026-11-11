@@ -9,9 +9,11 @@ script = ExtResource("2")
 [resource]
 script = ExtResource("1")
 id = "brass_topper"
-display_name = "Crystal Cane Topper"
-description = "Combo finishers hit in a ring all around you. It hums when the dead are near, which is always."
+display_name = "Brass Cane Topper"
+description = "Combo finishers hit in a ring all around you."
 rarity = "rare"
 tags = PackedStringArray("cane")
+build = "cane"
+kind = "passive"
 first_clear_path = "seance_hotline"
 effect = SubResource("Effect")

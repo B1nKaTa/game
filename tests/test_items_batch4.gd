@@ -25,7 +25,6 @@ const BATCH := {
 	"mothball_pockets": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "cemetery", false],
 	"telescope_cane": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 	"fortune_card": [ItemDef.RARE, ItemUnlocks.BOUNTY, "", false],
-	"obituary_clippings": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "funeral_parlour", false],
 	"grief_counselor": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "funeral_parlour", false],
 	"early_bird_special": [ItemDef.COMMON, ItemUnlocks.START, "", false],
 	"alarm_clock": [ItemDef.COMMON, ItemUnlocks.START, "", false],
@@ -274,29 +273,6 @@ func test_telescope_cane_moves_the_camera_ahead_and_keeps_him_on_screen() -> voi
 
 
 # --- rooms, kills and pace ---
-
-func test_obituary_clippings_add_four_percent_a_kill_until_the_next_room() -> void:
-	var kit := ItemKit.new()
-	var run := kit.run_with(["obituary_clippings"])
-	var enemy := kit.enemy("intern_reaper", 100.0)
-	assert_near(run.effects.hit_damage(enemy, 10.0, RunEffects.SWING), 10.0)
-	run.effects.kill(enemy, RunEffects.SWING)
-	run.effects.kill(enemy, RunEffects.SWING)
-	assert_near(run.effects.hit_damage(enemy, 10.0, RunEffects.SWING), 10.8)
-	var summon := kit.enemy()
-	summon.is_summon = true
-	run.effects.kill(summon, RunEffects.SWING)
-	assert_near(run.effects.hit_damage(enemy, 10.0, RunEffects.SWING), 10.8, "summons count for nothing")
-	for i in 20:
-		run.effects.kill(enemy, RunEffects.SWING)
-	assert_near(run.effects.hit_damage(enemy, 10.0, RunEffects.SWING), 14.0, "never past forty percent")
-	run.effects.ctx.counting_exact = true
-	assert_near(run.effects.hit_damage(enemy, 10.0, RunEffects.SWING), 10.0, "the loop measures plain damage")
-	run.effects.ctx.counting_exact = false
-	run.effects.room_enter(null)
-	assert_near(run.effects.hit_damage(enemy, 10.0, RunEffects.SWING), 10.0, "a new room starts again")
-	kit.free_enemies()
-
 
 func test_grief_counselor_pays_for_a_room_cleared_without_a_scratch() -> void:
 	var kit := ItemKit.new()

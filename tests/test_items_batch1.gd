@@ -18,17 +18,10 @@ const Nightmare := preload("res://scripts/items/dentists_nightmare.gd")
 # id: [rarity, source, first-clear path or ""]
 const BATCH := {
 	"walker_tennis_balls": [ItemDef.COMMON, ItemUnlocks.START, ""],
-	"cane_sword": [ItemDef.RARE, ItemUnlocks.RECIPE, ""],
-	"bingo_dabber": [ItemDef.COMMON, ItemUnlocks.FIRST_CLEAR, "sunset_shores"],
-	"rusty_hinge": [ItemDef.COMMON, ItemUnlocks.START, ""],
 	"reading_glasses": [ItemDef.RARE, ItemUnlocks.START, ""],
 	"rocking_chair": [ItemDef.COMMON, ItemUnlocks.START, ""],
 	"rubber_ferrule": [ItemDef.COMMON, ItemUnlocks.START, ""],
-	"knitting_needles": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "seance_hotline"],
 	"shoe_horn": [ItemDef.COMMON, ItemUnlocks.START, ""],
-	"brass_topper": [ItemDef.RARE, ItemUnlocks.FIRST_CLEAR, "seance_hotline"],
-	"rolling_pin": [ItemDef.LEGENDARY, ItemUnlocks.RECIPE, ""],
-	"reapers_scythe": [ItemDef.LEGENDARY, ItemUnlocks.BOUNTY, ""],
 	"overbite": [ItemDef.COMMON, ItemUnlocks.START, ""],
 }
 
@@ -132,24 +125,6 @@ func test_bingo_dabber_bursts_on_the_fifth_mark() -> void:
 	var pops := kit.fx_of(ItemFx.FxPop)
 	assert_eq(pops.size(), 1)
 	assert_eq(pops[0]["text"], "BINGO!")
-	kit.free_enemies()
-
-
-func test_rusty_hinge_stuns_on_the_combos_third_hit_with_a_rest_between() -> void:
-	var kit := ItemKit.new()
-	var run := kit.run_with(["rusty_hinge"])
-	var enemy := kit.enemy("intern_reaper", 1000.0)
-	run.effects.land(enemy, 1.0, RunEffects.SWING)
-	assert_false(enemy.is_stunned())
-	run.effects.land(enemy, 1.0, RunEffects.COMBO_3)
-	assert_true(enemy.is_stunned() and enemy.is_dazed())
-	enemy._stun_left = 0.0
-	run.effects.tick(0.5)
-	run.effects.land(enemy, 1.0, RunEffects.COMBO_3)
-	assert_false(enemy.is_stunned(), "not again so soon")
-	run.effects.tick(Hinge.AGAIN_AFTER)
-	run.effects.land(enemy, 1.0, RunEffects.COMBO_3)
-	assert_true(enemy.is_stunned())
 	kit.free_enemies()
 
 

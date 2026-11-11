@@ -35,6 +35,8 @@ const TIPS := {
 	"walker_tennis_balls": "Knock them back and keep them back. Space is your friend, son.",
 	"cane_sword": "Hold the charge all the way. The wave goes further than you can reach.",
 	"bingo_dabber": "Same target, five hits. Pick one and stick with it.",
+	"lightning_rod": "Charge it all the way. The sky does the rest.",
+	"cane_hook": "Finish the combo and drag them in. Then do it again.",
 	"rusty_hinge": "Finish the combo every time. The third one sticks them.",
 	"reading_glasses": "Let them bunch up, then swing through the lot. Dodge's yours again.",
 	"rocking_chair": "Dodge in, swing at once. Rock and roll, that's the rhythm.",

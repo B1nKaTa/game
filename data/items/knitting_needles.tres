@@ -9,9 +9,11 @@ script = ExtResource("2")
 [resource]
 script = ExtResource("1")
 id = "knitting_needles"
-display_name = "Incense Sticks"
-description = "Every swing also pokes two smoking sticks forward. Sandalwood, with notes of assault."
+display_name = "Knitting Needles"
+description = "Every swing also pokes two needles forward."
 rarity = "rare"
 tags = PackedStringArray("cane")
+build = "cane"
+kind = "passive"
 first_clear_path = "seance_hotline"
 effect = SubResource("Effect")
