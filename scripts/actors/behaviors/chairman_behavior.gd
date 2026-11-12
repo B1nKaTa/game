@@ -453,7 +453,7 @@ func tick(enemy: Enemy, delta: float) -> void:
 		if not _charting() and _chart_wait <= 0.0:
 			_begin(enemy, Attack.PROJECTIONS, phase_two)
 		else:
-			_begin(enemy, choose_attack(_last, _feet_distance(enemy), _charting(), _rng.randf()), phase_two)
+			_begin(enemy, choose_attack(_last, slam_distance(_feet_distance(enemy), enemy.can_strike_target()), _charting(), _rng.randf()), phase_two)
 		return
 	# He stands at his chart while it runs, so its mark is never under him.
 	if not _charting() and enemy.distance_to_target() > KEEP_NEAR:
@@ -462,6 +462,12 @@ func tick(enemy: Enemy, delta: float) -> void:
 
 func _charting() -> bool:
 	return _chart_left > 0.0
+
+
+# The distance the attack choice sees: with a prop between, the desk slam is out of reach, so
+# a near foot reads as just past SLAM_START (never far enough for the takeover).
+static func slam_distance(distance: float, line_clear: bool) -> float:
+	return distance if line_clear or distance > SLAM_START else SLAM_START + 1.0
 
 
 func _feet_distance(enemy: Enemy) -> float:

@@ -43,6 +43,10 @@ const SAY_COLOR := Color("fff6d8")
 const WARNING_Z := 60
 # How often a walker looks again for its way to Grandpa, and how near a waypoint counts as reached.
 const ROUTE_EVERY := 0.3
+# A swing needs only a thin line: line_is_clear also samples both sides at Harold's end, so a body-wide
+# line would make him immune to melee when he stands against a wall. Samples are 8 px apart, which
+# a corner touched diagonally by two solid cells does not slip through in practice.
+const STRIKE_LINE_HALF_WIDTH := 0.0
 const WAYPOINT_REACH := 4.0
 # A goal that moves further than this from where its route was planned gets a new route at once.
 const ROUTE_GOAL_SLACK := 64.0
@@ -751,7 +755,7 @@ func _route_half_width() -> float:
 func can_strike_target() -> bool:
 	if walk_grid == null or def.ignores_walls or submerged:
 		return true
-	return walk_grid.line_is_clear(global_position, target_ground(), _route_half_width())
+	return walk_grid.line_is_clear(global_position, target_ground(), STRIKE_LINE_HALF_WIDTH)
 
 
 func _plan_route(goal: Vector2) -> void:

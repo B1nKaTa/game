@@ -235,7 +235,7 @@ func _fight_alone(enemy: Enemy, delta: float) -> void:
 				enemy.hit_target(enemy.def.damage)
 		return
 	_cooldown = maxf(_cooldown - delta, 0.0)
-	if distance <= ALONE_START:
+	if distance <= ALONE_START and enemy.can_strike_target():
 		if _cooldown <= 0.0:
 			_telegraph.start(ALONE_WINDUP)
 			enemy.set_warning(_telegraph, ALONE_STRIKE)

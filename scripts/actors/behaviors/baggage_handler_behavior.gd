@@ -77,7 +77,7 @@ func tick(enemy: Enemy, delta: float) -> void:
 			_has_hit = false
 		return
 	_cooldown -= delta
-	if should_charge(enemy.distance_to_target(), _cooldown, enemy.target_in_view() and enemy.can_strike_target()):
+	if should_charge(enemy.distance_to_target(), _cooldown, enemy.target_in_view()) and enemy.can_strike_target():
 		_way = enemy.direction_to_target()
 		enemy.facing = _way
 		_telegraph.start(WINDUP)
