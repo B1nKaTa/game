@@ -734,7 +734,6 @@ func _handle_attacks() -> void:
 	if Input.is_action_just_released("attack"):
 		if _charge.release():
 			_swing(ChargeSwing.DAMAGE * run.charge_damage_mult(), CHARGE_REACH, CHARGE_ANGLE, ChargeSwing.KNOCKBACK, true, false)
-			run.effects.charge_release(true)
 
 
 func _throw_teeth() -> void:
@@ -861,6 +860,10 @@ func _swing(damage: float, reach: float, angle: float, push: float, heavy: bool,
 	Sfx.play("charged_swing" if heavy else "cane_swing")
 	# A kick or punch plays over its own lock, so the punch fills its wind-up and quick kicks never restart it.
 	_visual.play_once("attack", _era_moves.lock_time if from_era and _era_moves != null else CaneCombo.LOCK_TIME)
+	# Only a fully charged swing is heavy (ChargeSwing.release fires once it is full). The items hear the
+	# release before the first strike, so what a first-frame hit calls (the Lightning Rod's bolt) is armed.
+	if heavy:
+		run.effects.charge_release(true)
 	_strike_enemies()
 
 

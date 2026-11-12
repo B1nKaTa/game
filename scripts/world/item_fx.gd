@@ -17,6 +17,9 @@ const SPARKS_TIME := 0.3
 const POP_TIME := 0.9
 const POP_RISE := 18.0
 const BLAST_TIME := 0.3
+const BOLT_TIME := 0.25
+const BOLT_SEGMENTS := 6
+const BOLT_LEAN := 25.0
 const BINGO_COLOR := Color("ffd24a")
 const BLAST_COLOR := Color("ff7b2e")
 const CLOUD_COLOR := Color(0.75, 0.78, 0.7, 0.55)
@@ -79,6 +82,27 @@ static func make_pop(text: String, color := BINGO_COLOR) -> Fx:
 
 static func make_blast(radius: float, color := BLAST_COLOR) -> Fx:
 	return FxBlast.new(radius, color, BLAST_TIME)
+
+
+# A jagged bolt of lightning falling from height px above the point it is placed at, down to it, fading
+# over BOLT_TIME. Set blast_radius to follow it with the blast where it lands.
+static func make_bolt(height: float, color: Color) -> Fx:
+	var bolt := FxBolt.new(0.0, color, BOLT_TIME)
+	bolt.height = height
+	return bolt
+
+
+# The bolt's corners from its top (0, -height) down to the strike (0, 0). BOLT_SEGMENTS strokes of equal
+# drop lean BOLT_LEAN degrees off vertical to alternate sides, so the line only ever runs downward: it
+# can never cross itself, and no two strokes ever form a cross or a plus.
+static func bolt_points(height: float) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	var drop := height / BOLT_SEGMENTS
+	var lean := drop * tan(deg_to_rad(BOLT_LEAN))
+	for i in BOLT_SEGMENTS:
+		points.append(Vector2(lean if i % 2 == 1 else 0.0, -height + drop * i))
+	points.append(Vector2.ZERO)
+	return points
 
 
 # Ink dots on an enemy's body, one per mark, that ride on it. Set count to change them.
@@ -364,6 +388,37 @@ class FxBlast:
 		draw_circle(Vector2.ZERO, radius * 0.35 * (1.0 - t), Color(1.0, 0.95, 0.7, 0.8 * (1.0 - t)))
 		draw_arc(Vector2.ZERO, radius, 0.0, TAU, 32, Color(Color.BLACK, 0.7 * (1.0 - t)), 4.0)
 		draw_arc(Vector2.ZERO, radius, 0.0, TAU, 32, Color(color.lightened(0.3), 1.0 - t), 2.0)
+
+
+# A bolt of lightning that falls onto the point it stands at: a zig-zag of slanted strokes that always runs
+# downward (see ItemFx.bolt_points), dark-edged so it reads on any floor, fading as it ends. With a
+# blast_radius it leaves the blast at that point when it is gone.
+class FxBolt:
+	extends Fx
+
+	var height := 160.0
+	var blast_radius := 0.0
+	var _blasted := false
+
+	func _init(at_radius: float, at_color: Color, seconds: float) -> void:
+		super(at_radius, at_color, seconds)
+
+	func _process(delta: float) -> void:
+		if age + delta >= life and blast_radius > 0.0 and not _blasted:
+			_blasted = true
+			var parent := get_parent()
+			if parent != null:
+				var blast := ItemFx.make_blast(blast_radius, color)
+				parent.add_child(blast)
+				blast.global_position = global_position
+		super(delta)
+
+	func _draw() -> void:
+		var fade := 1.0 - progress()
+		var points := ItemFx.bolt_points(height)
+		draw_polyline(points, Color(Color.BLACK, 0.7 * fade), 5.0)
+		draw_polyline(points, Color(color, fade), 3.0)
+		draw_polyline(points, Color(1.0, 1.0, 1.0, 0.8 * fade), 1.0)
 
 
 # The Bingo Dabber's marks: ink dots across the body, each with a dark rim so it reads on any enemy.

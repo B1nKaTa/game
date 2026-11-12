@@ -5,6 +5,8 @@ extends ItemEffect
 
 const BOLT := 20.0
 const RADIUS := 14.0
+# How far above the enemy the bolt starts.
+const HEIGHT := 160.0
 const COLOR := Color("cfe8ff")
 var _full := false
 
@@ -16,7 +18,9 @@ func on_charge_release(_ctx: EffectContext, full: bool) -> void:
 func on_hit(ctx: EffectContext, enemy: Enemy, _amount: float, source: String) -> void:
 	if source != RunEffects.CHARGE or not _full or ctx.counting_exact:
 		return
-	ctx.add_fx(ItemFx.make_blast(RADIUS, COLOR), enemy.global_position)
+	var bolt := ItemFx.make_bolt(HEIGHT, COLOR) as ItemFx.FxBolt
+	bolt.blast_radius = RADIUS
+	ctx.add_fx(bolt, enemy.global_position)
 	ctx.hit_enemy(enemy, BOLT, RunEffects.ITEM)
 
 

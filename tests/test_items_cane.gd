@@ -76,3 +76,56 @@ func test_obituaries_add_five_percent_a_kill_up_to_half_and_say_so() -> void:
 	assert_near(run.effects.hit_damage(enemy, 10.0, RunEffects.PET), 10.0, "a pet's bite is not his hit")
 	assert_near(run.effects.hit_damage(enemy, 10.0, RunEffects.ALLY), 10.0, "an ally's hit is not his")
 	kit.free_enemies()
+
+
+func test_the_rod_draws_a_bolt_then_a_blast() -> void:
+	var kit := ItemKit.new()
+	var run := kit.run_with(["lightning_rod"])
+	var enemy := kit.enemy("intern_reaper", 60.0)
+	run.effects.charge_release(true)
+	run.effects.hit(enemy, 30.0, RunEffects.CHARGE)
+	assert_eq(kit.fx_of(ItemFx.FxBolt).size(), 1, "one bolt falls on the enemy")
+	var rod := load("res://scripts/items/lightning_rod.gd")
+	assert_near(rod.HEIGHT, 160.0, "falling from 160 px up")
+	assert_near(rod.RADIUS, 14.0, "and the existing blast follows it")
+	kit.free_enemies()
+
+
+func test_a_bolt_is_a_zig_zag_that_never_crosses() -> void:
+	var bolt := ItemFx.make_bolt(160.0, Color("cfe8ff"))
+	assert_near(bolt.life, 0.25)
+	var points := ItemFx.bolt_points(160.0)
+	assert_true(points.size() >= 6 and points.size() <= 8, "5 to 7 segments")
+	assert_near(points[0].y, -160.0, "it starts 160 px above")
+	assert_near(points[-1].x, 0.0, "it ends on the enemy")
+	assert_near(points[-1].y, 0.0)
+	var last_side := 0.0
+	for i in points.size() - 1:
+		var step: Vector2 = points[i + 1] - points[i]
+		assert_true(step.y > 0.0, "always downward, so no stroke can cross another")
+		assert_true(rad_to_deg(atan2(absf(step.x), step.y)) >= 20.0, "each at least 20 degrees off vertical")
+		assert_true(step.x * last_side <= 0.0, "alternating sides")
+		last_side = signf(step.x)
+	bolt.free()
+
+
+func test_a_charged_swings_release_reaches_the_items_before_its_first_strike() -> void:
+	var source := FileAccess.get_file_as_string("res://scripts/actors/player.gd")
+	var swing := source.substr(source.find("func _swing("), 1800)
+	var release := swing.find("run.effects.charge_release(true)")
+	assert_true(release > 0, "the swing sends the release")
+	assert_true(release < swing.find("_strike_enemies()"), "before the first frame's strike")
+	var attacks := source.substr(source.find("func _handle_attacks("), 3000)
+	assert_false(attacks.contains("charge_release"), "and only the swing sends it")
+
+
+func test_a_first_frame_charged_hit_lands_the_bolt() -> void:
+	var kit := ItemKit.new()
+	var run := kit.run_with(["lightning_rod"])
+	var enemy := kit.enemy("intern_reaper", 60.0)
+	# The order a charged swing now sends: the release, then the strike through land.
+	run.effects.charge_release(true)
+	run.effects.land(enemy, 30.0, RunEffects.CHARGE)
+	assert_near(enemy.hp, 10.0, "30 for the swing and 20 for the bolt")
+	run.effects.swing_end(null)
+	kit.free_enemies()
