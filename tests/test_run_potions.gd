@@ -193,3 +193,16 @@ func test_cash_in_pays_nothing_while_counting_exact() -> void:
 	run.effects.ctx.counting_exact = true
 	assert_true(_drink(run, _potion("milk_test", PotionDef.ACTION_CASH_IN, "rare")))
 	assert_eq(kit.paid, 0)
+
+
+func test_swap_potion_takes_the_new_one_and_returns_the_old() -> void:
+	var run := ItemKit.new().make_run()
+	var tea := _potion("swift_test", PotionDef.ACTION_SWAP)
+	var tonic := _potion("tonic_test", PotionDef.ACTION_DOUBLE_SLIPS, "rare")
+	assert_true(run.swap_potion(tea) == null, "an empty slot returns nothing")
+	assert_eq(run.potion, tea)
+	assert_eq(run.swap_potion(tonic), tea, "the old one comes back")
+	assert_eq(run.potion, tonic)
+	assert_eq(run.swap_potion(null), null, "a missing potion changes nothing")
+	assert_eq(run.potion, tonic)
+	assert_false(run.give_potion(tea), "giving still refuses a full slot")

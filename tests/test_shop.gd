@@ -220,3 +220,176 @@ func test_frequent_flyer_miles_cut_every_price_in_the_stock() -> void:
 	for i in plain.size():
 		assert_eq(cheap[i]["price"], ShopRules.price_after(plain[i]["price"], 0.2), str(i))
 		assert_true(cheap[i]["price"] < plain[i]["price"], str(i))
+
+
+# --- Potion swap (playtest 10, note 4) ---
+
+const SwapBank := preload("res://tests/support/stub_bank.gd")
+
+
+func _swap_rig(pension: int) -> Dictionary:
+	InputSetup.ensure()
+	var room := FloorRoom.new()
+	var layout := RoomLayout.new()
+	layout.room_type = RoomLayout.TYPE_COMBAT
+	var rows := ["####################"]
+	for y in range(1, 10):
+		rows.append("#..................#")
+	rows.append("####################")
+	layout.rows = PackedStringArray(rows)
+	room.layout = layout
+	room.room_type = RoomLayout.TYPE_COMBAT
+	var bank := SwapBank.new()
+	bank.data.pension = pension
+	var run := ItemKit.new().make_run()
+	var player := Player.new()
+	player.setup(run)
+	var view := RoomView.new()
+	view.setup(room, null, load("res://data/floors/floor_1.tres"), run, player, _rng(), null, bank)
+	view._ready()
+	return {"view": view, "run": run, "player": player, "bank": bank}
+
+
+func _free_swap_rig(rig: Dictionary) -> void:
+	for key in ["view", "player", "bank"]:
+		rig[key].free()
+
+
+func _floor_potions(view: RoomView) -> Array[Pickup]:
+	var found: Array[Pickup] = []
+	for child in view.get_children():
+		if child is Pickup and child.carry_kind == RoomRules.DROP_POTION and not child.is_queued_for_deletion():
+			found.append(child)
+	return found
+
+
+func test_a_floor_potion_with_an_empty_slot_is_taken_by_walking_as_before() -> void:
+	var rig := _swap_rig(0)
+	var view: RoomView = rig["view"]
+	var run: RunState = rig["run"]
+	var tea := Content.potion("swift_tea")
+	var lying := view._drop_potion(Vector2(100, 100), tea)
+	assert_false(lying.needs_press(), "no press with an empty slot")
+	lying.collect()
+	assert_eq(run.potion, tea)
+	assert_eq(_floor_potions(view).size(), 0, "nothing is left lying")
+	_free_swap_rig(rig)
+
+
+func test_a_floor_potion_with_a_full_slot_needs_the_press_and_swaps() -> void:
+	var rig := _swap_rig(0)
+	var view: RoomView = rig["view"]
+	var run: RunState = rig["run"]
+	var tea := Content.potion("swift_tea")
+	var tonic := Content.potion("healing_tonic")
+	run.give_potion(tea)
+	var lying := view._drop_potion(Vector2(100, 100), tonic)
+	assert_true(lying.needs_press(), "a full slot waits for the press")
+	assert_false(Pickup.should_collect(lying.needs_press(), true, false), "walking over it takes nothing")
+	assert_true(Pickup.should_collect(lying.needs_press(), true, true))
+	lying.collect()
+	assert_eq(run.potion, tonic, "the lying one is carried now")
+	var left := _floor_potions(view)
+	assert_eq(left.size(), 1, "the old one lies where the new one lay")
+	assert_eq(left[0].carry_id, tea.id)
+	assert_eq(left[0].position, Vector2(100, 100))
+	assert_true(left[0].needs_press(), "and obeys the same rule, so walking never swaps back")
+	_free_swap_rig(rig)
+
+
+func test_the_prompt_follows_the_slot_while_he_stands_there() -> void:
+	var rig := _swap_rig(0)
+	var view: RoomView = rig["view"]
+	var run: RunState = rig["run"]
+	var lying := view._drop_potion(Vector2(100, 100), Content.potion("healing_tonic"))
+	assert_false(lying.needs_press())
+	run.give_potion(Content.potion("swift_tea"))
+	assert_true(lying.needs_press(), "the slot filled")
+	run.potion = null
+	assert_false(lying.needs_press(), "the slot emptied")
+	_free_swap_rig(rig)
+
+
+func test_a_laid_potion_survives_a_save_and_quit() -> void:
+	var rig := _swap_rig(0)
+	var view: RoomView = rig["view"]
+	var run: RunState = rig["run"]
+	var tea := Content.potion("swift_tea")
+	run.give_potion(tea)
+	view._drop_potion(Vector2(100, 100), Content.potion("healing_tonic")).collect()
+	var shot: Dictionary = JSON.parse_string(JSON.stringify(view.snapshot()))
+	var kept: Array = shot["keep"].filter(func(entry): return entry["kind"] == RoomView.KEEP_POTION)
+	assert_eq(kept.size(), 1, "only the laid potion is kept, not the one taken")
+	assert_eq(kept[0]["id"], tea.id)
+	var back := _swap_rig(0)
+	var again: RoomView = back["view"]
+	again.restore = shot
+	again._restore_contents()
+	var left := _floor_potions(again)
+	assert_eq(left.size(), 1)
+	assert_eq(left[0].carry_id, tea.id)
+	_free_swap_rig(rig)
+	_free_swap_rig(back)
+
+
+func _potion_entry(view: RoomView, id: String, price: int) -> Pickup:
+	view._add_shop_entry(Vector2(200, 100), {"kind": ShopRules.KIND_POTION, "price": price, "item": null,
+			"potion": Content.potion(id), "half": false})
+	var ware: Pickup = null
+	for child in view.get_children():
+		if child is Pickup and child.requires_interact:
+			ware = child
+	return ware
+
+
+func test_buying_a_shop_potion_with_one_carried_swaps_and_takes_the_price_once() -> void:
+	var rig := _swap_rig(50)
+	var view: RoomView = rig["view"]
+	var run: RunState = rig["run"]
+	var bank = rig["bank"]
+	var tea := Content.potion("swift_tea")
+	var tonic := Content.potion("healing_tonic")
+	run.give_potion(tea)
+	var ware := _potion_entry(view, tonic.id, 20)
+	assert_true(ware.can_take.call(), "it can be bought with a potion carried")
+	ware.collect()
+	assert_eq(bank.data.pension, 30, "the price was taken once")
+	assert_eq(run.potion, tonic)
+	var left := _floor_potions(view)
+	assert_eq(left.size(), 1)
+	assert_eq(left[0].carry_id, tea.id, "the old potion lies on the ware's cell")
+	assert_eq(left[0].position, Vector2(200, 100))
+	assert_false(left[0].requires_interact, "it is not a ware")
+	assert_true(left[0].get_meta(RoomView.KEEP)["kind"] == RoomView.KEEP_POTION, "it is free floor stock, not a priced ware")
+	_free_swap_rig(rig)
+
+
+func test_a_shop_potion_costs_nothing_when_it_would_give_nothing() -> void:
+	var rig := _swap_rig(50)
+	var view: RoomView = rig["view"]
+	var run: RunState = rig["run"]
+	var tonic := Content.potion("healing_tonic")
+	run.give_potion(tonic)
+	var ware := _potion_entry(view, tonic.id, 20)
+	assert_false(ware.can_take.call(), "the same potion again gives nothing, so it is not for sale")
+	var poor := _swap_rig(5)
+	poor["run"].give_potion(Content.potion("swift_tea"))
+	var dear := _potion_entry(poor["view"], tonic.id, 20)
+	assert_false(dear.can_take.call(), "and Pension must still cover it")
+	_free_swap_rig(rig)
+	_free_swap_rig(poor)
+
+
+func test_a_shop_potion_with_an_empty_slot_is_bought_as_before() -> void:
+	var rig := _swap_rig(50)
+	var view: RoomView = rig["view"]
+	var run: RunState = rig["run"]
+	var bank = rig["bank"]
+	var tonic := Content.potion("healing_tonic")
+	var ware := _potion_entry(view, tonic.id, 20)
+	assert_true(ware.can_take.call())
+	ware.collect()
+	assert_eq(bank.data.pension, 30)
+	assert_eq(run.potion, tonic)
+	assert_eq(_floor_potions(view).size(), 0, "nothing to lay down")
+	_free_swap_rig(rig)

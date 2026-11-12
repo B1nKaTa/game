@@ -10,11 +10,17 @@ const FLY_START_SPEED := 120.0
 const FLY_ACCELERATION := 700.0
 const FLY_MAX_SPEED := 420.0
 const PROMPT_TEXT := "Take"
+const SWAP_PROMPT := "Swap"
 const ICON_SIZE := 20.0
 # Bone white, so the skull stands out from the cursed name's purple on any floor.
 const SKULL_COLOR := Color("ece9e0")
 
 var requires_interact := false
+# A pickup that needs the press only at times (a potion on the floor while the slot is full): returns true
+# while it does. Empty for one that never does.
+var press_when := Callable()
+# The frame whose press is not his to use here: a pickup laid by that press must not take it too.
+var ignore_press_frame := -1
 # How near his feet must come to take it. A heal under the Pill Crusher wants him nearer.
 var collect_radius := COLLECT_RADIUS
 var can_take := Callable()
@@ -116,6 +122,10 @@ func is_flying() -> bool:
 	return _flying
 
 
+func needs_press() -> bool:
+	return requires_interact or (press_when.is_valid() and bool(press_when.call()))
+
+
 func _process(delta: float) -> void:
 	if _done or not is_instance_valid(_player):
 		return
@@ -129,13 +139,15 @@ func _process(delta: float) -> void:
 	var in_range := distance <= collect_radius
 	if can_take.is_valid() and not can_take.call():
 		in_range = false
-	var show_prompt := requires_interact and in_range
+	var needs := needs_press()
+	var show_prompt := needs and in_range
 	if show_prompt != _prompt_shown or (show_prompt and KeyBindings.prompt_label("interact") != _prompt_label):
 		_prompt_shown = show_prompt
 		_prompt_label = KeyBindings.prompt_label("interact")
 		queue_redraw()
-	if should_collect(requires_interact, in_range, Input.is_action_just_pressed("interact")):
-		if requires_interact:
+	var pressed := Input.is_action_just_pressed("interact") and Engine.get_process_frames() != ignore_press_frame
+	if should_collect(needs, in_range, pressed):
+		if needs:
 			FirstRunTips.interacted(self)
 		collect()
 

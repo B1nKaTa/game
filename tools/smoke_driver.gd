@@ -2357,19 +2357,30 @@ func _check_vault_room(scene: Node) -> void:
 , "a vault offers a choice of items, found %d interactive pickups with %d items left to offer" % [choices, can_offer])
 	if potion == null:
 		return
-	# A potion fills the slot, and stays on the floor while the slot is full.
+	# A potion fills an empty slot as he walks over it. With the slot full it waits for the press, and the
+	# press swaps: the carried potion lies where the new one lay.
 	var potion_id := potion.carry_id
+	var lying_at := potion.global_position
 	run.potion = null
 	run.give_potion(Content.potion("swift_tea"))
-	_put_feet(scene, potion.global_position)
+	_put_feet(scene, lying_at)
 	await _wait(0.25)
 	_check(not _gone(potion), "a full slot leaves the potion on the floor")
 	_check(run.potion.id == "swift_tea", "and keeps the potion it has")
+	await _press("interact")
+	await _wait(0.25)
+	_check(run.potion != null and run.potion.id == potion_id, "the press swaps the potion lying there in")
+	_check(_gone(potion), "and the swapped pickup is gone")
+	var laid: Pickup = null
+	for pickup in get_tree().get_nodes_in_group("pickups"):
+		if pickup.carry_kind == RoomRules.DROP_POTION and pickup.carry_id == "swift_tea" and not pickup.is_queued_for_deletion():
+			laid = pickup
+	_check(laid != null and laid.global_position.distance_to(lying_at) < 1.0, "the old potion lies where the new one lay")
 	run.potion = null
 	run.changed.emit()
 	await _wait(0.25)
-	_check(run.potion != null and run.potion.id == potion_id, "an empty slot takes the potion lying there")
-	_check(_gone(potion), "and the pickup is gone")
+	_check(run.potion != null and run.potion.id == "swift_tea", "an empty slot takes the potion lying there")
+	_check(_gone(laid), "and the pickup is gone")
 	run.potion = null
 	run.changed.emit()
 

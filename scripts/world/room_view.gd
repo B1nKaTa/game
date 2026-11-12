@@ -31,6 +31,7 @@ const KEEP_FREE := "free"
 const KEEP_SHOP := "shop"
 const KEEP_RECIPE := "recipe"
 const KEEP_CHEST := "chest"
+const KEEP_POTION := "potion"
 const SHOP_PROMPT := "Buy"
 # The same merchant keeps every shop on every floor.
 const MERCHANT: NpcDef = preload("res://data/npcs/shop_merchant.tres")
@@ -1124,18 +1125,37 @@ func _drop_consumable(at: Vector2, kind: String) -> void:
 			_drop_potion(at, PotionPool.roll(Content.potions(), _rng.randf(), _rng.randf()))
 
 
-# A potion lying in the room. It fills the potion slot, and waits on the floor while the slot is full.
+# A potion lying in the room. It fills an empty potion slot as he walks over it. With a potion carried it
+# asks for the press instead, and swaps: the carried one is laid down where this one lay.
 func _drop_potion(at: Vector2, def: PotionDef) -> Pickup:
 	if def == null:
 		def = Content.potion(RoomRules.SMALL_POTION_ID)
-	var potion := _add_pickup(at, def.display_name, def.color, func(): _take_consumable(func(): _run.give_potion(def)), false, "pill_heal")
-	potion.can_take = _run.can_take_potion
+	var potion := _add_pickup(at, def.display_name, def.color, func(): _take_potion(def, at), false, "pill_heal")
+	potion.press_when = func(): return not _run.can_take_potion()
+	potion.prompt = tr(Pickup.SWAP_PROMPT)
+	potion.set_meta(KEEP, {"kind": KEEP_POTION, "id": def.id})
 	potion.carry_kind = RoomRules.DROP_POTION
 	potion.carry_id = def.id
 	potion.copy_kind = "potion"
 	potion.copy_potion = def
 	potion.art_id = ART_POTION
 	return potion
+
+
+# An empty slot takes the potion. A full one swaps, and the old potion lies on `at` for him to swap back.
+func _take_potion(def: PotionDef, at: Vector2) -> void:
+	if _run.can_take_potion():
+		_take_consumable(func(): _run.give_potion(def))
+		return
+	_swap_in_potion(def, at)
+	consumable_taken.emit()
+
+
+func _swap_in_potion(def: PotionDef, at: Vector2) -> void:
+	var old: PotionDef = _run.swap_potion(def)
+	if old != null:
+		# The press that swapped must not be the press that swaps it back.
+		_drop_potion(at, old).ignore_press_frame = Engine.get_process_frames()
 
 
 # kind is the RunEffects pickup kind the items hear, or "" for one they do not. The items may make one
@@ -1447,8 +1467,8 @@ func _add_shop_entry(at: Vector2, entry: Dictionary) -> void:
 			var potion: PotionDef = entry["potion"]
 			label = potion.display_name
 			color = potion.color
-			give = func(): _run.give_potion(potion)
-			allowed = _run.can_take_potion
+			give = func(): _swap_in_potion(potion, at)
+			allowed = func(): return _run.potion == null or _run.potion.id != potion.id
 	var text := "%s: %d" % [label, price]
 	if price <= 0:
 		text = "Free: %s" % label
@@ -1894,6 +1914,10 @@ func _restore_entry(entry: Dictionary) -> void:
 					return
 			_add_shop_entry(at, {"kind": kind, "price": int(entry.get("price", 0)), "item": item,
 					"potion": shop_potion, "half": bool(entry.get("half", false))})
+		KEEP_POTION:
+			var laid := Content.potion(str(entry.get("id", "")))
+			if laid != null:
+				_drop_potion(at, laid)
 		KEEP_RECIPE:
 			if item != null:
 				_add_recipe_pickup(at, item)

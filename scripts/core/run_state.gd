@@ -465,6 +465,16 @@ func give_potion(def: PotionDef) -> bool:
 	return true
 
 
+# Harold swaps: he takes def and hands back the potion it replaced (null when the slot was empty).
+func swap_potion(def: PotionDef) -> PotionDef:
+	if def == null:
+		return null
+	var old := potion
+	potion = def
+	changed.emit()
+	return old
+
+
 # Healing is never wasted on a full set of pills, so drinking waits until it helps.
 func can_drink_potion() -> bool:
 	if potion == null:
