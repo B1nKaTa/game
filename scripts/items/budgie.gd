@@ -15,6 +15,7 @@ var _ctx: EffectContext
 
 func on_gain(ctx: EffectContext) -> void:
 	_ctx = ctx
+	super(ctx)
 
 
 func on_room_enter(ctx: EffectContext, room: Node) -> void:

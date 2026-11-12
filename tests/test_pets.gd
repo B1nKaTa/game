@@ -97,6 +97,82 @@ func test_each_pet_places_its_body_in_every_room_on_its_own_slot() -> void:
 		seen[offset] = true
 
 
+# Nothing in a test is in a started tree, so a context that says Harold and a room are there, as in play. Its
+# add_fx hands the body to the on_fx listener and frees it, as the real one does with no room.
+class StagedContext extends EffectContext:
+	func has_player() -> bool:
+		return true
+
+
+	func has_room() -> bool:
+		return true
+
+
+	func feet() -> Vector2:
+		return Vector2.ZERO
+
+
+	func add_fx(node: Node2D, _at: Vector2) -> Node2D:
+		if on_fx.is_valid():
+			on_fx.call(node)
+		node.free()
+		return null
+
+
+# Puts the staged context in the run, wired to the kit.
+func _stage(kit: ItemKit, run: RunState) -> void:
+	run.effects.ctx = StagedContext.new(run)
+	kit.wire(run)
+
+
+func _bodies(kit: ItemKit) -> int:
+	return kit.fx.filter(func(entry): return entry["script"] == Pet).size()
+
+
+func test_a_pet_gained_in_a_room_places_its_body_at_once() -> void:
+	var kit := ItemKit.new()
+	var run := kit.make_run()
+	_stage(kit, run)
+	run.add_item(_pet_item("rex_test"))
+	assert_eq(_bodies(kit), 1, "the body stands by him the moment the pet is taken")
+	run.effects.room_enter(null)
+	assert_eq(_bodies(kit), 2, "the next room places exactly one more")
+
+
+func test_a_pet_gained_with_no_room_places_nothing_until_a_room() -> void:
+	var kit := ItemKit.new()
+	var run := kit.make_run()
+	run.add_item(_pet_item("rex_test"))
+	assert_eq(_bodies(kit), 0)
+	run.effects.room_enter(null)
+	assert_eq(_bodies(kit), 1)
+
+
+func test_a_resumed_pet_places_nothing_until_a_room() -> void:
+	var kit := ItemKit.new()
+	var run := kit.make_run()
+	_stage(kit, run)
+	run.effects.add(_pet_item("rex_test"), false)
+	assert_eq(_bodies(kit), 0, "a resumed run gets no body on restoring")
+
+
+func test_every_shipped_pet_places_its_body_when_taken() -> void:
+	var ids: Array[String] = []
+	for item in Content.all_items():
+		if item.effect is PetEffect:
+			ids.append(item.id)
+	assert_true(ids.size() >= 10, "the shipped pets were found")
+	for id in ids:
+		var kit := ItemKit.new()
+		var run := kit.make_run()
+		_stage(kit, run)
+		run.add_item(kit.item(id))
+		var expected := 2 if id == "moths" else 1
+		assert_eq(_bodies(kit), expected, "%s shows at once" % id)
+		run.effects.room_enter(null)
+		assert_eq(_bodies(kit), expected * 2, "%s places the same count in the next room" % id)
+	
+
 # The run-tests root is not in a started tree, so the guards are asked through try_block_in with the
 # nodes the group would hold (the repo's way for group-wide helpers).
 func test_a_pet_body_is_a_passing_effect_and_never_blocks_by_itself() -> void:

@@ -12,7 +12,19 @@ var slot := 0
 var _pet: WeakRef
 
 
+# Taken mid-room, the body stands by him at once; before there is a player and a room (tests, a resumed
+# run's restore, which never calls this) it waits for the next room.
+func on_gain(ctx: EffectContext) -> void:
+	if ctx.has_player() and ctx.has_room():
+		_place(ctx)
+
+
 func on_room_enter(ctx: EffectContext, _room: Node) -> void:
+	_place(ctx)
+
+
+# Puts this pet's body (or bodies) by his feet. The one placement, for a room entered and for a pet taken.
+func _place(ctx: EffectContext) -> void:
 	_pet = null
 	var body := Pet.make(look, color, slot, base_speed() * (1.0 + _speed_bonus(ctx)))
 	body.follow = ctx.player if ctx.has_player() else null

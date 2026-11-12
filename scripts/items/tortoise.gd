@@ -10,6 +10,7 @@ var _ctx: EffectContext
 
 func on_gain(ctx: EffectContext) -> void:
 	_ctx = ctx
+	super(ctx)
 
 
 func base_speed() -> float:

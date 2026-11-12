@@ -20,9 +20,10 @@ var _ctx: EffectContext
 
 func on_gain(ctx: EffectContext) -> void:
 	_ctx = ctx
+	super(ctx)
 
 
-func on_room_enter(ctx: EffectContext, _room: Node) -> void:
+func _place(ctx: EffectContext) -> void:
 	_ctx = ctx
 	_again = [{}, {}]
 	for i in COUNT:
