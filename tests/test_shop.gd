@@ -364,20 +364,45 @@ func test_buying_a_shop_potion_with_one_carried_swaps_and_takes_the_price_once()
 	_free_swap_rig(rig)
 
 
-func test_a_shop_potion_costs_nothing_when_it_would_give_nothing() -> void:
+func test_a_shop_potion_matching_the_carried_one_still_buys_a_spare_copy() -> void:
 	var rig := _swap_rig(50)
 	var view: RoomView = rig["view"]
 	var run: RunState = rig["run"]
+	var bank = rig["bank"]
 	var tonic := Content.potion("healing_tonic")
 	run.give_potion(tonic)
 	var ware := _potion_entry(view, tonic.id, 20)
-	assert_false(ware.can_take.call(), "the same potion again gives nothing, so it is not for sale")
-	var poor := _swap_rig(5)
-	poor["run"].give_potion(Content.potion("swift_tea"))
-	var dear := _potion_entry(poor["view"], tonic.id, 20)
-	assert_false(dear.can_take.call(), "and Pension must still cover it")
+	assert_true(ware.can_take.call(), "it is for sale")
+	ware.collect()
+	assert_eq(bank.data.pension, 30, "charged once")
+	var left := _floor_potions(view)
+	assert_eq(left.size(), 1, "the old copy lies on the cell")
+	assert_eq(left[0].carry_id, tonic.id)
 	_free_swap_rig(rig)
-	_free_swap_rig(poor)
+
+
+func test_a_shop_potion_ware_reads_swap_while_a_potion_is_carried() -> void:
+	var rig := _swap_rig(50)
+	var view: RoomView = rig["view"]
+	var run: RunState = rig["run"]
+	var ware := _potion_entry(view, "healing_tonic", 20)
+	assert_eq(ware.current_prompt(), RoomView.SHOP_PROMPT)
+	run.give_potion(Content.potion("swift_tea"))
+	assert_eq(ware.current_prompt(), Pickup.SWAP_PROMPT)
+	run.potion = null
+	assert_eq(ware.current_prompt(), RoomView.SHOP_PROMPT, "empty again: Buy")
+	assert_true(ware._label.begins_with("Healing"), "the name and price stay")
+	_free_swap_rig(rig)
+
+
+func test_a_shop_potion_too_dear_is_not_for_sale() -> void:
+	var tonic := Content.potion("healing_tonic")
+	var rig := _swap_rig(5)
+	var view: RoomView = rig["view"]
+	rig["run"].give_potion(Content.potion("swift_tea"))
+	var dear := _potion_entry(view, tonic.id, 20)
+	assert_false(dear.can_take.call(), "Pension must still cover it")
+	_free_swap_rig(rig)
 
 
 func test_a_shop_potion_with_an_empty_slot_is_bought_as_before() -> void:

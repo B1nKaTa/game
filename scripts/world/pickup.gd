@@ -28,6 +28,8 @@ var flies := false
 # How near a flying coin must be to set off toward him. The Penny Jar widens it.
 var magnet_radius := MAGNET_RADIUS
 var prompt := PROMPT_TEXT
+# When set, returns the prompt's words as they stand now (a potion ware reads Swap while one is carried).
+var prompt_when := Callable()
 # What the name is drawn in, and whether a skull sits before it, as a cursed item's does.
 var label_color := Color.WHITE
 var skull := false
@@ -58,6 +60,7 @@ var _fly_time := 0.0
 var _prompt_shown := false
 # The button the prompt was drawn with, so it is drawn again when the device changes.
 var _prompt_label := ""
+var _prompt_words := ""
 
 
 static func should_collect(needs_interact: bool, in_range: bool, interact_pressed: bool) -> bool:
@@ -122,6 +125,12 @@ func is_flying() -> bool:
 	return _flying
 
 
+func current_prompt() -> String:
+	if prompt_when.is_valid():
+		return str(prompt_when.call())
+	return prompt
+
+
 func needs_press() -> bool:
 	return requires_interact or (press_when.is_valid() and bool(press_when.call()))
 
@@ -141,8 +150,10 @@ func _process(delta: float) -> void:
 		in_range = false
 	var needs := needs_press()
 	var show_prompt := needs and in_range
-	if show_prompt != _prompt_shown or (show_prompt and KeyBindings.prompt_label("interact") != _prompt_label):
+	var words := current_prompt()
+	if show_prompt != _prompt_shown or (show_prompt and (KeyBindings.prompt_label("interact") != _prompt_label or words != _prompt_words)):
 		_prompt_shown = show_prompt
+		_prompt_words = words
 		_prompt_label = KeyBindings.prompt_label("interact")
 		queue_redraw()
 	var pressed := Input.is_action_just_pressed("interact") and Engine.get_process_frames() != ignore_press_frame
@@ -200,7 +211,7 @@ func _draw() -> void:
 		var width := ThemeDB.fallback_font.get_string_size(_label, HORIZONTAL_ALIGNMENT_LEFT, -1, Npc.FONT_SIZE).x
 		draw_skull(self, Vector2(-width / 2.0 - 8.0, -16.0), SKULL_COLOR)
 	if _prompt_shown:
-		Npc._draw_centered(self, KeyBindings.with_key("interact", prompt), Vector2(0, 22), Color("ffd24a"))
+		Npc._draw_centered(self, KeyBindings.with_key("interact", current_prompt()), Vector2(0, 22), Color("ffd24a"))
 
 
 # A small skull, drawn in code: a round head, a jaw, two dark eyes. It marks a cursed item's name.

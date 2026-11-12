@@ -1468,7 +1468,7 @@ func _add_shop_entry(at: Vector2, entry: Dictionary) -> void:
 			label = potion.display_name
 			color = potion.color
 			give = func(): _swap_in_potion(potion, at)
-			allowed = func(): return _run.potion == null or _run.potion.id != potion.id
+			allowed = func(): return true
 	var text := "%s: %d" % [label, price]
 	if price <= 0:
 		text = "Free: %s" % label
@@ -1476,6 +1476,8 @@ func _add_shop_entry(at: Vector2, entry: Dictionary) -> void:
 		text = "%s: %d, half" % [label, price]
 	var pickup := _add_pickup(at, text, color, func(): _buy(price, give), true)
 	pickup.prompt = SHOP_PROMPT
+	if entry["kind"] == ShopRules.KIND_POTION:
+		pickup.prompt_when = func() -> String: return tr(Pickup.SWAP_PROMPT) if not _run.can_take_potion() else SHOP_PROMPT
 	pickup.art_id = SHOP_ART.get(entry["kind"], "")
 	var item_id: String = entry["item"].id if entry.get("item") != null else (entry["potion"].id if entry.get("potion") != null else "")
 	pickup.set_meta(KEEP, {"kind": KEEP_SHOP, "shop": entry["kind"], "price": price, "id": item_id,
@@ -1801,7 +1803,8 @@ func is_finished() -> bool:
 
 
 # What the run checkpoint keeps of this room: whether it was cleared, and the items, stock, recipes and
-# closed chests still waiting in it, each on its cell. Loose coins, heals and consumables are left out.
+# closed chests still waiting in it, each on its cell. Loose potions are kept too; loose coins, heals,
+# Slips and Thermoses are left out.
 func snapshot() -> Dictionary:
 	var keep := []
 	for child in get_children():

@@ -691,6 +691,8 @@ class Bot extends Node:
 					if not child.can_take.is_valid() or child.can_take.call():
 						took_item = true
 						child.collect()
+			elif child.needs_press():
+				continue
 			elif not child.can_take.is_valid() or child.can_take.call():
 				child.collect()
 

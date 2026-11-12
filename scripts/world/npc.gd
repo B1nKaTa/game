@@ -169,7 +169,7 @@ func _rival_distances() -> Array[float]:
 	var feet := _feet()
 	for node in get_tree().get_nodes_in_group("pickups"):
 		var pickup := node as Pickup
-		if pickup == null or not pickup.requires_interact or pickup.is_flying():
+		if pickup == null or not pickup.needs_press() or pickup.is_flying():
 			continue
 		if pickup.can_take.is_valid() and not pickup.can_take.call():
 			continue

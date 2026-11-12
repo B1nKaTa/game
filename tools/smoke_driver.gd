@@ -708,7 +708,7 @@ func _clear_room(scene: Node) -> void:
 			continue
 		if pickup.requires_interact:
 			# Buying could spend the Pension this check expects to see earned.
-			if pickup.prompt != RoomView.SHOP_PROMPT:
+			if not (pickup.has_meta(RoomView.KEEP) and pickup.get_meta(RoomView.KEEP).get("kind", "") == RoomView.KEEP_SHOP):
 				pickup.collect()
 				await _wait(0.05)
 			continue
