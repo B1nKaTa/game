@@ -469,6 +469,7 @@ func _ready() -> void:
 	_create_blocks()
 	_create_props(palette)
 	if not restore.is_empty():
+		_remove_broken_props()
 		_restore_contents()
 		return
 	_create_rewards()
@@ -1792,10 +1793,41 @@ func snapshot() -> Dictionary:
 		var cell := _cell_of(child.position)
 		entry["cell"] = [cell.x, cell.y]
 		keep.append(entry)
-	var shot := {"cleared": _finished, "keep": keep}
+	var shot := {"cleared": _finished, "keep": keep, "broken": broken_cells_sorted()}
 	if _room.room_type == RoomLayout.TYPE_SHOP:
 		shot["purchases"] = shop_purchases
 	return shot
+
+
+# The cells of broken props as [x, y] pairs, in a fixed order, so a saved room is the same each time.
+func broken_cells_sorted() -> Array:
+	var cells: Array[Vector2i] = []
+	for cell: Vector2i in _broken_cells.keys():
+		cells.append(cell)
+	cells.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return a.x < b.x or (a.x == b.x and a.y < b.y))
+	var out := []
+	for cell in cells:
+		out.append([cell.x, cell.y])
+	return out
+
+
+# A resumed room has no prop on a cell that was broken before: it is freed (the props were all made, so
+# their coin rolls drew from the RNG as before), and the cell opens. Nothing drops. A snapshot without
+# the key breaks nothing.
+func _remove_broken_props() -> void:
+	var raw: Array = restore.get("broken", [])
+	if raw.is_empty():
+		return
+	for pair in raw:
+		if pair is Array and pair.size() >= 2:
+			_mark_broken(Vector2i(int(pair[0]), int(pair[1])))
+	for child in get_children():
+		# Only props the room listens to, so loose scenery that shares a cell stays.
+		if not child is BreakableBlock or child.get_signal_connection_list("broken").is_empty():
+			continue
+		if _broken_cells.has(_cell_of(child.position)):
+			remove_child(child)
+			child.free()
 
 
 # The cells of a snapshot's wares that lie off the shop's own S cells (a Ticket Stub Book's extra ware),
