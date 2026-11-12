@@ -30,7 +30,7 @@ func tick(enemy: Enemy, delta: float) -> void:
 		return
 	_rushed += delta
 	enemy.desired_velocity = enemy.chase_direction() * enemy.def.speed
-	if enemy.distance_to_target() <= START_RANGE or _rushed >= RUSH_LIMIT:
+	if (enemy.distance_to_target() <= START_RANGE and enemy.can_strike_target()) or _rushed >= RUSH_LIMIT:
 		_lit = true
 		_telegraph.start(FUSE)
 		# A blast has no second chance, so its warning shows for the whole fuse.

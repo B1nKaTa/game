@@ -55,7 +55,7 @@ func tick(enemy: Enemy, delta: float) -> void:
 	_throw_cooldown -= delta
 	var distance := enemy.distance_to_target()
 	enemy.desired_velocity = enemy.chase_direction() * enemy.def.speed
-	if distance <= SWING_RANGE and _swing_cooldown <= 0.0:
+	if distance <= SWING_RANGE and _swing_cooldown <= 0.0 and enemy.can_strike_target():
 		_swing.start(SWING_WINDUP)
 		enemy.set_warning(_swing, SWING_RANGE)
 	elif distance <= THROW_RANGE and _throw_cooldown <= 0.0 and enemy.target_in_view():

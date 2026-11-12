@@ -741,12 +741,23 @@ func _routed_direction(goal: Vector2, straight: Vector2) -> Vector2:
 	return global_position.direction_to(_waypoint) if _routing else straight
 
 
+# The narrower half of its collision box. Sliding takes care of a pixel or two of scraping.
+func _route_half_width() -> float:
+	return minf(def.body_size.x, def.body_size.y) * 0.4 - 1.0
+
+
+# Whether nothing solid stands between it and Grandpa's feet, so a melee swing may begin. A ghost,
+# anything underground and a room without a grid always may.
+func can_strike_target() -> bool:
+	if walk_grid == null or def.ignores_walls or submerged:
+		return true
+	return walk_grid.line_is_clear(global_position, target_ground(), _route_half_width())
+
+
 func _plan_route(goal: Vector2) -> void:
 	_route_goal = goal
-	# The narrower half of its collision box. Sliding takes care of a pixel or two of scraping.
-	var half_width := minf(def.body_size.x, def.body_size.y) * 0.4 - 1.0
 	_routing = false
-	if walk_grid.line_is_clear(global_position, goal, half_width):
+	if walk_grid.line_is_clear(global_position, goal, _route_half_width()):
 		return
 	var next := walk_grid.next_cell(WalkGrid.cell_of(global_position), WalkGrid.cell_of(goal))
 	if next == WalkGrid.NO_CELL or next == WalkGrid.cell_of(goal):

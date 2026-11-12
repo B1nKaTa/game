@@ -46,7 +46,7 @@ func tick(enemy: Enemy, delta: float) -> void:
 	if not enemy.target_in_view():
 		enemy.desired_velocity = enemy.chase_direction() * enemy.def.speed * BossMoves.CATCH_UP_SPEED
 		return
-	var near := enemy.distance_to_target() <= START_RANGE
+	var near := enemy.distance_to_target() <= START_RANGE and enemy.can_strike_target()
 	if _cooldown <= 0.0:
 		_begin(enemy, choose_attack(near))
 		return

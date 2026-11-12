@@ -168,7 +168,7 @@ func tick(enemy: Enemy, delta: float) -> void:
 	if not enemy.target_in_view():
 		enemy.desired_velocity = enemy.chase_direction() * speed * BossMoves.CATCH_UP_SPEED
 		return
-	var near := offset.length() <= SHOVEL_START
+	var near := offset.length() <= SHOVEL_START and enemy.can_strike_target()
 	if _cooldown <= 0.0:
 		var attack := _next if _next != Attack.NONE else choose_attack(near, _last, _may_summon(enemy), randf())
 		_next = Attack.NONE

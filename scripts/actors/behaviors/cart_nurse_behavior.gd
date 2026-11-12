@@ -60,7 +60,7 @@ func _wanted(enemy: Enemy, delta: float) -> Vector2:
 			_has_hit = false
 		return Vector2.ZERO
 	_cooldown -= delta
-	if _cooldown <= 0.0 and enemy.distance_to_target() <= START_RANGE and enemy.target_in_view():
+	if _cooldown <= 0.0 and enemy.distance_to_target() <= START_RANGE and enemy.target_in_view() and enemy.can_strike_target():
 		_direction = enemy.direction_to_target()
 		_telegraph.start(WINDUP)
 		enemy.set_warning(_telegraph, WARNING_RADIUS)

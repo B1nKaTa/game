@@ -33,7 +33,7 @@ func tick(enemy: Enemy, delta: float) -> void:
 				enemy.hit_target(enemy.def.damage)
 		return
 	_cooldown = maxf(_cooldown - delta, 0.0)
-	if distance <= START_RANGE:
+	if distance <= START_RANGE and enemy.can_strike_target():
 		if _cooldown <= 0.0:
 			_telegraph.start(WINDUP)
 			enemy.set_warning(_telegraph, WARNING_RADIUS)
@@ -41,4 +41,4 @@ func tick(enemy: Enemy, delta: float) -> void:
 	var spot: Vector2 = enemy.target.global_position
 	if distance > FLANK_DISTANCE and distance < FLANK_FROM:
 		spot += Vector2.from_angle(_flank) * FLANK_DISTANCE
-	enemy.desired_velocity = enemy.global_position.direction_to(spot) * enemy.def.speed
+	enemy.desired_velocity = enemy.walk_direction_to(spot) * enemy.def.speed

@@ -138,7 +138,7 @@ func tick(enemy: Enemy, delta: float) -> void:
 	if not enemy.target_in_view():
 		enemy.desired_velocity = enemy.chase_direction() * speed * BossMoves.CATCH_UP_SPEED
 		return
-	var near := offset.length() <= NEAR
+	var near := offset.length() <= NEAR and enemy.can_strike_target()
 	if _cooldown <= 0.0 or (_next != Attack.NONE and _cooldown <= cooldown_for(phase_two) * 0.5):
 		var attack := _next
 		if attack == Attack.NONE:

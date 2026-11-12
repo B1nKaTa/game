@@ -105,7 +105,7 @@ func tick(enemy: Enemy, delta: float) -> void:
 	if not enemy.target_in_view():
 		enemy.desired_velocity = enemy.chase_direction() * speed * BossMoves.CATCH_UP_SPEED
 		return
-	var near := offset.length() <= SWEEP_START
+	var near := offset.length() <= SWEEP_START and enemy.can_strike_target()
 	if _next != Attack.NONE:
 		var chained := _next
 		_next = Attack.NONE

@@ -28,10 +28,10 @@ func tick(enemy: Enemy, delta: float) -> void:
 			if enemy.distance_to_target() <= STRIKE_RANGE:
 				enemy.hit_target(enemy.def.damage)
 		return
-	var wanted := enemy.direction_to_target()
+	var wanted := enemy.chase_direction()
 	enemy.facing = turned(enemy.facing, wanted, TURN_SPEED * delta)
 	_cooldown = maxf(_cooldown - delta, 0.0)
-	if enemy.distance_to_target() <= START_RANGE:
+	if enemy.distance_to_target() <= START_RANGE and enemy.can_strike_target():
 		if _cooldown <= 0.0:
 			_telegraph.start(WINDUP)
 			enemy.set_warning(_telegraph, STRIKE_RANGE)

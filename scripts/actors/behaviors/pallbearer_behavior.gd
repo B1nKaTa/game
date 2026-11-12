@@ -175,7 +175,7 @@ func _carry_on(enemy: Enemy, delta: float) -> void:
 				_pair.rams += 1
 		else:
 			_pair.cooldown -= delta
-			if _pair.cooldown <= 0.0 and enemy.distance_to_target() <= START_RANGE and enemy.target_in_view():
+			if _pair.cooldown <= 0.0 and enemy.distance_to_target() <= START_RANGE and enemy.target_in_view() and enemy.can_strike_target():
 				_pair.direction = enemy.direction_to_target()
 				_pair.telegraph.start(WINDUP)
 				_pair.warned += 1

@@ -76,7 +76,7 @@ func tick(enemy: Enemy, delta: float) -> void:
 		_summon_timer = SUMMON_EVERY
 		if BossMoves.can_summon(enemy.enemies_alive(), MAX_ENEMIES):
 			enemy.request_summon_at(scatter_points(enemy.target_ground(), SUMMON_COUNT + 1, SUMMON_DISTANCE, randf() * TAU).slice(1), BossMoves.SUMMON_WARNING)
-	var near := offset.length() <= SLAM_START
+	var near := offset.length() <= SLAM_START and enemy.can_strike_target()
 	if _cooldown <= 0.0:
 		_begin(enemy, choose_attack(near, _last, randf()))
 		return

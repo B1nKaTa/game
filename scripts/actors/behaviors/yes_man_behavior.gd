@@ -76,7 +76,7 @@ func tick(enemy: Enemy, delta: float) -> void:
 		if _echo_left < 0.0:
 			_begin(enemy, false)
 			return
-	elif _cooldown <= 0.0 and enemy.distance_to_target() <= START_RANGE and enemy.target_in_view():
+	elif _cooldown <= 0.0 and enemy.distance_to_target() <= START_RANGE and enemy.target_in_view() and enemy.can_strike_target():
 		_begin(enemy, true)
 		return
 	_walk(enemy)

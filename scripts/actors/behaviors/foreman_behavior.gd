@@ -104,7 +104,7 @@ func tick(enemy: Enemy, delta: float) -> void:
 		if BossMoves.can_summon(enemy.enemies_alive(), MAX_ENEMIES):
 			enemy.request_summon_at(BossMoves.cutoff_points(enemy.target_ground(), enemy.target_motion(), enemy.global_position, SUMMON_COUNT, SUMMON_DISTANCE, 1.2), BossMoves.SUMMON_WARNING)
 	if _cooldown <= 0.0:
-		_begin(enemy, choose_attack(distance, _last))
+		_begin(enemy, choose_attack(distance if enemy.can_strike_target() else INF, _last))
 		return
 	if distance > KEEP_NEAR:
 		enemy.desired_velocity = enemy.chase_direction() * enemy.def.speed

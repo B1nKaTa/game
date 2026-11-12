@@ -48,7 +48,7 @@ func tick(enemy: Enemy, delta: float) -> void:
 			_start_charge(enemy)
 		return
 	_cooldown -= delta
-	if _cooldown <= 0.0 and enemy.distance_to_target() <= START_RANGE and enemy.target_in_view():
+	if _cooldown <= 0.0 and enemy.distance_to_target() <= START_RANGE and enemy.target_in_view() and enemy.can_strike_target():
 		_way = enemy.direction_to_target()
 		if _way.is_zero_approx():
 			_way = Vector2.RIGHT

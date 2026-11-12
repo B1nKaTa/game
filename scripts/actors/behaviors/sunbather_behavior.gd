@@ -106,7 +106,7 @@ func _brawl(enemy: Enemy, delta: float) -> void:
 				enemy.hit_target(enemy.def.damage)
 		return
 	_cooldown = maxf(_cooldown - delta, 0.0)
-	if distance <= START_RANGE:
+	if distance <= START_RANGE and enemy.can_strike_target():
 		if _cooldown <= 0.0:
 			_telegraph.start(STRIKE_WINDUP)
 			enemy.set_warning(_telegraph, STRIKE_RANGE, true)
