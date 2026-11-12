@@ -108,3 +108,14 @@ Real players' notes on build `0c234a7`, collected as they come in. Fix in batche
     control and everything was too easy"; he beat the game on his second run (left paths only; the
     right paths were still locked). He tried the F flashbacks, saw them all, and "this was my favorite
     moment of the game".
+
+## The user (2026-11-12, on Player 1's large item room screenshot)
+
+22. **Furniture is too small for Harold, and thrown about at random.** Beds, armchairs, plants and
+    drip stands should be at Harold's scale (a bed he could lie on, a chair he could sit in, though he
+    never does), and placed like a real room, not scattered. Measured: Harold stands about 40 px tall
+    on a 48 px frame; the Sunset Shores bed is 30x27 px, the armchair 22x23, the drip stand 13x28. A
+    tile is 32 px, and every prop fills one tile, which is why a bed can be no longer than one cell.
+    Causes: (a) props are one cell each (`RoomLayout` symbols, `RoomView._create_props`); (b) the
+    small decor (plants, drip stands, vases) is scattered by `RoomDecor.plan` with the room's decor
+    seed, and the beds and chairs stand where each hand-made layout put them, one by one.
