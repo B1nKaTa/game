@@ -5,6 +5,13 @@ signal entered(target_id: int)
 signal key_spent
 
 const ENTER_RADIUS := 18.0
+# A door in a wall takes him only once his feet reach its opening: within ENTER_RADIUS of the door cell's
+# middle and at least OPENING_DEPTH past it toward the wall. His shoes reach 9 px (west, east) or 10 px
+# (north, south) past that middle before the wall's face stops them, so this is the last few pixels at the
+# face. Walking along the floor row in front of the door, sideways past it, no longer takes him through.
+const OPENING_DEPTH := 6.0
+# Where his feet stand in the opening when put there (the full loop): inside it and within his reach.
+const OPENING_REACH := 8.0
 const PROMPT_GAP := 18.0
 const KEY_PROMPT := "Use Slip"
 const NO_KEY_PROMPT := "Needs a Slip"
@@ -60,6 +67,14 @@ static func should_enter(is_locked: bool, needs_key: bool, used: bool, armed: bo
 	return armed and in_range and not (is_locked or needs_key or used or is_chained)
 
 
+# Whether his feet have reached the door's opening (OPENING_DEPTH). Arming and the Slip prompt still use
+# the plain ENTER_RADIUS, so arriving on a door waits until he steps away as before.
+static func in_opening(door_at: Vector2, side: Vector2i, feet: Vector2) -> bool:
+	if door_at.distance_to(feet) > ENTER_RADIUS:
+		return false
+	return side == Vector2i.ZERO or (feet - door_at).dot(Vector2(side)) >= OPENING_DEPTH
+
+
 static func can_spend_key(needs_key: bool, is_locked: bool, in_range: bool, player_has_key: bool) -> bool:
 	return needs_key and not is_locked and in_range and player_has_key
 
@@ -105,6 +120,12 @@ func is_within(radius: float) -> bool:
 	return _spot(self).distance_to(_spot(_player)) <= radius
 
 
+# Where his feet stand to go through: in the opening, pressed toward the wall's face. A door standing on
+# the floor (side ZERO) is its own spot.
+func opening_spot() -> Vector2:
+	return _spot(self) + Vector2(_side) * OPENING_REACH
+
+
 # Where a node stands on screen, or its own position when it is out of the tree (as in a test).
 static func _spot(node: Node2D) -> Vector2:
 	return node.global_position if node.is_inside_tree() else node.position
@@ -133,7 +154,8 @@ func _process(delta: float) -> void:
 	if not is_instance_valid(_player):
 		_redraw_if_changed()
 		return
-	_near = global_position.distance_to(_player.global_position) <= ENTER_RADIUS
+	var feet := _spot(_player)
+	_near = _spot(self).distance_to(feet) <= ENTER_RADIUS
 	_armed = next_armed(_armed, _near)
 	_redraw_if_changed()
 	if Input.is_action_just_pressed("interact") and can_spend_key(requires_key, locked, _near, _player_has_key()):
@@ -141,7 +163,7 @@ func _process(delta: float) -> void:
 		key_spent.emit()
 		FirstRunTips.interacted(self)
 		return
-	if should_enter(locked, requires_key, _used, _armed, _near, chained):
+	if should_enter(locked, requires_key, _used, _armed, in_opening(_spot(self), _side, feet), chained):
 		_used = true
 		entered.emit(_target_id)
 

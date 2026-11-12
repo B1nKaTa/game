@@ -467,8 +467,9 @@ func _step_away_from(scene: Node, door: Door, room: FloorRoom) -> void:
 	await _wait(0.05)
 
 
+# In its opening, pressed toward the wall (Door.opening_spot): a door in a wall takes him only there.
 func _stand_on(scene: Node, door: Door) -> void:
-	scene.player.global_position = door.global_position - Player.FEET_OFFSET
+	scene.player.global_position = door.opening_spot() - Player.FEET_OFFSET
 
 
 func _check_camera(scene: Node) -> void:
