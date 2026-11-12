@@ -163,6 +163,12 @@ func test_player_cancel_charge_clears_a_held_charge() -> void:
 	player.free()
 
 
+func test_entering_a_room_drops_a_held_charge() -> void:
+	var source := FileAccess.get_file_as_string("res://scripts/scenes/floor_scene.gd")
+	var enter := source.substr(source.find("func _enter_room("), 400)
+	assert_true(enter.contains("player.cancel_charge()"), "a charge held through a door does not swing in the next room")
+
+
 func test_feet_box_ends_at_the_bottom_of_the_sprite() -> void:
 	assert_near(Player.FEET_OFFSET.y + Player.FEET_BOX_SIZE.y / 2.0, Player.SPRITE_FEET_Y)
 

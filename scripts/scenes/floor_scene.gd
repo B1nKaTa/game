@@ -533,6 +533,8 @@ func _on_big_map_changed(is_open: bool) -> void:
 func _enter_room(target_id: int) -> void:
 	_hud.hide_boss_bar()
 	player.recall_teeth()
+	# A charge held through the door must not swing in the next room.
+	player.cancel_charge()
 	player.end_push()
 	# A hold from the room he leaves (On the Line) stays there too.
 	player.end_leash()
