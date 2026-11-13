@@ -24,10 +24,14 @@ var _baked := {}
 
 
 # Reaches past the view and the room by more than the biggest screen shake, so
-# shaking never shows the clear color, whatever the room's size.
+# shaking never shows the clear color, whatever the room's size. The view is the
+# camera's own (RoomCamera, kept below the HUD's band), taken at both ends of its
+# travel, since every rest between them lies inside those two.
 static func overdraw_rect(room_size: Vector2) -> Rect2:
-	var cover := Vector2(maxf(room_size.x, VIEW_SIZE.x), maxf(room_size.y, VIEW_SIZE.y))
-	return Rect2((room_size - cover) / 2.0, cover).grow(OVERDRAW_MARGIN)
+	var first := RoomCamera.center_for(room_size, Vector2.ZERO, VIEW_SIZE, Hud.BAND_BOTTOM)
+	var last := RoomCamera.center_for(room_size, room_size, VIEW_SIZE, Hud.BAND_BOTTOM)
+	var views := Rect2(first - VIEW_SIZE / 2.0, VIEW_SIZE).merge(Rect2(last - VIEW_SIZE / 2.0, VIEW_SIZE))
+	return views.merge(Rect2(Vector2.ZERO, room_size)).grow(OVERDRAW_MARGIN)
 
 
 # A band of wall around the room, so a shake at the room's edge shows wall and

@@ -1,6 +1,6 @@
 extends TestCase
 
-const SIZES: Array[Vector2i] = [Vector2i(14, 9), Vector2i(20, 11), Vector2i(30, 17)]
+const SIZES: Array[Vector2i] = [Vector2i(14, 9), Vector2i(20, 10), Vector2i(20, 11), Vector2i(30, 17)]
 
 
 func _pixels(cells: Vector2i) -> Vector2:
@@ -14,7 +14,7 @@ func test_overdraw_covers_the_view_plus_the_biggest_shake_at_every_camera_rest()
 		var room := _pixels(cells)
 		var rect := RoomBackdrop.overdraw_rect(room)
 		for focus: Vector2 in [Vector2.ZERO, room, Vector2(0, room.y), Vector2(room.x, 0)]:
-			var center := RoomCamera.center_for(room, focus, RoomBackdrop.VIEW_SIZE)
+			var center := RoomCamera.center_for(room, focus, RoomBackdrop.VIEW_SIZE, Hud.BAND_BOTTOM)
 			assert_true(rect.position.x < center.x - half_view.x - reach, "left %s" % str(cells))
 			assert_true(rect.position.y < center.y - half_view.y - reach, "top %s" % str(cells))
 			assert_true(rect.end.x > center.x + half_view.x + reach, "right %s" % str(cells))
@@ -30,7 +30,7 @@ func test_the_wall_rim_reaches_past_the_room_by_more_than_the_biggest_shake() ->
 func test_a_small_room_has_darkness_past_its_rim() -> void:
 	var room := _pixels(Vector2i(14, 9))
 	var rim := RoomBackdrop.wall_rim_rect(room)
-	var center := RoomCamera.center_for(room, Vector2.ZERO, RoomBackdrop.VIEW_SIZE)
+	var center := RoomCamera.center_for(room, Vector2.ZERO, RoomBackdrop.VIEW_SIZE, Hud.BAND_BOTTOM)
 	assert_true(rim.position.x > center.x - RoomBackdrop.VIEW_SIZE.x / 2.0)
 	assert_true(rim.end.y < center.y + RoomBackdrop.VIEW_SIZE.y / 2.0)
 

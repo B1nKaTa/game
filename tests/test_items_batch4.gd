@@ -242,7 +242,7 @@ func test_telescope_cane_moves_the_camera_ahead_and_keeps_him_on_screen() -> voi
 	assert_true(enemy.contains("target.camera_focus() if target.has_method(\"camera_focus\")"), "on screen is what the camera shows")
 	for scene: String in ["floor_scene", "waiting_room"]:
 		var text := FileAccess.get_file_as_string("res://scripts/scenes/%s.gd" % scene)
-		assert_true(text.contains("RoomCamera.center_for(room_size, player.camera_focus(), RoomBackdrop.VIEW_SIZE)"), scene)
+		assert_true(text.contains("RoomCamera.center_for(room_size, player.camera_focus(), RoomBackdrop.VIEW_SIZE, Hud.BAND_BOTTOM)"), scene)
 
 
 # --- rooms, kills and pace ---

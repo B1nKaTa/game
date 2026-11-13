@@ -2,8 +2,9 @@ class_name BossMoves
 extends RefCounted
 
 # A boss starts an attack only with its whole body inside what the camera really shows. The camera
-# sits on the room's middle when the room fits the view and stops at its edges otherwise, so the
-# view is worked out the way the floor places it, around Grandpa's feet. The margin keeps a body
+# sits on the room's middle when the room fits the view and stops at its edges otherwise, keeping the
+# room below the HUD's band (RoomCamera's top inset), so the view is worked out the way the floor
+# places it, around Grandpa's feet. The margin keeps a body
 # pressed to the screen's edge out.
 const VIEW_MARGIN := Vector2(8.0, 8.0)
 const CATCH_UP_SPEED := 1.9
@@ -11,7 +12,7 @@ const SUMMON_WARNING := 0.7
 
 
 static func view_rect(room_size: Vector2, focus: Vector2) -> Rect2:
-	var center := RoomCamera.center_for(room_size, focus, RoomBackdrop.VIEW_SIZE)
+	var center := RoomCamera.center_for(room_size, focus, RoomBackdrop.VIEW_SIZE, Hud.BAND_BOTTOM)
 	return Rect2(center - RoomBackdrop.VIEW_SIZE / 2.0, RoomBackdrop.VIEW_SIZE)
 
 

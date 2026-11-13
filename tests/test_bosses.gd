@@ -88,7 +88,8 @@ func _reaper_at(center: Vector2) -> Rect2:
 	return Rect2(center - Vector2(20, 24), Vector2(40, 48))
 
 
-func test_in_a_room_the_screen_holds_whole_the_camera_does_not_follow_grandpa() -> void:
+# 20 x 11 is 28 px taller than the space under the HUD's band, so the camera scrolls only that much.
+func test_in_a_room_the_screen_almost_holds_the_camera_barely_follows_grandpa() -> void:
 	var room := Vector2(20, 11) * RoomBackdrop.TILE
 	assert_true(BossMoves.in_view(_reaper_at(Vector2(320, 280)), room, Vector2(320, 100)), "180 px below him and on screen")
 	assert_true(BossMoves.in_view(_reaper_at(Vector2(560, 290)), room, Vector2(48, 48)), "he stands in a corner, the boss across the room")
@@ -98,7 +99,9 @@ func test_in_a_room_the_screen_holds_whole_the_camera_does_not_follow_grandpa() 
 func test_in_a_big_room_the_view_follows_grandpa() -> void:
 	var room := Vector2(30, 17) * RoomBackdrop.TILE
 	var feet := Vector2(64, 64)
-	assert_true(BossMoves.in_view(_reaper_at(Vector2(600, 300)), room, feet))
+	# The room's top sits below the HUD's band, so the view ends 324 px down the room here.
+	assert_true(BossMoves.in_view(_reaper_at(Vector2(600, 280)), room, feet))
+	assert_false(BossMoves.in_view(_reaper_at(Vector2(600, 300)), room, feet), "its feet at the screen's foot")
 	assert_false(BossMoves.in_view(_reaper_at(Vector2(800, 450)), room, feet), "off the screen")
 	assert_false(BossMoves.in_view(_reaper_at(Vector2(620, 180)), room, feet), "half off the screen")
 
@@ -109,6 +112,17 @@ func test_at_a_big_room_s_edge_the_view_stops_and_shows_more_of_the_room() -> vo
 	assert_true(BossMoves.in_view(_reaper_at(Vector2(360, 300)), room, feet), "540 px away, yet the camera stopped at the wall")
 	assert_false(BossMoves.in_view(_reaper_at(Vector2(340, 300)), room, feet), "its body crosses the view's edge")
 	assert_true(BossMoves.view_rect(room, feet).end.is_equal_approx(room), "the view ends at the room's corner")
+
+
+# The camera keeps the room's top below the HUD's band (RoomCamera's top inset), so the view a boss
+# judges by is the camera's own: at the top of a tall room it starts the band's height above the room.
+func test_a_boss_judges_by_the_view_the_camera_really_shows() -> void:
+	for room: Vector2 in [Vector2(20, 11) * RoomBackdrop.TILE, Vector2(30, 17) * RoomBackdrop.TILE, Vector2(14, 9) * RoomBackdrop.TILE]:
+		for feet: Vector2 in [Vector2(48, 48), Vector2(300, 200), room - Vector2(48, 48)]:
+			var center := RoomCamera.center_for(room, feet, RoomBackdrop.VIEW_SIZE, Hud.BAND_BOTTOM)
+			assert_eq(BossMoves.view_rect(room, feet), Rect2(center - RoomBackdrop.VIEW_SIZE / 2.0, RoomBackdrop.VIEW_SIZE), str(room))
+	var top := BossMoves.view_rect(Vector2(30, 17) * RoomBackdrop.TILE, Vector2(64, 64))
+	assert_eq(top.position.y, -Hud.BAND_BOTTOM, "the room starts below the band")
 
 
 func test_a_ring_points_all_the_way_around() -> void:

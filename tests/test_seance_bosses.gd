@@ -1712,10 +1712,11 @@ func test_madame_zaras_effects_are_cleared_from_a_stored_room() -> void:
 
 
 func test_what_shows_clear_of_the_hud_is_below_its_band_and_off_the_small_map() -> void:
-	# A room shorter than the view (352 px against 360) is centred in it, so the view's top is 4 px above the room's.
+	# A 352 px room is taller than the 324 px under the band, so the camera follows him; in its south
+	# half it stops with the room's foot at the screen's, and the view's top is 8 px above the room's.
 	var medium := BossMoves.clear_view(Vector2(20, 11) * RoomBackdrop.TILE, Vector2(100, 300))
-	var top := (11 * RoomBackdrop.TILE - 360.0) / 2.0
-	assert_eq(medium["play"], Rect2(0, top + Hud.BAND_BOTTOM, 640, 360 - Hud.BAND_BOTTOM), "a room that fits the view")
+	var top := 11 * RoomBackdrop.TILE - 360.0
+	assert_eq(medium["play"], Rect2(0, top + Hud.BAND_BOTTOM, 640, 360 - Hud.BAND_BOTTOM), "a room a little taller than the space under the band")
 	assert_eq(medium["map"], Rect2(Hud.MAP_PANEL.position + Vector2(0, top), Hud.MAP_PANEL.size))
 	var large := BossMoves.clear_view(Vector2(30, 17) * RoomBackdrop.TILE, Vector2(900, 520))
 	assert_eq((large["play"] as Rect2).end, Vector2(960, 544), "the camera stops at the room's far corner")

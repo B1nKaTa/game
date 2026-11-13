@@ -479,11 +479,16 @@ func _check_camera(scene: Node) -> void:
 	var cells: Vector2i = scene.debug_map().room(scene.debug_current_id()).layout.size_in_cells()
 	var room_size := Vector2(cells) * RoomBackdrop.TILE
 	var view_rect := Rect2(camera.position - VIEW / 2.0, VIEW)
+	# Down the screen, the HUD's band covers the top (RoomCamera's top inset): a room fits in what is
+	# left under it, and the camera may show the band's height above the room's top, never more.
 	for axis in 2:
-		if room_size[axis] <= VIEW[axis]:
-			_check(is_equal_approx(camera.position[axis], roundf(room_size[axis] / 2.0)), "a room that fits stays centered")
+		var inset: float = Hud.BAND_BOTTOM if axis == 1 else 0.0
+		if room_size[axis] <= VIEW[axis] - inset:
+			_check(is_equal_approx(camera.position[axis], roundf(room_size[axis] / 2.0 - inset / 2.0)), "a room that fits stays centered under the HUD")
 		else:
-			_check(view_rect.position[axis] >= 0.0 and view_rect.end[axis] <= room_size[axis], "the camera stops at the room's edges")
+			_check(view_rect.position[axis] >= -inset and view_rect.end[axis] <= room_size[axis], "the camera stops at the room's edges")
+	var feet: Vector2 = scene.player.global_position + Player.FEET_OFFSET - view_rect.position
+	_check(feet.y >= Hud.BAND_BOTTOM and feet.y <= VIEW.y, "he is never under the HUD's band, feet at screen y %f" % feet.y)
 	# Aiming reads the mouse through the camera, so it must land where the view is now.
 	var mouse_on_screen: Vector2 = scene.get_viewport().get_mouse_position()
 	var expected_mouse: Vector2 = view_rect.position + camera.offset + mouse_on_screen
@@ -2216,7 +2221,8 @@ func _check_far_boss_waits(scene: Node, boss_def: EnemyDef) -> void:
 	await _dismiss_all()
 
 
-# In a room the screen holds whole, a boss across it from Grandpa in a corner is on screen, so it attacks.
+# In a room the screen all but holds (20 x 11, 28 px taller than the space under the HUD's band, so the
+# camera scrolls just that much), a boss across it from Grandpa in a corner is on screen, so it attacks.
 func _check_boss_seen_from_a_corner(scene: Node, boss_def: EnemyDef) -> void:
 	var view := await _enter_made_room(scene, _fight_layout(20, 11, {}))
 	_put_feet(scene, RoomBackdrop.cell_center(Vector2i(1, 1)))

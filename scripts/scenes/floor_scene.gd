@@ -833,7 +833,7 @@ func _follow_player() -> void:
 	if _camera == null or _current_id == -1:
 		return
 	var room_size := Vector2(_map.room(_current_id).layout.size_in_cells()) * RoomBackdrop.TILE
-	_camera.position = RoomCamera.center_for(room_size, player.camera_focus(), RoomBackdrop.VIEW_SIZE)
+	_camera.position = RoomCamera.center_for(room_size, player.camera_focus(), RoomBackdrop.VIEW_SIZE, Hud.BAND_BOTTOM)
 
 
 func _make_room_view(room: FloorRoom) -> RoomView:
