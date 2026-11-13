@@ -52,8 +52,6 @@ const SWEEP_EDGE := Color("8f7ce0")
 const SWEEP_BLADE := Color("e8ecf4")
 # How quickly the Telescope Cane's look ahead follows his aim, per second.
 const LOOK_EASE := 4.0
-# The warm film glow on him while a readied reel waits for its door (RuleKeeper).
-const SEPIA_GLOW := Color("d9b98a")
 # The hit source the items hear for an era's moves: stat-like items still answer it, cane and denture ones don't.
 const ERA_HIT := "era"
 # How far beyond his feet the spin or barge reaches into a body it passes, and the barge's extra pace.
@@ -94,7 +92,6 @@ var _era_dodge_hits := {}
 # His football or ticket lines in the room. They live beside him, as his teeth do, so recall_teeth clears them
 # on every room change.
 var _era_thrown: Array[Node2D] = []
-var _sepia_glow := false
 # The last line he said (say_line), until he has a speech bubble of his own.
 var last_line := ""
 # A gust that shoves him along for a while, as the bellows do. A dodge breaks free of it.
@@ -142,18 +139,6 @@ func feet() -> Node2D:
 	return _feet
 
 
-# Through the sprite's own tint, never modulate (the shader ignores it). Nothing else tints him, and his
-# hats, cardigan and cane are drawn by GrandpaLook and the cane, so white is his own look again.
-func set_sepia_glow(on: bool) -> void:
-	_sepia_glow = on
-	if _visual != null:
-		_visual.set_tint(SEPIA_GLOW if on else _era_tint())
-
-
-func has_sepia_glow() -> bool:
-	return _sepia_glow
-
-
 # A younger Harold for one room, or old Harold again with "". Only his moves and look change here: the
 # RuleKeeper owns run.era (and so his pace, RunState.move_speed). Health and stat items carry over; his
 # cane and dentures items don't touch an era's own moves. New moves every time, so a football left
@@ -165,14 +150,15 @@ func set_era(era_id: String) -> void:
 	_era_moves = EraMoves.for_era(era_id)
 	_era_dodge_hits.clear()
 	_combo = CaneCombo.new()
-	# A charge held through the reel door (or held as the era ends) never carries over to the other self.
+	# A charge held as the era starts or ends never carries over to the other self.
 	_charge.cancel()
 	if _visual != null:
 		var look: Dictionary = run.look if run != null else {}
 		var art := GrandpaLook.outfit_art(look)
 		if not era_id.is_empty() and SpriteVisual.has_anim(Eras.art_id(era_id), "idle"):
 			art = Eras.art_id(era_id)
-		_visual.set_tint(SEPIA_GLOW if _sepia_glow else _era_tint())
+		# Through the sprite's own tint, never modulate (the shader ignores it).
+		_visual.set_tint(_era_tint())
 		_visual.set_art(art)
 	# His hats and cardigan are old Harold's.
 	sync_look()

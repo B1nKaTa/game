@@ -269,6 +269,44 @@ func test_f_with_no_reel_or_during_an_era_says_why_every_time() -> void:
 	_free_setup(parts)
 
 
+# During an era F says it is busy, whether or not a reel is left to play.
+func test_f_during_an_era_with_no_reel_left_says_busy() -> void:
+	var parts := _flashback_setup()
+	var keeper: RuleKeeper = parts["keeper"]
+	var run: RunState = parts["run"]
+	keeper.on_room_entered(parts["fight"], parts["map"].room(1), true)
+	run.give_reel(Eras.FOOTBALL)
+	assert_true(keeper.try_play_reel())
+	assert_true(run.held_reels.is_empty())
+	for i in 2:
+		parts["hud"]._notice.text = ""
+		assert_false(keeper.try_play_reel())
+		assert_eq(_notice_of(parts), RuleKeeper.BUSY_NOTICE, "press %d" % i)
+	assert_eq(run.era, Eras.FOOTBALL)
+	_free_setup(parts)
+
+
+# A reel picked up mid-era fills his pocket; a save then keeps the era's reel too, one over the cap.
+func test_a_save_mid_era_with_a_full_pocket_keeps_both_reels() -> void:
+	var run := RunState.new([] as Array[UpgradeDef], {})
+	assert_eq(run.reel_cap(), 1)
+	run.era = Eras.BUS
+	run.give_reel(Eras.FOOTBALL)
+	var raw: Dictionary = JSON.parse_string(JSON.stringify(RunCheckpoint.run_to_dict(run)))
+	var back := RunState.new([] as Array[UpgradeDef], {})
+	RunCheckpoint.apply_run(back, raw, Content.items())
+	assert_eq(back.held_reels, [Eras.FOOTBALL, Eras.BUS] as Array[String])
+	assert_false(back.give_reel(Eras.DANCE), "no third while over the cap")
+	assert_eq(back.take_reel(), Eras.FOOTBALL)
+	assert_eq(back.take_reel(), Eras.BUS)
+	# An empty pocket mid-era keeps the era's reel as before.
+	var lone := RunState.new([] as Array[UpgradeDef], {})
+	lone.era = Eras.DANCE
+	var again := RunState.new([] as Array[UpgradeDef], {})
+	RunCheckpoint.apply_run(again, RunCheckpoint.run_to_dict(lone), Content.items())
+	assert_eq(again.held_reels, [Eras.DANCE] as Array[String])
+
+
 func test_clearing_the_room_does_not_end_the_era_but_leaving_does() -> void:
 	var parts := _flashback_setup()
 	var keeper: RuleKeeper = parts["keeper"]
@@ -340,17 +378,12 @@ func test_a_second_reel_while_holding_one_fades() -> void:
 	_free_setup(parts)
 
 
-func test_the_sepia_glow_clears_back_to_his_own_look() -> void:
+func test_an_era_is_his_own_look_and_the_keeper_owns_run_era() -> void:
 	var run := RunState.new([] as Array[UpgradeDef], {})
 	var player := Player.new()
 	player.setup(run)
 	player._visual = SpriteVisual.new()
 	player.add_child(player._visual)
-	player.set_sepia_glow(true)
-	assert_true(player.has_sepia_glow())
-	assert_eq(player._visual._tint, Player.SEPIA_GLOW)
-	player.set_sepia_glow(false)
-	assert_eq(player._visual._tint, Color.WHITE)
 	player.set_era(Eras.FOOTBALL)
 	assert_eq(player.era(), Eras.FOOTBALL)
 	assert_eq(run.era, "", "the RuleKeeper owns run.era")

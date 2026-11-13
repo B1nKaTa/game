@@ -124,11 +124,6 @@ static func _spot(node: Node2D) -> Vector2:
 	return node.global_position if node.is_inside_tree() else node.position
 
 
-# For tests.
-func debug_set_player(player: Node2D) -> void:
-	_player = player
-
-
 # How far the gate has risen, 0 shut to 1 open (DoorOpening).
 func gate() -> float:
 	return clampf(_gate, 0.0, 1.0)

@@ -166,11 +166,11 @@ func load_dict(raw: Dictionary) -> void:
 # The flashback button: the held reel plays at once, for the room he stands in, while a fight is on there.
 # A press that plays nothing always says why.
 func try_play_reel() -> bool:
+	if _run != null and not _run.era.is_empty():
+		_notice(tr(BUSY_NOTICE))
+		return false
 	if _run == null or _run.held_reel.is_empty():
 		_notice(tr(NO_REEL_NOTICE))
-		return false
-	if not _run.era.is_empty():
-		_notice(tr(BUSY_NOTICE))
 		return false
 	if _view == null or not is_instance_valid(_view) or not _view.is_fighting():
 		_notice(tr(SAVE_NOTICE))

@@ -124,10 +124,11 @@ static func run_to_dict(run: RunState) -> Dictionary:
 # What the run did so far for EndingRules (RunState's run-only tracking), kept apart from run_to_dict
 # since play time goes on counting after a save. Won Arcade visits come back as a count, since visit
 # numbers start again in the resumed scene.
-# The reels held, and the era being lived when a slot is free for it, as the single held_reel did.
+# The reels held, and the era being lived, which a resume ends: its reel goes back in his pocket even
+# when that pocket is full, one over the cap, so a save never loses a reel he earned.
 static func _reels_to_keep(run: RunState) -> Array:
 	var reels: Array = Array(run.held_reels)
-	if not run.era.is_empty() and reels.size() < run.reel_cap():
+	if not run.era.is_empty():
 		reels.append(run.era)
 	return reels
 
@@ -274,7 +275,8 @@ static func apply_run(run: RunState, raw: Dictionary, items: Array[ItemDef]) -> 
 	run.held_reels.clear()
 	if reels is Array:
 		for reel in reels:
-			if Eras.is_known(str(reel)) and run.held_reels.size() < run.reel_cap():
+			# One over the cap: an era saved while his pocket was full (_reels_to_keep).
+			if Eras.is_known(str(reel)) and run.held_reels.size() < run.reel_cap() + 1:
 				run.held_reels.append(str(reel))
 	else:
 		var reel := str(raw.get("held_reel", ""))
