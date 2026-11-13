@@ -1,8 +1,9 @@
 extends TestCase
 
 const PROGRESS_SCRIPT := preload("res://scripts/autoload/progress.gd")
-const REAL_PATH := "user://test_dev_real_save.json"
-const DEV_PATH := "user://test_dev_run_save.json"
+# Tests never write to user://, which is the real game's folder: every file here is in the temp folder.
+var REAL_PATH := OS.get_temp_dir().path_join("grandpa_test_dev_real_save.json")
+var DEV_PATH := OS.get_temp_dir().path_join("grandpa_test_dev_run_save.json")
 
 
 func _dev_data() -> ProgressData:
@@ -347,8 +348,15 @@ func test_only_the_playtest_preset_carries_the_playtest_tag() -> void:
 	for key in presets.get_section_keys(release + ".options"):
 		assert_eq(presets.get_value(playtest + ".options", key), presets.get_value(release + ".options", key), key)
 	assert_eq(presets.get_section_keys(playtest + ".options").size(), presets.get_section_keys(release + ".options").size())
+
+
+# A playtest exe and zip never share a path or a name with a Steam build's.
+func test_the_build_steps_keep_playtest_builds_apart_from_steam_builds() -> void:
 	var steps := FileAccess.get_file_as_string("res://docs/release/build-steps.md")
-	assert_true(steps.contains("Windows Playtest"), "the build steps name the playtest preset")
+	assert_true(steps.contains("--export-release \"Windows Playtest\" D:\\grandpa-build\\build-playtest\\Grandpa.exe"), "its own folder, as the preset's path")
+	assert_false(steps.contains("--export-release \"Windows Playtest\" D:\\grandpa-build\\Grandpa.exe"), "never the release exe's path")
+	assert_true(steps.contains("Grandpa-playtest-<commit>.zip"))
+	assert_true(steps.contains("PLAYTEST"), "the corner check names the mark")
 
 
 func _cheat_run() -> RunState:
@@ -362,18 +370,24 @@ func _pool_item(id: String) -> ItemDef:
 	return null
 
 
-# How many cheats the panel under test has reported.
+# How many cheats the panel under test has reported, and the progress a report marks, if any.
 var _cheats := 0
+var _marking: Node
 
 
 func _on_cheat() -> void:
 	_cheats += 1
+	if _marking != null:
+		DevStart.mark_tester_run(_marking, DEV_PATH)
 
 
-func _panel(run: RunState) -> TesterPanel:
+# tester_run: the run is a tester run already, so no question is asked before a cheat.
+func _panel(run: RunState, tester_run := true) -> TesterPanel:
 	var panel := TesterPanel.new()
 	panel.setup(run, Content.items(), Content.run_potions())
+	panel.tester_run = tester_run
 	_cheats = 0
+	_marking = null
 	panel.cheat_used.connect(_on_cheat)
 	return panel
 
@@ -398,17 +412,41 @@ func test_the_panel_adds_ninety_nine_slips_and_thermoses_up_to_the_cap() -> void
 	run.keys = 3
 	run.bombs = 1
 	var panel := _panel(run)
-	panel.add_slips()
+	assert_true(panel.add_slips())
 	assert_eq(run.keys, RunState.MAX_CONSUMABLE, "the keys")
 	assert_eq(run.bombs, 1)
-	panel.add_thermoses()
+	assert_true(panel.add_thermoses())
 	assert_eq(run.bombs, RunState.MAX_CONSUMABLE, "the bombs")
-	panel.add_slips()
-	panel.add_thermoses()
+	assert_false(panel.add_slips(), "at the cap a press changes nothing")
+	assert_false(panel.add_thermoses())
 	assert_eq(run.keys, RunState.MAX_CONSUMABLE, "never past the cap")
 	assert_eq(run.bombs, RunState.MAX_CONSUMABLE)
-	assert_eq(_cheats, 4, "every press is a cheat")
+	assert_eq(_cheats, 2, "a press that changes nothing is no cheat")
 	panel.free()
+
+
+var _paid: Array[int] = []
+
+
+func _on_paid(amount: int) -> void:
+	_paid.append(amount)
+
+
+# Pension pays as an item's does, through the run's own pay hook (the scene's _on_pension_earned).
+func test_the_panel_pays_pension_through_the_runs_pay_hook() -> void:
+	var run := _cheat_run()
+	_paid.clear()
+	run.effects.ctx.pay_pension = _on_paid
+	var panel := _panel(run)
+	assert_true(panel.add_pension())
+	assert_eq(_paid, [TesterPanel.PENSION_AMOUNT] as Array[int])
+	assert_eq(TesterPanel.PENSION_AMOUNT, 999)
+	assert_eq(_cheats, 1)
+	var bankless := _panel(_cheat_run())
+	assert_false(bankless.add_pension(), "a run with no bank pays nothing")
+	assert_eq(_cheats, 0)
+	panel.free()
+	bankless.free()
 
 
 func test_give_item_puts_it_in_the_run_as_a_pickup_does() -> void:
@@ -462,10 +500,11 @@ func test_give_potion_fills_or_replaces_the_potion_slot() -> void:
 	var run := _cheat_run()
 	var panel := _panel(run)
 	var potions := Content.run_potions()
-	panel.give_potion(potions[0])
+	assert_true(panel.give_potion(potions[0]))
 	assert_true(run.potion == potions[0])
-	panel.give_potion(potions[1])
+	assert_true(panel.give_potion(potions[1]))
 	assert_true(run.potion == potions[1], "a carried potion is replaced")
+	assert_false(panel.give_potion(potions[1]), "the one carried changes nothing")
 	assert_eq(_cheats, 2)
 	panel.free()
 
@@ -476,7 +515,7 @@ func test_god_mode_blocks_every_hit_while_on() -> void:
 	var player := Player.new()
 	player.setup(run)
 	var pills := run.health.pills
-	panel.set_god_mode(true)
+	assert_true(panel.set_god_mode(true))
 	assert_true(panel.god_mode())
 	assert_false(run.health.hit(1))
 	assert_false(player.take_hit(5), "an enemy's hit")
@@ -485,7 +524,7 @@ func test_god_mode_blocks_every_hit_while_on() -> void:
 		run.health.lose_half(false)
 	assert_eq(run.health.pills, pills, "no pill lost")
 	assert_false(run.health.is_dead())
-	panel.set_god_mode(false)
+	assert_true(panel.set_god_mode(false))
 	assert_false(panel.god_mode())
 	assert_true(player.take_hit(1), "hits land again once it is off")
 	assert_eq(run.health.pills, pills - 1)
@@ -494,24 +533,110 @@ func test_god_mode_blocks_every_hit_while_on() -> void:
 	panel.free()
 
 
-# A run a cheat touched is a tester run: a dev run on a copy of the save as it stood, so nothing from
-# it reaches the real save, and the checkpoint of the real run goes, since a dev run keeps none.
-func test_a_cheat_makes_the_run_a_tester_run_that_never_reaches_the_real_save() -> void:
+# The first cheat of a run that is not a tester run asks first. No changes nothing and reports nothing;
+# a press that would change nothing never asks.
+func test_the_first_cheat_asks_and_no_changes_nothing() -> void:
+	var run := _cheat_run()
+	var panel := _panel(run, false)
+	var shoes := _pool_item("velcro_shoes")
+	assert_false(panel.give_item(shoes), "not given yet")
+	assert_true(panel.asking())
+	assert_false(run.has_item("velcro_shoes"))
+	assert_eq(_cheats, 0, "nothing is marked before the answer")
+	panel.answer(false)
+	assert_false(panel.asking())
+	assert_false(run.has_item("velcro_shoes"), "No gives nothing")
+	assert_eq(_cheats, 0, "and marks nothing")
+	assert_false(panel.tester_run)
+	run.keys = RunState.MAX_CONSUMABLE
+	assert_false(panel.add_slips())
+	assert_false(panel.asking(), "a press at the cap asks nothing")
+	assert_true(panel.set_god_mode(true) == false and panel.asking())
+	panel.answer(true)
+	assert_true(panel.god_mode(), "Yes runs the cheat")
+	assert_eq(_cheats, 1)
+	assert_true(panel.tester_run, "asked once a run")
+	assert_true(panel.give_item(shoes), "the next cheat runs at once")
+	assert_false(panel.asking())
+	assert_eq(_cheats, 2)
+	panel.free()
+
+
+# The run is a tester run before the first cheat touches it, so a cheat that pays Pension on gain
+# (Inheritance Letter) pays the throwaway copy, never the real save.
+func test_the_first_cheat_lands_on_the_tester_copy_not_the_real_save() -> void:
 	var real := ProgressData.new()
 	real.pension = 17
 	real.opening_seen = true
 	var progress := _progress_with_real_save(real)
-	progress._smoke = true
-	var run_file: String = progress.run_path()
-	assert_true(progress.write_checkpoint({"depth": 1}))
-	assert_false(progress.read_checkpoint().is_empty())
+	var before := _real_save_text()
+	var run := _cheat_run()
+	run.effects.ctx.pay_pension = Callable(progress, "add_pension")
+	var panel := _panel(run, false)
+	_marking = progress
+	var letter := _pool_item("inheritance_letter")
+	assert_true(letter != null)
+	panel.give_item(letter)
+	assert_eq(_real_save_text(), before, "asking changes nothing")
+	panel.answer(true)
+	assert_true(run.has_item("inheritance_letter"))
+	assert_true(progress.is_dev_run(), "a tester run now")
+	assert_eq(progress.data.pension, 17 + 75, "the letter paid the copy")
+	assert_eq(_real_save_text(), before, "the real save never saw the letter's Pension")
+	assert_true(panel.add_pension())
+	assert_eq(_real_save_text(), before)
+	progress.end_dev_run()
+	assert_eq(progress.data.pension, 17, "the real save's Pension is as it was")
+	_marking = null
+	panel.free()
+	progress.free()
+	SaveStore.new(REAL_PATH).delete_all()
+
+
+# Stands in for Progress, so the tester-run switch can be checked without any checkpoint file.
+class FakeProgress extends Node:
+	var calls: Array[String] = []
+	var data := ProgressData.new()
+	var dev_start_depth := DevStart.START_DEPTH
+	var dev := false
+
+	func is_dev_run() -> bool:
+		return dev
+
+	func clear_checkpoint() -> void:
+		calls.append("clear")
+
+	func begin_dev_run(dev_data: ProgressData, dev_path: String, start_depth: int) -> void:
+		calls.append("begin %s %d" % [dev_path, start_depth])
+		data = dev_data
+		dev = true
+
+
+func test_the_tester_switch_clears_the_checkpoint_before_the_dev_run_begins() -> void:
+	var progress := FakeProgress.new()
+	progress.data.pension = 17
+	var real := progress.data
+	assert_true(DevStart.mark_tester_run(progress, DEV_PATH))
+	assert_eq(progress.calls, ["clear", "begin %s %d" % [DEV_PATH, DevStart.START_DEPTH]] as Array[String], "a dev run keeps no checkpoint, so the real one goes first")
+	assert_true(progress.data != real, "a copy")
+	assert_eq(progress.data.pension, 17, "of the save as it stood")
+	assert_false(DevStart.mark_tester_run(progress, DEV_PATH), "once is enough")
+	assert_eq(progress.calls.size(), 2)
+	progress.free()
+
+
+# A run a cheat touched is a tester run: a dev run on a copy of the save as it stood, so nothing from
+# it reaches the real save.
+func test_a_tester_run_never_reaches_the_real_save() -> void:
+	var real := ProgressData.new()
+	real.pension = 17
+	real.opening_seen = true
+	var progress := _progress_with_real_save(real)
 	var before := _real_save_text()
 	var log_size: int = progress.data.run_log.size()
 	assert_true(DevStart.mark_tester_run(progress, DEV_PATH))
 	assert_true(progress.is_dev_run(), "flagged as dev runs are")
-	assert_true(RunCheckpoint.read(run_file).is_empty(), "the real run's checkpoint is gone")
 	assert_eq(progress.data.pension, 17, "it goes on from the save as it stood")
-	assert_false(DevStart.mark_tester_run(progress, DEV_PATH), "once is enough")
 	progress.add_pension(500)
 	progress.record_floor_cleared(1, "floor_1")
 	progress.data.run_log.append({"n": 99})
@@ -524,9 +649,20 @@ func test_a_cheat_makes_the_run_a_tester_run_that_never_reaches_the_real_save() 
 	assert_eq(progress.data.run_log.size(), log_size, "the copy shared nothing with the real save")
 	assert_false(progress.data.items_unlocked.has("anything"))
 	assert_false(FileAccess.file_exists(DEV_PATH))
-	RunCheckpoint.delete(run_file)
 	progress.free()
 	SaveStore.new(REAL_PATH).delete_all()
+
+
+# Once a run is a tester run, the pause menu never offers to save it.
+func test_the_pause_menu_says_a_tester_run_is_not_saved() -> void:
+	assert_eq(PauseMenu.quit_text(true, false), "Save and Quit to Title")
+	assert_eq(PauseMenu.quit_text(false, false), "Quit to Title")
+	assert_eq(PauseMenu.quit_text(true, true), PauseMenu.QUIT_NOT_SAVED)
+	assert_false(PauseMenu.QUIT_NOT_SAVED.contains("Save"))
+	assert_true(PauseMenu.NOT_SAVED_NOTE.contains("not saved"))
+	var scene := FileAccess.get_file_as_string("res://scripts/scenes/floor_scene.gd")
+	assert_true(scene.contains("_pause.setup(true, Progress.is_dev_run())"))
+	assert_true(scene.contains("_tester.tester_run = Progress.is_dev_run()"), "a tester run asks no more")
 
 
 # Nothing of the panel exists without cheats: the scene's only listener checks the gate first.

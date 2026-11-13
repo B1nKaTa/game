@@ -10,8 +10,12 @@ signal quit_wanted(to_desktop: bool)
 
 const LAYER := 50
 const WIDTH := 200.0
+# A tester run (TesterPanel) or a dev run keeps no checkpoint, so its menu never offers to save it.
+const NOT_SAVED_NOTE := "Tester run: it is not saved and earns nothing."
+const QUIT_NOT_SAVED := "Quit to Title (not saved)"
 
 var _in_run := true
+var _not_saved := false
 var _opened_frame := -1
 var _options: OptionsPanel
 var _options_closed_frame := -1
@@ -19,8 +23,17 @@ var _first: Button
 var _done := false
 
 
-func setup(in_run: bool) -> void:
+# not_saved: the run is a tester or dev run, which Save and Quit cannot keep.
+func setup(in_run: bool, not_saved := false) -> void:
 	_in_run = in_run
+	_not_saved = not_saved
+
+
+# The first quit button's words: Save and Quit in a run that keeps a checkpoint.
+static func quit_text(in_run: bool, not_saved: bool) -> String:
+	if in_run and not_saved:
+		return QUIT_NOT_SAVED
+	return "Save and Quit to Title" if in_run else "Quit to Title"
 
 
 # The scenes' own Esc handling leaves this alone, since it answers Esc itself.
@@ -43,9 +56,15 @@ func _ready() -> void:
 	var title := MenuStyle.label(tr("Paused"), MenuStyle.TITLE_FONT, MenuStyle.GOLD)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(title)
+	if _in_run and _not_saved:
+		var note := MenuStyle.label(tr(NOT_SAVED_NOTE), 8, MenuStyle.STAMP)
+		note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		note.custom_minimum_size.x = WIDTH
+		column.add_child(note)
 	_first = _add(column, tr("Resume"), _resume)
 	_add(column, tr("Options"), _open_options)
-	_add(column, tr("Save and Quit to Title") if _in_run else tr("Quit to Title"), _quit.bind(false))
+	_add(column, tr(quit_text(_in_run, _not_saved)), _quit.bind(false))
 	_add(column, tr("Quit to Desktop"), _quit.bind(true))
 	holder.reset_size()
 	holder.position = ((Vector2(GameSettings.VIEW) - holder.get_combined_minimum_size()) / 2.0).floor()

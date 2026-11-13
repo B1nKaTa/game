@@ -739,6 +739,8 @@ func _open_tester_panel() -> void:
 	player.cancel_charge()
 	_tester = TesterPanel.new()
 	_tester.setup(_run, Content.items(), Content.run_potions())
+	# A run that is a tester or dev run already asks nothing before a cheat.
+	_tester.tester_run = Progress.is_dev_run()
 	_tester.closed.connect(_close_tester_panel)
 	_tester.cheat_used.connect(_on_cheat_used)
 	add_child(_tester)
@@ -759,6 +761,7 @@ func _close_tester_panel() -> void:
 
 
 # Any cheat makes this a tester run, which never counts for unlocks or records (DevStart.mark_tester_run).
+# The panel reports a cheat before the cheat changes anything, so the cheat itself lands on the copy.
 func _on_cheat_used() -> void:
 	DevStart.mark_tester_run(Progress, Progress.DEV_PATH)
 
@@ -791,7 +794,8 @@ func case_info() -> Dictionary:
 func _open_pause() -> void:
 	Sfx.play("pause_open")
 	_pause = PauseMenu.new()
-	_pause.setup(true)
+	# A tester run (or a dev run) keeps no checkpoint, so its menu says so instead of "Save and Quit".
+	_pause.setup(true, Progress.is_dev_run())
 	_pause.resumed.connect(_close_pause)
 	_pause.quit_wanted.connect(_on_pause_quit)
 	add_child(_pause)
