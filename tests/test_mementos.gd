@@ -33,22 +33,17 @@ func test_looking_at_the_wall_lists_each_memento_or_says_it_is_empty() -> void:
 	assert_true(lines[1].begins_with("Coal shovel"), lines[1])
 
 
-# Empty frames side by side name their bosses, so no two neighbouring captions may overlap.
-func test_neighbouring_captions_never_run_together() -> void:
-	var font := ThemeDB.fallback_font
-	var boxes: Array[Rect2] = []
+# The portraits hang in one straight row with no name plates under them (the look-at-the-wall list
+# names each memento), and the endings plaque hangs clear of the frames.
+func test_the_frames_hang_in_one_row_with_no_name_plates() -> void:
+	var row_y := TrophyWall.frame_center(0).y
 	for i in Mementos.ALL.size():
-		var caption: String = Mementos.ALL[i]["short_name"]
-		var width := font.get_string_size(caption, HORIZONTAL_ALIGNMENT_LEFT, -1, TrophyWall.CAPTION_SIZE).x
-		var ascent := font.get_ascent(TrophyWall.CAPTION_SIZE)
-		var height := ascent + font.get_descent(TrophyWall.CAPTION_SIZE)
-		var at := TrophyWall.frame_center(i) + Vector2(-width / 2.0, TrophyWall.caption_y(i) - ascent)
-		boxes.append(Rect2(at, Vector2(width, height)).grow_individual(1.0, 0.0, 1.0, 0.0))
-	for i in boxes.size() - 1:
-		assert_false(boxes[i].intersects(boxes[i + 1]), "%s and %s" % [Mementos.ALL[i]["short_name"], Mementos.ALL[i + 1]["short_name"]])
-	# Every second caption shares a row, two frame steps apart.
-	for i in boxes.size() - 2:
-		assert_false(boxes[i].intersects(boxes[i + 2]), "%s and %s" % [Mementos.ALL[i]["short_name"], Mementos.ALL[i + 2]["short_name"]])
+		assert_near(TrophyWall.frame_center(i).y, row_y)
+	var source := FileAccess.get_file_as_string("res://scripts/world/trophy_wall.gd")
+	assert_false(source.contains("caption_y"), "no staggered captions")
+	assert_false(source.contains("brass_plate"), "no name plates")
+	assert_true(source.contains("brass_plaque"), "the endings plaque stays")
+	assert_true(TrophyWall.ENDINGS_Y - TrophyWall.PLAQUE_ABOVE_BASELINE >= TrophyWall.FRAME_SIZE.y / 2.0, "the plaque hangs under the frames")
 
 
 # The frames hang on the lobby's top wall, so none may cover the north door or a lantern.
@@ -203,21 +198,13 @@ func test_the_boarding_pass_adds_a_pill_to_every_landing() -> void:
 	assert_eq(Mementos.LANDING_EXTRA, 1)
 
 
-# Every frame hangs its boss's portrait (shown as a silhouette until he is beaten), and the brass name
-# plates, which are wider than their names, never meet side to side or two frames apart.
-func test_every_frame_has_a_portrait_and_the_name_plates_never_meet() -> void:
+# Every frame hangs its boss's portrait (shown as a silhouette until he is beaten), and no two frames
+# overlap.
+func test_every_frame_has_a_portrait_and_no_two_frames_overlap() -> void:
 	for entry: Dictionary in Mementos.ALL:
 		assert_true(ResourceLoader.exists("res://art/props/waiting_room/%s.png" % TrophyWall.portrait_art(entry["boss"])), entry["boss"])
-	var font := ThemeDB.fallback_font
-	var plates: Array[Rect2] = []
 	for i in Mementos.ALL.size():
-		var caption: String = Mementos.ALL[i]["short_name"]
-		var width := ceilf(font.get_string_size(caption, HORIZONTAL_ALIGNMENT_LEFT, -1, TrophyWall.CAPTION_SIZE).x + TrophyWall.PLATE_PAD * 2.0)
-		var baseline := TrophyWall.frame_center(i) + Vector2(0, TrophyWall.caption_y(i))
-		plates.append(Rect2(Vector2(floorf(baseline.x - width / 2.0), baseline.y - TrophyWall.PLATE_ABOVE_BASELINE), Vector2(width, 10.0)))
-	for i in plates.size():
 		var frame := Rect2(TrophyWall.frame_center(i) - TrophyWall.FRAME_SIZE / 2.0, TrophyWall.FRAME_SIZE)
-		for j in plates.size():
-			assert_false(frame.intersects(plates[j]), "frame %d and plate %d" % [i, j])
-			if j > i:
-				assert_false(plates[i].intersects(plates[j]), "%s and %s" % [Mementos.ALL[i]["short_name"], Mementos.ALL[j]["short_name"]])
+		for j in range(i + 1, Mementos.ALL.size()):
+			var other := Rect2(TrophyWall.frame_center(j) - TrophyWall.FRAME_SIZE / 2.0, TrophyWall.FRAME_SIZE)
+			assert_false(frame.intersects(other), "frame %d and frame %d" % [i, j])

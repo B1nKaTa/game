@@ -141,7 +141,7 @@ const NPCS: Array[Dictionary] = [
 	{"id": "duty_free_clerk", "department": DUTY_FREE, "cell": Vector2i(9, 4), "def": "res://data/npcs/duty_free_clerk.tres", "greets": true},
 	{"id": "severance_clerk", "department": EXECUTIVE_SUITE, "cell": Vector2i(6, 6), "def": "res://data/npcs/severance_clerk.tres", "greets": true},
 	# Gerald, once the true ending has put him in the queue too. "needs_ending" keeps him out until then
-	# (npc_stands). He stands off the way across, clear of the trophy captions and the loadout bench.
+	# (npc_stands). He stands off the way across, clear of the trophy wall and the loadout bench.
 	{"id": "gerald", "department": LOBBY, "cell": Vector2i(17, 4), "def": "res://data/npcs/gerald.tres", "greets": true, "needs_ending": EndingRules.ETERNAL_FEUD},
 ]
 

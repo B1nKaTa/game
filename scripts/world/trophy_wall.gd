@@ -2,13 +2,12 @@ class_name TrophyWall
 extends Node2D
 
 # Ten framed portraits along the lobby's top wall, one per floor boss in floor order, each in dark wood
-# with a brass bevel (trophy_frame). A beaten boss's portrait hangs in colour, cut from his own sprite
-# (art/props/waiting_room/trophy_<boss id>.png, built by tools/art/waiting_props.py); one still to beat
-# shows only his dark silhouette. Every frame has a small brass name plate under it, every second one
-# a plate lower so long names never meet, and the endings count is set on a larger brass plaque below.
-# With no portrait the memento is drawn in code in its frame as before, and with no brass the words
-# stand alone. Ten frames this narrow fit the eight wall cells between the north door and the next
-# lantern (test_mementos).
+# with a brass bevel (trophy_frame), hung in one straight row. A beaten boss's portrait hangs in colour,
+# cut from his own sprite (art/props/waiting_room/trophy_<boss id>.png, built by tools/art/waiting_props.py);
+# one still to beat shows only his dark silhouette. The frames carry no name plates (looking at the wall
+# names each memento), and the endings count is set on a brass plaque below the row. With no portrait the
+# memento is drawn in code in its frame as before, and with no brass the words stand alone. Ten frames
+# this narrow fit the eight wall cells between the north door and the next lantern (test_mementos).
 
 const FRAME_SIZE := Vector2(22, 22)
 const FRAME_ART := "trophy_frame"
@@ -21,24 +20,13 @@ const WOOD := Color("4a2f1c")
 const WOOD_EDGE := Color("22150c")
 const MAT := Color("d8cfb8")
 const QUESTION := Color(0.3, 0.27, 0.22, 0.45)
-const CAPTION := Color("ece9e0")
-# Brass name plates (brass_plate: 3 px caps and one middle column stretched) and the endings plaque
-# (brass_plaque: 4 px caps), with engraved dark words.
-const PLATE_ART := "brass_plate"
-const PLATE_CAP := 3
+# The endings plaque (brass_plaque: 4 px caps and one middle column stretched), with engraved dark words.
 const PLAQUE_ART := "brass_plaque"
 const PLAQUE_CAP := 4
 const ENGRAVED := Color("2e1c0c")
 const PLATE_PAD := 4.0
-const CAPTION_SIZE := 7
-# A caption's baseline under its frame's middle, and the plate's top this far over the baseline.
-const CAPTION_Y := 21.0
-const PLATE_ABOVE_BASELINE := 7.0
-# Every second caption hangs a whole caption lower, since a name like "Commodore" is wider than a
-# frame step and two plates side by side would run together.
-const CAPTION_STAGGER := 13.0
-# The endings count (EndingRules), on its plaque under the plates.
-const ENDINGS_Y := 51.0
+# The endings count (EndingRules), on its plaque under the frames.
+const ENDINGS_Y := 24.0
 const PLAQUE_ABOVE_BASELINE := 9.0
 const ENDINGS_COLOR := Color("ffd24a")
 const ENDINGS_SIZE := 8
@@ -62,11 +50,6 @@ func endings_line() -> String:
 # The middle of each frame, from left to right.
 static func frame_center(index: int) -> Vector2:
 	return Vector2((index - (Mementos.ALL.size() - 1) / 2.0) * FRAME_STEP, 0.0)
-
-
-# How far below a frame's middle its caption's baseline sits.
-static func caption_y(index: int) -> float:
-	return CAPTION_Y + (CAPTION_STAGGER if index % 2 == 1 else 0.0)
 
 
 static func portrait_art(boss: String) -> String:
@@ -96,7 +79,6 @@ func _draw() -> void:
 			_draw_memento(entry["perk"], at)
 		else:
 			draw_string(font, at + Vector2(-3, 4), "?", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, QUESTION)
-		_draw_label(entry["short_name"], at + Vector2(0, caption_y(i)), CAPTION_SIZE, PLATE_ART, PLATE_CAP, PLATE_ABOVE_BASELINE, CAPTION)
 
 
 # Words centred on `baseline`, engraved on a brass plate stretched to fit them, or outlined alone when
