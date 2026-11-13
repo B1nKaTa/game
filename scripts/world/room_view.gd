@@ -996,7 +996,10 @@ func clear_spot(at: Vector2) -> Vector2:
 	return RoomBackdrop.cell_center(_room.layout.nearest_floor_cell(cell))
 
 
+# A quiet room (the floor's first) spawns none, so it finishes at once with its doors open.
 func _spawn_enemies() -> void:
+	if _room.quiet:
+		return
 	for entry in EnemyPlan.plan(_room.layout, _floor_def, _room.extra_enemies, _rng):
 		var enemy := _spawn_enemy(entry["def"], RoomBackdrop.cell_center(entry["cell"]))
 		enemy.is_group_follower = not entry["leader"]
@@ -1789,7 +1792,8 @@ func _finish_room() -> void:
 			coin.fly()
 	if _had_enemies:
 		_run.effects.room_clear(self)
-	if _room.room_type in [RoomLayout.TYPE_COMBAT, RoomLayout.TYPE_MINI_BOSS, RoomLayout.TYPE_SIDE]:
+	# A quiet room had no fight, so it pays nothing for clearing.
+	if not _room.quiet and _room.room_type in [RoomLayout.TYPE_COMBAT, RoomLayout.TYPE_MINI_BOSS, RoomLayout.TYPE_SIDE]:
 		pension_earned.emit(_run.pension_amount(_floor_def.clear_pension))
 	if _had_enemies and _room.room_type in [RoomLayout.TYPE_COMBAT, RoomLayout.TYPE_SIDE]:
 		_drop_consumable(_last_death_at, RoomRules.clear_drop(_rng.randf()))

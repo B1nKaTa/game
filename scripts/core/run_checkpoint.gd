@@ -6,6 +6,9 @@ extends RefCounted
 # finished temp file, which read takes in its place, never a broken one. A file from another build's version, a damaged one or a missing one is no run.
 
 const VERSION := 1
+# Set in every checkpoint since floors start in a quiet room with two ways on. A floor checkpoint without
+# it rebuilds its seed by the old rule (FloorBuilder two_ways false), so its room ids name the same rooms.
+const QUIET_START := "quiet_start"
 
 
 static func write(path: String, data: Dictionary) -> bool:
@@ -305,11 +308,12 @@ static func new_seed(rng: RandomNumberGenerator) -> String:
 	return str(rng.randi())
 
 
-# Builds a floor from its seed alone, so the same seed always gives the same map.
-static func build_floor(def: FloorDef, seed_text: String, pool: Array[RoomLayout] = []) -> FloorMap:
+# Builds a floor from its seed alone, so the same seed always gives the same map. two_ways is false only
+# for a checkpoint written before QUIET_START.
+static func build_floor(def: FloorDef, seed_text: String, pool: Array[RoomLayout] = [], two_ways := true) -> FloorMap:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = int(seed_text)
-	return FloorBuilder.build_from_pool(rng, def, pool if not pool.is_empty() else FloorBuilder.pool_for(def))
+	return FloorBuilder.build_from_pool(rng, def, pool if not pool.is_empty() else FloorBuilder.pool_for(def), two_ways)
 
 
 # A checkpoint moved off a retired path (PathMigration.FLOOR_START) starts its floor again, as walking
@@ -334,5 +338,5 @@ static func map_signature(map: FloorMap) -> Array:
 		for side: Vector2i in room.doors:
 			doors.append([side, room.doors[side]])
 		doors.sort()
-		rooms.append([room.id, room.room_type, room.cell, room.layout.resource_path if room.layout != null else "", room.decor_seed, room.extra_enemies, doors])
+		rooms.append([room.id, room.room_type, room.cell, room.layout.resource_path if room.layout != null else "", room.decor_seed, room.extra_enemies, room.quiet, doors])
 	return [map.start_id, map.boss_id, map.main_path, rooms]

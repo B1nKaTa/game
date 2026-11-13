@@ -18,7 +18,9 @@ static func pool_for(def: FloorDef) -> Array[RoomLayout]:
 	return pool
 
 
-static func build_from_pool(rng: RandomNumberGenerator, def: FloorDef, pool: Array[RoomLayout]) -> FloorMap:
+# two_ways: the start must have two ways on (_start_has_two_ways_on). Only a run checkpoint written before
+# that check (RunCheckpoint.QUIET_START missing) passes false, so its seed rebuilds the floor it was on.
+static func build_from_pool(rng: RandomNumberGenerator, def: FloorDef, pool: Array[RoomLayout], two_ways := true) -> FloorMap:
 	var by_type := {}
 	for layout in pool:
 		if not by_type.has(layout.room_type):
@@ -29,7 +31,7 @@ static func build_from_pool(rng: RandomNumberGenerator, def: FloorDef, pool: Arr
 			push_error("No valid layouts for room type: %s" % room_type)
 			return null
 	for attempt in MAX_ATTEMPTS:
-		var map := _try_build(rng, def, _LayoutPicker.new(by_type, rng))
+		var map := _try_build(rng, def, _LayoutPicker.new(by_type, rng), two_ways)
 		if map != null:
 			return map
 	push_error("Could not fit floor '%s' on its %s grid" % [def.id, str(def.grid_size)])
@@ -45,7 +47,7 @@ static func _types_a_floor_cannot_lack(def: FloorDef) -> Array[String]:
 	return types
 
 
-static func _try_build(rng: RandomNumberGenerator, def: FloorDef, picker: _LayoutPicker) -> FloorMap:
+static func _try_build(rng: RandomNumberGenerator, def: FloorDef, picker: _LayoutPicker, two_ways := true) -> FloorMap:
 	var path_cells := _walk_main_path(rng, def)
 	if path_cells.is_empty():
 		return null
@@ -62,6 +64,9 @@ static func _try_build(rng: RandomNumberGenerator, def: FloorDef, picker: _Layou
 			map.join(map.room(map.main_path[i - 1]), room)
 	map.start_id = map.main_path[0]
 	map.boss_id = map.main_path[-1]
+	# The first room is quiet: a look round and a choice of ways before the first fight.
+	map.room(map.start_id).quiet = true
+	map.room(map.start_id).extra_enemies = 0
 	for room_type in branch_types:
 		if _attach(rng, map, _regular_rooms_except(map, [map.boss_id]), room_type, picker, def) == null:
 			return null
@@ -73,6 +78,9 @@ static func _try_build(rng: RandomNumberGenerator, def: FloorDef, picker: _Layou
 	# The Crossroads shows on the maps beside the start, so one side must stay free.
 	if not _start_has_a_free_side(map):
 		return null
+	# The quiet start offers a choice: at least two ways on.
+	if two_ways and not _start_has_two_ways_on(map):
+		return null
 	return map
 
 
@@ -81,6 +89,18 @@ static func _start_has_a_free_side(map: FloorMap) -> bool:
 		if map.room_at(map.room(map.start_id).cell + side) == null:
 			return true
 	return false
+
+
+# Doors he can walk through from the start, to rooms other than the Crossroads. A secret room's crack or a
+# vault's stone is no door until a bomb opens it, so neither counts.
+static func _start_has_two_ways_on(map: FloorMap) -> bool:
+	var start := map.room(map.start_id)
+	var ways := 0
+	for side: Vector2i in start.doors:
+		var target := map.room(start.doors[side])
+		if target.room_type != RoomLayout.TYPE_CROSSROADS and not target.needs_a_bomb():
+			ways += 1
+	return ways >= 2
 
 
 # Never touches itself, so the main path reads as a line on the map and leaves room for branches.

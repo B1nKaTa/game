@@ -327,7 +327,8 @@ func _run(progress) -> Dictionary:
 		var next := _next_room(scene, map)
 		if next == -1:
 			break
-		if _eras and not scene.debug_progress().is_visited(next) and RuleKeeper.FIGHT_ROOMS.has(map.room(next).room_type):
+		# A quiet room (the floor's first) has no fight to play a reel in.
+		if _eras and not scene.debug_progress().is_visited(next) and RuleKeeper.FIGHT_ROOMS.has(map.room(next).room_type) and not map.room(next).quiet:
 			var self_for: String = ERA_TURNS[_era_turn % ERA_TURNS.size()]
 			_era_turn += 1
 			if self_for != "":

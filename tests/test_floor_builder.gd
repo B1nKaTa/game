@@ -111,11 +111,74 @@ func test_the_mini_boss_sits_halfway_and_cannot_be_skipped() -> void:
 		assert_false(map.walk_from(map.start_id, [mini_id]).has(map.boss_id), "seed %d skipped it" % seed_value)
 
 
-func test_the_start_is_a_combat_room() -> void:
+# The start keeps a combat layout but is quiet: no enemies, none added, and it is the only quiet room.
+func test_the_start_is_a_quiet_combat_room() -> void:
 	var pool := _pool()
 	for seed_value in SEEDS:
 		var map := _build(seed_value, pool)
-		assert_eq(map.room(map.start_id).room_type, RoomLayout.TYPE_COMBAT)
+		var start := map.room(map.start_id)
+		assert_eq(start.room_type, RoomLayout.TYPE_COMBAT)
+		assert_eq(start.layout.room_type, RoomLayout.TYPE_COMBAT, "seed %d keeps a combat layout" % seed_value)
+		assert_true(start.quiet, "seed %d" % seed_value)
+		assert_eq(start.extra_enemies, 0, "seed %d" % seed_value)
+		for room in map.rooms:
+			if room.id != map.start_id:
+				assert_false(room.quiet, "seed %d room %d" % [seed_value, room.id])
+
+
+# Doors he can walk through from the start: a secret wall or a vault stone is no door until a bomb opens
+# it, and nothing leads back to the Crossroads.
+func _ways_on(map: FloorMap) -> int:
+	var ways := 0
+	for side: Vector2i in map.room(map.start_id).doors:
+		var target := map.room(map.room(map.start_id).doors[side])
+		if target.room_type != RoomLayout.TYPE_CROSSROADS and not target.needs_a_bomb():
+			ways += 1
+	return ways
+
+
+func test_the_start_has_at_least_two_ways_on() -> void:
+	var pool := _pool()
+	var crossroads: RoomLayout = load("res://data/rooms/crossroads/crossroads.tres")
+	for seed_value in SEEDS:
+		var map := _build(seed_value, pool)
+		assert_true(_ways_on(map) >= 2, "seed %d has %d" % [seed_value, _ways_on(map)])
+		assert_true(map.attach_crossroads(crossroads, Vector2i.LEFT) != null, "seed %d keeps a side for the Crossroads" % seed_value)
+		assert_true(_ways_on(map) >= 2, "seed %d with its Crossroads" % seed_value)
+
+
+# The two-ways check makes some attempts fail, so every floor must still build from every seed within
+# FloorBuilder.MAX_ATTEMPTS, with two ways on from its quiet start.
+func test_every_floor_builds_within_the_retry_budget() -> void:
+	var seeds := RandomNumberGenerator.new()
+	seeds.seed = 2026
+	for path in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "flashback_cinema", "last_resort_cruise", "seance_hotline", "terminal_zero", "head_office"]:
+		var def: FloorDef = load("res://data/floors/%s.tres" % path)
+		var pool := FloorBuilder.pool_for(def)
+		for i in 300:
+			var seed_value := seeds.randi()
+			var map := _build(seed_value, pool, def)
+			assert_true(map != null, "%s seed %d builds" % [path, seed_value])
+			if map == null:
+				return
+			assert_true(map.room(map.start_id).quiet, "%s seed %d" % [path, seed_value])
+			assert_true(_ways_on(map) >= 2, "%s seed %d has %d ways on" % [path, seed_value, _ways_on(map)])
+
+
+# A checkpoint written before the quiet start rebuilds its floor by the old rule, so its room ids still
+# name the same rooms; the start is quiet all the same.
+func test_the_old_rule_still_builds_without_the_two_ways_check() -> void:
+	var pool := _pool()
+	var differs := 0
+	for seed_value in SEEDS:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = seed_value
+		var old := FloorBuilder.build_from_pool(rng, _def(), pool, false)
+		assert_true(old != null, "seed %d" % seed_value)
+		assert_true(old.room(old.start_id).quiet, "seed %d" % seed_value)
+		if RunCheckpoint.map_signature(old) != RunCheckpoint.map_signature(_build(seed_value, pool)):
+			differs += 1
+	assert_true(differs > 0, "the check changes some floors, so old checkpoints need the old rule")
 
 
 func test_regular_rooms_hold_the_item_rooms_and_the_healing_room() -> void:

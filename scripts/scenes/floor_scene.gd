@@ -299,6 +299,7 @@ func write_checkpoint() -> bool:
 		"bosses": int(Progress.last_run.get("bosses", 0)),
 		"run_time": snappedf(_run_time, 0.1),
 		"rules": _rules.to_dict(),
+		RunCheckpoint.QUIET_START: true,
 	}
 	return Progress.write_checkpoint(checkpoint)
 
@@ -327,7 +328,7 @@ func _resume_map(resume: Dictionary) -> bool:
 	elif kind == MAP_LANDING:
 		map = _landing_map()
 	elif kind == MAP_FLOOR:
-		map = RunCheckpoint.build_floor(def, str(resume.get("seed", "")))
+		map = RunCheckpoint.build_floor(def, str(resume.get("seed", "")), [], bool(resume.get(RunCheckpoint.QUIET_START, false)))
 		if map == null:
 			return false
 		var side: Array = resume.get("exit_side", [0, 0])

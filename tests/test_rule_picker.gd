@@ -76,6 +76,26 @@ func test_a_first_run_meets_its_rule_in_the_first_three_fights() -> void:
 		assert_eq(RulePicker.rule_rooms(map, 1, seed_text, 0, true), ids, "same seed, same room")
 
 
+# The quiet first room has no fight to keep a rule in: no rule, early or late, ever posts there, even when
+# a floor asks for a rule in every combat room it has.
+func test_no_rule_ever_posts_in_the_quiet_first_room() -> void:
+	for path in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "flashback_cinema", "last_resort_cruise", "seance_hotline", "terminal_zero", "head_office"]:
+		var def: FloorDef = load("res://data/floors/%s.tres" % path)
+		for i in 40:
+			var seed_text := str(1000 + i)
+			var map := RunCheckpoint.build_floor(def, seed_text)
+			var quiet_ids: Array[int] = []
+			for room in map.rooms:
+				if room.quiet:
+					quiet_ids.append(room.id)
+			assert_eq(quiet_ids, [map.start_id] as Array[int], "%s seed %s" % [path, seed_text])
+			var picked: Array[int] = RulePicker.early_candidates(map)
+			picked.append_array(RulePicker.rule_rooms(map, def.depth, seed_text, 99, true))
+			picked.append_array(RulePicker.rule_rooms(map, def.depth, seed_text, 99, false))
+			for id in picked:
+				assert_false(map.room(id).quiet, "%s seed %s room %d" % [path, seed_text, id])
+
+
 func test_later_runs_place_rules_as_before() -> void:
 	# The old draw: the default (not early) picks are unchanged by this round, so a seed replays the same.
 	for seed_text in SEEDS:

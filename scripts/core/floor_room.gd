@@ -11,6 +11,9 @@ var doors := {}
 var decor_seed := 0
 # Enemies added on top of the layout's own, because the room lies far along the main path.
 var extra_enemies := 0
+# A room that spawns no enemies: the floor's first room, so a floor opens with a look round and a choice
+# of ways rather than a fight. It keeps its combat layout.
+var quiet := false
 
 
 # A detour is a dead end hanging off a regular room, and never counts toward the floor's size.

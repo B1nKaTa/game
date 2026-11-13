@@ -268,6 +268,34 @@ func test_different_seeds_make_different_floors() -> void:
 	assert_true(a != b, "the signature can tell floors apart")
 
 
+# The quiet start's two-ways check changes about a third of all floors, so a checkpoint written before it
+# (no RunCheckpoint.QUIET_START) rebuilds its seed by the old rule and keeps its room ids. Seed 1364138424
+# built 19 rooms from a start at (3, 6) before the check, and builds 17 from (2, 3) with it.
+func test_an_old_checkpoint_rebuilds_the_floor_it_was_written_on() -> void:
+	var def: FloorDef = load("res://data/floors/floor_1.tres")
+	var pool := FloorBuilder.pool_for(def)
+	var old := RunCheckpoint.build_floor(def, "1364138424", pool, false)
+	assert_eq(old.rooms.size(), 19)
+	assert_eq(old.room(old.start_id).cell, Vector2i(3, 6))
+	assert_true(old.room(old.start_id).quiet, "its start is quiet all the same")
+	var now := RunCheckpoint.build_floor(def, "1364138424", pool)
+	assert_eq(now.rooms.size(), 17)
+	assert_eq(now.room(now.start_id).cell, Vector2i(2, 3))
+	var source := FileAccess.get_file_as_string("res://scripts/scenes/floor_scene.gd")
+	var write := source.substr(source.find("func write_checkpoint"), 2400)
+	assert_true(write.contains("RunCheckpoint.QUIET_START: true"), "every new checkpoint is marked")
+	var resume := source.substr(source.find("func _resume_map"), 1200)
+	assert_true(resume.contains("RunCheckpoint.build_floor(def, str(resume.get(\"seed\", \"\")), [], bool(resume.get(RunCheckpoint.QUIET_START, false)))"), "an unmarked one is rebuilt by the old rule")
+
+
+func test_the_signature_tells_a_quiet_room_apart() -> void:
+	var def: FloorDef = load("res://data/floors/floor_1.tres")
+	var map := RunCheckpoint.build_floor(def, "1")
+	var quiet := RunCheckpoint.map_signature(map)
+	map.room(map.start_id).quiet = false
+	assert_true(RunCheckpoint.map_signature(map) != quiet)
+
+
 # start_run has already used up the brew, the crafted item, a cursed ticket and the Bon Voyage pack when
 # he stands at the first Crossroads, so Save and Quit there must keep the run: a start checkpoint is
 # written on arrival, and resuming rebuilds the lone Crossroads.

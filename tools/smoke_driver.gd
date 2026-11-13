@@ -44,6 +44,7 @@ var _talked_to_merchant := false
 var _checked_props := false
 var _pickups_off_solids := 0
 var _checked_fight := false
+var _checked_quiet_reel := false
 var _opened_a_vault := false
 var _checked_vault_room := false
 var _checked_stone_memory := false
@@ -2517,6 +2518,29 @@ func _walk_a_path(scene: Node, index: int) -> void:
 	_check(feet.distance_to(RoomBackdrop.cell_center(start.layout.door_cell(side))) < Door.ENTER_RADIUS, "he arrives on the side facing the Crossroads")
 	await _wait(0.2)
 	_check(scene.debug_current_id() == map.start_id, "arriving from the Crossroads does not walk him onward")
+	await _check_quiet_start(scene, start)
+
+
+# A floor's first room is quiet: no enemies, no fight, its doors open from the start and two of them lead
+# on. Once a loop, F there with a reel in hand keeps the reel and says to save it for a fight.
+func _check_quiet_start(scene: Node, start: FloorRoom) -> void:
+	var view: RoomView = scene.debug_room_view()
+	_check(start.quiet, "the floor's first room is quiet")
+	_check(get_tree().get_nodes_in_group("enemies").is_empty() and not view.is_fighting(), "the quiet first room has no fight")
+	var open := 0
+	for door in view.doors():
+		if not door.locked:
+			open += 1
+	_check(open >= 2 and open == view.doors().size(), "the quiet first room's doors are all open, %d of them" % open)
+	var run: RunState = scene.player.run
+	if _checked_quiet_reel or not run.held_reels.is_empty() or not run.era.is_empty():
+		return
+	_checked_quiet_reel = true
+	run.give_reel(Eras.FOOTBALL)
+	await _press("flashback")
+	_check(_find_hud(scene)._notice.text == tr(RuleKeeper.SAVE_NOTICE), "F in the quiet first room says '%s', got '%s'" % [RuleKeeper.SAVE_NOTICE, _find_hud(scene)._notice.text])
+	_check(run.era.is_empty() and run.held_reels.size() == 1 and run.held_reels[0] == Eras.FOOTBALL, "F in the quiet first room keeps the reel")
+	run.take_reel()
 
 
 func _strikes_in(view: Node) -> Array:
