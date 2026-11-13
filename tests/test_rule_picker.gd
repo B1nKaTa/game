@@ -32,6 +32,84 @@ func test_a_rule_only_applies_where_it_can_matter() -> void:
 		assert_true(RoomRule.can_apply(rule, full), rule)
 
 
+# Leave Canes at Reception only where a fight without the cane is fair (playtest 9, note 20).
+func test_no_cane_posts_only_in_a_small_fight() -> void:
+	assert_eq(RoomRule.MAX_NO_CANE_ENEMIES, 6)
+	assert_true(RoomRule.can_apply(RoomRule.NO_CANE, {"enemy_count": 6}), "six enemies")
+	assert_false(RoomRule.can_apply(RoomRule.NO_CANE, {"enemy_count": 7}), "seven enemies")
+	assert_true(RoomRule.can_apply(RoomRule.NO_CANE, {}), "a ready dict without the count")
+	var crowded := {"has_bomb": true, "has_potion": true, "has_breakables": true, "enemy_count": 30}
+	for rule in RoomRule.ALL:
+		if rule != RoomRule.NO_CANE:
+			assert_true(RoomRule.can_apply(rule, crowded), "%s ignores the count" % rule)
+
+
+# A room view with count bare enemies in it, fighting.
+func _crowd(count: int) -> RoomView:
+	var view := RoomView.new()
+	for i in count:
+		view.add_child(Enemy.new())
+	view.debug_set_alive(count)
+	return view
+
+
+func test_a_room_counts_the_enemies_alive_in_it() -> void:
+	var view := _crowd(3)
+	assert_eq(view.enemy_count(), 3)
+	var fallen: Enemy = view.get_child(0)
+	fallen._dead = true
+	assert_eq(view.enemy_count(), 2, "a fallen enemy does not count")
+	view.free()
+
+
+# The rule the keeper posts on first entry into room 0, the floor's one rule room.
+func _posted(view: RoomView, seed_text: String, parts: Dictionary) -> String:
+	var keeper := RuleKeeper.new()
+	keeper.setup(parts["player"], parts["hud"], parts["run"], Callable())
+	keeper.plan_floor(parts["map"], 1, seed_text, FloorProgress.new(parts["map"]))
+	keeper.on_room_entered(view, parts["map"].room(0), true)
+	var watch := keeper.watch_of(0)
+	var rule := watch.rule if watch != null else ""
+	keeper.free()
+	return rule
+
+
+func test_the_keeper_counts_the_room_before_posting_no_cane() -> void:
+	var map := FloorMap.new()
+	for i in 2:
+		var room := FloorRoom.new()
+		room.id = i
+		room.room_type = RoomLayout.TYPE_COMBAT
+		room.cell = Vector2i(i, 0)
+		map.rooms.append(room)
+	map.join(map.room(0), map.room(1))
+	map.start_id = 1
+	var run := RunState.new([] as Array[UpgradeDef], {})
+	var player := Player.new()
+	player.setup(run)
+	var hud := Hud.new()
+	hud.setup(run)
+	hud._ready()
+	var parts := {"map": map, "run": run, "player": player, "hud": hud}
+	var small := _crowd(RoomRule.MAX_NO_CANE_ENEMIES)
+	var crowded := _crowd(RoomRule.MAX_NO_CANE_ENEMIES + 1)
+	var no_cane_seeds := 0
+	for i in 80:
+		var seed_text := "crowd%d" % i
+		var bare := {"has_bomb": run.bombs > 0, "has_potion": run.potion != null, "has_breakables": false}
+		if RulePicker.pick_rule(seed_text, 0, bare) != RoomRule.NO_CANE:
+			continue
+		no_cane_seeds += 1
+		assert_eq(_posted(small, seed_text, parts), RoomRule.NO_CANE, "seed %s: six enemies keep it" % seed_text)
+		var other := _posted(crowded, seed_text, parts)
+		assert_true(not other.is_empty() and other != RoomRule.NO_CANE, "seed %s: seven enemies post %s" % [seed_text, other])
+	assert_true(no_cane_seeds > 0, "some seeds would post No Cane")
+	small.free()
+	crowded.free()
+	hud.free()
+	player.free()
+
+
 func test_floor_one_has_exactly_one_combat_rule_room() -> void:
 	for seed_text in SEEDS:
 		var map := _floor_map(seed_text)

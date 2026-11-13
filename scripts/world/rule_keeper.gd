@@ -102,7 +102,7 @@ func on_room_entered(view: RoomView, room: FloorRoom, first_visit: bool) -> void
 	current_id = room.id
 	_view = view
 	if first_visit and _rule_rooms.has(room.id) and view.is_fighting() and not _watches.has(room.id):
-		var ready := {"has_bomb": _run.bombs > 0, "has_potion": _run.potion != null, "has_breakables": view.has_breakables()}
+		var ready := {"has_bomb": _run.bombs > 0, "has_potion": _run.potion != null, "has_breakables": view.has_breakables(), "enemy_count": view.enemy_count()}
 		_watches[room.id] = RuleWatch.new(RulePicker.pick_rule(_seed, room.id, ready))
 	var watch := watch_of(room.id)
 	var watching := watch != null and watch.is_open() and view.is_fighting()

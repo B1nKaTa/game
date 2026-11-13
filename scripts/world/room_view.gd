@@ -235,6 +235,15 @@ func has_breakables() -> bool:
 	return false
 
 
+# For Leave Canes at Reception: how many enemies are alive in the room now.
+func enemy_count() -> int:
+	var count := 0
+	for child in get_children():
+		if child is Enemy and not child.is_queued_for_deletion() and not child.is_dead():
+			count += 1
+	return count
+
+
 # The room's enemies wait while its rule is announced.
 func hold_enemies(seconds: float) -> void:
 	for child in get_children():

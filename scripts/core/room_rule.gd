@@ -11,6 +11,8 @@ const NO_FOOD := "no_food"
 const EXHIBITS := "exhibits"
 const NO_LOITERING := "no_loitering"
 const ALL: Array[String] = [NO_CANE, NO_HORSEPLAY, TEETH_IN, NO_EXPLOSIVES, NO_FOOD, EXHIBITS, NO_LOITERING]
+# Leave Canes at Reception posts only where he can fairly fight this many or fewer without the cane.
+const MAX_NO_CANE_ENEMIES := 6
 
 # What Harold did, as the RuleKeeper reports it.
 const ACTION_SWING := "swing"
@@ -57,9 +59,12 @@ static func button_of(rule: String) -> String:
 	return _BUTTONS.get(rule, "")
 
 
-# ready: {"has_bomb": bool, "has_potion": bool, "has_breakables": bool}, read as Harold enters.
+# ready: {"has_bomb": bool, "has_potion": bool, "has_breakables": bool, "enemy_count": int}, read as
+# Harold enters. A dict without "enemy_count" counts as a small fight.
 static func can_apply(rule: String, ready: Dictionary) -> bool:
 	match rule:
+		NO_CANE:
+			return int(ready.get("enemy_count", 0)) <= MAX_NO_CANE_ENEMIES
 		NO_EXPLOSIVES:
 			return ready.get("has_bomb", false)
 		NO_FOOD:
