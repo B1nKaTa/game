@@ -82,7 +82,8 @@ func test_dropping_the_items_ends_the_combo() -> void:
 
 func test_the_banner_names_the_combo() -> void:
 	assert_eq(Hud.banner_text("Full Set"), "COMBO: Full Set")
-	assert_eq(FloorMapView.combos_line(PackedStringArray(["Full Set", "Night Shift"])), "Combos: Full Set, Night Shift")
+	# Combos are retired from the paused map, which lists the run's formed sets instead.
+	assert_eq(FloorMapView.sets_line(PackedStringArray(["Full Set", "Night Shift"])), "Sets: Full Set, Night Shift")
 	var scene := FileAccess.get_file_as_string("res://scripts/scenes/floor_scene.gd")
 	assert_true(scene.contains("combo_formed.connect(") and scene.contains("_hud.show_combo("))
 

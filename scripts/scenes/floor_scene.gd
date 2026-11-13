@@ -176,7 +176,7 @@ func _ready() -> void:
 	_big_map.opened_changed.connect(_on_big_map_changed)
 	if _tips != null:
 		_tips.watch_map(_big_map)
-	_big_map.combo_names = _run.effects.bonus_names()
+	_big_map.set_names = _run.effects.set_names()
 	# An item taken mid-floor can change what the maps show (Floor Plan, Fortune Teller's Card).
 	_run.changed.connect(_refresh_map_items)
 	_apply_game_settings()
@@ -1010,16 +1010,15 @@ func _on_active_swapped(old: ItemDef, charge: int) -> void:
 		_room_view.drop_active(old, charge, player.feet().global_position)
 
 
-# A combo forms: its banner shows, and the paused map lists it from now on.
+# A combo forms: its banner shows.
 func _on_combo_formed(combo: ComboDef) -> void:
 	_hud.show_combo(combo.display_name)
-	_big_map.combo_names = _run.effects.bonus_names()
 
 
 # A set bonus forms: its banner shows, and the paused map lists it from now on.
 func _on_set_formed(set_def: SetDef) -> void:
 	_hud.show_set(set_def.display_name)
-	_big_map.combo_names = _run.effects.bonus_names()
+	_big_map.set_names = _run.effects.set_names()
 
 
 

@@ -33,21 +33,44 @@ const CROSSROADS_SCALE := 0.65
 const MINI_SPACING := Vector2(13, 11)
 const MINI_FONT := 8
 const MINI_LINK := 3.0
-const BIG_RECT := Rect2(60, 40, 520, 280)
-const BIG_AREA := Rect2(72, 70, 496, 214)
+# The big map is a floor plan on a sheet of the case file's paper (MapPaper), over the dimmed game: a
+# manila tab, the floor's name over an ink rule, the run's sets, the plan on graph paper, and a key.
+const SHEET := Rect2(48, 22, 544, 324)
+const TAB := Rect2(64, 8, 96, 16)
+const TAB_TEXT := "FLOOR PLAN"
+const NAME_BOX := Rect2(64, 28, 416, 18)
+# The close prompt's room, right of the name.
+const HINT_WIDTH := 92.0
+const RULE_Y := 48.0
+const SETS_BOX := Rect2(64, 51, 512, 9)
+const BIG_AREA := Rect2(64, 62, 512, 226)
+const GRID_STEP := 16
 const BIG_SPACING := Vector2(60, 46)
 const BIG_FONT := 16
-const BIG_LINK := 6.0
 const ROOM_FILL := 0.8
-const LEGEND_TOP := "C Combat   I Item   H Healing   ? Side   S Secret"
-const LEGEND_BOTTOM := "T Treasure   $ Shop   M Mini boss   B Boss   V Vault   + Crossroads"
+# How far an exit stub reaches past the gap into the next cell, and its dashes' length.
+const STUB_REACH := 3
+const STUB_DASH := 2
+const STAMP_TEXT := "YOU ARE HERE"
+# The stamp is pressed over the current room's corner by this much.
+const STAMP_OVERLAP := 4.0
+# The key lists only the signs of the rooms on this floor, in this order. A plain fight room has no
+# sign and shows as an empty square; the Crossroads is a smaller one, as on the plan.
+const KEY_RECT := Rect2(64, 292, 512, 48)
+const KEY_TITLE := "KEY"
+const KEY_TITLE_WIDTH := 30.0
+const KEY_COLUMNS := 6
+const KEY_ROWS := 3
+const KEY_ROW_HEIGHT := 14.0
+const KEY_ORDER := ["v", "+", "C", "I", "H", "$", "T", "?", "A", "S", "V", "M", "B"]
+const KEY_LABELS := {
+	"v": "Stairs", "+": "Crossroads", "C": "Fight", "I": "Item", "H": "Healing", "$": "Shop", "T": "Treasure",
+	"?": "Unknown", "A": "Arcade", "S": "Secret", "V": "Vault", "M": "Mini boss", "B": "Boss",
+}
 const CLOSE_HINT := "Close"
 # A room the Floor Plan shows but he has not walked into: an outline only, saying nothing of what is in it.
 const PLAN_COLOR := Color("8a8698")
 const PLAN_LINK_COLOR := Color(0.79, 0.77, 0.84, 0.45)
-# The Fortune Teller's Card writes who waits in a boss room under it on the big map.
-const BOSS_NAME_FONT := 10
-const BOSS_NAME_COLOR := Color("ffd24a")
 # Rooms the Floor Plan never gives away, since finding them is the point.
 const HIDDEN_TYPES := [RoomLayout.TYPE_SECRET, RoomLayout.TYPE_VAULT]
 const BOSS_TYPES := [RoomLayout.TYPE_FLOOR_BOSS, RoomLayout.TYPE_MINI_BOSS]
@@ -63,10 +86,14 @@ var _progress: FloorProgress
 var _current_id := -1
 var _is_big := false
 var _floor_name := ""
-# The run's combos, listed on the paused big map as its run summary.
-var combo_names := PackedStringArray():
+# What the big map last drew, for marks laid over it later: each shown room's box by id (the Crossroads'
+# smaller one), and the "YOU ARE HERE" stamp. A room's sign sits in room_sign_rect of its box.
+var big_room_rects := {}
+var big_stamp_rect := Rect2()
+# The run's formed sets, listed on the paused big map as its run summary.
+var set_names := PackedStringArray():
 	set(value):
-		combo_names = value
+		set_names = value
 		queue_redraw()
 # The Floor Plan: every room but the hidden ones shows from the start, as an outline until visited.
 var show_plan := false:
@@ -113,6 +140,128 @@ static func link_shown(a: FloorRoom, b: FloorRoom, progress: FloorProgress, with
 	if progress.is_visited(a.id) and progress.is_visited(b.id):
 		return true
 	return with_plan and not HIDDEN_TYPES.has(a.room_type) and not HIDDEN_TYPES.has(b.room_type)
+
+
+# The exits of walked rooms into rooms the map does not show yet: one per such door, ending in the sign
+# of the room behind it ("?" for a room with none, a plain fight room). A secret or a vault is never
+# given away: it shows only once found, and then it is a room on the map, not a stub.
+static func exit_stubs(map: FloorMap, progress: FloorProgress, shown: Array) -> Array[Dictionary]:
+	var stubs: Array[Dictionary] = []
+	for room_id: int in shown:
+		if not progress.is_visited(room_id):
+			continue
+		var room := map.room(room_id)
+		for side: Vector2i in room.doors:
+			var target_id: int = room.doors[side]
+			if shown.has(target_id) or HIDDEN_TYPES.has(map.room(target_id).room_type):
+				continue
+			var icon := RoomRules.door_icon(map.room(target_id).room_type)
+			stubs.append({"from": room_id, "side": side, "icon": icon if DoorSign.has_sign(icon) else "?"})
+	return stubs
+
+
+# The signs the key lists: those of the rooms on this floor (a secret or a vault once it shows) and of
+# the stubs, in KEY_ORDER.
+static func key_icons(map: FloorMap, shown: Array, stubs: Array[Dictionary]) -> Array[String]:
+	var present := {}
+	for room in map.rooms:
+		if not HIDDEN_TYPES.has(room.room_type) or shown.has(room.id):
+			present[RoomRules.door_icon(room.room_type)] = true
+	for stub in stubs:
+		present[stub["icon"]] = true
+	var icons: Array[String] = []
+	for icon: String in KEY_ORDER:
+		if present.has(icon):
+			icons.append(icon)
+	return icons
+
+
+static func key_column_width() -> float:
+	return floorf((KEY_RECT.size.x - KEY_TITLE_WIDTH - 4.0) / KEY_COLUMNS)
+
+
+# The room a key entry's label has, right of its sign.
+static func key_label_width() -> float:
+	return key_column_width() - DoorSign.SIZE - 5.0
+
+
+# The floor's name heads the sheet in capitals, large when it fits, else in the small size.
+static func heading_text(floor_name: String) -> String:
+	return floor_name.to_upper()
+
+
+static func heading_size(floor_name: String) -> int:
+	if MapPaper.text_width(heading_text(floor_name), HudStyle.LARGE) <= NAME_BOX.size.x:
+		return HudStyle.LARGE
+	return HudStyle.SMALL
+
+
+static func sets_line(names: PackedStringArray) -> String:
+	return "Sets: %s" % ", ".join(names)
+
+
+# The sets line as it fits `width` in the small font: every name, or the first ones and how many more.
+static func sets_text(names: PackedStringArray, width: float) -> String:
+	var line := sets_line(names)
+	var count := names.size() - 1
+	while count >= 1 and MapPaper.text_width(line, HudStyle.SMALL) > width:
+		line = "%s and %d more" % [sets_line(names.slice(0, count)), names.size() - count]
+		count -= 1
+	if MapPaper.text_width(line, HudStyle.SMALL) > width:
+		line = "Sets: %d" % names.size()
+	return line
+
+
+# How long an exit stub is: across the gap between cells and a little into the next one.
+static func stub_length(side: Vector2i, spacing: Vector2) -> int:
+	var gap := spacing - room_size(spacing)
+	return int(gap.x if side.x != 0 else gap.y) + STUB_REACH
+
+
+# A stub's sign is a size smaller than a walked room's, so it never reads as a room.
+static func stub_sign_scale(room: Vector2) -> int:
+	return maxi(1, MapPaper.sign_scale(room) - 1)
+
+
+# The whole of a stub from a room drawn at from_rect: its walls and the sign past its end.
+static func stub_box(from_rect: Rect2, side: Vector2i, spacing: Vector2) -> Rect2:
+	var room := room_size(spacing)
+	var length := stub_length(side, spacing)
+	var walls := MapPaper.corridor_box(MapPaper.edge_mid(from_rect, side), side, length, MapPaper.corridor_half(room))
+	var sign_rect := MapPaper.stub_sign_rect(MapPaper.stub_end(from_rect, side, length), side, stub_sign_scale(room))
+	return walls.merge(sign_rect.grow(1.0))
+
+
+# The spot a room's door sign takes in the middle of its box on the big map, whether or not the room
+# has a sign (a plain fight room's middle is left clear too).
+static func room_sign_rect(rect: Rect2, room: Vector2) -> Rect2:
+	var size := float(DoorSign.SIZE * MapPaper.sign_scale(room))
+	return Rect2((rect.get_center() - Vector2(size, size) / 2.0).floor(), Vector2(size, size))
+
+
+# Where the "YOU ARE HERE" stamp goes: over a corner of the current room, on whichever corner covers the
+# least of the rest of the plan (busy), and always inside the plan's area.
+static func stamp_rect(here: Rect2, size: Vector2, busy: Array[Rect2]) -> Rect2:
+	var o := STAMP_OVERLAP
+	var tries: Array[Vector2] = [
+		Vector2(here.end.x - o, here.position.y - size.y + o),
+		Vector2(here.position.x - size.x + o, here.position.y - size.y + o),
+		Vector2(here.end.x - o, here.end.y - o),
+		Vector2(here.position.x - size.x + o, here.end.y - o),
+	]
+	var best := Rect2()
+	var best_cover := INF
+	for at in tries:
+		var x := clampf(at.x, BIG_AREA.position.x, BIG_AREA.end.x - size.x)
+		var y := clampf(at.y, BIG_AREA.position.y, BIG_AREA.end.y - size.y)
+		var rect := Rect2(Vector2(x, y).floor(), size)
+		var cover := 0.0
+		for other in busy:
+			cover += rect.intersection(other).get_area()
+		if cover < best_cover:
+			best = rect
+			best_cover = cover
+	return best
 
 
 # A room's place on the map is its grid cell, counted from the floor's top left, whatever its size.
@@ -212,31 +361,182 @@ func _exit_tree() -> void:
 func _draw() -> void:
 	if _map == null or _progress == null or _current_id == -1:
 		return
-	var panel := BIG_RECT if _is_big else MINI_RECT
-	var extent := _map.bounds().size
-	var spacing := big_spacing(extent) if _is_big else MINI_SPACING
-	var origin := big_origin(extent, spacing) if _is_big else mini_origin(map_position(_map, _map.room(_current_id)))
-	draw_rect(panel, BIG_PANEL_COLOR if _is_big else PANEL_COLOR)
+	if _is_big:
+		paint_big(self)
+		return
+	var panel := MINI_RECT
+	var origin := mini_origin(map_position(_map, _map.room(_current_id)))
+	draw_rect(panel, PANEL_COLOR)
 	draw_rect(panel, Color("625e6f"), false, 1.0)
 	var shown := shown_ids(_map, _progress, show_secrets, show_plan, not boss_names.is_empty())
 	for room_id in (shown if show_plan else _progress.visited_ids()):
-		_draw_links(_map.room(room_id), panel, origin, spacing)
+		_draw_links(_map.room(room_id), panel, origin, MINI_SPACING)
 	for room_id in shown:
-		_draw_room(_map.room(room_id), panel, origin, spacing)
-	if _is_big:
-		for room_id in shown:
-			_draw_boss_name(_map.room(room_id), panel, origin, spacing)
-	if not _is_big:
-		_draw_floor_name()
-	else:
-		_draw_text(panel.position + Vector2(12, 22), _floor_name, 16, Color.WHITE)
-		if not combo_names.is_empty():
-			_draw_text(panel.position + Vector2(12, 36), combos_line(combo_names), 10, Hud.BANNER_COLOR)
-		var hint := close_hint(true, ActiveDevice.family) if ActiveDevice.using_pad else KeyBindings.with_key("map", CLOSE_HINT)
-		var hint_width := ThemeDB.fallback_font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x
-		_draw_text(Vector2(panel.end.x - 10.0 - hint_width, panel.position.y + 23.0), hint, 11, Color("ffd24a"))
-		_draw_text(panel.position + Vector2(12, panel.size.y - 26), LEGEND_TOP, 11, Color("ece9e0"))
-		_draw_text(panel.position + Vector2(12, panel.size.y - 12), LEGEND_BOTTOM, 11, Color("ece9e0"))
+		_draw_room(_map.room(room_id), panel, origin, MINI_SPACING)
+	_draw_floor_name()
+
+
+# The big map, on a CanvasItem (itself, in play) or into an Image (the tests): the sheet and its tab,
+# the heading, the plan (corridors, exit stubs, rooms, boss names, the stamp) and the key.
+func paint_big(canvas: Object) -> void:
+	MapPaper.fill(canvas, Rect2(Vector2.ZERO, CaseFile.VIEW), CaseFile.DESK)
+	MapPaper.sheet(canvas, SHEET)
+	MapPaper.fill(canvas, TAB, CaseFile.MANILA)
+	MapPaper.frame(canvas, TAB, 1, CaseFile.MANILA_EDGE)
+	MapPaper.text_in(canvas, TAB, tr(TAB_TEXT), HudStyle.SMALL, MapPaper.INK)
+	_paint_heading(canvas)
+	MapPaper.grid(canvas, BIG_AREA, GRID_STEP)
+	var extent := _map.bounds().size
+	var spacing := big_spacing(extent)
+	var origin := big_origin(extent, spacing)
+	var room := room_size(spacing)
+	var half := MapPaper.corridor_half(room)
+	var shown := shown_ids(_map, _progress, show_secrets, show_plan, not boss_names.is_empty())
+	var stubs := exit_stubs(_map, _progress, shown)
+	var links := _big_links(shown)
+	big_room_rects.clear()
+	for room_id: int in shown:
+		big_room_rects[room_id] = _drawn_rect(_map.room(room_id), origin, spacing)
+		# The grid stops a pixel short of every room, so no grid line runs on past a room's corner.
+		MapPaper.fill(canvas, (big_room_rects[room_id] as Rect2).grow(1.0), MapPaper.PAPER)
+	# Which sides of each room open onto a corridor or a stub, for its door gaps.
+	var gaps := {}
+	var busy: Array[Rect2] = []
+	for link: Array in links:
+		var a := _map.room(link[0])
+		var b := _map.room(link[1])
+		var a_rect := _drawn_rect(a, origin, spacing)
+		var side: Vector2i = b.cell - a.cell
+		(gaps.get_or_add(a.id, []) as Array).append(side)
+		(gaps.get_or_add(b.id, []) as Array).append(-side)
+		var known: bool = link[2]
+		MapPaper.corridor(canvas, a_rect, _drawn_rect(b, origin, spacing), half, 1, MapPaper.INK if known else MapPaper.PENCIL)
+		busy.append(MapPaper.corridor_box(MapPaper.edge_mid(a_rect, side), side, stub_length(side, spacing) - STUB_REACH, half))
+	for stub in stubs:
+		var from_rect := _drawn_rect(_map.room(stub["from"]), origin, spacing)
+		var side: Vector2i = stub["side"]
+		(gaps.get_or_add(stub["from"], []) as Array).append(side)
+		var end := MapPaper.stub(canvas, from_rect, side, stub_length(side, spacing), half, 1, STUB_DASH, MapPaper.INK)
+		var sign_rect := MapPaper.stub_sign_rect(end, side, stub_sign_scale(room))
+		MapPaper.fill(canvas, sign_rect.grow(1.0), MapPaper.PAPER)
+		MapPaper.ink_sign(canvas, sign_rect.get_center(), stub["icon"], stub_sign_scale(room))
+		busy.append(stub_box(from_rect, side, spacing))
+	for room_id: int in shown:
+		_paint_room(canvas, _map.room(room_id), origin, spacing, gaps.get(room_id, []))
+		if room_id != _current_id:
+			busy.append(big_room_rects[room_id])
+	for room_id: int in shown:
+		busy.append_array(_paint_boss_name(canvas, _map.room(room_id), origin, spacing))
+	var here := _drawn_rect(_map.room(_current_id), origin, spacing)
+	busy.append(here)
+	var words := tr(STAMP_TEXT)
+	big_stamp_rect = stamp_rect(here, MapPaper.stamp_size(words, HudStyle.SMALL), busy)
+	MapPaper.stamp(canvas, big_stamp_rect, words, HudStyle.SMALL)
+	_paint_key(canvas, key_icons(_map, shown, stubs))
+
+
+# The floor's name, the close prompt right of it, an ink rule under both, and the run's sets.
+func _paint_heading(canvas: Object) -> void:
+	var size := heading_size(_floor_name)
+	MapPaper.text(canvas, Vector2(NAME_BOX.position.x, MapPaper.baseline_in(NAME_BOX, size)), heading_text(_floor_name), size, MapPaper.INK)
+	var hint := close_hint(true, ActiveDevice.family) if ActiveDevice.using_pad else KeyBindings.with_key("map", CLOSE_HINT)
+	var hint_x := SHEET.end.x - 16.0 - MapPaper.text_width(hint, HudStyle.SMALL)
+	MapPaper.text(canvas, Vector2(hint_x, MapPaper.baseline_in(NAME_BOX, HudStyle.SMALL)), hint, HudStyle.SMALL, CaseFile.INK_DIM)
+	MapPaper.fill(canvas, Rect2(NAME_BOX.position.x, RULE_Y, SHEET.end.x - 16.0 - NAME_BOX.position.x, 1.0), MapPaper.INK)
+	if not set_names.is_empty():
+		MapPaper.text(canvas, Vector2(SETS_BOX.position.x, MapPaper.baseline_in(SETS_BOX, HudStyle.SMALL)), sets_text(set_names, SETS_BOX.size.x), HudStyle.SMALL, MapPaper.INK)
+
+
+# Each corridor the big map draws, once: [room id, room id, walked (ink) or planned (pencil)], pencil
+# first so a walked corridor is drawn last.
+func _big_links(shown: Array[int]) -> Array:
+	var ink: Array = []
+	var pencil: Array = []
+	var seen := {}
+	for room_id in shown:
+		var room := _map.room(room_id)
+		for side: Vector2i in room.doors:
+			var other_id: int = room.doors[side]
+			var key := Vector2i(mini(room_id, other_id), maxi(room_id, other_id))
+			if seen.has(key) or not shown.has(other_id) or not link_shown(room, _map.room(other_id), _progress, show_plan):
+				continue
+			seen[key] = true
+			var known := _progress.is_visited(room_id) and _progress.is_visited(other_id)
+			(ink if known else pencil).append([room_id, other_id, known])
+	return pencil + ink
+
+
+# The room as the big map draws it: the Crossroads is a smaller square in its cell.
+func _drawn_rect(room: FloorRoom, origin: Vector2, spacing: Vector2) -> Rect2:
+	var rect := _rect_of(room, origin, spacing)
+	if room.room_type != RoomLayout.TYPE_CROSSROADS:
+		return rect
+	var small := crossroads_rect(rect)
+	return Rect2(small.position.floor(), small.size.floor())
+
+
+# A walked room: its floor, an ink outline with door gaps, and its door's sign in ink (none for a plain
+# fight room or the Crossroads). A room shown but not walked into is a pencil outline; Night Vision's
+# secret carries a "?", and a boss room the Fortune Teller's Card shows its sign in pencil.
+func _paint_room(canvas: Object, room: FloorRoom, origin: Vector2, spacing: Vector2, gaps: Array) -> void:
+	var rect := _drawn_rect(room, origin, spacing)
+	var size := room_size(spacing)
+	var half := MapPaper.corridor_half(size)
+	var sign_icon := RoomRules.door_icon(room.room_type)
+	var scale := MapPaper.sign_scale(size)
+	if _progress.is_visited(room.id):
+		MapPaper.fill(canvas, rect, MapPaper.ROOM_FILL)
+		# The room he stands in is outlined in the stamp's red, so the stamp's room is never in doubt.
+		MapPaper.outline(canvas, rect, MapPaper.outline_width(size), MapPaper.STAMP if room.id == _current_id else MapPaper.INK, gaps, half)
+		if room.room_type != RoomLayout.TYPE_CROSSROADS:
+			MapPaper.ink_sign(canvas, room_sign_rect(rect, size).get_center(), sign_icon, scale)
+		return
+	MapPaper.fill(canvas, rect, MapPaper.PAPER)
+	MapPaper.outline(canvas, rect, 1, MapPaper.PENCIL, gaps, half)
+	if room.room_type == RoomLayout.TYPE_SECRET:
+		MapPaper.ink_sign(canvas, rect.get_center(), "?", scale)
+	elif boss_names.has(room.room_type):
+		MapPaper.ink_sign(canvas, rect.get_center(), sign_icon, scale, MapPaper.PENCIL, MapPaper.PENCIL)
+
+
+# The Fortune Teller's Card: the boss's name in ink on a clean patch under its room (over it when the
+# room is on the plan's bottom row). Returns the patch, or nothing.
+func _paint_boss_name(canvas: Object, room: FloorRoom, origin: Vector2, spacing: Vector2) -> Array[Rect2]:
+	var patches: Array[Rect2] = []
+	if not boss_names.has(room.room_type):
+		return patches
+	var rect := _drawn_rect(room, origin, spacing)
+	var words: String = boss_names[room.room_type]
+	var width := MapPaper.text_width(words, HudStyle.SMALL)
+	var height := MapPaper.line_height(HudStyle.SMALL)
+	var x := floorf(clampf(rect.get_center().x - width / 2.0, BIG_AREA.position.x + 2.0, BIG_AREA.end.x - width - 2.0))
+	var y := rect.end.y + 1.0
+	if y + height + 1.0 > BIG_AREA.end.y:
+		y = rect.position.y - height - 2.0
+	var patch := Rect2(x - 2.0, y, width + 4.0, height + 1.0)
+	MapPaper.fill(canvas, patch, MapPaper.PAPER)
+	MapPaper.text(canvas, Vector2(x, y + 1.0 + MapPaper.ascent(HudStyle.SMALL)), words, HudStyle.SMALL, MapPaper.INK)
+	patches.append(patch)
+	return patches
+
+
+# The key, a printed box under the plan: each sign on this floor with its name.
+func _paint_key(canvas: Object, icons: Array[String]) -> void:
+	var ascent := MapPaper.ascent(HudStyle.SMALL)
+	MapPaper.frame(canvas, KEY_RECT, 1, MapPaper.INK)
+	MapPaper.text(canvas, KEY_RECT.position + Vector2(6, 5 + ascent), tr(KEY_TITLE), HudStyle.SMALL, MapPaper.INK)
+	var column := key_column_width()
+	for i in icons.size():
+		var at := KEY_RECT.position + Vector2(KEY_TITLE_WIDTH + (i % KEY_COLUMNS) * column, 5.0 + floorf(i / float(KEY_COLUMNS)) * KEY_ROW_HEIGHT)
+		var box := Rect2(at, Vector2(DoorSign.SIZE, DoorSign.SIZE))
+		match icons[i]:
+			"C":
+				MapPaper.frame(canvas, box, 1, MapPaper.INK)
+			"+":
+				MapPaper.frame(canvas, box.grow(-1.0), 1, MapPaper.INK)
+			_:
+				MapPaper.ink_sign(canvas, box.get_center(), icons[i], 1)
+		MapPaper.text(canvas, at + Vector2(DoorSign.SIZE + 3.0, 1.0 + ascent), tr(String(KEY_LABELS[icons[i]])), HudStyle.SMALL, MapPaper.INK)
 
 
 # The close prompt in the top right. On a pad it names the back button (B, or Circle), which closes
@@ -245,10 +545,6 @@ static func close_hint(pad: bool, family: String) -> String:
 	if pad:
 		return "%s: %s" % [PadInput.button_name(JOY_BUTTON_B, family), CLOSE_HINT]
 	return KeyBindings.with_device("map", CLOSE_HINT, false, family)
-
-
-static func combos_line(names: PackedStringArray) -> String:
-	return "Combos: %s" % ", ".join(names)
 
 
 func _draw_floor_name() -> void:
@@ -287,27 +583,7 @@ func _draw_links(room: FloorRoom, panel: Rect2, origin: Vector2, spacing: Vector
 			continue
 		var center := from.get_center()
 		var known := _progress.is_visited(room.id) and _progress.is_visited(other_id)
-		draw_line(center, center + Vector2(side) * spacing, LINE_COLOR if known else PLAN_LINK_COLOR, BIG_LINK if _is_big else MINI_LINK)
-
-
-# The Fortune Teller's Card: the boss's name in the gap under its room, outlined so it reads over links.
-func _draw_boss_name(room: FloorRoom, panel: Rect2, origin: Vector2, spacing: Vector2) -> void:
-	if not boss_names.has(room.room_type):
-		return
-	var rect := _rect_of(room, origin, spacing)
-	if not panel.encloses(rect):
-		return
-	var text: String = boss_names[room.room_type]
-	var font := ThemeDB.fallback_font
-	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, BOSS_NAME_FONT).x
-	var x := clampf(rect.get_center().x - width / 2.0, panel.position.x + 4.0, panel.end.x - width - 4.0)
-	var at := Vector2(x, rect.end.y + font.get_ascent(BOSS_NAME_FONT) + 1.0)
-	# A dark tag behind it, since the name can run over the room below.
-	var tag := Rect2(x - 3.0, rect.end.y + 1.0, width + 6.0, font.get_height(BOSS_NAME_FONT) + 1.0)
-	draw_rect(tag, Color(0.05, 0.04, 0.07, 0.95))
-	draw_rect(tag, Color(BOSS_NAME_COLOR, 0.6), false, 1.0)
-	draw_string_outline(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, BOSS_NAME_FONT, 4, Color.BLACK)
-	draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, BOSS_NAME_FONT, BOSS_NAME_COLOR)
+		draw_line(center, center + Vector2(side) * spacing, LINE_COLOR if known else PLAN_LINK_COLOR, MINI_LINK)
 
 
 func _rect_of(room: FloorRoom, origin: Vector2, spacing: Vector2) -> Rect2:

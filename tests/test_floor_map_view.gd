@@ -18,18 +18,35 @@ func test_a_room_is_drawn_at_its_grid_cell_from_the_corner_of_the_floor() -> voi
 
 
 func test_the_big_map_fits_every_built_floor_in_its_panel() -> void:
-	var def: FloorDef = load("res://data/floors/floor_1.tres")
-	var pool := RoomCatalog.load_valid(def.rooms_dir)
-	for seed_value in 100:
-		var rng := RandomNumberGenerator.new()
-		rng.seed = seed_value
-		var map := FloorBuilder.build_from_pool(rng, def, pool)
-		var extent := map.bounds().size
-		var spacing := FloorMapView.big_spacing(extent)
-		var origin := FloorMapView.big_origin(extent, spacing)
-		for room in map.rooms:
-			var rect := FloorMapView.room_rect(FloorMapView.map_position(map, room), origin, spacing)
-			assert_true(FloorMapView.BIG_AREA.encloses(rect), "seed %d %s" % [seed_value, str(rect)])
+	for file in DirAccess.get_files_at("res://data/floors"):
+		if not file.ends_with(".tres"):
+			continue
+		var def: FloorDef = load("res://data/floors/" + file)
+		# The Waiting Room builds its own map (Departments) and the Crossroads and landings have none.
+		if def.rooms_dir.is_empty() or def.id == "waiting_room":
+			continue
+		var pool := RoomCatalog.load_valid(def.rooms_dir)
+		var seeds := 100 if def.id == "floor_1" else 20
+		for seed_value in seeds:
+			var rng := RandomNumberGenerator.new()
+			rng.seed = seed_value
+			var map := FloorBuilder.build_from_pool(rng, def, pool)
+			var extent := map.bounds().size
+			var spacing := FloorMapView.big_spacing(extent)
+			var origin := FloorMapView.big_origin(extent, spacing)
+			for room in map.rooms:
+				var rect := FloorMapView.room_rect(FloorMapView.map_position(map, room), origin, spacing)
+				assert_true(FloorMapView.BIG_AREA.encloses(rect), "%s seed %d %s" % [def.id, seed_value, str(rect)])
+			# Every main room walked, no detour: each detour door is a stub, and stub and sign stay inside.
+			var progress := FloorProgress.new(map)
+			for room in map.main_rooms():
+				progress.enter(room.id)
+			var stubs := FloorMapView.exit_stubs(map, progress, FloorMapView.shown_ids(map, progress, false))
+			for stub in stubs:
+				var from: FloorRoom = map.room(stub["from"])
+				var from_rect := FloorMapView.room_rect(FloorMapView.map_position(map, from), origin, spacing)
+				var box := FloorMapView.stub_box(from_rect, stub["side"], spacing)
+				assert_true(FloorMapView.BIG_AREA.encloses(box), "%s seed %d stub %s" % [def.id, seed_value, str(box)])
 
 
 func test_the_big_map_keeps_rooms_tall_enough_for_their_icons() -> void:
@@ -139,3 +156,269 @@ func test_the_maps_panel_fades_with_the_small_map() -> void:
 	hud.set_map_alpha(1.0, view)
 	assert_near(view.modulate.a, 1.0)
 	hud.free()
+
+
+# --- the paper floor plan (playtest-9 note 3) ---
+
+# A start room with a shop to the east, a fight room to the south, a secret to the west and an item room
+# to the north, every door joined.
+func _cross_floor() -> FloorMap:
+	var map := FloorMap.new()
+	var start := _add(map, RoomLayout.TYPE_COMBAT, Vector2i(1, 1))
+	map.join(start, _add(map, RoomLayout.TYPE_SHOP, Vector2i(2, 1)))
+	map.join(start, _add(map, RoomLayout.TYPE_COMBAT, Vector2i(1, 2)))
+	map.join(start, _add(map, RoomLayout.TYPE_SECRET, Vector2i(0, 1)))
+	map.join(start, _add(map, RoomLayout.TYPE_ITEM, Vector2i(1, 0)))
+	return map
+
+
+func _stub_to(stubs: Array[Dictionary], side: Vector2i) -> Dictionary:
+	for stub in stubs:
+		if stub["side"] == side:
+			return stub
+	return {}
+
+
+func test_a_visited_room_shows_a_stub_for_each_door_not_yet_walked_through() -> void:
+	var map := _cross_floor()
+	var progress := FloorProgress.new(map)
+	progress.enter(0)
+	progress.enter(4)
+	var stubs := FloorMapView.exit_stubs(map, progress, FloorMapView.shown_ids(map, progress, false))
+	assert_eq(stubs.size(), 2, str(stubs))
+	assert_eq(_stub_to(stubs, Vector2i.RIGHT), {"from": 0, "side": Vector2i.RIGHT, "icon": "$"}, "the shop's sign")
+	assert_eq(_stub_to(stubs, Vector2i.DOWN), {"from": 0, "side": Vector2i.DOWN, "icon": "?"}, "a plain fight room is a ?")
+	assert_true(_stub_to(stubs, Vector2i.LEFT).is_empty(), "an unfound secret gives no stub")
+	assert_true(_stub_to(stubs, Vector2i.UP).is_empty(), "a room already shown gives no stub")
+	# Night Vision shows the secret: it is shown now, so still no stub.
+	stubs = FloorMapView.exit_stubs(map, progress, FloorMapView.shown_ids(map, progress, true))
+	assert_true(_stub_to(stubs, Vector2i.LEFT).is_empty(), "a shown secret is a room, not a stub")
+	# With the Floor Plan every room shows, and a room he has not walked into gives no stubs of its own.
+	stubs = FloorMapView.exit_stubs(map, progress, FloorMapView.shown_ids(map, progress, false, true))
+	assert_true(stubs.is_empty(), str(stubs))
+
+
+func test_the_key_lists_only_the_room_types_on_this_floor() -> void:
+	var map := _cross_floor()
+	var progress := FloorProgress.new(map)
+	progress.enter(0)
+	var shown := FloorMapView.shown_ids(map, progress, false)
+	var stubs := FloorMapView.exit_stubs(map, progress, shown)
+	assert_eq(FloorMapView.key_icons(map, shown, stubs), ["C", "I", "$", "?"] as Array[String], "no secret before it is found")
+	progress.enter(3)
+	shown = FloorMapView.shown_ids(map, progress, false)
+	stubs = FloorMapView.exit_stubs(map, progress, shown)
+	assert_true(FloorMapView.key_icons(map, shown, stubs).has("S"), "a found secret joins the key")
+	for icon in FloorMapView.KEY_ORDER:
+		assert_true(FloorMapView.KEY_LABELS.has(icon), icon)
+	for icon: String in RoomRules.ICONS.values():
+		if DoorSign.has_sign(icon) or icon == "C":
+			assert_true(FloorMapView.KEY_ORDER.has(icon), "%s has a place in the key" % icon)
+	assert_true(FloorMapView.KEY_ORDER.size() <= FloorMapView.KEY_COLUMNS * FloorMapView.KEY_ROWS, "every entry fits the key's rows")
+
+
+func _width(text: String, font_size: int) -> float:
+	return HudStyle.font().get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+
+
+func test_every_text_on_the_big_map_fits_its_box_in_the_game_font() -> void:
+	for icon: String in FloorMapView.KEY_LABELS:
+		var label: String = FloorMapView.KEY_LABELS[icon]
+		assert_true(_width(label, HudStyle.SMALL) <= FloorMapView.key_label_width(), "key label %s" % label)
+	assert_true(_width(FloorMapView.TAB_TEXT, HudStyle.SMALL) <= FloorMapView.TAB.size.x - 8.0, "the tab")
+	for file in DirAccess.get_files_at("res://data/floors"):
+		if file.ends_with(".tres"):
+			var floor_name: String = (load("res://data/floors/" + file) as FloorDef).display_name
+			var size := FloorMapView.heading_size(floor_name)
+			assert_true(_width(FloorMapView.heading_text(floor_name), size) <= FloorMapView.NAME_BOX.size.x, "the floor name %s" % floor_name)
+			assert_true(MapPaper.line_height(size) <= FloorMapView.NAME_BOX.size.y, "its height at %d" % size)
+	assert_eq(FloorMapView.heading_size("The Records Basement"), HudStyle.LARGE, "a short name is written large")
+	# The line metrics the map lays text out by are the pixel font's own.
+	var fnt := FileAccess.get_file_as_string(HudStyle.FONT_PATH)
+	assert_true(fnt.contains("lineHeight=%d base=%d" % [MapPaper.FONT_LINE, MapPaper.FONT_BASE]), "the font file's line")
+	assert_true(MapPaper.line_height(HudStyle.SMALL) <= FloorMapView.SETS_BOX.size.y, "the sets line's height")
+	assert_true(MapPaper.line_height(HudStyle.SMALL) <= FloorMapView.KEY_ROW_HEIGHT, "a key row's height")
+	KeyBindings.reset_to_defaults()
+	for hint in [FloorMapView.close_hint(true, PadInput.PLAYSTATION), FloorMapView.close_hint(true, PadInput.PLAYSTATION_4), FloorMapView.close_hint(true, PadInput.XBOX), FloorMapView.close_hint(false, PadInput.XBOX)]:
+		assert_true(_width(hint, HudStyle.SMALL) <= FloorMapView.HINT_WIDTH, hint)
+	assert_true(FloorMapView.NAME_BOX.end.x + FloorMapView.HINT_WIDTH <= FloorMapView.SHEET.end.x - 12.0, "the hint's place right of the name")
+	var stamp := MapPaper.stamp_size(FloorMapView.STAMP_TEXT, HudStyle.SMALL)
+	assert_true(_width(FloorMapView.STAMP_TEXT, HudStyle.SMALL) + 4.0 <= stamp.x, "the stamp's words inside its frame")
+	var many := PackedStringArray()
+	for i in 12:
+		many.append("A Rather Long Set Name %d" % i)
+	var line := FloorMapView.sets_text(many, FloorMapView.SETS_BOX.size.x)
+	assert_true(_width(line, HudStyle.SMALL) <= FloorMapView.SETS_BOX.size.x, line)
+	assert_true(line.begins_with("Sets: A Rather Long Set Name 0"), line)
+	assert_eq(FloorMapView.sets_text(PackedStringArray(["Full Set"]), FloorMapView.SETS_BOX.size.x), "Sets: Full Set")
+
+
+func test_the_paper_map_sits_inside_its_sheet() -> void:
+	for box: Rect2 in [FloorMapView.BIG_AREA, FloorMapView.KEY_RECT, FloorMapView.NAME_BOX, FloorMapView.SETS_BOX]:
+		assert_true(FloorMapView.SHEET.encloses(box), str(box))
+	assert_true(FloorMapView.SETS_BOX.end.y <= FloorMapView.BIG_AREA.position.y, "the sets line above the plan")
+	assert_true(FloorMapView.BIG_AREA.end.y <= FloorMapView.KEY_RECT.position.y, "the plan above the key")
+	assert_true(FloorMapView.SHEET.end.y <= 360.0 and FloorMapView.TAB.position.y >= 0.0)
+
+
+# The paused map lists the run's formed sets (combos are retired).
+func test_the_paused_map_lists_the_runs_sets() -> void:
+	assert_eq(FloorMapView.sets_line(PackedStringArray(["Full Set", "Night Shift"])), "Sets: Full Set, Night Shift")
+	var scene := FileAccess.get_file_as_string("res://scripts/scenes/floor_scene.gd")
+	assert_true(scene.contains("_big_map.set_names = _run.effects.set_names()"))
+	assert_false(scene.contains("combo_names"))
+
+
+# --- the cross-shape rule, on the marks themselves ---
+
+# Pixels of the plan that carry a mark: anything on the sheet that is not bare paper or a room's floor.
+func _marked(image: Image) -> PackedByteArray:
+	var marks := PackedByteArray()
+	marks.resize(image.get_width() * image.get_height())
+	var sheet := Rect2i(FloorMapView.SHEET)
+	for y in range(sheet.position.y, sheet.end.y):
+		for x in range(sheet.position.x, sheet.end.x):
+			var c := image.get_pixel(x, y)
+			if c.a > 0.0 and not c.is_equal_approx(MapPaper.PAPER) and not c.is_equal_approx(MapPaper.ROOM_FILL) and not c.is_equal_approx(CaseFile.MANILA):
+				marks[y * image.get_width() + x] = 1
+	return marks
+
+
+func _run_length(marks: PackedByteArray, width: int, height: int, at: Vector2i, step: Vector2i) -> int:
+	var n := 0
+	var p := at + step
+	while p.x >= 0 and p.y >= 0 and p.x < width and p.y < height and marks[p.y * width + p.x] == 1:
+		n += 1
+		p += step
+	return n
+
+
+# A thin straight stroke crossing another: arms of 4 or more pixels on all four sides of a spot, each arm
+# 3 pixels wide or less a little way out. A T, an L, a filled block or a dot is no cross.
+func _crossings(image: Image) -> Array[Vector2i]:
+	var width := image.get_width()
+	var height := image.get_height()
+	var marks := _marked(image)
+	var found: Array[Vector2i] = []
+	for y in height:
+		for x in width:
+			if marks[y * width + x] == 0:
+				continue
+			var at := Vector2i(x, y)
+			var arms := true
+			for step: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+				if _run_length(marks, width, height, at, step) < 4:
+					arms = false
+					break
+			if not arms:
+				continue
+			var thin := true
+			for step: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+				var out := at + step * 3
+				var across := Vector2i(step.y, step.x)
+				var span := 1 + _run_length(marks, width, height, out, across) + _run_length(marks, width, height, out, -across)
+				if span > 3:
+					thin = false
+			if thin:
+				found.append(at)
+	return found
+
+
+func _paper_image() -> Image:
+	return Image.create(640, 360, false, Image.FORMAT_RGBA8)
+
+
+func test_the_cross_finder_sees_a_plus_and_not_a_corner() -> void:
+	var image := _paper_image()
+	MapPaper.fill(image, FloorMapView.SHEET, MapPaper.PAPER)
+	MapPaper.fill(image, Rect2(100, 100, 21, 1), CaseFile.INK)
+	MapPaper.fill(image, Rect2(110, 90, 1, 21), CaseFile.INK)
+	assert_false(_crossings(image).is_empty(), "a plus")
+	image = _paper_image()
+	MapPaper.fill(image, FloorMapView.SHEET, MapPaper.PAPER)
+	MapPaper.fill(image, Rect2(100, 100, 21, 1), CaseFile.INK)
+	MapPaper.fill(image, Rect2(110, 101, 1, 10), CaseFile.INK)
+	MapPaper.fill(image, Rect2(200, 100, 30, 20), CaseFile.INK)
+	assert_true(_crossings(image).is_empty(), "a T and a block")
+
+
+# A floor with every kind of mark on it: walked rooms with signs and corridors, the Floor Plan's pencil
+# rooms, Night Vision's "?", a boss named by the Fortune Teller's Card, stubs, the stamp and the key.
+func _painted_floor(seed_value: int, with_items: bool) -> Image:
+	var def: FloorDef = load("res://data/floors/floor_1.tres")
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value
+	var map := FloorBuilder.build_from_pool(rng, def, RoomCatalog.load_valid(def.rooms_dir))
+	var progress := FloorProgress.new(map)
+	for id: int in map.main_path.slice(0, 4):
+		progress.enter(id)
+	var view := FloorMapView.new()
+	view.setup(map, progress, true, def.display_name)
+	view.set_current(map.main_path[1])
+	view.set_names = PackedStringArray(["Full Set"])
+	if with_items:
+		view.show_secrets = true
+		view.show_plan = true
+		view.boss_names = FloorMapView.boss_names_for(def)
+	var image := _paper_image()
+	view.paint_big(image)
+	view.free()
+	return image
+
+
+func test_no_mark_on_the_big_map_reads_as_a_cross() -> void:
+	for seed_value in [1, 2, 3]:
+		for with_items in [false, true]:
+			var image := _painted_floor(seed_value, with_items)
+			var crossings := _crossings(image)
+			assert_true(crossings.is_empty(), "seed %d items %s: %s" % [seed_value, str(with_items), str(crossings.slice(0, 4))])
+	var checker = load("res://tests/test_art_direction.gd").new()
+	for icon: String in DoorSign.PICTURES:
+		var rows := MapPaper.ink_cells(icon)
+		assert_false(checker._reads_as_a_cross(rows), "the ink sign %s" % icon)
+		var turned: Array = []
+		for x in DoorSign.SIZE:
+			var column := ""
+			for row: String in rows:
+				column += row[x]
+			turned.append(column)
+		assert_false(checker._reads_as_a_cross(turned), "the ink sign %s on its side" % icon)
+
+
+func test_the_big_map_paints_the_plan_on_paper() -> void:
+	var image := _painted_floor(1, false)
+	var inked := 0
+	var stamped := 0
+	var area := Rect2i(FloorMapView.BIG_AREA)
+	for y in range(area.position.y, area.end.y):
+		for x in range(area.position.x, area.end.x):
+			var c := image.get_pixel(x, y)
+			if c.is_equal_approx(CaseFile.INK):
+				inked += 1
+			elif c.is_equal_approx(CaseFile.STAMP):
+				stamped += 1
+	assert_true(inked > 200, "ink outlines and signs: %d" % inked)
+	assert_true(stamped > 40, "the red stamp: %d" % stamped)
+	assert_true(image.get_pixelv(Vector2i(FloorMapView.TAB.get_center())).is_equal_approx(CaseFile.MANILA), "the manila tab")
+
+
+# What the big map leaves for marks laid over it later (pickups left in a room): each shown room's box,
+# the sign's spot inside it, and the stamp, all on the plan.
+func test_the_big_map_tells_where_it_drew_each_room_and_the_stamp() -> void:
+	var map := _cross_floor()
+	var progress := FloorProgress.new(map)
+	progress.enter(0)
+	progress.enter(1)
+	var view := FloorMapView.new()
+	view.setup(map, progress, true, "The Records Basement")
+	view.set_current(0)
+	view.paint_big(_paper_image())
+	assert_eq(view.big_room_rects.size(), 2, "the start and the shop, not the rooms behind its stubs")
+	var spacing := FloorMapView.big_spacing(map.bounds().size)
+	for room_id: int in view.big_room_rects:
+		var rect: Rect2 = view.big_room_rects[room_id]
+		assert_true(FloorMapView.BIG_AREA.encloses(rect))
+		assert_true(rect.encloses(FloorMapView.room_sign_rect(rect, FloorMapView.room_size(spacing))), "the sign's spot is inside room %d" % room_id)
+	assert_true(FloorMapView.BIG_AREA.encloses(view.big_stamp_rect), str(view.big_stamp_rect))
+	assert_true(view.big_stamp_rect.intersects(view.big_room_rects[0]), "the stamp is pressed on the current room's corner")
+	view.free()
