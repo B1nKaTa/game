@@ -9,6 +9,8 @@ extends RefCounted
 # - F4 in the Waiting Room: the Waiting Room again with every department open. F4 again, walking
 #   through the run door, or quitting the game ends it. The run door then starts the F3 dev run on
 #   the same throwaway profile, since floor_scene starts any run under a dev profile as one.
+# The tester panel (F9 in a run, TesterPanel) is the one shortcut playtest exports keep as well, and a
+# run it touches turns into a dev run there and then (mark_tester_run).
 
 # The depth a dev run starts at when nothing chose another: F3's, and the dev Waiting Room's run door.
 const START_DEPTH := 3
@@ -18,6 +20,10 @@ const HINT := "DEV  F3/F5/F6: Floor 3/4/5 (max upgrades)"
 const WAITING_KEY := KEY_F4
 # In a floor, a debug build's F7 hands Harold a film reel (RuleKeeper), to try a flashback at once.
 const REEL_KEY := KEY_F7
+# In a run, F9 opens the tester panel (TesterPanel), in debug builds and in exports made from the
+# "Windows Playtest" preset, which carries the PLAYTEST_FEATURE tag. Never in a release export.
+const CHEAT_KEY := KEY_F9
+const PLAYTEST_FEATURE := "playtest"
 const WAITING_HINT := "F4: Dev Waiting Room (all departments)"
 const WAITING_HINT_ON := "F4: Back to the real save"
 # Shown on screen in every department while the dev Waiting Room's profile is on.
@@ -41,6 +47,28 @@ static func is_available() -> bool:
 # Release exports are not debug builds, so the shortcut never exists there.
 static func allowed(debug_build: bool) -> bool:
 	return debug_build
+
+
+static func cheats_available() -> bool:
+	return cheats_allowed(OS.is_debug_build(), OS.has_feature(PLAYTEST_FEATURE))
+
+
+# The tester panel: debug builds and playtest exports. A Steam build is a release export without the tag.
+static func cheats_allowed(debug_build: bool, playtest_tag: bool) -> bool:
+	return debug_build or playtest_tag
+
+
+# A run a cheat touched is a tester run, so it never counts for unlocks or records: from then on it is a
+# dev run (Progress.begin_dev_run) on a copy of the save as it stands, which return_to_waiting throws
+# away. The real run's checkpoint goes first, as a dev run keeps none and would leave the old one behind
+# to resume. False when the run already was a dev or tester run.
+static func mark_tester_run(progress: Node, dev_path: String) -> bool:
+	if progress.is_dev_run():
+		return false
+	progress.clear_checkpoint()
+	var copy := ProgressData.from_dict(progress.data.to_dict().duplicate(true))
+	progress.begin_dev_run(copy, dev_path, progress.dev_start_depth)
+	return true
 
 
 # The depth a key starts at, or 0 for a key that starts no dev run.

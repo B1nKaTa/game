@@ -60,3 +60,19 @@ resource and would otherwise be left out of the export. To stamp a commit other 
 
 Then zip `Grandpa.exe` alone as `Grandpa-<commit>.zip`, start it once, and check that the title
 screen's corner shows the same commit as the zip's name. If it shows `dev`, step 3 was skipped.
+
+### Playtest zips and Steam builds
+
+A playtest zip for friends uses the **Windows Playtest** preset instead. It is the release preset
+with the `playtest` feature tag, which turns on the tester panel (F9 in a run: god mode, +99 Slips and
+Thermoses, any item or potion; see `DevStart.cheats_available`), and it exports to its own folder:
+
+```
+& $env:GODOT --headless --path D:\grandpa-build\src --export-release "Windows Playtest" D:\grandpa-build\Grandpa.exe
+```
+
+Start the playtest exe once into a run and check that F9 opens the tester panel.
+
+A Steam build never uses the Windows Playtest preset: always **Windows Desktop**, as above, so no
+cheat exists in it. Start it once into a run and check that F9 does nothing. The cheats themselves are
+removed from the code before release.

@@ -89,6 +89,9 @@ var _pause_closed_frame := -1
 # never opens it again or pauses.
 var _case_file: CaseFile
 var _case_closed_frame := -1
+# The tester panel while it is open (F9, playtest and debug builds only), and the frame it closed on.
+var _tester: TesterPanel
+var _tester_closed_frame := -1
 # Counts every room entry, so a won Arcade game knows which visit it was on (RunState.note_arcade_win).
 var _visit := 0
 # The run as it stood when the Chairman fell, for EndingRules, or empty when he has not. The ending
@@ -652,7 +655,7 @@ func _process(delta: float) -> void:
 	var under_map := MapFade.world_rect(get_viewport().get_canvas_transform())
 	_hud.set_map_alpha(MapFade.step(_hud.map_alpha(), MapFade.covered(_room_view, under_map), delta), _mini_map)
 	var frame := Engine.get_process_frames()
-	if frame != _pause_closed_frame and frame != _big_map.closed_frame and frame != _case_closed_frame and Input.is_action_just_pressed("pause"):
+	if frame != _pause_closed_frame and frame != _big_map.closed_frame and frame != _case_closed_frame and frame != _tester_closed_frame and Input.is_action_just_pressed("pause"):
 		_on_pause_key()
 	if frame != _case_closed_frame and Input.is_action_just_pressed("case_file"):
 		_open_case_file()
@@ -679,6 +682,7 @@ func _on_pad_lost() -> void:
 	if is_over or _pause != null:
 		return
 	_close_case_file()
+	_close_tester_panel()
 	if _big_map.is_open():
 		_big_map.set_open(false)
 	_open_pause()
@@ -686,7 +690,7 @@ func _on_pad_lost() -> void:
 
 # Tab: the case file on the Harold tab, over nothing else that is open. It pauses the game itself.
 func _open_case_file() -> void:
-	if is_over or _pause != null or _card_panel != null or _case_file != null or _big_map.is_open() or debug_cutscene() != null:
+	if is_over or _pause != null or _card_panel != null or _case_file != null or _tester != null or _big_map.is_open() or debug_cutscene() != null:
 		return
 	Sfx.play("pause_open")
 	player.cancel_charge()
@@ -714,6 +718,57 @@ func debug_case_file() -> CaseFile:
 
 func debug_open_case_file() -> void:
 	_open_case_file()
+
+
+# Playtest and debug builds only: F9 opens the tester panel (DevStart.CHEAT_KEY). In a release export
+# this listener does nothing, so the panel never exists there.
+func _unhandled_input(event: InputEvent) -> void:
+	if not DevStart.cheats_available():
+		return
+	var key := event as InputEventKey
+	if key != null and key.pressed and not key.echo and key.physical_keycode == DevStart.CHEAT_KEY:
+		get_viewport().set_input_as_handled()
+		_open_tester_panel()
+
+
+# Over nothing else that is open, as the case file. It pauses the game itself, and the map waits.
+func _open_tester_panel() -> void:
+	if not DevStart.cheats_available() or is_over or _pause != null or _card_panel != null or _case_file != null or _tester != null or _big_map.is_open() or debug_cutscene() != null:
+		return
+	Sfx.play("pause_open")
+	player.cancel_charge()
+	_tester = TesterPanel.new()
+	_tester.setup(_run, Content.items(), Content.run_potions())
+	_tester.closed.connect(_close_tester_panel)
+	_tester.cheat_used.connect(_on_cheat_used)
+	add_child(_tester)
+	_big_map.enabled = false
+	Input.mouse_mode = Settings.cursor_mode(false)
+
+
+func _close_tester_panel() -> void:
+	if _tester == null:
+		return
+	Sfx.play("pause_close")
+	_tester.queue_free()
+	_tester = null
+	_tester_closed_frame = Engine.get_process_frames()
+	get_tree().paused = false
+	_big_map.enabled = _card_panel == null and not is_over
+	Input.mouse_mode = Settings.cursor_mode(_card_panel == null)
+
+
+# Any cheat makes this a tester run, which never counts for unlocks or records (DevStart.mark_tester_run).
+func _on_cheat_used() -> void:
+	DevStart.mark_tester_run(Progress, Progress.DEV_PATH)
+
+
+func debug_tester_panel() -> TesterPanel:
+	return _tester
+
+
+func debug_open_tester_panel() -> void:
+	_open_tester_panel()
 
 
 # What the case file's Harold tab says of the floor, the route and the time.

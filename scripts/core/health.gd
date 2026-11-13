@@ -27,6 +27,8 @@ var half_heal_bonus := false
 # Asked at every heal whether the half-heal bonus may apply; the run points it at its context, so the
 # full loop counting pills turns the bonus off at the moment of the heal. Unset means allowed.
 var pill_bonus_allowed := Callable()
+# The tester panel's God mode (TesterPanel): while on, no hit and no lost half takes a pill.
+var god_mode := false
 
 
 func _init(start_pills: int) -> void:
@@ -35,7 +37,7 @@ func _init(start_pills: int) -> void:
 
 
 func hit(amount: int) -> bool:
-	if is_dead() or is_invulnerable():
+	if is_dead() or is_invulnerable() or god_mode:
 		return false
 	if amount > 0 and amount >= pills and lethal_saves > 0:
 		lethal_saves -= 1
@@ -93,7 +95,7 @@ func heal_half() -> void:
 # Half a pill lost. Every second half takes a whole pill, never the last when never_last is set.
 # Returns whether a whole pill went.
 func lose_half(never_last := true) -> bool:
-	if is_dead():
+	if is_dead() or god_mode:
 		return false
 	half_lost += 1
 	if half_lost < 2:

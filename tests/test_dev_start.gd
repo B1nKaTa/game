@@ -300,3 +300,240 @@ func test_ending_without_a_dev_run_changes_nothing() -> void:
 	assert_false(progress.is_dev_run())
 	progress.free()
 	SaveStore.new(REAL_PATH).delete_all()
+
+
+# --- The tester panel: F9 in a run, in debug builds and playtest exports only ---
+
+func test_cheats_exist_in_debug_builds_and_playtest_exports_only() -> void:
+	assert_true(DevStart.cheats_allowed(true, false), "a debug build")
+	assert_true(DevStart.cheats_allowed(false, true), "a playtest export")
+	assert_true(DevStart.cheats_allowed(true, true))
+	assert_false(DevStart.cheats_allowed(false, false), "a release export has none")
+	assert_eq(DevStart.cheats_available(), OS.is_debug_build() or OS.has_feature("playtest"))
+	assert_eq(DevStart.CHEAT_KEY, KEY_F9)
+	for key: int in [DevStart.WAITING_KEY, DevStart.REEL_KEY]:
+		assert_true(DevStart.CHEAT_KEY != key, "F9 is no other dev key")
+	assert_false(DevStart.START_KEYS.has(DevStart.CHEAT_KEY))
+
+
+func _preset(presets: ConfigFile, preset_name: String) -> String:
+	for section in presets.get_sections():
+		if not section.ends_with(".options") and str(presets.get_value(section, "name", "")) == preset_name:
+			return section
+	return ""
+
+
+# Only the playtest preset carries the tag, so a Steam build made from the release preset has no cheats.
+func test_only_the_playtest_preset_carries_the_playtest_tag() -> void:
+	var presets := ConfigFile.new()
+	assert_eq(presets.load("res://export_presets.cfg"), OK)
+	var release := _preset(presets, "Windows Desktop")
+	var playtest := _preset(presets, "Windows Playtest")
+	assert_false(release.is_empty())
+	assert_false(playtest.is_empty())
+	if release.is_empty() or playtest.is_empty():
+		return
+	assert_eq(presets.get_value(release, "custom_features"), "", "the release preset has no tag")
+	assert_eq(presets.get_value(release, "export_path"), "../build/Grandpa.exe")
+	assert_eq(presets.get_value(playtest, "custom_features"), "playtest")
+	assert_eq(presets.get_value(playtest, "export_path"), "../build-playtest/Grandpa.exe")
+	# Godot keeps one runnable preset per platform, and the release one stays it.
+	assert_eq(presets.get_value(release, "runnable"), true)
+	assert_eq(presets.get_value(playtest, "runnable"), false)
+	for key in presets.get_section_keys(release):
+		if not (key in ["name", "custom_features", "export_path", "runnable"]):
+			assert_eq(presets.get_value(playtest, key), presets.get_value(release, key), key)
+	assert_eq(presets.get_section_keys(playtest).size(), presets.get_section_keys(release).size())
+	for key in presets.get_section_keys(release + ".options"):
+		assert_eq(presets.get_value(playtest + ".options", key), presets.get_value(release + ".options", key), key)
+	assert_eq(presets.get_section_keys(playtest + ".options").size(), presets.get_section_keys(release + ".options").size())
+	var steps := FileAccess.get_file_as_string("res://docs/release/build-steps.md")
+	assert_true(steps.contains("Windows Playtest"), "the build steps name the playtest preset")
+
+
+func _cheat_run() -> RunState:
+	return RunState.new(Content.upgrades(), {})
+
+
+func _pool_item(id: String) -> ItemDef:
+	for item in Content.items():
+		if item.id == id:
+			return item
+	return null
+
+
+# How many cheats the panel under test has reported.
+var _cheats := 0
+
+
+func _on_cheat() -> void:
+	_cheats += 1
+
+
+func _panel(run: RunState) -> TesterPanel:
+	var panel := TesterPanel.new()
+	panel.setup(run, Content.items(), Content.run_potions())
+	_cheats = 0
+	panel.cheat_used.connect(_on_cheat)
+	return panel
+
+
+func test_the_panel_lists_every_pool_item_and_run_potion() -> void:
+	var panel := TesterPanel.new()
+	panel.setup(_cheat_run(), Content.items(), Content.run_potions())
+	assert_eq(panel.item_list().size(), Content.items().size())
+	assert_eq(panel.potion_list().size(), Content.run_potions().size())
+	assert_true(panel.potion_list().size() > 1)
+	var names: Array[String] = []
+	for item in panel.item_list():
+		names.append(item.display_name.to_lower())
+	var sorted := names.duplicate()
+	sorted.sort()
+	assert_eq(names, sorted, "by name, for finding one")
+	panel.free()
+
+
+func test_the_panel_adds_ninety_nine_slips_and_thermoses_up_to_the_cap() -> void:
+	var run := _cheat_run()
+	run.keys = 3
+	run.bombs = 1
+	var panel := _panel(run)
+	panel.add_slips()
+	assert_eq(run.keys, RunState.MAX_CONSUMABLE, "the keys")
+	assert_eq(run.bombs, 1)
+	panel.add_thermoses()
+	assert_eq(run.bombs, RunState.MAX_CONSUMABLE, "the bombs")
+	panel.add_slips()
+	panel.add_thermoses()
+	assert_eq(run.keys, RunState.MAX_CONSUMABLE, "never past the cap")
+	assert_eq(run.bombs, RunState.MAX_CONSUMABLE)
+	assert_eq(_cheats, 4, "every press is a cheat")
+	panel.free()
+
+
+func test_give_item_puts_it_in_the_run_as_a_pickup_does() -> void:
+	var run := _cheat_run()
+	var panel := _panel(run)
+	var shoes := _pool_item("velcro_shoes")
+	assert_true(panel.give_item(shoes))
+	assert_true(run.has_item("velcro_shoes"))
+	assert_true(run.found.has("velcro_shoes"), "found, as a picked-up item is")
+	assert_false(panel.give_item(shoes), "one already held is refused, as its pickup is")
+	assert_eq(run.items.size(), 1)
+	var desk := _pool_item("exchange_desk")
+	assert_true(desk.is_active())
+	assert_true(panel.give_item(desk))
+	assert_true(run.active == desk, "an active goes to the active slot")
+	assert_eq(_cheats, 2, "only what was given counts")
+	panel.free()
+
+
+func test_give_all_gives_every_passive_not_held_and_no_active() -> void:
+	var run := _cheat_run()
+	var panel := _panel(run)
+	var passives: Array[String] = ["pill_organizer", "velcro_shoes", "afterimage"]
+	var some: Array[ItemDef] = []
+	for id: String in passives:
+		some.append(_pool_item(id))
+		assert_false(some.back().is_active(), id)
+	for id: String in ["hearing_aid_feedback", "exchange_desk"]:
+		some.append(_pool_item(id))
+		assert_true(some.back().is_active(), id)
+	panel.give_item(some[0])
+	_cheats = 0
+	assert_eq(TesterPanel.give_all_list(some, run).size(), 2, "the passives not held")
+	assert_eq(panel.give_all(some), 2)
+	for id: String in passives:
+		assert_true(run.has_item(id), id)
+	assert_true(run.active == null, "an active would swap the last one out, so none is given")
+	assert_eq(TesterPanel.give_all_list(some, run).size(), 0, "nothing left to give")
+	assert_eq(panel.give_all(some), 0)
+	assert_eq(_cheats, 1, "only a press that gave something counts")
+	var actives := 0
+	for item in Content.items():
+		actives += 1 if item.is_active() else 0
+	var everything := TesterPanel.give_all_list(Content.items(), _cheat_run())
+	assert_eq(everything.size(), Content.items().size() - actives, "the whole passive pool")
+	assert_true(actives > 0)
+	panel.free()
+
+
+func test_give_potion_fills_or_replaces_the_potion_slot() -> void:
+	var run := _cheat_run()
+	var panel := _panel(run)
+	var potions := Content.run_potions()
+	panel.give_potion(potions[0])
+	assert_true(run.potion == potions[0])
+	panel.give_potion(potions[1])
+	assert_true(run.potion == potions[1], "a carried potion is replaced")
+	assert_eq(_cheats, 2)
+	panel.free()
+
+
+func test_god_mode_blocks_every_hit_while_on() -> void:
+	var run := _cheat_run()
+	var panel := _panel(run)
+	var player := Player.new()
+	player.setup(run)
+	var pills := run.health.pills
+	panel.set_god_mode(true)
+	assert_true(panel.god_mode())
+	assert_false(run.health.hit(1))
+	assert_false(player.take_hit(5), "an enemy's hit")
+	assert_false(player.take_fire_hit(1))
+	for i in 4:
+		run.health.lose_half(false)
+	assert_eq(run.health.pills, pills, "no pill lost")
+	assert_false(run.health.is_dead())
+	panel.set_god_mode(false)
+	assert_false(panel.god_mode())
+	assert_true(player.take_hit(1), "hits land again once it is off")
+	assert_eq(run.health.pills, pills - 1)
+	assert_eq(_cheats, 2)
+	player.free()
+	panel.free()
+
+
+# A run a cheat touched is a tester run: a dev run on a copy of the save as it stood, so nothing from
+# it reaches the real save, and the checkpoint of the real run goes, since a dev run keeps none.
+func test_a_cheat_makes_the_run_a_tester_run_that_never_reaches_the_real_save() -> void:
+	var real := ProgressData.new()
+	real.pension = 17
+	real.opening_seen = true
+	var progress := _progress_with_real_save(real)
+	progress._smoke = true
+	var run_file: String = progress.run_path()
+	assert_true(progress.write_checkpoint({"depth": 1}))
+	assert_false(progress.read_checkpoint().is_empty())
+	var before := _real_save_text()
+	var log_size: int = progress.data.run_log.size()
+	assert_true(DevStart.mark_tester_run(progress, DEV_PATH))
+	assert_true(progress.is_dev_run(), "flagged as dev runs are")
+	assert_true(RunCheckpoint.read(run_file).is_empty(), "the real run's checkpoint is gone")
+	assert_eq(progress.data.pension, 17, "it goes on from the save as it stood")
+	assert_false(DevStart.mark_tester_run(progress, DEV_PATH), "once is enough")
+	progress.add_pension(500)
+	progress.record_floor_cleared(1, "floor_1")
+	progress.data.run_log.append({"n": 99})
+	progress.data.items_unlocked["anything"] = true
+	assert_eq(_real_save_text(), before, "the real save is untouched")
+	progress.end_dev_run()
+	assert_false(progress.is_dev_run())
+	assert_eq(progress.data.pension, 17, "nothing it earned is kept")
+	assert_eq(progress.data.clears_at(1), 0, "no clear is kept")
+	assert_eq(progress.data.run_log.size(), log_size, "the copy shared nothing with the real save")
+	assert_false(progress.data.items_unlocked.has("anything"))
+	assert_false(FileAccess.file_exists(DEV_PATH))
+	RunCheckpoint.delete(run_file)
+	progress.free()
+	SaveStore.new(REAL_PATH).delete_all()
+
+
+# Nothing of the panel exists without cheats: the scene's only listener checks the gate first.
+func test_the_scene_opens_the_panel_only_when_cheats_are_available() -> void:
+	var scene := FileAccess.get_file_as_string("res://scripts/scenes/floor_scene.gd")
+	var listener := scene.substr(scene.find("func _unhandled_input"), 120)
+	assert_true(listener.contains("if not DevStart.cheats_available():"), "the gate first")
+	assert_true(scene.contains("DevStart.CHEAT_KEY"))
+	assert_true(scene.contains("DevStart.mark_tester_run(Progress, Progress.DEV_PATH)"))
+	assert_eq(scene.count("TesterPanel.new()"), 1, "one place makes it")

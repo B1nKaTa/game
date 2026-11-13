@@ -342,7 +342,8 @@ func take_hit(amount: int, source := RunEffects.HURT_ENEMY) -> bool:
 			_close_call_spent = true
 			run.effects.close_call()
 		return false
-	if run.health.is_dead() or run.health.is_invulnerable():
+	# The tester panel's God mode: the hit never lands, and no item hears of it.
+	if run.health.is_dead() or run.health.is_invulnerable() or run.health.god_mode:
 		return false
 	amount = run.effects.hurt(amount, source)
 	if amount <= 0:
