@@ -29,6 +29,7 @@ func setup_pet(ctx: EffectContext, body: Pet) -> void:
 	_ctx = ctx
 	body.radius = 6.0 + 3.0 * size(ctx)
 	body.check = can_block
+	body.roams = false
 	body.scale = Vector2.ONE * (1.0 + 0.25 * (size(ctx) - 1))
 
 

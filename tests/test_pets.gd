@@ -173,6 +173,119 @@ func test_every_shipped_pet_places_its_body_when_taken() -> void:
 		assert_eq(_bodies(kit), expected * 2, "%s places the same count in the next room" % id)
 	
 
+func _idle_pet(pet_slot: int, owner: Node2D) -> Pet:
+	var pet := Pet.make("rex", Color("8a5a2b"), pet_slot)
+	pet.follow = owner
+	pet.global_position = owner.global_position + Pet.slot_offset(pet_slot)
+	return pet
+
+
+# Runs the pet's frames; returns the farthest it strays from its slot and the positions it passed through.
+func _run_idle(pet: Pet, owner: Node2D, seconds: float) -> Dictionary:
+	var strayed := 0.0
+	var seen := {}
+	var frames := int(seconds * 30.0)
+	for i in frames:
+		pet._process(1.0 / 30.0)
+		strayed = maxf(strayed, pet.global_position.distance_to(pet.home()))
+		seen[pet.global_position] = true
+	return {"strayed": strayed, "seen": seen}
+
+
+func test_an_idle_pet_ambles_near_its_slot_while_harold_stands_still() -> void:
+	var owner := Node2D.new()
+	var pet := _idle_pet(0, owner)
+	var result := _run_idle(pet, owner, 30.0)
+	assert_true(result["seen"].size() > 3, "it moved on its own")
+	assert_true(float(result["strayed"]) > 1.0, "it left its slot")
+	assert_true(float(result["strayed"]) <= Pet.IDLE_ROAM + 0.01, "and stayed within IDLE_ROAM of it")
+	pet.free()
+	owner.free()
+
+
+func test_an_idle_pet_bobs_its_drawing_not_its_position() -> void:
+	var owner := Node2D.new()
+	var pet := _idle_pet(0, owner)
+	var lifted := false
+	var lowered := false
+	for i in 60:
+		pet._process(1.0 / 30.0)
+		if pet._bob == 1:
+			lifted = true
+		elif i > 2:
+			lowered = true
+	assert_true(lifted and lowered, "the drawing rises and falls within a couple of seconds")
+	pet.free()
+	owner.free()
+
+
+func test_a_pet_stops_idling_the_moment_its_owner_moves() -> void:
+	var owner := Node2D.new()
+	var pet := _idle_pet(0, owner)
+	var guard := 0
+	while pet._amble_offset == Vector2.INF and guard < 3000:
+		pet._process(1.0 / 30.0)
+		guard += 1
+	assert_true(pet._amble_offset != Vector2.INF, "it began an amble")
+	owner.global_position = Vector2(200, 0)
+	var before := pet.global_position
+	pet._process(1.0 / 30.0)
+	assert_near(pet.global_position.distance_to(before), Pet.SPEED / 30.0)
+	assert_eq(pet._bob, 0, "the bob settles")
+	assert_true(pet._amble_offset == Vector2.INF, "the amble is dropped")
+	pet.free()
+	owner.free()
+
+
+func test_a_pet_rock_does_not_amble() -> void:
+	var owner := Node2D.new()
+	var pet := _idle_pet(0, owner)
+	pet.roams = false
+	var start := pet.global_position
+	var result := _run_idle(pet, owner, 30.0)
+	assert_near(float(result["strayed"]), 0.0)
+	assert_eq(pet.global_position, start)
+	pet.free()
+	owner.free()
+	var effect: PetEffect = load("res://scripts/items/pet_rock.gd").new()
+	var body := Pet.make("pet_rock", Color.WHITE, 0)
+	effect.setup_pet(EffectContext.new(null), body)
+	assert_false(body.roams, "the rock's body is told not to amble")
+	body.free()
+
+
+func test_an_orbiting_pet_is_unchanged() -> void:
+	var owner := Node2D.new()
+	var pet := Pet.make("moth", Color.WHITE, 0)
+	pet.follow = owner
+	pet.orbit_speed = 2.0
+	pet.orbit_radius = 20.0
+	for i in 90:
+		pet._process(1.0 / 30.0)
+		assert_eq(pet.global_position, pet.home(), "it sits exactly on its circle")
+		assert_eq(pet._bob, 0)
+	pet.free()
+	owner.free()
+
+
+func test_two_pets_on_different_slots_are_not_in_step() -> void:
+	var owner := Node2D.new()
+	var first := _idle_pet(0, owner)
+	var second := _idle_pet(1, owner)
+	var differed := 0
+	for i in 600:
+		first._process(1.0 / 30.0)
+		second._process(1.0 / 30.0)
+		var a := first.global_position - first.home()
+		var b := second.global_position - second.home()
+		if not a.is_equal_approx(b):
+			differed += 1
+	assert_true(differed > 60, "their drift from their own slots differs")
+	first.free()
+	second.free()
+	owner.free()
+
+
 # The run-tests root is not in a started tree, so the guards are asked through try_block_in with the
 # nodes the group would hold (the repo's way for group-wide helpers).
 func test_a_pet_body_is_a_passing_effect_and_never_blocks_by_itself() -> void:
