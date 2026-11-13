@@ -93,3 +93,69 @@ func test_flying_coin_frees_itself_on_arrival_without_paying_again() -> void:
 	assert_eq(paid[0], 1)
 	player.free()
 	coin.free()
+
+
+func test_nearest_index_picks_the_closest_within_reach() -> void:
+	var spots: Array[Vector2] = [Vector2(40, 0), Vector2(10, 0), Vector2(60, 0)]
+	assert_eq(Pickup.nearest_index(spots, Vector2.ZERO, Pickup.NAME_RADIUS), 1)
+
+
+func test_nearest_index_is_minus_one_when_none_is_in_reach() -> void:
+	var spots: Array[Vector2] = [Vector2(65, 0), Vector2(0, 200)]
+	assert_eq(Pickup.nearest_index(spots, Vector2.ZERO, Pickup.NAME_RADIUS), -1)
+	var none: Array[Vector2] = []
+	assert_eq(Pickup.nearest_index(none, Vector2.ZERO, Pickup.NAME_RADIUS), -1)
+
+
+func test_nearest_index_counts_the_radius_itself_as_in_reach() -> void:
+	var spots: Array[Vector2] = [Vector2(Pickup.NAME_RADIUS, 0)]
+	assert_eq(Pickup.nearest_index(spots, Vector2.ZERO, Pickup.NAME_RADIUS), 0)
+
+
+func _named_pickup(player: Node2D, at: Vector2) -> Pickup:
+	var pickup := Pickup.new()
+	pickup.setup("Item", Color.WHITE, player, true)
+	pickup.names_near_only = true
+	pickup.position = at
+	return pickup
+
+
+func test_a_far_pickup_draws_no_name() -> void:
+	var player := Node2D.new()
+	var far := _named_pickup(player, Vector2(200, 0))
+	far.update_name([far])
+	assert_false(far.shows_name())
+	player.position = Vector2(180, 0)
+	far.update_name([far])
+	assert_true(far.shows_name())
+	player.free()
+	far.free()
+
+
+func test_of_two_in_reach_only_the_nearest_shows_its_name() -> void:
+	var player := Node2D.new()
+	var near := _named_pickup(player, Vector2(20, 0))
+	var other := _named_pickup(player, Vector2(50, 0))
+	var peers := [near, other]
+	near.update_name(peers)
+	other.update_name(peers)
+	assert_true(near.shows_name())
+	assert_false(other.shows_name())
+	player.position = Vector2(60, 0)
+	near.update_name(peers)
+	other.update_name(peers)
+	assert_false(near.shows_name())
+	assert_true(other.shows_name())
+	player.free()
+	near.free()
+	other.free()
+
+
+func test_a_pickup_without_the_flag_always_draws_its_name() -> void:
+	var player := Node2D.new()
+	var coin := Pickup.new()
+	coin.setup("+5", Color.YELLOW, player)
+	coin.position = Vector2(500, 0)
+	assert_true(coin.shows_name())
+	player.free()
+	coin.free()

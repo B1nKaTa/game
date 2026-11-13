@@ -621,6 +621,7 @@ func drop_reel(at: Vector2, era: String, on_take: Callable) -> Pickup:
 	var spot := RoomBackdrop.cell_center(_room.layout.label_spot_near(_cell_of(at), taken))
 	var pickup := _add_pickup(spot, tr("Reel: %s") % tr(Eras.title(era)), REEL_COLOR, on_take, false, "item_fanfare")
 	pickup.art_id = ART_REEL
+	pickup.names_near_only = true
 	return pickup
 
 
@@ -1143,6 +1144,7 @@ func _drop_potion(at: Vector2, def: PotionDef) -> Pickup:
 	if def == null:
 		def = Content.potion(RoomRules.SMALL_POTION_ID)
 	var potion := _add_pickup(at, def.display_name, def.color, func(): _take_potion(def, at), false, "pill_heal")
+	potion.names_near_only = true
 	potion.press_when = func(): return not _run.can_take_potion()
 	potion.prompt = tr(Pickup.SWAP_PROMPT)
 	potion.set_meta(KEEP, {"kind": KEEP_POTION, "id": def.id})
@@ -1487,6 +1489,7 @@ func _add_shop_entry(at: Vector2, entry: Dictionary) -> void:
 	elif entry.get("half", false):
 		text = "%s: %d, half" % [label, price]
 	var pickup := _add_pickup(at, text, color, func(): _buy(price, give), true)
+	pickup.names_near_only = true
 	pickup.prompt = SHOP_PROMPT
 	if entry["kind"] == ShopRules.KIND_POTION:
 		pickup.prompt_when = func() -> String: return tr(Pickup.SWAP_PROMPT) if not _run.can_take_potion() else SHOP_PROMPT
@@ -1729,6 +1732,7 @@ func _drop_recipe(at: Vector2) -> bool:
 func _add_recipe_pickup(at: Vector2, item: ItemDef) -> Pickup:
 	var pickup := _add_pickup(at, "Recipe: %s" % item.display_name, RECIPE_COLOR, func(): _take_recipe(item), true, "slip_pickup")
 	pickup.art_id = ART_RECIPE
+	pickup.names_near_only = true
 	pickup.prompt = RECIPE_PROMPT
 	pickup.set_meta(KEEP, {"kind": KEEP_RECIPE, "id": item.id})
 	return pickup
@@ -1756,6 +1760,7 @@ func _create_treasure(cell: Vector2i) -> void:
 # is cursed.
 func _add_item_pickup(at: Vector2, item: ItemDef) -> Pickup:
 	var pickup := _add_pickup(at, item.display_name, ItemRarity.color_of(item.rarity), func(): _run.add_item(item), true, "item_fanfare")
+	pickup.names_near_only = true
 	pickup.can_take = func(): return not _run.has_item(item.id)
 	pickup.set_meta(KEEP, {"kind": KEEP_ITEM, "id": item.id})
 	_mark_item(pickup, item)
@@ -1766,6 +1771,7 @@ func _add_item_pickup(at: Vector2, item: ItemDef) -> Pickup:
 func drop_active(item: ItemDef, charge: int, at: Vector2) -> Pickup:
 	var spot := clear_spot(at + Vector2(RoomBackdrop.TILE, 0))
 	var pickup := _add_pickup(spot, item.display_name, ItemRarity.color_of(item.rarity), func(): _run.add_item(item, charge), true, "item_fanfare")
+	pickup.names_near_only = true
 	pickup.can_take = func(): return not _run.has_item(item.id)
 	pickup.set_meta(KEEP, {"kind": KEEP_ITEM, "id": item.id, "charge": charge})
 	_mark_item(pickup, item)

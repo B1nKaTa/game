@@ -12,6 +12,8 @@ const FLY_MAX_SPEED := 420.0
 const PROMPT_TEXT := "Take"
 const SWAP_PROMPT := "Swap"
 const ICON_SIZE := 20.0
+# A named pickup shows its name only while it is the nearest one within this far of his feet.
+const NAME_RADIUS := 64.0
 # Bone white, so the skull stands out from the cursed name's purple on any floor.
 const SKULL_COLOR := Color("ece9e0")
 
@@ -33,6 +35,10 @@ var prompt_when := Callable()
 # What the name is drawn in, and whether a skull sits before it, as a cursed item's does.
 var label_color := Color.WHITE
 var skull := false
+# Items, wares, potions, reels and recipes: the name is drawn only up close (see NAME_RADIUS). Coins, slips,
+# thermoses and heals draw theirs always, as before.
+var names_near_only := false
+var _name_shown := false
 # A small pickup the Moving Boxes may carry to the next room: its RoomRules.DROP_ kind and amount, or ""
 # for anything that stays (coins, items, shop wares).
 var carry_kind := ""
@@ -65,6 +71,18 @@ var _prompt_words := ""
 
 static func should_collect(needs_interact: bool, in_range: bool, interact_pressed: bool) -> bool:
 	return in_range and (interact_pressed or not needs_interact)
+
+
+# Which of the spots is nearest his feet and within radius: its index, or -1 when none is. The first wins a tie.
+static func nearest_index(spots: Array[Vector2], feet: Vector2, radius: float) -> int:
+	var best := -1
+	var best_distance := radius
+	for i in spots.size():
+		var distance := spots[i].distance_to(feet)
+		if distance <= best_distance and (best == -1 or distance < best_distance):
+			best = i
+			best_distance = distance
+	return best
 
 
 static func should_magnet(can_fly: bool, distance: float, reach := MAGNET_RADIUS) -> bool:
@@ -135,12 +153,37 @@ func needs_press() -> bool:
 	return requires_interact or (press_when.is_valid() and bool(press_when.call()))
 
 
+# Whether its name is drawn now.
+func shows_name() -> bool:
+	return not names_near_only or _name_shown
+
+
+# Of the peers (the "pickups" group), only the nearest named one waiting within NAME_RADIUS shows its name.
+func update_name(peers: Array) -> void:
+	if not names_near_only:
+		return
+	var spots: Array[Vector2] = []
+	var mine := -1
+	for peer in peers:
+		if not is_instance_valid(peer) or not peer.names_near_only or not peer.is_waiting():
+			continue
+		if peer == self:
+			mine = spots.size()
+		spots.append(peer.global_position)
+	var shown := mine != -1 and nearest_index(spots, _player.global_position, NAME_RADIUS) == mine
+	if shown != _name_shown:
+		_name_shown = shown
+		queue_redraw()
+
+
 func _process(delta: float) -> void:
 	if _done or not is_instance_valid(_player):
 		return
 	if _flying:
 		_fly_toward_player(delta)
 		return
+	if names_near_only and is_inside_tree():
+		update_name(get_tree().get_nodes_in_group("pickups"))
 	var distance := global_position.distance_to(_player.global_position)
 	if should_magnet(flies, distance, magnet_radius):
 		fly()
@@ -206,6 +249,10 @@ func _draw() -> void:
 		return
 	# Centred and outlined, as people's names are, so they read on the palest floors and long names
 	# never run into the next ware.
+	if not shows_name():
+		if _prompt_shown:
+			Npc._draw_centered(self, KeyBindings.with_key("interact", current_prompt()), Vector2(0, 22), Color("ffd24a"))
+		return
 	Npc._draw_centered(self, _label, Vector2(0, -12), label_color)
 	if skull:
 		var width := ThemeDB.fallback_font.get_string_size(_label, HORIZONTAL_ALIGNMENT_LEFT, -1, Npc.FONT_SIZE).x
