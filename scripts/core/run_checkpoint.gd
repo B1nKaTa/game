@@ -6,8 +6,9 @@ extends RefCounted
 # finished temp file, which read takes in its place, never a broken one. A file from another build's version, a damaged one or a missing one is no run.
 
 const VERSION := 1
-# Set in every checkpoint since floors start in a quiet room with two ways on. A floor checkpoint without
-# it rebuilds its seed by the old rule (FloorBuilder two_ways false), so its room ids name the same rooms.
+# Set in every checkpoint since floors start in a quiet room with two ways on and item rooms are never
+# large. A floor checkpoint without it rebuilds its seed by the old rules (FloorBuilder quiet_start false),
+# so its room ids name the same rooms with the same layouts.
 const QUIET_START := "quiet_start"
 
 
@@ -308,12 +309,12 @@ static func new_seed(rng: RandomNumberGenerator) -> String:
 	return str(rng.randi())
 
 
-# Builds a floor from its seed alone, so the same seed always gives the same map. two_ways is false only
+# Builds a floor from its seed alone, so the same seed always gives the same map. quiet_start is false only
 # for a checkpoint written before QUIET_START.
-static func build_floor(def: FloorDef, seed_text: String, pool: Array[RoomLayout] = [], two_ways := true) -> FloorMap:
+static func build_floor(def: FloorDef, seed_text: String, pool: Array[RoomLayout] = [], quiet_start := true) -> FloorMap:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = int(seed_text)
-	return FloorBuilder.build_from_pool(rng, def, pool if not pool.is_empty() else FloorBuilder.pool_for(def), two_ways)
+	return FloorBuilder.build_from_pool(rng, def, pool if not pool.is_empty() else FloorBuilder.pool_for(def), quiet_start)
 
 
 # A checkpoint moved off a retired path (PathMigration.FLOOR_START) starts its floor again, as walking

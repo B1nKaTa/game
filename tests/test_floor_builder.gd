@@ -2,6 +2,7 @@ extends TestCase
 
 const SEEDS := 300
 const FLOOR_PATH := "res://data/floors/floor_1.tres"
+const ALL_FLOORS := ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "flashback_cinema", "last_resort_cruise", "seance_hotline", "terminal_zero", "head_office"]
 
 
 func _def() -> FloorDef:
@@ -152,7 +153,7 @@ func test_the_start_has_at_least_two_ways_on() -> void:
 func test_every_floor_builds_within_the_retry_budget() -> void:
 	var seeds := RandomNumberGenerator.new()
 	seeds.seed = 2026
-	for path in ["floor_1", "cemetery", "sunset_shores", "furnace_works", "funeral_parlour", "flashback_cinema", "last_resort_cruise", "seance_hotline", "terminal_zero", "head_office"]:
+	for path in ALL_FLOORS:
 		var def: FloorDef = load("res://data/floors/%s.tres" % path)
 		var pool := FloorBuilder.pool_for(def)
 		for i in 300:
@@ -179,6 +180,60 @@ func test_the_old_rule_still_builds_without_the_two_ways_check() -> void:
 		if RunCheckpoint.map_signature(old) != RunCheckpoint.map_signature(_build(seed_value, pool)):
 			differs += 1
 	assert_true(differs > 0, "the check changes some floors, so old checkpoints need the old rule")
+
+
+func _layout_of(room_type: String, width: int) -> RoomLayout:
+	var layout := RoomLayout.new()
+	layout.room_type = room_type
+	var rows := PackedStringArray()
+	for y in 9:
+		rows.append("#".repeat(width))
+	layout.rows = rows
+	return layout
+
+
+# An item room is small or medium (playtest 9, note 14): a large one left its two items lost in the space.
+func test_a_large_item_layout_is_not_allowed() -> void:
+	assert_true(FloorBuilder.allowed_layout(_layout_of(RoomLayout.TYPE_ITEM, 14)), "small item room")
+	assert_true(FloorBuilder.allowed_layout(_layout_of(RoomLayout.TYPE_ITEM, RoomLayout.MEDIUM_WIDTH)), "medium item room")
+	assert_false(FloorBuilder.allowed_layout(_layout_of(RoomLayout.TYPE_ITEM, RoomLayout.LARGE_WIDTH)), "large item room")
+	assert_true(FloorBuilder.allowed_layout(_layout_of(RoomLayout.TYPE_COMBAT, RoomLayout.LARGE_WIDTH)), "large combat room")
+
+
+func test_no_floor_builds_a_large_item_room() -> void:
+	var seeds := RandomNumberGenerator.new()
+	seeds.seed = 914
+	for path in ALL_FLOORS:
+		var def: FloorDef = load("res://data/floors/%s.tres" % path)
+		var pool := FloorBuilder.pool_for(def)
+		var large_in_pool := 0
+		for layout in pool:
+			if layout.room_type == RoomLayout.TYPE_ITEM and layout.size_class() == RoomLayout.SIZE_LARGE:
+				large_in_pool += 1
+		assert_true(large_in_pool > 0, "%s keeps its large item layout file" % path)
+		var item_layouts := {}
+		for i in 200:
+			var seed_value := seeds.randi()
+			var map := _build(seed_value, pool, def)
+			for room in map.rooms:
+				if room.room_type == RoomLayout.TYPE_ITEM:
+					assert_true(room.layout.size_class() != RoomLayout.SIZE_LARGE, "%s seed %d room %d" % [path, seed_value, room.id])
+					item_layouts[room.layout.resource_path] = true
+		assert_true(item_layouts.size() >= 2, "%s still builds item rooms from %d layouts" % [path, item_layouts.size()])
+
+
+# A checkpoint written before (RunCheckpoint.QUIET_START missing) rebuilds by the old rule, large item
+# rooms and all, so its saved room keeps its layout.
+func test_the_old_rule_still_builds_large_item_rooms() -> void:
+	var pool := _pool()
+	var large := 0
+	for seed_value in SEEDS:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = seed_value
+		for room in FloorBuilder.build_from_pool(rng, _def(), pool, false).rooms:
+			if room.room_type == RoomLayout.TYPE_ITEM and room.layout.size_class() == RoomLayout.SIZE_LARGE:
+				large += 1
+	assert_true(large > 0, "old floors keep their large item rooms")
 
 
 func test_regular_rooms_hold_the_item_rooms_and_the_healing_room() -> void:

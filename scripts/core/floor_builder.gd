@@ -18,11 +18,14 @@ static func pool_for(def: FloorDef) -> Array[RoomLayout]:
 	return pool
 
 
-# two_ways: the start must have two ways on (_start_has_two_ways_on). Only a run checkpoint written before
-# that check (RunCheckpoint.QUIET_START missing) passes false, so its seed rebuilds the floor it was on.
-static func build_from_pool(rng: RandomNumberGenerator, def: FloorDef, pool: Array[RoomLayout], two_ways := true) -> FloorMap:
+# quiet_start: build by the rules since RunCheckpoint.QUIET_START: the start must have two ways on
+# (_start_has_two_ways_on), and no item room is large (allowed_layout). Only a run checkpoint written
+# before them (QUIET_START missing) passes false, so its seed rebuilds the floor it was on, layouts and all.
+static func build_from_pool(rng: RandomNumberGenerator, def: FloorDef, pool: Array[RoomLayout], quiet_start := true) -> FloorMap:
 	var by_type := {}
 	for layout in pool:
+		if quiet_start and not allowed_layout(layout):
+			continue
 		if not by_type.has(layout.room_type):
 			by_type[layout.room_type] = []
 		by_type[layout.room_type].append(layout)
@@ -31,11 +34,17 @@ static func build_from_pool(rng: RandomNumberGenerator, def: FloorDef, pool: Arr
 			push_error("No valid layouts for room type: %s" % room_type)
 			return null
 	for attempt in MAX_ATTEMPTS:
-		var map := _try_build(rng, def, _LayoutPicker.new(by_type, rng), two_ways)
+		var map := _try_build(rng, def, _LayoutPicker.new(by_type, rng), quiet_start)
 		if map != null:
 			return map
 	push_error("Could not fit floor '%s' on its %s grid" % [def.id, str(def.grid_size)])
 	return null
+
+
+# A large item room left its two items lost in the space, so item rooms are small or medium. The large
+# layout files stay, for floors an old checkpoint rebuilds.
+static func allowed_layout(layout: RoomLayout) -> bool:
+	return not (layout.room_type == RoomLayout.TYPE_ITEM and layout.size_class() == RoomLayout.SIZE_LARGE)
 
 
 static func _types_a_floor_cannot_lack(def: FloorDef) -> Array[String]:
@@ -47,7 +56,7 @@ static func _types_a_floor_cannot_lack(def: FloorDef) -> Array[String]:
 	return types
 
 
-static func _try_build(rng: RandomNumberGenerator, def: FloorDef, picker: _LayoutPicker, two_ways := true) -> FloorMap:
+static func _try_build(rng: RandomNumberGenerator, def: FloorDef, picker: _LayoutPicker, quiet_start := true) -> FloorMap:
 	var path_cells := _walk_main_path(rng, def)
 	if path_cells.is_empty():
 		return null
@@ -79,7 +88,7 @@ static func _try_build(rng: RandomNumberGenerator, def: FloorDef, picker: _Layou
 	if not _start_has_a_free_side(map):
 		return null
 	# The quiet start offers a choice: at least two ways on.
-	if two_ways and not _start_has_two_ways_on(map):
+	if quiet_start and not _start_has_two_ways_on(map):
 		return null
 	return map
 
