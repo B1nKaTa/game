@@ -281,11 +281,58 @@ func test_an_old_checkpoint_rebuilds_the_floor_it_was_written_on() -> void:
 	var now := RunCheckpoint.build_floor(def, "1364138424", pool)
 	assert_eq(now.rooms.size(), 17)
 	assert_eq(now.room(now.start_id).cell, Vector2i(2, 3))
-	var source := FileAccess.get_file_as_string("res://scripts/scenes/floor_scene.gd")
-	var write := source.substr(source.find("func write_checkpoint"), 2400)
-	assert_true(write.contains("RunCheckpoint.QUIET_START: true"), "every new checkpoint is marked")
-	var resume := source.substr(source.find("func _resume_map"), 1200)
-	assert_true(resume.contains("RunCheckpoint.build_floor(def, str(resume.get(\"seed\", \"\")), [], bool(resume.get(RunCheckpoint.QUIET_START, false)))"), "an unmarked one is rebuilt by the old rule")
+
+
+# A floor checkpoint standing him in room 18 of seed 1364138424's old floor, as a pre-quiet-start build
+# wrote it: no RunCheckpoint.QUIET_START.
+func _old_floor_checkpoint() -> Dictionary:
+	return {"depth": 1, "floor": "res://data/floors/floor_1.tres", "kind": "floor", "seed": "1364138424", "exit_side": [0, 1], "room": 18, "from": -1, "visited": [18], "rooms": {}}
+
+
+# A floor scene (not in a tree, never ready) that has rebuilt its map from the checkpoint, as a resume
+# does before the first room is entered.
+func _resume(checkpoint: Dictionary) -> Node:
+	var scene: Node = load("res://scripts/scenes/floor_scene.gd").new()
+	scene._rules = RuleKeeper.new()
+	assert_true(scene._resume_map(checkpoint.duplicate(true)), "the checkpoint resumes")
+	return scene
+
+
+func _free_scene(scene: Node) -> void:
+	scene._rules.free()
+	scene.free()
+
+
+# A resume writes a checkpoint at once (_enter_resumed_room). It must keep the old rule for an old floor,
+# so resuming again, from what it wrote, gives the very same map, and room 18 is still there.
+func test_an_old_floor_resumes_on_the_same_map_every_time() -> void:
+	var first := _resume(_old_floor_checkpoint())
+	var map: FloorMap = first._map
+	assert_eq(map.rooms.size(), 20, "the old 19 rooms and the Crossroads")
+	assert_eq(map.room(map.start_id).cell, Vector2i(3, 6))
+	var marks: Dictionary = first.floor_marks()
+	assert_eq(marks[RunCheckpoint.QUIET_START], false, "an old floor stays old")
+	var again := _old_floor_checkpoint()
+	again.merge(marks, true)
+	var second := _resume(again)
+	assert_eq(RunCheckpoint.map_signature(second._map), RunCheckpoint.map_signature(map), "the second resume rebuilds the same floor")
+	_free_scene(first)
+	_free_scene(second)
+
+
+# A checkpoint written since keeps the new rule through its own resume and the checkpoint after it.
+func test_a_new_floor_resumes_by_the_new_rule() -> void:
+	var checkpoint := _old_floor_checkpoint()
+	checkpoint["room"] = 3
+	checkpoint["visited"] = [3]
+	checkpoint[RunCheckpoint.QUIET_START] = true
+	var scene := _resume(checkpoint)
+	var map: FloorMap = scene._map
+	assert_eq(map.rooms.size(), 18, "the new 17 rooms and the Crossroads")
+	assert_eq(map.room(map.start_id).cell, Vector2i(2, 3))
+	assert_eq(scene.floor_marks()[RunCheckpoint.QUIET_START], true)
+	assert_eq(scene.floor_marks()["seed"], "1364138424")
+	_free_scene(scene)
 
 
 func test_the_signature_tells_a_quiet_room_apart() -> void:

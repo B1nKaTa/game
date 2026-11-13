@@ -66,6 +66,9 @@ const RESUMED_NOTICE := "Your run picks up where you left it."
 var _map_kind := MAP_START
 var _floor_seed := ""
 var _exit_side := Vector2i.ZERO
+# False only while on a floor resumed from a checkpoint written before the quiet start, which was built
+# by the old rule; every newly drawn floor sets it true again.
+var _quiet_start := true
 # The room Grandpa came into the current room from, so a resumed run puts him on that door.
 var _arrived_from := -1
 # Snapshots of cleared rooms from a checkpoint, by room id, to rebuild them from.
@@ -282,8 +285,6 @@ func write_checkpoint() -> bool:
 		"depth": _depth,
 		"floor": _floor_def.resource_path,
 		"kind": _map_kind,
-		"seed": _floor_seed,
-		"exit_side": [_exit_side.x, _exit_side.y],
 		"visited": _progress.visited_ids().duplicate(),
 		"room": room,
 		"from": from,
@@ -299,9 +300,19 @@ func write_checkpoint() -> bool:
 		"bosses": int(Progress.last_run.get("bosses", 0)),
 		"run_time": snappedf(_run_time, 0.1),
 		"rules": _rules.to_dict(),
-		RunCheckpoint.QUIET_START: true,
 	}
+	checkpoint.merge(floor_marks())
 	return Progress.write_checkpoint(checkpoint)
+
+
+# What rebuilds the floor on resume: its seed, the side he left the Crossroads by, and the rule it was
+# built by (RunCheckpoint.QUIET_START), kept from a resumed checkpoint so an old floor stays old.
+func floor_marks() -> Dictionary:
+	return {
+		"seed": _floor_seed,
+		"exit_side": [_exit_side.x, _exit_side.y],
+		RunCheckpoint.QUIET_START: _quiet_start,
+	}
 
 
 func _write_checkpoint_soon() -> void:
@@ -328,7 +339,8 @@ func _resume_map(resume: Dictionary) -> bool:
 	elif kind == MAP_LANDING:
 		map = _landing_map()
 	elif kind == MAP_FLOOR:
-		map = RunCheckpoint.build_floor(def, str(resume.get("seed", "")), [], bool(resume.get(RunCheckpoint.QUIET_START, false)))
+		_quiet_start = bool(resume.get(RunCheckpoint.QUIET_START, false))
+		map = RunCheckpoint.build_floor(def, str(resume.get("seed", "")), [], _quiet_start)
 		if map == null:
 			return false
 		var side: Array = resume.get("exit_side", [0, 0])
@@ -497,6 +509,7 @@ func _choose_path(index: int) -> void:
 		_end_run("This floor could not be built. Returning to the Waiting Room.")
 		return
 	_floor_seed = seed_text
+	_quiet_start = true
 	_run.seeds.append(seed_text)
 	_restored.clear()
 	_safe_room = -1
