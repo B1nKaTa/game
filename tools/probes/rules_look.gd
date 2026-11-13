@@ -5,8 +5,9 @@ extends SceneTree
 # - audit_north / audit_side: VIOLATION, the AUDIT flash at the door he came in by and the Auditor
 #   walking in; then his clipboard windup and swing, the FINED stamp in flight and its ink blot;
 # - reel: GOOD CONDUCT, the reel on the floor, the reel in the HUD slot (keys, Xbox and PlayStation
-#   labels), "Memory ready" with the sepia glow, the sepia flicker, each era's idle, walk, kick or
-#   punch, dodge and throw, and the return to old Harold in his hat and cardigan;
+#   labels), "Save it for a fight" in a cleared room, the sepia flicker as he plays it mid-fight, each
+#   era's idle, walk, kick or punch, dodge and throw, and the return to old Harold in his hat and
+#   cardigan as he leaves the room;
 # - options: the title screen, and the Options Input tab scrolled to its last rows.
 # A 4x crop sits beside the shots of small things. Run only from an exported copy whose config/name is
 # renamed. Args after --: announce | audit_north | audit_side | reel | options | all
@@ -372,7 +373,7 @@ func _frames(count: int) -> void:
 		await process_frame
 
 
-# --- 5, 6, 7: GOOD CONDUCT, the reel, Memory ready, the flicker, the eras and the return ---
+# --- 5, 6, 7: GOOD CONDUCT, the reel, Save it for a fight, the flicker, the eras and the return ---
 
 func _reel() -> void:
 	await _floor()
@@ -422,27 +423,24 @@ func _reel() -> void:
 	await _play_era(scene.debug_room_view(), "b")
 
 
-# From the cleared room he stands in (or a neighbour), readies the reel at a door into an unvisited
-# fight room, walks through, shoots the era's moves, clears the room and shoots the return.
+# From the cleared room he stands in (or a neighbour), presses flashback there (refused: no fight),
+# walks into an unvisited fight room, presses it again mid-fight, shoots the era's moves, clears the
+# room (the era goes on) and walks back out, which ends it, and shoots the return.
 func _play_era(_view: RoomView, tag: String) -> void:
-	var rules: RuleKeeper = scene._rules
 	var pair := await _door_pair()
 	if pair.is_empty():
 		print("NO DOOR PAIR")
 		return
-	var view: RoomView = scene.debug_room_view()
-	var door: Door = view.door_to(pair[1])
-	var inward := -Vector2(door.side())
-	_move_feet_to(door.global_position + inward * 34.0)
-	aim = -inward
+	aim = Vector2.RIGHT
 	await _wait(0.2)
 	await _tap("flashback")
-	await _until(func() -> bool: return rules.readied_door() == pair[1], 1.0)
 	await _wait(0.2)
-	print("readied %d glow %s notice '%s'" % [rules.readied_door(), player.has_sepia_glow(), scene._hud._notice.text])
-	await _shot("06%s_memory_ready" % tag, player)
+	print("cleared room: era '%s' reel '%s' notice '%s'" % [player.run.era, player.run.held_reel, scene._hud._notice.text])
+	await _shot("06%s_save_it_for_a_fight" % tag, player)
 	var era: String = player.run.held_reel
-	_move_feet_to(door.global_position)
+	scene._enter_room(pair[1])
+	await _wait(0.3)
+	await _tap("flashback")
 	var flicker_of := func() -> SepiaFlicker:
 		for child in scene.get_children():
 			if child is SepiaFlicker and not child.is_queued_for_deletion():
@@ -454,7 +452,7 @@ func _play_era(_view: RoomView, tag: String) -> void:
 		await _until(func() -> bool: return not is_instance_valid(flicker) or flicker._left <= SepiaFlicker.TIME * 0.5, 1.0)
 		await _shot("06%s_sepia_flicker_%s" % [tag, era])
 	await _wait(0.6)
-	view = scene.debug_room_view()
+	var view: RoomView = scene.debug_room_view()
 	print("era %s player era %s room %d" % [player.run.era, player.era(), scene._current_id])
 	# Everyone held still and set aside, and one foe frozen east of him for the kick or punch.
 	var middle := _middle(view)
@@ -507,11 +505,14 @@ func _play_era(_view: RoomView, tag: String) -> void:
 	await _wait(0.45)
 	if thrown != null and is_instance_valid(thrown):
 		await _shot("07%s_%s_throw_late" % [tag, era], thrown)
-	# The fight cleared: the era ends, the flicker, the line, old Harold in his hat and cardigan.
+	# The fight cleared: the era goes on while he stays. He walks out: the flicker, the line, old Harold
+	# in his hat and cardigan.
 	for other in foes:
 		if is_instance_valid(other):
 			other.set_physics_process(true)
 	await _clear_room()
+	print("cleared: era '%s' player era '%s'" % [player.run.era, player.era()])
+	scene._enter_room(pair[0])
 	await _wait(0.4)
 	aim = Vector2.RIGHT
 	await _shot("07%s_return" % tag, player)

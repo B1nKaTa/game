@@ -44,8 +44,14 @@ func test_a_skipped_tip_is_passed_over_and_the_next_shows() -> void:
 func test_the_rule_and_the_reel_come_first_when_they_happen() -> void:
 	assert_eq(FirstRunTips.next_tip({}, _facts({"rule_on": true, "fighting": true})), FirstRunTips.RULE)
 	assert_eq(FirstRunTips.next_tip({}, _facts({"rule_on": true, "announcing": true})), FirstRunTips.MOVE, "not over the notice")
-	assert_eq(FirstRunTips.next_tip({}, _facts({"has_reel": true})), FirstRunTips.REEL)
-	assert_eq(FirstRunTips.next_tip({}, _facts({"has_reel": true, "fighting": true})), FirstRunTips.MOVE, "a reel is used at a door, not mid-fight")
+	assert_eq(FirstRunTips.next_tip({}, _facts({"has_reel": true, "fighting": true})), FirstRunTips.REEL)
+	assert_eq(FirstRunTips.next_tip({}, _facts({"has_reel": true})), FirstRunTips.MOVE, "a reel is played in a fight, so it waits for one")
+
+
+func test_the_reel_tip_says_it_is_for_this_room() -> void:
+	assert_eq(FirstRunTips.TEXTS[FirstRunTips.REEL], "Relive a memory: be young for this room.")
+	assert_eq(CoachTips.TIPS["old_projector"], "A flashback lasts one more room now.")
+	assert_true(str(CoachTips.TIPS["photo_album"]).ends_with("Save one for the hard room."))
 
 
 func test_the_rest_wait_for_their_moment() -> void:

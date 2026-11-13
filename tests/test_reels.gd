@@ -103,18 +103,6 @@ func test_the_flashback_action_is_f_and_pad_y() -> void:
 	assert_eq(pads[0].device, PadInput.ALL_DEVICES, "any pad, not only the first")
 
 
-func test_a_door_knows_when_harold_is_near_it() -> void:
-	var door := Door.new()
-	var feet := Node2D.new()
-	door.position = Vector2(100, 100)
-	feet.position = Vector2(130, 100)
-	door.debug_set_player(feet)
-	assert_true(door.is_within(48.0))
-	assert_false(door.is_within(20.0))
-	door.free()
-	feet.free()
-
-
 func test_the_reel_slot_fits_the_top_row() -> void:
 	var rect := Rect2(ReelSlot.AT, ReelSlot.SIZE)
 	assert_true(rect.end.y <= Hud.BAND_BOTTOM)
@@ -172,128 +160,173 @@ func test_a_reel_lands_where_its_name_fits_and_off_the_doors() -> void:
 	assert_true(FileAccess.get_file_as_string("res://scripts/world/room_view.gd").contains("label_spot_near(_cell_of(at), taken)"), "drop_reel uses it")
 
 
-# A map of a cleared room 0 with a door 30 px from Harold into the fight room 1 he hasn't seen.
-func _flashback_setup(target_type := RoomLayout.TYPE_COMBAT, gap := 30.0) -> Dictionary:
+# A map of a cleared room 0 (where he stands) and the fight room 1 and cleared room 2 beside it, with a
+# HUD for the notices.
+func _flashback_setup() -> Dictionary:
 	var map := FloorMap.new()
-	for i in 2:
+	for i in 3:
 		var room := FloorRoom.new()
 		room.id = i
-		room.room_type = RoomLayout.TYPE_CROSSROADS if i == 0 else target_type
+		room.room_type = RoomLayout.TYPE_COMBAT if i == 1 else RoomLayout.TYPE_CROSSROADS
 		map.rooms.append(room)
 	var progress := FloorProgress.new(map)
 	progress.enter(0)
 	var run := RunState.new([] as Array[UpgradeDef], {})
 	var player := Player.new()
 	player.setup(run)
+	var hud := Hud.new()
+	hud.setup(run)
+	hud._ready()
 	var keeper := RuleKeeper.new()
-	keeper.setup(player, null, run, Callable())
+	keeper.setup(player, hud, run, Callable())
 	keeper.plan_floor(map, 1, "seed", progress)
 	# No rule posted here, so these tests see the reel alone.
 	keeper._rule_rooms.clear()
-	var view := RoomView.new()
-	var door := Door.new()
-	var feet := Node2D.new()
-	door.setup(1, "?", feet)
-	door.locked = false
-	feet.position = Vector2(gap, 0)
-	view._doors.append(door)
-	return {"map": map, "progress": progress, "run": run, "player": player, "keeper": keeper, "view": view, "door": door, "feet": feet}
+	var calm := RoomView.new()
+	var fight := RoomView.new()
+	fight._alive = 3
+	var other := RoomView.new()
+	keeper.on_room_entered(calm, map.room(0), false)
+	return {"map": map, "progress": progress, "run": run, "player": player, "hud": hud, "keeper": keeper, "calm": calm, "fight": fight, "other": other}
 
 
 func _free_setup(parts: Dictionary) -> void:
-	for key in ["keeper", "view", "door", "feet", "player"]:
+	for key in ["keeper", "calm", "fight", "other", "player", "hud"]:
 		if is_instance_valid(parts[key]):
 			parts[key].free()
 
 
-func test_a_reel_readies_at_a_door_into_an_unfought_room() -> void:
-	var parts := _flashback_setup()
-	var keeper: RuleKeeper = parts["keeper"]
-	var run: RunState = parts["run"]
-	assert_false(keeper.try_ready_reel(parts["view"], parts["progress"], parts["map"]), "no reel, nothing to ready")
-	run.give_reel(Eras.FOOTBALL)
-	assert_true(keeper.try_ready_reel(parts["view"], parts["progress"], parts["map"]))
-	assert_eq(keeper.readied_door(), 1)
-	assert_eq(run.held_reel, Eras.FOOTBALL, "readied, not spent: the door spends it")
-	assert_true(parts["player"].has_sepia_glow())
-	_free_setup(parts)
+func _notice_of(parts: Dictionary) -> String:
+	return parts["hud"]._notice.text
 
 
-func test_a_reel_does_not_ready_far_from_a_door_or_at_a_room_already_seen() -> void:
-	var parts := _flashback_setup(RoomLayout.TYPE_COMBAT, 80.0)
-	var keeper: RuleKeeper = parts["keeper"]
-	var run: RunState = parts["run"]
-	run.give_reel(Eras.FOOTBALL)
-	assert_false(keeper.try_ready_reel(parts["view"], parts["progress"], parts["map"]), "too far from the door")
-	parts["feet"].position = Vector2(30, 0)
-	parts["progress"].enter(1)
-	assert_false(keeper.try_ready_reel(parts["view"], parts["progress"], parts["map"]), "that room's fight is over")
-	assert_eq(keeper.readied_door(), -1)
-	assert_eq(run.held_reel, Eras.FOOTBALL)
-	assert_false(parts["player"].has_sepia_glow())
-	_free_setup(parts)
+func test_the_reel_notices_are_the_shared_names() -> void:
+	assert_eq(RuleKeeper.NO_REEL_NOTICE, "No memory to play")
+	assert_eq(RuleKeeper.BUSY_NOTICE, "Already remembering")
+	assert_eq(RuleKeeper.SAVE_NOTICE, "Save it for a fight")
+	assert_eq(RuleKeeper.HELD_NOTICE, "Already holding a memory")
 
 
-func test_a_reel_does_not_ready_at_a_shut_door() -> void:
-	var parts := _flashback_setup()
-	parts["run"].give_reel(Eras.FOOTBALL)
-	for door in parts["view"].doors():
-		door.locked = true
-	assert_false(parts["keeper"].try_ready_reel(parts["view"], parts["progress"], parts["map"]))
-	assert_eq(parts["keeper"].readied_door(), -1)
-	_free_setup(parts)
-
-
-func test_a_reel_does_not_ready_at_a_shop_door() -> void:
-	var parts := _flashback_setup(RoomLayout.TYPE_SHOP)
-	parts["run"].give_reel(Eras.BUS)
-	assert_false(parts["keeper"].try_ready_reel(parts["view"], parts["progress"], parts["map"]))
-	_free_setup(parts)
-
-
-func test_the_readied_door_plays_the_era_for_that_room_until_it_clears() -> void:
+func test_f_mid_fight_plays_the_era_at_once_for_the_room() -> void:
 	var parts := _flashback_setup()
 	var keeper: RuleKeeper = parts["keeper"]
 	var run: RunState = parts["run"]
 	var map: FloorMap = parts["map"]
 	run.give_reel(Eras.BUS)
-	keeper.try_ready_reel(parts["view"], parts["progress"], map)
-	var fight := RoomView.new()
-	fight._alive = 3
 	var started := []
-	var ended := []
 	keeper.era_started.connect(func(era): started.append(era))
-	keeper.era_ended.connect(func(era): ended.append(era))
-	keeper.on_room_entered(fight, map.room(1), true)
+	keeper.on_room_entered(parts["fight"], map.room(1), true)
+	assert_eq(run.era, "", "walking in plays nothing")
+	assert_true(keeper.try_play_reel())
 	assert_eq(run.era, Eras.BUS)
 	assert_eq(run.held_reel, "", "the reel is spent")
 	assert_eq(started, [Eras.BUS])
-	assert_false(parts["player"].has_sepia_glow())
 	assert_eq(parts["player"].era(), Eras.BUS)
-	# Coming back into the same view never hooks the clear twice.
-	keeper.on_room_entered(fight, map.room(1), false)
-	fight.finished.emit()
-	assert_eq(run.era, "", "old Harold again once the room is clear")
-	assert_eq(ended, [Eras.BUS])
-	assert_eq(parts["player"].era(), "")
-	fight.free()
+	assert_eq(keeper._era_room, 1, "for the room he stands in")
+	assert_eq(run.flashbacks_played, 1)
 	_free_setup(parts)
 
 
-func test_another_door_cancels_the_readied_reel_and_keeps_it() -> void:
+func test_f_in_a_room_with_no_fight_keeps_the_reel() -> void:
+	var parts := _flashback_setup()
+	var keeper: RuleKeeper = parts["keeper"]
+	var run: RunState = parts["run"]
+	run.give_reel(Eras.FOOTBALL)
+	for i in 2:
+		parts["hud"]._notice.text = ""
+		assert_false(keeper.try_play_reel())
+		assert_eq(_notice_of(parts), RuleKeeper.SAVE_NOTICE, "press %d" % i)
+	assert_eq(run.held_reel, Eras.FOOTBALL)
+	assert_eq(run.era, "")
+	# A fight room whose fight is over is the same.
+	parts["fight"]._alive = 0
+	keeper.on_room_entered(parts["fight"], parts["map"].room(1), true)
+	assert_false(keeper.try_play_reel())
+	assert_eq(_notice_of(parts), RuleKeeper.SAVE_NOTICE)
+	assert_eq(run.held_reel, Eras.FOOTBALL)
+	_free_setup(parts)
+
+
+func test_f_with_no_reel_or_during_an_era_says_why_every_time() -> void:
+	var parts := _flashback_setup()
+	var keeper: RuleKeeper = parts["keeper"]
+	var run: RunState = parts["run"]
+	keeper.on_room_entered(parts["fight"], parts["map"].room(1), true)
+	for i in 3:
+		parts["hud"]._notice.text = ""
+		assert_false(keeper.try_play_reel())
+		assert_eq(_notice_of(parts), RuleKeeper.NO_REEL_NOTICE, "press %d" % i)
+	run.give_reel(Eras.DANCE)
+	assert_true(keeper.try_play_reel())
+	# A second reel (Photo Album) waits while the first plays.
+	run.held_reels.append(Eras.BUS)
+	for i in 3:
+		parts["hud"]._notice.text = ""
+		assert_false(keeper.try_play_reel())
+		assert_eq(_notice_of(parts), RuleKeeper.BUSY_NOTICE, "press %d" % i)
+	assert_eq(run.era, Eras.DANCE)
+	assert_eq(run.held_reel, Eras.BUS, "the second reel waits")
+	_free_setup(parts)
+
+
+func test_clearing_the_room_does_not_end_the_era_but_leaving_does() -> void:
+	var parts := _flashback_setup()
+	var keeper: RuleKeeper = parts["keeper"]
+	var run: RunState = parts["run"]
+	var map: FloorMap = parts["map"]
+	var fight: RoomView = parts["fight"]
+	run.give_reel(Eras.ALLOTMENT)
+	keeper.on_room_entered(fight, map.room(1), true)
+	keeper.try_play_reel()
+	var ended := []
+	keeper.era_ended.connect(func(era): ended.append(era))
+	fight._alive = 0
+	fight.finished.emit()
+	keeper._on_room_finished(fight, 1)
+	assert_eq(run.era, Eras.ALLOTMENT, "a cleared room keeps the era while he stays")
+	assert_eq(ended, [])
+	keeper.on_room_entered(parts["other"], map.room(2), false)
+	assert_eq(run.era, "", "old Harold again once he leaves")
+	assert_eq(ended, [Eras.ALLOTMENT])
+	assert_eq(parts["player"].era(), "")
+	assert_false(parts["player"].last_line.is_empty(), "with the return line")
+	# Walking back in does not bring it back.
+	keeper.on_room_entered(fight, map.room(1), false)
+	assert_eq(run.era, "")
+	assert_eq(ended, [Eras.ALLOTMENT])
+	_free_setup(parts)
+
+
+func test_leaving_mid_fight_ends_the_era_too() -> void:
 	var parts := _flashback_setup()
 	var keeper: RuleKeeper = parts["keeper"]
 	var run: RunState = parts["run"]
 	var map: FloorMap = parts["map"]
 	run.give_reel(Eras.FOOTBALL)
-	keeper.try_ready_reel(parts["view"], parts["progress"], map)
-	var start := RoomView.new()
-	keeper.on_room_entered(start, map.room(0), false)
-	assert_eq(keeper.readied_door(), -1)
-	assert_eq(run.held_reel, Eras.FOOTBALL)
+	keeper.on_room_entered(parts["fight"], map.room(1), true)
+	keeper.try_play_reel()
+	keeper.on_room_entered(parts["calm"], map.room(0), false)
 	assert_eq(run.era, "")
-	assert_false(parts["player"].has_sepia_glow())
-	start.free()
+	_free_setup(parts)
+
+
+func test_an_old_projector_carries_the_era_one_room_further() -> void:
+	var parts := _flashback_setup()
+	var keeper: RuleKeeper = parts["keeper"]
+	var run: RunState = parts["run"]
+	var map: FloorMap = parts["map"]
+	run.stats.extra_era_rooms = 1
+	run.give_reel(Eras.DANCE)
+	keeper.on_room_entered(parts["fight"], map.room(1), true)
+	keeper.try_play_reel()
+	var ended := []
+	keeper.era_ended.connect(func(era): ended.append(era))
+	keeper.on_room_entered(parts["other"], map.room(2), true)
+	assert_eq(run.era, Eras.DANCE, "into the next room he enters")
+	assert_eq(keeper._era_room, 2)
+	keeper.on_room_entered(parts["fight"], map.room(1), false)
+	assert_eq(run.era, "", "and ends when he leaves that one")
+	assert_eq(ended, [Eras.DANCE])
 	_free_setup(parts)
 
 
@@ -337,11 +370,10 @@ func test_a_new_floor_ends_an_era_still_playing() -> void:
 	var keeper: RuleKeeper = parts["keeper"]
 	var run: RunState = parts["run"]
 	var map: FloorMap = parts["map"]
+	var fight: RoomView = parts["fight"]
 	run.give_reel(Eras.FOOTBALL)
-	keeper.try_ready_reel(parts["view"], parts["progress"], map)
-	var fight := RoomView.new()
-	fight._alive = 3
 	keeper.on_room_entered(fight, map.room(1), true)
+	keeper.try_play_reel()
 	assert_eq(run.era, Eras.FOOTBALL)
 	var ended := []
 	keeper.era_ended.connect(func(era): ended.append(era))
@@ -355,7 +387,6 @@ func test_a_new_floor_ends_an_era_still_playing() -> void:
 	assert_eq(ended, [Eras.FOOTBALL])
 	keeper.set_floor(map, parts["progress"])
 	assert_eq(run.era, "")
-	fight.free()
 	_free_setup(parts)
 
 
@@ -379,7 +410,7 @@ func test_the_floor_scene_wires_the_reels() -> void:
 	var choose := source.substr(source.find("func _choose_path("), 2000)
 	assert_true(choose.contains("_rules.plan_floor(map, def.depth, seed_text, _progress)"))
 	var resume := source.substr(source.find("func _resume_map("), 3000)
-	assert_true(resume.contains("_rules.set_floor(map, _progress)"), "a resumed floor can ready reels too")
+	assert_true(resume.contains("_rules.set_floor(map, _progress)"), "a resumed floor ends an era too")
 	var keeper := FileAccess.get_file_as_string("res://scripts/world/rule_keeper.gd")
 	assert_true(keeper.contains("Sfx.play(\"reel_flicker\")"))
 	assert_true(DevStart.REEL_KEY == KEY_F7)

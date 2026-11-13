@@ -120,7 +120,7 @@ func test_a_kept_rule_counts_and_tells_the_items() -> void:
 	keeper.free()
 
 
-func test_an_old_projector_keeps_the_era_into_one_more_fight_room() -> void:
+func test_an_old_projector_keeps_the_era_into_one_more_room() -> void:
 	var run := _run_with_events()
 	var projector := _stat("projector")
 	projector.extra_era_rooms = 1
@@ -131,11 +131,14 @@ func test_an_old_projector_keeps_the_era_into_one_more_fight_room() -> void:
 	keeper._start_era(Eras.FOOTBALL, 4)
 	assert_eq(run.flashbacks_played, 1)
 	keeper._on_room_finished(view, 4)
-	assert_eq(run.era, Eras.FOOTBALL, "it goes on")
-	assert_true(keeper.era_waiting())
-	keeper._claim_era_room(9)
-	assert_false(keeper.era_waiting())
-	keeper._on_room_finished(view, 9)
+	assert_eq(run.era, Eras.FOOTBALL, "a clear never ends it")
+	var next := FloorRoom.new()
+	next.id = 9
+	keeper.on_room_entered(view, next, true)
+	assert_eq(run.era, Eras.FOOTBALL, "it goes on into the next room")
+	var after := FloorRoom.new()
+	after.id = 10
+	keeper.on_room_entered(view, after, true)
 	assert_eq(run.era, "", "it ends after one more room")
 	var events: Array[String] = run.effects.effect_of("events").events
 	assert_eq(events, [RunEffects.EVENT_FLASHBACK_START, RunEffects.EVENT_FLASHBACK_END] as Array[String])
@@ -189,17 +192,19 @@ func test_the_scene_and_room_wire_the_auditor_items() -> void:
 	assert_true(keeper.contains("RulePicker.rule_rooms(map, depth, seed_text, _run.stats.extra_rule_rooms if _run != null else 0, first_run)"))
 
 
-func test_a_flashback_end_is_told_once_whether_a_room_or_the_floor_ends_it() -> void:
+func test_a_flashback_end_is_told_once_whether_leaving_or_the_floor_ends_it() -> void:
 	var run := _run_with_events()
 	var keeper := RuleKeeper.new()
 	keeper._run = run
 	var view := RoomView.new()
 	keeper._start_era(Eras.FOOTBALL, 4)
-	keeper._on_room_finished(view, 4)
+	var next := FloorRoom.new()
+	next.id = 5
+	keeper.on_room_entered(view, next, true)
 	assert_eq(run.era, "")
 	keeper.set_floor(null, null)
 	var ends: Array = run.effects.effect_of("events").events.filter(func(e): return e == RunEffects.EVENT_FLASHBACK_END)
-	assert_eq(ends.size(), 1, "a room's end, then a floor change with no era: once")
+	assert_eq(ends.size(), 1, "leaving the room, then a floor change with no era: once")
 	keeper._start_era(Eras.BUS, 5)
 	keeper.set_floor(null, null)
 	assert_eq(run.era, "")

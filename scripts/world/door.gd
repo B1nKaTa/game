@@ -113,13 +113,6 @@ func is_shut() -> bool:
 	return locked or requires_key or chained
 
 
-# Whether Harold's feet are within radius of the door, as the flashback button asks (RuleKeeper).
-func is_within(radius: float) -> bool:
-	if _player == null or not is_instance_valid(_player):
-		return false
-	return _spot(self).distance_to(_spot(_player)) <= radius
-
-
 # Where his feet stand to go through: in the opening, pressed toward the wall's face. A door standing on
 # the floor (side ZERO) is its own spot.
 func opening_spot() -> Vector2:

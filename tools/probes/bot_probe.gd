@@ -79,8 +79,6 @@ var _eras := false
 var _obey := false
 var _era_turn := 0
 const ERA_TURNS: Array[String] = ["", Eras.FOOTBALL, Eras.DANCE, Eras.BUS, Eras.ALLOTMENT]
-# How near the door (his middle to the door, as Door.is_within measures) he stands to press flashback.
-const REEL_DOOR_GAP := 40.0
 
 
 func _main() -> void:
@@ -169,7 +167,7 @@ func _rules_summary() -> String:
 	var fought := {}
 	var rooms := {}
 	var swung := {}
-	var readied := 0
+	var played := 0
 	var fallback := 0
 	for r in _results:
 		if str(r.get("death_in", "")) != "":
@@ -179,8 +177,8 @@ func _rules_summary() -> String:
 		kept += int(r.get("rules_kept", 0))
 		auditors += int(r.get("auditors", 0))
 		reels += int(r.get("reels_taken", 0))
-		readied += int(r.get("reels_readied", 0))
-		fallback += int(r.get("ready_fallback", 0))
+		played += int(r.get("reels_played", 0))
+		fallback += int(r.get("play_fallback", 0))
 		for rule in r.get("broken_by", {}):
 			by_rule[rule] = by_rule.get(rule, 0) + r["broken_by"][rule]
 		for era in r.get("dealt", {}):
@@ -200,7 +198,7 @@ func _rules_summary() -> String:
 		era_parts.append("%s:%s" % [era, _dps(dealt, fought, era)])
 		room_parts.append("%s:%d/%.0fs/%.2fsw" % [era, rooms.get(era, 0), fought.get(era, 0.0), swung.get(era, 0) / maxf(fought.get(era, 0.0), 0.001)])
 	room_parts.push_front("old:%d/%.0fs/%.2fsw" % [rooms.get("", 0), fought.get("", 0.0), swung.get("", 0) / maxf(fought.get("", 0.0), 0.001)])
-	return out + " old_dps=%s era_dps=%s dps_rooms=%s reels_readied=%d ready_fallback=%d" % [_dps(dealt, fought, ""), ",".join(era_parts), ",".join(room_parts), readied, fallback]
+	return out + " old_dps=%s era_dps=%s dps_rooms=%s reels_played=%d play_fallback=%d" % [_dps(dealt, fought, ""), ",".join(era_parts), ",".join(room_parts), played, fallback]
 
 
 # One entry per self (old Harold as "", then each era) holding the same starting value.
@@ -257,16 +255,25 @@ func _run(progress) -> Dictionary:
 	var pension_before: int = progress.data.pension
 	var map: FloorMap = scene.debug_map()
 	var r := {"reached_mini": false, "beat_mini": false, "reached_boss": false, "beat_boss": false, "income": 0, "time": 0.0, "rooms": 0, "stuck": 0, "hits": 0, "boss_ttk": 0.0, "mini_ttk": 0.0, "boss_hits": 0, "mini_hits": 0, "death_in": ""}
-	r.merge({"rules_seen": 0, "rules_broken": 0, "rules_kept": 0, "broken_by": {}, "auditors": 0, "reels_taken": 0, "reels_readied": 0, "ready_fallback": 0, "dealt": _per_self(0.0), "fought": _per_self(0.0), "dps_rooms": _per_self(0), "swings": _per_self(0)})
+	r.merge({"rules_seen": 0, "rules_broken": 0, "rules_kept": 0, "broken_by": {}, "auditors": 0, "reels_taken": 0, "reels_played": 0, "play_fallback": 0, "dealt": _per_self(0.0), "fought": _per_self(0.0), "dps_rooms": _per_self(0), "swings": _per_self(0)})
 	scene.player.hurt.connect(func(): r["hits"] += 1; _attribute(scene); _trace(bot))
 	var rules: RuleKeeper = scene.debug_rules()
 	bot.rules = rules
 	bot.obey = _obey
 	rules.rule_broken.connect(func(_view): r["rules_broken"] += 1)
 	var reel_was := ""
+	# A reel handed over for this turn's era, played once the next fight room's fight starts.
+	var reel_waiting := false
 	while true:
 		var at: int = scene.debug_current_id()
 		var kind: String = map.room(at).room_type
+		if reel_waiting and RuleKeeper.FIGHT_ROOMS.has(kind):
+			reel_waiting = false
+			var played: int = await bot.play_reel_here()
+			if played == 2:
+				r["play_fallback"] += 1
+			if played > 0:
+				r["reels_played"] += 1
 		r["rooms"] += 1
 		if kind == RoomLayout.TYPE_MINI_BOSS:
 			r["reached_mini"] = true
@@ -324,17 +331,10 @@ func _run(progress) -> Dictionary:
 			var self_for: String = ERA_TURNS[_era_turn % ERA_TURNS.size()]
 			_era_turn += 1
 			if self_for != "":
-				# A DEV give, as F7 would: the reel for this turn's era.
+				# A DEV give, as F7 would: the reel for this turn's era, played in that room's fight.
 				run.held_reel = self_for
 				reel_was = self_for
-				var readied: int = await bot.ready_reel_at(next)
-				if readied == 2:
-					r["ready_fallback"] += 1
-				if readied > 0:
-					r["reels_readied"] += 1
-				if scene.debug_current_id() != at:
-					# A door on the way took him through on its own; that room is fought next.
-					continue
+				reel_waiting = true
 		scene._enter_room(next)
 		await create_timer(0.1).timeout
 	r["income"] = progress.data.pension - pension_before
@@ -560,7 +560,6 @@ class Bot extends Node:
 	var fought := 0.0
 	var swings := 0
 	var _hp_seen := {}
-	var _walk_goal := Vector2.INF
 
 	func begin_count() -> void:
 		auditors = 0
@@ -597,35 +596,24 @@ class Bot extends Node:
 		var watch: RuleWatch = rules.watch_of(scene.debug_current_id())
 		return watch.rule if watch != null and watch.is_open() else ""
 
-	# Walks within REEL_DOOR_GAP of the door into a room and presses flashback for one frame. Returns 0
-	# when no reel was readied, 1 when the press readied it, 2 when only a direct call did (the press
-	# missed; counted on the SUMMARY line so a broken press shows).
-	func ready_reel_at(target_id: int) -> int:
-		var view: RoomView = scene.debug_room_view()
-		var door: Door = view.door_to(target_id)
-		if door == null:
-			return 0
-		var at: int = scene.debug_current_id()
-		_walk_goal = door.global_position
+	# Presses flashback for one frame in the room he stands in, once its fight has started. Returns 0 when
+	# no era began, 1 when the press played it, 2 when only a direct call did (the press missed; counted
+	# on the SUMMARY line so a broken press shows).
+	func play_reel_here() -> int:
 		var waited := 0.0
-		while not door.is_within(REEL_DOOR_GAP) and waited < 10.0 and scene.debug_current_id() == at and not scene.is_over:
+		while not scene.debug_room_view().is_fighting() and waited < 2.0 and not scene.is_over:
 			await get_tree().physics_frame
 			waited += get_physics_process_delta_time()
-		_walk_goal = Vector2.INF
-		release_all()
-		if scene.debug_current_id() != at or scene.is_over:
-			return 0
-		if not door.is_within(REEL_DOOR_GAP):
-			print("REEL DOOR not reached in %.1f s, Grandpa at %s, door at %s" % [waited, str(_player.global_position), str(door.global_position)])
+		if scene.is_over or not scene.debug_room_view().is_fighting():
 			return 0
 		Input.action_press("flashback")
 		await get_tree().process_frame
 		await get_tree().physics_frame
 		Input.action_release("flashback")
 		await get_tree().process_frame
-		if rules.readied_door() == target_id:
+		if _player.era() != "":
 			return 1
-		if rules.try_ready_reel(view, scene.debug_progress(), scene.debug_map()) and rules.readied_door() == target_id:
+		if rules.try_play_reel():
 			return 2
 		return 0
 
@@ -699,9 +687,6 @@ class Bot extends Node:
 	func _physics_process(delta: float) -> void:
 		Engine.time_scale = 1.0
 		clock += delta
-		if _walk_goal != Vector2.INF and not _fighting and is_instance_valid(_player) and not scene.is_over:
-			_press_move(_walk_to(_walk_goal))
-			return
 		if not _fighting or scene.is_over or not is_instance_valid(_player):
 			return
 		fought += delta

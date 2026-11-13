@@ -26,7 +26,7 @@ const ACTIONS := {
 }
 const TEXTS := {
 	RULE: "Keep the room's rule for a film reel. Break it and the Auditor comes.",
-	REEL: "At a door to a new fight: relive a memory.",
+	REEL: "Relive a memory: be young for this room.",
 	MOVE: "Walk around the room.",
 	SWING: "Swing the cane. Three swings make a combo.",
 	DODGE: "Dodge. It's not running away. It's tactical.",
@@ -93,7 +93,7 @@ static func _applies(id: String, done: Dictionary, facts: Dictionary) -> bool:
 		RULE:
 			return facts.get("rule_on", false) and not facts.get("announcing", false)
 		REEL:
-			return facts.get("has_reel", false) and not fighting
+			return facts.get("has_reel", false) and fighting
 		MOVE:
 			return true
 		SWING:

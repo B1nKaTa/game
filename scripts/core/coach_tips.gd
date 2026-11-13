@@ -47,7 +47,7 @@ const TIPS := {
 	"turned_auditor": "Break a rule and the Auditor fights for you. Bend them early.",
 	"gold_star": "Keep a rule, get a pill. Be good.",
 	"photo_album": "Two reels in your pocket. Save one for the hard room.",
-	"old_projector": "A flashback runs two rooms now. Pick the second well.",
+	"old_projector": "A flashback lasts one more room now.",
 	"those_were_the_days": "Every flashback ends in a pill. Go back often.",
 	"rose_tinted": "You hit harder in the old days. Use your reels on big fights.",
 	"scrapbook": "Play every flashback. Old you remembers them all.",
