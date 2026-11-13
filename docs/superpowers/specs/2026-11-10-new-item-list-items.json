@@ -323,7 +323,7 @@
    "build": "pets",
    "rarity": "common",
    "cursed": false,
-   "desc": "Counts as a pet. Pet items make it bigger, and big enough it blocks shots."
+   "desc": "Counts as a pet. Pet items make it bigger, and once big enough it blocks shots."
   },
   {
    "id": "dog_treats",
