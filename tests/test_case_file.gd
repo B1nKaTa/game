@@ -324,3 +324,66 @@ func test_the_file_never_names_an_autoload() -> void:
 				var line_start := source.rfind("\n", at) + 1
 				assert_true(source.substr(line_start, at - line_start).contains("#"), "%s names %s" % [path, autoload])
 				at = source.find(autoload, at + 1)
+
+
+# --- label widths and names (feedback 15, 16) ---
+
+func _full_run() -> RunState:
+	var run := _plain_run()
+	run.stats.heal_bonus = 1
+	run.stats.lucky_swing_chance = 0.1
+	run.stats.shop_discount = 0.1
+	run.stats.floor_lethal_saves = 1
+	run.stats.dodge_charges = 2
+	run.potion = Content.potions()[0]
+	run.buff = Content.potions()[0]
+	run.buff_left = 10.0
+	run.cursed = true
+	return run
+
+
+func _label_width(text: String) -> float:
+	var size := MenuStyle.pixel_size(CaseFile.FONT)
+	return HudStyle.font().get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+
+
+func test_every_stat_and_run_label_fits_its_column() -> void:
+	var run := _full_run()
+	var stat := CaseFileData.stat_rows(run)
+	var info := {"floor": "1", "route": "R", "time": 5.0}
+	var runs := CaseFileData.run_rows(run, info, ["Memento"])
+	assert_true(stat.size() >= 12, "every optional stat row is built")
+	assert_true(runs.size() >= 12, "every optional run row is built")
+	for row in stat:
+		assert_true(_label_width(str(row[0])) < CaseFile.STAT_LABEL_WIDTH, "%s is %.0f px in %.0f" % [row[0], _label_width(str(row[0])), CaseFile.STAT_LABEL_WIDTH])
+	for row in runs:
+		assert_true(_label_width(str(row[0])) < CaseFile.RUN_LABEL_WIDTH, "%s is %.0f px in %.0f" % [row[0], _label_width(str(row[0])), CaseFile.RUN_LABEL_WIDTH])
+
+
+func test_the_waiting_room_labels_fit_their_column() -> void:
+	for def in Content.upgrades():
+		assert_true(_label_width(def.display_name) < CaseFile.FILE_LABEL_WIDTH, def.display_name)
+
+
+func test_discount_and_sets_rows_use_the_new_names() -> void:
+	var run := _full_run()
+	var labels: Array = []
+	for row in CaseFileData.stat_rows(run):
+		labels.append(row[0])
+	assert_true(labels.has("Discount"))
+	assert_false(labels.has("Shop discount"))
+	var runs := CaseFileData.run_rows(run, {}, [])
+	var sets_row: Array = []
+	for row in runs:
+		assert_true(row[0] != "Combos")
+		if row[0] == "Sets":
+			sets_row = row
+	assert_eq(sets_row, ["Sets", "-"])
+
+
+func test_the_pet_rock_description_says_it_blocks_shots() -> void:
+	for item in Content.items():
+		if item.id == "pet_rock":
+			assert_eq(item.description, "Counts as a pet. Pet items make it bigger, and once big enough it blocks shots.")
+			return
+	assert_true(false, "pet_rock exists")

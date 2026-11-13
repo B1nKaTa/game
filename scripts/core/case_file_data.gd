@@ -116,9 +116,9 @@ static func stat_rows(run: RunState) -> Array:
 	if stats.lucky_swing_chance > 0.0:
 		rows.append(["Lucky swing", "%d%%" % roundi(stats.lucky_swing_chance * 100.0)])
 	if stats.shop_discount > 0.0:
-		rows.append(["Shop discount", "%d%%" % roundi(stats.shop_discount * 100.0)])
+		rows.append(["Discount", "%d%%" % roundi(stats.shop_discount * 100.0)])
 	if stats.floor_lethal_saves > 0:
-		rows.append(["Saves a floor", "%d" % stats.floor_lethal_saves])
+		rows.append(["Floor saves", "%d" % stats.floor_lethal_saves])
 	return rows
 
 
@@ -147,8 +147,8 @@ static func run_rows(run: RunState, info: Dictionary, perks_text: Array) -> Arra
 	]
 	if run.buff != null and run.buff_left > 0.0:
 		rows.append(["Buff", "%s, %ds" % [run.buff.display_name, ceili(run.buff_left)]])
-	var combos := run.effects.combo_names()
-	rows.append(["Combos", ", ".join(combos) if not combos.is_empty() else "-"])
+	var sets := run.effects.set_names()
+	rows.append(["Sets", ", ".join(sets) if not sets.is_empty() else "-"])
 	var curses: PackedStringArray = []
 	if run.cursed:
 		curses.append("Cursed ticket")

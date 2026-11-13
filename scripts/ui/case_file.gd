@@ -23,6 +23,9 @@ const GRID_COLUMNS := 8
 const HAROLD_ROWS := 3
 const CATALOG_ROWS := 6
 const FONT := 9
+const STAT_LABEL_WIDTH := 62.0
+const RUN_LABEL_WIDTH := 96.0
+const FILE_LABEL_WIDTH := 130.0
 const HEAD_FONT := 12
 const DESK := Color(0.05, 0.035, 0.03, 0.88)
 const MANILA := Color("cfae68")
@@ -273,7 +276,7 @@ func _build_harold() -> void:
 	for i in rows.size():
 		var column := 0 if i < half else 1
 		var at := left.position + Vector2(column * left.size.x / 2.0, 20.0 + (i % half) * 11.0)
-		_add_row(rows[i], at, left.size.x / 2.0 - 6.0, 62.0)
+		_add_row(rows[i], at, left.size.x / 2.0 - 6.0, STAT_LABEL_WIDTH)
 	var y := 22.0 + half * 11.0
 	var forms := CaseFileData.upgrade_rows(_data.upgrades, Content.upgrades())
 	var form_parts: PackedStringArray = []
@@ -306,7 +309,7 @@ func _build_run_right() -> void:
 	box.add_theme_constant_override("separation", 1)
 	_body.add_child(box)
 	for row in rows:
-		box.add_child(_wrapped_row(row, right.size.x, 96.0))
+		box.add_child(_wrapped_row(row, right.size.x, RUN_LABEL_WIDTH))
 
 
 func _build_waiting_right() -> void:
@@ -319,7 +322,7 @@ func _build_waiting_right() -> void:
 	box.size = Vector2(right.size.x, right.size.y - 20)
 	_body.add_child(box)
 	for row in rows:
-		box.add_child(_wrapped_row(row, right.size.x, 130.0))
+		box.add_child(_wrapped_row(row, right.size.x, FILE_LABEL_WIDTH))
 
 
 # --- Items and Bestiary ---
