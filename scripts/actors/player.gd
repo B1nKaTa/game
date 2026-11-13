@@ -52,6 +52,10 @@ const SWEEP_EDGE := Color("8f7ce0")
 const SWEEP_BLADE := Color("e8ecf4")
 # How quickly the Telescope Cane's look ahead follows his aim, per second.
 const LOOK_EASE := 4.0
+# He faces where he walks, and turns to his aim for this long after the mouse or right stick moved, and
+# for THROW_FACE_TIME after a throw.
+const FACE_AIM_TIME := 0.6
+const THROW_FACE_TIME := 0.3
 # The hit source the items hear for an era's moves: stat-like items still answer it, cane and denture ones don't.
 const ERA_HIT := "era"
 # How far beyond his feet the spin or barge reaches into a body it passes, and the barge's extra pace.
@@ -80,6 +84,11 @@ var _dodge := DodgeTimer.new()
 var _aim := Vector2.RIGHT
 var _dodge_direction := Vector2.RIGHT
 var _active_swing: SwingAttack
+# Seconds left that the aim, not the walk, sets which way he faces (mouse moved, stick pushed, just threw).
+var _aim_face_left := 0.0
+var _throw_face_left := 0.0
+var _face_is_left := false
+var _last_mouse_screen := Vector2.INF
 var _visual: SpriteVisual
 # What he wears, drawn over the sprite. Made only once he wears something.
 var _look: GrandpaLook
@@ -517,9 +526,12 @@ func _physics_process(delta: float) -> void:
 	var to_mouse := _aim_point() - global_position
 	if not to_mouse.is_zero_approx():
 		_aim = to_mouse.normalized()
-	_visual.set_facing_left(_aim.x < 0.0)
+	var walk_x := Input.get_vector("move_left", "move_right", "move_up", "move_down").x
+	_track_aim_input(delta)
+	var facing_left := visual_facing_left(walk_x)
+	_visual.set_facing_left(facing_left)
 	if _look != null:
-		_look.set_facing(_aim.x)
+		_look.set_facing(-1.0 if facing_left else 1.0)
 		sync_look()
 	_visual.set_alpha(HurtLook.alpha_for(_dodge.is_active(), run.health.invulnerability_left()))
 	ease_look_ahead(delta)
@@ -532,6 +544,40 @@ func _physics_process(delta: float) -> void:
 	_leave_dodge_ghosts(delta)
 	_charge_sounds()
 	queue_redraw()
+
+
+# Which way he faces: the aim while one is being used, else the way he walks, else as he was. Only the
+# looks read this; the aim itself (cane, throws, crosshair) is untouched.
+static func face_left(walk_x: float, aim_x: float, aiming: bool, was_left: bool) -> bool:
+	if aiming:
+		return aim_x < 0.0
+	if walk_x != 0.0:
+		return walk_x < 0.0
+	return was_left
+
+
+func visual_facing_left(walk_x: float) -> bool:
+	var swinging := _active_swing != null
+	var aiming := swinging or _charge.is_holding() or _throw_face_left > 0.0 or _aim_face_left > 0.0 or aim_source.is_valid()
+	var pointing := _active_swing.direction.x if swinging else _aim.x
+	_face_is_left = face_left(walk_x, pointing, aiming, _face_is_left)
+	return _face_is_left
+
+
+# Counts real mouse motion (the cursor on screen, so a still cursor under a walking Harold is not aiming)
+# and a pushed right stick.
+func _track_aim_input(delta: float) -> void:
+	_aim_face_left = maxf(_aim_face_left - delta, 0.0)
+	_throw_face_left = maxf(_throw_face_left - delta, 0.0)
+	if ActiveDevice.using_pad:
+		var stick := Vector2(Input.get_joy_axis(ActiveDevice.pad_id, JOY_AXIS_RIGHT_X), Input.get_joy_axis(ActiveDevice.pad_id, JOY_AXIS_RIGHT_Y))
+		if PadInput.stick_dir(stick) != Vector2.ZERO:
+			_aim_face_left = FACE_AIM_TIME
+	elif mouse_aim and is_inside_tree():
+		var at := get_viewport().get_mouse_position()
+		if _last_mouse_screen != Vector2.INF and not at.is_equal_approx(_last_mouse_screen):
+			_aim_face_left = FACE_AIM_TIME
+		_last_mouse_screen = at
 
 
 func _charge_sounds() -> void:
@@ -757,6 +803,7 @@ func _throw_teeth() -> void:
 		_spare_teeth.append(spare)
 		if not wall.is_empty():
 			spare_state.drop()
+	_throw_face_left = THROW_FACE_TIME
 	teeth_thrown.emit()
 	run.effects.throw()
 	if not wall.is_empty():
@@ -779,6 +826,7 @@ func _era_throw() -> void:
 	thrown.global_position = spawn
 	_era_thrown = _era_thrown.filter(func(n): return is_instance_valid(n))
 	_era_thrown.append(thrown)
+	_throw_face_left = THROW_FACE_TIME
 	teeth_thrown.emit()
 
 
