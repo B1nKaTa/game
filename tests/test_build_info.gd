@@ -69,3 +69,9 @@ func test_the_id_shows_where_bug_reports_look() -> void:
 # the Waiting Room and the floors had no floor or walls. The export keeps them as text.
 func test_the_export_keeps_text_resources_as_text() -> void:
 	assert_eq(ProjectSettings.get_setting("editor/export/convert_text_resources_to_binary", true), false)
+
+# A playtest export (the tester panel's builds) says so after its id, so it is never taken for a release.
+func test_a_playtest_build_marks_its_id() -> void:
+	assert_eq(BuildInfo.marked("build 291126a (2026-11-08)", true), "build 291126a (2026-11-08)  PLAYTEST")
+	assert_eq(BuildInfo.marked("build 291126a (2026-11-08)", false), "build 291126a (2026-11-08)", "a release build has no mark")
+	assert_eq(BuildInfo.label().contains(BuildInfo.PLAYTEST_MARK), OS.has_feature("playtest"))

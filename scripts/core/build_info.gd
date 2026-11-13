@@ -8,6 +8,9 @@ extends RefCounted
 
 const PATH := "res://build_info.txt"
 const DEV := "dev"
+# Shown after the build id in a playtest export (the "Windows Playtest" preset's feature tag), so a
+# build with the tester panel in it is never taken for a release.
+const PLAYTEST_MARK := "PLAYTEST"
 
 static var _label := ""
 
@@ -15,8 +18,12 @@ static var _label := ""
 # The build id shown on the title screen, the pause menu and the first line of display_log.txt.
 static func label() -> String:
 	if _label.is_empty():
-		_label = read(PATH)
+		_label = marked(read(PATH), OS.has_feature(DevStart.PLAYTEST_FEATURE))
 	return _label
+
+
+static func marked(label_text: String, playtest: bool) -> String:
+	return "%s  %s" % [label_text, PLAYTEST_MARK] if playtest else label_text
 
 
 static func read(path: String) -> String:

@@ -65,14 +65,19 @@ screen's corner shows the same commit as the zip's name. If it shows `dev`, step
 
 A playtest zip for friends uses the **Windows Playtest** preset instead. It is the release preset
 with the `playtest` feature tag, which turns on the tester panel (F9 in a run: god mode, +99 Slips and
-Thermoses, any item or potion; see `DevStart.cheats_available`), and it exports to its own folder:
+Thermoses, +999 Pension, any item or potion; see `DevStart.cheats_available`). It exports to its own
+folder, `build-playtest` beside the source copy, as the preset's own export path says, never to the
+release exe's path:
 
 ```
-& $env:GODOT --headless --path D:\grandpa-build\src --export-release "Windows Playtest" D:\grandpa-build\Grandpa.exe
+& $env:GODOT --headless --path D:\grandpa-build\src --export-release "Windows Playtest" D:\grandpa-build\build-playtest\Grandpa.exe
 ```
 
-Start the playtest exe once into a run and check that F9 opens the tester panel.
+Zip that `Grandpa.exe` alone as `Grandpa-playtest-<commit>.zip`. Start it once: the title screen's
+corner must read `build <commit> (<date>)  PLAYTEST`, and F9 in a run must open the tester panel.
 
-A Steam build never uses the Windows Playtest preset: always **Windows Desktop**, as above, so no
-cheat exists in it. Start it once into a run and check that F9 does nothing. The cheats themselves are
-removed from the code before release.
+A Steam build never uses the Windows Playtest preset: always **Windows Desktop**, as in step 5, into
+`D:\grandpa-build\Grandpa.exe`, zipped without `playtest` in its name. Start it once: the title
+screen's corner must not say `PLAYTEST`, and F9 in a run must do nothing. Never upload anything from
+a `build-playtest` folder or a `Grandpa-playtest-*.zip`. The cheats themselves are removed from the
+code before release.
