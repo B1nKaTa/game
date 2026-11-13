@@ -23,6 +23,7 @@ const IDLE_PAUSE_MAX := 3.5
 const IDLE_LOOK_ODDS := 4
 const BOB_PERIOD := 1.0
 const OWNER_STILL := 0.01
+const OWNER_STILL_TIME := 0.15
 
 var look := ""
 var color := Color.WHITE
@@ -41,6 +42,7 @@ var roams := true
 var _rng := RandomNumberGenerator.new()
 var _rng_ready := false
 var _owner_last := Vector2.INF
+var _still_time := 0.0
 var _bob_phase := 0.0
 # Pixels the drawing is raised; draw only, the node's position never moves for it.
 var _bob := 0
@@ -94,14 +96,22 @@ func _face(dx: float) -> void:
 	queue_redraw()
 
 
-# True when Harold's own position has not changed since the last frame.
-func _owner_still() -> bool:
+# Called every frame. Harold moves on the physics clock, so a render frame with no physics tick shows him
+# unmoved while he walks: he counts as still only after OWNER_STILL_TIME of unchanged position.
+func _track_owner(delta: float) -> void:
 	if not is_instance_valid(follow):
-		return true
+		_still_time = OWNER_STILL_TIME
+		return
 	var here := follow.global_position
-	var still := _owner_last != Vector2.INF and here.distance_to(_owner_last) <= OWNER_STILL
+	if _owner_last != Vector2.INF and here.distance_to(_owner_last) <= OWNER_STILL:
+		_still_time += delta
+	else:
+		_still_time = 0.0
 	_owner_last = here
-	return still
+
+
+func _owner_still() -> bool:
+	return _still_time >= OWNER_STILL_TIME
 
 
 func _seed_rng() -> void:
@@ -154,7 +164,9 @@ func _stop_idle() -> void:
 func _process(delta: float) -> void:
 	var before := global_position
 	orbit_angle = wrapf(orbit_angle + orbit_speed * delta, 0.0, TAU)
+	_track_owner(delta)
 	if _lunge_left > 0.0:
+		_stop_idle()
 		_lunge_left -= delta
 		global_position = step_toward(global_position, _lunge_to, speed * LUNGE_PACE, delta)
 	elif orbit_speed != 0.0:
@@ -163,7 +175,7 @@ func _process(delta: float) -> void:
 		# on another clock and would flip it back and forth while he walks.
 		_face(-sin(orbit_angle) * signf(orbit_speed))
 		return
-	elif _owner_still() and global_position.distance_to(home()) <= SLOT_REACH:
+	elif _owner_still() and global_position.distance_to(home()) <= IDLE_ROAM + 0.01:
 		_idle(delta)
 	else:
 		_stop_idle()

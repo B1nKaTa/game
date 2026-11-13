@@ -34,6 +34,7 @@ func _place(ctx: EffectContext) -> void:
 		body.orbit_angle = _angle + PI * i
 		body.radius = REACH
 		body.check = can_block.bind(i)
+		body.roams = false
 		body.spend = blocked.bind(i)
 		ctx.add_fx(body, moth_spot(ctx, i))
 

@@ -227,14 +227,64 @@ func test_a_pet_stops_idling_the_moment_its_owner_moves() -> void:
 		pet._process(1.0 / 30.0)
 		guard += 1
 	assert_true(pet._amble_offset != Vector2.INF, "it began an amble")
-	owner.global_position = Vector2(200, 0)
+	# A small step, well inside IDLE_ROAM: only the owner-still check can tell he moved.
+	owner.global_position += Vector2(3, 0)
 	var before := pet.global_position
+	var expected := Pet.step_toward(before, pet.home(), Pet.SPEED, 1.0 / 30.0)
 	pet._process(1.0 / 30.0)
-	assert_near(pet.global_position.distance_to(before), Pet.SPEED / 30.0)
+	assert_eq(pet.global_position, expected, "it follows at full pace, not the amble pace")
 	assert_eq(pet._bob, 0, "the bob settles")
 	assert_true(pet._amble_offset == Vector2.INF, "the amble is dropped")
+	# Walking, with frames where he happens not to move, never idles.
+	for i in 60:
+		if i % 2 == 0:
+			owner.global_position += Vector2(3, 0)
+		pet._process(1.0 / 30.0)
+		assert_eq(pet._bob, 0, "no bob while he walks")
+		assert_true(pet._amble_offset == Vector2.INF)
 	pet.free()
 	owner.free()
+
+
+func test_a_lunge_stops_idling() -> void:
+	var owner := Node2D.new()
+	var pet := _idle_pet(0, owner)
+	var guard := 0
+	while pet._amble_offset == Vector2.INF and guard < 3000:
+		pet._process(1.0 / 30.0)
+		guard += 1
+	pet._bob = 1
+	pet.lunge_to(Vector2(80, 0))
+	pet._process(1.0 / 30.0)
+	assert_eq(pet._bob, 0)
+	assert_true(pet._amble_offset == Vector2.INF)
+	pet.free()
+	owner.free()
+
+
+func test_a_pet_far_from_its_slot_walks_home_before_idling() -> void:
+	var owner := Node2D.new()
+	var pet := _idle_pet(0, owner)
+	pet.global_position += Vector2(18, 0)
+	pet._still_time = 5.0
+	pet._owner_last = owner.global_position
+	pet._process(1.0 / 30.0)
+	assert_eq(pet._bob, 0, "18 px out is beyond IDLE_ROAM: no idle yet")
+	for i in 30:
+		pet._process(1.0 / 30.0)
+	assert_true(pet.global_position.distance_to(pet.home()) <= Pet.IDLE_ROAM + 0.01)
+	pet.free()
+	owner.free()
+
+
+func test_every_pet_that_blocks_shots_never_ambles() -> void:
+	for path in ["pet_rock", "tortoise", "budgie"]:
+		var effect: PetEffect = load("res://scripts/items/%s.gd" % path).new()
+		var body := Pet.make(path, Color.WHITE, 0)
+		effect.setup_pet(EffectContext.new(null), body)
+		assert_true(body.check.is_valid())
+		assert_false(body.roams, "%s blocks shots, so it only bobs" % path)
+		body.free()
 
 
 func test_a_pet_rock_does_not_amble() -> void:

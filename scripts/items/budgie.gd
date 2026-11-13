@@ -28,6 +28,7 @@ func setup_pet(_ctx_now: EffectContext, body: Pet) -> void:
 	body.orbit_radius = ORBIT
 	body.radius = REACH
 	body.check = can_block
+	body.roams = false
 	body.spend = blocked
 
 
