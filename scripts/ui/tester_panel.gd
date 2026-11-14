@@ -25,6 +25,8 @@ const LAYER := 56
 const SHEET := Rect2(96, 22, 448, 316)
 const CONFIRM_SHEET := Rect2(170, 128, 300, 96)
 const PAD := 10.0
+# The slip ignores presses for this long after it opens.
+const SLIP_DEAD_SECONDS := 0.25
 const LEFT_WIDTH := 168.0
 const COLUMN_GAP := 12.0
 const CONTENT_TOP := 78.0
@@ -84,6 +86,7 @@ var _item_buttons := {}
 # The cheat waiting on the question's answer, and the question while it shows.
 var _pending := Callable()
 var _confirm: CanvasLayer
+var _confirm_opened_msec := 0
 
 
 # items: every pool item (Content.items()); potions: every run potion (Content.run_potions()).
@@ -376,15 +379,29 @@ func _show_confirm() -> void:
 	var no := _ink_button(tr(NO), 60.0)
 	no.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	no.position = Vector2(inner.position.x + inner.size.x / 2.0 - 70.0, inner.end.y - BUTTON_HEIGHT)
-	no.pressed.connect(answer.bind(false))
+	no.pressed.connect(press_slip.bind(false))
+	no.mouse_entered.disconnect(no.grab_focus)
 	_confirm.add_child(no)
 	var yes := _ink_button(tr(YES), 60.0)
 	yes.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	yes.position = Vector2(inner.position.x + inner.size.x / 2.0 + 10.0, inner.end.y - BUTTON_HEIGHT)
-	yes.pressed.connect(answer.bind(true))
+	yes.pressed.connect(press_slip.bind(true))
+	yes.mouse_entered.disconnect(yes.grab_focus)
 	_confirm.add_child(yes)
-	no.grab_focus.call_deferred()
+	if is_inside_tree():
+		no.grab_focus.call_deferred()
 	_confirm.add_child(PadFocus.new())
+	_confirm_opened_msec = Time.get_ticks_msec()
+
+
+# A press on the slip's buttons (a click, or Enter on the focused one). For the first SLIP_DEAD_SECONDS
+# it does nothing, so the second click of a double-click on a list row cannot answer it.
+func press_slip(yes: bool) -> void:
+	if _confirm == null:
+		return
+	if float(Time.get_ticks_msec() - _confirm_opened_msec) / 1000.0 < SLIP_DEAD_SECONDS:
+		return
+	answer(yes)
 
 
 func confirm_layer() -> CanvasLayer:

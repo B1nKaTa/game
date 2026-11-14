@@ -562,6 +562,48 @@ func test_the_first_cheat_asks_and_no_changes_nothing() -> void:
 	panel.free()
 
 
+func _slip_buttons(panel: TesterPanel) -> Dictionary:
+	var found := {}
+	for node in panel.confirm_layer().get_children():
+		var button := node as Button
+		if button != null:
+			found[button.text] = button
+	return found
+
+
+# A double-click on a list row must not land its second click on Yes, and hover must not move the
+# focus off No, so Enter cannot answer Yes by accident.
+func test_the_confirm_slip_ignores_presses_at_first_and_hover_keeps_the_focus_on_no() -> void:
+	var run := _cheat_run()
+	var panel := _panel(run, false)
+	var shoes := _pool_item("velcro_shoes")
+	panel.give_item(shoes)
+	assert_true(panel.asking())
+	# The test run has no live tree, so the slip is built by hand.
+	panel.call("_show_confirm")
+	var buttons := _slip_buttons(panel)
+	assert_eq(buttons.size(), 2, "No and Yes")
+	var no: Button = buttons.get(panel.tr(TesterPanel.NO))
+	var yes: Button = buttons.get(panel.tr(TesterPanel.YES))
+	assert_true(no != null and yes != null)
+	if no == null or yes == null:
+		panel.free()
+		return
+	yes.pressed.emit()
+	no.pressed.emit()
+	panel.press_slip(true)
+	assert_true(panel.asking(), "a click or Enter within 0.25 s does nothing")
+	assert_false(run.has_item("velcro_shoes"))
+	for button in [no, yes]:
+		for link in button.mouse_entered.get_connections():
+			assert_false((link["callable"] as Callable).get_method() == &"grab_focus", "hover never moves the focus")
+	OS.delay_msec(300)
+	panel.press_slip(true)
+	assert_false(panel.asking(), "after the pause Yes answers")
+	assert_true(run.has_item("velcro_shoes"))
+	panel.free()
+
+
 # The run is a tester run before the first cheat touches it, so a cheat that pays Pension on gain
 # (Inheritance Letter) pays the throwaway copy, never the real save.
 func test_the_first_cheat_lands_on_the_tester_copy_not_the_real_save() -> void:
