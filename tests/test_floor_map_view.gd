@@ -72,9 +72,37 @@ func test_rooms_keep_a_gap_their_door_link_can_show_in() -> void:
 		assert_true(left.end.y < below.position.y, str(spacing))
 
 
-func test_every_room_type_has_a_color() -> void:
+# The small map has no room for a 9 px sign, so each sign is a dot of colour there. Every room type
+# with a sign has one, in a colour of its own that reads on the paper and on a walked room's floor.
+func test_every_sign_has_a_dot_on_the_small_map() -> void:
 	for room_type: String in RoomRules.ICONS:
-		assert_true(FloorMapView.ROOM_COLORS.has(room_type), room_type)
+		var icon := RoomRules.door_icon(room_type)
+		# The Crossroads is drawn blank and smaller on both maps, as its sign is a signpost.
+		var dotted := DoorSign.has_sign(icon) and room_type != RoomLayout.TYPE_CROSSROADS
+		assert_eq(FloorMapView.MINI_DOTS.has(icon), dotted, "%s (%s)" % [room_type, icon])
+	assert_true(FloorMapView.MINI_DOTS.has("?"), "the unknown, as a stub to a plain fight room ends")
+	var seen := {}
+	for icon: String in FloorMapView.MINI_DOTS:
+		var color: Color = FloorMapView.MINI_DOTS[icon]
+		assert_false(seen.has(color.to_html()), "%s has a colour of its own" % icon)
+		seen[color.to_html()] = true
+		for ink: Color in [MapPaper.INK, MapPaper.PENCIL, MapPaper.STAMP, MapPaper.PAPER_EDGE]:
+			assert_false(color.is_equal_approx(ink), "%s is no line's colour" % icon)
+		for ground: Color in [MapPaper.PAPER, MapPaper.ROOM_FILL]:
+			assert_true(_contrast(color, ground) >= 3.0, "%s on %s: %.2f" % [icon, ground.to_html(), _contrast(color, ground)])
+
+
+func _luminance(c: Color) -> float:
+	var parts: Array[float] = []
+	for v: float in [c.r, c.g, c.b]:
+		parts.append(v / 12.92 if v <= 0.04045 else pow((v + 0.055) / 1.055, 2.4))
+	return 0.2126 * parts[0] + 0.7152 * parts[1] + 0.0722 * parts[2]
+
+
+func _contrast(a: Color, b: Color) -> float:
+	var la := _luminance(a)
+	var lb := _luminance(b)
+	return (maxf(la, lb) + 0.05) / (minf(la, lb) + 0.05)
 
 
 func test_night_vision_shows_secret_rooms_before_they_are_found() -> void:
@@ -159,6 +187,58 @@ func test_the_maps_panel_fades_with_the_small_map() -> void:
 	hud.set_map_alpha(1.0, view)
 	assert_near(view.modulate.a, 1.0)
 	hud.free()
+
+
+# The small map reaches below the HUD's rows: it fades while anything that matters is under its panel on
+# screen, not only a warning. under_hud is the rule: any screen rect overlapping the panel.
+func test_under_hud_is_any_thing_overlapping_the_panel() -> void:
+	var panel := Hud.MAP_PANEL
+	var none: Array[Rect2] = []
+	assert_false(MapFade.under_hud(panel, none), "nothing at all")
+	assert_true(MapFade.under_hud(panel, [Rect2(600, 30, 16, 16)] as Array[Rect2]), "inside it")
+	assert_true(MapFade.under_hud(panel, [Rect2(510, 65, 20, 20)] as Array[Rect2]), "over its bottom left corner")
+	assert_false(MapFade.under_hud(panel, [Rect2(510, 80, 20, 20)] as Array[Rect2]), "below it")
+	assert_false(MapFade.under_hud(panel, [Rect2(panel.position.x - 20.0, 10, 20, 20)] as Array[Rect2]), "only touching its edge")
+	assert_false(MapFade.under_hud(panel, [Rect2(100, 100, 40, 40), Rect2(300, 20, 30, 30)] as Array[Rect2]), "all elsewhere")
+	assert_true(MapFade.under_hud(panel, [Rect2(100, 100, 40, 40), Rect2(630, 70, 4, 4)] as Array[Rect2]), "any one of them")
+
+
+# Harold, a pickup still lying in the room and a live enemy each fade the map when the camera shows them
+# under its panel; a pickup flying to him, a dead enemy, or any of them elsewhere does not.
+func test_the_small_map_fades_while_harold_a_pickup_or_an_enemy_is_under_it() -> void:
+	# The camera has moved: world (880, 140) is on screen at (580, 40), under the panel.
+	var canvas := Transform2D(0.0, Vector2(-300, -100))
+	var under := Vector2(880, 140)
+	assert_true(Hud.MAP_PANEL.has_point(canvas * under))
+	var room := Node2D.new()
+	var harold := Node2D.new()
+	harold.position = Vector2(500, 300)
+	assert_false(MapFade.should_fade(room, harold, canvas), "an empty corner")
+	harold.position = under
+	assert_true(MapFade.should_fade(room, harold, canvas), "Harold under it")
+	# His feet below the panel, his head and shoulders still under it.
+	harold.position = Vector2(880, 100 + Hud.MAP_PANEL.end.y + 10.0)
+	assert_true(MapFade.should_fade(room, harold, canvas), "his head under its bottom edge")
+	harold.position = Vector2(500, 300)
+	var pickup := Pickup.new()
+	pickup.position = under
+	room.add_child(pickup)
+	assert_true(MapFade.should_fade(room, harold, canvas), "a pickup lying under it")
+	pickup.fly()
+	assert_false(MapFade.should_fade(room, harold, canvas), "a pickup already on its way to him")
+	var enemy := Enemy.new()
+	enemy.setup(load("res://data/enemies/intern_reaper.tres"), null, 0.5)
+	enemy.position = under + Vector2(10, 10)
+	room.add_child(enemy)
+	assert_true(MapFade.should_fade(room, harold, canvas), "a live enemy under it")
+	enemy._dead = true
+	assert_false(MapFade.should_fade(room, harold, canvas), "a dead one")
+	enemy._dead = false
+	enemy.position = Vector2(400, 400)
+	assert_false(MapFade.should_fade(room, harold, canvas), "a live one elsewhere")
+	assert_false(MapFade.should_fade(null, null, canvas), "no room and no Harold")
+	room.free()
+	harold.free()
 
 
 # --- the paper floor plan (playtest-9 note 3) ---
@@ -274,11 +354,12 @@ func test_the_paused_map_lists_the_runs_sets() -> void:
 
 # --- the cross-shape rule, on the marks themselves ---
 
-# Pixels of the plan that carry a mark: anything on the sheet that is not bare paper or a room's floor.
-func _marked(image: Image) -> PackedByteArray:
+# Pixels of the plan that carry a mark: anything on the sheet (or `area`, such as the small map's scrap)
+# that is not bare paper or a room's floor.
+func _marked(image: Image, area := Rect2()) -> PackedByteArray:
 	var marks := PackedByteArray()
 	marks.resize(image.get_width() * image.get_height())
-	var sheet := Rect2i(FloorMapView.SHEET)
+	var sheet := Rect2i(FloorMapView.SHEET if area.size == Vector2.ZERO else area)
 	for y in range(sheet.position.y, sheet.end.y):
 		for x in range(sheet.position.x, sheet.end.x):
 			var c := image.get_pixel(x, y)
@@ -298,10 +379,10 @@ func _run_length(marks: PackedByteArray, width: int, height: int, at: Vector2i, 
 
 # A thin straight stroke crossing another: arms of 4 or more pixels on all four sides of a spot, each arm
 # 3 pixels wide or less a little way out. A T, an L, a filled block or a dot is no cross.
-func _crossings(image: Image) -> Array[Vector2i]:
+func _crossings(image: Image, area := Rect2()) -> Array[Vector2i]:
 	var width := image.get_width()
 	var height := image.get_height()
-	var marks := _marked(image)
+	var marks := _marked(image, area)
 	var found: Array[Vector2i] = []
 	for y in height:
 		for x in width:
@@ -642,4 +723,185 @@ func test_a_boss_name_with_no_room_on_the_plan_goes_to_the_key() -> void:
 	for i in icons.size():
 		var entry := Rect2(FloorMapView.KEY_RECT.position + Vector2(FloorMapView.KEY_TITLE_WIDTH + (i % FloorMapView.KEY_COLUMNS) * column, 5.0 + floorf(i / float(FloorMapView.KEY_COLUMNS)) * FloorMapView.KEY_ROW_HEIGHT), Vector2(column, DoorSign.SIZE))
 		assert_false(entry.intersects(patch) or entry.intersects(sign_box), "entry %s" % icons[i])
+	view.free()
+
+
+# --- the small map: a scrap of the same paper (playtest-9 note 2) ---
+
+func _mini_view(map: FloorMap, progress: FloorProgress, current: int) -> FloorMapView:
+	var view := FloorMapView.new()
+	view.setup(map, progress, false, "The Records Basement")
+	view.set_current(current)
+	return view
+
+
+# The colours of the dots painted on the small map, as MINI_DOTS letters.
+func _dots_in(image: Image) -> Dictionary:
+	var found := {}
+	var area := Rect2i(FloorMapView.MINI_RECT)
+	for y in range(area.position.y, area.end.y):
+		for x in range(area.position.x, area.end.x):
+			var c := image.get_pixel(x, y)
+			for icon: String in FloorMapView.MINI_DOTS:
+				if c.is_equal_approx(FloorMapView.MINI_DOTS[icon]):
+					found[icon] = true
+	return found
+
+
+func test_the_small_map_is_a_paper_scrap_with_the_same_exit_stubs() -> void:
+	var map := _cross_floor()
+	var progress := FloorProgress.new(map)
+	progress.enter(0)
+	progress.enter(4)
+	var view := _mini_view(map, progress, 0)
+	var image := _paper_image()
+	view.paint_mini(image)
+	var scrap := FloorMapView.MINI_RECT
+	assert_true(image.get_pixelv(Vector2i(scrap.position)).is_equal_approx(MapPaper.PAPER_EDGE), "the scrap's edge")
+	assert_true(image.get_pixelv(Vector2i(scrap.position) + Vector2i(1, 1)).is_equal_approx(MapPaper.PAPER), "its paper")
+	assert_eq(view.mini_room_rects.size(), 2, "the start and the item room, not the rooms behind the stubs")
+	var start: Rect2 = view.mini_room_rects[0]
+	var item: Rect2 = view.mini_room_rects[4]
+	assert_true(image.get_pixelv(Vector2i(start.position)).is_equal_approx(MapPaper.STAMP), "the room he stands in, outlined in the stamp's red")
+	assert_true(image.get_pixelv(Vector2i(item.position)).is_equal_approx(MapPaper.INK), "a walked room in ink")
+	assert_true(image.get_pixelv(Vector2i(FloorMapView.mini_dot_rect(item).position)).is_equal_approx(FloorMapView.MINI_DOTS["I"]), "the item room's dot")
+	assert_true(image.get_pixelv(Vector2i(FloorMapView.mini_dot_rect(start).position)).is_equal_approx(MapPaper.ROOM_FILL), "a plain fight room stays blank")
+	var half := MapPaper.corridor_half(FloorMapView.room_size(FloorMapView.MINI_SPACING))
+	var up := Vector2i(MapPaper.edge_mid(start, Vector2i.UP))
+	assert_true(image.get_pixel(up.x - half, up.y - 1).is_equal_approx(MapPaper.INK), "the corridor between the walked rooms")
+	assert_true(image.get_pixel(up.x, up.y).is_equal_approx(MapPaper.ROOM_FILL), "with a door gap in the room's edge")
+	# The same stubs as the big map's: the shop's, ending in its dot, and a "?" for the fight room.
+	var stubs := FloorMapView.exit_stubs(map, progress, FloorMapView.shown_ids(map, progress, false))
+	assert_eq(stubs.size(), 2, str(stubs))
+	for stub in stubs:
+		var side: Vector2i = stub["side"]
+		var dot := FloorMapView.mini_stub_dot(start, side)
+		assert_true(image.get_pixelv(Vector2i(dot.position)).is_equal_approx(FloorMapView.MINI_DOTS[stub["icon"]]), "the %s stub's dot" % stub["icon"])
+		var mid := Vector2i(MapPaper.edge_mid(start, side))
+		var wall := mid + (Vector2i(0, -half) if side.x != 0 else Vector2i(-half, 0))
+		assert_true(image.get_pixelv(wall).is_equal_approx(MapPaper.INK), "the %s stub's wall" % stub["icon"])
+		assert_true(image.get_pixelv(wall + side).is_equal_approx(MapPaper.PAPER), "its wall dashed")
+		assert_true(image.get_pixelv(mid - side).is_equal_approx(MapPaper.ROOM_FILL), "a door gap where it leaves")
+	assert_eq(_dots_in(image).keys().size(), 3, "the item room's dot and two stubs' dots: %s" % str(_dots_in(image)))
+	# The secret is not found: nothing at all in its cell.
+	var origin := FloorMapView.mini_origin(FloorMapView.map_position(map, map.room(0)))
+	var secret := Rect2i(FloorMapView.room_rect(FloorMapView.map_position(map, map.room(3)), origin, FloorMapView.MINI_SPACING))
+	for y in range(secret.position.y, secret.end.y):
+		for x in range(secret.position.x, secret.end.x):
+			assert_true(image.get_pixel(x, y).is_equal_approx(MapPaper.PAPER), "the unfound secret's cell at %d,%d" % [x, y])
+	view.free()
+
+
+# The small map gives away no more than the big map's key does: a room's dot only for a mark the big map
+# draws (drawn_sign), and a stub's dot only for a door he has seen.
+func test_the_small_map_shows_only_what_is_drawn() -> void:
+	var def: FloorDef = load("res://data/floors/floor_1.tres")
+	var pool := RoomCatalog.load_valid(def.rooms_dir)
+	var kept_quiet := 0
+	for seed_value in 30:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = seed_value
+		var map := FloorBuilder.build_from_pool(rng, def, pool)
+		var progress := FloorProgress.new(map)
+		progress.enter(map.start_id)
+		var stub_icons := {}
+		for stub in FloorMapView.exit_stubs(map, progress, FloorMapView.shown_ids(map, progress, false)):
+			stub_icons[stub["icon"]] = true
+		var view := _mini_view(map, progress, map.start_id)
+		var image := _paper_image()
+		view.paint_mini(image)
+		var dots := _dots_in(image)
+		assert_eq(dots.keys().size(), stub_icons.keys().size(), "seed %d: %s against stubs %s" % [seed_value, str(dots), str(stub_icons)])
+		for icon: String in stub_icons:
+			assert_true(dots.has(icon), "seed %d: the %s stub's dot" % [seed_value, icon])
+		for room in map.rooms:
+			if room.room_type == RoomLayout.TYPE_SHOP and not stub_icons.has("$"):
+				kept_quiet += 1
+		# Under the Floor Plan, a room he never saw a door to is a pencil outline with no dot.
+		view.show_plan = true
+		image = _paper_image()
+		view.paint_mini(image)
+		var allowed := {}
+		for room_id: int in view.mini_room_rects:
+			var room := map.room(room_id)
+			var mark := FloorMapView.drawn_sign(map, progress, room, false)
+			allowed[mark] = true
+			if mark.is_empty() or not FloorMapView.MINI_DOTS.has(mark):
+				var spot := Vector2i(FloorMapView.mini_dot_rect(view.mini_room_rects[room_id]).position)
+				var c := image.get_pixelv(spot)
+				assert_true(c.is_equal_approx(MapPaper.PAPER) or c.is_equal_approx(MapPaper.ROOM_FILL), "seed %d: room %d keeps its middle blank" % [seed_value, room_id])
+		for icon: String in _dots_in(image):
+			assert_true(allowed.has(icon), "seed %d plan: a %s dot no room on the map draws" % [seed_value, icon])
+		view.free()
+	assert_true(kept_quiet > 0, "some floor had a shop the small map kept quiet about")
+
+
+# A boss room the Fortune Teller's Card shows, beside a walked room: the door into it is a pencil
+# corridor on the small map too (corridor_shown), with the boss's dot in it, not a stub.
+func test_the_small_map_draws_the_door_into_a_boss_room_the_card_shows() -> void:
+	var map := FloorMap.new()
+	var start := _add(map, RoomLayout.TYPE_COMBAT, Vector2i(0, 0))
+	var boss := _add(map, RoomLayout.TYPE_FLOOR_BOSS, Vector2i(1, 0))
+	map.join(start, boss)
+	var progress := FloorProgress.new(map)
+	progress.enter(start.id)
+	var view := _mini_view(map, progress, start.id)
+	view.boss_names = {RoomLayout.TYPE_FLOOR_BOSS: "Regional Reaper"}
+	var image := _paper_image()
+	view.paint_mini(image)
+	assert_true(view.mini_room_rects.has(boss.id), "the boss room is on the small map")
+	var half := MapPaper.corridor_half(FloorMapView.room_size(FloorMapView.MINI_SPACING))
+	var mid := Vector2i(MapPaper.edge_mid(view.mini_room_rects[start.id], Vector2i.RIGHT))
+	assert_true(image.get_pixel(mid.x + 1, mid.y - half).is_equal_approx(MapPaper.PENCIL), "the corridor's top wall")
+	assert_true(image.get_pixel(mid.x + 1, mid.y + half - 1).is_equal_approx(MapPaper.PENCIL), "the corridor's bottom wall")
+	assert_true(image.get_pixel(mid.x + 2, mid.y - half).is_equal_approx(MapPaper.PENCIL), "solid, not a dashed stub")
+	var far := Vector2i(MapPaper.edge_mid(view.mini_room_rects[boss.id], Vector2i.LEFT))
+	assert_true(image.get_pixel(far.x, far.y).is_equal_approx(MapPaper.PAPER), "a door gap in the boss room")
+	var dot := Vector2i(FloorMapView.mini_dot_rect(view.mini_room_rects[boss.id]).position)
+	assert_true(image.get_pixelv(dot).is_equal_approx(FloorMapView.MINI_DOTS["B"]), "the boss's dot")
+	view.free()
+
+
+func test_no_mark_on_the_small_map_reads_as_a_cross() -> void:
+	var def: FloorDef = load("res://data/floors/floor_1.tres")
+	for seed_value in [1, 2, 3]:
+		for with_items in [false, true]:
+			var rng := RandomNumberGenerator.new()
+			rng.seed = seed_value
+			var map := FloorBuilder.build_from_pool(rng, def, RoomCatalog.load_valid(def.rooms_dir))
+			var progress := FloorProgress.new(map)
+			for id: int in map.main_path.slice(0, 4):
+				progress.enter(id)
+			var view := _mini_view(map, progress, map.main_path[1])
+			if with_items:
+				view.show_secrets = true
+				view.show_plan = true
+				view.boss_names = FloorMapView.boss_names_for(def)
+			var image := _paper_image()
+			view.paint_mini(image)
+			assert_true(view.mini_room_rects.size() >= 4, "seed %d: rooms were drawn" % seed_value)
+			var crossings := _crossings(image, FloorMapView.MINI_RECT)
+			assert_true(crossings.is_empty(), "seed %d items %s: %s" % [seed_value, str(with_items), str(crossings.slice(0, 4))])
+			view.free()
+
+
+# What the small map leaves for a mark laid in a room later (Task 20's pickups left behind): each drawn
+# room's box, all inside the scrap, and the dot's spot in its middle, clear of each corner inside the edge.
+func test_the_small_map_tells_where_it_drew_each_room() -> void:
+	var map := _cross_floor()
+	var progress := FloorProgress.new(map)
+	for id in [0, 1, 2, 4]:
+		progress.enter(id)
+	var view := _mini_view(map, progress, 0)
+	view.paint_mini(_paper_image())
+	assert_eq(view.mini_room_rects.size(), 4)
+	var width := MapPaper.outline_width(FloorMapView.room_size(FloorMapView.MINI_SPACING))
+	for room_id: int in view.mini_room_rects:
+		var rect: Rect2 = view.mini_room_rects[room_id]
+		assert_true(FloorMapView.mini_area().encloses(rect), str(rect))
+		var inside := rect.grow(-float(width))
+		var dot := FloorMapView.mini_dot_rect(rect)
+		assert_true(inside.encloses(dot), "the dot inside room %d's edge" % room_id)
+		for corner: Vector2 in [inside.position, Vector2(inside.end.x - 2.0, inside.position.y), Vector2(inside.position.x, inside.end.y - 2.0), inside.end - Vector2(2, 2)]:
+			assert_false(dot.grow(1.0).intersects(Rect2(corner, Vector2(2, 2))), "a 2 px corner of room %d stays clear" % room_id)
 	view.free()

@@ -637,7 +637,8 @@ func _apply_game_settings() -> void:
 	_feedback.hit_stop_enabled = Settings.game("hit_stop")
 	_run.heals_at_full = Settings.game("heal_at_full")
 	player.mouse_aim = Settings.game("mouse_aim")
-	_mini_map.modulate.a = Settings.game("minimap_opacity") / 100.0
+	_hud.set_map_opacity(Settings.game("minimap_opacity"))
+	_hud.set_map_alpha(_hud.map_alpha(), _mini_map)
 	_hud.show_timer = Settings.game("run_timer")
 	_hud.set_run_time(_run_time)
 
@@ -651,9 +652,10 @@ func _process(delta: float) -> void:
 	_hud.set_run_time(_run_time)
 	var fighting := _room_view != null and _room_view.is_fighting()
 	_mini_map.visible = GameSettings.minimap_visible(Settings.game("hide_minimap_in_combat"), fighting, _big_map.is_open())
-	# The small map lies over the play area's top right: it fades while a warning lies under it.
-	var under_map := MapFade.world_rect(get_viewport().get_canvas_transform())
-	_hud.set_map_alpha(MapFade.step(_hud.map_alpha(), MapFade.covered(_room_view, under_map), delta), _mini_map)
+	# The small map lies over the play area's top right: it fades while Harold, a pickup, an enemy or a
+	# warning lies under it.
+	var faded := MapFade.should_fade(_room_view, player, get_viewport().get_canvas_transform())
+	_hud.set_map_alpha(MapFade.step(_hud.map_alpha(), faded, delta), _mini_map)
 	var frame := Engine.get_process_frames()
 	if frame != _pause_closed_frame and frame != _big_map.closed_frame and frame != _case_closed_frame and frame != _tester_closed_frame and Input.is_action_just_pressed("pause"):
 		_on_pause_key()

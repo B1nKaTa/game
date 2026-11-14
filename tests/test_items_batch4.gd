@@ -145,8 +145,13 @@ func test_floor_plan_shows_every_room_but_the_hidden_ones_and_not_what_is_in_the
 		var other := map.room(start.doors[side])
 		assert_eq(FloorMapView.link_shown(start, other, progress, true), not FloorMapView.HIDDEN_TYPES.has(other.room_type))
 		assert_false(FloorMapView.link_shown(start, other, progress, false), "no plan, no link to a room not walked into")
-	var view := FileAccess.get_file_as_string("res://scripts/ui/floor_map_view.gd")
-	assert_true(view.contains("draw_rect(rect, PLAN_COLOR, false, 1.0)"), "an unvisited room is an outline, with no letter")
+	# A room it shows that he never saw a door to is an outline only: neither map draws its sign or dot.
+	var told := 0
+	for room in map.rooms:
+		if shown.has(room.id) and not progress.is_visited(room.id) and not FloorMapView.sign_seen(map, progress, room):
+			assert_eq(FloorMapView.drawn_sign(map, progress, room, false), "", "room %d says nothing of what it holds" % room.id)
+			told += 1
+	assert_true(told > 0, "rooms he never saw a door to were checked")
 
 
 func test_fortune_teller_names_the_bosses_and_slows_each_ones_first_attack_once() -> void:

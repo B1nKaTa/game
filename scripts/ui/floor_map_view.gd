@@ -3,36 +3,27 @@ extends Control
 
 signal opened_changed(is_open: bool)
 
-const ROOM_COLORS := {
-	RoomLayout.TYPE_COMBAT: Color("8f8ba0"),
-	RoomLayout.TYPE_ITEM: Color("7dd3fc"),
-	RoomLayout.TYPE_HEALING: Color("e4524f"),
-	RoomLayout.TYPE_SIDE: Color("a78bda"),
-	RoomLayout.TYPE_MINI_BOSS: Color("ff9a3c"),
-	RoomLayout.TYPE_FLOOR_BOSS: Color("ffd24a"),
-	RoomLayout.TYPE_TREASURE: Color("67f0d0"),
-	RoomLayout.TYPE_SHOP: Color("7d9a5c"),
-	RoomLayout.TYPE_SECRET: Color("ece9e0"),
-	RoomLayout.TYPE_VAULT: Color("5fd8ff"),
-	RoomLayout.TYPE_CROSSROADS: Color("c9b98a"),
-	RoomLayout.TYPE_LANDING: Color("c9b98a"),
-	RoomLayout.TYPE_ARCADE: Color("e85fd0"),
-}
-const PANEL_COLOR := Color(0.09, 0.07, 0.11, 0.65)
-const BIG_PANEL_COLOR := Color(0.09, 0.07, 0.11, 0.95)
-const LINE_COLOR := Color("c9c5d6")
-const CURRENT_COLOR := Color.WHITE
 # The floor's name sits on the row above it, at the top of the screen.
 const NAME_FONT := 9
 # A long name is written smaller over the mini map, but never below this.
 const MIN_NAME_FONT := 7
 const NAME_BASELINE := 10.0
 const NAME_COLOR := Color("ece9e0")
+# The small map is a scrap of the big map's paper: rooms, corridors and exit stubs in ink, the room he
+# stands in outlined in the stamp's red. Its rooms are 12x8, too small for a 9 px sign at 1x, so each
+# sign shows as a dot of colour (MINI_DOTS) in the room's middle, or past a stub's end.
 const MINI_RECT := Rect2(528, 13, 108, 58)
 const CROSSROADS_SCALE := 0.65
-const MINI_SPACING := Vector2(13, 11)
-const MINI_FONT := 8
-const MINI_LINK := 3.0
+const MINI_SPACING := Vector2(15, 11)
+const MINI_DOT := 4
+const MINI_STUB_DASH := 1
+# Each sign's dot by its letter: the old small map's room colours, darkened to read on the paper and on
+# a walked room's floor. A plain fight room ("C") stays blank and the Crossroads ("+") is a smaller square.
+const MINI_DOTS := {
+	"v": Color("7d6a45"), "I": Color("2f4fb3"), "H": Color("c0392b"), "$": Color("5a7a1a"),
+	"T": Color("1d7a5e"), "?": Color("5f6670"), "A": Color("a3338f"), "S": Color("6a4a9c"),
+	"V": Color("1b7a99"), "M": Color("b5531a"), "B": Color("866a08"),
+}
 # The big map is a floor plan on a sheet of the case file's paper (MapPaper), over the dimmed game: a
 # manila tab, the floor's name over an ink rule, the run's sets, the plan on graph paper, and a key.
 const SHEET := Rect2(48, 22, 544, 324)
@@ -46,7 +37,6 @@ const SETS_BOX := Rect2(64, 51, 512, 9)
 const BIG_AREA := Rect2(64, 62, 512, 226)
 const GRID_STEP := 16
 const BIG_SPACING := Vector2(60, 46)
-const BIG_FONT := 16
 const ROOM_FILL := 0.8
 # How far an exit stub reaches past the gap into the next cell, and its dashes' length.
 const STUB_REACH := 3
@@ -71,9 +61,6 @@ const CLOSE_HINT := "Close"
 # A boss's name in the key's spare row (no clear spot on the plan), so it never reads as a key entry.
 const KEY_NAME_FORMATS := {"B": "Boss: %s", "M": "Mini boss: %s"}
 const KEY_NAME_GAP := 12.0
-# A room the Floor Plan shows but he has not walked into: an outline only, saying nothing of what is in it.
-const PLAN_COLOR := Color("8a8698")
-const PLAN_LINK_COLOR := Color(0.79, 0.77, 0.84, 0.45)
 # Rooms the Floor Plan never gives away, since finding them is the point.
 const HIDDEN_TYPES := [RoomLayout.TYPE_SECRET, RoomLayout.TYPE_VAULT]
 const BOSS_TYPES := [RoomLayout.TYPE_FLOOR_BOSS, RoomLayout.TYPE_MINI_BOSS]
@@ -96,6 +83,9 @@ var big_stamp_rect := Rect2()
 # The corridors' and stubs' footprints, and the boss names' patches, as last drawn.
 var big_link_rects: Array[Rect2] = []
 var big_name_rects: Array[Rect2] = []
+# Each room the small map last drew, by id, as its box there (the Crossroads' smaller one). A room's dot
+# sits in mini_dot_rect of its box, which leaves each corner inside its edge clear.
+var mini_room_rects := {}
 # The run's formed sets, listed on the paused big map as its run summary.
 var set_names := PackedStringArray():
 	set(value):
@@ -376,6 +366,25 @@ static func mini_origin(current_at: Vector2) -> Vector2:
 	return MINI_RECT.get_center() - current_at * MINI_SPACING - room_size(MINI_SPACING) / 2.0
 
 
+# Where the small map draws: inside the scrap's edge with a pixel clear. A room, corridor or stub that
+# would not lie wholly inside is left off, as a room off the scrap is.
+static func mini_area() -> Rect2:
+	return MINI_RECT.grow(-2.0)
+
+
+# A room's dot on the small map, in the middle of its box.
+static func mini_dot_rect(rect: Rect2) -> Rect2:
+	var center := rect.position + (rect.size / 2.0).floor()
+	return Rect2(center - Vector2(MINI_DOT, MINI_DOT) / 2.0, Vector2(MINI_DOT, MINI_DOT))
+
+
+# A stub's dot on the small map: a pixel past its end, as wide as its walls.
+static func mini_stub_dot(from_rect: Rect2, side: Vector2i) -> Rect2:
+	var end := MapPaper.stub_end(from_rect, side, stub_length(side, MINI_SPACING))
+	var center := end + Vector2(side) * (MINI_DOT / 2.0 + 1.0)
+	return Rect2((center - Vector2(MINI_DOT, MINI_DOT) / 2.0).floor(), Vector2(MINI_DOT, MINI_DOT))
+
+
 # The Crossroads is a smaller square in its cell, so it reads as the little room it is.
 static func crossroads_rect(cell_rect: Rect2) -> Rect2:
 	var size := (cell_rect.size * CROSSROADS_SCALE).floor()
@@ -447,16 +456,67 @@ func _draw() -> void:
 	if _is_big:
 		paint_big(self)
 		return
-	var panel := MINI_RECT
-	var origin := mini_origin(map_position(_map, _map.room(_current_id)))
-	draw_rect(panel, PANEL_COLOR)
-	draw_rect(panel, Color("625e6f"), false, 1.0)
-	var shown := shown_ids(_map, _progress, show_secrets, show_plan, not boss_names.is_empty())
-	for room_id in (shown if show_plan else _progress.visited_ids()):
-		_draw_links(_map.room(room_id), panel, origin, MINI_SPACING)
-	for room_id in shown:
-		_draw_room(_map.room(room_id), panel, origin, MINI_SPACING)
+	paint_mini(self)
 	_draw_floor_name()
+
+
+# The small map, on a CanvasItem (itself, in play) or into an Image (the tests): a scrap of paper with
+# the rooms round the one he stands in, their corridors and the exit stubs, drawn as the big map draws
+# them (the same shown rooms, corridors and stubs, and only the marks drawn_sign allows), each sign as
+# its dot. A room, corridor or stub not wholly on the scrap is left off.
+func paint_mini(canvas: Object) -> void:
+	MapPaper.fill(canvas, MINI_RECT, MapPaper.PAPER)
+	MapPaper.frame(canvas, MINI_RECT, 1, MapPaper.PAPER_EDGE)
+	var spacing := MINI_SPACING
+	var origin := mini_origin(map_position(_map, _map.room(_current_id)))
+	var half := MapPaper.corridor_half(room_size(spacing))
+	var area := mini_area()
+	var with_bosses := not boss_names.is_empty()
+	var shown := shown_ids(_map, _progress, show_secrets, show_plan, with_bosses)
+	mini_room_rects.clear()
+	for room_id: int in shown:
+		var rect := _drawn_rect(_map.room(room_id), origin, spacing)
+		if area.encloses(rect):
+			mini_room_rects[room_id] = rect
+	var gaps := {}
+	for link: Array in _links(shown):
+		if not mini_room_rects.has(link[0]) or not mini_room_rects.has(link[1]):
+			continue
+		var side: Vector2i = _map.room(link[1]).cell - _map.room(link[0]).cell
+		(gaps.get_or_add(link[0], []) as Array).append(side)
+		(gaps.get_or_add(link[1], []) as Array).append(-side)
+		var known: bool = link[2]
+		MapPaper.corridor(canvas, mini_room_rects[link[0]], mini_room_rects[link[1]], half, 1, MapPaper.INK if known else MapPaper.PENCIL)
+	for stub in exit_stubs(_map, _progress, shown):
+		if not mini_room_rects.has(stub["from"]):
+			continue
+		var from_rect: Rect2 = mini_room_rects[stub["from"]]
+		var side: Vector2i = stub["side"]
+		var length := stub_length(side, spacing)
+		var dot := mini_stub_dot(from_rect, side)
+		if not area.encloses(MapPaper.corridor_box(MapPaper.edge_mid(from_rect, side), side, length, half).merge(dot)):
+			continue
+		(gaps.get_or_add(stub["from"], []) as Array).append(side)
+		MapPaper.stub(canvas, from_rect, side, length, half, 1, MINI_STUB_DASH, MapPaper.INK)
+		MapPaper.fill(canvas, dot, MINI_DOTS.get(stub["icon"], MINI_DOTS["?"]))
+	for room_id: int in mini_room_rects:
+		_paint_mini_room(canvas, _map.room(room_id), mini_room_rects[room_id], gaps.get(room_id, []), half, with_bosses)
+
+
+# A room on the small map: a walked room's floor in an ink outline (the stamp's red for the room he
+# stands in), a room shown but not walked into as a pencil outline on bare paper, with door gaps where
+# its corridors and stubs open; and the dot of its drawn_sign, if it has one.
+func _paint_mini_room(canvas: Object, room: FloorRoom, rect: Rect2, gaps: Array, half: int, with_bosses: bool) -> void:
+	var width := MapPaper.outline_width(room_size(MINI_SPACING))
+	if _progress.is_visited(room.id):
+		MapPaper.fill(canvas, rect, MapPaper.ROOM_FILL)
+		MapPaper.outline(canvas, rect, width, MapPaper.STAMP if room.id == _current_id else MapPaper.INK, gaps, half)
+	else:
+		MapPaper.fill(canvas, rect, MapPaper.PAPER)
+		MapPaper.outline(canvas, rect, width, MapPaper.PENCIL, gaps, half)
+	var mark := drawn_sign(_map, _progress, room, with_bosses)
+	if MINI_DOTS.has(mark):
+		MapPaper.fill(canvas, mini_dot_rect(rect), MINI_DOTS[mark])
 
 
 # The big map, on a CanvasItem (itself, in play) or into an Image (the tests): the sheet and its tab,
@@ -476,7 +536,7 @@ func paint_big(canvas: Object) -> void:
 	var half := MapPaper.corridor_half(room)
 	var shown := shown_ids(_map, _progress, show_secrets, show_plan, not boss_names.is_empty())
 	var stubs := exit_stubs(_map, _progress, shown)
-	var links := _big_links(shown)
+	var links := _links(shown)
 	var with_bosses := not boss_names.is_empty()
 	big_room_rects.clear()
 	big_link_rects.clear()
@@ -538,9 +598,9 @@ func _paint_heading(canvas: Object) -> void:
 		MapPaper.text(canvas, Vector2(SETS_BOX.position.x, MapPaper.baseline_in(SETS_BOX, HudStyle.SMALL)), sets_text(set_names, SETS_BOX.size.x), HudStyle.SMALL, MapPaper.INK)
 
 
-# Each corridor the big map draws, once: [room id, room id, walked (ink) or planned (pencil)], pencil
-# first so a walked corridor is drawn last.
-func _big_links(shown: Array[int]) -> Array:
+# Each corridor the maps draw, once: [room id, room id, walked (ink) or planned (pencil)], pencil first so
+# a walked corridor is drawn last.
+func _links(shown: Array[int]) -> Array:
 	var ink: Array = []
 	var pencil: Array = []
 	var seen := {}
@@ -726,74 +786,5 @@ static func mini_name(full: String) -> Array:
 	return [short, MIN_NAME_FONT]
 
 
-# Only between two visited rooms, so a link never gives away a room or a secret not yet found.
-func _draw_links(room: FloorRoom, panel: Rect2, origin: Vector2, spacing: Vector2) -> void:
-	var from := _rect_of(room, origin, spacing)
-	if not panel.encloses(from):
-		return
-	for side: Vector2i in room.doors:
-		var other_id: int = room.doors[side]
-		var other := _map.room(other_id)
-		if not link_shown(room, other, _progress, show_plan) or not panel.encloses(_rect_of(other, origin, spacing)):
-			continue
-		var center := from.get_center()
-		var known := _progress.is_visited(room.id) and _progress.is_visited(other_id)
-		draw_line(center, center + Vector2(side) * spacing, LINE_COLOR if known else PLAN_LINK_COLOR, MINI_LINK)
-
-
 func _rect_of(room: FloorRoom, origin: Vector2, spacing: Vector2) -> Rect2:
 	return room_rect(map_position(_map, room), origin, spacing)
-
-
-func _draw_room(room: FloorRoom, panel: Rect2, origin: Vector2, spacing: Vector2) -> void:
-	var rect := _rect_of(room, origin, spacing)
-	if not panel.encloses(rect):
-		return
-	var is_crossroads := room.room_type == RoomLayout.TYPE_CROSSROADS
-	if is_crossroads:
-		rect = crossroads_rect(rect)
-	# A boss room the Fortune Teller's Card shows before it is found: an outline in its colour, with its letter.
-	if not _progress.is_visited(room.id) and boss_names.has(room.room_type):
-		var boss_color: Color = ROOM_COLORS.get(room.room_type, Color.WHITE)
-		# Opaque first, so the links behind it never show through.
-		draw_rect(rect, BIG_PANEL_COLOR)
-		draw_rect(rect, Color(boss_color, 0.25))
-		draw_rect(rect, boss_color, false, 1.0)
-		var letter_size := BIG_FONT if _is_big else MINI_FONT
-		var letter := RoomRules.door_icon(room.room_type)
-		var letter_box := ThemeDB.fallback_font.get_string_size(letter, HORIZONTAL_ALIGNMENT_LEFT, -1, letter_size)
-		var letter_ascent := ThemeDB.fallback_font.get_ascent(letter_size)
-		_draw_text(rect.get_center() + Vector2(-letter_box.x / 2.0, letter_ascent - letter_box.y / 2.0), letter, letter_size, boss_color)
-		return
-	# A room the Floor Plan shows but he has not walked into: a plain outline, nothing of what it holds.
-	if not _progress.is_visited(room.id) and room.room_type != RoomLayout.TYPE_SECRET:
-		draw_rect(rect, BIG_PANEL_COLOR)
-		draw_rect(rect, Color(PLAN_COLOR, 0.18))
-		draw_rect(rect, PLAN_COLOR, false, 1.0)
-		return
-	# A secret room Night Vision shows but Grandpa has not found is only an outline with a "?".
-	if not _progress.is_visited(room.id):
-		draw_rect(rect, ROOM_COLORS.get(room.room_type, Color.WHITE), false, 1.0)
-		var mark_size := BIG_FONT if _is_big else MINI_FONT
-		var mark := ThemeDB.fallback_font.get_string_size("?", HORIZONTAL_ALIGNMENT_LEFT, -1, mark_size)
-		var mark_ascent := ThemeDB.fallback_font.get_ascent(mark_size)
-		_draw_text(rect.get_center() + Vector2(-mark.x / 2.0, mark_ascent - mark.y / 2.0), "?", mark_size, ROOM_COLORS.get(room.room_type, Color.WHITE))
-		return
-	draw_rect(rect, ROOM_COLORS.get(room.room_type, Color.WHITE))
-	var is_current := room.id == _current_id
-	draw_rect(rect, CURRENT_COLOR if is_current else Color.BLACK, false, 2.0 if is_current else 1.0)
-	# Its shape says enough on either map, and its letter is a "+", which reads as a cross.
-	if is_crossroads:
-		return
-	var font_size := BIG_FONT if _is_big else MINI_FONT
-	var icon := RoomRules.door_icon(room.room_type)
-	if icon == RoomRules.ARCADE_ICON:
-		ArcadeTable.draw_die(self, rect.get_center(), float(font_size))
-		return
-	var icon_size := ThemeDB.fallback_font.get_string_size(icon, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
-	var ascent := ThemeDB.fallback_font.get_ascent(font_size)
-	_draw_text(rect.get_center() + Vector2(-icon_size.x / 2.0, ascent - icon_size.y / 2.0), icon, font_size, Color.BLACK)
-
-
-func _draw_text(at: Vector2, text: String, font_size: int, color: Color) -> void:
-	draw_string(ThemeDB.fallback_font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)

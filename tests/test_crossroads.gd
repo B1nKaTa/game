@@ -137,7 +137,7 @@ func test_walking_a_floor_never_routes_back_through_the_crossroads() -> void:
 
 func test_the_crossroads_has_its_own_look_on_the_map() -> void:
 	assert_true(RoomRules.ICONS.has(RoomLayout.TYPE_CROSSROADS))
-	assert_true(FloorMapView.ROOM_COLORS.has(RoomLayout.TYPE_CROSSROADS))
+	assert_false(FloorMapView.MINI_DOTS.has(RoomRules.door_icon(RoomLayout.TYPE_CROSSROADS)), "a smaller square on the small map, no dot")
 	assert_eq(FloorMapView.KEY_LABELS.get(RoomRules.door_icon(RoomLayout.TYPE_CROSSROADS), ""), "Crossroads", "the big map's key names it")
 
 

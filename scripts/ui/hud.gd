@@ -78,6 +78,9 @@ var _boss_back: ColorRect
 var _boss_fill: ColorRect
 var _boss_max_hp := 1.0
 var _map_back: MapBack
+# The small map's level: the Minimap opacity setting (its solid level, 0.2-1) times the fade (MapFade).
+var _map_opacity := 1.0
+var _map_fade := 1.0
 var _rule_icon: RuleIcon
 var _rule_stamp: RuleStamp
 var _pension := 0
@@ -249,14 +252,22 @@ func _ready() -> void:
 	_refresh()
 
 
-# The small map, its floor name and its panel together at this alpha (MapFade), so a warning under them shows.
+# The small map, its floor name and its panel together at this fade (MapFade), so what lies under them
+# shows. The fade multiplies the Minimap opacity setting, so the slider still sets the solid level.
 func set_map_alpha(alpha: float, mini_map: CanvasItem) -> void:
+	_map_fade = alpha
+	var level := alpha * _map_opacity
 	if _map_back != null:
-		_map_back.modulate.a = alpha
+		_map_back.modulate.a = level
 	if _rule_icon != null:
-		_rule_icon.modulate.a = alpha
+		_rule_icon.modulate.a = level
 	if mini_map != null:
-		mini_map.modulate.a = alpha
+		mini_map.modulate.a = level
+
+
+# The Minimap opacity setting, in percent (GameSettings keeps it at 20-100).
+func set_map_opacity(percent: float) -> void:
+	_map_opacity = clampf(percent / 100.0, 0.0, 1.0)
 
 
 func show_rule(rule: String) -> void:
@@ -298,8 +309,9 @@ func active_label() -> String:
 	return _active_slot.label_text_shown() if _active_slot != null else ""
 
 
+# The fade alone, before the opacity setting, so MapFade.step moves on from where the fade was.
 func map_alpha() -> float:
-	return _map_back.modulate.a if _map_back != null else 1.0
+	return _map_fade
 
 
 func set_pension(amount: int) -> void:

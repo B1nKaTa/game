@@ -98,7 +98,7 @@ func test_game_tables_are_solid_and_must_be_reached() -> void:
 
 func test_the_arcade_has_a_die_icon_a_color_and_counts_as_a_detour() -> void:
 	assert_eq(RoomRules.door_icon(RoomLayout.TYPE_ARCADE), RoomRules.ARCADE_ICON)
-	assert_true(FloorMapView.ROOM_COLORS.has(RoomLayout.TYPE_ARCADE))
+	assert_true(FloorMapView.MINI_DOTS.has(RoomRules.ARCADE_ICON), "a dot of its own on the small map")
 	var room := FloorRoom.new()
 	room.room_type = RoomLayout.TYPE_ARCADE
 	assert_true(room.is_detour())

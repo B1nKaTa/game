@@ -1,9 +1,11 @@
 class_name MapFade
 extends RefCounted
 
-# The small map lies over the play area's top right (Hud.MAP_PANEL), so in a large room a warning there
-# would lie under it. While any warning shape overlaps the map's part of the view, the map, its floor
-# name and its panel fade to FADED, so the warning shows through; they come back when it is gone.
+# The small map lies over the play area's top right (Hud.MAP_PANEL), reaching below the HUD's rows, so
+# in a large room Harold, a pickup, an enemy or a warning there would lie under it. While any of them is
+# under the panel on screen (under_hud), the map, its floor name and its panel fade to FADED, so it
+# shows through; they come back when it is gone. The fade multiplies the Minimap opacity setting
+# (Hud.set_map_alpha), never replaces it.
 #
 # A screen-colour window (WarningWindow, removed) opened on faint red floors such as the parlour's wine
 # carpet, so this reads the warnings themselves. Shapes are exact where a node gives them (route_rects,
@@ -16,6 +18,10 @@ const SPEED := 5.0
 # The circle taken for a warning node that gives no shape of its own, and round a winding-up enemy.
 const LOOSE_REACH := 40.0
 const WINDUP_REACH := 56.0
+# The room each body takes in the world round its node: Harold's whole sprite (he stands on his feet,
+# Player.SPRITE_FEET_Y below his position, and is about 48 px tall), and a pickup's icon.
+const HAROLD_BOX := Rect2(-12, -26, 24, 50)
+const PICKUP_BOX := Rect2(-10, -10, 20, 20)
 
 # Whether nodes of a script can show a warning at all, by script, so the room's props, tiles and decor
 # cost one look-up a frame each rather than the whole passing-effect test.
@@ -28,6 +34,47 @@ static func world_rect(canvas: Transform2D) -> Rect2:
 	var a := inverse * Hud.MAP_PANEL.position
 	var b := inverse * Hud.MAP_PANEL.end
 	return Rect2(a, Vector2.ZERO).expand(b)
+
+
+# The rule: whether any of the things (screen rects) lies under rect. Only touching its edge is not under.
+static func under_hud(rect: Rect2, things: Array[Rect2]) -> bool:
+	for thing in things:
+		if rect.intersects(thing):
+			return true
+	return false
+
+
+# Whether the small map fades now: Harold, a pickup still lying in the room or a live enemy under its
+# panel on screen, or a warning shape under it (covered: the same test made in world space, so a ring
+# keeps its exact round shape rather than its square box).
+static func should_fade(room: Node, harold: Node2D, canvas: Transform2D) -> bool:
+	var things: Array[Rect2] = []
+	for body in bodies(room, harold):
+		things.append(to_screen(canvas, body))
+	return under_hud(Hud.MAP_PANEL, things) or covered(room, world_rect(canvas))
+
+
+# Harold, the room's waiting pickups and its live enemies, as boxes in the world. Hidden ones are left out,
+# since fading for them shows nothing.
+static func bodies(room: Node, harold: Node2D) -> Array[Rect2]:
+	var found: Array[Rect2] = []
+	if is_instance_valid(harold) and harold.visible:
+		found.append(Rect2(harold.global_position + HAROLD_BOX.position, HAROLD_BOX.size))
+	if room == null:
+		return found
+	for child in room.get_children():
+		if not (child is Node2D) or not (child as Node2D).visible or child.is_queued_for_deletion():
+			continue
+		if child is Pickup and (child as Pickup).is_waiting():
+			found.append(Rect2((child as Node2D).global_position + PICKUP_BOX.position, PICKUP_BOX.size))
+		elif child is Enemy and not (child as Enemy).is_dead():
+			found.append((child as Enemy).body_rect())
+	return found
+
+
+# A world box as the screen shows it, through the camera's canvas transform.
+static func to_screen(canvas: Transform2D, rect: Rect2) -> Rect2:
+	return Rect2(canvas * rect.position, Vector2.ZERO).expand(canvas * rect.end)
 
 
 # Whether any warning in the room overlaps area (world space).

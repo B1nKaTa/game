@@ -135,13 +135,47 @@ func test_no_door_sign_reads_as_a_cross() -> void:
 		assert_false(_reads_as_a_cross(turned), "sign %s on its side reads as a cross" % icon)
 
 
-# The big map drew the Crossroads' letter, a literal "+", in its room.
-func test_the_big_map_draws_no_plus_for_the_crossroads() -> void:
-	var source := FileAccess.get_file_as_string("res://scripts/ui/floor_map_view.gd")
-	var icon_draw := source.find("var icon := RoomRules.door_icon(room.room_type)")
-	var skip := source.rfind("if is_crossroads:", icon_draw)
-	assert_true(icon_draw > 0 and skip > 0, "the Crossroads returns before any letter is drawn")
-	assert_false(source.contains("if is_crossroads and not _is_big:"), "on both maps")
+# The big map drew the Crossroads' letter, a literal "+", in its room. Both maps are painted into an image
+# with the Crossroads walked and a corridor on every side: nothing is inked inside its square, and the
+# pixel cross finder sees no crossing strokes anywhere on either map.
+func test_neither_map_draws_a_plus_for_the_crossroads() -> void:
+	var map := FloorMap.new()
+	var rooms := {}
+	for cell: Vector2i in [Vector2i(1, 1), Vector2i(1, 0), Vector2i(2, 1), Vector2i(1, 2), Vector2i(0, 1)]:
+		var room := FloorRoom.new()
+		room.id = map.rooms.size()
+		room.cell = cell
+		room.room_type = RoomLayout.TYPE_CROSSROADS if cell == Vector2i(1, 1) else RoomLayout.TYPE_ITEM
+		map.rooms.append(room)
+		rooms[cell] = room
+	var progress := FloorProgress.new(map)
+	for cell: Vector2i in rooms:
+		if cell != Vector2i(1, 1):
+			map.join(rooms[Vector2i(1, 1)], rooms[cell])
+		progress.enter(rooms[cell].id)
+	var crossroads: FloorRoom = rooms[Vector2i(1, 1)]
+	var finder = load("res://tests/test_floor_map_view.gd").new()
+	for is_big in [true, false]:
+		var view := FloorMapView.new()
+		view.setup(map, progress, is_big, "The Crossroads")
+		view.set_current(rooms[Vector2i(1, 0)].id)
+		var image := Image.create(640, 360, false, Image.FORMAT_RGBA8)
+		if is_big:
+			view.paint_big(image)
+		else:
+			view.paint_mini(image)
+		var rect: Rect2 = view.big_room_rects[crossroads.id] if is_big else view.mini_room_rects[crossroads.id]
+		var spacing := FloorMapView.big_spacing(map.bounds().size) if is_big else FloorMapView.MINI_SPACING
+		var inside := Rect2i(rect.grow(-float(MapPaper.outline_width(FloorMapView.room_size(spacing)))))
+		var floor_pixels := 0
+		for y in range(inside.position.y, inside.end.y):
+			for x in range(inside.position.x, inside.end.x):
+				assert_true(image.get_pixel(x, y).is_equal_approx(MapPaper.ROOM_FILL), "big %s: nothing drawn in the Crossroads at %d,%d" % [str(is_big), x, y])
+				floor_pixels += 1
+		assert_true(floor_pixels > 0, "the Crossroads was painted")
+		var area := FloorMapView.SHEET if is_big else FloorMapView.MINI_RECT
+		assert_true(finder._crossings(image, area).is_empty(), "big %s: a crossing" % str(is_big))
+		view.free()
 
 
 func test_a_door_gate_is_shut_while_the_room_is_shut_and_rises_after() -> void:

@@ -161,6 +161,35 @@ func test_minimap_visibility() -> void:
 	assert_false(GameSettings.minimap_visible(false, false, true), "the big map always hides it")
 
 
+# Minimap opacity works again: the slider sets the small map's solid level, and the fade (MapFade)
+# multiplies it rather than writing over it every frame.
+func test_the_minimap_opacity_is_the_level_the_fade_multiplies() -> void:
+	var hud := Hud.new()
+	hud._ready()
+	var view := FloorMapView.new()
+	view.setup(FloorMap.new(), null, false)
+	hud.add_child(view)
+	hud.set_map_opacity(50)
+	hud.set_map_alpha(1.0, view)
+	assert_near(view.modulate.a, 0.5, "the slider at 50, nothing under the map")
+	assert_near(hud.map_alpha(), 1.0)
+	var fade := 1.0
+	for i in 60:
+		fade = MapFade.step(hud.map_alpha(), true, 1.0 / 60.0)
+		hud.set_map_alpha(fade, view)
+	assert_near(hud.map_alpha(), MapFade.FADED, "the fade steps on from its own level, not the slider's")
+	assert_near(view.modulate.a, 0.5 * 0.35, "the slider at 50 with a full fade")
+	assert_near(MapFade.FADED, 0.35)
+	hud.set_map_opacity(100)
+	hud.set_map_alpha(1.0, view)
+	assert_near(view.modulate.a, 1.0, "at 100 and whole, as before")
+	hud.free()
+	# The scene hands the setting to the HUD and no longer writes the map's alpha itself.
+	var scene := FileAccess.get_file_as_string("res://scripts/scenes/floor_scene.gd")
+	assert_true(scene.contains("_hud.set_map_opacity(Settings.game(\"minimap_opacity\"))"))
+	assert_false(scene.contains("_mini_map.modulate.a"), "nothing writes over the slider")
+
+
 # F11 and Alt+Enter switch fullscreen, so a key cell waiting for a key never takes them (OptionsPanel._input).
 func test_the_fullscreen_keys_are_the_window_keys() -> void:
 	var f11 := InputEventKey.new()
