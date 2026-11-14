@@ -167,7 +167,7 @@ func test_every_floor_builds_within_the_retry_budget() -> void:
 
 
 # A checkpoint written before the quiet start rebuilds its floor by the old rule, so its room ids still
-# name the same rooms; the start is quiet all the same.
+# name the same rooms; the start is not quiet, as it was not then.
 func test_the_old_rule_still_builds_without_the_two_ways_check() -> void:
 	var pool := _pool()
 	var differs := 0
@@ -176,7 +176,7 @@ func test_the_old_rule_still_builds_without_the_two_ways_check() -> void:
 		rng.seed = seed_value
 		var old := FloorBuilder.build_from_pool(rng, _def(), pool, false)
 		assert_true(old != null, "seed %d" % seed_value)
-		assert_true(old.room(old.start_id).quiet, "seed %d" % seed_value)
+		assert_false(old.room(old.start_id).quiet, "old rule, seed %d" % seed_value)
 		if RunCheckpoint.map_signature(old) != RunCheckpoint.map_signature(_build(seed_value, pool)):
 			differs += 1
 	assert_true(differs > 0, "the check changes some floors, so old checkpoints need the old rule")

@@ -73,9 +73,11 @@ static func _try_build(rng: RandomNumberGenerator, def: FloorDef, picker: _Layou
 			map.join(map.room(map.main_path[i - 1]), room)
 	map.start_id = map.main_path[0]
 	map.boss_id = map.main_path[-1]
-	# The first room is quiet: a look round and a choice of ways before the first fight.
-	map.room(map.start_id).quiet = true
-	map.room(map.start_id).extra_enemies = 0
+	# The first room is quiet: a look round and a choice of ways before the first fight. A floor rebuilt by
+	# the old rules (an old checkpoint) keeps its start as it was, an ordinary first fight.
+	if quiet_start:
+		map.room(map.start_id).quiet = true
+		map.room(map.start_id).extra_enemies = 0
 	for room_type in branch_types:
 		if _attach(rng, map, _regular_rooms_except(map, [map.boss_id]), room_type, picker, def) == null:
 			return null

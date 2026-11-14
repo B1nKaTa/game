@@ -277,7 +277,7 @@ func test_an_old_checkpoint_rebuilds_the_floor_it_was_written_on() -> void:
 	var old := RunCheckpoint.build_floor(def, "1364138424", pool, false)
 	assert_eq(old.rooms.size(), 19)
 	assert_eq(old.room(old.start_id).cell, Vector2i(3, 6))
-	assert_true(old.room(old.start_id).quiet, "its start is quiet all the same")
+	assert_false(old.room(old.start_id).quiet, "its start is an ordinary first fight, as it was")
 	var now := RunCheckpoint.build_floor(def, "1364138424", pool)
 	assert_eq(now.rooms.size(), 17)
 	assert_eq(now.room(now.start_id).cell, Vector2i(2, 3))
@@ -318,6 +318,22 @@ func test_an_old_floor_resumes_on_the_same_map_every_time() -> void:
 	assert_eq(RunCheckpoint.map_signature(second._map), RunCheckpoint.map_signature(map), "the second resume rebuilds the same floor")
 	_free_scene(first)
 	_free_scene(second)
+
+
+# An old checkpoint written during the floor's first fight stands in the start room; that start was never
+# quiet, so the resumed first room is an ordinary fight again, with its enemies.
+func test_an_old_checkpoint_from_the_first_fight_resumes_into_a_fight() -> void:
+	var def: FloorDef = load("res://data/floors/floor_1.tres")
+	var start_id: int = RunCheckpoint.build_floor(def, "1364138424", [], false).start_id
+	var checkpoint := _old_floor_checkpoint()
+	checkpoint["room"] = start_id
+	checkpoint["visited"] = [start_id]
+	var scene := _resume(checkpoint)
+	var map: FloorMap = scene._map
+	assert_eq(map.start_id, start_id)
+	assert_false(map.room(map.start_id).quiet, "no quiet start for an old floor")
+	assert_eq(scene.floor_marks()[RunCheckpoint.QUIET_START], false)
+	_free_scene(scene)
 
 
 # A checkpoint written since keeps the new rule through its own resume and the checkpoint after it.
