@@ -73,6 +73,8 @@ var _quiet_start := true
 var _arrived_from := -1
 # Snapshots of cleared rooms from a checkpoint, by room id, to rebuild them from.
 var _restored := {}
+# Where write_checkpoint hands the checkpoint when set (the tests); else Progress.write_checkpoint.
+var checkpoint_writer := Callable()
 var _resumed := false
 # The last cleared room a checkpoint was written in on this map, and the room he came into it from.
 var _safe_room := -1
@@ -278,7 +280,11 @@ func write_checkpoint() -> bool:
 			from = _safe_from
 	var ending := RunCheckpoint.ending_to_dict(_run)
 	ending["pension_earned"] = maxi(_run.pension_earned - room_paid, 0)
+	# A resumed room not walked into since lives only in the checkpoint's copy; it stays saved, or the next
+	# resume would build it fresh, fight and rewards and all. A room walked into since is saved as it is now.
 	var rooms := {}
+	for id: int in _restored:
+		rooms[str(id)] = _restored[id]
 	for id: int in _room_views:
 		# Untyped: a typed assignment fails on a freed view before is_instance_valid can skip it.
 		var view = _room_views[id]
@@ -305,6 +311,8 @@ func write_checkpoint() -> bool:
 		"rules": _rules.to_dict(),
 	}
 	checkpoint.merge(floor_marks())
+	if checkpoint_writer.is_valid():
+		return checkpoint_writer.call(checkpoint)
 	return Progress.write_checkpoint(checkpoint)
 
 

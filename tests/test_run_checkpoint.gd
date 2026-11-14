@@ -335,6 +335,94 @@ func test_a_new_floor_resumes_by_the_new_rule() -> void:
 	_free_scene(scene)
 
 
+func _keep_written(checkpoint: Dictionary, into: Array) -> bool:
+	into.append(checkpoint)
+	return true
+
+
+# A cleared room of the checkpoint's map built as the floor scene builds it on walking in: from the
+# checkpoint's copy when it has one (_make_room_view), else fresh.
+func _walk_in(scene: Node, room_id: int, run: RunState, player: Player) -> RoomView:
+	var view := RoomView.new()
+	view.setup(scene._map.room(room_id), scene._map, scene._floor_def, run, player, RandomNumberGenerator.new(), scene._progress, null)
+	if scene._restored.has(room_id):
+		view.restore = scene._restored[room_id]
+	view._ready()
+	return view
+
+
+func _enemies_in(view: RoomView) -> int:
+	var count := 0
+	for child in view.get_children():
+		if child is Enemy:
+			count += 1
+	return count
+
+
+# Save and Quit twice. A resume writes a checkpoint at once, before he has walked back into most rooms;
+# those live only in the checkpoint's copy, and it must keep them. Else the second resume builds them
+# fresh, fight and rewards and all, and what he left there is gone. A room walked into since is saved
+# as it stands now.
+func test_a_second_save_and_quit_keeps_the_rooms_not_walked_into_since() -> void:
+	var def: FloorDef = load("res://data/floors/floor_1.tres")
+	var built := RunCheckpoint.build_floor(def, "1364138424", [], true)
+	var fights: Array[int] = []
+	for id: int in built.main_path:
+		var room := built.room(id)
+		if room.room_type == RoomLayout.TYPE_COMBAT and not room.quiet:
+			fights.append(id)
+	assert_true(fights.size() >= 2, "two fight rooms on the main path: %s" % str(fights))
+	var left: int = fights[0]
+	var here: int = fights[1]
+	var potion := {"kind": RoomView.KEEP_POTION, "id": "swift_tea", "cell": [3, 3]}
+	var first := _old_floor_checkpoint()
+	first[RunCheckpoint.QUIET_START] = true
+	first["room"] = here
+	first["visited"] = [left, here]
+	first["rooms"] = {str(left): {"cleared": true, "keep": [potion], "broken": []}, str(here): {"cleared": true, "keep": [potion], "broken": []}}
+	# The first resume stands him in `here`, where he takes the potion; `left` he never walks back into.
+	var scene := _resume(first)
+	var run := _fresh_run()
+	var player := Player.new()
+	player.setup(run)
+	scene._run = run
+	scene._current_id = here
+	var view := _walk_in(scene, here, run, player)
+	scene._room_views[here] = view
+	for child in view.get_children():
+		if child is Pickup and child.carry_kind == RoomRules.DROP_POTION:
+			child.collect()
+	var written: Array = []
+	scene.checkpoint_writer = _keep_written.bind(written)
+	# The test root never readies the Progress autoload; the checkpoint reads its Pension (nothing is saved).
+	var bank: ProgressData = Progress.data
+	if bank == null:
+		Progress.data = ProgressData.new()
+	assert_true(scene.write_checkpoint(), "the resume's checkpoint is written")
+	Progress.data = bank
+	var second: Dictionary = JSON.parse_string(JSON.stringify(written[0]))
+	var rooms: Dictionary = second["rooms"]
+	assert_true(rooms.has(str(left)), "the room not walked into since is kept: %s" % str(rooms.keys()))
+	assert_true(rooms.has(str(here)), "the room he stands in is kept")
+	assert_eq((rooms[str(here)]["keep"] as Array).size(), 0, "as it stands now: its potion was taken")
+	# The second resume, from what the first wrote.
+	var again := _resume(second)
+	var left_behind := FloorMapView.leftovers(again._map, again._progress)
+	assert_eq(left_behind.get(left), ["potion"] as Array[String], "the map still shows the potion left behind")
+	assert_false(left_behind.has(here), "and nothing where he took it")
+	var back := _walk_in(again, left, run, player)
+	assert_true(back.is_finished(), "the room comes back cleared")
+	assert_eq(_enemies_in(back), 0, "with no fight in it")
+	var keep: Array = back.snapshot()["keep"]
+	assert_eq(keep.size(), 1, "and only what he left, no new rewards: %s" % str(keep))
+	assert_eq(FloorMapView.leftover_kind(keep[0]) if keep.size() == 1 else "", "potion")
+	view.free()
+	back.free()
+	player.free()
+	_free_scene(scene)
+	_free_scene(again)
+
+
 func test_the_signature_tells_a_quiet_room_apart() -> void:
 	var def: FloorDef = load("res://data/floors/floor_1.tres")
 	var map := RunCheckpoint.build_floor(def, "1")
