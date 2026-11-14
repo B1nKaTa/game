@@ -26,6 +26,8 @@ const STAMP_FRAME := 2
 # Font's get_height and get_ascent count its fallback font too, which is taller.
 const FONT_LINE := 9
 const FONT_BASE := 7
+# The rows a glyph may fill, below its line's top (the same file: no glyph reaches past row 8).
+const FONT_GLYPH := 8
 
 
 # One block of colour: drawn on a CanvasItem, or painted into an Image.
@@ -58,6 +60,10 @@ static func line_height(font_size: int) -> float:
 
 static func ascent(font_size: int) -> float:
 	return float(FONT_BASE * font_size / HudStyle.SMALL)
+
+
+static func glyph_height(font_size: int) -> float:
+	return float(FONT_GLYPH * font_size / HudStyle.SMALL)
 
 
 # The baseline that centres a line of this size in a box's height.

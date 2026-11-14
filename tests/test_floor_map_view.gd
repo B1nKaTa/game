@@ -18,6 +18,7 @@ func test_a_room_is_drawn_at_its_grid_cell_from_the_corner_of_the_floor() -> voi
 
 
 func test_the_big_map_fits_every_built_floor_in_its_panel() -> void:
+	var stubs_tested := 0
 	for file in DirAccess.get_files_at("res://data/floors"):
 		if not file.ends_with(".tres"):
 			continue
@@ -47,6 +48,8 @@ func test_the_big_map_fits_every_built_floor_in_its_panel() -> void:
 				var from_rect := FloorMapView.room_rect(FloorMapView.map_position(map, from), origin, spacing)
 				var box := FloorMapView.stub_box(from_rect, stub["side"], spacing)
 				assert_true(FloorMapView.BIG_AREA.encloses(box), "%s seed %d stub %s" % [def.id, seed_value, str(box)])
+				stubs_tested += 1
+	assert_true(stubs_tested > 100, "stubs were tested: %d" % stubs_tested)
 
 
 func test_the_big_map_keeps_rooms_tall_enough_for_their_icons() -> void:
@@ -204,11 +207,11 @@ func test_the_key_lists_only_the_room_types_on_this_floor() -> void:
 	progress.enter(0)
 	var shown := FloorMapView.shown_ids(map, progress, false)
 	var stubs := FloorMapView.exit_stubs(map, progress, shown)
-	assert_eq(FloorMapView.key_icons(map, shown, stubs), ["C", "I", "$", "?"] as Array[String], "no secret before it is found")
+	assert_eq(FloorMapView.key_icons(map, progress, shown, stubs, false), ["C", "I", "$", "?"] as Array[String], "no secret before it is found")
 	progress.enter(3)
 	shown = FloorMapView.shown_ids(map, progress, false)
 	stubs = FloorMapView.exit_stubs(map, progress, shown)
-	assert_true(FloorMapView.key_icons(map, shown, stubs).has("S"), "a found secret joins the key")
+	assert_true(FloorMapView.key_icons(map, progress, shown, stubs, false).has("S"), "a found secret joins the key")
 	for icon in FloorMapView.KEY_ORDER:
 		assert_true(FloorMapView.KEY_LABELS.has(icon), icon)
 	for icon: String in RoomRules.ICONS.values():
@@ -421,4 +424,166 @@ func test_the_big_map_tells_where_it_drew_each_room_and_the_stamp() -> void:
 		assert_true(rect.encloses(FloorMapView.room_sign_rect(rect, FloorMapView.room_size(spacing))), "the sign's spot is inside room %d" % room_id)
 	assert_true(FloorMapView.BIG_AREA.encloses(view.big_stamp_rect), str(view.big_stamp_rect))
 	assert_true(view.big_stamp_rect.intersects(view.big_room_rects[0]), "the stamp is pressed on the current room's corner")
+	view.free()
+
+
+# --- fix round 1 ---
+
+# The key explains only the marks on the sheet: with only the start walked, no shop, treasure room or
+# boss is listed unless a stub from the start shows its sign.
+func test_the_key_gives_away_no_room_not_yet_found() -> void:
+	var def: FloorDef = load("res://data/floors/floor_1.tres")
+	var pool := RoomCatalog.load_valid(def.rooms_dir)
+	var hidden_somewhere := 0
+	for seed_value in 30:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = seed_value
+		var map := FloorBuilder.build_from_pool(rng, def, pool)
+		var progress := FloorProgress.new(map)
+		progress.enter(map.start_id)
+		var shown := FloorMapView.shown_ids(map, progress, false)
+		var stubs := FloorMapView.exit_stubs(map, progress, shown)
+		var stub_icons := {}
+		for stub in stubs:
+			stub_icons[stub["icon"]] = true
+		var icons := FloorMapView.key_icons(map, progress, shown, stubs, false)
+		for icon: String in ["$", "T", "B", "M", "H", "A"]:
+			assert_eq(icons.has(icon), stub_icons.has(icon), "seed %d: %s only when its stub shows" % [seed_value, icon])
+		for room in map.rooms:
+			if room.room_type == RoomLayout.TYPE_SHOP and not stub_icons.has("$"):
+				hidden_somewhere += 1
+	assert_true(hidden_somewhere > 0, "some floor had a shop the key kept quiet about")
+	# Night Vision's secret is drawn as its eye, and the key lists the eye; a blank Floor Plan room adds nothing.
+	var map := _cross_floor()
+	var progress := FloorProgress.new(map)
+	progress.enter(0)
+	var shown := FloorMapView.shown_ids(map, progress, true, true)
+	assert_eq(FloorMapView.drawn_sign(map, progress, map.room(3), false), "S", "the secret's eye")
+	assert_true(FloorMapView.key_icons(map, progress, shown, FloorMapView.exit_stubs(map, progress, shown), false).has("S"))
+
+
+# A boss room shown by the Fortune Teller's Card, beside a walked room: the walked room's door into it
+# is a corridor with a door gap at both ends, not nothing.
+func test_a_door_into_a_room_shown_but_not_walked_keeps_its_corridor() -> void:
+	var map := FloorMap.new()
+	var start := _add(map, RoomLayout.TYPE_COMBAT, Vector2i(0, 0))
+	var boss := _add(map, RoomLayout.TYPE_FLOOR_BOSS, Vector2i(1, 0))
+	map.join(start, boss)
+	var progress := FloorProgress.new(map)
+	progress.enter(start.id)
+	assert_true(FloorMapView.shown_ids(map, progress, false, false, true).has(boss.id))
+	assert_true(FloorMapView.corridor_shown(start, boss, progress, false), "a walked room's door into a shown room")
+	var view := FloorMapView.new()
+	view.setup(map, progress, true, "The Records Basement")
+	view.set_current(start.id)
+	view.boss_names = {RoomLayout.TYPE_FLOOR_BOSS: "Regional Reaper"}
+	var image := _paper_image()
+	view.paint_big(image)
+	var spacing := FloorMapView.big_spacing(map.bounds().size)
+	var half := MapPaper.corridor_half(FloorMapView.room_size(spacing))
+	var from: Rect2 = view.big_room_rects[start.id]
+	var to: Rect2 = view.big_room_rects[boss.id]
+	var mid := Vector2i(MapPaper.edge_mid(from, Vector2i.RIGHT))
+	assert_true(image.get_pixel(mid.x + 1, mid.y - half).is_equal_approx(MapPaper.PENCIL), "the corridor's top wall")
+	assert_true(image.get_pixel(mid.x + 1, mid.y + half - 1).is_equal_approx(MapPaper.PENCIL), "the corridor's bottom wall")
+	assert_true(image.get_pixel(mid.x - 1, mid.y).is_equal_approx(MapPaper.ROOM_FILL), "a door gap in the walked room")
+	var far := Vector2i(MapPaper.edge_mid(to, Vector2i.LEFT))
+	assert_true(image.get_pixel(far.x, far.y).is_equal_approx(MapPaper.PAPER), "a door gap in the boss room")
+	assert_true(FloorMapView.exit_stubs(map, progress, FloorMapView.shown_ids(map, progress, false, false, true)).is_empty(), "a corridor, not also a stub")
+	view.free()
+
+
+# Under the Floor Plan, a door sign he saw from a walked room stays on the plan, in the room behind it.
+func test_a_seen_door_sign_survives_the_floor_plan() -> void:
+	var map := _cross_floor()
+	var progress := FloorProgress.new(map)
+	progress.enter(0)
+	assert_eq(FloorMapView.drawn_sign(map, progress, map.room(1), false), "$", "the shop's sign, seen from the start")
+	var far := _add(map, RoomLayout.TYPE_TREASURE, Vector2i(3, 1))
+	map.join(map.room(1), far)
+	assert_eq(FloorMapView.drawn_sign(map, progress, far, false), "", "a Floor Plan room he never saw a door to says nothing")
+	var shown := FloorMapView.shown_ids(map, progress, false, true)
+	var icons := FloorMapView.key_icons(map, progress, shown, FloorMapView.exit_stubs(map, progress, shown), false)
+	assert_true(icons.has("$") and not icons.has("T"), str(icons))
+
+
+func _items_view(def: FloorDef, seed_value: int) -> FloorMapView:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value
+	var map := FloorBuilder.build_from_pool(rng, def, RoomCatalog.load_valid(def.rooms_dir))
+	var progress := FloorProgress.new(map)
+	for id: int in map.main_path.slice(0, 4):
+		progress.enter(id)
+	var view := FloorMapView.new()
+	view.setup(map, progress, true, def.display_name)
+	view.set_current(map.main_path[1])
+	view.show_secrets = true
+	view.show_plan = true
+	view.boss_names = FloorMapView.boss_names_for(def)
+	return view
+
+
+# A boss's name never covers a room, a corridor or a stub (it once erased a corridor and a wall): it sits
+# near its room where the plan is clear, else in the key's row under the entries.
+func test_a_boss_name_covers_no_room_corridor_or_stub() -> void:
+	var named := 0
+	var in_key := 0
+	for floor_id in ["floor_1", "seance_hotline"]:
+		var def: FloorDef = load("res://data/floors/%s.tres" % floor_id)
+		for seed_value in range(1, 7):
+			for plan in [true, false]:
+				var view := _items_view(def, seed_value)
+				view.show_plan = plan
+				view.paint_big(_paper_image())
+				for patch: Rect2 in view.big_name_rects:
+					named += 1
+					if FloorMapView.KEY_RECT.encloses(patch):
+						in_key += 1
+						continue
+					assert_true(FloorMapView.BIG_AREA.encloses(patch), "%s seed %d: %s" % [floor_id, seed_value, str(patch)])
+					for room_id: int in view.big_room_rects:
+						assert_eq(patch.intersection(view.big_room_rects[room_id]).get_area(), 0.0, "%s seed %d plan %s: a name over room %d" % [floor_id, seed_value, str(plan), room_id])
+					for link: Rect2 in view.big_link_rects:
+						assert_eq(patch.intersection(link).get_area(), 0.0, "%s seed %d plan %s: a name over a corridor %s" % [floor_id, seed_value, str(plan), str(link)])
+					assert_eq(patch.intersection(view.big_stamp_rect).get_area(), 0.0, "and the stamp keeps off it")
+				view.free()
+	assert_true(named >= 24, "names were placed: %d" % named)
+	assert_true(in_key < named, "most names sit by their rooms: %d of %d in the key" % [in_key, named])
+	# Both of any floor's bosses fit the key's name row, each with its sign.
+	var room := FloorMapView.KEY_RECT.size.x - FloorMapView.KEY_TITLE_WIDTH - 4.0
+	for file in DirAccess.get_files_at("res://data/floors"):
+		if file.ends_with(".tres"):
+			var names := FloorMapView.boss_names_for(load("res://data/floors/" + file))
+			var width := 0.0
+			for words: String in names.values():
+				width += DoorSign.SIZE + 2.0 + _width(words, HudStyle.SMALL) + 2.0 + 12.0
+			assert_true(width <= room, "%s: %s" % [file, str(names)])
+	# A name's patch is the glyph rows only: no glyph of the font reaches below them.
+	var fnt := FileAccess.get_file_as_string(HudStyle.FONT_PATH)
+	var glyph := RegEx.create_from_string("height=(\\d+) xoffset=-?\\d+ yoffset=(-?\\d+)")
+	for found in glyph.search_all(fnt):
+		assert_true(int(found.get_string(1)) + int(found.get_string(2)) <= MapPaper.FONT_GLYPH, found.get_string())
+
+
+# The Crossroads' smaller square sits so the middle of each side matches its cell's, where corridors run.
+func test_the_crossroads_door_gaps_meet_their_corridors() -> void:
+	var map := FloorMap.new()
+	var start := _add(map, RoomLayout.TYPE_COMBAT, Vector2i(1, 1))
+	var crossroads := _add(map, RoomLayout.TYPE_CROSSROADS, Vector2i(1, 0))
+	crossroads.doors[Vector2i.DOWN] = start.id
+	var progress := FloorProgress.new(map)
+	progress.enter(crossroads.id)
+	progress.enter(start.id)
+	var view := FloorMapView.new()
+	view.setup(map, progress, true, "The Records Basement")
+	view.set_current(start.id)
+	view.paint_big(_paper_image())
+	var spacing := FloorMapView.big_spacing(map.bounds().size)
+	var origin := FloorMapView.big_origin(map.bounds().size, spacing)
+	var cell := FloorMapView.room_rect(FloorMapView.map_position(map, crossroads), origin, spacing)
+	var small: Rect2 = view.big_room_rects[crossroads.id]
+	assert_true(small.size.x < cell.size.x, "it is drawn smaller")
+	for side: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+		var along := Vector2(absi(side.y), absi(side.x))
+		assert_eq(MapPaper.edge_mid(small, side) * along, MapPaper.edge_mid(cell, side) * along, str(side))
 	view.free()
