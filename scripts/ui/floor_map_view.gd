@@ -11,18 +11,21 @@ const NAME_BASELINE := 10.0
 const NAME_COLOR := Color("ece9e0")
 # The small map is a scrap of the big map's paper: rooms, corridors and exit stubs in ink, the room he
 # stands in outlined in the stamp's red. Its rooms are 12x8, too small for a 9 px sign at 1x, so each
-# sign shows as a dot of colour (MINI_DOTS) in the room's middle, or past a stub's end.
+# sign shows as a dot of colour (MINI_DOTS) in the room's middle, or past a stub's end. The big map's key
+# shows each sign's dot beside it. The Crossroads is a whole room here, with its own dot: drawn smaller,
+# its corridors were as wide as it and the four of them read as a plus.
 const MINI_RECT := Rect2(528, 13, 108, 58)
 const CROSSROADS_SCALE := 0.65
 const MINI_SPACING := Vector2(15, 11)
 const MINI_DOT := 4
 const MINI_STUB_DASH := 1
-# Each sign's dot by its letter: the old small map's room colours, darkened to read on the paper and on
-# a walked room's floor. A plain fight room ("C") stays blank and the Crossroads ("+") is a smaller square.
+# Each sign's dot by its letter. Every two dots, and each dot against the paper, the room floor, the ink,
+# the pencil and the stamp's red, are at least 23 apart in CIEDE2000, and each dot reads on the paper
+# (contrast 3 or more). A plain fight room ("C") stays blank.
 const MINI_DOTS := {
-	"v": Color("7d6a45"), "I": Color("2f4fb3"), "H": Color("c0392b"), "$": Color("5a7a1a"),
-	"T": Color("1d7a5e"), "?": Color("5f6670"), "A": Color("a3338f"), "S": Color("6a4a9c"),
-	"V": Color("1b7a99"), "M": Color("b5531a"), "B": Color("866a08"),
+	"v": Color("008d68"), "+": Color("004849"), "I": Color("386dfd"), "H": Color("f3007a"),
+	"$": Color("0d5202"), "T": Color("738500"), "?": Color("52526f"), "A": Color("1606d4"),
+	"S": Color("c70aff"), "V": Color("0d89a0"), "M": Color("c46100"), "B": Color("810059"),
 }
 # The big map is a floor plan on a sheet of the case file's paper (MapPaper), over the dimmed game: a
 # manila tab, the floor's name over an ink rule, the run's sets, the plan on graph paper, and a key.
@@ -52,6 +55,8 @@ const KEY_TITLE_WIDTH := 30.0
 const KEY_COLUMNS := 6
 const KEY_ROWS := 3
 const KEY_ROW_HEIGHT := 14.0
+# Room for an entry's dot swatch (MINI_DOT) and a pixel's gap after it.
+const KEY_SWATCH_ROOM := 6.0
 const KEY_ORDER := ["v", "+", "C", "I", "H", "$", "T", "?", "A", "S", "V", "M", "B"]
 const KEY_LABELS := {
 	"v": "Stairs", "+": "Crossroads", "C": "Fight", "I": "Item", "H": "Healing", "$": "Shop", "T": "Treasure",
@@ -83,8 +88,8 @@ var big_stamp_rect := Rect2()
 # The corridors' and stubs' footprints, and the boss names' patches, as last drawn.
 var big_link_rects: Array[Rect2] = []
 var big_name_rects: Array[Rect2] = []
-# Each room the small map last drew, by id, as its box there (the Crossroads' smaller one). A room's dot
-# sits in mini_dot_rect of its box, which leaves each corner inside its edge clear.
+# Each room the small map last drew, by id, as its box there (a whole room, the Crossroads too). A
+# room's dot sits in mini_dot_rect of its box, which leaves each corner inside its edge clear.
 var mini_room_rects := {}
 # The run's formed sets, listed on the paused big map as its run summary.
 var set_names := PackedStringArray():
@@ -216,9 +221,19 @@ static func key_column_width() -> float:
 	return floorf((KEY_RECT.size.x - KEY_TITLE_WIDTH - 4.0) / KEY_COLUMNS)
 
 
-# The room a key entry's label has, right of its sign.
+# The room a key entry's label has, right of its sign and the swatch of its small-map dot.
 static func key_label_width() -> float:
-	return key_column_width() - DoorSign.SIZE - 5.0
+	return key_column_width() - DoorSign.SIZE - 5.0 - KEY_SWATCH_ROOM
+
+
+# Where key entry i starts: its sign's top left.
+static func key_entry_at(i: int) -> Vector2:
+	return KEY_RECT.position + Vector2(KEY_TITLE_WIDTH + (i % KEY_COLUMNS) * key_column_width(), 5.0 + floorf(i / float(KEY_COLUMNS)) * KEY_ROW_HEIGHT)
+
+
+# The swatch of a key entry's small-map dot, between its sign and its label, level with the sign's middle.
+static func key_swatch_rect(at: Vector2) -> Rect2:
+	return Rect2(at + Vector2(DoorSign.SIZE + 2.0, floorf((DoorSign.SIZE - MINI_DOT) / 2.0)), Vector2(MINI_DOT, MINI_DOT))
 
 
 # The floor's name heads the sheet in capitals, large when it fits, else in the small size.
@@ -475,7 +490,7 @@ func paint_mini(canvas: Object) -> void:
 	var shown := shown_ids(_map, _progress, show_secrets, show_plan, with_bosses)
 	mini_room_rects.clear()
 	for room_id: int in shown:
-		var rect := _drawn_rect(_map.room(room_id), origin, spacing)
+		var rect := _rect_of(_map.room(room_id), origin, spacing)
 		if area.encloses(rect):
 			mini_room_rects[room_id] = rect
 	var gaps := {}
@@ -498,7 +513,7 @@ func paint_mini(canvas: Object) -> void:
 			continue
 		(gaps.get_or_add(stub["from"], []) as Array).append(side)
 		MapPaper.stub(canvas, from_rect, side, length, half, 1, MINI_STUB_DASH, MapPaper.INK)
-		MapPaper.fill(canvas, dot, MINI_DOTS.get(stub["icon"], MINI_DOTS["?"]))
+		MapPaper.fill(canvas, dot, MINI_DOTS[stub["icon"]])
 	for room_id: int in mini_room_rects:
 		_paint_mini_room(canvas, _map.room(room_id), mini_room_rects[room_id], gaps.get(room_id, []), half, with_bosses)
 
@@ -727,9 +742,8 @@ func _paint_key(canvas: Object, icons: Array[String], named: Array[String]) -> v
 	var ascent := MapPaper.ascent(HudStyle.SMALL)
 	MapPaper.frame(canvas, KEY_RECT, 1, MapPaper.INK)
 	MapPaper.text(canvas, KEY_RECT.position + Vector2(6, 5 + ascent), tr(KEY_TITLE), HudStyle.SMALL, MapPaper.INK)
-	var column := key_column_width()
 	for i in icons.size():
-		var at := KEY_RECT.position + Vector2(KEY_TITLE_WIDTH + (i % KEY_COLUMNS) * column, 5.0 + floorf(i / float(KEY_COLUMNS)) * KEY_ROW_HEIGHT)
+		var at := key_entry_at(i)
 		var box := Rect2(at, Vector2(DoorSign.SIZE, DoorSign.SIZE))
 		match icons[i]:
 			"C":
@@ -738,7 +752,9 @@ func _paint_key(canvas: Object, icons: Array[String], named: Array[String]) -> v
 				MapPaper.frame(canvas, box.grow(-1.0), 1, MapPaper.INK)
 			_:
 				MapPaper.ink_sign(canvas, box.get_center(), icons[i], 1)
-		MapPaper.text(canvas, at + Vector2(DoorSign.SIZE + 3.0, 1.0 + ascent), tr(String(KEY_LABELS[icons[i]])), HudStyle.SMALL, MapPaper.INK)
+		if MINI_DOTS.has(icons[i]):
+			MapPaper.fill(canvas, key_swatch_rect(at), MINI_DOTS[icons[i]])
+		MapPaper.text(canvas, at + Vector2(DoorSign.SIZE + 3.0 + KEY_SWATCH_ROOM, 1.0 + ascent), tr(String(KEY_LABELS[icons[i]])), HudStyle.SMALL, MapPaper.INK)
 	var at := KEY_RECT.position + Vector2(KEY_TITLE_WIDTH, 5.0 + ceilf(icons.size() / float(KEY_COLUMNS)) * KEY_ROW_HEIGHT)
 	var full: Array[String] = []
 	for icon in named:

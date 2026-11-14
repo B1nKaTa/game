@@ -77,9 +77,7 @@ func test_rooms_keep_a_gap_their_door_link_can_show_in() -> void:
 func test_every_sign_has_a_dot_on_the_small_map() -> void:
 	for room_type: String in RoomRules.ICONS:
 		var icon := RoomRules.door_icon(room_type)
-		# The Crossroads is drawn blank and smaller on both maps, as its sign is a signpost.
-		var dotted := DoorSign.has_sign(icon) and room_type != RoomLayout.TYPE_CROSSROADS
-		assert_eq(FloorMapView.MINI_DOTS.has(icon), dotted, "%s (%s)" % [room_type, icon])
+		assert_eq(FloorMapView.MINI_DOTS.has(icon), DoorSign.has_sign(icon), "%s (%s)" % [room_type, icon])
 	assert_true(FloorMapView.MINI_DOTS.has("?"), "the unknown, as a stub to a plain fight room ends")
 	var seen := {}
 	for icon: String in FloorMapView.MINI_DOTS:
@@ -103,6 +101,89 @@ func _contrast(a: Color, b: Color) -> float:
 	var la := _luminance(a)
 	var lb := _luminance(b)
 	return (maxf(la, lb) + 0.05) / (minf(la, lb) + 0.05)
+
+
+# A 4 px dot at 1x is told apart only by a clear difference: every two dots, and each dot against the
+# lines and grounds it sits on or beside (the stamp's red outlines the current room), are at least 20
+# apart in CIEDE2000. Godot has no CIELAB, so the test computes it (sRGB, D65), checked first against
+# published reference pairs.
+const MIN_DOT_DISTANCE := 20.0
+
+
+func test_every_two_dots_are_far_apart_in_ciede2000() -> void:
+	# Reference pairs from Sharma, Wu and Dalal's CIEDE2000 test data.
+	assert_near(_de00_lab(Vector3(50.0, 2.6772, -79.7751), Vector3(50.0, 0.0, -82.7485)), 2.0425, "reference pair 1")
+	assert_near(_de00_lab(Vector3(50.0, 2.5, 0.0), Vector3(73.0, 25.0, -18.0)), 27.1492, "reference pair 7")
+	assert_near(_de00_lab(Vector3(2.0776, 0.0795, -1.1350), Vector3(0.9033, -0.0636, -0.5514)), 0.9082, "reference pair 34")
+	var icons: Array = FloorMapView.MINI_DOTS.keys()
+	var nearest := INF
+	for i in icons.size():
+		var a: Color = FloorMapView.MINI_DOTS[icons[i]]
+		for j in range(i + 1, icons.size()):
+			var d := _de00(a, FloorMapView.MINI_DOTS[icons[j]])
+			nearest = minf(nearest, d)
+			assert_true(d >= MIN_DOT_DISTANCE, "%s and %s: %.1f" % [icons[i], icons[j], d])
+		for line: Color in [MapPaper.STAMP, MapPaper.INK, MapPaper.PENCIL, MapPaper.PAPER, MapPaper.ROOM_FILL]:
+			var d := _de00(a, line)
+			assert_true(d >= MIN_DOT_DISTANCE, "%s against %s: %.1f" % [icons[i], line.to_html(false), d])
+	assert_true(nearest < 100.0, "pairs were measured")
+
+
+func _lab(c: Color) -> Vector3:
+	var lin: Array[float] = []
+	for v: float in [c.r, c.g, c.b]:
+		lin.append(v / 12.92 if v <= 0.04045 else pow((v + 0.055) / 1.055, 2.4))
+	var x := (0.4124 * lin[0] + 0.3576 * lin[1] + 0.1805 * lin[2]) / 0.95047
+	var y := 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2]
+	var z := (0.0193 * lin[0] + 0.1192 * lin[1] + 0.9505 * lin[2]) / 1.08883
+	var f := func(t: float) -> float: return pow(t, 1.0 / 3.0) if t > 0.008856 else 7.787 * t + 16.0 / 116.0
+	var fy: float = f.call(y)
+	return Vector3(116.0 * fy - 16.0, 500.0 * (float(f.call(x)) - fy), 200.0 * (fy - float(f.call(z))))
+
+
+func _de00(a: Color, b: Color) -> float:
+	return _de00_lab(_lab(a), _lab(b))
+
+
+func _de00_lab(p: Vector3, q: Vector3) -> float:
+	var c1 := Vector2(p.y, p.z).length()
+	var c2 := Vector2(q.y, q.z).length()
+	var cb := (c1 + c2) / 2.0
+	var g := 0.5 * (1.0 - sqrt(pow(cb, 7.0) / (pow(cb, 7.0) + pow(25.0, 7.0))))
+	var a1 := (1.0 + g) * p.y
+	var a2 := (1.0 + g) * q.y
+	var c1p := Vector2(a1, p.z).length()
+	var c2p := Vector2(a2, q.z).length()
+	var h1 := fposmod(rad_to_deg(atan2(p.z, a1)), 360.0) if c1p > 0.0 else 0.0
+	var h2 := fposmod(rad_to_deg(atan2(q.z, a2)), 360.0) if c2p > 0.0 else 0.0
+	var dl := q.x - p.x
+	var dc := c2p - c1p
+	var dh := 0.0
+	if c1p * c2p != 0.0:
+		dh = h2 - h1
+		if dh > 180.0:
+			dh -= 360.0
+		elif dh < -180.0:
+			dh += 360.0
+	var dhh := 2.0 * sqrt(c1p * c2p) * sin(deg_to_rad(dh) / 2.0)
+	var lb := (p.x + q.x) / 2.0
+	var cbp := (c1p + c2p) / 2.0
+	var hb := h1 + h2
+	if c1p * c2p != 0.0:
+		if absf(h1 - h2) <= 180.0:
+			hb = (h1 + h2) / 2.0
+		elif h1 + h2 < 360.0:
+			hb = (h1 + h2 + 360.0) / 2.0
+		else:
+			hb = (h1 + h2 - 360.0) / 2.0
+	var t := 1.0 - 0.17 * cos(deg_to_rad(hb - 30.0)) + 0.24 * cos(deg_to_rad(2.0 * hb)) + 0.32 * cos(deg_to_rad(3.0 * hb + 6.0)) - 0.20 * cos(deg_to_rad(4.0 * hb - 63.0))
+	var dtheta := 30.0 * exp(-pow((hb - 275.0) / 25.0, 2.0))
+	var rc := 2.0 * sqrt(pow(cbp, 7.0) / (pow(cbp, 7.0) + pow(25.0, 7.0)))
+	var sl := 1.0 + 0.015 * pow(lb - 50.0, 2.0) / sqrt(20.0 + pow(lb - 50.0, 2.0))
+	var sc := 1.0 + 0.045 * cbp
+	var sh := 1.0 + 0.015 * cbp * t
+	var rt := -sin(deg_to_rad(2.0 * dtheta)) * rc
+	return sqrt(pow(dl / sl, 2.0) + pow(dc / sc, 2.0) + pow(dhh / sh, 2.0) + rt * (dc / sc) * (dhh / sh))
 
 
 func test_night_vision_shows_secret_rooms_before_they_are_found() -> void:
@@ -904,4 +985,95 @@ func test_the_small_map_tells_where_it_drew_each_room() -> void:
 		assert_true(inside.encloses(dot), "the dot inside room %d's edge" % room_id)
 		for corner: Vector2 in [inside.position, Vector2(inside.end.x - 2.0, inside.position.y), Vector2(inside.position.x, inside.end.y - 2.0), inside.end - Vector2(2, 2)]:
 			assert_false(dot.grow(1.0).intersects(Rect2(corner, Vector2(2, 2))), "a 2 px corner of room %d stays clear" % room_id)
+	view.free()
+
+
+# --- fix round 1 ---
+
+# A Crossroads with a door on every side. Drawn as a smaller square on the small map, its corridors were
+# as wide as it, and the hub's outline read as a plus. It is a whole room there now, with its own dot,
+# and the shape painted round it is a room with doors: each corridor at most half as wide as the room
+# on its side and shorter than half its height, so no two arms of equal length run through it.
+func test_a_four_door_crossroads_on_the_small_map_is_no_plus() -> void:
+	var map := FloorMap.new()
+	var hub := _add(map, RoomLayout.TYPE_CROSSROADS, Vector2i(1, 1))
+	for cell: Vector2i in [Vector2i(1, 0), Vector2i(2, 1), Vector2i(1, 2), Vector2i(0, 1)]:
+		map.join(hub, _add(map, RoomLayout.TYPE_ITEM, cell))
+	var progress := FloorProgress.new(map)
+	for room in map.rooms:
+		progress.enter(room.id)
+	var view := _mini_view(map, progress, 1)
+	var image := _paper_image()
+	view.paint_mini(image)
+	var rect: Rect2 = view.mini_room_rects[hub.id]
+	var room := FloorMapView.room_size(FloorMapView.MINI_SPACING)
+	assert_eq(rect.size, room, "a whole room, not a smaller square")
+	assert_true(image.get_pixelv(Vector2i(FloorMapView.mini_dot_rect(rect).position)).is_equal_approx(FloorMapView.MINI_DOTS["+"]), "its own dot")
+	var gap := FloorMapView.MINI_SPACING - room
+	for side: Vector2i in [Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]:
+		# Across the gap's middle on this side: the corridor's span, from its first marked pixel to its last.
+		var length := int(gap.y if side.y != 0 else gap.x)
+		var at := Vector2i(MapPaper.edge_mid(rect, side)) + side * (length / 2 + (0 if side.x > 0 or side.y > 0 else 1))
+		var across := Vector2i(absi(side.y), absi(side.x))
+		var first := 999
+		var last := -999
+		for k in range(-10, 11):
+			var p := at + across * k
+			if not image.get_pixelv(p).is_equal_approx(MapPaper.PAPER):
+				first = mini(first, k)
+				last = maxi(last, k)
+		var width := last - first + 1
+		var hub_side := rect.size.x if side.y != 0 else rect.size.y
+		assert_true(width >= 2 and width * 2 <= hub_side, "%s: a corridor %d px wide against the room's %d" % [str(side), width, hub_side])
+		assert_true(length * 2 < minf(rect.size.x, rect.size.y), "%s: a corridor %d px long" % [str(side), length])
+	assert_true(_crossings(image, FloorMapView.MINI_RECT).is_empty())
+	view.free()
+
+
+# A stub into a Crossroads ends in the Crossroads' own dot, as the big map ends it in its sign.
+func test_a_stub_into_a_crossroads_ends_in_its_dot() -> void:
+	var map := FloorMap.new()
+	var start := _add(map, RoomLayout.TYPE_COMBAT, Vector2i(0, 0))
+	var hub := _add(map, RoomLayout.TYPE_CROSSROADS, Vector2i(1, 0))
+	map.join(start, hub)
+	var progress := FloorProgress.new(map)
+	progress.enter(start.id)
+	var stubs := FloorMapView.exit_stubs(map, progress, FloorMapView.shown_ids(map, progress, false))
+	assert_eq(stubs.size(), 1)
+	assert_eq(stubs[0]["icon"], "+")
+	var view := _mini_view(map, progress, start.id)
+	var image := _paper_image()
+	view.paint_mini(image)
+	var dot := FloorMapView.mini_stub_dot(view.mini_room_rects[start.id], Vector2i.RIGHT)
+	assert_true(image.get_pixelv(Vector2i(dot.position)).is_equal_approx(FloorMapView.MINI_DOTS["+"]), "the Crossroads' dot, not the unknown's")
+	view.free()
+
+
+# The dots have a key: each big-map key entry with a dot shows a swatch of it between its sign and its
+# label. A plain fight room has no dot and no swatch.
+func test_the_big_maps_key_shows_each_dot() -> void:
+	var map := _cross_floor()
+	var progress := FloorProgress.new(map)
+	progress.enter(0)
+	var view := FloorMapView.new()
+	view.setup(map, progress, true, "The Records Basement")
+	view.set_current(0)
+	var image := _paper_image()
+	view.paint_big(image)
+	var shown := FloorMapView.shown_ids(map, progress, false)
+	var icons := FloorMapView.key_icons(map, progress, shown, FloorMapView.exit_stubs(map, progress, shown), false)
+	var swatches := 0
+	for i in icons.size():
+		var at := FloorMapView.key_entry_at(i)
+		var swatch := FloorMapView.key_swatch_rect(at)
+		assert_true(FloorMapView.KEY_RECT.encloses(swatch))
+		assert_false(swatch.intersects(Rect2(at, Vector2(DoorSign.SIZE, DoorSign.SIZE))), "clear of the sign")
+		assert_true(swatch.end.x < at.x + DoorSign.SIZE + 3.0 + FloorMapView.KEY_SWATCH_ROOM, "clear of the label")
+		var c := image.get_pixelv(Vector2i(swatch.position))
+		if FloorMapView.MINI_DOTS.has(icons[i]):
+			assert_true(c.is_equal_approx(FloorMapView.MINI_DOTS[icons[i]]), "the %s swatch" % icons[i])
+			swatches += 1
+		else:
+			assert_true(c.is_equal_approx(MapPaper.PAPER), "no swatch for %s" % icons[i])
+	assert_eq(swatches, 3, "item, shop and unknown: %s" % str(icons))
 	view.free()

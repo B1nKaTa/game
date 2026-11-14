@@ -180,6 +180,11 @@ func test_the_minimap_opacity_is_the_level_the_fade_multiplies() -> void:
 	assert_near(hud.map_alpha(), MapFade.FADED, "the fade steps on from its own level, not the slider's")
 	assert_near(view.modulate.a, 0.5 * 0.35, "the slider at 50 with a full fade")
 	assert_near(MapFade.FADED, 0.35)
+	assert_near(hud._map_back.modulate.a, 0.5 * 0.35, "the map's panel with it")
+	# The room rule's icon under the map fades with it, but the Minimap slider is not its setting.
+	assert_near(hud._rule_icon.modulate.a, MapFade.FADED, "the rule icon: the fade only")
+	hud.set_map_alpha(1.0, view)
+	assert_near(hud._rule_icon.modulate.a, 1.0, "whole at the slider's 50")
 	hud.set_map_opacity(100)
 	hud.set_map_alpha(1.0, view)
 	assert_near(view.modulate.a, 1.0, "at 100 and whole, as before")

@@ -136,8 +136,9 @@ func test_no_door_sign_reads_as_a_cross() -> void:
 
 
 # The big map drew the Crossroads' letter, a literal "+", in its room. Both maps are painted into an image
-# with the Crossroads walked and a corridor on every side: nothing is inked inside its square, and the
-# pixel cross finder sees no crossing strokes anywhere on either map.
+# with the Crossroads walked and a corridor on every side: nothing is inked inside its square (the small
+# map's dot only), and the pixel cross finder sees no crossing strokes anywhere on either map. The small
+# map's four-door shape is checked in test_floor_map_view (test_a_four_door_crossroads_on_the_small_map_is_no_plus).
 func test_neither_map_draws_a_plus_for_the_crossroads() -> void:
 	var map := FloorMap.new()
 	var rooms := {}
@@ -167,10 +168,13 @@ func test_neither_map_draws_a_plus_for_the_crossroads() -> void:
 		var rect: Rect2 = view.big_room_rects[crossroads.id] if is_big else view.mini_room_rects[crossroads.id]
 		var spacing := FloorMapView.big_spacing(map.bounds().size) if is_big else FloorMapView.MINI_SPACING
 		var inside := Rect2i(rect.grow(-float(MapPaper.outline_width(FloorMapView.room_size(spacing)))))
+		# The big map leaves it blank; the small map has only its dot, a filled block, in it.
+		var dot := Rect2i(FloorMapView.mini_dot_rect(rect)) if not is_big else Rect2i()
 		var floor_pixels := 0
 		for y in range(inside.position.y, inside.end.y):
 			for x in range(inside.position.x, inside.end.x):
-				assert_true(image.get_pixel(x, y).is_equal_approx(MapPaper.ROOM_FILL), "big %s: nothing drawn in the Crossroads at %d,%d" % [str(is_big), x, y])
+				var expected: Color = FloorMapView.MINI_DOTS["+"] if dot.has_point(Vector2i(x, y)) else MapPaper.ROOM_FILL
+				assert_true(image.get_pixel(x, y).is_equal_approx(expected), "big %s: nothing else drawn in the Crossroads at %d,%d" % [str(is_big), x, y])
 				floor_pixels += 1
 		assert_true(floor_pixels > 0, "the Crossroads was painted")
 		var area := FloorMapView.SHEET if is_big else FloorMapView.MINI_RECT

@@ -253,14 +253,15 @@ func _ready() -> void:
 
 
 # The small map, its floor name and its panel together at this fade (MapFade), so what lies under them
-# shows. The fade multiplies the Minimap opacity setting, so the slider still sets the solid level.
+# shows. The fade multiplies the Minimap opacity setting, so the slider still sets the solid level. The
+# room rule's icon under the map fades with it, but the Minimap setting is not its to follow.
 func set_map_alpha(alpha: float, mini_map: CanvasItem) -> void:
 	_map_fade = alpha
 	var level := alpha * _map_opacity
 	if _map_back != null:
 		_map_back.modulate.a = level
 	if _rule_icon != null:
-		_rule_icon.modulate.a = level
+		_rule_icon.modulate.a = alpha
 	if mini_map != null:
 		mini_map.modulate.a = level
 
