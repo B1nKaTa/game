@@ -1970,8 +1970,9 @@ func _restore_entry(entry: Dictionary) -> void:
 			elif drop in [RoomRules.DROP_KEY, RoomRules.DROP_BOMB]:
 				_drop_consumable(at, drop)
 		KEEP_REEL:
+			# An era a later build no longer has is left out, as RunCheckpoint leaves out a held one.
 			var era := str(entry.get("era", ""))
-			if not era.is_empty():
+			if Eras.is_known(era):
 				_add_reel(at, era, _take_kept_reel.bind(era))
 		KEEP_RECIPE:
 			if item != null:

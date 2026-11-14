@@ -75,15 +75,16 @@ const LEFTOVER_ORDER: Array[String] = ["potion", "item", "reel", "key", "bomb", 
 const LEFTOVER_MORE := "more"
 const LEFTOVER_SLOTS := 4
 const LEFTOVER_ICON := Vector2(5, 6)
-# The game's own pictures, simplified to ink at 1x: the HUD's flask, the item room's star, the reel slot's
-# holed disc, the HUD Slip's ruled paper, the HUD Thermos with its band, and the healing sign's pill set
-# upright. 'x' is ink, 's' pencil, '.' bare.
+# The game's own pictures, simplified to ink at 1x: the HUD's flask (a cork, a neck, a round belly), the
+# item room's star, the reel slot's holed disc, the HUD Slip's ruled paper, the HUD Thermos as a narrower
+# straight-sided cylinder under a flat lid, and the healing sign's pill set upright. 'x' is ink, 's'
+# pencil, '.' bare.
 const LEFTOVER_ICONS := {
-	"potion": [".xxx.", "..x..", ".xxx.", "x.xxx", "x.xxx", ".xxx."],
+	"potion": [".xxx.", "..x..", ".xxx.", "xxxxx", "xxxxx", ".xxx."],
 	"item": ["..x..", ".xxx.", "xxxxx", ".xxx.", ".x.x.", "x...x"],
 	"reel": [".xxx.", "x.x.x", "xxxxx", "xx.xx", ".xxx."],
 	"key": ["xxxxx", "xss.x", "x...x", "xss.x", "x...x", "xxxxx"],
-	"bomb": [".xxx.", "xxxxx", "xxxxx", "x...x", "xxxxx", "xxxxx"],
+	"bomb": ["xxxx", "x..x", "xxxx", "xxxx", "xxxx", "xxxx"],
 	"heal": [".x.", "x.x", "x.x", "xxx", "xxx", ".x."],
 	"more": ["x.x.x"],
 }
@@ -538,10 +539,11 @@ static func leftover_origin(slot: Rect2, mark: String) -> Vector2:
 	return slot.position + ((LEFTOVER_ICON - Vector2(width, rows.size())) / 2.0).floor()
 
 
-# The small map's mark for a room with leftovers: a 2 px ink dot in its top right corner, inside the
-# outline, clear of the room's colour dot (mini_dot_rect).
+# The small map's mark for a room with leftovers: a 1 px ink dot in its top right corner, a pixel clear of
+# the outline and of the room's colour dot (mini_dot_rect) on every side, so it reads as a dot and not as
+# a thicker corner. A 12x8 room has no spot that leaves a 2 px dot clear all round.
 static func mini_leftover_rect(rect: Rect2) -> Rect2:
-	return Rect2(rect.end.x - 3.0, rect.position.y + 1.0, 2.0, 2.0)
+	return Rect2(rect.end.x - 3.0, rect.position.y + 2.0, 1.0, 1.0)
 
 
 func setup(map: FloorMap, progress: FloorProgress, is_big: bool, floor_name := "") -> void:

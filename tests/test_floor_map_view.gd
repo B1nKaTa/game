@@ -1217,6 +1217,26 @@ func test_only_what_he_can_come_back_for_is_a_leftover() -> void:
 	_free_left_rig(rig)
 
 
+# A saved reel of an era this build does not know is left out on resume, as a held one is.
+func test_a_saved_reel_of_an_unknown_era_is_not_laid_back() -> void:
+	InputSetup.ensure()
+	var run := ItemKit.new().make_run()
+	var player := Player.new()
+	player.setup(run)
+	var shot := {"cleared": true, "keep": [
+		{"kind": RoomView.KEEP_REEL, "era": "no_such_era", "cell": [3, 3]},
+		{"kind": RoomView.KEEP_REEL, "era": Eras.FOOTBALL, "cell": [6, 3]},
+	]}
+	var view := _plain_view(run, player, shot)
+	var reels: Array = []
+	for child in view.get_children():
+		if child is Pickup and child.art_id == RoomView.ART_REEL:
+			reels.append(child.get_meta(RoomView.KEEP)["era"])
+	assert_eq(reels, [Eras.FOOTBALL], "only the known era's reel")
+	view.free()
+	player.free()
+
+
 # Save and Quit, then resume: before he walks back in, the checkpoint's copy of the room lists the same
 # leftovers as the room did, and the room rebuilt from it when he walks in lays every one out again.
 func test_a_resumed_checkpoint_gives_the_same_leftovers() -> void:
@@ -1302,6 +1322,13 @@ func test_every_leftover_icon_is_small_ink_and_no_cross() -> void:
 		assert_false(checker._reads_as_a_cross(_turned(rows)), "%s on its side reads as a cross" % mark)
 	for kind: String in FloorMapView.LEFTOVER_ORDER:
 		assert_true(FloorMapView.LEFTOVER_LABELS.has(kind), kind)
+	# At 1x the potion and the Thermos are told apart by their outline: the Thermos is a narrower cylinder
+	# with straight sides (every row the same width), the potion a wider flask.
+	var thermos: Array = FloorMapView.LEFTOVER_ICONS["bomb"]
+	var potion: Array = FloorMapView.LEFTOVER_ICONS["potion"]
+	for row: String in thermos:
+		assert_eq(checker._extent(row), [0, (thermos[0] as String).length() - 1], "the Thermos row %s is straight-sided" % row)
+	assert_true((thermos[0] as String).length() < (potion[3] as String).length(), "narrower than the potion's belly")
 
 
 # Four icons fit every room box the big map draws, for every floor extent its grid allows: inside the
@@ -1474,8 +1501,9 @@ func test_the_keys_left_here_line_fits_beside_any_entries() -> void:
 	assert_true(FloorMapView.key_has_name_row(6, true), "with two rows free, both fit")
 
 
-# The small map marks a room with leftovers by one 2 px ink dot in its top right corner, clear of the
-# room's colour dot, and nothing else.
+# The small map marks a room with leftovers by one ink dot in its top right corner, and nothing else. It
+# touches neither the outline nor the room's colour dot: a pixel of floor lies all round it, so it reads
+# as a dot and never as a thicker corner.
 func test_the_small_map_marks_a_room_with_leftovers_in_its_corner() -> void:
 	var bare := _row_view({2: {"cleared": true, "keep": []}}, false)
 	var plain := _paper_image()
@@ -1488,10 +1516,15 @@ func test_the_small_map_marks_a_room_with_leftovers_in_its_corner() -> void:
 		var rect: Rect2 = view.mini_room_rects[room_id]
 		var dot := FloorMapView.mini_leftover_rect(rect)
 		marked[room_id] = dot
-		assert_eq(dot.size, Vector2(2, 2))
-		assert_true(rect.grow(-1.0).encloses(dot), "inside room %d's edge" % room_id)
-		assert_false(dot.grow(1.0).intersects(FloorMapView.mini_dot_rect(rect)), "clear of room %d's colour dot" % room_id)
-		assert_eq(_ink_counts(image, dot), Vector2i(4, 0), "room %d's dot is ink" % room_id)
+		assert_eq(dot.size, Vector2(1, 1))
+		var width := MapPaper.outline_width(FloorMapView.room_size(FloorMapView.MINI_SPACING))
+		assert_true(rect.grow(-float(width) - 1.0).encloses(dot), "a pixel clear of room %d's outline" % room_id)
+		assert_false(dot.grow(1.0).intersects(FloorMapView.mini_dot_rect(rect)), "a pixel clear of room %d's colour dot" % room_id)
+		assert_eq(_ink_counts(image, dot), Vector2i(1, 0), "room %d's dot is ink" % room_id)
+		# Painted: every pixel round it is the room's bare floor, so nothing touches it.
+		var at := Vector2i(dot.position)
+		for step: Vector2i in [Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1), Vector2i(-1, 0), Vector2i(1, 0), Vector2i(-1, 1), Vector2i(0, 1), Vector2i(1, 1)]:
+			assert_true(image.get_pixelv(at + step).is_equal_approx(MapPaper.ROOM_FILL), "room %d: floor at %s beside the dot" % [room_id, str(at + step)])
 	for y in range(int(FloorMapView.MINI_RECT.position.y), int(FloorMapView.MINI_RECT.end.y)):
 		for x in range(int(FloorMapView.MINI_RECT.position.x), int(FloorMapView.MINI_RECT.end.x)):
 			if image.get_pixel(x, y).is_equal_approx(plain.get_pixel(x, y)):
