@@ -105,7 +105,7 @@ static func stat_rows(run: RunState) -> Array:
 		["Pills", "%d / %d" % [run.health.pills, run.health.max_pills]],
 		["Damage", "x%.2f" % run.damage_mult()],
 		["Speed", "%d" % roundi(run.move_speed())],
-		["Swing speed", "x%.2f" % run.swing_speed()],
+		["Swing rate", "x%.2f" % run.swing_speed()],
 		["Dodge", "%.2f s%s" % [stats.dodge_cooldown, "  x%d" % stats.dodge_charges if stats.dodge_charges > 1 else ""]],
 		["Teeth", "x%.2f, %d px" % [run.bite_damage_mult(), roundi(stats.bite_range)]],
 		["Thermos", "x%.2f, %d px" % [stats.thermos_damage_mult, roundi(stats.blast_radius)]],

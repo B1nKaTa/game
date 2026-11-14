@@ -342,6 +342,9 @@ func _full_run() -> RunState:
 	return run
 
 
+const MIN_LABEL_GAP := 3.0
+
+
 func _label_width(text: String) -> float:
 	var size := MenuStyle.pixel_size(CaseFile.FONT)
 	return HudStyle.font().get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
@@ -354,10 +357,11 @@ func test_every_stat_and_run_label_fits_its_column() -> void:
 	var runs := CaseFileData.run_rows(run, info, ["Memento"])
 	assert_true(stat.size() >= 12, "every optional stat row is built")
 	assert_true(runs.size() >= 12, "every optional run row is built")
+	# A few px stay between a label and its value, so no row runs flush against its value.
 	for row in stat:
-		assert_true(_label_width(str(row[0])) < CaseFile.STAT_LABEL_WIDTH, "%s is %.0f px in %.0f" % [row[0], _label_width(str(row[0])), CaseFile.STAT_LABEL_WIDTH])
+		assert_true(_label_width(str(row[0])) + MIN_LABEL_GAP <= CaseFile.STAT_LABEL_WIDTH, "%s is %.1f px in %.0f" % [row[0], _label_width(str(row[0])), CaseFile.STAT_LABEL_WIDTH])
 	for row in runs:
-		assert_true(_label_width(str(row[0])) < CaseFile.RUN_LABEL_WIDTH, "%s is %.0f px in %.0f" % [row[0], _label_width(str(row[0])), CaseFile.RUN_LABEL_WIDTH])
+		assert_true(_label_width(str(row[0])) + MIN_LABEL_GAP <= CaseFile.RUN_LABEL_WIDTH, "%s is %.1f px in %.0f" % [row[0], _label_width(str(row[0])), CaseFile.RUN_LABEL_WIDTH])
 
 
 func test_the_waiting_room_labels_fit_their_column() -> void:
