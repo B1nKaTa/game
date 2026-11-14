@@ -66,6 +66,30 @@ const CLOSE_HINT := "Close"
 # A boss's name in the key's spare row (no clear spot on the plan), so it never reads as a key entry.
 const KEY_NAME_FORMATS := {"B": "Boss: %s", "M": "Mini boss: %s"}
 const KEY_NAME_GAP := 12.0
+# Pickups left behind in a walked room (leftovers), each kind once, in this order. The big map draws up to
+# LEFTOVER_SLOTS small ink pictures in the room's box, beside its sign; with more kinds than slots, the
+# last slot holds dots (LEFTOVER_MORE), never a plus, which would read as a cross. The small map marks
+# such a room with one ink dot in its top right corner (mini_leftover_rect). The key explains the
+# pictures on a "Left here" line, only while some room has leftovers.
+const LEFTOVER_ORDER: Array[String] = ["potion", "item", "reel", "key", "bomb", "heal"]
+const LEFTOVER_MORE := "more"
+const LEFTOVER_SLOTS := 4
+const LEFTOVER_ICON := Vector2(5, 6)
+# The game's own pictures, simplified to ink at 1x: the HUD's flask, the item room's star, the reel slot's
+# holed disc, the HUD Slip's ruled paper, the HUD Thermos with its band, and the healing sign's pill set
+# upright. 'x' is ink, 's' pencil, '.' bare.
+const LEFTOVER_ICONS := {
+	"potion": [".xxx.", "..x..", ".xxx.", "x.xxx", "x.xxx", ".xxx."],
+	"item": ["..x..", ".xxx.", "xxxxx", ".xxx.", ".x.x.", "x...x"],
+	"reel": [".xxx.", "x.x.x", "xxxxx", "xx.xx", ".xxx."],
+	"key": ["xxxxx", "xss.x", "x...x", "xss.x", "x...x", "xxxxx"],
+	"bomb": [".xxx.", "xxxxx", "xxxxx", "x...x", "xxxxx", "xxxxx"],
+	"heal": [".x.", "x.x", "x.x", "xxx", "xxx", ".x."],
+	"more": ["x.x.x"],
+}
+const LEFTOVER_LABELS := {"potion": "Potion", "item": "Item", "reel": "Reel", "key": "Slip", "bomb": "Thermos", "heal": "Heal"}
+const LEFTOVER_TITLE := "Left here:"
+const LEFTOVER_GAP := 8.0
 # Rooms the Floor Plan never gives away, since finding them is the point.
 const HIDDEN_TYPES := [RoomLayout.TYPE_SECRET, RoomLayout.TYPE_VAULT]
 const BOSS_TYPES := [RoomLayout.TYPE_FLOOR_BOSS, RoomLayout.TYPE_MINI_BOSS]
@@ -406,6 +430,120 @@ static func crossroads_rect(cell_rect: Rect2) -> Rect2:
 	return Rect2(cell_rect.get_center() - size / 2.0, size)
 
 
+# The pickups left behind in each walked room, by room id: the kinds of LEFTOVER_ORDER lying there, each
+# once, in that order. They are read from the room's saved state (FloorProgress.state_of), the very state
+# that lays them out again when he walks back in, after a Save and Quit too, so the map never tells of
+# something that is not there. A room with none is left out, and so is the Crossroads, which the
+# checkpoint never keeps.
+static func leftovers(map: FloorMap, progress: FloorProgress) -> Dictionary:
+	var out := {}
+	for room_id: int in progress.visited_ids():
+		if map.room(room_id).room_type == RoomLayout.TYPE_CROSSROADS:
+			continue
+		var present := {}
+		for entry in progress.state_of(room_id).get("keep", []):
+			if entry is Dictionary:
+				present[leftover_kind(entry)] = true
+		var kinds: Array[String] = []
+		for kind in LEFTOVER_ORDER:
+			if present.has(kind):
+				kinds.append(kind)
+		if not kinds.is_empty():
+			out[room_id] = kinds
+	return out
+
+
+# What the maps call a thing a saved room keeps (RoomView.snapshot), or "" for one he cannot simply come
+# back for: shop wares, closed chests and recipes.
+static func leftover_kind(entry: Dictionary) -> String:
+	match str(entry.get("kind", "")):
+		RoomView.KEEP_POTION:
+			return "potion"
+		RoomView.KEEP_ITEM, RoomView.KEEP_FREE:
+			return "item"
+		RoomView.KEEP_REEL:
+			return "reel"
+		RoomView.KEEP_DROP:
+			match str(entry.get("drop", "")):
+				RoomRules.DROP_KEY:
+					return "key"
+				RoomRules.DROP_BOMB:
+					return "bomb"
+				RoomRules.DROP_HEAL:
+					return "heal"
+	return ""
+
+
+# Where a walked room's leftover pictures go on the big map, in the order they fill: beside the sign's spot
+# (room_sign_rect), a pixel clear of it, of the outline and of each other, and off the corners the stamp
+# presses on (STAMP_OVERLAP). Two a side, at the top and the bottom, or all on one side when the other is
+# too narrow. Fewer only when even that does not fit, which no room the big map draws comes to.
+static func leftover_slots(rect: Rect2, room: Vector2) -> Array[Rect2]:
+	var icon := LEFTOVER_ICON
+	var inside := rect.grow(-float(MapPaper.outline_width(room) + 1))
+	var sign_spot := room_sign_rect(rect, room).grow(1.0)
+	var o := STAMP_OVERLAP
+	var corners: Array[Rect2] = [Rect2(rect.position, Vector2(o, o)), Rect2(rect.end.x - o, rect.position.y, o, o),
+			Rect2(rect.position.x, rect.end.y - o, o, o), Rect2(rect.end - Vector2(o, o), Vector2(o, o))]
+	var columns: Array[Rect2] = []
+	for column: Rect2 in [Rect2(inside.position.x, inside.position.y, sign_spot.position.x - inside.position.x, inside.size.y),
+			Rect2(sign_spot.end.x, inside.position.y, inside.end.x - sign_spot.end.x, inside.size.y)]:
+		if column.size.x >= icon.x:
+			columns.append(column)
+	var per_column := 0 if columns.is_empty() else ceili(LEFTOVER_SLOTS / float(columns.size()))
+	var stacks: Array = []
+	for column in columns:
+		var x := column.position.x + floorf((column.size.x - icon.x) / 2.0)
+		var top := column.position.y
+		var bottom := column.end.y - icon.y
+		for corner in corners:
+			if Rect2(x, top, icon.x, icon.y).intersects(corner):
+				top = corner.end.y
+			if Rect2(x, bottom, icon.x, icon.y).intersects(corner):
+				bottom = corner.position.y - icon.y
+		var stack: Array[Rect2] = []
+		var count := mini(per_column, floori((bottom - top) / (icon.y + 1.0)) + 1)
+		for i in count:
+			var y := top if count == 1 else top + roundf(i * (bottom - top) / (count - 1))
+			stack.append(Rect2(x, y, icon.x, icon.y))
+		stacks.append(stack)
+	# Reading order: across the top row of the columns first, then down.
+	var slots: Array[Rect2] = []
+	for i in per_column:
+		for stack: Array[Rect2] in stacks:
+			if i < stack.size() and slots.size() < LEFTOVER_SLOTS:
+				slots.append(stack[i])
+	return slots
+
+
+# The marks drawn in a room's slots: each kind, or with more kinds than slots, all but the last slot's
+# worth and LEFTOVER_MORE there.
+static func leftover_marks(kinds: Array[String], slots: int) -> Array[String]:
+	var marks: Array[String] = []
+	for kind in kinds:
+		marks.append(kind)
+	if marks.size() > slots:
+		marks.resize(maxi(slots - 1, 0))
+		if slots > 0:
+			marks.append(LEFTOVER_MORE)
+	return marks
+
+
+# A leftover picture's top left in its slot: centred, on whole pixels.
+static func leftover_origin(slot: Rect2, mark: String) -> Vector2:
+	var rows: Array = LEFTOVER_ICONS[mark]
+	var width := 0
+	for row: String in rows:
+		width = maxi(width, row.length())
+	return slot.position + ((LEFTOVER_ICON - Vector2(width, rows.size())) / 2.0).floor()
+
+
+# The small map's mark for a room with leftovers: a 2 px ink dot in its top right corner, inside the
+# outline, clear of the room's colour dot (mini_dot_rect).
+static func mini_leftover_rect(rect: Rect2) -> Rect2:
+	return Rect2(rect.end.x - 3.0, rect.position.y + 1.0, 2.0, 2.0)
+
+
 func setup(map: FloorMap, progress: FloorProgress, is_big: bool, floor_name := "") -> void:
 	_map = map
 	_progress = progress
@@ -516,6 +654,11 @@ func paint_mini(canvas: Object) -> void:
 		MapPaper.fill(canvas, dot, MINI_DOTS[stub["icon"]])
 	for room_id: int in mini_room_rects:
 		_paint_mini_room(canvas, _map.room(room_id), mini_room_rects[room_id], gaps.get(room_id, []), half, with_bosses)
+	# A room with pickups left behind: one ink dot in its corner, never a colour a room's dot could have.
+	var left := leftovers(_map, _progress)
+	for room_id: int in mini_room_rects:
+		if left.has(room_id):
+			MapPaper.fill(canvas, mini_leftover_rect(mini_room_rects[room_id]), MapPaper.INK)
 
 
 # A room on the small map: a walked room's floor in an ink outline (the stamp's red for the room he
@@ -587,18 +730,44 @@ func paint_big(canvas: Object) -> void:
 	for room_id: int in shown:
 		_paint_room(canvas, _map.room(room_id), origin, spacing, gaps.get(room_id, []), with_bosses)
 		busy.append(big_room_rects[room_id])
+	# Pickups left behind, after the rooms and before the names and the stamp, which then keep clear of
+	# them where they can and are pressed over them where they cannot.
+	var left := leftovers(_map, _progress)
+	var left_kinds: Array[String] = []
+	for room_id: int in left:
+		if big_room_rects.has(room_id):
+			busy.append_array(_paint_leftovers(canvas, big_room_rects[room_id], room, left[room_id]))
+		for kind: String in left[room_id]:
+			if not left_kinds.has(kind):
+				left_kinds.append(kind)
+	var kinds_in_order: Array[String] = []
+	for kind in LEFTOVER_ORDER:
+		if left_kinds.has(kind):
+			kinds_in_order.append(kind)
 	var icons := key_icons(_map, _progress, shown, stubs, with_bosses)
 	big_name_rects.clear()
 	var key_names: Array[String] = []
 	for room_id: int in shown:
-		if not _paint_boss_name(canvas, _map.room(room_id), spacing, busy, key_has_name_row(icons.size())):
+		if not _paint_boss_name(canvas, _map.room(room_id), spacing, busy, key_has_name_row(icons.size(), not kinds_in_order.is_empty())):
 			key_names.append(RoomRules.door_icon(_map.room(room_id).room_type))
 	busy.append_array(big_name_rects)
 	var here: Rect2 = big_room_rects[_current_id]
 	var words := tr(STAMP_TEXT)
 	big_stamp_rect = stamp_rect(here, MapPaper.stamp_size(words, HudStyle.SMALL), busy)
 	MapPaper.stamp(canvas, big_stamp_rect, words, HudStyle.SMALL)
-	_paint_key(canvas, icons, key_names)
+	_paint_key(canvas, icons, key_names, kinds_in_order)
+
+
+# A walked room's pickups left behind: each kind's ink picture in its own slot beside the sign's spot, or
+# with more kinds than slots, dots in the last. Returns the slots drawn in.
+func _paint_leftovers(canvas: Object, rect: Rect2, room: Vector2, kinds: Array[String]) -> Array[Rect2]:
+	var slots := leftover_slots(rect, room)
+	var marks := leftover_marks(kinds, slots.size())
+	var drawn: Array[Rect2] = []
+	for i in marks.size():
+		MapPaper.ink_picture(canvas, leftover_origin(slots[i], marks[i]), LEFTOVER_ICONS[marks[i]])
+		drawn.append(slots[i])
+	return drawn
 
 
 # The floor's name, the close prompt right of it, an ink rule under both, and the run's sets.
@@ -731,14 +900,50 @@ static func key_name_room() -> float:
 	return KEY_RECT.size.x - KEY_TITLE_WIDTH - 4.0
 
 
-# Whether the key has a row left under its entries, for boss names that found no clear spot.
-static func key_has_name_row(entries: int) -> bool:
-	return ceili(entries / float(KEY_COLUMNS)) < KEY_ROWS
+# Whether the key has a row left under its entries, for boss names that found no clear spot. The Left
+# here line, when there is one, takes the first row under the entries before them.
+static func key_has_name_row(entries: int, with_leftovers := false) -> bool:
+	return ceili(entries / float(KEY_COLUMNS)) + (1 if with_leftovers else 0) < KEY_ROWS
 
 
-# The key, a printed box under the plan: each sign drawn on this floor with its name, and on the next
-# row the bosses the Fortune Teller's Card names (by their signs) when the plan had no room for them.
-func _paint_key(canvas: Object, icons: Array[String], named: Array[String]) -> void:
+# Where the key's Left here line starts (its first picture's row top): on the row under the entries, or
+# with every row taken, after the last entry.
+static func leftover_line_at(entries: int) -> Vector2:
+	var rows := ceili(entries / float(KEY_COLUMNS))
+	if rows < KEY_ROWS:
+		return KEY_RECT.position + Vector2(KEY_TITLE_WIDTH, 5.0 + rows * KEY_ROW_HEIGHT)
+	return key_entry_at(entries)
+
+
+# How wide the Left here line draws: its title, then each kind's picture and name.
+static func leftover_line_width(kinds: Array[String]) -> float:
+	var width := MapPaper.text_width(TranslationServer.translate(LEFTOVER_TITLE), HudStyle.SMALL)
+	for kind in kinds:
+		width += LEFTOVER_GAP + LEFTOVER_ICON.x + 2.0 + MapPaper.text_width(TranslationServer.translate(LEFTOVER_LABELS[kind]), HudStyle.SMALL)
+	return ceilf(width)
+
+
+# The key's Left here line: "Left here:", then each kind lying in some walked room, as its picture and
+# its name.
+func _paint_leftover_line(canvas: Object, at: Vector2, kinds: Array[String]) -> void:
+	var baseline := at.y + 1.0 + MapPaper.ascent(HudStyle.SMALL)
+	var title := tr(LEFTOVER_TITLE)
+	MapPaper.text(canvas, Vector2(at.x, baseline), title, HudStyle.SMALL, MapPaper.INK)
+	var x := at.x + MapPaper.text_width(title, HudStyle.SMALL)
+	for kind in kinds:
+		x += LEFTOVER_GAP
+		var box := Rect2(x, at.y + floorf((DoorSign.SIZE - LEFTOVER_ICON.y) / 2.0), LEFTOVER_ICON.x, LEFTOVER_ICON.y)
+		MapPaper.ink_picture(canvas, leftover_origin(box, kind), LEFTOVER_ICONS[kind])
+		x += LEFTOVER_ICON.x + 2.0
+		var label := tr(String(LEFTOVER_LABELS[kind]))
+		MapPaper.text(canvas, Vector2(x, baseline), label, HudStyle.SMALL, MapPaper.INK)
+		x += MapPaper.text_width(label, HudStyle.SMALL)
+
+
+# The key, a printed box under the plan: each sign drawn on this floor with its name, the Left here line
+# when some room has pickups left behind, and on the next row the bosses the Fortune Teller's Card names
+# (by their signs) when the plan had no room for them.
+func _paint_key(canvas: Object, icons: Array[String], named: Array[String], left_kinds: Array[String]) -> void:
 	var ascent := MapPaper.ascent(HudStyle.SMALL)
 	MapPaper.frame(canvas, KEY_RECT, 1, MapPaper.INK)
 	MapPaper.text(canvas, KEY_RECT.position + Vector2(6, 5 + ascent), tr(KEY_TITLE), HudStyle.SMALL, MapPaper.INK)
@@ -755,7 +960,11 @@ func _paint_key(canvas: Object, icons: Array[String], named: Array[String]) -> v
 		if MINI_DOTS.has(icons[i]):
 			MapPaper.fill(canvas, key_swatch_rect(at), MINI_DOTS[icons[i]])
 		MapPaper.text(canvas, at + Vector2(DoorSign.SIZE + 3.0 + KEY_SWATCH_ROOM, 1.0 + ascent), tr(String(KEY_LABELS[icons[i]])), HudStyle.SMALL, MapPaper.INK)
-	var at := KEY_RECT.position + Vector2(KEY_TITLE_WIDTH, 5.0 + ceilf(icons.size() / float(KEY_COLUMNS)) * KEY_ROW_HEIGHT)
+	var rows := ceilf(icons.size() / float(KEY_COLUMNS))
+	if not left_kinds.is_empty():
+		_paint_leftover_line(canvas, leftover_line_at(icons.size()), left_kinds)
+		rows += 1.0
+	var at := KEY_RECT.position + Vector2(KEY_TITLE_WIDTH, 5.0 + rows * KEY_ROW_HEIGHT)
 	var full: Array[String] = []
 	for icon in named:
 		full.append(boss_names[RoomLayout.TYPE_FLOOR_BOSS if icon == "B" else RoomLayout.TYPE_MINI_BOSS])

@@ -32,6 +32,10 @@ const KEEP_SHOP := "shop"
 const KEEP_RECIPE := "recipe"
 const KEEP_CHEST := "chest"
 const KEEP_POTION := "potion"
+# A Slip, a Thermos or a heal lying loose, by its RoomRules drop kind (a heal keeps its pills too).
+const KEEP_DROP := "drop"
+# A film reel a kept rule left, by its era.
+const KEEP_REEL := "reel"
 const SHOP_PROMPT := "Buy"
 # The same merchant keeps every shop on every floor.
 const MERCHANT: NpcDef = preload("res://data/npcs/shop_merchant.tres")
@@ -125,6 +129,9 @@ var _dealer: Npc
 var restore := {}
 # Choice groups put back from a checkpoint, kept here since a Callable holds no reference to them.
 var _restored_groups := {}
+# Takes a film reel laid back from the checkpoint, by its era (RuleKeeper.take_reel; the floor scene sets
+# it), as the kept rule's own reel is taken.
+var reel_taker := Callable()
 # The floor's depth look, or null when its rooms keep the flat tiles (DepthLook, FloorDef.art_style).
 var _depth: DepthLook
 # The palette the room was built with, for the doors' jambs and the floor beyond them.
@@ -619,10 +626,21 @@ func drop_reel(at: Vector2, era: String, on_take: Callable) -> Pickup:
 		if child is Pickup and child.art_id != ART_COIN and not child.is_queued_for_deletion():
 			taken.append(_cell_of(child.position))
 	var spot := RoomBackdrop.cell_center(_room.layout.label_spot_near(_cell_of(at), taken))
+	return _add_reel(spot, era, on_take)
+
+
+func _add_reel(spot: Vector2, era: String, on_take: Callable) -> Pickup:
 	var pickup := _add_pickup(spot, tr("Reel: %s") % tr(Eras.title(era)), REEL_COLOR, on_take, false, "item_fanfare")
 	pickup.art_id = ART_REEL
 	pickup.names_near_only = true
+	pickup.set_meta(KEEP, {"kind": KEEP_REEL, "era": era})
 	return pickup
+
+
+# A reel laid back from the checkpoint is the keeper's to take.
+func _take_kept_reel(era: String) -> void:
+	if reel_taker.is_valid():
+		reel_taker.call(era)
 
 
 func door_to(target_id: int) -> Door:
@@ -1127,6 +1145,7 @@ func _drop_consumable(at: Vector2, kind: String) -> void:
 			slip.fetch_kind = "key"
 			slip.copy_kind = "key"
 			slip.art_id = ART_SLIP
+			slip.set_meta(KEEP, {"kind": KEEP_DROP, "drop": kind})
 		RoomRules.DROP_BOMB:
 			var thermos := _add_pickup(at, RoomRules.BOMB_NAME, BOMB_COLOR, func(): _take_consumable(_run.add_bomb, RunEffects.BOMB), false, "thermos_pickup")
 			thermos.can_take = _run.can_add_bomb
@@ -1134,6 +1153,7 @@ func _drop_consumable(at: Vector2, kind: String) -> void:
 			thermos.fetch_kind = "bomb"
 			thermos.copy_kind = "bomb"
 			thermos.art_id = ART_THERMOS
+			thermos.set_meta(KEEP, {"kind": KEEP_DROP, "drop": kind})
 		RoomRules.DROP_POTION:
 			_drop_potion(at, PotionPool.roll(Content.potions(), _rng.randf(), _rng.randf()))
 
@@ -1209,6 +1229,7 @@ func _add_heal(at: Vector2, pills: int) -> Pickup:
 	heal.copy_kind = "heal"
 	heal.copy_amount = pills
 	heal.art_id = ART_PILL
+	heal.set_meta(KEEP, {"kind": KEEP_DROP, "drop": RoomRules.DROP_HEAL, "amount": pills})
 	return heal
 
 
@@ -1822,8 +1843,9 @@ func is_finished() -> bool:
 
 
 # What the run checkpoint keeps of this room: whether it was cleared, and the items, stock, recipes and
-# closed chests still waiting in it, each on its cell. Loose potions are kept too; loose coins, heals,
-# Slips and Thermoses are left out.
+# closed chests still waiting in it, each on its cell. Loose potions, heals, Slips, Thermoses and film
+# reels are kept too, so whatever he left lies there again on resume; loose coins are left out. The maps
+# read the pickups left behind from this same state (FloorMapView.leftovers).
 func snapshot() -> Dictionary:
 	var keep := []
 	for child in get_children():
@@ -1887,7 +1909,8 @@ static func restored_extra_cells(layout: RoomLayout, shot: Dictionary) -> Array[
 	return cells
 
 
-# Builds a cleared room again from its snapshot. The floor scene only restores rooms that were cleared.
+# Builds a cleared room again from its snapshot (heals keep their pills, reels their era). The floor
+# scene only restores rooms that were cleared.
 func _restore_contents() -> void:
 	if _room.room_type == RoomLayout.TYPE_SHOP:
 		_create_shop_keeper(restored_extra_cells(_room.layout, restore))
@@ -1940,6 +1963,16 @@ func _restore_entry(entry: Dictionary) -> void:
 			var laid := Content.potion(str(entry.get("id", "")))
 			if laid != null:
 				_drop_potion(at, laid)
+		KEEP_DROP:
+			var drop := str(entry.get("drop", ""))
+			if drop == RoomRules.DROP_HEAL:
+				_add_heal(at, maxi(int(entry.get("amount", HEAL_AMOUNT)), 1))
+			elif drop in [RoomRules.DROP_KEY, RoomRules.DROP_BOMB]:
+				_drop_consumable(at, drop)
+		KEEP_REEL:
+			var era := str(entry.get("era", ""))
+			if not era.is_empty():
+				_add_reel(at, era, _take_kept_reel.bind(era))
 		KEEP_RECIPE:
 			if item != null:
 				_add_recipe_pickup(at, item)

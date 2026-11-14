@@ -198,6 +198,12 @@ func _on_rule_kept(view: RoomView, at: Vector2) -> void:
 		view.drop_reel(at, era, _reel_taken.bind(era))
 
 
+# A reel laid back in a room rebuilt from the checkpoint is taken as the kept rule's reel was
+# (RoomView.reel_taker).
+func take_reel(era: String) -> void:
+	_reel_taken(era)
+
+
 # A reel picked up: his if his pocket is empty, or it fades, since he holds one memory at a time.
 func _reel_taken(era: String) -> void:
 	if _run.give_reel(era):

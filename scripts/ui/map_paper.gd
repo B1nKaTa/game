@@ -250,7 +250,12 @@ static func ink_sign(canvas: Object, center: Vector2, icon: String, scale: int, 
 	if icon == RoomRules.ARCADE_ICON:
 		ink_die(canvas, Rect2(origin, Vector2(size, size)), scale, ink)
 		return
-	var rows := ink_cells(icon)
+	ink_picture(canvas, origin, ink_cells(icon), scale, ink, shade)
+
+
+# A picture of ink cells ('x' ink, 's' the lighter shade, '.' bare paper) from its top left, each cell
+# `scale` pixels square: a door sign, or a pickup left behind (FloorMapView.LEFTOVER_ICONS).
+static func ink_picture(canvas: Object, origin: Vector2, rows: Array, scale := 1, ink := INK, shade := PENCIL) -> void:
 	for y in rows.size():
 		var row: String = rows[y]
 		for x in row.length():

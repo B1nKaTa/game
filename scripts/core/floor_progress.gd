@@ -5,10 +5,21 @@ const FIRST_ARRIVAL_SIDES: Array[Vector2i] = [RoomLayout.SOUTH, RoomLayout.WEST,
 
 var _map: FloorMap
 var _visited: Array[int] = []
+# Reads a room's saved state by its id, as RoomView.snapshot() gives it: the floor scene hands over the
+# room itself while it is kept, else the checkpoint's copy of it. The maps read pickups left behind from
+# it (FloorMapView.leftovers). Unset, every room reads as empty.
+var room_state := Callable()
 
 
 func _init(map: FloorMap) -> void:
 	_map = map
+
+
+func state_of(room_id: int) -> Dictionary:
+	if not room_state.is_valid():
+		return {}
+	var state: Variant = room_state.call(room_id)
+	return state if state is Dictionary else {}
 
 
 func enter(room_id: int) -> void:

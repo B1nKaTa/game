@@ -1077,3 +1077,427 @@ func test_the_big_maps_key_shows_each_dot() -> void:
 			assert_true(c.is_equal_approx(MapPaper.PAPER), "no swatch for %s" % icons[i])
 	assert_eq(swatches, 3, "item, shop and unknown: %s" % str(icons))
 	view.free()
+
+
+# --- pickups left behind (the user, 2026-11-14) ---
+
+const LeftBank := preload("res://tests/support/stub_bank.gd")
+
+
+# A plain room's view, cleared, built from a saved state when one is given (as a resumed room is).
+func _plain_view(run: RunState, player: Player, restore := {}) -> RoomView:
+	var room := FloorRoom.new()
+	var layout := RoomLayout.new()
+	layout.room_type = RoomLayout.TYPE_COMBAT
+	var rows := ["####################"]
+	for y in range(1, 10):
+		rows.append("#..................#")
+	rows.append("####################")
+	layout.rows = PackedStringArray(rows)
+	room.layout = layout
+	room.room_type = RoomLayout.TYPE_COMBAT
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 5
+	var view := RoomView.new()
+	view.setup(room, null, load("res://data/floors/floor_1.tres"), run, player, rng, null, null)
+	view.restore = restore
+	view._ready()
+	return view
+
+
+# Room ids to what stands for each room's saved state, as the floor scene keeps it: the room itself (a
+# RoomView) while it is kept, or the checkpoint's copy of it (a Dictionary).
+func _state_of(room_id: int, rooms: Dictionary) -> Dictionary:
+	var source: Variant = rooms.get(room_id)
+	if source is RoomView:
+		return (source as RoomView).snapshot()
+	return source if source is Dictionary else {}
+
+
+# _cross_floor with the start walked. Room 0 (the start) and room 1 (the shop, not walked into) each have
+# a plain room view standing for their state.
+func _left_rig() -> Dictionary:
+	InputSetup.ensure()
+	var map := _cross_floor()
+	var progress := FloorProgress.new(map)
+	progress.enter(0)
+	var run := ItemKit.new().make_run()
+	var player := Player.new()
+	player.setup(run)
+	var rooms := {0: _plain_view(run, player), 1: _plain_view(run, player)}
+	progress.room_state = _state_of.bind(rooms)
+	return {"map": map, "progress": progress, "run": run, "player": player, "rooms": rooms}
+
+
+func _free_left_rig(rig: Dictionary) -> void:
+	for source in (rig["rooms"] as Dictionary).values():
+		if source is RoomView:
+			source.free()
+	rig["player"].free()
+
+
+func _kinds(kinds: Array) -> Array[String]:
+	var out: Array[String] = []
+	for kind: String in kinds:
+		out.append(kind)
+	return out
+
+
+func _first_active() -> ItemDef:
+	for item in Content.items():
+		if item.is_active():
+			return item
+	return null
+
+
+func _first_passive() -> ItemDef:
+	for item in Content.items():
+		if not item.is_active() and not item.cursed:
+			return item
+	return null
+
+
+# One of every kind the maps mark, laid in the view, plus the things they never mark.
+func _lay_everything(view: RoomView) -> void:
+	view._add_shop_entry(Vector2(300, 60), {"kind": ShopRules.KIND_ITEM, "price": 10, "item": _first_passive(), "potion": null, "half": false})
+	view._add_shop_entry(Vector2(340, 60), {"kind": ShopRules.KIND_HEAL, "price": 5, "item": null, "potion": null, "half": false})
+	view._create_chest(Vector2i(14, 6), ChestRules.LOCKED)
+	view._add_recipe_pickup(Vector2(380, 100), _first_passive())
+	view._add_heal(Vector2(60, 60), 2)
+	view._drop_consumable(Vector2(100, 60), RoomRules.DROP_BOMB)
+	view._drop_consumable(Vector2(140, 60), RoomRules.DROP_KEY)
+	view.drop_reel(Vector2(180, 140), Eras.FOOTBALL, func() -> void: pass)
+	view.drop_active(_first_active(), 2, Vector2(60, 220))
+	view._add_item_pickup(Vector2(220, 220), _first_passive())
+	view._drop_potion(Vector2(260, 220), Content.potion("swift_tea"))
+
+
+func test_a_potion_left_in_a_walked_room_is_listed_until_taken() -> void:
+	var rig := _left_rig()
+	var map: FloorMap = rig["map"]
+	var progress: FloorProgress = rig["progress"]
+	var run: RunState = rig["run"]
+	var view: RoomView = rig["rooms"][0]
+	assert_eq(FloorMapView.leftovers(map, progress), {}, "nothing left yet")
+	var tea := Content.potion("swift_tea")
+	var lying := view._drop_potion(Vector2(100, 100), tea)
+	assert_eq(FloorMapView.leftovers(map, progress), {0: _kinds(["potion"])}, "a potion lying in a walked room")
+	lying.collect()
+	assert_eq(run.potion, tea)
+	assert_eq(FloorMapView.leftovers(map, progress), {}, "taking it takes it off the map")
+	# A swap lays the carried potion where the new one lay, and the map shows it at once.
+	view._drop_potion(Vector2(140, 100), Content.potion("healing_tonic")).collect()
+	assert_eq(FloorMapView.leftovers(map, progress), {0: _kinds(["potion"])}, "the potion swapped out is left")
+	# The shop is not walked into: what lies there is not listed until he has been in.
+	(rig["rooms"][1] as RoomView)._drop_potion(Vector2(100, 100), tea)
+	assert_false(FloorMapView.leftovers(map, progress).has(1), "a room not walked into lists nothing")
+	progress.enter(1)
+	assert_eq(FloorMapView.leftovers(map, progress).get(1), _kinds(["potion"]), "once walked into, it is")
+	_free_left_rig(rig)
+
+
+func test_only_what_he_can_come_back_for_is_a_leftover() -> void:
+	var rig := _left_rig()
+	var map: FloorMap = rig["map"]
+	var progress: FloorProgress = rig["progress"]
+	var view: RoomView = rig["rooms"][0]
+	view._add_shop_entry(Vector2(300, 60), {"kind": ShopRules.KIND_ITEM, "price": 10, "item": _first_passive(), "potion": null, "half": false})
+	view._create_chest(Vector2i(14, 6), ChestRules.LOCKED)
+	view._add_recipe_pickup(Vector2(380, 100), _first_passive())
+	view._drop_coin(Vector2(200, 100), 5)
+	assert_eq(FloorMapView.leftovers(map, progress), {}, "wares, a closed chest, a recipe and coins are not leftovers")
+	_lay_everything(view)
+	assert_eq(FloorMapView.leftovers(map, progress), {0: _kinds(FloorMapView.LEFTOVER_ORDER)}, "each kind once, in the map's order")
+	assert_eq(FloorMapView.LEFTOVER_ORDER, ["potion", "item", "reel", "key", "bomb", "heal"])
+	# Taking every one of a kind takes the kind off the map.
+	for child in view.get_children():
+		if child is Pickup and child.carry_kind == RoomRules.DROP_KEY:
+			child.collect()
+	assert_eq(FloorMapView.leftovers(map, progress)[0], _kinds(["potion", "item", "reel", "bomb", "heal"]), "the Slip was taken")
+	_free_left_rig(rig)
+
+
+# Save and Quit, then resume: before he walks back in, the checkpoint's copy of the room lists the same
+# leftovers as the room did, and the room rebuilt from it when he walks in lays every one out again.
+func test_a_resumed_checkpoint_gives_the_same_leftovers() -> void:
+	var rig := _left_rig()
+	var map: FloorMap = rig["map"]
+	var progress: FloorProgress = rig["progress"]
+	var view: RoomView = rig["rooms"][0]
+	_lay_everything(view)
+	var before := FloorMapView.leftovers(map, progress)
+	assert_eq(before.get(0), _kinds(FloorMapView.LEFTOVER_ORDER))
+	var shot: Dictionary = JSON.parse_string(JSON.stringify(view.snapshot()))
+	var rooms: Dictionary = rig["rooms"]
+	rooms[0] = shot
+	assert_eq(FloorMapView.leftovers(map, progress), before, "the checkpoint's copy lists the same")
+	var again := _plain_view(rig["run"], rig["player"], shot)
+	var played: Array[String] = []
+	again.reel_taker = func(era: String) -> void: played.append(era)
+	rooms[0] = again
+	assert_eq(FloorMapView.leftovers(map, progress), before, "the room rebuilt from it lists the same")
+	assert_eq(again.snapshot()["keep"].size(), shot["keep"].size(), "everything kept came back")
+	for child in again.get_children():
+		if child is Pickup and child.art_id == RoomView.ART_REEL:
+			child.collect()
+	assert_eq(played, [Eras.FOOTBALL] as Array[String], "the reel laid back is taken as the kept rule's reel")
+	var heal_back := false
+	for child in again.get_children():
+		if child is Pickup and child.carry_kind == RoomRules.DROP_HEAL:
+			heal_back = child.carry_amount == 2
+	assert_true(heal_back, "a heal comes back with its pills")
+	# The rig frees the views it holds now (the rebuilt room); the room before the save goes here.
+	view.free()
+	_free_left_rig(rig)
+
+
+# The floor scene hands the maps its rooms' saved state: the kept room, else the checkpoint's copy.
+func test_the_floor_scene_hands_the_maps_its_rooms_state() -> void:
+	var scene := FileAccess.get_file_as_string("res://scripts/scenes/floor_scene.gd")
+	assert_eq(scene.count("FloorProgress.new("), 1, "every floor's progress is made by _new_progress")
+	assert_true(scene.count("_progress = _new_progress(") >= 4, "the start, a resume, a new floor and a landing")
+	assert_true(scene.contains("progress.room_state = _room_state"))
+	var state := scene.substr(scene.find("func _room_state("), 300)
+	assert_true(state.contains("view.snapshot()") and state.contains("_restored.get(room_id"), state)
+	assert_true(scene.contains("view.reel_taker = _rules.take_reel"), "a reel laid back on resume is the keeper's")
+	assert_true(scene.contains("view.child_entered_tree.connect(_on_room_child_changed)"), "the small map redraws as one is laid down")
+	assert_true(scene.contains("view.child_exiting_tree.connect(_on_room_child_changed)"), "and as one is taken")
+
+
+func _turned(rows: Array) -> Array:
+	var width := 0
+	for row: String in rows:
+		width = maxi(width, row.length())
+	var turned: Array = []
+	for x in width:
+		var column := ""
+		for row: String in rows:
+			column += row[x] if x < row.length() else "."
+		turned.append(column)
+	return turned
+
+
+# Each picture is small ink line art (ink, pencil or bare), fits the icon box, differs from the others and
+# reads as no cross, upright or on its side, by test_art_direction's silhouette check.
+func test_every_leftover_icon_is_small_ink_and_no_cross() -> void:
+	var checker = load("res://tests/test_art_direction.gd").new()
+	var seen := {}
+	var marks: Array = FloorMapView.LEFTOVER_ORDER.duplicate()
+	marks.append(FloorMapView.LEFTOVER_MORE)
+	for mark: String in marks:
+		assert_true(FloorMapView.LEFTOVER_ICONS.has(mark), mark)
+		var rows: Array = FloorMapView.LEFTOVER_ICONS[mark]
+		assert_true(rows.size() <= FloorMapView.LEFTOVER_ICON.y, "%s is %d tall" % [mark, rows.size()])
+		var inked := 0
+		for row: String in rows:
+			assert_true(row.length() <= FloorMapView.LEFTOVER_ICON.x, "%s: %s" % [mark, row])
+			for c in row:
+				assert_true(c in ["x", "s", "."], "%s: %s" % [mark, c])
+				if c == "x":
+					inked += 1
+		assert_true(inked >= 3, "%s has ink" % mark)
+		assert_false(seen.has(str(rows)), "%s has a picture of its own" % mark)
+		seen[str(rows)] = true
+		assert_false(checker._reads_as_a_cross(rows), "%s reads as a cross" % mark)
+		assert_false(checker._reads_as_a_cross(_turned(rows)), "%s on its side reads as a cross" % mark)
+	for kind: String in FloorMapView.LEFTOVER_ORDER:
+		assert_true(FloorMapView.LEFTOVER_LABELS.has(kind), kind)
+
+
+# Four icons fit every room box the big map draws, for every floor extent its grid allows: inside the
+# outline with a pixel clear, a pixel clear of the sign's spot and of each other, and off the corners
+# the stamp presses on.
+func test_four_leftover_icons_fit_every_room_box_the_big_map_draws() -> void:
+	var sizes := {}
+	var grid := Vector2i.ZERO
+	for file in DirAccess.get_files_at("res://data/floors"):
+		if file.ends_with(".tres"):
+			var size: Vector2i = (load("res://data/floors/" + file) as FloorDef).grid_size
+			grid = Vector2i(maxi(grid.x, size.x), maxi(grid.y, size.y))
+	for w in range(1, grid.x + 1):
+		for h in range(1, grid.y + 1):
+			var room := FloorMapView.room_size(FloorMapView.big_spacing(Vector2i(w, h)))
+			var rect := Rect2(Vector2(100, 80), room)
+			sizes[str(room)] = true
+			var slots := FloorMapView.leftover_slots(rect, room)
+			assert_eq(slots.size(), FloorMapView.LEFTOVER_SLOTS, "a %s room" % str(room))
+			var inside := rect.grow(-float(MapPaper.outline_width(room) + 1))
+			var sign_spot := FloorMapView.room_sign_rect(rect, room)
+			var o := FloorMapView.STAMP_OVERLAP
+			var corners: Array[Rect2] = [Rect2(rect.position, Vector2(o, o)), Rect2(rect.end.x - o, rect.position.y, o, o),
+					Rect2(rect.position.x, rect.end.y - o, o, o), Rect2(rect.end - Vector2(o, o), Vector2(o, o))]
+			for i in slots.size():
+				var slot: Rect2 = slots[i]
+				assert_eq(slot.size, FloorMapView.LEFTOVER_ICON)
+				assert_true(inside.encloses(slot), "%s slot %d %s inside %s" % [str(room), i, str(slot), str(inside)])
+				assert_false(slot.intersects(sign_spot.grow(1.0)), "%s slot %d clear of the sign" % [str(room), i])
+				for corner in corners:
+					assert_false(slot.intersects(corner), "%s slot %d off the stamp's corner" % [str(room), i])
+				for j in range(i + 1, slots.size()):
+					assert_false(slot.grow(1.0).intersects(slots[j]), "%s slots %d and %d apart" % [str(room), i, j])
+	assert_true(sizes.size() >= 4, "room sizes tested: %s" % str(sizes.keys()))
+
+
+# Three rooms in a row, all walked, standing in the first; the third's saved state as given.
+func _row_view(states: Dictionary, is_big := true) -> FloorMapView:
+	var map := FloorMap.new()
+	var a := _add(map, RoomLayout.TYPE_COMBAT, Vector2i(0, 0))
+	var b := _add(map, RoomLayout.TYPE_ITEM, Vector2i(1, 0))
+	var c := _add(map, RoomLayout.TYPE_COMBAT, Vector2i(2, 0))
+	map.join(a, b)
+	map.join(b, c)
+	var progress := FloorProgress.new(map)
+	for room in map.rooms:
+		progress.enter(room.id)
+	progress.room_state = _state_of.bind(states)
+	var view := FloorMapView.new()
+	view.setup(map, progress, is_big, "The Records Basement")
+	view.set_current(a.id)
+	return view
+
+
+func _kept(kinds: Array) -> Dictionary:
+	var keep := []
+	for kind: String in kinds:
+		match kind:
+			"potion":
+				keep.append({"kind": RoomView.KEEP_POTION, "id": "swift_tea", "cell": [2, 2]})
+			"item":
+				keep.append({"kind": RoomView.KEEP_ITEM, "id": _first_passive().id, "cell": [3, 2]})
+			"reel":
+				keep.append({"kind": RoomView.KEEP_REEL, "era": Eras.FOOTBALL, "cell": [4, 2]})
+			"key", "bomb":
+				keep.append({"kind": RoomView.KEEP_DROP, "drop": kind, "cell": [5, 2]})
+			"heal":
+				keep.append({"kind": RoomView.KEEP_DROP, "drop": RoomRules.DROP_HEAL, "amount": 2, "cell": [6, 2]})
+	keep.append({"kind": RoomView.KEEP_CHEST, "chest": ChestRules.LOCKED, "cell": [7, 2]})
+	return {"cleared": true, "keep": keep}
+
+
+func _ink_counts(image: Image, box: Rect2) -> Vector2i:
+	var counts := Vector2i.ZERO
+	var area := Rect2i(box)
+	for y in range(area.position.y, area.end.y):
+		for x in range(area.position.x, area.end.x):
+			var c := image.get_pixel(x, y)
+			if c.is_equal_approx(MapPaper.INK):
+				counts.x += 1
+			elif c.is_equal_approx(MapPaper.PENCIL):
+				counts.y += 1
+	return counts
+
+
+func _picture_counts(mark: String) -> Vector2i:
+	var counts := Vector2i.ZERO
+	for row: String in FloorMapView.LEFTOVER_ICONS[mark]:
+		counts += Vector2i(row.count("x"), row.count("s"))
+	return counts
+
+
+# The big map draws each kind's picture in its own slot of the walked room's box, in the map's order.
+# Nothing else on the plan changes: not the room's sign, the stamp, a corridor or a stub. The key gains
+# its "Left here" line only when some room has leftovers.
+func test_the_big_map_draws_each_kind_left_in_a_walked_room() -> void:
+	var bare := _row_view({2: {"cleared": true, "keep": []}})
+	var plain := _paper_image()
+	bare.paint_big(plain)
+	var none := _row_view({})
+	var unmarked := _paper_image()
+	none.paint_big(unmarked)
+	assert_eq(plain.get_data(), unmarked.get_data(), "no leftovers, no change anywhere (the key too)")
+	var view := _row_view({2: _kept(["heal", "potion", "key"])})
+	var image := _paper_image()
+	view.paint_big(image)
+	assert_eq(view.big_stamp_rect, bare.big_stamp_rect, "the stamp stays put")
+	var spacing := FloorMapView.big_spacing(view._map.bounds().size)
+	var room := FloorMapView.room_size(spacing)
+	var slots := FloorMapView.leftover_slots(view.big_room_rects[2], room)
+	var marks := ["potion", "key", "heal"]
+	for i in marks.size():
+		var slot: Rect2 = slots[i]
+		assert_eq(_ink_counts(image, slot), _picture_counts(marks[i]), "slot %d holds the %s" % [i, marks[i]])
+	assert_eq(_ink_counts(image, slots[3]), Vector2i.ZERO, "the fourth slot is empty")
+	# Every changed pixel on the plan is inside a slot; under it, only the key changed.
+	var changed_in_key := 0
+	for y in 360:
+		for x in 640:
+			if image.get_pixel(x, y).is_equal_approx(plain.get_pixel(x, y)):
+				continue
+			var p := Vector2(x, y) + Vector2(0.5, 0.5)
+			if FloorMapView.KEY_RECT.has_point(p):
+				changed_in_key += 1
+				continue
+			var in_slot := false
+			for slot: Rect2 in slots:
+				in_slot = in_slot or slot.has_point(p)
+			assert_true(in_slot, "a pixel changed at %d,%d outside the icons" % [x, y])
+	assert_true(changed_in_key >= _picture_counts("potion").x, "the key's Left here line draws its icons: %d" % changed_in_key)
+	var crossings := _crossings(image)
+	assert_true(crossings.is_empty(), str(crossings.slice(0, 4)))
+	for v: FloorMapView in [bare, none, view]:
+		v.free()
+
+
+# With more kinds than slots, the last slot holds "..." (a plus would read as a cross).
+func test_a_room_with_more_kinds_than_slots_ends_in_dots() -> void:
+	var view := _row_view({2: _kept(FloorMapView.LEFTOVER_ORDER)})
+	var image := _paper_image()
+	view.paint_big(image)
+	var slots := FloorMapView.leftover_slots(view.big_room_rects[2], FloorMapView.room_size(FloorMapView.big_spacing(view._map.bounds().size)))
+	var shown := FloorMapView.leftover_marks(_kinds(FloorMapView.LEFTOVER_ORDER), slots.size())
+	assert_eq(shown, _kinds(["potion", "item", "reel", FloorMapView.LEFTOVER_MORE]))
+	for i in shown.size():
+		assert_eq(_ink_counts(image, slots[i]), _picture_counts(shown[i]), "slot %d: %s" % [i, shown[i]])
+	assert_eq(FloorMapView.leftover_marks(_kinds(["potion", "item", "reel", "key"]), 4), _kinds(["potion", "item", "reel", "key"]), "four fit as they are")
+	assert_true(_crossings(image).is_empty())
+	view.free()
+
+
+# The key's Left here line: its words and icons fit beside whatever entries the key holds, and it takes
+# the row a boss name would otherwise borrow.
+func test_the_keys_left_here_line_fits_beside_any_entries() -> void:
+	var all := _kinds(FloorMapView.LEFTOVER_ORDER)
+	var width := FloorMapView.leftover_line_width(all)
+	var measured := _width(FloorMapView.LEFTOVER_TITLE, HudStyle.SMALL)
+	for kind: String in all:
+		measured += _width(FloorMapView.LEFTOVER_LABELS[kind], HudStyle.SMALL)
+	assert_true(width > measured, "the line is measured in the game font: %.0f" % width)
+	for entries in range(0, FloorMapView.KEY_ORDER.size() + 1):
+		var at := FloorMapView.leftover_line_at(entries)
+		var line := Rect2(at, Vector2(width, DoorSign.SIZE))
+		assert_true(FloorMapView.KEY_RECT.grow(-2.0).encloses(line), "%d entries: %s" % [entries, str(line)])
+		for i in entries:
+			var entry := Rect2(FloorMapView.key_entry_at(i), Vector2(FloorMapView.key_column_width(), DoorSign.SIZE))
+			assert_false(entry.intersects(line), "%d entries: entry %d" % [entries, i])
+	assert_true(FloorMapView.key_has_name_row(6), "a name row under one row of entries")
+	assert_false(FloorMapView.key_has_name_row(7, true), "the Left here line takes the last free row")
+	assert_true(FloorMapView.key_has_name_row(6, true), "with two rows free, both fit")
+
+
+# The small map marks a room with leftovers by one 2 px ink dot in its top right corner, clear of the
+# room's colour dot, and nothing else.
+func test_the_small_map_marks_a_room_with_leftovers_in_its_corner() -> void:
+	var bare := _row_view({2: {"cleared": true, "keep": []}}, false)
+	var plain := _paper_image()
+	bare.paint_mini(plain)
+	var view := _row_view({1: _kept(["potion"]), 2: _kept(["key", "reel"])}, false)
+	var image := _paper_image()
+	view.paint_mini(image)
+	var marked := {}
+	for room_id: int in [1, 2]:
+		var rect: Rect2 = view.mini_room_rects[room_id]
+		var dot := FloorMapView.mini_leftover_rect(rect)
+		marked[room_id] = dot
+		assert_eq(dot.size, Vector2(2, 2))
+		assert_true(rect.grow(-1.0).encloses(dot), "inside room %d's edge" % room_id)
+		assert_false(dot.grow(1.0).intersects(FloorMapView.mini_dot_rect(rect)), "clear of room %d's colour dot" % room_id)
+		assert_eq(_ink_counts(image, dot), Vector2i(4, 0), "room %d's dot is ink" % room_id)
+	for y in range(int(FloorMapView.MINI_RECT.position.y), int(FloorMapView.MINI_RECT.end.y)):
+		for x in range(int(FloorMapView.MINI_RECT.position.x), int(FloorMapView.MINI_RECT.end.x)):
+			if image.get_pixel(x, y).is_equal_approx(plain.get_pixel(x, y)):
+				continue
+			var p := Vector2(x, y) + Vector2(0.5, 0.5)
+			assert_true((marked[1] as Rect2).has_point(p) or (marked[2] as Rect2).has_point(p), "a pixel changed at %d,%d" % [x, y])
+	assert_true(_crossings(image, FloorMapView.MINI_RECT).is_empty())
+	bare.free()
+	view.free()

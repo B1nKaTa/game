@@ -170,7 +170,7 @@ func _ready() -> void:
 	var glow := Lighting.make_light(Color(1.0, 0.85, 0.6), 0.7, 0.8)
 	player.add_child(glow)
 	if not _resumed:
-		_progress = FloorProgress.new(_map)
+		_progress = _new_progress(_map)
 	_mini_map = _add_map_view(false)
 	_big_map = _add_map_view(true)
 	_big_map.opened_changed.connect(_on_big_map_changed)
@@ -364,7 +364,7 @@ func _resume_map(resume: Dictionary) -> bool:
 	_floor_def = def
 	_map = map
 	_map_kind = kind
-	_progress = FloorProgress.new(map)
+	_progress = _new_progress(map)
 	for id in resume.get("visited", []):
 		if int(id) >= 0 and int(id) < map.rooms.size():
 			_progress.enter(int(id))
@@ -527,7 +527,7 @@ func _choose_path(index: int) -> void:
 	_run.paths_taken[_depth] = def.id
 	# A new floor, a new boss room: only the pills lost in this floor's boss room count.
 	_run.boss_room_pill_lost = false
-	_progress = FloorProgress.new(map)
+	_progress = _new_progress(map)
 	_progress.enter(crossroads.id)
 	_run.floor_depth = def.depth
 	_rules.plan_floor(map, def.depth, seed_text, _progress)
@@ -859,7 +859,38 @@ func _make_room_view(room: FloorRoom) -> RoomView:
 	view.floor_cleared.connect(_on_floor_cleared)
 	view.boss_spawned.connect(_on_boss_spawned)
 	_feedback.watch_room(view)
+	view.reel_taker = _rules.take_reel
+	_watch_leftovers(view)
 	return view
+
+
+# Each floor's progress hands the maps its rooms' saved state, for the pickups left behind in them.
+func _new_progress(map: FloorMap) -> FloorProgress:
+	var progress := FloorProgress.new(map)
+	progress.room_state = _room_state
+	return progress
+
+
+# A room's saved state as the maps read it: the room itself while it is kept on this floor, else what the
+# checkpoint kept of it (a resumed room not walked into since). Either is what lays its pickups out again
+# when he walks back in.
+func _room_state(room_id: int) -> Dictionary:
+	# Untyped: a typed assignment fails on a freed view before is_instance_valid can skip it.
+	var view = _room_views.get(room_id)
+	if is_instance_valid(view):
+		return view.snapshot()
+	return _restored.get(room_id, {})
+
+
+# The small map marks rooms with pickups left in them, so it is drawn again as one is laid down or taken.
+func _watch_leftovers(view: RoomView) -> void:
+	view.child_entered_tree.connect(_on_room_child_changed)
+	view.child_exiting_tree.connect(_on_room_child_changed)
+
+
+func _on_room_child_changed(node: Node) -> void:
+	if node is Pickup and is_instance_valid(_mini_map):
+		_mini_map.queue_redraw()
 
 
 func _exit_tree() -> void:
@@ -985,7 +1016,7 @@ func _go_down() -> void:
 	_room_views.clear()
 	_floor_def = load(LANDINGS_BY_DEPTH[_depth])
 	_map = _landing_map()
-	_progress = FloorProgress.new(_map)
+	_progress = _new_progress(_map)
 	_mini_map.setup(_map, _progress, false, _floor_def.display_name)
 	_big_map.setup(_map, _progress, true, _floor_def.display_name)
 	_current_id = -1
