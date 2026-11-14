@@ -453,13 +453,16 @@ func test_the_key_gives_away_no_room_not_yet_found() -> void:
 			if room.room_type == RoomLayout.TYPE_SHOP and not stub_icons.has("$"):
 				hidden_somewhere += 1
 	assert_true(hidden_somewhere > 0, "some floor had a shop the key kept quiet about")
-	# Night Vision's secret is drawn as its eye, and the key lists the eye; a blank Floor Plan room adds nothing.
+	# Night Vision's secret not yet walked into is drawn as a "?", which the key lists as "Unknown" (no eye).
 	var map := _cross_floor()
 	var progress := FloorProgress.new(map)
 	progress.enter(0)
 	var shown := FloorMapView.shown_ids(map, progress, true, true)
-	assert_eq(FloorMapView.drawn_sign(map, progress, map.room(3), false), "S", "the secret's eye")
-	assert_true(FloorMapView.key_icons(map, progress, shown, FloorMapView.exit_stubs(map, progress, shown), false).has("S"))
+	assert_eq(FloorMapView.drawn_sign(map, progress, map.room(3), false), "?", "the spec's ?")
+	var icons := FloorMapView.key_icons(map, progress, shown, FloorMapView.exit_stubs(map, progress, shown), false)
+	assert_true(icons.has("?") and not icons.has("S"), str(icons))
+	progress.enter(3)
+	assert_eq(FloorMapView.drawn_sign(map, progress, map.room(3), false), "S", "a walked secret shows its own sign")
 
 
 # A boss room shown by the Fortune Teller's Card, beside a walked room: the walked room's door into it
@@ -549,15 +552,21 @@ func test_a_boss_name_covers_no_room_corridor_or_stub() -> void:
 				view.free()
 	assert_true(named >= 24, "names were placed: %d" % named)
 	assert_true(in_key < named, "most names sit by their rooms: %d of %d in the key" % [in_key, named])
-	# Both of any floor's bosses fit the key's name row, each with its sign.
-	var room := FloorMapView.KEY_RECT.size.x - FloorMapView.KEY_TITLE_WIDTH - 4.0
+	# Both of any floor's bosses fit the key's name row, each with its sign, measured in the game font.
 	for file in DirAccess.get_files_at("res://data/floors"):
 		if file.ends_with(".tres"):
 			var names := FloorMapView.boss_names_for(load("res://data/floors/" + file))
+			var icons: Array[String] = []
+			var in_order: Array[String] = []
+			for type: String in names:
+				icons.append(RoomRules.door_icon(type))
+				in_order.append(names[type])
+			var texts := FloorMapView.key_name_row(icons, in_order)
 			var width := 0.0
-			for words: String in names.values():
-				width += DoorSign.SIZE + 2.0 + _width(words, HudStyle.SMALL) + 2.0 + 12.0
-			assert_true(width <= room, "%s: %s" % [file, str(names)])
+			for i in texts.size():
+				assert_true(texts[i].begins_with("Boss: " if icons[i] == "B" else "Mini boss: "), texts[i])
+				width += DoorSign.SIZE + 2.0 + _width(texts[i], HudStyle.SMALL) + 2.0 + FloorMapView.KEY_NAME_GAP
+			assert_true(width <= FloorMapView.key_name_room(), "%s: %s" % [file, str(texts)])
 	# A name's patch is the glyph rows only: no glyph of the font reaches below them.
 	var fnt := FileAccess.get_file_as_string(HudStyle.FONT_PATH)
 	var glyph := RegEx.create_from_string("height=(\\d+) xoffset=-?\\d+ yoffset=(-?\\d+)")
@@ -586,4 +595,51 @@ func test_the_crossroads_door_gaps_meet_their_corridors() -> void:
 	for side: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
 		var along := Vector2(absi(side.y), absi(side.x))
 		assert_eq(MapPaper.edge_mid(small, side) * along, MapPaper.edge_mid(cell, side) * along, str(side))
+	view.free()
+
+
+# A crowded Floor Plan: a 3x3 floor, every room joined to its neighbours, the boss in the middle. The plan
+# has no clear spot for the boss's name, so the key's spare row writes it: "Boss: <name>" right after the
+# boss's sign, inside the key box, over no key entry.
+func test_a_boss_name_with_no_room_on_the_plan_goes_to_the_key() -> void:
+	var map := FloorMap.new()
+	var grid := {}
+	for y in 3:
+		for x in 3:
+			grid[Vector2i(x, y)] = _add(map, RoomLayout.TYPE_FLOOR_BOSS if Vector2i(x, y) == Vector2i(1, 1) else RoomLayout.TYPE_COMBAT, Vector2i(x, y))
+	for cell: Vector2i in grid:
+		for step: Vector2i in [Vector2i.RIGHT, Vector2i.DOWN]:
+			if grid.has(cell + step):
+				map.join(grid[cell], grid[cell + step])
+	var progress := FloorProgress.new(map)
+	progress.enter(0)
+	var view := FloorMapView.new()
+	view.setup(map, progress, true, "The Records Basement")
+	view.set_current(0)
+	view.show_plan = true
+	view.boss_names = {RoomLayout.TYPE_FLOOR_BOSS: "Regional Reaper"}
+	var image := _paper_image()
+	view.paint_big(image)
+	assert_eq(view.big_name_rects.size(), 1)
+	var patch: Rect2 = view.big_name_rects[0]
+	assert_true(FloorMapView.KEY_RECT.encloses(patch), "in the key: %s" % str(patch))
+	assert_eq(patch.size.x, ceilf(_width(FloorMapView.key_name_text("B", "Regional Reaper"), HudStyle.SMALL) + 2.0), "sized for \"Boss: Regional Reaper\"")
+	assert_eq(FloorMapView.key_name_text("B", "Regional Reaper"), "Boss: Regional Reaper")
+	# The boss's sign right before it, inked, inside the key box.
+	var sign_box := Rect2(patch.position.x - DoorSign.SIZE - 2.0, patch.position.y, DoorSign.SIZE, DoorSign.SIZE)
+	assert_true(FloorMapView.KEY_RECT.encloses(sign_box))
+	var inked := 0
+	for y in range(int(sign_box.position.y), int(sign_box.end.y)):
+		for x in range(int(sign_box.position.x), int(sign_box.end.x)):
+			if image.get_pixel(x, y).is_equal_approx(MapPaper.INK):
+				inked += 1
+	assert_true(inked >= 20, "the boss's sign in ink: %d px" % inked)
+	# Over no entry: each entry's sign and label box on the rows above.
+	var shown := FloorMapView.shown_ids(map, progress, false, true, true)
+	var icons := FloorMapView.key_icons(map, progress, shown, FloorMapView.exit_stubs(map, progress, shown), true)
+	assert_true(icons.has("B"), "the boss's own entry is there too")
+	var column := FloorMapView.key_column_width()
+	for i in icons.size():
+		var entry := Rect2(FloorMapView.KEY_RECT.position + Vector2(FloorMapView.KEY_TITLE_WIDTH + (i % FloorMapView.KEY_COLUMNS) * column, 5.0 + floorf(i / float(FloorMapView.KEY_COLUMNS)) * FloorMapView.KEY_ROW_HEIGHT), Vector2(column, DoorSign.SIZE))
+		assert_false(entry.intersects(patch) or entry.intersects(sign_box), "entry %s" % icons[i])
 	view.free()

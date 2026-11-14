@@ -68,6 +68,9 @@ const KEY_LABELS := {
 	"?": "Unknown", "A": "Arcade", "S": "Secret", "V": "Vault", "M": "Mini boss", "B": "Boss",
 }
 const CLOSE_HINT := "Close"
+# A boss's name in the key's spare row (no clear spot on the plan), so it never reads as a key entry.
+const KEY_NAME_FORMATS := {"B": "Boss: %s", "M": "Mini boss: %s"}
+const KEY_NAME_GAP := 12.0
 # A room the Floor Plan shows but he has not walked into: an outline only, saying nothing of what is in it.
 const PLAN_COLOR := Color("8a8698")
 const PLAN_LINK_COLOR := Color(0.79, 0.77, 0.84, 0.45)
@@ -167,14 +170,16 @@ static func sign_seen(map: FloorMap, progress: FloorProgress, room: FloorRoom) -
 
 # The mark the big map draws in a shown room, as a key letter, or "" for none:
 # - a walked room's own sign ("C" for a plain fight room and "+" for the Crossroads, drawn as their blank boxes);
-# - Night Vision's secret, as its eye;
+# - Night Vision's secret not yet walked into, as a "?" (the key's "Unknown");
 # - a room he has not walked into but whose door sign he saw from a walked room;
 # - a boss room the Fortune Teller's Card names.
 # A Floor Plan room otherwise says nothing of what is in it.
 static func drawn_sign(map: FloorMap, progress: FloorProgress, room: FloorRoom, with_bosses: bool) -> String:
 	var mark := RoomRules.door_icon(room.room_type)
-	if progress.is_visited(room.id) or room.room_type == RoomLayout.TYPE_SECRET:
+	if progress.is_visited(room.id):
 		return mark
+	if room.room_type == RoomLayout.TYPE_SECRET:
+		return "?"
 	if HIDDEN_TYPES.has(room.room_type) or not DoorSign.has_sign(mark):
 		return ""
 	if sign_seen(map, progress, room) or (with_bosses and BOSS_TYPES.has(room.room_type)):
@@ -564,7 +569,7 @@ func _drawn_rect(room: FloorRoom, origin: Vector2, spacing: Vector2) -> Rect2:
 
 # A walked room: its floor, an ink outline with door gaps, and its door's sign in ink (none for a plain
 # fight room or the Crossroads). A room shown but not walked into is a pencil outline holding its
-# drawn_sign: in ink when he saw it (a door sign from a walked room, Night Vision's eye), in pencil when
+# drawn_sign: in ink when he saw it (a door sign from a walked room, Night Vision's "?"), in pencil when
 # only the Fortune Teller's Card tells it.
 func _paint_room(canvas: Object, room: FloorRoom, origin: Vector2, spacing: Vector2, gaps: Array, with_bosses: bool) -> void:
 	var rect := _drawn_rect(room, origin, spacing)
@@ -620,6 +625,37 @@ static func cover(rect: Rect2, busy: Array[Rect2]) -> float:
 	return area
 
 
+# A boss's name as the key's spare row writes it, after the boss's sign: "Boss: <name>".
+static func key_name_text(icon: String, boss_name: String) -> String:
+	return TranslationServer.translate(KEY_NAME_FORMATS[icon]) % boss_name
+
+
+# The key's name row: each boss as key_name_text writes it, or, when the whole row would not fit, each
+# name's part before its comma ("Boss: Mortimer Grimsby"), as the small map shortens a long floor name.
+static func key_name_row(icons: Array[String], boss_names_in_order: Array[String]) -> PackedStringArray:
+	var texts := PackedStringArray()
+	for i in icons.size():
+		texts.append(key_name_text(icons[i], boss_names_in_order[i]))
+	if key_name_row_width(texts) <= key_name_room():
+		return texts
+	texts.clear()
+	for i in icons.size():
+		texts.append(key_name_text(icons[i], boss_names_in_order[i].get_slice(",", 0).strip_edges()))
+	return texts
+
+
+# How wide the name row draws: each name after its sign, with a gap before the next.
+static func key_name_row_width(texts: PackedStringArray) -> float:
+	var width := 0.0
+	for words in texts:
+		width += DoorSign.SIZE + 2.0 + MapPaper.text_width(words, HudStyle.SMALL) + 2.0 + KEY_NAME_GAP
+	return width
+
+
+static func key_name_room() -> float:
+	return KEY_RECT.size.x - KEY_TITLE_WIDTH - 4.0
+
+
 # Whether the key has a row left under its entries, for boss names that found no clear spot.
 static func key_has_name_row(entries: int) -> bool:
 	return ceili(entries / float(KEY_COLUMNS)) < KEY_ROWS
@@ -644,13 +680,18 @@ func _paint_key(canvas: Object, icons: Array[String], named: Array[String]) -> v
 				MapPaper.ink_sign(canvas, box.get_center(), icons[i], 1)
 		MapPaper.text(canvas, at + Vector2(DoorSign.SIZE + 3.0, 1.0 + ascent), tr(String(KEY_LABELS[icons[i]])), HudStyle.SMALL, MapPaper.INK)
 	var at := KEY_RECT.position + Vector2(KEY_TITLE_WIDTH, 5.0 + ceilf(icons.size() / float(KEY_COLUMNS)) * KEY_ROW_HEIGHT)
+	var full: Array[String] = []
 	for icon in named:
-		var words: String = boss_names[RoomLayout.TYPE_FLOOR_BOSS if icon == "B" else RoomLayout.TYPE_MINI_BOSS]
+		full.append(boss_names[RoomLayout.TYPE_FLOOR_BOSS if icon == "B" else RoomLayout.TYPE_MINI_BOSS])
+	var texts := key_name_row(named, full)
+	for i in named.size():
+		var icon := named[i]
+		var words := texts[i]
 		MapPaper.ink_sign(canvas, Rect2(at, Vector2(DoorSign.SIZE, DoorSign.SIZE)).get_center(), icon, 1)
 		var patch := Rect2(at + Vector2(DoorSign.SIZE + 2.0, 0.0), Vector2(MapPaper.text_width(words, HudStyle.SMALL) + 2.0, MapPaper.glyph_height(HudStyle.SMALL)))
 		MapPaper.text(canvas, Vector2(patch.position.x + 1.0, at.y + 1.0 + ascent), words, HudStyle.SMALL, MapPaper.INK)
 		big_name_rects.append(patch)
-		at.x = patch.end.x + 12.0
+		at.x = patch.end.x + KEY_NAME_GAP
 
 
 # The close prompt in the top right. On a pad it names the back button (B, or Circle), which closes
