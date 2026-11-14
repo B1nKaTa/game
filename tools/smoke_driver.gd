@@ -411,7 +411,26 @@ func _walk_through_door(scene: Node, target_id: int) -> void:
 	# Spending the Slip while standing on the door walks him through it at once.
 	if scene.debug_current_id() == from_id:
 		_stand_on(scene, door)
-		await _wait(0.15)
+		scene.player.velocity = Vector2.ZERO
+		# Hold the move input toward the wall, as a player does, so drift cannot leave the feet short
+		# of the opening.
+		var held := _hold_toward(map.room(from_id).side_towards(target_id))
+		# Let go the moment the room changes, so he does not walk on from the door he arrives on.
+		for _frame in 20:
+			await get_tree().physics_frame
+			if scene.debug_current_id() != from_id:
+				break
+		for action in held:
+			Input.action_release(action)
+		if scene.debug_current_id() != from_id:
+			scene.player.velocity = Vector2.ZERO
+		else:
+			await _wait(0.1)
+	if scene.debug_current_id() != target_id:
+		var feet: Vector2 = scene.player.feet().global_position
+		var door_at := door.global_position
+		var side := map.room(from_id).side_towards(target_id)
+		print("DOOR DEBUG room %d -> %d: type %s, door state locked=%s requires_key=%s armed=%s used=%s, feet %s door %s, feet past door %.1f, feet distance %.1f, velocity %s" % [from_id, target_id, target.room_type, str(door.locked), str(door.requires_key), str(door._armed), str(door._used), str(feet), str(door_at), (feet - door_at).dot(Vector2(side)), feet.distance_to(door_at), str(scene.player.velocity)])
 	_check(scene.debug_current_id() == target_id, "walking onto a door enters room %d" % target_id)
 	_check_arrival(scene, map, target_id, from_id)
 	await _wait(0.2)
@@ -469,6 +488,22 @@ func _step_away_from(scene: Node, door: Door, room: FloorRoom) -> void:
 
 
 # In its opening, pressed toward the wall (Door.opening_spot): a door in a wall takes him only there.
+# Presses the move action(s) toward a side of the room and returns them, to release afterwards.
+func _hold_toward(side: Vector2i) -> Array[String]:
+	var held: Array[String] = []
+	if side.x < 0:
+		held.append("move_left")
+	elif side.x > 0:
+		held.append("move_right")
+	if side.y < 0:
+		held.append("move_up")
+	elif side.y > 0:
+		held.append("move_down")
+	for action in held:
+		Input.action_press(action)
+	return held
+
+
 func _stand_on(scene: Node, door: Door) -> void:
 	scene.player.global_position = door.opening_spot() - Player.FEET_OFFSET
 
@@ -1928,15 +1963,21 @@ func _check_chests(scene: Node) -> void:
 	var urn: Chest = view._create_chest(Vector2i(12, 3), ChestRules.URN)
 	var offer := mini(ChestRules.URN_CHOICES, _offerable_items(run, ItemRarity.URN))
 	var lying_before := _item_pickups(view)
+	# Locksmith's Apron and the like cut the urn's cost; zero the cut so two Slips stay the price.
+	var cost_cut: int = run.stats.slip_cost_cut
+	run.stats.slip_cost_cut = 0
+	while run.keys > 0:
+		run.use_key()
 	run.add_key()
 	_put_feet(scene, urn.global_position)
 	await _wait(0.1)
 	await _press("interact")
 	await _wait(0.1)
-	_check(not _gone(urn) and run.keys == 1, "one Slip is not enough for the urn")
+	_check(not _gone(urn) and run.keys == 1, "one Slip is not enough for the urn (keys %d, cut %d)" % [run.keys, cost_cut])
 	run.add_key()
 	await _press("interact")
 	await _wait(0.2)
+	run.stats.slip_cost_cut = cost_cut
 	_check(_gone(urn) and run.keys == 0, "two Slips open the urn and are spent")
 	var offered := _item_pickups(view).filter(func(p: Pickup) -> bool: return not lying_before.has(p))
 	_check(offered.size() == offer, "the urn lays out %d items, found %d" % [offer, offered.size()])
@@ -2288,7 +2329,11 @@ func _check_potion_drinking(scene: Node) -> void:
 	await _press("potion")
 	_check(run.buff != null and absf(run.move_speed() - base_speed * 1.4) < 0.01, "the potion key starts a buff")
 	var hud := _find_hud(scene)
-	await get_tree().process_frame
+	# The label follows in Hud._process, which may come a frame or two after the drink.
+	for _frame in 10:
+		await get_tree().process_frame
+		if hud._potion_slot != null and hud._potion_slot._buff_label.text.begins_with("Swift"):
+			break
 	_check(hud._potion_slot != null and hud._potion_slot._buff_label.text.begins_with("Swift"), "the HUD shows the running buff")
 	run.tick_buff(99.0)
 	_check(run.buff == null and absf(run.move_speed() - base_speed) < 0.01, "a buff runs out")
